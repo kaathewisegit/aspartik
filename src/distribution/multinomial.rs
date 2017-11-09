@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Discrete, Distribution};
+use distribution::{CheckedDiscrete, Discrete, Distribution};
 use function::factorial;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -235,18 +235,7 @@ impl<'a> Discrete<&'a [u64], f64> for Multinomial {
     /// `x_i` is the `i`th `x` value, and `k` is the total number of
     /// probabilities
     fn pmf(&self, x: &[u64]) -> f64 {
-        assert_eq!(self.p.len(), x.len(), "{}", StatsError::ContainersMustBeSameLength);
-        assert_eq!(x.iter().sum::<u64>(), self.n, "{}", StatsError::ContainerExpectedSumVar("x", "n"));
-
-        let coeff = factorial::multinomial(self.n, x);
-        coeff *
-            self.p.iter().zip(x.iter()).fold(
-                1.0,
-                |acc,
-                 (pi, xi)| {
-                    acc * pi.powf(*xi as f64)
-                },
-            )
+        self.checked_pmf(x).unwrap()
     }
 
     /// Calculates the log probability mass function for the multinomial
@@ -269,16 +258,76 @@ impl<'a> Discrete<&'a [u64], f64> for Multinomial {
     /// `x_i` is the `i`th `x` value, and `k` is the total number of
     /// probabilities
     fn ln_pmf(&self, x: &[u64]) -> f64 {
-        assert_eq!(self.p.len(), x.len(), "{}", StatsError::ContainersMustBeSameLength);
-        assert_eq!(x.iter().sum::<u64>(), self.n, "{}", StatsError::ContainerExpectedSumVar("x", "n"));
+        self.checked_ln_pmf(x).unwrap()
+    }
+}
 
+impl<'a> CheckedDiscrete<&'a [u64], f64> for Multinomial {
+    /// Calculates the probability mass function for the multinomial
+    /// distribution
+    /// with the given `x`'s corresponding to the probabilities for this
+    /// distribution
+    ///
+    /// # Errors
+    ///
+    /// If the elements in `x` do not sum to `n` or if the length of `x` is not
+    /// equivalent to the length of `p`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// (n! / x_1!...x_k!) * p_i^x_i for i in 1...k
+    /// ```
+    ///
+    /// where `n` is the number of trials, `p_i` is the `i`th probability,
+    /// `x_i` is the `i`th `x` value, and `k` is the total number of
+    /// probabilities
+    fn checked_pmf(&self, x: &[u64]) -> Result<f64> {
+        if self.p.len() != x.len() {
+            return Err(StatsError::ContainersMustBeSameLength);
+        }
+        if x.iter().sum::<u64>() != self.n {
+            return Err(StatsError::ContainerExpectedSumVar("x", "n"));
+        }
+        let coeff = factorial::multinomial(self.n, x);
+        let val = coeff * self.p.iter().zip(x.iter()).fold(1.0, |acc, (pi, xi)| acc * pi.powf(*xi as f64));
+        Ok(val)
+    }
+
+    /// Calculates the log probability mass function for the multinomial
+    /// distribution
+    /// with the given `x`'s corresponding to the probabilities for this
+    /// distribution
+    ///
+    /// # Errors
+    ///
+    /// If the elements in `x` do not sum to `n` or if the length of `x` is not
+    /// equivalent to the length of `p`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// ln((n! / x_1!...x_k!) * p_i^x_i) for i in 1...k
+    /// ```
+    ///
+    /// where `n` is the number of trials, `p_i` is the `i`th probability,
+    /// `x_i` is the `i`th `x` value, and `k` is the total number of
+    /// probabilities
+    fn checked_ln_pmf(&self, x: &[u64]) -> Result<f64> {
+        if self.p.len() != x.len() {
+            return Err(StatsError::ContainersMustBeSameLength);
+        }
+        if x.iter().sum::<u64>() != self.n {
+            return Err(StatsError::ContainerExpectedSumVar("x", "n"));
+        }
         let coeff = factorial::multinomial(self.n, x).ln();
-        coeff +
-            self.p
-                .iter()
-                .zip(x.iter())
-                .map(|(pi, xi)| *xi as f64 * pi.ln())
-                .fold(0.0, |acc, x| acc + x)
+        let val = coeff +
+                  self.p
+                      .iter()
+                      .zip(x.iter())
+                      .map(|(pi, xi)| *xi as f64 * pi.ln())
+                      .fold(0.0, |acc, x| acc + x);
+        Ok(val)
     }
 }
 
@@ -286,7 +335,7 @@ impl<'a> Discrete<&'a [u64], f64> for Multinomial {
 #[cfg(test)]
 mod test {
     use statistics::*;
-    use distribution::{Discrete, Multinomial};
+    use distribution::{CheckedDiscrete, Discrete, Multinomial};
 
     fn try_create(p: &[f64], n: u64) -> Multinomial {
         let dist = Multinomial::new(p, n);
@@ -394,6 +443,18 @@ mod test {
     }
 
     #[test]
+    fn test_checked_pmf_x_wrong_length() {
+        let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
+        assert!(n.checked_pmf(&[1]).is_err());
+    }
+
+    #[test]
+    fn test_checked_pmf_x_wrong_sum() {
+        let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
+        assert!(n.checked_pmf(&[1, 3]).is_err());
+    }
+
+    #[test]
     fn test_ln_pmf() {
         let large_p = &[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
         let n = Multinomial::new(large_p, 45).unwrap();
@@ -419,5 +480,17 @@ mod test {
     fn test_ln_pmf_x_wrong_sum() {
         let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
         n.ln_pmf(&[1, 3]);
+    }
+
+    #[test]
+    fn test_checked_ln_pmf_x_wrong_length() {
+        let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
+        assert!(n.checked_ln_pmf(&[1]).is_err());
+    }
+
+    #[test]
+    fn test_checked_ln_pmf_x_wrong_sum() {
+        let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
+        assert!(n.checked_ln_pmf(&[1, 3]).is_err());
     }
 }

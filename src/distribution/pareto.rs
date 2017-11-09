@@ -283,11 +283,32 @@ impl Skewness<f64> for Pareto {
     ///
     /// where `α` is the shape
     fn skewness(&self) -> f64 {
-        assert!(
-            self.shape > 3.0,
-            format!("{}", StatsError::ArgGt("shape", 3.0))
-        );
-        (2.0 * (self.shape + 1.0) / (self.shape - 3.0)) * ((self.shape - 2.0) / self.shape).sqrt()
+        self.checked_skewness().unwrap()
+    }
+}
+
+impl CheckedSkewness<f64> for Pareto {
+    /// Returns the skewness of the Pareto distribution
+    ///
+    /// # Errors
+    ///
+    /// If `α <= 3.0`
+    ///
+    /// where `α` is the shape
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    ///     (2*(α + 1)/(α - 3))*sqrt((α - 2)/α)
+    /// ```
+    ///
+    /// where `α` is the shape
+    fn checked_skewness(&self) -> Result<f64> {
+        if self.shape <= 3.0 {
+            Err(StatsError::ArgGt("shape", 3.0))
+        } else {
+            Ok((2.0 * (self.shape + 1.0) / (self.shape - 3.0)) * ((self.shape - 2.0) / self.shape).sqrt())
+        }
     }
 }
 
@@ -455,8 +476,13 @@ mod test {
     #[test]
     #[should_panic]
     fn test_skewness_invalid_shape() {
-        let _ = try_create(1.0, 1.0).skewness();
-        let _ = try_create(1.0, 3.0).skewness();
+        try_create(1.0, 3.0).skewness();
+    }
+
+    #[test]
+    fn test_checked_skewness_invalid_shape() {
+        let n = try_create(1.0, 3.0);
+        assert!(n.checked_skewness().is_err());
     }
 
     #[test]

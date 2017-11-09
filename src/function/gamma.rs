@@ -1,6 +1,7 @@
 //! Provides the [gamma](https://en.wikipedia.org/wiki/Gamma_function) and
 //! related functions
 
+use Result;
 use consts;
 use error::StatsError;
 use prec;
@@ -10,19 +11,17 @@ use std::f64;
 const GAMMA_R: f64 = 10.900511;
 
 /// Polynomial coefficients for approximating the `gamma_ln` function
-const GAMMA_DK: &'static [f64] = &[
-    2.48574089138753565546e-5,
-    1.05142378581721974210,
-    -3.45687097222016235469,
-    4.51227709466894823700,
-    -2.98285225323576655721,
-    1.05639711577126713077,
-    -1.95428773191645869583e-1,
-    1.70970543404441224307e-2,
-    -5.71926117404305781283e-4,
-    4.63399473359905636708e-6,
-    -2.71994908488607703910e-9,
-];
+const GAMMA_DK: &'static [f64] = &[2.48574089138753565546e-5,
+                                   1.05142378581721974210,
+                                   -3.45687097222016235469,
+                                   4.51227709466894823700,
+                                   -2.98285225323576655721,
+                                   1.05639711577126713077,
+                                   -1.95428773191645869583e-1,
+                                   1.70970543404441224307e-2,
+                                   -5.71926117404305781283e-4,
+                                   4.63399473359905636708e-6,
+                                   -2.71994908488607703910e-9];
 
 /// Computes the logarithm of the gamma function
 /// with an accuracy of 16 floating point digits.
@@ -78,7 +77,19 @@ pub fn gamma(x: f64) -> f64 {
 ///
 /// if `a` or `x` are not in `(0, +inf)`
 pub fn gamma_ui(a: f64, x: f64) -> f64 {
-    gamma_ur(a, x) * gamma(a)
+    checked_gamma_ui(a, x).unwrap()
+}
+
+/// Computes the upper incomplete gamma function
+/// `Gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
+/// where `a` is the argument for the gamma function and
+/// `x` is the lower intergral limit.
+///
+/// # Errors
+///
+/// if `a` or `x` are not in `(0, +inf)`
+pub fn checked_gamma_ui(a: f64, x: f64) -> Result<f64> {
+    checked_gamma_ur(a, x).map(|x| x * gamma(a))
 }
 
 /// Computes the lower incomplete gamma function
@@ -91,7 +102,20 @@ pub fn gamma_ui(a: f64, x: f64) -> f64 {
 ///
 /// if `a` or `x` are not in `(0, +inf)`
 pub fn gamma_li(a: f64, x: f64) -> f64 {
-    gamma_lr(a, x) * gamma(a)
+    checked_gamma_li(a, x).unwrap()
+}
+
+/// Computes the lower incomplete gamma function
+/// `gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
+/// where `a` is the argument for the gamma function and `x`
+/// is the upper integral limit.
+///
+///
+/// # Errors
+///
+/// if `a` or `x` are not in `(0, +inf)`
+pub fn checked_gamma_li(a: f64, x: f64) -> Result<f64> {
+    checked_gamma_lr(a, x).map(|x| x * gamma(a))
 }
 
 /// Computes the upper incomplete regularized gamma function
@@ -107,29 +131,43 @@ pub fn gamma_li(a: f64, x: f64) -> f64 {
 ///
 /// if `a` or `x` are not in `(0, +inf)`
 pub fn gamma_ur(a: f64, x: f64) -> f64 {
+    checked_gamma_ur(a, x).unwrap()
+}
+
+/// Computes the upper incomplete regularized gamma function
+/// `Q(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
+/// where `a` is the argument for the gamma function and
+/// `x` is the lower integral limit.
+///
+/// # Remarks
+///
+/// Returns `f64::NAN` if either argument is `f64::NAN`
+///
+/// # Errors
+///
+/// if `a` or `x` are not in `(0, +inf)`
+pub fn checked_gamma_ur(a: f64, x: f64) -> Result<f64> {
     if a.is_nan() || x.is_nan() {
-        return f64::NAN;
+        return Ok(f64::NAN);
     }
-    assert!(
-        a > 0.0 && a < f64::INFINITY,
-        format!("{}", StatsError::ArgIntervalExcl("a", 0.0, f64::INFINITY))
-    );
-    assert!(
-        x > 0.0 && x < f64::INFINITY,
-        format!("{}", StatsError::ArgIntervalExcl("x", 0.0, f64::INFINITY))
-    );
+    if a <= 0.0 || a == f64::INFINITY {
+        return Err(StatsError::ArgIntervalExcl("a", 0.0, f64::INFINITY));
+    }
+    if x <= 0.0 || x == f64::INFINITY {
+        return Err(StatsError::ArgIntervalExcl("x", 0.0, f64::INFINITY));
+    }
 
     let eps = 0.000000000000001;
     let big = 4503599627370496.0;
     let big_inv = 2.22044604925031308085e-16;
 
     if x < 1.0 || x <= a {
-        return 1.0 - gamma_lr(a, x);
+        return Ok(1.0 - gamma_lr(a, x));
     }
 
     let mut ax = a * x.ln() - x - ln_gamma(a);
     if ax < -709.78271289338399 {
-        return if a < x { 0.0 } else { 1.0 };
+        return if a < x { Ok(0.0) } else { Ok(1.0) };
     }
 
     ax = ax.exp();
@@ -171,7 +209,7 @@ pub fn gamma_ur(a: f64, x: f64) -> f64 {
             }
         }
     }
-    ans * ax
+    Ok(ans * ax)
 }
 
 /// Computes the lower incomplete regularized gamma function
@@ -187,36 +225,49 @@ pub fn gamma_ur(a: f64, x: f64) -> f64 {
 ///
 /// if `a` or `x` are not in `(0, +inf)`
 pub fn gamma_lr(a: f64, x: f64) -> f64 {
-    if a.is_nan() || x.is_nan() {
-        return f64::NAN;
-    }
+    checked_gamma_lr(a, x).unwrap()
+}
 
-    assert!(
-        a > 0.0 && a < f64::INFINITY,
-        format!("{}", StatsError::ArgIntervalExcl("a", 0.0, f64::INFINITY))
-    );
-    assert!(
-        x > 0.0 && x < f64::INFINITY,
-        format!("{}", StatsError::ArgIntervalExcl("x", 0.0, f64::INFINITY))
-    );
+/// Computes the lower incomplete regularized gamma function
+/// `P(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for real a > 0, x > 0`
+/// where `a` is the argument for the gamma function and `x` is the upper
+/// integral limit.
+///
+/// # Remarks
+///
+/// Returns `f64::NAN` if either argument is `f64::NAN`
+///
+/// # Errors
+///
+/// if `a` or `x` are not in `(0, +inf)`
+pub fn checked_gamma_lr(a: f64, x: f64) -> Result<f64> {
+    if a.is_nan() || x.is_nan() {
+        return Ok(f64::NAN);
+    }
+    if a <= 0.0 || a == f64::INFINITY {
+        return Err(StatsError::ArgIntervalExcl("a", 0.0, f64::INFINITY));
+    }
+    if x <= 0.0 || x == f64::INFINITY {
+        return Err(StatsError::ArgIntervalExcl("x", 0.0, f64::INFINITY));
+    }
 
     let eps = 0.000000000000001;
     let big = 4503599627370496.0;
     let big_inv = 2.22044604925031308085e-16;
 
     if prec::almost_eq(a, 0.0, prec::DEFAULT_F64_ACC) {
-        return 1.0;
+        return Ok(1.0);
     }
     if prec::almost_eq(x, 0.0, prec::DEFAULT_F64_ACC) {
-        return 0.0;
+        return Ok(0.0);
     }
 
     let ax = a * x.ln() - x - ln_gamma(a);
     if ax < -709.78271289338399 {
         if a < x {
-            return 1.0;
+            return Ok(1.0);
         }
-        return 0.0;
+        return Ok(0.0);
     }
     if x <= 1.0 || x <= a {
         let mut r2 = a;
@@ -231,7 +282,7 @@ pub fn gamma_lr(a: f64, x: f64) -> f64 {
                 break;
             }
         }
-        return ax.exp() * ans2 / a;
+        return Ok(ax.exp() * ans2 / a);
     }
 
     let mut y = 1.0 - a;
@@ -275,7 +326,7 @@ pub fn gamma_lr(a: f64, x: f64) -> f64 {
             }
         }
     }
-    1.0 - ax.exp() * ans
+    Ok(1.0 - ax.exp() * ans)
 }
 
 /// Computes the Digamma function which is defined as the derivative of
@@ -473,6 +524,26 @@ mod test {
     }
 
     #[test]
+    fn test_checked_gamma_lr_a_lower_bound() {
+        assert!(super::checked_gamma_lr(-1.0, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_lr_a_upper_bound() {
+        assert!(super::checked_gamma_lr(f64::INFINITY, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_lr_x_lower_bound() {
+        assert!(super::checked_gamma_lr(1.0, -1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_lr_x_upper_bound() {
+        assert!(super::checked_gamma_lr(1.0, f64::INFINITY).is_err());
+    }
+
+    #[test]
     fn test_gamma_li() {
         assert!(super::gamma_li(f64::NAN, f64::NAN).is_nan());
         assert_almost_eq!(super::gamma_li(0.1, 1.0), 9.2839720283798852469443229940217320532607158711056334, 1e-14);
@@ -511,6 +582,26 @@ mod test {
     #[should_panic]
     fn test_gamma_li_x_upper_bound() {
         super::gamma_li(1.0, f64::INFINITY);
+    }
+
+    #[test]
+    fn test_checked_gamma_li_a_lower_bound() {
+        assert!(super::checked_gamma_li(-1.0, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_li_a_upper_bound() {
+        assert!(super::checked_gamma_li(f64::INFINITY, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_li_x_lower_bound() {
+        assert!(super::checked_gamma_li(1.0, -1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_li_x_upper_bound() {
+        assert!(super::checked_gamma_li(1.0, f64::INFINITY).is_err());
     }
 
     // TODO: precision testing could be more accurate, borrowed wholesale from Math.NET
@@ -572,6 +663,26 @@ mod test {
     }
 
     #[test]
+    fn test_checked_gamma_ur_a_lower_bound() {
+        assert!(super::checked_gamma_ur(-1.0, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_ur_a_upper_bound() {
+        assert!(super::checked_gamma_ur(f64::INFINITY, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_ur_x_lower_bound() {
+        assert!(super::checked_gamma_ur(1.0, -1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_ur_x_upper_bound() {
+        assert!(super::checked_gamma_ur(1.0, f64::INFINITY).is_err());
+    }
+
+    #[test]
     fn test_gamma_ui() {
         assert!(super::gamma_ui(f64::NAN, f64::NAN).is_nan());
         assert_almost_eq!(super::gamma_ui(0.1, 1.0), 0.2295356702888460382790772147651768201739736396141314, 1e-14);
@@ -610,6 +721,26 @@ mod test {
     #[should_panic]
     fn test_gamma_ui_x_upper_bound() {
         super::gamma_ui(1.0, f64::INFINITY);
+    }
+
+    #[test]
+    fn test_checked_gamma_ui_a_lower_bound() {
+        assert!(super::checked_gamma_ui(-1.0, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_ui_a_upper_bound() {
+        assert!(super::checked_gamma_ui(f64::INFINITY, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_ui_x_lower_bound() {
+        assert!(super::checked_gamma_ui(1.0, -1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_gamma_ui_x_upper_bound() {
+        assert!(super::checked_gamma_ui(1.0, f64::INFINITY).is_err());
     }
 
     // TODO: precision testing could be more accurate

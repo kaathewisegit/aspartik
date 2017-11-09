@@ -1,6 +1,7 @@
 //! Provides the [logistic](http://en.wikipedia.org/wiki/Logistic_function) and
 //! related functions
 
+use Result;
 use error::StatsError;
 
 /// Computes the logistic function
@@ -14,11 +15,20 @@ pub fn logistic(p: f64) -> f64 {
 ///
 /// If `p < 0.0` or `p > 1.0`
 pub fn logit(p: f64) -> f64 {
-    assert!(
-        p >= 0.0 && p <= 1.0,
-        format!("{}", StatsError::ArgIntervalIncl("p", 0.0, 1.0))
-    );
-    (p / (1.0 - p)).ln()
+    checked_logit(p).unwrap()
+}
+
+/// Computes the logit function
+///
+/// # Errors
+///
+/// If `p < 0.0` or `p > 1.0`
+pub fn checked_logit(p: f64) -> Result<f64> {
+    if p < 0.0 || p > 1.0 {
+        Err(StatsError::ArgIntervalIncl("p", 0.0, 1.0))
+    } else {
+        Ok((p / (1.0 - p)).ln())
+    }
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -50,5 +60,27 @@ mod test {
         assert_eq!(super::logit(0.999), 6.9067547786485526081487245019905638981131702804661);
         assert_eq!(super::logit(0.99999), 11.512915464924779098232747799811946290419057060965);
         assert_eq!(super::logit(1.0), f64::INFINITY);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_logit_p_lt_0() {
+        super::logit(-1.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_logit_p_gt_1() {
+        super::logit(2.0);
+    }
+
+    #[test]
+    fn test_checked_logit_p_lt_0() {
+        assert!(super::checked_logit(-1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_logit_p_gt_1() {
+        assert!(super::checked_logit(2.0).is_err());
     }
 }

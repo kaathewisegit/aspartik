@@ -271,8 +271,7 @@ impl Entropy<f64> for Beta {
             0.0
         } else {
             beta::ln_beta(self.shape_a, self.shape_b) - (self.shape_a - 1.0) * gamma::digamma(self.shape_a) -
-                (self.shape_b - 1.0) * gamma::digamma(self.shape_b) +
-                (self.shape_a + self.shape_b - 2.0) * gamma::digamma(self.shape_a + self.shape_b)
+            (self.shape_b - 1.0) * gamma::digamma(self.shape_b) + (self.shape_a + self.shape_b - 2.0) * gamma::digamma(self.shape_a + self.shape_b)
         }
     }
 }
@@ -296,7 +295,7 @@ impl Skewness<f64> for Beta {
             2.0
         } else {
             2.0 * (self.shape_b - self.shape_a) * (self.shape_a + self.shape_b + 1.0).sqrt() /
-                ((self.shape_a + self.shape_b + 2.0) * (self.shape_a * self.shape_b).sqrt())
+            ((self.shape_a + self.shape_b + 2.0) * (self.shape_a * self.shape_b).sqrt())
         }
     }
 }
@@ -323,24 +322,46 @@ impl Mode<f64> for Beta {
     ///
     /// where `α` is shapeA and `β` is shapeB
     fn mode(&self) -> f64 {
+        self.checked_mode().unwrap()
+    }
+}
+
+impl CheckedMode<f64> for Beta {
+    /// Returns the mode of the Beta distribution.
+    ///
+    /// # Remarks
+    ///
+    /// Since the mode is technically only calculate for `α > 1, β > 1`, those
+    /// are the only values we allow. We may consider relaxing this constraint
+    /// in
+    /// the future.
+    ///
+    /// # Errors
+    ///
+    /// If `α <= 1` or `β <= 1`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// (α - 1) / (α + β - 2)
+    /// ```
+    ///
+    /// where `α` is shapeA and `β` is shapeB
+    fn checked_mode(&self) -> Result<f64> {
         // TODO: perhaps relax constraint in order to allow calculation
         // of 'anti-mode;
-        assert!(
-            self.shape_a > 1.0,
-            format!("{}", StatsError::ArgGt("shape_a", 1.0))
-        );
-        assert!(
-            self.shape_b > 1.0,
-            format!("{}", StatsError::ArgGt("shape_b", 1.0))
-        );
-        if self.shape_a == f64::INFINITY && self.shape_b == f64::INFINITY {
-            0.5
+        if self.shape_a <= 1.0 {
+            Err(StatsError::ArgGt("shape_a", 1.0))
+        } else if self.shape_b <= 1.0 {
+            Err(StatsError::ArgGt("shape_b", 1.0))
+        } else if self.shape_a == f64::INFINITY && self.shape_b == f64::INFINITY {
+            Ok(0.5)
         } else if self.shape_a == f64::INFINITY {
-            1.0
+            Ok(1.0)
         } else if self.shape_b == f64::INFINITY {
-            0.0
+            Ok(0.0)
         } else {
-            (self.shape_a - 1.0) / (self.shape_a + self.shape_b - 2.0)
+            Ok((self.shape_a - 1.0) / (self.shape_a + self.shape_b - 2.0))
         }
     }
 }
@@ -569,14 +590,26 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_mode_shape_a_lte_one() {
+    fn test_mode_shape_a_lte_1() {
         get_value(1.0, 5.0, |x| x.mode());
     }
 
     #[test]
     #[should_panic]
-    fn test_mode_shape_b_lte_one() {
+    fn test_mode_shape_b_lte_1() {
         get_value(5.0, 1.0, |x| x.mode());
+    }
+
+    #[test]
+    fn test_checked_mode_shape_a_lte_1() {
+        let n = try_create(1.0, 5.0);
+        assert!(n.checked_mode().is_err());
+    }
+
+    #[test]
+    fn test_checked_mode_shape_b_lte_1() {
+        let n = try_create(5.0, 1.0);
+        assert!(n.checked_mode().is_err());
     }
 
     #[test]
@@ -609,12 +642,12 @@ mod test {
     }
 
     #[test]
-    fn test_pdf_input_lt_zero() {
+    fn test_pdf_input_lt_0() {
         test_case(1.0, 1.0, 0.0, |x| x.pdf(-1.0));
     }
 
     #[test]
-    fn test_pdf_input_gt_one() {
+    fn test_pdf_input_gt_0() {
         test_case(1.0, 1.0, 0.0, |x| x.pdf(2.0));
     }
 
@@ -641,12 +674,12 @@ mod test {
     }
 
     #[test]
-    fn test_ln_pdf_input_lt_zero() {
+    fn test_ln_pdf_input_lt_0() {
         test_case(1.0, 1.0, f64::NEG_INFINITY, |x| x.ln_pdf(-1.0));
     }
 
     #[test]
-    fn test_ln_pdf_input_gt_one() {
+    fn test_ln_pdf_input_gt_1() {
         test_case(1.0, 1.0, f64::NEG_INFINITY, |x| x.ln_pdf(2.0));
     }
 
@@ -673,12 +706,12 @@ mod test {
     }
 
     #[test]
-    fn test_cdf_input_lt_zero() {
+    fn test_cdf_input_lt_0() {
         test_case(1.0, 1.0, 0.0, |x| x.cdf(-1.0));
     }
 
     #[test]
-    fn test_cdf_input_gt_zero() {
+    fn test_cdf_input_gt_1() {
         test_case(1.0, 1.0, 1.0, |x| x.cdf(2.0));
     }
 

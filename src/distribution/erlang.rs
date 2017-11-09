@@ -255,10 +255,6 @@ impl Mode<f64> for Erlang {
     /// Returns `shape` if `rate ==f64::INFINITY`. This behavior
     /// is borrowed from the Math.NET implementation
     ///
-    /// # Panics
-    ///
-    /// If `k < 1`
-    ///
     /// # Formula
     ///
     /// ```ignore
@@ -267,10 +263,6 @@ impl Mode<f64> for Erlang {
     ///
     /// where `k` is the shape and `λ` is the rate
     fn mode(&self) -> f64 {
-        assert!(
-            self.g.shape() >= 1.0,
-            format!("{}", StatsError::ArgGte("shape", 1.0))
-        );
         self.g.mode()
     }
 }

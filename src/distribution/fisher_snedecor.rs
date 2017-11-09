@@ -6,7 +6,8 @@ use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
 use std::f64;
 
-/// Implements the [Fisher-Snedecor](https://en.wikipedia.org/wiki/F-distribution) distribution
+/// Implements the
+/// [Fisher-Snedecor](https://en.wikipedia.org/wiki/F-distribution) distribution
 /// also commonly known as the F-distribution
 ///
 /// # Examples
@@ -130,7 +131,7 @@ impl Distribution<f64> for FisherSnedecor {
     /// ```
     fn sample<R: Rng>(&self, r: &mut R) -> f64 {
         (super::gamma::sample_unchecked(r, self.freedom_1 / 2.0, 0.5) * self.freedom_2) /
-            (super::gamma::sample_unchecked(r, self.freedom_2 / 2.0, 0.5) * self.freedom_1)
+        (super::gamma::sample_unchecked(r, self.freedom_2 / 2.0, 0.5) * self.freedom_1)
     }
 }
 
@@ -154,11 +155,9 @@ impl Univariate<f64, f64> for FisherSnedecor {
         } else if x == f64::INFINITY {
             1.0
         } else {
-            beta::beta_reg(
-                self.freedom_1 / 2.0,
-                self.freedom_2 / 2.0,
-                self.freedom_1 * x / (self.freedom_1 * x + self.freedom_2),
-            )
+            beta::beta_reg(self.freedom_1 / 2.0,
+                           self.freedom_2 / 2.0,
+                           self.freedom_1 * x / (self.freedom_1 * x + self.freedom_2))
         }
     }
 }
@@ -212,8 +211,34 @@ impl Mean<f64> for FisherSnedecor {
     ///
     /// where `d2` is the second degree of freedom
     fn mean(&self) -> f64 {
-        assert!(self.freedom_2 > 2.0, StatsError::ArgGt("freedom_2", 2.0));
-        self.freedom_2 / (self.freedom_2 - 2.0)
+        self.checked_mean().unwrap()
+    }
+}
+
+impl CheckedMean<f64> for FisherSnedecor {
+    /// Returns the mean of the fisher-snedecor distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom_2 <= 2.0`
+    ///
+    /// # Remarks
+    ///
+    /// Returns `NaN` if `freedom_2` is `INF`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// d2 / (d2 - 2)
+    /// ```
+    ///
+    /// where `d2` is the second degree of freedom
+    fn checked_mean(&self) -> Result<f64> {
+        if self.freedom_2 <= 2.0 {
+            Err(StatsError::ArgGt("freedom_2", 2.0))
+        } else {
+            Ok(self.freedom_2 / (self.freedom_2 - 2.0))
+        }
     }
 }
 
@@ -237,9 +262,7 @@ impl Variance<f64> for FisherSnedecor {
     /// where `d1` is the first degree of freedom and `d2` is
     /// the second degree of freedom
     fn variance(&self) -> f64 {
-        assert!(self.freedom_2 > 4.0, StatsError::ArgGt("freedom_2", 4.0));
-        (2.0 * self.freedom_2 * self.freedom_2 * (self.freedom_1 + self.freedom_2 - 2.0)) /
-            (self.freedom_1 * (self.freedom_2 - 2.0) * (self.freedom_2 - 2.0) * (self.freedom_2 - 4.0))
+        self.checked_variance().unwrap()
     }
 
     /// Returns the standard deviation of the fisher-snedecor distribution
@@ -261,7 +284,59 @@ impl Variance<f64> for FisherSnedecor {
     /// where `d1` is the first degree of freedom and `d2` is
     /// the second degree of freedom
     fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+        self.checked_std_dev().unwrap()
+    }
+}
+
+impl CheckedVariance<f64> for FisherSnedecor {
+    /// Returns the variance of the fisher-snedecor distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom_2 <= 4.0`
+    ///
+    /// # Remarks
+    ///
+    /// Returns `NaN` if `freedom_1` or `freedom_2` is `INF`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// (2 * d2^2 * (d1 + d2 - 2)) / (d1 * (d2 - 2)^2 * (d2 - 4))
+    /// ```
+    ///
+    /// where `d1` is the first degree of freedom and `d2` is
+    /// the second degree of freedom
+    fn checked_variance(&self) -> Result<f64> {
+        if self.freedom_2 <= 4.0 {
+            Err(StatsError::ArgGt("freedom_2", 4.0))
+        } else {
+            let val = (2.0 * self.freedom_2 * self.freedom_2 * (self.freedom_1 + self.freedom_2 - 2.0)) /
+                      (self.freedom_1 * (self.freedom_2 - 2.0) * (self.freedom_2 - 2.0) * (self.freedom_2 - 4.0));
+            Ok(val)
+        }
+    }
+
+    /// Returns the standard deviation of the fisher-snedecor distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom_2 <= 4.0`
+    ///
+    /// # Remarks
+    ///
+    /// Returns `NaN` if `freedom_1` or `freedom_2` is `INF`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// sqrt((2 * d2^2 * (d1 + d2 - 2)) / (d1 * (d2 - 2)^2 * (d2 - 4)))
+    /// ```
+    ///
+    /// where `d1` is the first degree of freedom and `d2` is
+    /// the second degree of freedom
+    fn checked_std_dev(&self) -> Result<f64> {
+        self.checked_variance().map(|x| x.sqrt())
     }
 }
 
@@ -286,9 +361,38 @@ impl Skewness<f64> for FisherSnedecor {
     /// where `d1` is the first degree of freedom and `d2` is
     /// the second degree of freedom
     fn skewness(&self) -> f64 {
-        assert!(self.freedom_2 > 6.0, StatsError::ArgGt("freedom_2", 6.0));
-        ((2.0 * self.freedom_1 + self.freedom_2 - 2.0) * (8.0 * (self.freedom_2 - 4.0)).sqrt()) /
-            ((self.freedom_2 - 6.0) * (self.freedom_1 * (self.freedom_1 + self.freedom_2 - 2.0)).sqrt())
+        self.checked_skewness().unwrap()
+    }
+}
+
+impl CheckedSkewness<f64> for FisherSnedecor {
+    /// Returns the skewness of the fisher-snedecor distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom_2 <= 6.0`
+    ///
+    /// # Remarks
+    ///
+    /// Returns `NaN` if `freedom_1` or `freedom_2` is `INF`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// ((2d1 + d2 - 2) * sqrt(8 * (d2 - 4))) / ((d2 - 6) * sqrt(d1 * (d1 + d2
+    /// - 2)))
+    /// ```
+    ///
+    /// where `d1` is the first degree of freedom and `d2` is
+    /// the second degree of freedom
+    fn checked_skewness(&self) -> Result<f64> {
+        if self.freedom_2 <= 6.0 {
+            Err(StatsError::ArgGt("freedom_2", 6.0))
+        } else {
+            let val = ((2.0 * self.freedom_1 + self.freedom_2 - 2.0) * (8.0 * (self.freedom_2 - 4.0)).sqrt()) /
+                      ((self.freedom_2 - 6.0) * (self.freedom_1 * (self.freedom_1 + self.freedom_2 - 2.0)).sqrt());
+            Ok(val)
+        }
     }
 }
 
@@ -312,8 +416,36 @@ impl Mode<f64> for FisherSnedecor {
     /// where `d1` is the first degree of freedom and `d2` is
     /// the second degree of freedom
     fn mode(&self) -> f64 {
-        assert!(self.freedom_1 > 2.0, StatsError::ArgGt("freedom_1", 2.0));
-        (self.freedom_2 * (self.freedom_1 - 2.0)) / (self.freedom_1 * (self.freedom_2 + 2.0))
+        self.checked_mode().unwrap()
+    }
+}
+
+impl CheckedMode<f64> for FisherSnedecor {
+    /// Returns the mode for the fisher-snedecor distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom_1 <= 2.0`
+    ///
+    /// # Remarks
+    ///
+    /// Returns `NaN` if `freedom_1` or `freedom_2` is `INF`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// ((d1 - 2) / d1) * (d2 / (d2 + 2))
+    /// ```
+    ///
+    /// where `d1` is the first degree of freedom and `d2` is
+    /// the second degree of freedom
+    fn checked_mode(&self) -> Result<f64> {
+        if self.freedom_1 <= 2.0 {
+            Err(StatsError::ArgGt("freedom_1", 2.0))
+        } else {
+            let val = (self.freedom_2 * (self.freedom_1 - 2.0)) / (self.freedom_1 * (self.freedom_2 + 2.0));
+            Ok(val)
+        }
     }
 }
 
@@ -343,8 +475,8 @@ impl Continuous<f64, f64> for FisherSnedecor {
             0.0
         } else {
             ((self.freedom_1 * x).powf(self.freedom_1) * self.freedom_2.powf(self.freedom_2) /
-                 (self.freedom_1 * x + self.freedom_2).powf(self.freedom_1 + self.freedom_2))
-            .sqrt() / (x * beta::beta(self.freedom_1 / 2.0, self.freedom_2 / 2.0))
+             (self.freedom_1 * x + self.freedom_2).powf(self.freedom_1 + self.freedom_2))
+                    .sqrt() / (x * beta::beta(self.freedom_1 / 2.0, self.freedom_2 / 2.0))
         }
     }
 
@@ -451,12 +583,6 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
-    fn test_mean_with_low_d2() {
-        get_value(0.1, 0.1, |x| x.mean());
-    }
-
-    #[test]
     fn test_mean() {
         test_case(0.1, 10.0, 1.25, |x| x.mean());
         test_case(1.0, 10.0, 1.25, |x| x.mean());
@@ -465,8 +591,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_variance_with_low_d2() {
-        get_value(0.1, 0.1, |x| x.variance());
+    fn test_mean_with_low_d2() {
+        get_value(0.1, 0.1, |x| x.mean());
+    }
+
+    #[test]
+    fn test_checked_mean_with_low_d2() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_mean().is_err());
     }
 
     #[test]
@@ -478,8 +610,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_std_dev_with_low_d2() {
-        get_value(0.1, 0.1, |x| x.std_dev());
+    fn test_variance_with_low_d2() {
+        get_value(0.1, 0.1, |x| x.variance());
+    }
+
+    #[test]
+    fn test_checked_variance_with_low_d2() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_variance().is_err());
     }
 
     #[test]
@@ -491,8 +629,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_skewness_with_low_d2() {
-        get_value(0.1, 0.1, |x| x.skewness());
+    fn test_std_dev_with_low_d2() {
+        get_value(0.1, 0.1, |x| x.std_dev());
+    }
+
+    #[test]
+    fn test_checked_std_dev_with_low_d2() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_std_dev().is_err());
     }
 
     #[test]
@@ -504,8 +648,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_mode_with_low_d1() {
-        get_value(0.1, 0.1, |x| x.mode());
+    fn test_skewness_with_low_d2() {
+        get_value(0.1, 0.1, |x| x.skewness());
+    }
+
+    #[test]
+    fn test_checked_skewness_with_low_d2() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_skewness().is_err());
     }
 
     #[test]
@@ -513,6 +663,18 @@ mod test {
         test_case(10.0, 0.1, 0.0380952380952380952381, |x| x.mode());
         test_case(10.0, 1.0, 4.0 / 15.0, |x| x.mode());
         test_case(10.0, 10.0, 2.0 / 3.0, |x| x.mode());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_mode_with_low_d1() {
+        get_value(0.1, 0.1, |x| x.mode());
+    }
+
+    #[test]
+    fn test_checked_mode_with_low_d1() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_mode().is_err());
     }
 
     #[test]

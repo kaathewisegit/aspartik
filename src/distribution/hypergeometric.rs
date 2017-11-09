@@ -7,7 +7,8 @@ use statistics::*;
 use std::cmp;
 use std::f64;
 
-/// Implements the [Hypergeometric](http://en.wikipedia.org/wiki/Hypergeometric_distribution)
+/// Implements the
+/// [Hypergeometric](http://en.wikipedia.org/wiki/Hypergeometric_distribution)
 /// distribution
 ///
 /// # Examples
@@ -102,11 +103,7 @@ impl Hypergeometric {
     /// Returns population, successes, and draws in that order
     /// as a tuple of doubles
     fn values_f64(&self) -> (f64, f64, f64) {
-        (
-            self.population as f64,
-            self.successes as f64,
-            self.draws as f64,
-        )
+        (self.population as f64, self.successes as f64, self.draws as f64)
     }
 }
 
@@ -247,12 +244,30 @@ impl Mean<f64> for Hypergeometric {
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
     fn mean(&self) -> f64 {
-        assert!(
-            self.population > 0,
-            format!("{}", StatsError::ArgGt("population", 0.0))
-        );
+        self.checked_mean().unwrap()
+    }
+}
 
-        self.successes as f64 * self.draws as f64 / self.population as f64
+impl CheckedMean<f64> for Hypergeometric {
+    /// Returns the mean of the hypergeometric distribution
+    ///
+    /// # Errors
+    ///
+    /// If `N` is `0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// K * n / N
+    /// ```
+    ///
+    /// where `N` is population, `K` is successes, and `n` is draws
+    fn checked_mean(&self) -> Result<f64> {
+        if self.population == 0 {
+            Err(StatsError::ArgGt("population", 0.0))
+        } else {
+            Ok(self.successes as f64 * self.draws as f64 / self.population as f64)
+        }
     }
 }
 
@@ -271,13 +286,7 @@ impl Variance<f64> for Hypergeometric {
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
     fn variance(&self) -> f64 {
-        assert!(
-            self.population > 1,
-            format!("{}", StatsError::ArgGt("population", 1.0))
-        );
-
-        let (population, successes, draws) = self.values_f64();
-        draws * successes * (population - draws) * (population - successes) / (population * population * (population - 1.0))
+        self.checked_variance().unwrap()
     }
 
     /// Returns the standard deviation of the hypergeometric distribution
@@ -294,7 +303,49 @@ impl Variance<f64> for Hypergeometric {
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
     fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+        self.checked_std_dev().unwrap()
+    }
+}
+
+impl CheckedVariance<f64> for Hypergeometric {
+    /// Returns the variance of the hypergeometric distribution
+    ///
+    /// # Errors
+    ///
+    /// If `N <= 1`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1))
+    /// ```
+    ///
+    /// where `N` is population, `K` is successes, and `n` is draws
+    fn checked_variance(&self) -> Result<f64> {
+        if self.population <= 1 {
+            Err(StatsError::ArgGt("population", 1.0))
+        } else {
+            let (population, successes, draws) = self.values_f64();
+            let val = draws * successes * (population - draws) * (population - successes) / (population * population * (population - 1.0));
+            Ok(val)
+        }
+    }
+
+    /// Returns the standard deviation of the hypergeometric distribution
+    ///
+    /// # Errors
+    ///
+    /// If `N <= 1`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)))
+    /// ```
+    ///
+    /// where `N` is population, `K` is successes, and `n` is draws
+    fn checked_std_dev(&self) -> Result<f64> {
+        self.checked_variance().map(|x| x.sqrt())
     }
 }
 
@@ -314,14 +365,35 @@ impl Skewness<f64> for Hypergeometric {
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
     fn skewness(&self) -> f64 {
-        assert!(
-            self.population > 2,
-            format!("{}", StatsError::ArgGt("population", 2.0))
-        );
+        self.checked_skewness().unwrap()
+    }
+}
 
-        let (population, successes, draws) = self.values_f64();
-        (population - 1.0).sqrt() * (population - 2.0 * draws) * (population - 2.0 * successes) /
-            ((draws * successes * (population - successes) * (population - draws)).sqrt() * (population - 2.0))
+impl CheckedSkewness<f64> for Hypergeometric {
+    /// Returns the skewness of the hypergeometric distribution
+    ///
+    /// # Errors
+    ///
+    /// If `N <= 2`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// ((N - 2K) * (N - 1)^(1 / 2) * (N - 2n)) / ([n * K * (N - K) * (N -
+    /// n)]^(1 / 2) * (N - 2))
+    /// ```
+    ///
+    /// where `N` is population, `K` is successes, and `n` is draws
+    fn checked_skewness(&self) -> Result<f64> {
+
+        if self.population <= 2 {
+            Err(StatsError::ArgGt("population", 2.0))
+        } else {
+            let (population, successes, draws) = self.values_f64();
+            let val = (population - 1.0).sqrt() * (population - 2.0 * draws) * (population - 2.0 * successes) /
+                      ((draws * successes * (population - successes) * (population - draws)).sqrt() * (population - 2.0));
+            Ok(val)
+        }
     }
 }
 
@@ -356,7 +428,7 @@ impl Discrete<u64, f64> for Hypergeometric {
             0.0
         } else {
             factorial::binomial(self.successes, x) * factorial::binomial(self.population - self.successes, self.draws - x) /
-                factorial::binomial(self.population, self.draws)
+            factorial::binomial(self.population, self.draws)
         }
     }
 
@@ -372,7 +444,7 @@ impl Discrete<u64, f64> for Hypergeometric {
     /// where `N` is population, `K` is successes, and `n` is draws
     fn ln_pmf(&self, x: u64) -> f64 {
         factorial::ln_binomial(self.successes, x) + factorial::ln_binomial(self.population - self.successes, self.draws - x) -
-            factorial::ln_binomial(self.population, self.draws)
+        factorial::ln_binomial(self.population, self.draws)
     }
 }
 
@@ -459,6 +531,12 @@ mod test {
     }
 
     #[test]
+    fn test_checked_mean_with_population_0() {
+        let n = try_create(0, 0, 0);
+        assert!(n.checked_mean().is_err());
+    }
+
+    #[test]
     fn test_variance() {
         test_case(2, 1, 1, 0.25, |x| x.variance());
         test_case(2, 2, 2, 0.0, |x| x.variance());
@@ -470,6 +548,12 @@ mod test {
     #[should_panic]
     fn test_variance_with_pop_lte_1() {
         get_value(1, 1, 1, |x| x.variance());
+    }
+
+    #[test]
+    fn test_checked_variance_with_pop_lte_1() {
+        let n = try_create(1, 1, 1);
+        assert!(n.checked_variance().is_err());
     }
 
     #[test]
@@ -487,6 +571,12 @@ mod test {
     }
 
     #[test]
+    fn test_checked_std_dev_with_pop_lte_1() {
+        let n = try_create(1, 1, 1);
+        assert!(n.checked_std_dev().is_err());
+    }
+
+    #[test]
     fn test_skewness() {
         test_case(10, 1, 1, 8.0 / 3.0, |x| x.skewness());
         test_case(10, 5, 3, 0.0, |x| x.skewness());
@@ -496,6 +586,12 @@ mod test {
     #[should_panic]
     fn test_skewness_with_pop_lte_2() {
         get_value(2, 2, 2, |x| x.skewness());
+    }
+
+    #[test]
+    fn test_checked_skewness_with_pop_lte_2() {
+        let n = try_create(2, 2, 2);
+        assert!(n.checked_skewness().is_err());
     }
 
     #[test]

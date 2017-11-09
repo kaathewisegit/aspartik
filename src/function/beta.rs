@@ -1,6 +1,7 @@
 //! Provides the [beta](https://en.wikipedia.org/wiki/Beta_function) and related
 //! function
 
+use Result;
 use error::StatsError;
 use function::gamma;
 use prec;
@@ -16,9 +17,27 @@ use std::f64;
 ///
 /// if `a <= 0.0` or `b <= 0.0`
 pub fn ln_beta(a: f64, b: f64) -> f64 {
-    assert!(a > 0.0, format!("{}", StatsError::ArgMustBePositive("a")));
-    assert!(b > 0.0, format!("{}", StatsError::ArgMustBePositive("b")));
-    gamma::ln_gamma(a) + gamma::ln_gamma(b) - gamma::ln_gamma(a + b)
+    checked_ln_beta(a, b).unwrap()
+}
+
+
+/// Computes the natural logarithm
+/// of the beta function
+/// where `a` is the first beta parameter
+/// and `b` is the second beta parameter
+/// and `a > 0`, `b > 0`.
+///
+/// # Errors
+///
+/// if `a <= 0.0` or `b <= 0.0`
+pub fn checked_ln_beta(a: f64, b: f64) -> Result<f64> {
+    if a <= 0.0 {
+        Err(StatsError::ArgMustBePositive("a"))
+    } else if b <= 0.0 {
+        Err(StatsError::ArgMustBePositive("b"))
+    } else {
+        Ok(gamma::ln_gamma(a) + gamma::ln_gamma(b) - gamma::ln_gamma(a + b))
+    }
 }
 
 /// Computes the beta function
@@ -30,7 +49,19 @@ pub fn ln_beta(a: f64, b: f64) -> f64 {
 ///
 /// if `a <= 0.0` or `b <= 0.0`
 pub fn beta(a: f64, b: f64) -> f64 {
-    ln_beta(a, b).exp()
+    checked_beta(a, b).unwrap()
+}
+
+/// Computes the beta function
+/// where `a` is the first beta parameter
+/// and `b` is the second beta parameter.
+///
+///
+/// # Errors
+///
+/// if `a <= 0.0` or `b <= 0.0`
+pub fn checked_beta(a: f64, b: f64) -> Result<f64> {
+    checked_ln_beta(a, b).map(|x| x.exp())
 }
 
 /// Computes the lower incomplete (unregularized) beta function
@@ -40,9 +71,21 @@ pub fn beta(a: f64, b: f64) -> f64 {
 ///
 /// # Panics
 ///
-/// If `a < 0.0`, `b < 0.0`, `x < 0.0`, or `x > 1.0`
+/// If `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
 pub fn beta_inc(a: f64, b: f64, x: f64) -> f64 {
-    beta_reg(a, b, x) * beta(a, b)
+    checked_beta_inc(a, b, x).unwrap()
+}
+
+/// Computes the lower incomplete (unregularized) beta function
+/// `B(a,b,x) = int(t^(a-1)*(1-t)^(b-1),t=0..x)` for `a > 0, b > 0, 1 >= x >= 0`
+/// where `a` is the first beta parameter, `b` is the second beta parameter, and
+/// `x` is the upper limit of the integral
+///
+/// # Errors
+///
+/// If `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
+pub fn checked_beta_inc(a: f64, b: f64, x: f64) -> Result<f64> {
+    checked_beta_reg(a, b, x).and_then(|x| checked_beta(a, b).map(|y| x * y))
 }
 
 /// Computes the regularized lower incomplete beta function
@@ -53,93 +96,108 @@ pub fn beta_inc(a: f64, b: f64, x: f64) -> f64 {
 ///
 /// # Panics
 ///
-/// if `a < 0.0`, `b < 0.0`, `x < 0.0`, or `x > 1.0`
+/// if `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
 pub fn beta_reg(a: f64, b: f64, x: f64) -> f64 {
-    assert!(a > 0.0, format!("{}", StatsError::ArgMustBePositive("a")));
-    assert!(b > 0.0, format!("{}", StatsError::ArgMustBePositive("b")));
-    assert!(
-        x >= 0.0 && x <= 1.0,
-        format!("{}", StatsError::ArgIntervalIncl("x", 0.0, 1.0))
-    );
+    checked_beta_reg(a, b, x).unwrap()
+}
 
-    let bt = if x == 0.0 || x == 1.0 {
-        0.0
+
+/// Computes the regularized lower incomplete beta function
+/// `I_x(a,b) = 1/Beta(a,b) * int(t^(a-1)*(1-t)^(b-1), t=0..x)`
+/// `a > 0`, `b > 0`, `1 >= x >= 0` where `a` is the first beta parameter,
+/// `b` is the second beta parameter, and `x` is the upper limit of the
+/// integral.
+///
+/// # Errors
+///
+/// if `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
+pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64> {
+    if a <= 0.0 {
+        Err(StatsError::ArgMustBePositive("a"))
+    } else if b <= 0.0 {
+        Err(StatsError::ArgMustBePositive("b"))
+    } else if x < 0.0 || x > 1.0 {
+        Err(StatsError::ArgIntervalIncl("x", 0.0, 1.0))
     } else {
-        (gamma::ln_gamma(a + b) - gamma::ln_gamma(a) - gamma::ln_gamma(b) + a * x.ln() + b * (1.0 - x).ln()).exp()
-    };
-    let symm_transform = x >= (a + 1.0) / (a + b + 2.0);
-    let eps = prec::F64_PREC;
-    let fpmin = f64::MIN_POSITIVE / eps;
+        let bt = if x == 0.0 || x == 1.0 {
+            0.0
+        } else {
+            (gamma::ln_gamma(a + b) - gamma::ln_gamma(a) - gamma::ln_gamma(b) + a * x.ln() + b * (1.0 - x).ln()).exp()
+        };
+        let symm_transform = x >= (a + 1.0) / (a + b + 2.0);
+        let eps = prec::F64_PREC;
+        let fpmin = f64::MIN_POSITIVE / eps;
 
-    let mut a = a;
-    let mut b = b;
-    let mut x = x;
-    if symm_transform {
-        let swap = a;
-        x = 1.0 - x;
-        a = b;
-        b = swap;
-    }
+        let mut a = a;
+        let mut b = b;
+        let mut x = x;
+        if symm_transform {
+            let swap = a;
+            x = 1.0 - x;
+            a = b;
+            b = swap;
+        }
 
-    let qab = a + b;
-    let qap = a + 1.0;
-    let qam = a - 1.0;
-    let mut c = 1.0;
-    let mut d = 1.0 - qab * x / qap;
-
-    if d.abs() < fpmin {
-        d = fpmin;
-    }
-    d = 1.0 / d;
-    let mut h = d;
-
-    for m in 1..141 {
-        let m = f64::from(m);
-        let m2 = m * 2.0;
-        let mut aa = m * (b - m) * x / ((qam + m2) * (a + m2));
-        d = 1.0 + aa * d;
+        let qab = a + b;
+        let qap = a + 1.0;
+        let qam = a - 1.0;
+        let mut c = 1.0;
+        let mut d = 1.0 - qab * x / qap;
 
         if d.abs() < fpmin {
             d = fpmin;
         }
-
-        c = 1.0 + aa / c;
-        if c.abs() < fpmin {
-            c = fpmin;
-        }
-
         d = 1.0 / d;
-        h = h * d * c;
-        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
-        d = 1.0 + aa * d;
+        let mut h = d;
 
-        if d.abs() < fpmin {
-            d = fpmin;
+        for m in 1..141 {
+            let m = f64::from(m);
+            let m2 = m * 2.0;
+            let mut aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+            d = 1.0 + aa * d;
+
+            if d.abs() < fpmin {
+                d = fpmin;
+            }
+
+            c = 1.0 + aa / c;
+            if c.abs() < fpmin {
+                c = fpmin;
+            }
+
+            d = 1.0 / d;
+            h = h * d * c;
+            aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+            d = 1.0 + aa * d;
+
+            if d.abs() < fpmin {
+                d = fpmin;
+            }
+
+            c = 1.0 + aa / c;
+
+            if c.abs() < fpmin {
+                c = fpmin;
+            }
+
+            d = 1.0 / d;
+            let del = d * c;
+            h *= del;
+
+            if (del - 1.0).abs() <= eps {
+                return if symm_transform {
+                    Ok(1.0 - bt * h / a)
+                } else {
+                    Ok(bt * h / a)
+                };
+            }
         }
 
-        c = 1.0 + aa / c;
-
-        if c.abs() < fpmin {
-            c = fpmin;
+        if symm_transform {
+            Ok(1.0 - bt * h / a)
+        } else {
+            Ok(bt * h / a)
         }
-
-        d = 1.0 / d;
-        let del = d * c;
-        h *= del;
-
-        if (del - 1.0).abs() <= eps {
-            return if symm_transform {
-                1.0 - bt * h / a
-            } else {
-                bt * h / a
-            };
-        }
-    }
-
-    if symm_transform {
-        1.0 - bt * h / a
-    } else {
-        bt * h / a
     }
 }
 
@@ -157,6 +215,50 @@ mod test {
         assert_almost_eq!(super::ln_beta(0.5, 2.5), 0.163900632837673937284, 1e-15);
         assert_almost_eq!(super::ln_beta(1.0, 2.5), -0.9162907318741550651835, 1e-14);
         assert_almost_eq!(super::ln_beta(2.5, 2.5), -2.608688089402107300388, 1e-14);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_ln_beta_a_lte_0() {
+        super::ln_beta(0.0, 0.5);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_ln_beta_b_lte_0() {
+        super::ln_beta(0.5, 0.0);
+    }
+
+    #[test]
+    fn test_checked_ln_beta_a_lte_0() {
+        assert!(super::checked_ln_beta(0.0, 0.5).is_err());
+    }
+
+    #[test]
+    fn test_checked_ln_beta_b_lte_0() {
+        assert!(super::checked_ln_beta(0.5, 0.0).is_err());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_beta_a_lte_0() {
+        super::beta(0.0, 0.5);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_beta_b_lte_0() {
+        super::beta(0.5, 0.0);
+    }
+
+    #[test]
+    fn test_checked_beta_a_lte_0() {
+        assert!(super::checked_beta(0.0, 0.5).is_err());
+    }
+
+    #[test]
+    fn test_checked_beta_b_lte_0() {
+        assert!(super::checked_beta(0.5, 0.0).is_err());
     }
 
     #[test]
@@ -195,6 +297,50 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    fn test_beta_inc_a_lte_0() {
+        super::beta_inc(0.0, 1.0, 1.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_beta_inc_b_lte_0() {
+        super::beta_inc(1.0, 0.0, 1.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_beta_inc_x_lt_0() {
+        super::beta_inc(1.0, 1.0, -1.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_beta_inc_x_gt_1() {
+        super::beta_inc(1.0, 1.0, 2.0);
+    }
+
+    #[test]
+    fn test_checked_beta_inc_a_lte_0() {
+        assert!(super::checked_beta_inc(0.0, 1.0, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_beta_inc_b_lte_0() {
+        assert!(super::checked_beta_inc(1.0, 0.0, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_beta_inc_x_lt_0() {
+        assert!(super::checked_beta_inc(1.0, 1.0, -1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_beta_inc_x_gt_1() {
+        assert!(super::checked_beta_inc(1.0, 1.0, 2.0).is_err());
+    }
+
+    #[test]
     fn test_beta_reg() {
         assert_almost_eq!(super::beta_reg(0.5, 0.5, 0.5), 0.5, 1e-15);
         assert_eq!(super::beta_reg(0.5, 0.5, 1.0), 1.0);
@@ -218,37 +364,45 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_ln_beta_neg() {
-        super::ln_beta(-1.0, -1.0);
+    fn test_beta_reg_a_lte_0() {
+        super::beta_reg(0.0, 1.0, 1.0);
     }
 
     #[test]
     #[should_panic]
-    fn test_beta_neg() {
-        super::beta(-1.0, -1.0);
+    fn test_beta_reg_b_lte_0() {
+        super::beta_reg(1.0, 0.0, 1.0);
     }
 
     #[test]
     #[should_panic]
-    fn test_beta_inc_neg() {
-        super::beta_inc(0.5, 0.5, -1.0);
+    fn test_beta_reg_x_lt_0() {
+        super::beta_reg(1.0, 1.0, -1.0);
     }
 
     #[test]
     #[should_panic]
-    fn test_beta_inc_over_one() {
-        super::beta_inc(0.5, 0.5, 2.5);
+    fn test_beta_reg_x_gt_1() {
+        super::beta_reg(1.0, 1.0, 2.0);
     }
 
     #[test]
-    #[should_panic]
-    fn test_beta_reg_neg() {
-        super::beta_reg(0.5, 0.5, -1.0);
+    fn test_checked_beta_reg_a_lte_0() {
+        assert!(super::checked_beta_reg(0.0, 1.0, 1.0).is_err());
     }
 
     #[test]
-    #[should_panic]
-    fn test_beta_reg_over_one() {
-        super::beta_reg(0.5, 0.5, 2.5);
+    fn test_checked_beta_reg_b_lte_0() {
+        assert!(super::checked_beta_reg(1.0, 0.0, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_beta_reg_x_lt_0() {
+        assert!(super::checked_beta_reg(1.0, 1.0, -1.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_beta_reg_x_gt_1() {
+        assert!(super::checked_beta_reg(1.0, 1.0, 2.0).is_err());
     }
 }

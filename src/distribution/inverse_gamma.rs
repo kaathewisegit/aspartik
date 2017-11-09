@@ -201,11 +201,30 @@ impl Mean<f64> for InverseGamma {
     ///
     /// where `α` is the shape and `β` is the rate
     fn mean(&self) -> f64 {
-        assert!(
-            self.shape > 1.0,
-            format!("{}", StatsError::ArgGt("shape", 1.0))
-        );
-        self.rate / (self.shape - 1.0)
+        self.checked_mean().unwrap()
+    }
+}
+
+impl CheckedMean<f64> for InverseGamma {
+    /// Returns the mean of the inverse distribution
+    ///
+    /// # Errors
+    ///
+    /// If `shape <= 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// β / (α - 1)
+    /// ```
+    ///
+    /// where `α` is the shape and `β` is the rate
+    fn checked_mean(&self) -> Result<f64> {
+        if self.shape <= 1.0 {
+            Err(StatsError::ArgGt("shape", 1.0))
+        } else {
+            Ok(self.rate / (self.shape - 1.0))
+        }
     }
 }
 
@@ -224,11 +243,7 @@ impl Variance<f64> for InverseGamma {
     ///
     /// where `α` is the shape and `β` is the rate
     fn variance(&self) -> f64 {
-        assert!(
-            self.shape > 2.0,
-            format!("{}", StatsError::ArgGt("shape", 2.0))
-        );
-        self.rate * self.rate / ((self.shape - 1.0) * (self.shape - 1.0) * (self.shape - 2.0))
+        self.checked_variance().unwrap()
     }
 
     /// Returns the standard deviation of the inverse gamma distribution
@@ -245,7 +260,48 @@ impl Variance<f64> for InverseGamma {
     ///
     /// where `α` is the shape and `β` is the rate
     fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+        self.checked_std_dev().unwrap()
+    }
+}
+
+impl CheckedVariance<f64> for InverseGamma {
+    /// Returns the variance of the inverse gamma distribution
+    ///
+    /// # Errors
+    ///
+    /// If `shape <= 2.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// β^2 / ((α - 1)^2 * (α - 2))
+    /// ```
+    ///
+    /// where `α` is the shape and `β` is the rate
+    fn checked_variance(&self) -> Result<f64> {
+        if self.shape <= 2.0 {
+            Err(StatsError::ArgGt("shape", 2.0))
+        } else {
+            let val = self.rate * self.rate / ((self.shape - 1.0) * (self.shape - 1.0) * (self.shape - 2.0));
+            Ok(val)
+        }
+    }
+
+    /// Returns the standard deviation of the inverse gamma distribution
+    ///
+    /// # Errors
+    ///
+    /// If `shape <= 2.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// sqrt(β^2 / ((α - 1)^2 * (α - 2)))
+    /// ```
+    ///
+    /// where `α` is the shape and `β` is the rate
+    fn checked_std_dev(&self) -> Result<f64> {
+        self.checked_variance().map(|x| x.sqrt())
     }
 }
 
@@ -280,11 +336,30 @@ impl Skewness<f64> for InverseGamma {
     ///
     /// where `α` is the shape
     fn skewness(&self) -> f64 {
-        assert!(
-            self.shape > 3.0,
-            format!("{}", StatsError::ArgGt("shape", 3.0))
-        );
-        4.0 * (self.shape - 2.0).sqrt() / (self.shape - 3.0)
+        self.checked_skewness().unwrap()
+    }
+}
+
+impl CheckedSkewness<f64> for InverseGamma {
+    /// Returns the skewness of the inverse gamma distribution
+    ///
+    /// # Errors
+    ///
+    /// If `shape <= 3`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// 4 * sqrt(α - 2) / (α - 3)
+    /// ```
+    ///
+    /// where `α` is the shape
+    fn checked_skewness(&self) -> Result<f64> {
+        if self.shape <= 3.0 {
+            Err(StatsError::ArgGt("shape", 3.0))
+        } else {
+            Ok(4.0 * (self.shape - 2.0).sqrt() / (self.shape - 3.0))
+        }
     }
 }
 
@@ -418,8 +493,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_mean_panics() {
+    fn test_mean_with_shape_lte_1() {
         get_value(0.1, 0.1, |x| x.mean());
+    }
+
+    #[test]
+    fn test_checked_mean_with_shape_lte_1() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_mean().is_err());
     }
 
     #[test]
@@ -430,8 +511,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_variance_panics() {
+    fn test_variance_with_shape_lte_2() {
         get_value(0.1, 0.1, |x| x.variance());
+    }
+
+    #[test]
+    fn test_checked_variance_with_shape_lte_2() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_variance().is_err());
     }
 
     #[test]
@@ -442,8 +529,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_std_dev_panics() {
+    fn test_std_dev_with_shape_lte_2() {
         get_value(0.1, 0.1, |x| x.std_dev());
+    }
+
+    #[test]
+    fn test_checked_std_dev_with_shape_lte_2() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_std_dev().is_err());
     }
 
     #[test]
@@ -461,8 +554,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_skewness_panics() {
+    fn test_skewness_with_shape_lte_3() {
         get_value(0.1, 0.1, |x| x.skewness());
+    }
+
+    #[test]
+    fn test_checked_skewness_with_shape_lte_3() {
+        let n = try_create(0.1, 0.1);
+        assert!(n.checked_skewness().is_err());
     }
 
     #[test]

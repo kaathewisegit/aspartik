@@ -1,5 +1,5 @@
 use {Result, StatsError, prec};
-use distribution::{Continuous, Distribution};
+use distribution::{CheckedContinuous, Continuous, Distribution};
 use function::gamma;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -95,10 +95,7 @@ impl Dirichlet {
     }
 
     fn alpha_sum(&self) -> f64 {
-        self.alpha.iter().fold(
-            0.0,
-            |acc, x| acc + x,
-        )
+        self.alpha.iter().fold(0.0, |acc, x| acc + x)
     }
 }
 
@@ -231,9 +228,7 @@ impl Entropy<f64> for Dirichlet {
     /// is the `i`th concentration parameter, and `Σ` is the sum from `1` to `K`
     fn entropy(&self) -> f64 {
         let sum = self.alpha_sum();
-        let num = self.alpha.iter().fold(0.0, |acc, &x| {
-            acc + (x - 1.0) * gamma::digamma(x)
-        });
+        let num = self.alpha.iter().fold(0.0, |acc, &x| acc + (x - 1.0) * gamma::digamma(x));
         gamma::ln_gamma(sum) + (sum - self.alpha.len() as f64) * gamma::digamma(sum) - num
     }
 }
@@ -270,7 +265,7 @@ impl<'a> Continuous<&'a [f64], f64> for Dirichlet {
     /// `Π` is the product from `1` to `K`, `Σ` is the sum from `1` to `K`,
     /// and `K` is the number of concentration parameters
     fn pdf(&self, x: &[f64]) -> f64 {
-        self.ln_pdf(x).exp()
+        self.checked_pdf(x).unwrap()
     }
 
     /// Calculates the log probabiliy density function for the dirichlet
@@ -304,29 +299,95 @@ impl<'a> Continuous<&'a [f64], f64> for Dirichlet {
     /// `Π` is the product from `1` to `K`, `Σ` is the sum from `1` to `K`,
     /// and `K` is the number of concentration parameters
     fn ln_pdf(&self, x: &[f64]) -> f64 {
-        assert_eq!(self.alpha.len(), x.len(), "{}", StatsError::ContainersMustBeSameLength);
+        self.checked_ln_pdf(x).unwrap()
+    }
+}
 
+impl<'a> CheckedContinuous<&'a [f64], f64> for Dirichlet {
+    /// Calculates the probabiliy density function for the dirichlet
+    /// distribution
+    /// with given `x`'s corresponding to the concentration parameters for this
+    /// distribution
+    ///
+    /// # Errors
+    ///
+    /// If any element in `x` is not in `(0, 1)`, the elements in `x` do not
+    /// sum to
+    /// `1` with a tolerance of `1e-4`,  or if `x` is not the same length as
+    /// the vector of
+    /// concentration parameters for this distribution
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// (1 / B(α)) * Π(x_i^(α_i - 1))
+    /// ```
+    ///
+    /// where
+    ///
+    /// ```ignore
+    /// B(α) = Π(Γ(α_i)) / Γ(Σ(α_i))
+    /// ```
+    ///
+    /// `α` is the vector of concentration parameters, `α_i` is the `i`th
+    /// concentration parameter, `x_i` is the `i`th argument corresponding to
+    /// the `i`th concentration parameter, `Γ` is the gamma function,
+    /// `Π` is the product from `1` to `K`, `Σ` is the sum from `1` to `K`,
+    /// and `K` is the number of concentration parameters
+    fn checked_pdf(&self, x: &[f64]) -> Result<f64> {
+        self.checked_ln_pdf(x).map(|x| x.exp())
+    }
+
+    /// Calculates the log probabiliy density function for the dirichlet
+    /// distribution
+    /// with given `x`'s corresponding to the concentration parameters for this
+    /// distribution
+    ///
+    /// # Errors
+    ///
+    /// If any element in `x` is not in `(0, 1)`, the elements in `x` do not
+    /// sum to
+    /// `1` with a tolerance of `1e-4`,  or if `x` is not the same length as
+    /// the vector of
+    /// concentration parameters for this distribution
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// ln((1 / B(α)) * Π(x_i^(α_i - 1)))
+    /// ```
+    ///
+    /// where
+    ///
+    /// ```ignore
+    /// B(α) = Π(Γ(α_i)) / Γ(Σ(α_i))
+    /// ```
+    ///
+    /// `α` is the vector of concentration parameters, `α_i` is the `i`th
+    /// concentration parameter, `x_i` is the `i`th argument corresponding to
+    /// the `i`th concentration parameter, `Γ` is the gamma function,
+    /// `Π` is the product from `1` to `K`, `Σ` is the sum from `1` to `K`,
+    /// and `K` is the number of concentration parameters
+    fn checked_ln_pdf(&self, x: &[f64]) -> Result<f64> {
+        // TODO: would it be clearer here to just do a for loop instead
+        // of using iterators?
+        if self.alpha.len() != x.len() {
+            return Err(StatsError::ContainersMustBeSameLength);
+        }
+        if x.iter().any(|&x| x <= 0.0 || x >= 1.0) {
+            return Err(StatsError::ArgIntervalExcl("x", 0.0, 1.0));
+        }
         let (term, sum_xi, sum_alpha) = x.iter()
                                          .enumerate()
                                          .map(|pair| (pair.1, self.alpha[pair.0]))
-                                         .fold((0.0, 0.0, 0.0), |acc, pair| {
-            assert!(
-                *pair.0 > 0.0 && *pair.0 < 1.0,
-                format!("{}", StatsError::ArgIntervalExcl("x", 0.0, 1.0))
-            );
+                                         .fold((0.0, 0.0, 0.0),
+                                               |acc, pair| (acc.0 + (pair.1 - 1.0) * pair.0.ln() - gamma::ln_gamma(pair.1), acc.1 + pair.0, acc.2 + pair.1));
 
-            (
-                acc.0 + (pair.1 - 1.0) * pair.0.ln() - gamma::ln_gamma(pair.1),
-                acc.1 + pair.0,
-                acc.2 + pair.1,
-            )
-        });
-
-        assert!(
-            prec::almost_eq(sum_xi, 1.0, 1e-4),
-            format!("{}", StatsError::ContainerExpectedSum("x", 1.0))
-        );
-        term + gamma::ln_gamma(sum_alpha)
+        if !prec::almost_eq(sum_xi, 1.0, 1e-4) {
+            Err(StatsError::ContainerExpectedSum("x", 1.0))
+        } else {
+            Ok(term + gamma::ln_gamma(sum_alpha))
+        }
     }
 }
 
@@ -348,7 +409,7 @@ mod test {
     use std::f64;
     use function::gamma;
     use statistics::*;
-    use distribution::{Continuous, Dirichlet};
+    use distribution::{CheckedContinuous, Continuous, Dirichlet};
 
     fn try_create(alpha: &[f64]) -> Dirichlet {
         let n = Dirichlet::new(alpha);
@@ -443,5 +504,83 @@ mod test {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
         assert_almost_eq!(n.ln_pdf(&[0.01, 0.03, 0.5, 0.46]), 18.77225681167061f64.ln(), 1e-12);
         assert_almost_eq!(n.ln_pdf(&[0.1,0.2,0.3,0.4]), 0.8314656481199253f64.ln(), 1e-14);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_pdf_bad_input_length() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        n.pdf(&[0.5]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_pdf_bad_input_range() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        n.pdf(&[1.5, 0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_pdf_bad_input_sum() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        n.pdf(&[0.5, 0.25, 0.8, 0.9]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_ln_pdf_bad_input_length() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        n.ln_pdf(&[0.5]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_ln_pdf_bad_input_range() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        n.ln_pdf(&[1.5, 0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_ln_pdf_bad_input_sum() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        n.ln_pdf(&[0.5, 0.25, 0.8, 0.9]);
+    }
+
+    #[test]
+    fn test_checked_pdf_bad_input_length() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        assert!(n.checked_pdf(&[0.5]).is_err());
+    }
+
+    #[test]
+    fn test_checked_pdf_bad_input_range() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        assert!(n.checked_pdf(&[1.5, 0.0, 0.0, 0.0]).is_err());
+    }
+
+    #[test]
+    fn test_checked_pdf_bad_input_sum() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        assert!(n.checked_pdf(&[0.5, 0.25, 0.8, 0.9]).is_err());
+    }
+
+    #[test]
+    fn test_checked_ln_pdf_bad_input_length() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        assert!(n.checked_ln_pdf(&[0.5]).is_err());
+    }
+
+    #[test]
+    fn test_checked_ln_pdf_bad_input_range() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        assert!(n.checked_ln_pdf(&[1.5, 0.0, 0.0, 0.0]).is_err());
+    }
+
+    #[test]
+    fn test_checked_ln_pdf_bad_input_sum() {
+        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
+        assert!(n.checked_ln_pdf(&[0.5, 0.25, 0.8, 0.9]).is_err());
     }
 }

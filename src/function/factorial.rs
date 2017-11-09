@@ -1,6 +1,7 @@
 //! Provides functions related to factorial calculations (e.g. binomial
 //! coefficient, factorial, multinomial)
 
+use Result;
 use error::StatsError;
 use function::gamma;
 use std::f64;
@@ -76,14 +77,22 @@ pub fn ln_binomial(n: u64, k: u64) -> f64 {
 ///
 /// If the elements in `ni` do not sum to `n`
 pub fn multinomial(n: u64, ni: &[u64]) -> f64 {
-    let (sum, ret) = ni.iter().fold(
-        (0, ln_factorial(n)),
-        |acc, &x| {
-            (acc.0 + x, acc.1 - ln_factorial(x))
-        },
-    );
-    assert_eq!(sum, n, "{}", StatsError::ContainerExpectedSumVar("ni", "n"));
-    (0.5 + ret.exp()).floor()
+    checked_multinomial(n, ni).unwrap()
+}
+
+/// Computes the multinomial coefficient: `n choose n1, n2, n3, ...`
+///
+/// # Errors
+///
+/// If the elements in `ni` do not sum to `n`
+pub fn checked_multinomial(n: u64, ni: &[u64]) -> Result<f64> {
+    let (sum, ret) = ni.iter().fold((0, ln_factorial(n)),
+                                    |acc, &x| (acc.0 + x, acc.1 - ln_factorial(x)));
+    if sum != n {
+        Err(StatsError::ContainerExpectedSumVar("ni", "n"))
+    } else {
+        Ok((0.5 + ret.exp()).floor())
+    }
 }
 
 // Initialization for pre-computed cache of 171 factorial
@@ -161,5 +170,16 @@ mod test {
         assert_eq!(10.0, super::multinomial(5, &[3, 2]));
         assert_eq!(10.0, super::multinomial(5, &[2, 3]));
         assert_eq!(35.0, super::multinomial(7, &[3, 4]));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_multinomial_bad_ni() {
+        super::multinomial(1, &[1, 1]);
+    }
+
+    #[test]
+    fn test_checked_multinomial_bad_ni() {
+        assert!(super::checked_multinomial(1, &[1, 1]).is_err());
     }
 }

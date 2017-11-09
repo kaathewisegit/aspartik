@@ -6,7 +6,8 @@ use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
 use std::f64;
 
-/// Implements the [Student's T](https://en.wikipedia.org/wiki/Student%27s_t-distribution) distribution
+/// Implements the [Student's
+/// T](https://en.wikipedia.org/wiki/Student%27s_t-distribution) distribution
 ///
 /// # Examples
 ///
@@ -221,11 +222,30 @@ impl Mean<f64> for StudentsT {
     ///
     /// where `μ` is the location
     fn mean(&self) -> f64 {
-        assert!(
-            self.freedom > 1.0,
-            format!("{}", StatsError::ArgGt("freedom", 1.0))
-        );
-        self.location
+        self.checked_mean().unwrap()
+    }
+}
+
+impl CheckedMean<f64> for StudentsT {
+    /// Returns the mean of the student's t-distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom <= 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// μ
+    /// ```
+    ///
+    /// where `μ` is the location
+    fn checked_mean(&self) -> Result<f64> {
+        if self.freedom <= 1.0 {
+            Err(StatsError::ArgGt("freedom", 1.0))
+        } else {
+            Ok(self.location)
+        }
     }
 }
 
@@ -250,17 +270,7 @@ impl Variance<f64> for StudentsT {
     ///
     /// where `σ` is the scale and `v` is the freedom
     fn variance(&self) -> f64 {
-        assert!(
-            self.freedom > 1.0,
-            format!("{}", StatsError::ArgGt("freedom", 1.0))
-        );
-        if self.freedom == f64::INFINITY {
-            self.scale * self.scale
-        } else if self.freedom > 2.0 {
-            self.freedom * self.scale * self.scale / (self.freedom - 2.0)
-        } else {
-            f64::INFINITY
-        }
+        self.checked_variance().unwrap()
     }
 
     /// Returns the standard deviation of the student's t-distribution
@@ -284,7 +294,64 @@ impl Variance<f64> for StudentsT {
     ///
     /// where `σ` is the scale and `v` is the freedom
     fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+        self.checked_std_dev().unwrap()
+    }
+}
+
+impl CheckedVariance<f64> for StudentsT {
+    /// Returns the variance of the student's t-distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom <= 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// if v == INF {
+    ///     σ^2
+    /// } else if freedom > 2.0 {
+    ///     v * σ^2 / (v - 2)
+    /// } else {
+    ///     INF
+    /// }
+    /// ```
+    ///
+    /// where `σ` is the scale and `v` is the freedom
+    fn checked_variance(&self) -> Result<f64> {
+        if self.freedom <= 1.0 {
+            Err(StatsError::ArgGt("freedom", 1.0))
+        } else if self.freedom == f64::INFINITY {
+            Ok(self.scale * self.scale)
+        } else if self.freedom > 2.0 {
+            Ok(self.freedom * self.scale * self.scale / (self.freedom - 2.0))
+        } else {
+            Ok(f64::INFINITY)
+        }
+    }
+
+    /// Returns the standard deviation of the student's t-distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom <= 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// let variance = if v == INF {
+    ///     σ^2
+    /// } else if freedom > 2.0 {
+    ///     v * σ^2 / (v - 2)
+    /// } else {
+    ///     INF
+    /// }
+    /// sqrt(variance)
+    /// ```
+    ///
+    /// where `σ` is the scale and `v` is the freedom
+    fn checked_std_dev(&self) -> Result<f64> {
+        self.checked_variance().map(|x| x.sqrt())
     }
 }
 
@@ -305,14 +372,35 @@ impl Entropy<f64> for StudentsT {
     /// where `v` is the freedom, `ψ` is the digamma function, and `B` is the
     /// beta function
     fn entropy(&self) -> f64 {
-        assert!(
-            self.location == 0.0 && self.scale == 1.0,
-            "Cannot calculate entropy for StudentsT distribution where location is not 0 and \
-                 scale is not 1"
-        );
+        self.checked_entropy().unwrap()
+    }
+}
 
-        (self.freedom + 1.0) / 2.0 * (gamma::digamma((self.freedom + 1.0) / 2.0) - gamma::digamma(self.freedom / 2.0)) +
-            (self.freedom.sqrt() * beta::beta(self.freedom / 2.0, 0.5)).ln()
+impl CheckedEntropy<f64> for StudentsT {
+    /// Returns the entropy for the student's t-distribution
+    ///
+    /// # Errors
+    ///
+    /// If `location != 0.0 && scale != 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// (v + 1) / 2 * (ψ((v + 1) / 2) - ψ(v / 2)) + ln(sqrt(v) * B(v / 2, 1 /
+    /// 2))
+    /// ```
+    ///
+    /// where `v` is the freedom, `ψ` is the digamma function, and `B` is the
+    /// beta function
+    fn checked_entropy(&self) -> Result<f64> {
+        // TODO: investigate using prec::almost_eq for comparisons here
+        if self.location != 0.0 || self.scale != 1.0 {
+            Err(StatsError::SpecialCase("Cannot calculate entropy for StudentsT distribution where location is not 0 and scale is not 1"))
+        } else {
+            let result = (self.freedom + 1.0) / 2.0 * (gamma::digamma((self.freedom + 1.0) / 2.0) - gamma::digamma(self.freedom / 2.0)) +
+                         (self.freedom.sqrt() * beta::beta(self.freedom / 2.0, 0.5)).ln();
+            Ok(result)
+        }
     }
 }
 
@@ -329,11 +417,28 @@ impl Skewness<f64> for StudentsT {
     /// 0
     /// ```
     fn skewness(&self) -> f64 {
-        assert!(
-            self.freedom > 3.0,
-            format!("{}", StatsError::ArgGt("freedom", 3.0))
-        );
-        0.0
+        self.checked_skewness().unwrap()
+    }
+}
+
+impl CheckedSkewness<f64> for StudentsT {
+    /// Returns the skewness of the student's t-distribution
+    ///
+    /// # Errors
+    ///
+    /// If `x <= 3.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// 0
+    /// ```
+    fn checked_skewness(&self) -> Result<f64> {
+        if self.freedom <= 3.0 {
+            Err(StatsError::ArgGt("freedom", 3.0))
+        } else {
+            Ok(0.0)
+        }
     }
 }
 
@@ -390,7 +495,7 @@ impl Continuous<f64, f64> for StudentsT {
         } else {
             let d = (x - self.location) / self.scale;
             (gamma::ln_gamma((self.freedom + 1.0) / 2.0) - gamma::ln_gamma(self.freedom / 2.0)).exp() *
-                (1.0 + d * d / self.freedom).powf(-0.5 * (self.freedom + 1.0)) / (self.freedom * f64::consts::PI).sqrt() / self.scale
+            (1.0 + d * d / self.freedom).powf(-0.5 * (self.freedom + 1.0)) / (self.freedom * f64::consts::PI).sqrt() / self.scale
         }
     }
 
@@ -416,7 +521,7 @@ impl Continuous<f64, f64> for StudentsT {
         } else {
             let d = (x - self.location) / self.scale;
             gamma::ln_gamma((self.freedom + 1.0) / 2.0) - 0.5 * ((self.freedom + 1.0) * (1.0 + d * d / self.freedom).ln()) -
-                gamma::ln_gamma(self.freedom / 2.0) - 0.5 * (self.freedom * f64::consts::PI).ln() - self.scale.ln()
+            gamma::ln_gamma(self.freedom / 2.0) - 0.5 * (self.freedom * f64::consts::PI).ln() - self.scale.ln()
         }
     }
 }
@@ -510,6 +615,17 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    fn test_mean_freedom_lte_1() {
+        try_create(1.0, 1.0, 0.5).mean();
+    }
+
+    #[test]
+    fn test_checked_mean_freedom_lte_1() {
+        assert!(try_create(1.0, 1.0, 0.5).checked_mean().is_err());
+    }
+
+    #[test]
     fn test_variance() {
         test_panic(0.0, 1.0, 1.0, |x| x.variance());
         test_panic(0.0, 0.1, 1.0, |x| x.variance());
@@ -521,6 +637,17 @@ mod test {
         test_case(10.0, 1.0, 2.5, 5.0, |x| x.variance());
         test_case(-5.0, 100.0, 1.5, f64::INFINITY, |x| x.variance());
         test_panic(0.0, f64::INFINITY, 1.0, |x| x.variance());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_variance_freedom_lte1() {
+        try_create(1.0, 1.0, 0.5).variance();
+    }
+
+    #[test]
+    fn test_checked_variance_freedom_lte1() {
+        assert!(try_create(1.0, 1.0, 0.5).checked_variance().is_err());
     }
 
     #[test]
@@ -536,6 +663,52 @@ mod test {
         test_case(10.0, 1.0, 2.5, 2.2360679774997896964091736687313, |x| x.std_dev());
         test_case(-5.0, 100.0, 1.5, f64::INFINITY, |x| x.std_dev());
         test_panic(0.0, f64::INFINITY, 1.0, |x| x.std_dev());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_std_dev_freedom_lte1() {
+        try_create(1.0, 1.0, 0.5).std_dev();
+    }
+
+    #[test]
+    fn test_checked_std_dev_freedom_lte1() {
+        assert!(try_create(1.0, 1.0, 0.5).checked_std_dev().is_err());
+    }
+
+    // TODO: valid entropy tests
+    #[test]
+    #[should_panic]
+    fn test_entropy_location_not_0() {
+        try_create(1.0, 1.0, 0.5).entropy();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_entropy_scale_not_1() {
+        try_create(0.0, 0.5, 0.5).entropy();
+    }
+
+    #[test]
+    fn test_checked_entropy_location_not_0() {
+        assert!(try_create(1.0, 1.0, 0.5).checked_entropy().is_err());
+    }
+
+    #[test]
+    fn test_checked_entropy_scale_not_1() {
+        assert!(try_create(0.0, 0.5, 0.5).checked_entropy().is_err());
+    }
+
+    // TODO: valid skewness tests
+    #[test]
+    #[should_panic]
+    fn test_skewness_freedom_lte_3() {
+        try_create(1.0, 1.0, 1.0).skewness();
+    }
+
+    #[test]
+    fn test_checked_skewness_freedom_lte_3() {
+        assert!(try_create(1.0, 1.0, 1.0).checked_skewness().is_err());
     }
 
     #[test]
@@ -626,7 +799,7 @@ mod test {
         test_almost(0.0, 1.0, 2.0, 0.091751709536137, 1e-15, |x| x.cdf(-2.0));
         test_case(0.0, 1.0, f64::INFINITY, 0.5, |x| x.cdf(0.0));
 
-// TODO: these are curiously low accuracy and should be re-examined
+        // TODO: these are curiously low accuracy and should be re-examined
         test_almost(0.0, 1.0, f64::INFINITY, 0.841344746068543, 1e-10, |x| x.cdf(1.0));
         test_almost(0.0, 1.0, f64::INFINITY, 0.977249868051821, 1e-11, |x| x.cdf(2.0));
     }

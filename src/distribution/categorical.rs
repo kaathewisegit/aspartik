@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Discrete, Distribution, InverseCDF, Univariate};
+use distribution::{CheckedInverseCDF, Discrete, Distribution, InverseCDF, Univariate};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -76,11 +76,7 @@ impl Categorical {
     }
 
     fn cdf_max(&self) -> f64 {
-        *unsafe {
-            self.cdf.get_unchecked(
-                self.cdf.len() - 1,
-            )
-        }
+        *unsafe { self.cdf.get_unchecked(self.cdf.len() - 1) }
     }
 }
 
@@ -166,12 +162,35 @@ impl InverseCDF<f64> for Categorical {
     /// and `f(x)` is defined as `p_x + f(x - 1)` and `f(0) = p_0` where
     /// `p_x` is the `x`th probability mass
     fn inverse_cdf(&self, x: f64) -> f64 {
-        assert!(
-            x > 0.0 && x < 1.0,
-            format!("{}", StatsError::ArgIntervalExcl("x", 0.0, 1.0))
-        );
-        let denorm_prob = x * self.cdf_max();
-        binary_index(&self.cdf, denorm_prob) as f64
+        self.checked_inverse_cdf(x).unwrap()
+    }
+}
+
+impl CheckedInverseCDF<f64> for Categorical {
+    /// Calculates the inverse cumulative distribution function for the
+    /// categorical
+    /// distribution at `x`
+    ///
+    /// # Errors
+    ///
+    /// If `x <= 0.0` or `x >= 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// i
+    /// ```
+    ///
+    /// where `i` is the first index such that `x < f(i)`
+    /// and `f(x)` is defined as `p_x + f(x - 1)` and `f(0) = p_0` where
+    /// `p_x` is the `x`th probability mass
+    fn checked_inverse_cdf(&self, x: f64) -> Result<f64> {
+        if x <= 0.0 || x >= 1.0 {
+            Err(StatsError::ArgIntervalExcl("x", 0.0, 1.0))
+        } else {
+            let denorm_prob = x * self.cdf_max();
+            Ok(binary_index(&self.cdf, denorm_prob) as f64)
+        }
     }
 }
 
@@ -218,10 +237,7 @@ impl Mean<f64> for Categorical {
     /// `Σ` is the sum from `0` to `k - 1`,
     /// and `k` is the number of categories
     fn mean(&self) -> f64 {
-        self.norm_pmf.iter().enumerate().fold(
-            0.0,
-            |acc, (idx, &val)| acc + idx as f64 * val,
-        )
+        self.norm_pmf.iter().enumerate().fold(0.0, |acc, (idx, &val)| acc + idx as f64 * val)
     }
 }
 
@@ -239,13 +255,10 @@ impl Variance<f64> for Categorical {
     /// and `k` is the number of categories
     fn variance(&self) -> f64 {
         let mu = self.mean();
-        self.norm_pmf.iter().enumerate().fold(
-            0.0,
-            |acc, (idx, &val)| {
-                let r = idx as f64 - mu;
-                acc + r * r * val
-            },
-        )
+        self.norm_pmf.iter().enumerate().fold(0.0, |acc, (idx, &val)| {
+            let r = idx as f64 - mu;
+            acc + r * r * val
+        })
     }
 
     /// Returns the standard deviation of the categorical distribution
@@ -407,7 +420,7 @@ mod test {
     use std::f64;
     use std::fmt::Debug;
     use statistics::*;
-    use distribution::{Univariate, Discrete, InverseCDF, Categorical};
+    use distribution::{Categorical, CheckedInverseCDF, Discrete, InverseCDF, Univariate};
     use distribution::internal::*;
 
     fn try_create(prob_mass: &[f64]) -> Categorical {
@@ -570,6 +583,18 @@ mod test {
     #[should_panic]
     fn test_inverse_cdf_input_high() {
         get_value(&[4.0, 2.5, 2.5, 1.0], |x| x.inverse_cdf(1.0));
+    }
+
+    #[test]
+    fn test_checked_inverse_cdf_input_low() {
+        let n = try_create(&[4.0, 2.5, 2.5, 1.0]);
+        assert!(n.checked_inverse_cdf(0.0).is_err());
+    }
+
+    #[test]
+    fn test_checked_inverse_cdf_input_high() {
+        let n = try_create(&[4.0, 2.5, 2.5, 1.0]);
+        assert!(n.checked_inverse_cdf(1.0).is_err());
     }
 
     #[test]

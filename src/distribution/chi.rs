@@ -107,9 +107,8 @@ impl Distribution<f64> for Chi {
     /// ```
     fn sample<R: Rng>(&self, r: &mut R) -> f64 {
         (0..self.freedom as i64)
-            .fold(0.0, |acc, _| {
-                acc + super::normal::sample_unchecked(r, 0.0, 1.0).powf(2.0)
-            })
+            .fold(0.0,
+                  |acc, _| acc + super::normal::sample_unchecked(r, 0.0, 1.0).powf(2.0))
             .sqrt()
     }
 }
@@ -277,11 +276,30 @@ impl Mode<f64> for Chi {
     ///
     /// where `k` is the degrees of freedom
     fn mode(&self) -> f64 {
-        assert!(
-            self.freedom >= 1.0,
-            format!("{}", StatsError::ArgGte("freedom", 1.0))
-        );
-        (self.freedom - 1.0).sqrt()
+        self.checked_mode().unwrap()
+    }
+}
+
+impl CheckedMode<f64> for Chi {
+    /// Returns the mode for the chi distribution
+    ///
+    /// # Errors
+    ///
+    /// If `freedom < 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// sqrt(k - 1)
+    /// ```
+    ///
+    /// where `k` is the degrees of freedom
+    fn checked_mode(&self) -> Result<f64> {
+        if self.freedom < 1.0 {
+            Err(StatsError::ArgGte("freedom", 1.0))
+        } else {
+            Ok((self.freedom - 1.0).sqrt())
+        }
     }
 }
 
@@ -447,8 +465,14 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn test_mode_freedom_lt_one() {
-        test_case(0.1, 0.0, |x| x.mode());
+    fn test_mode_freedom_lt_1() {
+        get_value(0.5, |x| x.mode());
+    }
+
+    #[test]
+    fn test_checked_mode_freedom_lt_1() {
+        let n = try_create(0.5);
+        assert!(n.checked_mode().is_err());
     }
 
     #[test]

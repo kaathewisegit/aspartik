@@ -3,7 +3,6 @@
 //! concrete implementations for a variety of distributions.
 
 use rand::Rng;
-use statistics::{Max, Min};
 
 pub use self::bernoulli::Bernoulli;
 pub use self::beta::Beta;
@@ -30,6 +29,7 @@ pub use self::students_t::StudentsT;
 pub use self::triangular::Triangular;
 pub use self::uniform::Uniform;
 pub use self::weibull::Weibull;
+use statistics::{Max, Min};
 
 mod bernoulli;
 mod beta;
@@ -59,6 +59,8 @@ mod uniform;
 mod weibull;
 mod ziggurat;
 mod ziggurat_tables;
+
+use Result;
 
 /// The `Distribution` trait is used to specify an interface
 /// for sampling statistical distributions
@@ -109,7 +111,7 @@ pub trait Univariate<T, K>: Distribution<K> + Min<T> + Max<T> {
     fn cdf(&self, x: K) -> K;
 }
 
-/// The `InverseCDF` trait used to specify an interface for distributions
+/// The `InverseCDF` trait is used to specify an interface for distributions
 /// with a closed form solution to the inverse cumulative distribution function.
 /// This trait will probably be merged into `Univariate` in a future release
 /// when already implemented distributions have `InverseCDF` back ported
@@ -121,13 +123,39 @@ pub trait InverseCDF<T> {
     /// # Examples
     ///
     /// ```
+    /// use statrs::distribution::InverseCDF;
+    /// use statrs::distribution::Categorical;
+    ///
+    /// let n = Categorical::new(&[0.0, 1.0, 2.0]).unwrap();
+    /// assert_eq!(n.inverse_cdf(0.5), 2.0);
     /// ```
     fn inverse_cdf(&self, x: T) -> T;
 }
 
-/// The `Continuous` trait extends the `Distribution`
-/// trait and provides an interface for interacting with continuous
-/// statistical distributions
+/// The `CheckedInverseCDF` trait is used to specify an interface
+/// for  distributions with a closed form solution to the inverse
+/// cumulative distribution function with possible failure modes.
+/// This trait should be merged into a `CheckedUnivarite` trait
+/// alongside `InverseCDF` in a future release.
+pub trait CheckedInverseCDF<T> {
+    /// Returns the inverse cumulative distribution function
+    /// calculated at `x` for a given distribution. May panic
+    /// depending on the implementor.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use statrs::distribution::CheckedInverseCDF;
+    /// use statrs::distribution::Categorical;
+    ///
+    /// let n = Categorical::new(&[0.0, 1.0, 2.0]).unwrap();
+    /// assert!(n.checked_inverse_cdf(-1.0).is_err());
+    /// ```
+    fn checked_inverse_cdf(&self, x: T) -> Result<T>;
+}
+
+/// The `Continuous` trait  provides an interface for interacting with
+/// continuous statistical distributions
 ///
 /// # Remarks
 ///
@@ -164,8 +192,38 @@ pub trait Continuous<T, K> {
     fn ln_pdf(&self, x: T) -> K;
 }
 
-/// The `Discrete` trait extends the `Distribution`
-/// trait and provides an interface for interacting with discrete
+/// The `CheckedContinuous` trait provides an interface for
+/// interacting with continuous statistical distributions with possible
+/// failure modes
+pub trait CheckedContinuous<T, K> {
+    /// Returns the probability density function calculated at `x` for a given
+    /// distribution.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use statrs::distribution::{CheckedContinuous, Dirichlet};
+    ///
+    /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
+    /// assert!(n.checked_pdf(&[0.0]).is_err());
+    /// ```
+    fn checked_pdf(&self, x: T) -> Result<K>;
+
+    /// Returns the log of the probability density function calculated at `x`
+    /// for a given distribution.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use statrs::distribution::{CheckedContinuous, Dirichlet};
+    ///
+    /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
+    /// assert!(n.checked_ln_pdf(&[0.0]).is_err());
+    /// ```
+    fn checked_ln_pdf(&self, x: T) -> Result<K>;
+}
+
+/// The `Discrete` trait provides an interface for interacting with discrete
 /// statistical distributions
 ///
 /// # Remarks
@@ -203,4 +261,36 @@ pub trait Discrete<T, K> {
     /// assert!(prec::almost_eq(n.ln_pmf(5), (0.24609375f64).ln(), 1e-15));
     /// ```
     fn ln_pmf(&self, x: T) -> K;
+}
+
+/// The `CheckedDiscrete` trait provides an interface for interacting
+/// with discrete statistical distributions with possible failure modes
+pub trait CheckedDiscrete<T, K> {
+    /// Returns the probability mass function calculated at `x` for a given
+    /// distribution.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use statrs::distribution::{CheckedDiscrete, Multinomial};
+    /// use statrs::prec;
+    ///
+    /// let n = Multinomial::new(&[0.3, 0.7], 5).unwrap();
+    /// assert!(n.checked_pmf(&[1]).is_err());
+    /// ```
+    fn checked_pmf(&self, x: T) -> Result<K>;
+
+    /// Returns the log of the probability mass function calculated at `x` for
+    /// a given distribution.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use statrs::distribution::{CheckedDiscrete, Multinomial};
+    /// use statrs::prec;
+    ///
+    /// let n = Multinomial::new(&[0.3, 0.7], 5).unwrap();
+    /// assert!(n.checked_ln_pmf(&[1]).is_err());
+    /// ```
+    fn checked_ln_pmf(&self, x: T) -> Result<K>;
 }

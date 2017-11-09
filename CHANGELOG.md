@@ -7,6 +7,7 @@ HEAD
  - deprecate old non-infinite iterators in favor of new infinite iterators with `take`
  - Implemented `Pareto` distribution
  - Implemented `Entropy` trait for the `Categorical` distribution
+ - Add a `checked_` interface to all distribution methods and functions that may panic
 
 v0.8.0
  - `cdf(x)`, `pdf(x)` and `pmf(x)` now return the correct value instead of panicking when `x` is outside the range of values that the distribution can attain.

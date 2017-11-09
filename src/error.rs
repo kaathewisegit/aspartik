@@ -44,6 +44,8 @@ pub enum StatsError {
     ContainerExpectedSum(&'static str, f64),
     /// Elements in a container were expected to sum to a variable but didn't
     ContainerExpectedSumVar(&'static str, &'static str),
+    /// Special case exception
+    SpecialCase(&'static str),
 }
 
 impl Error for StatsError {
@@ -74,6 +76,7 @@ impl fmt::Display for StatsError {
             StatsError::ComputationFailedToConverge => write!(f, "Computation failed to converge"),
             StatsError::ContainerExpectedSum(s, sum) => write!(f, "Elements in container {} expected to sum to {}", s, sum),
             StatsError::ContainerExpectedSumVar(s, sum) => write!(f, "Elements in container {} expected to sum to {}", s, sum),
+            StatsError::SpecialCase(s) => write!(f, "{}", s),
         }
     }
 }
