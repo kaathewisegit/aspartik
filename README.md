@@ -5,7 +5,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.md)
 [![Crates.io](https://img.shields.io/crates/v/statrs.svg?maxAge=2592000)](https://crates.io/crates/statrs)  
 
-## Current Version: v0.8.0
+## Current Version: v0.9.0
 
 Should work for both nightly and stable Rust.
 
@@ -25,7 +25,7 @@ and filled-in when not.
 This library is a work-in-progress and not complete. Planned for future releases are continued implementations
 of distributions as well as porting over more statistical utilities
 
-Please check out the documentation [here](https://docs.rs/statrs/0.8.0/statrs/)
+Please check out the documentation [here](https://docs.rs/statrs/0.9.0/statrs/)
 
 ## Usage
 
@@ -33,7 +33,7 @@ Add the following to your `Cargo.toml`
 
 ```Rust
 [dependencies]
-statrs = "0.8.0"
+statrs = "0.9.0"
 ```
 
 and this to your crate root
@@ -44,7 +44,7 @@ extern crate statrs;
   
 ## Examples
 
-Statrs v0.8.0 comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.
+Statrs v0.9.0 comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.
 The common use case is to set up the distributions and sample from them which depends on the `Rand` crate for random number generation
 
 ```Rust
@@ -71,7 +71,19 @@ assert_eq!(n.cdf(1.0), 0.6321205588285576784045);
 assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
 ```
 
-as well as utility functions including `erf`, `gamma`, `ln_gamma`, `beta`, etc
+as well as utility functions including `erf`, `gamma`, `ln_gamma`, `beta`, etc.
+
+For functions or methods with failure modes, Statrs provides a checked and unchecked interface. The unchecked
+interface will panic on an error while the checked interface returns a `Result`. 
+
+```Rust
+use statrs::statistics::CheckedVariance;
+use statrs::distribution::FisherSnedecor;
+
+let n = FisherSnedecor::new(1.0, 1.0).unwrap();
+assert!(n.checked_variance().is_err());
+// n.variance(); // uncomment this line to see it panic
+```
 
 ## Contributing
 

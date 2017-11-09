@@ -1,4 +1,4 @@
-HEAD
+v0.9.0
  - implemented infinite sequence generator for periodic sequence
  - implemented infinite sequence generator for sinusoidal sequence
  - implemented infinite sequence generator for square sequence
