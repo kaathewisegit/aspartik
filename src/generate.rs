@@ -110,7 +110,6 @@ impl Periodic {
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfinitePeriodic::new` and `take` instead")]
     pub fn new(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64, phase: f64, delay: i64) -> Periodic {
-
         Periodic { internal: InfinitePeriodic::new(sampling_rate, frequency, amplitude, phase, delay).take(length) }
     }
 
@@ -126,7 +125,7 @@ impl Periodic {
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfinitePeriodic::default` and `take` instead")]
     pub fn default(length: usize, sampling_rate: f64, frequency: f64) -> Periodic {
-        Self::new(length, sampling_rate, frequency, 1.0, 0.0, 0)
+        Periodic { internal: InfinitePeriodic::default(sampling_rate, frequency).take(length) }
     }
 }
 
@@ -151,7 +150,9 @@ impl Iterator for Periodic {
 /// ```
 #[deprecated(since = "0.8.0", note = "please use `Periodic::default` instead")]
 pub fn periodic(length: usize, sampling_rate: f64, frequency: f64) -> Vec<f64> {
-    periodic_custom(length, sampling_rate, frequency, 1.0, 0.0, 0)
+    InfinitePeriodic::default(sampling_rate, frequency)
+        .take(length)
+        .collect::<Vec<f64>>()
 }
 
 /// Creates a vector of `f64` points representing a periodic wave.
@@ -280,7 +281,6 @@ impl Sinusoidal {
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteSinusoidal::new` and `take` instead")]
     pub fn new(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64, mean: f64, phase: f64, delay: i64) -> Sinusoidal {
-
         Sinusoidal { internal: InfiniteSinusoidal::new(sampling_rate, frequency, amplitude, mean, phase, delay).take(length) }
     }
 
@@ -300,8 +300,7 @@ impl Sinusoidal {
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteSinusoidal::default` and `take` instead")]
     pub fn default(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64) -> Sinusoidal {
-
-        Self::new(length, sampling_rate, frequency, amplitude, 0.0, 0.0, 0)
+        Sinusoidal { internal: InfiniteSinusoidal::default(sampling_rate, frequency, amplitude).take(length) }
     }
 }
 
@@ -330,7 +329,9 @@ impl Iterator for Sinusoidal {
 /// ```
 #[deprecated(since = "0.8.0", note = "please use `Sinusoidal::default` instead")]
 pub fn sinusoidal(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64) -> Vec<f64> {
-    sinusoidal_custom(length, sampling_rate, frequency, amplitude, 0.0, 0.0, 0)
+    InfiniteSinusoidal::new(sampling_rate, frequency, amplitude, 0.0, 0.0, 0)
+        .take(length)
+        .collect::<Vec<f64>>()
 }
 
 /// Creates a vector of `f64` points representing a Sine wave.
@@ -426,7 +427,6 @@ impl Square {
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteSquare::new` and `take` instead")]
     pub fn new(length: usize, high_duration: i64, low_duration: i64, high_value: f64, low_value: f64, delay: i64) -> Square {
-
         Square { internal: InfiniteSquare::new(high_duration, low_duration, high_value, low_value, delay).take(length) }
     }
 }
@@ -529,7 +529,6 @@ impl Triangle {
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteTriangle::new` and `take` instead")]
     pub fn new(length: usize, raise_duration: i64, fall_duration: i64, high_value: f64, low_value: f64, delay: i64) -> Triangle {
-
         Triangle { internal: InfiniteTriangle::new(raise_duration, fall_duration, high_value, low_value, delay).take(length) }
     }
 }
@@ -609,7 +608,6 @@ impl Sawtooth {
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteSawtooth::new` and `take` instead")]
     pub fn new(length: usize, period: i64, high_value: f64, low_value: f64, delay: i64) -> Sawtooth {
-
         Sawtooth { internal: InfiniteSawtooth::new(period, high_value, low_value, delay).take(length) }
     }
 }
