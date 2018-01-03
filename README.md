@@ -25,7 +25,7 @@ and filled-in when not.
 This library is a work-in-progress and not complete. Planned for future releases are continued implementations
 of distributions as well as porting over more statistical utilities
 
-Please check out the documentation [here](https://docs.rs/statrs/0.9.0/statrs/)
+Please check out the documentation [here](https://docs.rs/statrs/*/statrs/)
 
 ## Usage
 
