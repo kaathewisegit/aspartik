@@ -94,7 +94,7 @@ Want to contribute? Check out some of the issues marked [help wanted](https://gi
 Clone the repo:
 
 ```
-git clone https://github.com/boxtown/starts
+git clone https://github.com/boxtown/statrs
 ```
 
 Create a feature branch:
