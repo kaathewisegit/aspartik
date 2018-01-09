@@ -1,5 +1,5 @@
 use {Result, StatsError, consts};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::erf;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -101,6 +101,8 @@ impl Distribution<f64> for LogNormal {
     }
 }
 
+impl WeakRngDistribution<f64> for LogNormal {}
+
 impl Univariate<f64, f64> for LogNormal {
     /// Calculates the cumulative distribution function for the log-normal
     /// distribution
@@ -120,10 +122,7 @@ impl Univariate<f64, f64> for LogNormal {
         } else if x == f64::INFINITY {
             1.0
         } else {
-            0.5 *
-                erf::erfc(
-                    (self.location - x.ln()) / (self.scale * f64::consts::SQRT_2),
-                )
+            0.5 * erf::erfc((self.location - x.ln()) / (self.scale * f64::consts::SQRT_2))
         }
     }
 }

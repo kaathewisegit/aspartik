@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::gamma;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -140,6 +140,8 @@ impl Distribution<f64> for Gamma {
         sample_unchecked(r, self.shape, self.rate)
     }
 }
+
+impl WeakRngDistribution<f64> for Gamma {}
 
 impl Univariate<f64, f64> for Gamma {
     /// Calculates the cumulative distribution function for the gamma

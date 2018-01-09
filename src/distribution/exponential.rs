@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate, ziggurat};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution, ziggurat};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -108,6 +108,8 @@ impl Distribution<f64> for Exponential {
         ziggurat::sample_exp_1(r) / self.rate
     }
 }
+
+impl WeakRngDistribution<f64> for Exponential {}
 
 impl Univariate<f64, f64> for Exponential {
     /// Calculates the cumulative distribution function for the

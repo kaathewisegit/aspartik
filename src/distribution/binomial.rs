@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Discrete, Distribution, Univariate};
+use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
 use function::{beta, factorial};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -131,6 +131,8 @@ impl Distribution<f64> for Binomial {
         })
     }
 }
+
+impl WeakRngDistribution<f64> for Binomial {}
 
 impl Univariate<u64, f64> for Binomial {
     /// Calulcates the cumulative distribution function for the

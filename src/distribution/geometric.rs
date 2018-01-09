@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Discrete, Distribution, Univariate};
+use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -114,6 +114,8 @@ impl Distribution<f64> for Geometric {
         }
     }
 }
+
+impl WeakRngDistribution<f64> for Geometric {}
 
 impl Univariate<u64, f64> for Geometric {
     /// Calculates the cumulative distribution function for the geometric

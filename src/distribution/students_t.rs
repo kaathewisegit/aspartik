@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::{beta, gamma};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -147,6 +147,8 @@ impl Distribution<f64> for StudentsT {
         super::normal::sample_unchecked(r, self.location, self.scale * (self.freedom / gamma).sqrt())
     }
 }
+
+impl WeakRngDistribution<f64> for StudentsT {}
 
 impl Univariate<f64, f64> for StudentsT {
     /// Calculates the cumulative distribution function for the student's

@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Discrete, Distribution, Univariate};
+use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
 use function::{factorial, gamma};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -112,6 +112,8 @@ impl Distribution<f64> for Poisson {
     }
 }
 
+impl WeakRngDistribution<f64> for Poisson {}
+
 impl Univariate<u64, f64> for Poisson {
     /// Calculates the cumulative distribution function for the poisson
     /// distribution at `x`
@@ -217,7 +219,7 @@ impl Entropy<f64> for Poisson {
     /// where `λ` is the rate
     fn entropy(&self) -> f64 {
         0.5 * (2.0 * f64::consts::PI * f64::consts::E * self.lambda).ln() - 1.0 / (12.0 * self.lambda) - 1.0 / (24.0 * self.lambda * self.lambda) -
-            19.0 / (360.0 * self.lambda * self.lambda * self.lambda)
+        19.0 / (360.0 * self.lambda * self.lambda * self.lambda)
     }
 }
 

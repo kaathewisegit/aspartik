@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{CheckedDiscrete, Discrete, Distribution};
+use distribution::{CheckedDiscrete, Discrete, Distribution, WeakRngDistribution};
 use function::factorial;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -139,6 +139,8 @@ impl Distribution<Vec<f64>> for Multinomial {
         res
     }
 }
+
+impl WeakRngDistribution<Vec<f64>> for Multinomial {}
 
 impl Mean<Vec<f64>> for Multinomial {
     /// Returns the mean of the multinomial distribution

@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::gamma;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -112,6 +112,8 @@ impl Distribution<f64> for Chi {
             .sqrt()
     }
 }
+
+impl WeakRngDistribution<f64> for Chi {}
 
 impl Univariate<f64, f64> for Chi {
     /// Calculates the cumulative distribution function for the chi

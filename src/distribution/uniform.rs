@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -49,7 +49,10 @@ impl Uniform {
         if min > max || min.is_nan() || max.is_nan() {
             Err(StatsError::BadParams)
         } else {
-            Ok(Uniform { min: min, max: max })
+            Ok(Uniform {
+                min: min,
+                max: max,
+            })
         }
     }
 }
@@ -96,6 +99,8 @@ impl Distribution<f64> for Uniform {
         self.min + rand01 * (self.max - self.min)
     }
 }
+
+impl WeakRngDistribution<f64> for Uniform {}
 
 impl Univariate<f64, f64> for Uniform {
     /// Calculates the cumulative distribution function for the uniform

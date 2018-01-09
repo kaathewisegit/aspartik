@@ -1,5 +1,5 @@
 use Result;
-use distribution::{Continuous, Distribution, Gamma, Univariate};
+use distribution::{Continuous, Distribution, Gamma, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -119,6 +119,8 @@ impl Distribution<f64> for Erlang {
         self.g.sample(r)
     }
 }
+
+impl WeakRngDistribution<f64> for Erlang {}
 
 impl Univariate<f64, f64> for Erlang {
     /// Calculates the cumulative distribution function for the erlang

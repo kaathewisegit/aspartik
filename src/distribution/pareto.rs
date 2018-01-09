@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -131,6 +131,8 @@ impl Distribution<f64> for Pareto {
         self.scale * u.powf(-1.0 / self.shape)
     }
 }
+
+impl WeakRngDistribution<f64> for Pareto {}
 
 impl Univariate<f64, f64> for Pareto {
     /// Calculates the cumulative distribution function for the Pareto

@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{CheckedInverseCDF, Discrete, Distribution, InverseCDF, Univariate};
+use distribution::{CheckedInverseCDF, Discrete, Distribution, InverseCDF, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -120,6 +120,8 @@ impl Distribution<f64> for Categorical {
         sample_unchecked(r, &self.cdf)
     }
 }
+
+impl WeakRngDistribution<f64> for Categorical {}
 
 impl Univariate<u64, f64> for Categorical {
     /// Calculates the cumulative distribution function for the categorical

@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -107,6 +107,8 @@ impl Distribution<f64> for Triangular {
         sample_unchecked(r, self.min, self.max, self.mode)
     }
 }
+
+impl WeakRngDistribution<f64> for Triangular {}
 
 impl Univariate<f64, f64> for Triangular {
     /// Calculates the cumulative distribution function for the triangular

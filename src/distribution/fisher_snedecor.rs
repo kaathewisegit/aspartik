@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::beta;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -134,6 +134,8 @@ impl Distribution<f64> for FisherSnedecor {
         (super::gamma::sample_unchecked(r, self.freedom_2 / 2.0, 0.5) * self.freedom_1)
     }
 }
+
+impl WeakRngDistribution<f64> for FisherSnedecor {}
 
 impl Univariate<f64, f64> for FisherSnedecor {
     /// Calculates the cumulative distribution function for the fisher-snedecor

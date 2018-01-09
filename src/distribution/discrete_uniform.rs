@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Discrete, Distribution, Univariate};
+use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -48,7 +48,10 @@ impl DiscreteUniform {
         if max < min {
             Err(StatsError::BadParams)
         } else {
-            Ok(DiscreteUniform { min: min, max: max })
+            Ok(DiscreteUniform {
+                min: min,
+                max: max,
+            })
         }
     }
 }
@@ -93,6 +96,8 @@ impl Distribution<f64> for DiscreteUniform {
         r.gen_range(self.min, self.max + 1) as f64
     }
 }
+
+impl WeakRngDistribution<f64> for DiscreteUniform {}
 
 impl Univariate<i64, f64> for DiscreteUniform {
     /// Calculates the cumulative distribution function for the

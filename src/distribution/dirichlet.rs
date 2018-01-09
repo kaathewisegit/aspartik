@@ -1,5 +1,5 @@
 use {Result, StatsError, prec};
-use distribution::{CheckedContinuous, Continuous, Distribution};
+use distribution::{CheckedContinuous, Continuous, Distribution, WeakRngDistribution};
 use function::gamma;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -149,6 +149,8 @@ impl Distribution<Vec<f64>> for Dirichlet {
         samples
     }
 }
+
+impl WeakRngDistribution<Vec<f64>> for Dirichlet {}
 
 impl Mean<Vec<f64>> for Dirichlet {
     /// Returns the means of the dirichlet distribution

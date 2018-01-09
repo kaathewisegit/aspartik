@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -123,6 +123,8 @@ impl Distribution<f64> for Cauchy {
         self.location + self.scale * (f64::consts::PI * (r.next_f64() - 0.5)).tan()
     }
 }
+
+impl WeakRngDistribution<f64> for Cauchy {}
 
 impl Univariate<f64, f64> for Cauchy {
     /// Calculates the cumulative distribution function for the

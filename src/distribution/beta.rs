@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::{beta, gamma};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -132,6 +132,8 @@ impl Distribution<f64> for Beta {
         x / (x + y)
     }
 }
+
+impl WeakRngDistribution<f64> for Beta {}
 
 impl Univariate<f64, f64> for Beta {
     /// Calculates the cumulative distribution function for the beta

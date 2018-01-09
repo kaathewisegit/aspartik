@@ -1,5 +1,5 @@
 use {Result, StatsError, consts};
-use distribution::{Continuous, Distribution, Univariate, ziggurat};
+use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution, ziggurat};
 use function::erf;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -98,6 +98,8 @@ impl Distribution<f64> for Normal {
         sample_unchecked(r, self.mean, self.std_dev)
     }
 }
+
+impl WeakRngDistribution<f64> for Normal {}
 
 impl Univariate<f64, f64> for Normal {
     /// Calculates the cumulative distribution function for the

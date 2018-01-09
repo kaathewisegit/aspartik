@@ -1,5 +1,5 @@
 use {Result, StatsError};
-use distribution::{Discrete, Distribution, Univariate};
+use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
 use function::factorial;
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
@@ -164,6 +164,8 @@ impl Distribution<f64> for Hypergeometric {
         x
     }
 }
+
+impl WeakRngDistribution<f64> for Hypergeometric {}
 
 impl Univariate<u64, f64> for Hypergeometric {
     /// Calculates the cumulative distribution function for the hypergeometric
