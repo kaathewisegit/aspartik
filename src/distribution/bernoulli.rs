@@ -1,5 +1,5 @@
 use Result;
-use distribution::{Binomial, Discrete, Distribution, Univariate};
+use distribution::{Binomial, Discrete, Distribution, Univariate, WeakRngDistribution};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
 use statistics::*;
@@ -124,6 +124,8 @@ impl Distribution<f64> for Bernoulli {
         self.b.sample(r)
     }
 }
+
+impl WeakRngDistribution<f64> for Bernoulli {}
 
 impl Univariate<u64, f64> for Bernoulli {
     /// Calculates the cumulative distribution

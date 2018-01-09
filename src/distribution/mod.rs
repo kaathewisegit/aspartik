@@ -2,7 +2,7 @@
 //! and provides
 //! concrete implementations for a variety of distributions.
 
-use rand::Rng;
+use rand::{Rng, XorShiftRng, weak_rng};
 
 pub use self::bernoulli::Bernoulli;
 pub use self::beta::Beta;
@@ -66,6 +66,7 @@ use Result;
 /// for sampling statistical distributions
 pub trait Distribution<T> {
     /// Draws a random sample using the supplied random number generator
+    ///
     /// # Examples
     ///
     /// A trivial implementation that just samples from the supplied
@@ -89,6 +90,31 @@ pub trait Distribution<T> {
     /// # fn main() { }
     /// ```
     fn sample<R: Rng>(&self, r: &mut R) -> T;
+}
+
+/// The `WeakRngDistribution` trait is used to specify an interface
+/// for sampling statistical distributions using a supplied default RNG
+/// (`weak_rng` from the `rand` crate)
+pub trait WeakRngDistribution<T>: Distribution<T> {
+    /// Draws a random sample using a default RNG (`weak_rng` from `rand`)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate statrs;
+    ///
+    /// use statrs::distribution::{Bernoulli, WeakRngDistribution};
+    ///
+    ///
+    /// # fn main() {
+    /// let n = Bernoulli::new(0.5).unwrap();
+    /// print!("{}", n.weak_sample());
+    /// }
+    /// ```
+    fn weak_sample(&self) -> T {
+        let mut r = weak_rng();
+        self.sample::<XorShiftRng>(&mut r)
+    }
 }
 
 /// The `Univariate` trait is used to specify an interface for univariate

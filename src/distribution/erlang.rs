@@ -1,4 +1,4 @@
-use {Result, StatsError};
+use Result;
 use distribution::{Continuous, Distribution, Gamma, Univariate};
 use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
