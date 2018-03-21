@@ -137,55 +137,6 @@ impl Iterator for Periodic {
     }
 }
 
-/// Creates a vector of `f64` points representing a periodic wave with an
-/// amplitude of `1.0`, phase of `0.0`, and delay of `0`.
-///
-/// # Examples
-///
-/// ```
-/// use statrs::generate;
-///
-/// let x = generate::periodic(10, 8.0, 2.0);
-/// assert_eq!(x, [0.0, 0.25, 0.5, 0.75, 0.0, 0.25, 0.5, 0.75, 0.0, 0.25]);
-/// ```
-#[deprecated(since = "0.8.0", note = "please use `Periodic::default` instead")]
-pub fn periodic(length: usize, sampling_rate: f64, frequency: f64) -> Vec<f64> {
-    InfinitePeriodic::default(sampling_rate, frequency)
-        .take(length)
-        .collect::<Vec<f64>>()
-}
-
-/// Creates a vector of `f64` points representing a periodic wave.
-///
-/// # Examples
-///
-/// ```
-/// use statrs::generate;
-///
-/// let x = generate::periodic_custom(10, 8.0, 2.0, 10.0, 1.0, 2);
-/// assert_eq!(x, [6.0, 8.5, 1.0, 3.5, 6.0, 8.5, 1.0, 3.5, 6.0, 8.5]);
-/// ```
-#[deprecated(since = "0.8.0", note = "please use `Periodic::new` instead")]
-pub fn periodic_custom(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64, phase: f64, delay: i64) -> Vec<f64> {
-
-    let step = frequency / sampling_rate * amplitude;
-    let mut phase = (phase - delay as f64 * step).modulus(amplitude);
-    let mut data = vec![0.0; length];
-    let mut k = 0.0;
-
-    for d in &mut data {
-        let mut x = phase + k * step;
-        if x >= amplitude {
-            x %= amplitude;
-            phase = x;
-            k = 0.0;
-        }
-        *d = x;
-        k += 1.0;
-    }
-    data
-}
-
 /// Infinite iterator returning floats that form a sinusoidal wave
 pub struct InfiniteSinusoidal {
     amplitude: f64,
@@ -310,53 +261,6 @@ impl Iterator for Sinusoidal {
     fn next(&mut self) -> Option<f64> {
         self.internal.next()
     }
-}
-
-/// Creates a vector of `f64` points representing a Sine wave with a mean of
-/// `0.0`, phase of `0.0`, and delay of `0`.
-///
-/// # Examples
-///
-/// ```
-/// use statrs::generate;
-///
-/// let x = generate::sinusoidal(10, 8.0, 2.0, 1.0);
-/// assert_eq!(x,
-///     [0.0, 1.0, 0.00000000000000012246467991473532,
-///     -1.0, -0.00000000000000024492935982947064, 1.0,
-///     0.00000000000000036739403974420594, -1.0,
-///     -0.0000000000000004898587196589413, 1.0]);
-/// ```
-#[deprecated(since = "0.8.0", note = "please use `Sinusoidal::default` instead")]
-pub fn sinusoidal(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64) -> Vec<f64> {
-    InfiniteSinusoidal::new(sampling_rate, frequency, amplitude, 0.0, 0.0, 0)
-        .take(length)
-        .collect::<Vec<f64>>()
-}
-
-/// Creates a vector of `f64` points representing a Sine wave.
-///
-/// # Examples
-///
-/// ```
-/// use statrs::generate;
-///
-/// let x = generate::sinusoidal_custom(10, 8.0, 2.0, 1.0, 5.0, 2.0, 1);
-/// assert_eq!(x,
-///     [5.416146836547142, 5.909297426825682, 4.583853163452858,
-///     4.090702573174318, 5.416146836547142, 5.909297426825682,
-///     4.583853163452858, 4.090702573174318, 5.416146836547142,
-///     5.909297426825682]);
-/// ```
-#[deprecated(since = "0.8.0", note = "please use `Sinusoidal::new` instead")]
-pub fn sinusoidal_custom(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64, mean: f64, phase: f64, delay: i64) -> Vec<f64> {
-
-    let pi2 = consts::PI * 2.0;
-    let step = frequency / sampling_rate * pi2;
-    let phase = (phase - delay as f64 * step) % pi2;
-    (0..length)
-        .map(|i| mean + amplitude * (phase + i as f64 * step).sin())
-        .collect()
 }
 
 /// Infinite iterator returning floats forming a square wave starting
@@ -566,13 +470,11 @@ impl InfiniteSawtooth {
         let height = high_value - low_value;
         let period = period as f64;
         InfiniteSawtooth {
-            periodic: InfinitePeriodic::new(
-                1.0,
-                1.0 / period,
-                height * period / (period - 1.0),
-                0.0,
-                delay,
-            ),
+            periodic: InfinitePeriodic::new(1.0,
+                                            1.0 / period,
+                                            height * period / (period - 1.0),
+                                            0.0,
+                                            delay),
             low_value: low_value as f64,
         }
     }
@@ -582,9 +484,7 @@ impl Iterator for InfiniteSawtooth {
     type Item = f64;
 
     fn next(&mut self) -> Option<f64> {
-        self.periodic.next().and_then(|x| {
-            Some(x + self.low_value)
-        })
+        self.periodic.next().and_then(|x| Some(x + self.low_value))
     }
 }
 
