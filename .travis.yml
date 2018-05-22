@@ -23,7 +23,8 @@ matrix:
         - rust: nightly
 
 before_script:
-  - rustup component add rustfmt-preview
+  - rustup install nightly
+  - rustup component add rustfmt-preview --toolchain nightly
   # Configure only if we're doing coverage
   - >
     if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$TRAVIS_RUST_VERSION" == "stable" ]]; then
