@@ -23,11 +23,17 @@ matrix:
         - rust: nightly
 
 before_script:
+  - rustup component add rustfmt-preview
   # Configure only if we're doing coverage
   - >
     if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$TRAVIS_RUST_VERSION" == "stable" ]]; then
       LOCAL="~/.local" && export PATH=$LOCAL/bin:$PATH;
     fi
+
+script:
+  - cargo fmt --all -- --check
+  - cargo build
+  - cargo test
 
 after_success: >
   if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$TRAVIS_RUST_VERSION" == "stable" ]]; then
