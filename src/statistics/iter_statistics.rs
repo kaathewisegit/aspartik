@@ -40,7 +40,8 @@ where
         let mut iter = self.into_iter();
         match iter.next() {
             None => f64::NAN,
-            Some(init) => iter.map(|x| x.borrow().abs())
+            Some(init) => iter
+                .map(|x| x.borrow().abs())
                 .fold(init.borrow().abs(), |acc, x| {
                     if x < acc || x.is_nan() {
                         x
@@ -55,7 +56,8 @@ where
         let mut iter = self.into_iter();
         match iter.next() {
             None => f64::NAN,
-            Some(init) => iter.map(|x| x.borrow().abs())
+            Some(init) => iter
+                .map(|x| x.borrow().abs())
                 .fold(init.borrow().abs(), |acc, x| {
                     if x > acc || x.is_nan() {
                         x

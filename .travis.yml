@@ -31,7 +31,7 @@ before_script:
     fi
 
 script:
-  - cargo fmt --all -- --check
+  - cargo +nightly fmt --all -- --check
   - cargo build
   - cargo test
 
