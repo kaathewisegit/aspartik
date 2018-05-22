@@ -1,10 +1,10 @@
-use {Result, StatsError, consts};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::gamma;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {consts, Result, StatsError};
 
 /// Implements the [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
 /// distribution
@@ -53,13 +53,11 @@ impl Weibull {
         match (shape, scale, is_nan) {
             (_, _, true) => Err(StatsError::BadParams),
             (_, _, false) if shape <= 0.0 || scale <= 0.0 => Err(StatsError::BadParams),
-            (_, _, false) => {
-                Ok(Weibull {
-                    shape: shape,
-                    scale: scale,
-                    scale_pow_shape_inv: scale.powf(-shape),
-                })
-            }
+            (_, _, false) => Ok(Weibull {
+                shape: shape,
+                scale: scale,
+                scale_pow_shape_inv: scale.powf(-shape),
+            }),
         }
     }
 
@@ -263,7 +261,9 @@ impl Skewness<f64> for Weibull {
         let sigma = self.std_dev();
         let sigma2 = sigma * sigma;
         let sigma3 = sigma2 * sigma;
-        (self.scale * self.scale * self.scale * gamma::gamma(1.0 + 3.0 / self.shape) - 3.0 * sigma2 * mu - (mu * mu * mu)) / sigma3
+        (self.scale * self.scale * self.scale * gamma::gamma(1.0 + 3.0 / self.shape)
+            - 3.0 * sigma2 * mu
+            - (mu * mu * mu)) / sigma3
     }
 }
 
@@ -324,7 +324,9 @@ impl Continuous<f64, f64> for Weibull {
         } else if x == f64::INFINITY {
             0.0
         } else {
-            self.shape * (x / self.scale).powf(self.shape - 1.0) * (-(x.powf(self.shape)) * self.scale_pow_shape_inv).exp() / self.scale
+            self.shape
+                * (x / self.scale).powf(self.shape - 1.0)
+                * (-(x.powf(self.shape)) * self.scale_pow_shape_inv).exp() / self.scale
         }
     }
 
@@ -346,7 +348,9 @@ impl Continuous<f64, f64> for Weibull {
         } else if x == f64::INFINITY {
             f64::NEG_INFINITY
         } else {
-            self.shape.ln() + (self.shape - 1.0) * (x / self.scale).ln() - x.powf(self.shape) * self.scale_pow_shape_inv - self.scale.ln()
+            self.shape.ln() + (self.shape - 1.0) * (x / self.scale).ln()
+                - x.powf(self.shape) * self.scale_pow_shape_inv
+                - self.scale.ln()
         }
     }
 }

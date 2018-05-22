@@ -1,10 +1,10 @@
-use {Result, StatsError};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::{beta, gamma};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the [Student's
 /// T](https://en.wikipedia.org/wiki/Student%27s_t-distribution) distribution
@@ -144,7 +144,11 @@ impl Distribution<f64> for StudentsT {
     /// ```
     fn sample<R: Rng>(&self, r: &mut R) -> f64 {
         let gamma = super::gamma::sample_unchecked(r, 0.5 * self.freedom, 0.5);
-        super::normal::sample_unchecked(r, self.location, self.scale * (self.freedom / gamma).sqrt())
+        super::normal::sample_unchecked(
+            r,
+            self.location,
+            self.scale * (self.freedom / gamma).sqrt(),
+        )
     }
 }
 
@@ -176,7 +180,11 @@ impl Univariate<f64, f64> for StudentsT {
             let k = (x - self.location) / self.scale;
             let h = self.freedom / (self.freedom + k * k);
             let ib = 0.5 * beta::beta_reg(self.freedom / 2.0, 0.5, h);
-            if x <= self.location { ib } else { 1.0 - ib }
+            if x <= self.location {
+                ib
+            } else {
+                1.0 - ib
+            }
         }
     }
 }
@@ -397,10 +405,13 @@ impl CheckedEntropy<f64> for StudentsT {
     fn checked_entropy(&self) -> Result<f64> {
         // TODO: investigate using prec::almost_eq for comparisons here
         if self.location != 0.0 || self.scale != 1.0 {
-            Err(StatsError::SpecialCase("Cannot calculate entropy for StudentsT distribution where location is not 0 and scale is not 1"))
+            Err(StatsError::SpecialCase(
+                "Cannot calculate entropy for StudentsT distribution where location is not 0 and scale is not 1",
+            ))
         } else {
-            let result = (self.freedom + 1.0) / 2.0 * (gamma::digamma((self.freedom + 1.0) / 2.0) - gamma::digamma(self.freedom / 2.0)) +
-                         (self.freedom.sqrt() * beta::beta(self.freedom / 2.0, 0.5)).ln();
+            let result = (self.freedom + 1.0) / 2.0
+                * (gamma::digamma((self.freedom + 1.0) / 2.0) - gamma::digamma(self.freedom / 2.0))
+                + (self.freedom.sqrt() * beta::beta(self.freedom / 2.0, 0.5)).ln();
             Ok(result)
         }
     }
@@ -496,8 +507,9 @@ impl Continuous<f64, f64> for StudentsT {
             super::normal::pdf_unchecked(x, self.location, self.scale)
         } else {
             let d = (x - self.location) / self.scale;
-            (gamma::ln_gamma((self.freedom + 1.0) / 2.0) - gamma::ln_gamma(self.freedom / 2.0)).exp() *
-            (1.0 + d * d / self.freedom).powf(-0.5 * (self.freedom + 1.0)) / (self.freedom * f64::consts::PI).sqrt() / self.scale
+            (gamma::ln_gamma((self.freedom + 1.0) / 2.0) - gamma::ln_gamma(self.freedom / 2.0))
+                .exp() * (1.0 + d * d / self.freedom).powf(-0.5 * (self.freedom + 1.0))
+                / (self.freedom * f64::consts::PI).sqrt() / self.scale
         }
     }
 
@@ -522,8 +534,11 @@ impl Continuous<f64, f64> for StudentsT {
             super::normal::ln_pdf_unchecked(x, self.location, self.scale)
         } else {
             let d = (x - self.location) / self.scale;
-            gamma::ln_gamma((self.freedom + 1.0) / 2.0) - 0.5 * ((self.freedom + 1.0) * (1.0 + d * d / self.freedom).ln()) -
-            gamma::ln_gamma(self.freedom / 2.0) - 0.5 * (self.freedom * f64::consts::PI).ln() - self.scale.ln()
+            gamma::ln_gamma((self.freedom + 1.0) / 2.0)
+                - 0.5 * ((self.freedom + 1.0) * (1.0 + d * d / self.freedom).ln())
+                - gamma::ln_gamma(self.freedom / 2.0)
+                - 0.5 * (self.freedom * f64::consts::PI).ln()
+                - self.scale.ln()
         }
     }
 }

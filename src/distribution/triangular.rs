@@ -1,9 +1,9 @@
-use {Result, StatsError};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the
 /// [Triangular](https://en.wikipedia.org/wiki/Triangular_distribution)

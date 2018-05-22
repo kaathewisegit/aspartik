@@ -1,9 +1,9 @@
-use {Result, StatsError};
 use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the [Discrete
 /// Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
@@ -48,10 +48,7 @@ impl DiscreteUniform {
         if max < min {
             Err(StatsError::BadParams)
         } else {
-            Ok(DiscreteUniform {
-                min: min,
-                max: max,
-            })
+            Ok(DiscreteUniform { min: min, max: max })
         }
     }
 }
@@ -117,7 +114,11 @@ impl Univariate<i64, f64> for DiscreteUniform {
             let lower = self.min as f64;
             let upper = self.max as f64;
             let ans = (x.floor() - lower + 1.0) / (upper - lower + 1.0);
-            if ans > 1.0 { 1.0 } else { ans }
+            if ans > 1.0 {
+                1.0
+            } else {
+                ans
+            }
         }
     }
 }

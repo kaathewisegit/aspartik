@@ -1,9 +1,9 @@
-use Result;
 use distribution::{Continuous, Distribution, Gamma, Univariate, WeakRngDistribution};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use Result;
 
 /// Implements the
 /// [Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution)
@@ -50,11 +50,9 @@ impl ChiSquared {
     /// assert!(result.is_err());
     /// ```
     pub fn new(freedom: f64) -> Result<ChiSquared> {
-        Gamma::new(freedom / 2.0, 0.5).map(|g| {
-            ChiSquared {
-                freedom: freedom,
-                g: g,
-            }
+        Gamma::new(freedom / 2.0, 0.5).map(|g| ChiSquared {
+            freedom: freedom,
+            g: g,
         })
     }
 
@@ -277,7 +275,8 @@ impl Median<f64> for ChiSquared {
     fn median(&self) -> f64 {
         if self.freedom < 1.0 {
             // if k is small, calculate using expansion of formula
-            self.freedom - 2.0 / 3.0 + 12.0 / (81.0 * self.freedom) - 8.0 / (729.0 * self.freedom * self.freedom)
+            self.freedom - 2.0 / 3.0 + 12.0 / (81.0 * self.freedom)
+                - 8.0 / (729.0 * self.freedom * self.freedom)
         } else {
             // if k is large enough, median heads toward k - 2/3
             self.freedom - 2.0 / 3.0

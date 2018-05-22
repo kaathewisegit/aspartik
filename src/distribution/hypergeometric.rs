@@ -1,11 +1,11 @@
-use {Result, StatsError};
 use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
 use function::factorial;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::cmp;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the
 /// [Hypergeometric](http://en.wikipedia.org/wiki/Hypergeometric_distribution)
@@ -103,7 +103,11 @@ impl Hypergeometric {
     /// Returns population, successes, and draws in that order
     /// as a tuple of doubles
     fn values_f64(&self) -> (f64, f64, f64) {
-        (self.population as f64, self.successes as f64, self.draws as f64)
+        (
+            self.population as f64,
+            self.successes as f64,
+            self.draws as f64,
+        )
     }
 }
 
@@ -191,7 +195,10 @@ impl Univariate<u64, f64> for Hypergeometric {
             let k = x.floor() as u64;
             let ln_denom = factorial::ln_binomial(self.population, self.draws);
             (0..k + 1).fold(0.0, |acc, i| {
-                acc + (factorial::ln_binomial(self.successes, i) + factorial::ln_binomial(self.population - self.successes, self.draws - i) - ln_denom).exp()
+                acc + (factorial::ln_binomial(self.successes, i)
+                    + factorial::ln_binomial(self.population - self.successes, self.draws - i)
+                    - ln_denom)
+                    .exp()
             })
         }
     }
@@ -328,7 +335,8 @@ impl CheckedVariance<f64> for Hypergeometric {
             Err(StatsError::ArgGt("population", 1.0))
         } else {
             let (population, successes, draws) = self.values_f64();
-            let val = draws * successes * (population - draws) * (population - successes) / (population * population * (population - 1.0));
+            let val = draws * successes * (population - draws) * (population - successes)
+                / (population * population * (population - 1.0));
             Ok(val)
         }
     }
@@ -387,13 +395,15 @@ impl CheckedSkewness<f64> for Hypergeometric {
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
     fn checked_skewness(&self) -> Result<f64> {
-
         if self.population <= 2 {
             Err(StatsError::ArgGt("population", 2.0))
         } else {
             let (population, successes, draws) = self.values_f64();
-            let val = (population - 1.0).sqrt() * (population - 2.0 * draws) * (population - 2.0 * successes) /
-                      ((draws * successes * (population - successes) * (population - draws)).sqrt() * (population - 2.0));
+            let val = (population - 1.0).sqrt()
+                * (population - 2.0 * draws)
+                * (population - 2.0 * successes)
+                / ((draws * successes * (population - successes) * (population - draws)).sqrt()
+                    * (population - 2.0));
             Ok(val)
         }
     }
@@ -429,8 +439,9 @@ impl Discrete<u64, f64> for Hypergeometric {
         if x > self.draws {
             0.0
         } else {
-            factorial::binomial(self.successes, x) * factorial::binomial(self.population - self.successes, self.draws - x) /
-            factorial::binomial(self.population, self.draws)
+            factorial::binomial(self.successes, x)
+                * factorial::binomial(self.population - self.successes, self.draws - x)
+                / factorial::binomial(self.population, self.draws)
         }
     }
 
@@ -445,8 +456,9 @@ impl Discrete<u64, f64> for Hypergeometric {
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
     fn ln_pmf(&self, x: u64) -> f64 {
-        factorial::ln_binomial(self.successes, x) + factorial::ln_binomial(self.population - self.successes, self.draws - x) -
-        factorial::ln_binomial(self.population, self.draws)
+        factorial::ln_binomial(self.successes, x)
+            + factorial::ln_binomial(self.population - self.successes, self.draws - x)
+            - factorial::ln_binomial(self.population, self.draws)
     }
 }
 

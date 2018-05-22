@@ -1,10 +1,10 @@
-use {Result, StatsError};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::gamma;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
 /// distribution
@@ -51,12 +51,10 @@ impl Gamma {
         match (shape, rate, is_nan) {
             (_, _, true) => Err(StatsError::BadParams),
             (_, _, false) if shape <= 0.0 || rate <= 0.0 => Err(StatsError::BadParams),
-            (_, _, false) => {
-                Ok(Gamma {
-                    shape: shape,
-                    rate: rate,
-                })
-            }
+            (_, _, false) => Ok(Gamma {
+                shape: shape,
+                rate: rate,
+            }),
         }
     }
 
@@ -272,7 +270,9 @@ impl Entropy<f64> for Gamma {
         if self.rate == f64::INFINITY {
             0.0
         } else {
-            self.shape - self.rate.ln() + gamma::ln_gamma(self.shape) + (1.0 - self.shape) * gamma::digamma(self.shape)
+            self.shape - self.rate.ln()
+                + gamma::ln_gamma(self.shape)
+                + (1.0 - self.shape) * gamma::digamma(self.shape)
         }
     }
 }
@@ -342,7 +342,8 @@ impl Continuous<f64, f64> for Gamma {
         } else if x == f64::INFINITY {
             0.0
         } else {
-            self.rate.powf(self.shape) * x.powf(self.shape - 1.0) * (-self.rate * x).exp() / gamma::gamma(self.shape)
+            self.rate.powf(self.shape) * x.powf(self.shape - 1.0) * (-self.rate * x).exp()
+                / gamma::gamma(self.shape)
         }
     }
 
@@ -370,7 +371,9 @@ impl Continuous<f64, f64> for Gamma {
         } else if x == f64::INFINITY {
             f64::NEG_INFINITY
         } else {
-            self.shape * self.rate.ln() + (self.shape - 1.0) * x.ln() - self.rate * x - gamma::ln_gamma(self.shape)
+            self.shape * self.rate.ln() + (self.shape - 1.0) * x.ln()
+                - self.rate * x
+                - gamma::ln_gamma(self.shape)
         }
     }
 }

@@ -280,8 +280,13 @@ impl Median<f64> for [f64] {
     }
 }
 
-fn handle_rank_ties(ranks: &mut [f64], index: &[usize], a: isize, b: isize, tie_breaker: RankTieBreaker) {
-
+fn handle_rank_ties(
+    ranks: &mut [f64],
+    index: &[usize],
+    a: isize,
+    b: isize,
+    tie_breaker: RankTieBreaker,
+) {
     let rank = match tie_breaker {
         RankTieBreaker::Average => (b + a - 1) as f64 / 2.0 + 1.0,
         RankTieBreaker::Min => (a + 1) as f64,
@@ -368,7 +373,12 @@ fn select_inplace(arr: &mut [f64], rank: usize) -> f64 {
 // insertion sort on small
 // containers and quick sorts for larger ones
 fn sort(primary: &mut [f64], secondary: &mut [usize]) {
-    assert_eq!(primary.len(), secondary.len(), "{}", StatsError::ContainersMustBeSameLength);
+    assert_eq!(
+        primary.len(),
+        secondary.len(),
+        "{}",
+        StatsError::ContainersMustBeSameLength
+    );
 
     let n = primary.len();
     if n <= 1 {
@@ -408,7 +418,12 @@ fn sort(primary: &mut [f64], secondary: &mut [usize]) {
 
 // quick sorts a primary slice and re-orders the secondary slice automatically
 fn quick_sort(primary: &mut [f64], secondary: &mut [usize], left: usize, right: usize) {
-    assert_eq!(primary.len(), secondary.len(), "{}", StatsError::ContainersMustBeSameLength);
+    assert_eq!(
+        primary.len(),
+        secondary.len(),
+        "{}",
+        StatsError::ContainersMustBeSameLength
+    );
 
     // shadow left and right for mutability in loop
     let mut left = left;
@@ -487,7 +502,12 @@ fn quick_sort(primary: &mut [f64], secondary: &mut [usize], left: usize, right: 
 // quick sorts a primary slice and re-orders the secondary slice automatically.
 // Sorts secondarily by the secondary slice on primary key duplicates
 fn quick_sort_all(primary: &mut [f64], secondary: &mut [usize], left: usize, right: usize) {
-    assert_eq!(primary.len(), secondary.len(), "{}", StatsError::ContainersMustBeSameLength);
+    assert_eq!(
+        primary.len(),
+        secondary.len(),
+        "{}",
+        StatsError::ContainersMustBeSameLength
+    );
 
     // shadow left and right for mutability in loop
     let mut left = left;
@@ -500,24 +520,24 @@ fn quick_sort_all(primary: &mut [f64], secondary: &mut [usize], left: usize, rig
             let mut b = right;
             let p = a + ((b - a) >> 1);
 
-            if *primary.get_unchecked(a) > *primary.get_unchecked(p) ||
-                *primary.get_unchecked(a) == *primary.get_unchecked(p) && *secondary.get_unchecked(a) > *secondary.get_unchecked(p)
+            if *primary.get_unchecked(a) > *primary.get_unchecked(p)
+                || *primary.get_unchecked(a) == *primary.get_unchecked(p)
+                    && *secondary.get_unchecked(a) > *secondary.get_unchecked(p)
             {
-
                 primary.swap(a, p);
                 secondary.swap(a, p);
             }
-            if *primary.get_unchecked(a) > *primary.get_unchecked(b) ||
-                *primary.get_unchecked(a) == *primary.get_unchecked(b) && *secondary.get_unchecked(a) > *secondary.get_unchecked(b)
+            if *primary.get_unchecked(a) > *primary.get_unchecked(b)
+                || *primary.get_unchecked(a) == *primary.get_unchecked(b)
+                    && *secondary.get_unchecked(a) > *secondary.get_unchecked(b)
             {
-
                 primary.swap(a, b);
                 secondary.swap(a, b);
             }
-            if *primary.get_unchecked(p) > *primary.get_unchecked(b) ||
-                *primary.get_unchecked(p) == *primary.get_unchecked(b) && *secondary.get_unchecked(p) > *secondary.get_unchecked(b)
+            if *primary.get_unchecked(p) > *primary.get_unchecked(b)
+                || *primary.get_unchecked(p) == *primary.get_unchecked(b)
+                    && *secondary.get_unchecked(p) > *secondary.get_unchecked(b)
             {
-
                 primary.swap(p, b);
                 secondary.swap(p, b);
             }
@@ -527,10 +547,14 @@ fn quick_sort_all(primary: &mut [f64], secondary: &mut [usize], left: usize, rig
 
             // Hoare partitioning
             loop {
-                while *primary.get_unchecked(a) < pivot1 || *primary.get_unchecked(a) == pivot1 && *secondary.get_unchecked(a) < pivot2 {
+                while *primary.get_unchecked(a) < pivot1
+                    || *primary.get_unchecked(a) == pivot1 && *secondary.get_unchecked(a) < pivot2
+                {
                     a += 1;
                 }
-                while pivot1 < *primary.get_unchecked(b) || pivot1 == *primary.get_unchecked(b) && pivot2 < *secondary.get_unchecked(b) {
+                while pivot1 < *primary.get_unchecked(b)
+                    || pivot1 == *primary.get_unchecked(b) && pivot2 < *secondary.get_unchecked(b)
+                {
                     b -= 1;
                 }
                 if a > b {

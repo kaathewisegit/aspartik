@@ -1,9 +1,9 @@
-use {Result, StatsError};
-use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution, ziggurat};
-use rand::Rng;
+use distribution::{ziggurat, Continuous, Distribution, Univariate, WeakRngDistribution};
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the
 /// [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution)

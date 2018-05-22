@@ -1,8 +1,8 @@
-use Result;
 use distribution::{Continuous, Distribution, Gamma, Univariate, WeakRngDistribution};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
+use Result;
 
 /// Implements the [Erlang](https://en.wikipedia.org/wiki/Erlang_distribution)
 /// distribution

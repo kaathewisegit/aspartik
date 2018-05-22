@@ -1,10 +1,10 @@
-use {Result, StatsError};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::beta;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the
 /// [Fisher-Snedecor](https://en.wikipedia.org/wiki/F-distribution) distribution
@@ -130,8 +130,8 @@ impl Distribution<f64> for FisherSnedecor {
     /// # }
     /// ```
     fn sample<R: Rng>(&self, r: &mut R) -> f64 {
-        (super::gamma::sample_unchecked(r, self.freedom_1 / 2.0, 0.5) * self.freedom_2) /
-        (super::gamma::sample_unchecked(r, self.freedom_2 / 2.0, 0.5) * self.freedom_1)
+        (super::gamma::sample_unchecked(r, self.freedom_1 / 2.0, 0.5) * self.freedom_2)
+            / (super::gamma::sample_unchecked(r, self.freedom_2 / 2.0, 0.5) * self.freedom_1)
     }
 }
 
@@ -157,9 +157,11 @@ impl Univariate<f64, f64> for FisherSnedecor {
         } else if x == f64::INFINITY {
             1.0
         } else {
-            beta::beta_reg(self.freedom_1 / 2.0,
-                           self.freedom_2 / 2.0,
-                           self.freedom_1 * x / (self.freedom_1 * x + self.freedom_2))
+            beta::beta_reg(
+                self.freedom_1 / 2.0,
+                self.freedom_2 / 2.0,
+                self.freedom_1 * x / (self.freedom_1 * x + self.freedom_2),
+            )
         }
     }
 }
@@ -313,8 +315,12 @@ impl CheckedVariance<f64> for FisherSnedecor {
         if self.freedom_2 <= 4.0 {
             Err(StatsError::ArgGt("freedom_2", 4.0))
         } else {
-            let val = (2.0 * self.freedom_2 * self.freedom_2 * (self.freedom_1 + self.freedom_2 - 2.0)) /
-                      (self.freedom_1 * (self.freedom_2 - 2.0) * (self.freedom_2 - 2.0) * (self.freedom_2 - 4.0));
+            let val =
+                (2.0 * self.freedom_2 * self.freedom_2 * (self.freedom_1 + self.freedom_2 - 2.0))
+                    / (self.freedom_1
+                        * (self.freedom_2 - 2.0)
+                        * (self.freedom_2 - 2.0)
+                        * (self.freedom_2 - 4.0));
             Ok(val)
         }
     }
@@ -391,8 +397,10 @@ impl CheckedSkewness<f64> for FisherSnedecor {
         if self.freedom_2 <= 6.0 {
             Err(StatsError::ArgGt("freedom_2", 6.0))
         } else {
-            let val = ((2.0 * self.freedom_1 + self.freedom_2 - 2.0) * (8.0 * (self.freedom_2 - 4.0)).sqrt()) /
-                      ((self.freedom_2 - 6.0) * (self.freedom_1 * (self.freedom_1 + self.freedom_2 - 2.0)).sqrt());
+            let val = ((2.0 * self.freedom_1 + self.freedom_2 - 2.0)
+                * (8.0 * (self.freedom_2 - 4.0)).sqrt())
+                / ((self.freedom_2 - 6.0)
+                    * (self.freedom_1 * (self.freedom_1 + self.freedom_2 - 2.0)).sqrt());
             Ok(val)
         }
     }
@@ -445,7 +453,8 @@ impl CheckedMode<f64> for FisherSnedecor {
         if self.freedom_1 <= 2.0 {
             Err(StatsError::ArgGt("freedom_1", 2.0))
         } else {
-            let val = (self.freedom_2 * (self.freedom_1 - 2.0)) / (self.freedom_1 * (self.freedom_2 + 2.0));
+            let val = (self.freedom_2 * (self.freedom_1 - 2.0))
+                / (self.freedom_1 * (self.freedom_2 + 2.0));
             Ok(val)
         }
     }
@@ -476,9 +485,9 @@ impl Continuous<f64, f64> for FisherSnedecor {
         } else if x <= 0.0 {
             0.0
         } else {
-            ((self.freedom_1 * x).powf(self.freedom_1) * self.freedom_2.powf(self.freedom_2) /
-             (self.freedom_1 * x + self.freedom_2).powf(self.freedom_1 + self.freedom_2))
-                    .sqrt() / (x * beta::beta(self.freedom_1 / 2.0, self.freedom_2 / 2.0))
+            ((self.freedom_1 * x).powf(self.freedom_1) * self.freedom_2.powf(self.freedom_2)
+                / (self.freedom_1 * x + self.freedom_2).powf(self.freedom_1 + self.freedom_2))
+                .sqrt() / (x * beta::beta(self.freedom_1 / 2.0, self.freedom_2 / 2.0))
         }
     }
 

@@ -1,11 +1,11 @@
 //! Provides functions related to factorial calculations (e.g. binomial
 //! coefficient, factorial, multinomial)
 
-use Result;
 use error::StatsError;
 use function::gamma;
 use std::f64;
-use std::sync::{ONCE_INIT, Once};
+use std::sync::{Once, ONCE_INIT};
+use Result;
 
 /// The maximum factorial representable
 /// by a 64-bit floating point without
@@ -86,8 +86,9 @@ pub fn multinomial(n: u64, ni: &[u64]) -> f64 {
 ///
 /// If the elements in `ni` do not sum to `n`
 pub fn checked_multinomial(n: u64, ni: &[u64]) -> Result<f64> {
-    let (sum, ret) = ni.iter().fold((0, ln_factorial(n)),
-                                    |acc, &x| (acc.0 + x, acc.1 - ln_factorial(x)));
+    let (sum, ret) = ni.iter().fold((0, ln_factorial(n)), |acc, &x| {
+        (acc.0 + x, acc.1 - ln_factorial(x))
+    });
     if sum != n {
         Err(StatsError::ContainerExpectedSumVar("ni", "n"))
     } else {

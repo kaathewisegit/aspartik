@@ -50,8 +50,13 @@ impl InfinitePeriodic {
     /// 2).take(10).collect::<Vec<f64>>();
     /// assert_eq!(x, [6.0, 8.5, 1.0, 3.5, 6.0, 8.5, 1.0, 3.5, 6.0, 8.5]);
     /// ```
-    pub fn new(sampling_rate: f64, frequency: f64, amplitude: f64, phase: f64, delay: i64) -> InfinitePeriodic {
-
+    pub fn new(
+        sampling_rate: f64,
+        frequency: f64,
+        amplitude: f64,
+        phase: f64,
+        delay: i64,
+    ) -> InfinitePeriodic {
         let step = frequency / sampling_rate * amplitude;
         InfinitePeriodic {
             amplitude: amplitude,
@@ -109,8 +114,18 @@ impl Periodic {
     /// assert_eq!(x, [6.0, 8.5, 1.0, 3.5, 6.0, 8.5, 1.0, 3.5, 6.0, 8.5]);
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfinitePeriodic::new` and `take` instead")]
-    pub fn new(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64, phase: f64, delay: i64) -> Periodic {
-        Periodic { internal: InfinitePeriodic::new(sampling_rate, frequency, amplitude, phase, delay).take(length) }
+    pub fn new(
+        length: usize,
+        sampling_rate: f64,
+        frequency: f64,
+        amplitude: f64,
+        phase: f64,
+        delay: i64,
+    ) -> Periodic {
+        Periodic {
+            internal: InfinitePeriodic::new(sampling_rate, frequency, amplitude, phase, delay)
+                .take(length),
+        }
     }
 
     /// Constructs a default periodic wave generator
@@ -123,9 +138,13 @@ impl Periodic {
     /// let x = Periodic::default(10, 8.0, 2.0).collect::<Vec<f64>>();
     /// assert_eq!(x, [0.0, 0.25, 0.5, 0.75, 0.0, 0.25, 0.5, 0.75, 0.0, 0.25]);
     /// ```
-    #[deprecated(since = "0.9.0", note = "please use `InfinitePeriodic::default` and `take` instead")]
+    #[deprecated(
+        since = "0.9.0", note = "please use `InfinitePeriodic::default` and `take` instead"
+    )]
     pub fn default(length: usize, sampling_rate: f64, frequency: f64) -> Periodic {
-        Periodic { internal: InfinitePeriodic::default(sampling_rate, frequency).take(length) }
+        Periodic {
+            internal: InfinitePeriodic::default(sampling_rate, frequency).take(length),
+        }
     }
 }
 
@@ -162,8 +181,14 @@ impl InfiniteSinusoidal {
     ///     4.583853163452858, 4.090702573174318, 5.416146836547142,
     ///     5.909297426825682]);
     /// ```
-    pub fn new(sampling_rate: f64, frequency: f64, amplitude: f64, mean: f64, phase: f64, delay: i64) -> InfiniteSinusoidal {
-
+    pub fn new(
+        sampling_rate: f64,
+        frequency: f64,
+        amplitude: f64,
+        mean: f64,
+        phase: f64,
+        delay: i64,
+    ) -> InfiniteSinusoidal {
         let pi2 = consts::PI * 2.0;
         let step = frequency / sampling_rate * pi2;
         InfiniteSinusoidal {
@@ -231,8 +256,25 @@ impl Sinusoidal {
     ///     5.909297426825682]);
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteSinusoidal::new` and `take` instead")]
-    pub fn new(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64, mean: f64, phase: f64, delay: i64) -> Sinusoidal {
-        Sinusoidal { internal: InfiniteSinusoidal::new(sampling_rate, frequency, amplitude, mean, phase, delay).take(length) }
+    pub fn new(
+        length: usize,
+        sampling_rate: f64,
+        frequency: f64,
+        amplitude: f64,
+        mean: f64,
+        phase: f64,
+        delay: i64,
+    ) -> Sinusoidal {
+        Sinusoidal {
+            internal: InfiniteSinusoidal::new(
+                sampling_rate,
+                frequency,
+                amplitude,
+                mean,
+                phase,
+                delay,
+            ).take(length),
+        }
     }
 
     /// Constructs a default sinusoidal wave generator
@@ -249,9 +291,18 @@ impl Sinusoidal {
     ///     0.00000000000000036739403974420594, -1.0,
     ///     -0.0000000000000004898587196589413, 1.0]);
     /// ```
-    #[deprecated(since = "0.9.0", note = "please use `InfiniteSinusoidal::default` and `take` instead")]
-    pub fn default(length: usize, sampling_rate: f64, frequency: f64, amplitude: f64) -> Sinusoidal {
-        Sinusoidal { internal: InfiniteSinusoidal::default(sampling_rate, frequency, amplitude).take(length) }
+    #[deprecated(
+        since = "0.9.0", note = "please use `InfiniteSinusoidal::default` and `take` instead"
+    )]
+    pub fn default(
+        length: usize,
+        sampling_rate: f64,
+        frequency: f64,
+        amplitude: f64,
+    ) -> Sinusoidal {
+        Sinusoidal {
+            internal: InfiniteSinusoidal::default(sampling_rate, frequency, amplitude).take(length),
+        }
     }
 }
 
@@ -285,8 +336,13 @@ impl InfiniteSquare {
     /// assert_eq!(x, [-1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
     /// -1.0, 1.0])
     /// ```
-    pub fn new(high_duration: i64, low_duration: i64, high_value: f64, low_value: f64, delay: i64) -> InfiniteSquare {
-
+    pub fn new(
+        high_duration: i64,
+        low_duration: i64,
+        high_value: f64,
+        low_value: f64,
+        delay: i64,
+    ) -> InfiniteSquare {
         let duration = (high_duration + low_duration) as f64;
         InfiniteSquare {
             periodic: InfinitePeriodic::new(1.0, 1.0 / duration, duration, 0.0, delay),
@@ -330,8 +386,23 @@ impl Square {
     /// -1.0, 1.0])
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteSquare::new` and `take` instead")]
-    pub fn new(length: usize, high_duration: i64, low_duration: i64, high_value: f64, low_value: f64, delay: i64) -> Square {
-        Square { internal: InfiniteSquare::new(high_duration, low_duration, high_value, low_value, delay).take(length) }
+    pub fn new(
+        length: usize,
+        high_duration: i64,
+        low_duration: i64,
+        high_value: f64,
+        low_value: f64,
+        delay: i64,
+    ) -> Square {
+        Square {
+            internal: InfiniteSquare::new(
+                high_duration,
+                low_duration,
+                high_value,
+                low_value,
+                delay,
+            ).take(length),
+        }
     }
 }
 
@@ -375,8 +446,13 @@ impl InfiniteTriangle {
     /// }
     /// # }
     /// ```
-    pub fn new(raise_duration: i64, fall_duration: i64, high_value: f64, low_value: f64, delay: i64) -> InfiniteTriangle {
-
+    pub fn new(
+        raise_duration: i64,
+        fall_duration: i64,
+        high_value: f64,
+        low_value: f64,
+        delay: i64,
+    ) -> InfiniteTriangle {
         let duration = (raise_duration + fall_duration) as f64;
         let height = high_value - low_value;
         InfiniteTriangle {
@@ -403,7 +479,6 @@ impl Iterator for InfiniteTriangle {
         })
     }
 }
-
 
 /// Finite iterator returning floats forming a triangle wave
 /// starting with the raise phase from the lowest sample
@@ -432,8 +507,23 @@ impl Triangle {
     /// # }
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteTriangle::new` and `take` instead")]
-    pub fn new(length: usize, raise_duration: i64, fall_duration: i64, high_value: f64, low_value: f64, delay: i64) -> Triangle {
-        Triangle { internal: InfiniteTriangle::new(raise_duration, fall_duration, high_value, low_value, delay).take(length) }
+    pub fn new(
+        length: usize,
+        raise_duration: i64,
+        fall_duration: i64,
+        high_value: f64,
+        low_value: f64,
+        delay: i64,
+    ) -> Triangle {
+        Triangle {
+            internal: InfiniteTriangle::new(
+                raise_duration,
+                fall_duration,
+                high_value,
+                low_value,
+                delay,
+            ).take(length),
+        }
     }
 }
 
@@ -466,15 +556,16 @@ impl InfiniteSawtooth {
     /// 1.0, -1.0]);
     /// ```
     pub fn new(period: i64, high_value: f64, low_value: f64, delay: i64) -> InfiniteSawtooth {
-
         let height = high_value - low_value;
         let period = period as f64;
         InfiniteSawtooth {
-            periodic: InfinitePeriodic::new(1.0,
-                                            1.0 / period,
-                                            height * period / (period - 1.0),
-                                            0.0,
-                                            delay),
+            periodic: InfinitePeriodic::new(
+                1.0,
+                1.0 / period,
+                height * period / (period - 1.0),
+                0.0,
+                delay,
+            ),
             low_value: low_value as f64,
         }
     }
@@ -507,8 +598,16 @@ impl Sawtooth {
     /// 1.0, -1.0]);
     /// ```
     #[deprecated(since = "0.9.0", note = "please use `InfiniteSawtooth::new` and `take` instead")]
-    pub fn new(length: usize, period: i64, high_value: f64, low_value: f64, delay: i64) -> Sawtooth {
-        Sawtooth { internal: InfiniteSawtooth::new(period, high_value, low_value, delay).take(length) }
+    pub fn new(
+        length: usize,
+        period: i64,
+        high_value: f64,
+        low_value: f64,
+        delay: i64,
+    ) -> Sawtooth {
+        Sawtooth {
+            internal: InfiniteSawtooth::new(period, high_value, low_value, delay).take(length),
+        }
     }
 }
 

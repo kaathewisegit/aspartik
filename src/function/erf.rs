@@ -380,7 +380,6 @@ const ERF_IMPL_ND: &'static [f64] = &[
 // ********** Coefficients for erf_inv_impl polynomial ******
 // **********************************************************
 
-
 /// Polynomial coefficients for a numerator of `erf_inv_impl`
 /// in the interval [0, 0.5].
 const ERF_INV_IMPL_AN: &'static [f64] = &[
@@ -568,8 +567,6 @@ const ERF_INV_IMPL_GD: &'static [f64] = &[
     0.231558608310259605225e-11,
 ];
 
-
-
 /// `erf_impl` computes the error function at `z`.
 /// If `inv` is true, `1 - erf` is calculated as opposed to `erf`
 fn erf_impl(z: f64, inv: bool) -> f64 {
@@ -587,72 +584,86 @@ fn erf_impl(z: f64, inv: bool) -> f64 {
         if z < 1e-10 {
             z * 1.125 + z * 0.003379167095512573896158903121545171688
         } else {
-            z * 1.125 + z * evaluate::polynomial(z, ERF_IMPL_AN) / evaluate::polynomial(z, ERF_IMPL_AD)
+            z * 1.125
+                + z * evaluate::polynomial(z, ERF_IMPL_AN) / evaluate::polynomial(z, ERF_IMPL_AD)
         }
     } else if z < 110.0 {
         let (r, b) = if z < 0.75 {
             (
-                evaluate::polynomial(z - 0.5, ERF_IMPL_BN) / evaluate::polynomial(z - 0.5, ERF_IMPL_BD),
+                evaluate::polynomial(z - 0.5, ERF_IMPL_BN)
+                    / evaluate::polynomial(z - 0.5, ERF_IMPL_BD),
                 0.3440242112,
             )
         } else if z < 1.25 {
             (
-                evaluate::polynomial(z - 0.75, ERF_IMPL_CN) / evaluate::polynomial(z - 0.75, ERF_IMPL_CD),
+                evaluate::polynomial(z - 0.75, ERF_IMPL_CN)
+                    / evaluate::polynomial(z - 0.75, ERF_IMPL_CD),
                 0.419990927,
             )
         } else if z < 2.25 {
             (
-                evaluate::polynomial(z - 1.25, ERF_IMPL_DN) / evaluate::polynomial(z - 1.25, ERF_IMPL_DD),
+                evaluate::polynomial(z - 1.25, ERF_IMPL_DN)
+                    / evaluate::polynomial(z - 1.25, ERF_IMPL_DD),
                 0.4898625016,
             )
         } else if z < 3.5 {
             (
-                evaluate::polynomial(z - 2.25, ERF_IMPL_EN) / evaluate::polynomial(z - 2.25, ERF_IMPL_ED),
+                evaluate::polynomial(z - 2.25, ERF_IMPL_EN)
+                    / evaluate::polynomial(z - 2.25, ERF_IMPL_ED),
                 0.5317370892,
             )
         } else if z < 5.25 {
             (
-                evaluate::polynomial(z - 3.5, ERF_IMPL_FN) / evaluate::polynomial(z - 3.5, ERF_IMPL_FD),
+                evaluate::polynomial(z - 3.5, ERF_IMPL_FN)
+                    / evaluate::polynomial(z - 3.5, ERF_IMPL_FD),
                 0.5489973426,
             )
         } else if z < 8.0 {
             (
-                evaluate::polynomial(z - 5.25, ERF_IMPL_GN) / evaluate::polynomial(z - 5.25, ERF_IMPL_GD),
+                evaluate::polynomial(z - 5.25, ERF_IMPL_GN)
+                    / evaluate::polynomial(z - 5.25, ERF_IMPL_GD),
                 0.5571740866,
             )
         } else if z < 11.5 {
             (
-                evaluate::polynomial(z - 8.0, ERF_IMPL_HN) / evaluate::polynomial(z - 8.0, ERF_IMPL_HD),
+                evaluate::polynomial(z - 8.0, ERF_IMPL_HN)
+                    / evaluate::polynomial(z - 8.0, ERF_IMPL_HD),
                 0.5609807968,
             )
         } else if z < 17.0 {
             (
-                evaluate::polynomial(z - 11.5, ERF_IMPL_IN) / evaluate::polynomial(z - 11.5, ERF_IMPL_ID),
+                evaluate::polynomial(z - 11.5, ERF_IMPL_IN)
+                    / evaluate::polynomial(z - 11.5, ERF_IMPL_ID),
                 0.5626493692,
             )
         } else if z < 24.0 {
             (
-                evaluate::polynomial(z - 17.0, ERF_IMPL_JN) / evaluate::polynomial(z - 17.0, ERF_IMPL_JD),
+                evaluate::polynomial(z - 17.0, ERF_IMPL_JN)
+                    / evaluate::polynomial(z - 17.0, ERF_IMPL_JD),
                 0.5634598136,
             )
         } else if z < 38.0 {
             (
-                evaluate::polynomial(z - 24.0, ERF_IMPL_KN) / evaluate::polynomial(z - 24.0, ERF_IMPL_KD),
+                evaluate::polynomial(z - 24.0, ERF_IMPL_KN)
+                    / evaluate::polynomial(z - 24.0, ERF_IMPL_KD),
                 0.5638477802,
             )
         } else if z < 60.0 {
             (
-                evaluate::polynomial(z - 38.0, ERF_IMPL_LN) / evaluate::polynomial(z - 38.0, ERF_IMPL_LD),
+                evaluate::polynomial(z - 38.0, ERF_IMPL_LN)
+                    / evaluate::polynomial(z - 38.0, ERF_IMPL_LD),
                 0.5640528202,
             )
         } else if z < 85.0 {
             (
-                evaluate::polynomial(z - 60.0, ERF_IMPL_MN) / evaluate::polynomial(z - 60.0, ERF_IMPL_MD),
+                evaluate::polynomial(z - 60.0, ERF_IMPL_MN)
+                    / evaluate::polynomial(z - 60.0, ERF_IMPL_MD),
                 0.5641309023,
             )
         } else {
             (
-                evaluate::polynomial(z - 85.0, ERF_IMPL_NN) / evaluate::polynomial(z - 85.0, ERF_IMPL_ND),
+                evaluate::polynomial(z - 85.0, ERF_IMPL_NN)
+                    / evaluate::polynomial(z - 85.0, ERF_IMPL_ND),
                 0.5641584396,
             )
         };
@@ -686,34 +697,40 @@ fn erf_inv_impl(p: f64, q: f64, s: f64) -> f64 {
         let y = 2.249481201171875;
         let g = (-2.0 * q.ln()).sqrt();
         let xs = q - 0.25;
-        let r = evaluate::polynomial(xs, ERF_INV_IMPL_BN) / evaluate::polynomial(xs, ERF_INV_IMPL_BD);
+        let r =
+            evaluate::polynomial(xs, ERF_INV_IMPL_BN) / evaluate::polynomial(xs, ERF_INV_IMPL_BD);
         g / (y + r)
     } else {
         let x = (-q.ln()).sqrt();
         if x < 3.0 {
             let y = 0.807220458984375;
             let xs = x - 1.125;
-            let r = evaluate::polynomial(xs, ERF_INV_IMPL_CN) / evaluate::polynomial(xs, ERF_INV_IMPL_CD);
+            let r = evaluate::polynomial(xs, ERF_INV_IMPL_CN)
+                / evaluate::polynomial(xs, ERF_INV_IMPL_CD);
             y * x + r * x
         } else if x < 6.0 {
             let y = 0.93995571136474609375;
             let xs = x - 3.0;
-            let r = evaluate::polynomial(xs, ERF_INV_IMPL_DN) / evaluate::polynomial(xs, ERF_INV_IMPL_DD);
+            let r = evaluate::polynomial(xs, ERF_INV_IMPL_DN)
+                / evaluate::polynomial(xs, ERF_INV_IMPL_DD);
             y * x + r * x
         } else if x < 18.0 {
             let y = 0.98362827301025390625;
             let xs = x - 6.0;
-            let r = evaluate::polynomial(xs, ERF_INV_IMPL_EN) / evaluate::polynomial(xs, ERF_INV_IMPL_ED);
+            let r = evaluate::polynomial(xs, ERF_INV_IMPL_EN)
+                / evaluate::polynomial(xs, ERF_INV_IMPL_ED);
             y * x + r * x
         } else if x < 44.0 {
             let y = 0.99714565277099609375;
             let xs = x - 18.0;
-            let r = evaluate::polynomial(xs, ERF_INV_IMPL_FN) / evaluate::polynomial(xs, ERF_INV_IMPL_FD);
+            let r = evaluate::polynomial(xs, ERF_INV_IMPL_FN)
+                / evaluate::polynomial(xs, ERF_INV_IMPL_FD);
             y * x + r * x
         } else {
             let y = 0.99941349029541015625;
             let xs = x - 44.0;
-            let r = evaluate::polynomial(xs, ERF_INV_IMPL_GN) / evaluate::polynomial(xs, ERF_INV_IMPL_GD);
+            let r = evaluate::polynomial(xs, ERF_INV_IMPL_GN)
+                / evaluate::polynomial(xs, ERF_INV_IMPL_GD);
             y * x + r * x
         }
     };

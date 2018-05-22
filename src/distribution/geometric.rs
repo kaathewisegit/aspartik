@@ -1,9 +1,9 @@
-use {Result, StatsError};
 use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::{f64, u64};
+use {Result, StatsError};
 
 /// Implements the
 /// [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)
@@ -108,9 +108,7 @@ impl Distribution<f64> for Geometric {
         if self.p == 1.0 {
             1.0
         } else {
-            (1.0 - r.next_f64())
-                .log(1.0 - self.p)
-                .ceil()
+            (1.0 - r.next_f64()).log(1.0 - self.p).ceil()
         }
     }
 }

@@ -2,7 +2,7 @@
 //! and provides
 //! concrete implementations for a variety of distributions.
 
-use rand::{Rng, XorShiftRng, weak_rng};
+use rand::{weak_rng, Rng, XorShiftRng};
 
 pub use self::bernoulli::Bernoulli;
 pub use self::beta::Beta;

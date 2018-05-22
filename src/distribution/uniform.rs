@@ -1,9 +1,9 @@
-use {Result, StatsError};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the [Continuous
 /// Uniform](https://en.wikipedia.org/wiki/Uniform_distribution_(continuous))
@@ -49,10 +49,7 @@ impl Uniform {
         if min > max || min.is_nan() || max.is_nan() {
             Err(StatsError::BadParams)
         } else {
-            Ok(Uniform {
-                min: min,
-                max: max,
-            })
+            Ok(Uniform { min: min, max: max })
         }
     }
 }

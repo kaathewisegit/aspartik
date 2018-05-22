@@ -1,10 +1,9 @@
-use {Result, StatsError};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
-
+use {Result, StatsError};
 
 /// Implements the [Pareto](https://en.wikipedia.org/wiki/Pareto_distribution)
 /// distribution
@@ -309,7 +308,8 @@ impl CheckedSkewness<f64> for Pareto {
         if self.shape <= 3.0 {
             Err(StatsError::ArgGt("shape", 3.0))
         } else {
-            Ok((2.0 * (self.shape + 1.0) / (self.shape - 3.0)) * ((self.shape - 2.0) / self.shape).sqrt())
+            Ok((2.0 * (self.shape + 1.0) / (self.shape - 3.0))
+                * ((self.shape - 2.0) / self.shape).sqrt())
         }
     }
 }

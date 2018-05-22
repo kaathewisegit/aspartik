@@ -12,14 +12,13 @@ where
         let mut iter = self.into_iter();
         match iter.next() {
             None => f64::NAN,
-            Some(x) => {
-                iter.map(|x| *x.borrow()).fold(
-                    *x.borrow(),
-                    |acc, x| {
-                        if x < acc || x.is_nan() { x } else { acc }
-                    },
-                )
-            }
+            Some(x) => iter.map(|x| *x.borrow()).fold(*x.borrow(), |acc, x| {
+                if x < acc || x.is_nan() {
+                    x
+                } else {
+                    acc
+                }
+            }),
         }
     }
 
@@ -27,14 +26,13 @@ where
         let mut iter = self.into_iter();
         match iter.next() {
             None => f64::NAN,
-            Some(x) => {
-                iter.map(|x| *x.borrow()).fold(
-                    *x.borrow(),
-                    |acc, x| {
-                        if x > acc || x.is_nan() { x } else { acc }
-                    },
-                )
-            }
+            Some(x) => iter.map(|x| *x.borrow()).fold(*x.borrow(), |acc, x| {
+                if x > acc || x.is_nan() {
+                    x
+                } else {
+                    acc
+                }
+            }),
         }
     }
 
@@ -42,12 +40,14 @@ where
         let mut iter = self.into_iter();
         match iter.next() {
             None => f64::NAN,
-            Some(init) => {
-                iter.map(|x| x.borrow().abs()).fold(
-                    init.borrow().abs(),
-                    |acc, x| if x < acc || x.is_nan() { x } else { acc },
-                )
-            }
+            Some(init) => iter.map(|x| x.borrow().abs())
+                .fold(init.borrow().abs(), |acc, x| {
+                    if x < acc || x.is_nan() {
+                        x
+                    } else {
+                        acc
+                    }
+                }),
         }
     }
 
@@ -55,12 +55,14 @@ where
         let mut iter = self.into_iter();
         match iter.next() {
             None => f64::NAN,
-            Some(init) => {
-                iter.map(|x| x.borrow().abs()).fold(
-                    init.borrow().abs(),
-                    |acc, x| if x > acc || x.is_nan() { x } else { acc },
-                )
-            }
+            Some(init) => iter.map(|x| x.borrow().abs())
+                .fold(init.borrow().abs(), |acc, x| {
+                    if x > acc || x.is_nan() {
+                        x
+                    } else {
+                        acc
+                    }
+                }),
         }
     }
 
@@ -71,7 +73,11 @@ where
             i += 1.0;
             mean += (x.borrow() - mean) / i;
         }
-        if i > 0.0 { mean } else { f64::NAN }
+        if i > 0.0 {
+            mean
+        } else {
+            f64::NAN
+        }
     }
 
     fn geometric_mean(self) -> f64 {
@@ -81,7 +87,11 @@ where
             i += 1.0;
             sum += x.borrow().ln();
         }
-        if i > 0.0 { (sum / i).exp() } else { f64::NAN }
+        if i > 0.0 {
+            (sum / i).exp()
+        } else {
+            f64::NAN
+        }
     }
 
     fn harmonic_mean(self) -> f64 {
@@ -96,7 +106,11 @@ where
             }
             sum += 1.0 / borrow;
         }
-        if i > 0.0 { i / sum } else { f64::NAN }
+        if i > 0.0 {
+            i / sum
+        } else {
+            f64::NAN
+        }
     }
 
     fn variance(self) -> f64 {
@@ -201,7 +215,11 @@ where
         if iter.next().is_some() {
             panic!(format!("{}", StatsError::ContainersMustBeSameLength));
         }
-        if n > 0.0 { comoment / n } else { f64::NAN }
+        if n > 0.0 {
+            comoment / n
+        } else {
+            f64::NAN
+        }
     }
 
     fn quadratic_mean(self) -> f64 {
@@ -212,7 +230,11 @@ where
             i += 1.0;
             mean += (borrow * borrow - mean) / i;
         }
-        if i > 0.0 { mean.sqrt() } else { f64::NAN }
+        if i > 0.0 {
+            mean.sqrt()
+        } else {
+            f64::NAN
+        }
     }
 }
 
@@ -323,16 +345,16 @@ mod test {
         assert_almost_eq!((&data).population_variance(), (&data).population_covariance(&data), 1e-10);
 
         data = testing::load_data("nist/lew.txt");
-        assert_almost_eq!((&data).population_variance(), (&data).population_covariance((&data)), 1e-10);
+        assert_almost_eq!((&data).population_variance(), (&data).population_covariance(&data), 1e-10);
 
         data = testing::load_data("nist/mavro.txt");
-        assert_almost_eq!((&data).population_variance(), (&data).population_covariance((&data)), 1e-10);
+        assert_almost_eq!((&data).population_variance(), (&data).population_covariance(&data), 1e-10);
 
         data = testing::load_data("nist/michaelso.txt");
-        assert_almost_eq!((&data).population_variance(), (&data).population_covariance((&data)), 1e-10);
+        assert_almost_eq!((&data).population_variance(), (&data).population_covariance(&data), 1e-10);
 
         data = testing::load_data("nist/numacc1.txt");
-        assert_almost_eq!((&data).population_variance(), (&data).population_covariance((&data)), 1e-10);
+        assert_almost_eq!((&data).population_variance(), (&data).population_covariance(&data), 1e-10);
     }
 
     #[test]

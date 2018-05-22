@@ -1,10 +1,10 @@
-use {Result, StatsError, prec};
 use distribution::{CheckedContinuous, Continuous, Distribution, WeakRngDistribution};
 use function::gamma;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {prec, Result, StatsError};
 
 /// Implements the
 /// [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution)
@@ -52,7 +52,9 @@ impl Dirichlet {
         if !is_valid_alpha(alpha) {
             Err(StatsError::BadParams)
         } else {
-            Ok(Dirichlet { alpha: alpha.to_vec() })
+            Ok(Dirichlet {
+                alpha: alpha.to_vec(),
+            })
         }
     }
 
@@ -165,10 +167,7 @@ impl Mean<Vec<f64>> for Dirichlet {
     /// and `α_0` is the sum of all concentration parameters
     fn mean(&self) -> Vec<f64> {
         let sum = self.alpha_sum();
-        self.alpha
-            .iter()
-            .map(|x| x / sum)
-            .collect()
+        self.alpha.iter().map(|x| x / sum).collect()
     }
 }
 
@@ -202,10 +201,7 @@ impl Variance<Vec<f64>> for Dirichlet {
     /// for the `i`th element where `α_i` is the `i`th concentration parameter
     /// and `α_0` is the sum of all concentration parameters
     fn std_dev(&self) -> Vec<f64> {
-        self.variance()
-            .iter()
-            .map(|x| x.sqrt())
-            .collect()
+        self.variance().iter().map(|x| x.sqrt()).collect()
     }
 }
 
@@ -230,7 +226,10 @@ impl Entropy<f64> for Dirichlet {
     /// is the `i`th concentration parameter, and `Σ` is the sum from `1` to `K`
     fn entropy(&self) -> f64 {
         let sum = self.alpha_sum();
-        let num = self.alpha.iter().fold(0.0, |acc, &x| acc + (x - 1.0) * gamma::digamma(x));
+        let num = self
+            .alpha
+            .iter()
+            .fold(0.0, |acc, &x| acc + (x - 1.0) * gamma::digamma(x));
         gamma::ln_gamma(sum) + (sum - self.alpha.len() as f64) * gamma::digamma(sum) - num
     }
 }
@@ -379,11 +378,17 @@ impl<'a> CheckedContinuous<&'a [f64], f64> for Dirichlet {
         if x.iter().any(|&x| x <= 0.0 || x >= 1.0) {
             return Err(StatsError::ArgIntervalExcl("x", 0.0, 1.0));
         }
-        let (term, sum_xi, sum_alpha) = x.iter()
-                                         .enumerate()
-                                         .map(|pair| (pair.1, self.alpha[pair.0]))
-                                         .fold((0.0, 0.0, 0.0),
-                                               |acc, pair| (acc.0 + (pair.1 - 1.0) * pair.0.ln() - gamma::ln_gamma(pair.1), acc.1 + pair.0, acc.2 + pair.1));
+        let (term, sum_xi, sum_alpha) = x
+            .iter()
+            .enumerate()
+            .map(|pair| (pair.1, self.alpha[pair.0]))
+            .fold((0.0, 0.0, 0.0), |acc, pair| {
+                (
+                    acc.0 + (pair.1 - 1.0) * pair.0.ln() - gamma::ln_gamma(pair.1),
+                    acc.1 + pair.0,
+                    acc.2 + pair.1,
+                )
+            });
 
         if !prec::almost_eq(sum_xi, 1.0, 1e-4) {
             Err(StatsError::ContainerExpectedSum("x", 1.0))

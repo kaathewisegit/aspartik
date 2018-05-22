@@ -1,9 +1,9 @@
-use {Result, StatsError};
 use distribution::{CheckedDiscrete, Discrete, Distribution, WeakRngDistribution};
 use function::factorial;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
+use {Result, StatsError};
 
 /// Implements the
 /// [Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution)
@@ -154,10 +154,7 @@ impl Mean<Vec<f64>> for Multinomial {
     /// where `n` is the number of trials, `p_i` is the `i`th probability,
     /// and `k` is the total number of probabilities
     fn mean(&self) -> Vec<f64> {
-        self.p
-            .iter()
-            .map(|x| x * self.n as f64)
-            .collect()
+        self.p.iter().map(|x| x * self.n as f64).collect()
     }
 }
 
@@ -190,10 +187,7 @@ impl Variance<Vec<f64>> for Multinomial {
     /// where `n` is the number of trials, `p_i` is the `i`th probability,
     /// and `k` is the total number of probabilities
     fn std_dev(&self) -> Vec<f64> {
-        self.variance()
-            .iter()
-            .map(|x| x.sqrt())
-            .collect()
+        self.variance().iter().map(|x| x.sqrt()).collect()
     }
 }
 
@@ -292,7 +286,12 @@ impl<'a> CheckedDiscrete<&'a [u64], f64> for Multinomial {
             return Err(StatsError::ContainerExpectedSumVar("x", "n"));
         }
         let coeff = factorial::multinomial(self.n, x);
-        let val = coeff * self.p.iter().zip(x.iter()).fold(1.0, |acc, (pi, xi)| acc * pi.powf(*xi as f64));
+        let val = coeff
+            * self
+                .p
+                .iter()
+                .zip(x.iter())
+                .fold(1.0, |acc, (pi, xi)| acc * pi.powf(*xi as f64));
         Ok(val)
     }
 
@@ -323,12 +322,13 @@ impl<'a> CheckedDiscrete<&'a [u64], f64> for Multinomial {
             return Err(StatsError::ContainerExpectedSumVar("x", "n"));
         }
         let coeff = factorial::multinomial(self.n, x).ln();
-        let val = coeff +
-                  self.p
-                      .iter()
-                      .zip(x.iter())
-                      .map(|(pi, xi)| *xi as f64 * pi.ln())
-                      .fold(0.0, |acc, x| acc + x);
+        let val = coeff
+            + self
+                .p
+                .iter()
+                .zip(x.iter())
+                .map(|(pi, xi)| *xi as f64 * pi.ln())
+                .fold(0.0, |acc, x| acc + x);
         Ok(val)
     }
 }

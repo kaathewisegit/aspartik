@@ -24,7 +24,12 @@ pub mod test {
     use std::f64;
 
     /// cdf should be the integral of the pdf
-    fn check_integrate_pdf_is_cdf<D: Univariate<f64, f64> + Continuous<f64, f64>>(dist: &D, x_min: f64, x_max: f64, step: f64) {
+    fn check_integrate_pdf_is_cdf<D: Univariate<f64, f64> + Continuous<f64, f64>>(
+        dist: &D,
+        x_min: f64,
+        x_max: f64,
+        step: f64,
+    ) {
         let mut prev_x = x_min;
         let mut prev_density = dist.pdf(x_min);
         let mut sum = 0.0;
@@ -91,7 +96,11 @@ pub mod test {
 
     /// Does a series of checks that all continuous distributions must obey.
     /// 99% of the probability mass should be between x_min and x_max.
-    pub fn check_continuous_distribution<D: Univariate<f64, f64> + Continuous<f64, f64>>(dist: &D, x_min: f64, x_max: f64) {
+    pub fn check_continuous_distribution<D: Univariate<f64, f64> + Continuous<f64, f64>>(
+        dist: &D,
+        x_min: f64,
+        x_max: f64,
+    ) {
         assert_eq!(dist.pdf(f64::NEG_INFINITY), 0.0);
         assert_eq!(dist.pdf(f64::INFINITY), 0.0);
         assert_eq!(dist.ln_pdf(f64::NEG_INFINITY), f64::NEG_INFINITY);
@@ -105,7 +114,10 @@ pub mod test {
     /// Does a series of checks that all positive discrete distributions must
     /// obey.
     /// 99% of the probability mass should be between 0 and x_max (inclusive).
-    pub fn check_discrete_distribution<D: Univariate<u64, f64> + Discrete<u64, f64>>(dist: &D, x_max: u64) {
+    pub fn check_discrete_distribution<D: Univariate<u64, f64> + Discrete<u64, f64>>(
+        dist: &D,
+        x_max: u64,
+    ) {
         assert_eq!(dist.cdf(f64::NEG_INFINITY), 0.0);
         assert_eq!(dist.cdf(-10.0), 0.0);
         assert_eq!(dist.cdf(-1.0), 0.0);

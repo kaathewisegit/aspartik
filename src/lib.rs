@@ -31,18 +31,21 @@ extern crate rand;
 
 #[macro_export]
 macro_rules! assert_almost_eq {
-    ($a:expr, $b:expr, $prec:expr) => (
+    ($a:expr, $b:expr, $prec:expr) => {
         if !$crate::prec::almost_eq($a, $b, $prec) {
-            panic!(format!("assertion failed: `abs(left - right) < {:e}`, (left: `{}`, right: `{}`)", $prec, $a, $b));
+            panic!(format!(
+                "assertion failed: `abs(left - right) < {:e}`, (left: `{}`, right: `{}`)",
+                $prec, $a, $b
+            ));
         }
-    );
+    };
 }
 
+pub mod consts;
 pub mod distribution;
 pub mod euclid;
 pub mod function;
 pub mod generate;
-pub mod consts;
 pub mod prec;
 pub mod statistics;
 

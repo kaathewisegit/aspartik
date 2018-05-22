@@ -61,7 +61,14 @@ pub fn sample_exp_1<R: Rng>(r: &mut R) -> f64 {
 // https://github.com/rust-lang-nursery/rand/blob/master/src/distributions/mod.
 // rs#L223
 #[inline(always)]
-fn ziggurat<R: Rng, P, Z>(rng: &mut R, symmetric: bool, x_tab: ziggurat_tables::ZigTable, f_tab: ziggurat_tables::ZigTable, mut pdf: P, mut zero_case: Z) -> f64
+fn ziggurat<R: Rng, P, Z>(
+    rng: &mut R,
+    symmetric: bool,
+    x_tab: ziggurat_tables::ZigTable,
+    f_tab: ziggurat_tables::ZigTable,
+    mut pdf: P,
+    mut zero_case: Z,
+) -> f64
 where
     P: FnMut(f64) -> f64,
     Z: FnMut(&mut R, f64) -> f64,

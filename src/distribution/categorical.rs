@@ -1,9 +1,11 @@
-use {Result, StatsError};
-use distribution::{CheckedInverseCDF, Discrete, Distribution, InverseCDF, Univariate, WeakRngDistribution};
-use rand::Rng;
+use distribution::{
+    CheckedInverseCDF, Discrete, Distribution, InverseCDF, Univariate, WeakRngDistribution,
+};
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the
 /// [Categorical](https://en.wikipedia.org/wiki/Categorical_distribution)
@@ -239,7 +241,10 @@ impl Mean<f64> for Categorical {
     /// `Σ` is the sum from `0` to `k - 1`,
     /// and `k` is the number of categories
     fn mean(&self) -> f64 {
-        self.norm_pmf.iter().enumerate().fold(0.0, |acc, (idx, &val)| acc + idx as f64 * val)
+        self.norm_pmf
+            .iter()
+            .enumerate()
+            .fold(0.0, |acc, (idx, &val)| acc + idx as f64 * val)
     }
 }
 
@@ -257,10 +262,13 @@ impl Variance<f64> for Categorical {
     /// and `k` is the number of categories
     fn variance(&self) -> f64 {
         let mu = self.mean();
-        self.norm_pmf.iter().enumerate().fold(0.0, |acc, (idx, &val)| {
-            let r = idx as f64 - mu;
-            acc + r * r * val
-        })
+        self.norm_pmf
+            .iter()
+            .enumerate()
+            .fold(0.0, |acc, (idx, &val)| {
+                let r = idx as f64 - mu;
+                acc + r * r * val
+            })
     }
 
     /// Returns the standard deviation of the categorical distribution
@@ -292,11 +300,12 @@ impl Entropy<f64> for Categorical {
     /// `Σ` is the sum from `0` to `k - 1`,
     /// and `k` is the number of categories
     fn entropy(&self) -> f64 {
-        -self.norm_pmf
-             .iter()
-             .filter(|&&p| p > 0.0)
-             .map(|p| p * p.ln())
-             .sum::<f64>()
+        -self
+            .norm_pmf
+            .iter()
+            .filter(|&&p| p > 0.0)
+            .map(|p| p * p.ln())
+            .sum::<f64>()
     }
 }
 

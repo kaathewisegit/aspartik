@@ -1,11 +1,11 @@
 //! Provides the [beta](https://en.wikipedia.org/wiki/Beta_function) and related
 //! function
 
-use Result;
 use error::StatsError;
 use function::gamma;
 use prec;
 use std::f64;
+use Result;
 
 /// Computes the natural logarithm
 /// of the beta function
@@ -19,7 +19,6 @@ use std::f64;
 pub fn ln_beta(a: f64, b: f64) -> f64 {
     checked_ln_beta(a, b).unwrap()
 }
-
 
 /// Computes the natural logarithm
 /// of the beta function
@@ -101,7 +100,6 @@ pub fn beta_reg(a: f64, b: f64, x: f64) -> f64 {
     checked_beta_reg(a, b, x).unwrap()
 }
 
-
 /// Computes the regularized lower incomplete beta function
 /// `I_x(a,b) = 1/Beta(a,b) * int(t^(a-1)*(1-t)^(b-1), t=0..x)`
 /// `a > 0`, `b > 0`, `1 >= x >= 0` where `a` is the first beta parameter,
@@ -122,7 +120,10 @@ pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64> {
         let bt = if x == 0.0 || x == 1.0 {
             0.0
         } else {
-            (gamma::ln_gamma(a + b) - gamma::ln_gamma(a) - gamma::ln_gamma(b) + a * x.ln() + b * (1.0 - x).ln()).exp()
+            (gamma::ln_gamma(a + b) - gamma::ln_gamma(a) - gamma::ln_gamma(b)
+                + a * x.ln()
+                + b * (1.0 - x).ln())
+                .exp()
         };
         let symm_transform = x >= (a + 1.0) / (a + b + 2.0);
         let eps = prec::F64_PREC;

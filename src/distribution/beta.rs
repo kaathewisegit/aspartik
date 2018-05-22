@@ -1,10 +1,10 @@
-use {Result, StatsError};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::{beta, gamma};
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {Result, StatsError};
 
 /// Implements the [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
 /// distribution
@@ -51,12 +51,10 @@ impl Beta {
         match (shape_a, shape_b, is_nan) {
             (_, _, true) => Err(StatsError::BadParams),
             (_, _, false) if shape_a <= 0.0 || shape_b <= 0.0 => Err(StatsError::BadParams),
-            (_, _, false) => {
-                Ok(Beta {
-                    shape_a: shape_a,
-                    shape_b: shape_b,
-                })
-            }
+            (_, _, false) => Ok(Beta {
+                shape_a: shape_a,
+                shape_b: shape_b,
+            }),
         }
     }
 
@@ -154,9 +152,17 @@ impl Univariate<f64, f64> for Beta {
         } else if x >= 1.0 {
             1.0
         } else if self.shape_a == f64::INFINITY && self.shape_b == f64::INFINITY {
-            if x < 0.5 { 0.0 } else { 1.0 }
+            if x < 0.5 {
+                0.0
+            } else {
+                1.0
+            }
         } else if self.shape_a == f64::INFINITY {
-            if x < 1.0 { 0.0 } else { 1.0 }
+            if x < 1.0 {
+                0.0
+            } else {
+                1.0
+            }
         } else if self.shape_b == f64::INFINITY {
             1.0
         } else if self.shape_a == 1.0 && self.shape_b == 1.0 {
@@ -236,7 +242,10 @@ impl Variance<f64> for Beta {
     ///
     /// where `α` is shapeA and `β` is shapeB
     fn variance(&self) -> f64 {
-        self.shape_a * self.shape_b / ((self.shape_a + self.shape_b) * (self.shape_a + self.shape_b) * (self.shape_a + self.shape_b + 1.0))
+        self.shape_a * self.shape_b
+            / ((self.shape_a + self.shape_b)
+                * (self.shape_a + self.shape_b)
+                * (self.shape_a + self.shape_b + 1.0))
     }
 
     /// Returns the standard deviation of the beta distribution
@@ -272,8 +281,10 @@ impl Entropy<f64> for Beta {
         if self.shape_a == f64::INFINITY || self.shape_b == f64::INFINITY {
             0.0
         } else {
-            beta::ln_beta(self.shape_a, self.shape_b) - (self.shape_a - 1.0) * gamma::digamma(self.shape_a) -
-            (self.shape_b - 1.0) * gamma::digamma(self.shape_b) + (self.shape_a + self.shape_b - 2.0) * gamma::digamma(self.shape_a + self.shape_b)
+            beta::ln_beta(self.shape_a, self.shape_b)
+                - (self.shape_a - 1.0) * gamma::digamma(self.shape_a)
+                - (self.shape_b - 1.0) * gamma::digamma(self.shape_b)
+                + (self.shape_a + self.shape_b - 2.0) * gamma::digamma(self.shape_a + self.shape_b)
         }
     }
 }
@@ -296,8 +307,8 @@ impl Skewness<f64> for Beta {
         } else if self.shape_b == f64::INFINITY {
             2.0
         } else {
-            2.0 * (self.shape_b - self.shape_a) * (self.shape_a + self.shape_b + 1.0).sqrt() /
-            ((self.shape_a + self.shape_b + 2.0) * (self.shape_a * self.shape_b).sqrt())
+            2.0 * (self.shape_b - self.shape_a) * (self.shape_a + self.shape_b + 1.0).sqrt()
+                / ((self.shape_a + self.shape_b + 2.0) * (self.shape_a * self.shape_b).sqrt())
         }
     }
 }
@@ -385,17 +396,30 @@ impl Continuous<f64, f64> for Beta {
         if x < 0.0 || x > 1.0 {
             0.0
         } else if self.shape_a == f64::INFINITY && self.shape_b == f64::INFINITY {
-            if x == 0.5 { f64::INFINITY } else { 0.0 }
+            if x == 0.5 {
+                f64::INFINITY
+            } else {
+                0.0
+            }
         } else if self.shape_a == f64::INFINITY {
-            if x == 1.0 { f64::INFINITY } else { 0.0 }
+            if x == 1.0 {
+                f64::INFINITY
+            } else {
+                0.0
+            }
         } else if self.shape_b == f64::INFINITY {
-            if x == 0.0 { f64::INFINITY } else { 0.0 }
+            if x == 0.0 {
+                f64::INFINITY
+            } else {
+                0.0
+            }
         } else if self.shape_a == 1.0 && self.shape_b == 1.0 {
             1.0
         } else if self.shape_a > 80.0 || self.shape_b > 80.0 {
             self.ln_pdf(x).exp()
         } else {
-            let bb = gamma::gamma(self.shape_a + self.shape_b) / (gamma::gamma(self.shape_a) * gamma::gamma(self.shape_b));
+            let bb = gamma::gamma(self.shape_a + self.shape_b)
+                / (gamma::gamma(self.shape_a) * gamma::gamma(self.shape_b));
             bb * x.powf(self.shape_a - 1.0) * (1.0 - x).powf(self.shape_b - 1.0)
         }
     }
@@ -436,7 +460,9 @@ impl Continuous<f64, f64> for Beta {
         } else if self.shape_a == 1.0 && self.shape_b == 1.0 {
             0.0
         } else {
-            let aa = gamma::ln_gamma(self.shape_a + self.shape_b) - gamma::ln_gamma(self.shape_a) - gamma::ln_gamma(self.shape_b);
+            let aa = gamma::ln_gamma(self.shape_a + self.shape_b)
+                - gamma::ln_gamma(self.shape_a)
+                - gamma::ln_gamma(self.shape_b);
             let bb = if self.shape_a == 1.0 && x == 0.0 {
                 0.0
             } else if x == 0.0 {

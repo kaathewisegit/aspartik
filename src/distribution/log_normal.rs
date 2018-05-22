@@ -1,10 +1,10 @@
-use {Result, StatsError, consts};
 use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
 use function::erf;
-use rand::Rng;
 use rand::distributions::{IndependentSample, Sample};
+use rand::Rng;
 use statistics::*;
 use std::f64;
+use {consts, Result, StatsError};
 
 /// Implements the
 /// [Log-normal](https://en.wikipedia.org/wiki/Log-normal_distribution)
