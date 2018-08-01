@@ -1,6 +1,6 @@
-use distribution::{CheckedDiscrete, Discrete, Distribution, WeakRngDistribution};
+use distribution::{CheckedDiscrete, Discrete};
 use function::factorial;
-use rand::distributions::{IndependentSample, Sample};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use {Result, StatsError};
@@ -92,43 +92,8 @@ impl Multinomial {
     }
 }
 
-impl Sample<Vec<f64>> for Multinomial {
-    /// Generate random samples from a multinomial
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> Vec<f64> {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<Vec<f64>> for Multinomial {
-    /// Generate random independent samples from a M=multinomial
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> Vec<f64> {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<Vec<f64>> for Multinomial {
-    /// Generate random samples from the multinomial distribution
-    /// using `r` as the source of randomness
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Multinomial, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Multinomial::new(&[0.0, 1.0, 2.0], 4).unwrap();
-    /// print!("{:?}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> Vec<f64> {
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> Vec<f64> {
         let p_cdf = super::categorical::prob_mass_to_cdf(self.p());
         let mut res = vec![0.0; self.p.len()];
         for _ in 0..self.n {
@@ -139,8 +104,6 @@ impl Distribution<Vec<f64>> for Multinomial {
         res
     }
 }
-
-impl WeakRngDistribution<Vec<f64>> for Multinomial {}
 
 impl Mean<Vec<f64>> for Multinomial {
     /// Returns the mean of the multinomial distribution
@@ -286,12 +249,11 @@ impl<'a> CheckedDiscrete<&'a [u64], f64> for Multinomial {
             return Err(StatsError::ContainerExpectedSumVar("x", "n"));
         }
         let coeff = factorial::multinomial(self.n, x);
-        let val = coeff
-            * self
-                .p
-                .iter()
-                .zip(x.iter())
-                .fold(1.0, |acc, (pi, xi)| acc * pi.powf(*xi as f64));
+        let val = coeff * self
+            .p
+            .iter()
+            .zip(x.iter())
+            .fold(1.0, |acc, (pi, xi)| acc * pi.powf(*xi as f64));
         Ok(val)
     }
 
@@ -322,13 +284,12 @@ impl<'a> CheckedDiscrete<&'a [u64], f64> for Multinomial {
             return Err(StatsError::ContainerExpectedSumVar("x", "n"));
         }
         let coeff = factorial::multinomial(self.n, x).ln();
-        let val = coeff
-            + self
-                .p
-                .iter()
-                .zip(x.iter())
-                .map(|(pi, xi)| *xi as f64 * pi.ln())
-                .fold(0.0, |acc, x| acc + x);
+        let val = coeff + self
+            .p
+            .iter()
+            .zip(x.iter())
+            .map(|(pi, xi)| *xi as f64 * pi.ln())
+            .fold(0.0, |acc, x| acc + x);
         Ok(val)
     }
 }

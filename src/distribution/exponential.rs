@@ -1,5 +1,5 @@
-use distribution::{ziggurat, Continuous, Distribution, Univariate, WeakRngDistribution};
-use rand::distributions::{IndependentSample, Sample};
+use distribution::{ziggurat, Continuous, Univariate};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use std::f64;
@@ -68,48 +68,11 @@ impl Exponential {
     }
 }
 
-impl Sample<f64> for Exponential {
-    /// Generate a random sample from an exponential
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<f64> for Exponential {
-    /// Generate a random independent sample from an exponential
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for Exponential {
-    /// Generate a random sample from the exponential distribution
-    /// using `r` as the source of randomness
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Exponential, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Exponential::new(1.0).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         ziggurat::sample_exp_1(r) / self.rate
     }
 }
-
-impl WeakRngDistribution<f64> for Exponential {}
 
 impl Univariate<f64, f64> for Exponential {
     /// Calculates the cumulative distribution function for the

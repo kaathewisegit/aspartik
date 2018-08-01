@@ -1,6 +1,6 @@
-use distribution::{ziggurat, Continuous, Distribution, Univariate, WeakRngDistribution};
+use distribution::{ziggurat, Continuous, Univariate};
 use function::erf;
-use rand::distributions::{IndependentSample, Sample};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use std::f64;
@@ -57,49 +57,11 @@ impl Normal {
     }
 }
 
-impl Sample<f64> for Normal {
-    /// Generate a random sample from a normal
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<f64> for Normal {
-    /// Generate a random independent sample from a normal
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for Normal {
-    /// Generate a random sample from the normal distribution
-    /// using `r` as the source of randomness. Uses the Box-Muller
-    /// algorithm
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Normal, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Normal::new(0.0, 1.0).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         sample_unchecked(r, self.mean, self.std_dev)
     }
 }
-
-impl WeakRngDistribution<f64> for Normal {}
 
 impl Univariate<f64, f64> for Normal {
     /// Calculates the cumulative distribution function for the
@@ -291,8 +253,8 @@ pub fn ln_pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
     (-0.5 * d * d) - consts::LN_SQRT_2PI - std_dev.ln()
 }
 
-/// `sample_unchecked` draws a sample from a normal distribution
-pub fn sample_unchecked<R: Rng>(r: &mut R, mean: f64, std_dev: f64) -> f64 {
+/// draws a sample from a normal distribution using the Box-Muller algorithm
+pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, mean: f64, std_dev: f64) -> f64 {
     mean + std_dev * ziggurat::sample_std_normal(r)
 }
 

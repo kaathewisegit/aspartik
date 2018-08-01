@@ -1,6 +1,6 @@
-use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
+use distribution::{Continuous, Univariate};
 use function::gamma;
-use rand::distributions::{IndependentSample, Sample};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use std::f64;
@@ -91,48 +91,11 @@ impl InverseGamma {
     }
 }
 
-impl Sample<f64> for InverseGamma {
-    /// Generate a random sample from an inverse gamma
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<f64> for InverseGamma {
-    /// Generate a random independent sample from an inverse gamma
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for InverseGamma {
-    /// Generate a random sample from an inverse gamma distribution
-    /// using `r` as the source of randomness.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{InverseGamma, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = InverseGamma::new(3.0, 1.0).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         1.0 / super::gamma::sample_unchecked(r, self.shape, self.rate)
     }
 }
-
-impl WeakRngDistribution<f64> for InverseGamma {}
 
 impl Univariate<f64, f64> for InverseGamma {
     /// Calculates the cumulative distribution function for the inverse gamma

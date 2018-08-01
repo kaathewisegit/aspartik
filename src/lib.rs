@@ -11,15 +11,14 @@
 //! ```
 //! # extern crate rand;
 //! # extern crate statrs;
-
-//! use rand::StdRng;
-//! use statrs::distribution::{Distribution, Normal};
+//! use rand::distributions::Distribution;
+//! use statrs::distribution::Normal;
 //!
 //! # fn main() {
-//! let mut r = rand::StdRng::new().unwrap();
+//! let mut r = rand::thread_rng();
 //! let n = Normal::new(0.0, 1.0).unwrap();
 //! for _ in 0..10 {
-//!     print!("{}", n.sample::<StdRng>(&mut r));
+//!     print!("{}", n.sample(&mut r));
 //! }
 //! # }
 //! ```

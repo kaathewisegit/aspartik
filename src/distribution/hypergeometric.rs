@@ -1,6 +1,6 @@
-use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
+use distribution::{Discrete, Univariate};
 use function::factorial;
-use rand::distributions::{IndependentSample, Sample};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use std::cmp;
@@ -111,50 +111,15 @@ impl Hypergeometric {
     }
 }
 
-impl Sample<f64> for Hypergeometric {
-    /// Generate a random sample from a hypergeometric
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<f64> for Hypergeometric {
-    /// Generate a random independent sample from a hypergeometric
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for Hypergeometric {
-    /// Generates a random sample from the hypergeometric distribution
-    /// using `r` as the source of randomness
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Hypergeometric, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Hypergeometric::new(10, 5, 3).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         let mut population = self.population as f64;
         let mut successes = self.successes as f64;
         let mut draws = self.draws;
         let mut x = 0.0;
         loop {
             let p = successes / population;
-            let next = r.next_f64();
+            let next: f64 = r.gen();
             if next < p {
                 x += 1.0;
                 successes -= 1.0;
@@ -168,8 +133,6 @@ impl Distribution<f64> for Hypergeometric {
         x
     }
 }
-
-impl WeakRngDistribution<f64> for Hypergeometric {}
 
 impl Univariate<u64, f64> for Hypergeometric {
     /// Calculates the cumulative distribution function for the hypergeometric

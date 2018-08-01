@@ -1,5 +1,6 @@
-use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
-use rand::distributions::{IndependentSample, Sample};
+use distribution::{Continuous, Univariate};
+use rand::distributions::Distribution;
+use rand::distributions::Uniform as RandUniform;
 use rand::Rng;
 use statistics::*;
 use std::f64;
@@ -54,50 +55,12 @@ impl Uniform {
     }
 }
 
-impl Sample<f64> for Uniform {
-    /// Generate a random sample from a continuous uniform
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<f64> for Uniform {
-    /// Generate a random independent sample from a continuous uniform
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for Uniform {
-    /// Generate a random sample from the continuous uniform distribution
-    /// using `r` as the source of randomness in the range `[min, max]`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Uniform, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Uniform::new(0.0, 5.0).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
-        use rand::{Closed01, Rand};
-        let Closed01(rand01) = Closed01::<f64>::rand(r);
-        self.min + rand01 * (self.max - self.min)
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
+        let d = RandUniform::new_inclusive(self.min, self.max);
+        r.sample(d)
     }
 }
-
-impl WeakRngDistribution<f64> for Uniform {}
 
 impl Univariate<f64, f64> for Uniform {
     /// Calculates the cumulative distribution function for the uniform
@@ -472,10 +435,13 @@ mod test {
 
     #[test]
     fn test_samples_in_range() {
-        use super::Distribution;
-
         use rand::{StdRng, SeedableRng};
-        let seed: &[_] = &[1, 2, 3, 4, 5];
+        use rand::distributions::Distribution;
+
+        let seed = [
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+        ];
         let mut r: StdRng = SeedableRng::from_seed(seed);
 
         let min = -0.5;

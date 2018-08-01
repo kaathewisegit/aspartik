@@ -1,6 +1,6 @@
-use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
+use distribution::{Discrete, Univariate};
 use function::{beta, factorial};
-use rand::distributions::{IndependentSample, Sample};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use std::f64;
@@ -87,46 +87,10 @@ impl Binomial {
     }
 }
 
-impl Sample<f64> for Binomial {
-    /// Generate a random sample from a binomial
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-/// Generate a random independent sample from a binomial
-/// distribution using `r` as the source of randomness.
-/// Refer [here](#method.sample-1) for implementation details
-impl IndependentSample<f64> for Binomial {
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for Binomial {
-    /// Generate a random sample from the binomial distribution
-    /// using `r` as the source of randomness  where the range of
-    /// values is `[0.0, n]`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Binomial, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Binomial::new(0.5, 5).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         (0..self.n).fold(0.0, |acc, _| {
-            let n = r.next_f64();
+            let n: f64 = r.gen();
             if n < self.p {
                 acc + 1.0
             } else {
@@ -135,8 +99,6 @@ impl Distribution<f64> for Binomial {
         })
     }
 }
-
-impl WeakRngDistribution<f64> for Binomial {}
 
 impl Univariate<u64, f64> for Binomial {
     /// Calulcates the cumulative distribution function for the
@@ -320,8 +282,7 @@ impl Discrete<u64, f64> for Binomial {
         } else {
             (factorial::ln_binomial(self.n as u64, x as u64)
                 + x as f64 * self.p.ln()
-                + (self.n - x) as f64 * (1.0 - self.p).ln())
-                .exp()
+                + (self.n - x) as f64 * (1.0 - self.p).ln()).exp()
         }
     }
 

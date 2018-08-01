@@ -1,5 +1,5 @@
-use distribution::{Binomial, Discrete, Distribution, Univariate, WeakRngDistribution};
-use rand::distributions::{IndependentSample, Sample};
+use distribution::{Binomial, Discrete, Univariate};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use Result;
@@ -81,51 +81,11 @@ impl Bernoulli {
     }
 }
 
-impl Sample<f64> for Bernoulli {
-    /// Generate a random sample from a bernoulli
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<f64> for Bernoulli {
-    /// Generate a random independent sample from a bernoulli
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for Bernoulli {
-    /// Generate a random sample from the
-    /// bernoulli distribution using `r` as the source
-    /// of randomness where the generated
-    /// values are `1` with probability `p` and `0`
-    /// with probability `1-p`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Bernoulli, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Bernoulli::new(0.5).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
-        self.b.sample(r)
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
+        r.gen_bool(self.p()) as u8 as f64
     }
 }
-
-impl WeakRngDistribution<f64> for Bernoulli {}
 
 impl Univariate<u64, f64> for Bernoulli {
     /// Calculates the cumulative distribution

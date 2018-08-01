@@ -1,6 +1,6 @@
-use distribution::{Continuous, Distribution, Univariate, WeakRngDistribution};
+use distribution::{Continuous, Univariate};
 use function::gamma;
-use rand::distributions::{IndependentSample, Sample};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use std::f64;
@@ -90,49 +90,12 @@ impl Weibull {
     }
 }
 
-impl Sample<f64> for Weibull {
-    /// Generate a random sample from a weibull
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<f64> for Weibull {
-    /// Generate a random sample from a weibull
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for Weibull {
-    /// Generate a random sample from the weibull distribution
-    /// using `r` as the source of randomness
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Weibull, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Weibull::new(10.0, 1.0).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
-        let x = r.next_f64();
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
+        let x: f64 = r.gen();
         self.scale * (-x.ln()).powf(1.0 / self.shape)
     }
 }
-
-impl WeakRngDistribution<f64> for Weibull {}
 
 impl Univariate<f64, f64> for Weibull {
     /// Calculates the cumulative distribution function for the weibull
@@ -263,7 +226,8 @@ impl Skewness<f64> for Weibull {
         let sigma3 = sigma2 * sigma;
         (self.scale * self.scale * self.scale * gamma::gamma(1.0 + 3.0 / self.shape)
             - 3.0 * sigma2 * mu
-            - (mu * mu * mu)) / sigma3
+            - (mu * mu * mu))
+            / sigma3
     }
 }
 
@@ -326,7 +290,8 @@ impl Continuous<f64, f64> for Weibull {
         } else {
             self.shape
                 * (x / self.scale).powf(self.shape - 1.0)
-                * (-(x.powf(self.shape)) * self.scale_pow_shape_inv).exp() / self.scale
+                * (-(x.powf(self.shape)) * self.scale_pow_shape_inv).exp()
+                / self.scale
         }
     }
 

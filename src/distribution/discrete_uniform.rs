@@ -1,5 +1,5 @@
-use distribution::{Discrete, Distribution, Univariate, WeakRngDistribution};
-use rand::distributions::{IndependentSample, Sample};
+use distribution::{Discrete, Univariate};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use std::f64;
@@ -53,48 +53,11 @@ impl DiscreteUniform {
     }
 }
 
-impl Sample<f64> for DiscreteUniform {
-    /// Generate a random sample from a discrete uniform
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<f64> for DiscreteUniform {
-    /// Generate a random independent sample from a discrete uniform
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> f64 {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<f64> for DiscreteUniform {
-    /// Generate a random sample from the discrete uniform distribution
-    /// using `r` as the source of randomness in the range `[min, max]`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{DiscreteUniform, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = DiscreteUniform::new(0, 5).unwrap();
-    /// print!("{}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         r.gen_range(self.min, self.max + 1) as f64
     }
 }
-
-impl WeakRngDistribution<f64> for DiscreteUniform {}
 
 impl Univariate<i64, f64> for DiscreteUniform {
     /// Calculates the cumulative distribution function for the

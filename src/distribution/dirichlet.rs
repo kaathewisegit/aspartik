@@ -1,6 +1,6 @@
-use distribution::{CheckedContinuous, Continuous, Distribution, WeakRngDistribution};
+use distribution::{CheckedContinuous, Continuous};
 use function::gamma;
-use rand::distributions::{IndependentSample, Sample};
+use rand::distributions::Distribution;
 use rand::Rng;
 use statistics::*;
 use std::f64;
@@ -101,43 +101,8 @@ impl Dirichlet {
     }
 }
 
-impl Sample<Vec<f64>> for Dirichlet {
-    /// Generate random samples from a dirichlet
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn sample<R: Rng>(&mut self, r: &mut R) -> Vec<f64> {
-        super::Distribution::sample(self, r)
-    }
-}
-
-impl IndependentSample<Vec<f64>> for Dirichlet {
-    /// Generate random independent samples from a dirichlet
-    /// distribution using `r` as the source of randomness.
-    /// Refer [here](#method.sample-1) for implementation details
-    fn ind_sample<R: Rng>(&self, r: &mut R) -> Vec<f64> {
-        super::Distribution::sample(self, r)
-    }
-}
-
 impl Distribution<Vec<f64>> for Dirichlet {
-    /// Generate random samples from the dirichlet distribution
-    /// using `r` as the source of randomness
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate rand;
-    /// # extern crate statrs;
-    /// use rand::StdRng;
-    /// use statrs::distribution::{Dirichlet, Distribution};
-    ///
-    /// # fn main() {
-    /// let mut r = rand::StdRng::new().unwrap();
-    /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
-    /// print!("{:?}", n.sample::<StdRng>(&mut r));
-    /// # }
-    /// ```
-    fn sample<R: Rng>(&self, r: &mut R) -> Vec<f64> {
+    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> Vec<f64> {
         let n = self.alpha.len();
         let mut samples = vec![0.0; n];
         let mut sum = 0.0;
@@ -151,8 +116,6 @@ impl Distribution<Vec<f64>> for Dirichlet {
         samples
     }
 }
-
-impl WeakRngDistribution<Vec<f64>> for Dirichlet {}
 
 impl Mean<Vec<f64>> for Dirichlet {
     /// Returns the means of the dirichlet distribution
