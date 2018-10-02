@@ -5,7 +5,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.md)
 [![Crates.io](https://img.shields.io/crates/v/statrs.svg?maxAge=2592000)](https://crates.io/crates/statrs)  
 
-## Current Version: v0.9.0
+## Current Version: v0.10.0
 
 Should work for both nightly and stable Rust.
 
@@ -33,7 +33,7 @@ Add the following to your `Cargo.toml`
 
 ```Rust
 [dependencies]
-statrs = "0.9.0"
+statrs = "0.10.0"
 ```
 
 and this to your crate root
@@ -44,7 +44,7 @@ extern crate statrs;
   
 ## Examples
 
-Statrs v0.9.0 comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.
+Statrs v0.10.0 comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.
 The common use case is to set up the distributions and sample from them which depends on the `Rand` crate for random number generation
 
 ```Rust
