@@ -450,7 +450,8 @@ impl Continuous<f64, f64> for FisherSnedecor {
         } else {
             ((self.freedom_1 * x).powf(self.freedom_1) * self.freedom_2.powf(self.freedom_2)
                 / (self.freedom_1 * x + self.freedom_2).powf(self.freedom_1 + self.freedom_2))
-                .sqrt() / (x * beta::beta(self.freedom_1 / 2.0, self.freedom_2 / 2.0))
+            .sqrt()
+                / (x * beta::beta(self.freedom_1 / 2.0, self.freedom_2 / 2.0))
         }
     }
 

@@ -280,7 +280,8 @@ impl Sinusoidal {
                 mean,
                 phase,
                 delay,
-            ).take(length),
+            )
+            .take(length),
         }
     }
 
@@ -412,7 +413,8 @@ impl Square {
                 high_value,
                 low_value,
                 delay,
-            ).take(length),
+            )
+            .take(length),
         }
     }
 }
@@ -536,7 +538,8 @@ impl Triangle {
                 high_value,
                 low_value,
                 delay,
-            ).take(length),
+            )
+            .take(length),
         }
     }
 }

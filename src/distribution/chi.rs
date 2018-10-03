@@ -74,7 +74,8 @@ impl Distribution<f64> for Chi {
         (0..self.freedom as i64)
             .fold(0.0, |acc, _| {
                 acc + super::normal::sample_unchecked(r, 0.0, 1.0).powf(2.0)
-            }).sqrt()
+            })
+            .sqrt()
     }
 }
 
