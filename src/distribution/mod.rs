@@ -27,6 +27,7 @@ pub use self::students_t::StudentsT;
 pub use self::triangular::Triangular;
 pub use self::uniform::Uniform;
 pub use self::weibull::Weibull;
+pub use self::laplace::Laplace;
 use statistics::{Max, Min};
 
 mod bernoulli;
@@ -57,6 +58,7 @@ mod uniform;
 mod weibull;
 mod ziggurat;
 mod ziggurat_tables;
+mod laplace;
 
 use Result;
 
