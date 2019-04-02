@@ -1,3 +1,7 @@
+v0.11.0
+- upgrade `rand` dependency to `0.6`
+- Implement `CheckedInverseCDF` and `InverseCDF` for `Normal` distribution
+
 v0.10.0
 
 - upgrade `rand` dependency to `0.5`
