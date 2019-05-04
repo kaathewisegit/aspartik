@@ -18,6 +18,7 @@ pub use self::gamma::Gamma;
 pub use self::geometric::Geometric;
 pub use self::hypergeometric::Hypergeometric;
 pub use self::inverse_gamma::InverseGamma;
+pub use self::laplace::Laplace;
 pub use self::log_normal::LogNormal;
 pub use self::multinomial::Multinomial;
 pub use self::normal::Normal;
@@ -27,7 +28,6 @@ pub use self::students_t::StudentsT;
 pub use self::triangular::Triangular;
 pub use self::uniform::Uniform;
 pub use self::weibull::Weibull;
-pub use self::laplace::Laplace;
 use statistics::{Max, Min};
 
 mod bernoulli;
