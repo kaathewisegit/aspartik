@@ -6,13 +6,11 @@ use rand::distributions::OpenClosed01;
 use std::f64;
 use {Result, StatsError};
 
-/// <summary>
 /// Continuous Univariate Laplace distribution.
 /// The Laplace distribution is a distribution over the real numbers parameterized by a mean and
 /// scale parameter. The PDF is:
 ///     p(x) = \frac{1}{2 * scale} \exp{- |x - mean| / scale}.
 /// <a href="http://en.wikipedia.org/wiki/Laplace_distribution">Wikipedia - Laplace distribution</a>.
-/// </summary>
 pub struct Laplace {
     location : f64,
     scale : f64,
@@ -29,11 +27,7 @@ impl Laplace {
         scale > 0.0 && !location.is_nan()
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Laplace"/> struct.
-    /// </summary>
-    /// <param name="location">The location (μ) of the distribution.</param>
-    /// <param name="scale">The scale (b) of the distribution. Range: b > 0.</param>
+    /// Initializes a new instance of the Laplace struct.
     /// returns an error is scale is negative
     pub fn new (location : f64, scale: f64) -> Result<Laplace> {
         if Laplace::valid_parameter_set(location, scale) {
@@ -47,25 +41,19 @@ impl Laplace {
 
 impl Mean<f64> for Laplace {
 
-    /// <summary>
     /// Gets the mean of the distribution.
-    /// </summary>
     fn mean(&self) -> f64 {
         self.location
     }
 }
 
 impl Variance<f64> for Laplace {
-    /// <summary>
     /// Gets the variance of the distribution.
-    /// </summary>
     fn variance(&self) -> f64 {
         2.0 * self.scale * self.scale
     }
 
-    /// <summary>
     /// Gets the standard deviation of the distribution.
-    /// </summary>
     fn std_dev(&self) -> f64 {
         f64::consts::SQRT_2 * self.scale
     }
@@ -73,98 +61,68 @@ impl Variance<f64> for Laplace {
 
 
 impl Entropy<f64> for Laplace {
-    /// <summary>
     /// Gets the entropy of the distribution.
-    /// </summary>
     fn entropy(&self) -> f64 {
         f64::ln(2.0*f64::consts::E*self.scale)
     }
 }
 
 impl Skewness<f64> for Laplace {
-    /// <summary>
     /// Gets the skewness of the distribution.
-    /// </summary>
     fn skewness(&self) -> f64 {
         0.0
     }
 }
 
 impl Mode<f64> for Laplace {
-    /// <summary>
     /// Gets the mode of the distribution.
-    /// </summary>
     fn mode(&self) -> f64 {
         self.location
     }
 }
 
 impl Median<f64> for Laplace {
-    /// <summary>
     /// Gets the median of the distribution.
-    /// </summary>
     fn median(&self) -> f64 {
         self.location
     }
 }
 
 impl Min<f64> for Laplace {
-    /// <summary>
     /// Gets the minimum of the distribution.
-    /// </summary>
     fn min(&self) -> f64 {
         f64::NEG_INFINITY
     }
 }
 
 impl Max<f64> for Laplace {
-    /// <summary>
     /// Gets the maximum of the distribution.
-    /// </summary>
     fn max(&self) -> f64 {
         f64::INFINITY
     }
 }
 
 impl Continuous<f64, f64> for Laplace {
-    /// <summary>
     /// Computes the probability density of the distribution (PDF) at x, i.e. ∂P(X ≤ x)/∂x.
-    /// </summary>
-    /// <param name="x">The location at which to compute the density.</param>
-    /// <returns>the density at <paramref name="x"/>.</returns>
-    /// <seealso cref="PDF"/>
     fn pdf(&self, x: f64) -> f64 {
         f64::exp(-f64::abs(x - self.location)/self.scale)/(2.0*self.scale)
     }
 
-    /// <summary>
     /// Computes the log probability density of the distribution (lnPDF) at x, i.e. ln(∂P(X ≤ x)/∂x).
-    /// </summary>
-    /// <param name="x">The location at which to compute the log density.</param>
-    /// <returns>the log density at <paramref name="x"/>.</returns>
-    /// <seealso cref="PDFLn"/>
     fn ln_pdf(&self, x: f64) -> f64 {
         -f64::abs(x - self.location)/self.scale - f64::ln(2.0*self.scale)
     }
 }
 
 impl Distribution<f64> for Laplace {
-    /// <summary>
     /// Samples a Laplace distributed random variable.
-    /// </summary>
-    /// <returns>a sample from the distribution.</returns>
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         Laplace::sample_unchecked(rng, self.location, self.scale)
     }
 }
 
 impl Univariate<f64, f64> for Laplace {
-    /// <summary>
     /// Computes the cumulative distribution (CDF) of the distribution at x, i.e. P(X ≤ x).
-    /// </summary>
-    /// <param name="x">The location at which to compute the cumulative distribution function.</param>
-    /// <returns>the cumulative distribution at location <paramref name="x"/>.</returns>
-    /// <seealso cref="CDF"/>
     fn cdf(&self, x: f64) -> f64 {
         0.5*(1.0 + (f64::signum(x - self.location)*(1.0 - f64::exp(-f64::abs(x - self.location)/self.scale))))
     }
