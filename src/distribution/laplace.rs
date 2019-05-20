@@ -10,27 +10,17 @@ use {Result, StatsError};
 /// The Laplace distribution is a distribution over the real numbers parameterized by a mean and
 /// scale parameter. The PDF is:
 ///     p(x) = \frac{1}{2 * scale} \exp{- |x - mean| / scale}.
-/// <a href="http://en.wikipedia.org/wiki/Laplace_distribution">Wikipedia - Laplace distribution</a>.
+/// [Laplace](https://en.wikipedia.org/wiki/Laplace_distribution)
 pub struct Laplace {
     location: f64,
     scale: f64,
 }
 
 impl Laplace {
-    fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, location: f64, scale: f64) -> f64 {
-        let r: f64 = r.gen();
-        let u = r - 0.5;
-        location - (scale * f64::signum(u) * f64::ln(1.0 - (2.0 * f64::abs(u))))
-    }
-
-    fn valid_parameter_set(location: f64, scale: f64) -> bool {
-        scale > 0.0 && !location.is_nan()
-    }
-
     /// Initializes a new instance of the Laplace struct.
     /// returns an error is scale is negative
     pub fn new(location: f64, scale: f64) -> Result<Laplace> {
-        if Laplace::valid_parameter_set(location, scale) {
+        if scale > 0.0 && !location.is_nan() {
             Ok(Laplace { location, scale })
         } else {
             Err(StatsError::BadParams)
@@ -114,7 +104,9 @@ impl Continuous<f64, f64> for Laplace {
 impl Distribution<f64> for Laplace {
     /// Samples a Laplace distributed random variable.
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        Laplace::sample_unchecked(rng, self.location, self.scale)
+        let r: f64 = r.gen();
+        let u = r - 0.5;
+        location - (scale * f64::signum(u) * f64::ln(1.0 - (2.0 * f64::abs(u))))
     }
 }
 
@@ -127,6 +119,7 @@ impl Univariate<f64, f64> for Laplace {
     }
 }
 
+#[cfg_attr(rustfmt, rustfmt_skip)]
 #[cfg(test)]
 mod test {
     use distribution::internal::*;
@@ -192,7 +185,7 @@ mod test {
     }
 
     #[test]
-    fn test_create_fail() {
+    fn test_bad_create() {
         bad_create_case(2.0, -1.0);
         bad_create_case(f64::NAN, 1.0);
         bad_create_case(f64::NAN, -1.0);
