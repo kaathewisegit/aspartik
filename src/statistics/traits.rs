@@ -1,4 +1,4 @@
-use Result;
+use crate::Result;
 
 /// The `Min` trait specifies than an object has a minimum value
 pub trait Min<T> {

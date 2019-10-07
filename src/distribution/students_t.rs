@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
-use function::{beta, gamma};
+use crate::distribution::{Continuous, Univariate};
+use crate::function::{beta, gamma};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Student's
 /// T](https://en.wikipedia.org/wiki/Student%27s_t-distribution) distribution
@@ -513,9 +513,9 @@ impl Continuous<f64, f64> for StudentsT {
 mod test {
     use std::f64;
     use std::panic;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, StudentsT};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, StudentsT};
+    use crate::distribution::internal::*;
 
     fn try_create(location: f64, scale: f64, freedom: f64) -> StudentsT {
         let n = StudentsT::new(location, scale, freedom);

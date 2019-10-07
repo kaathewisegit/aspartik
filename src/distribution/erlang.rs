@@ -1,8 +1,8 @@
-use distribution::{Continuous, Gamma, Univariate};
+use crate::distribution::{Continuous, Gamma, Univariate};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
-use Result;
+use crate::statistics::*;
+use crate::Result;
 
 /// Implements the [Erlang](https://en.wikipedia.org/wiki/Erlang_distribution)
 /// distribution
@@ -277,8 +277,8 @@ impl Continuous<f64, f64> for Erlang {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use distribution::Erlang;
-    use distribution::internal::*;
+    use crate::distribution::Erlang;
+    use crate::distribution::internal::*;
 
     fn try_create(shape: u64, rate: f64) -> Erlang {
         let n = Erlang::new(shape, rate);

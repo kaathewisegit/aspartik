@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
-use function::beta;
+use crate::distribution::{Continuous, Univariate};
+use crate::function::beta;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the
 /// [Fisher-Snedecor](https://en.wikipedia.org/wiki/F-distribution) distribution
@@ -482,9 +482,9 @@ impl Continuous<f64, f64> for FisherSnedecor {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, FisherSnedecor};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, FisherSnedecor};
+    use crate::distribution::internal::*;
 
     fn try_create(freedom_1: f64, freedom_2: f64) -> FisherSnedecor {
         let n = FisherSnedecor::new(freedom_1, freedom_2);

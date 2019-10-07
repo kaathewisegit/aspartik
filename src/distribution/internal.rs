@@ -20,7 +20,7 @@ pub fn is_valid_multinomial(arr: &[f64], incl_zero: bool) -> bool {
 #[cfg(test)]
 pub mod test {
     use super::is_valid_multinomial;
-    use distribution::{Continuous, Discrete, Univariate};
+    use crate::distribution::{Continuous, Discrete, Univariate};
     use std::f64;
 
     /// cdf should be the integral of the pdf

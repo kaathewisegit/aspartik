@@ -27,7 +27,7 @@ pub use self::students_t::StudentsT;
 pub use self::triangular::Triangular;
 pub use self::uniform::Uniform;
 pub use self::weibull::Weibull;
-use statistics::{Max, Min};
+use crate::statistics::{Max, Min};
 
 mod bernoulli;
 mod beta;
@@ -58,7 +58,7 @@ mod weibull;
 mod ziggurat;
 mod ziggurat_tables;
 
-use Result;
+use crate::Result;
 
 /// The `Univariate` trait is used to specify an interface for univariate
 /// distributions e.g. distributions that have a closed form cumulative

@@ -53,7 +53,7 @@ mod error;
 #[cfg(test)]
 mod testing;
 
-pub use error::StatsError;
+pub use crate::error::StatsError;
 
 /// Result type for the statrs library package that returns
 /// either a result type `T` or a `StatsError`

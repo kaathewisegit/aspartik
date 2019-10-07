@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
-use function::gamma;
+use crate::distribution::{Continuous, Univariate};
+use crate::function::gamma;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
 /// distribution
@@ -378,9 +378,9 @@ pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, shape: f64, rate: f64) -> f6
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Gamma};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Gamma};
+    use crate::distribution::internal::*;
 
     fn try_create(shape: f64, rate: f64) -> Gamma {
         let n = Gamma::new(shape, rate);

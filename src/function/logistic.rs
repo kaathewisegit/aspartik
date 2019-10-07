@@ -1,8 +1,8 @@
 //! Provides the [logistic](http://en.wikipedia.org/wiki/Logistic_function) and
 //! related functions
 
-use error::StatsError;
-use Result;
+use crate::error::StatsError;
+use crate::Result;
 
 /// Computes the logistic function
 pub fn logistic(p: f64) -> f64 {

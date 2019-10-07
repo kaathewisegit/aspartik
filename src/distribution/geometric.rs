@@ -1,10 +1,10 @@
-use distribution::{Discrete, Univariate};
+use crate::distribution::{Discrete, Univariate};
 use rand::distributions::Distribution;
 use rand::distributions::OpenClosed01;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::{f64, u64};
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the
 /// [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)
@@ -274,9 +274,9 @@ impl Discrete<u64, f64> for Geometric {
 mod test {
     use std::fmt::Debug;
     use std::{u64, f64};
-    use statistics::*;
-    use distribution::{Univariate, Discrete, Geometric};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Discrete, Geometric};
+    use crate::distribution::internal::*;
 
     fn try_create(p: f64) -> Geometric {
         let n = Geometric::new(p);

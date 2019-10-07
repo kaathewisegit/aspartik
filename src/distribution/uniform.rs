@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, Univariate};
 use rand::distributions::Distribution;
 use rand::distributions::Uniform as RandUniform;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Continuous
 /// Uniform](https://en.wikipedia.org/wiki/Uniform_distribution_(continuous))
@@ -236,9 +236,9 @@ impl Continuous<f64, f64> for Uniform {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Uniform};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Uniform};
+    use crate::distribution::internal::*;
 
     fn try_create(min: f64, max: f64) -> Uniform {
         let n = Uniform::new(min, max);

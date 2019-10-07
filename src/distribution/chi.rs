@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
-use function::gamma;
+use crate::distribution::{Continuous, Univariate};
+use crate::function::gamma;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Chi](https://en.wikipedia.org/wiki/Chi_distribution)
 /// distribution
@@ -321,9 +321,9 @@ impl Continuous<f64, f64> for Chi {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Chi};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Chi};
+    use crate::distribution::internal::*;
 
     fn try_create(freedom: f64) -> Chi {
         let n = Chi::new(freedom);

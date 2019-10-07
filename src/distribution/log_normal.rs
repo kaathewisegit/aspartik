@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
-use function::erf;
+use crate::distribution::{Continuous, Univariate};
+use crate::function::erf;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {consts, Result, StatsError};
+use crate::{consts, Result, StatsError};
 
 /// Implements the
 /// [Log-normal](https://en.wikipedia.org/wiki/Log-normal_distribution)
@@ -270,9 +270,9 @@ impl Continuous<f64, f64> for LogNormal {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, LogNormal};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, LogNormal};
+    use crate::distribution::internal::*;
 
     fn try_create(mean: f64, std_dev: f64) -> LogNormal {
         let n = LogNormal::new(mean, std_dev);

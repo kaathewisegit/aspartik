@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
-use function::gamma;
+use crate::distribution::{Continuous, Univariate};
+use crate::function::gamma;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {consts, Result, StatsError};
+use crate::{consts, Result, StatsError};
 
 /// Implements the [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
 /// distribution
@@ -324,9 +324,9 @@ impl Continuous<f64, f64> for Weibull {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Weibull};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Weibull};
+    use crate::distribution::internal::*;
 
     fn try_create(shape: f64, scale: f64) -> Weibull {
         let n = Weibull::new(shape, scale);

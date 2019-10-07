@@ -1,9 +1,9 @@
-use distribution::{CheckedInverseCDF, Discrete, InverseCDF, Univariate};
+use crate::distribution::{CheckedInverseCDF, Discrete, InverseCDF, Univariate};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the
 /// [Categorical](https://en.wikipedia.org/wiki/Categorical_distribution)
@@ -391,9 +391,9 @@ fn test_binary_index() {
 mod test {
     use std::f64;
     use std::fmt::Debug;
-    use statistics::*;
-    use distribution::{Categorical, CheckedInverseCDF, Discrete, InverseCDF, Univariate};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Categorical, CheckedInverseCDF, Discrete, InverseCDF, Univariate};
+    use crate::distribution::internal::*;
 
     fn try_create(prob_mass: &[f64]) -> Categorical {
         let n = Categorical::new(prob_mass);

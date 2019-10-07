@@ -1,9 +1,9 @@
-use distribution::{CheckedDiscrete, Discrete};
-use function::factorial;
+use crate::distribution::{CheckedDiscrete, Discrete};
+use crate::function::factorial;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
-use {Result, StatsError};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 
 /// Implements the
 /// [Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution)
@@ -98,7 +98,7 @@ impl Distribution<Vec<f64>> for Multinomial {
         let mut res = vec![0.0; self.p.len()];
         for _ in 0..self.n {
             let i = super::categorical::sample_unchecked(r, &p_cdf);
-            let mut el = unsafe { res.get_unchecked_mut(i as usize) };
+            let el = unsafe { res.get_unchecked_mut(i as usize) };
             *el = *el + 1.0;
         }
         res
@@ -299,8 +299,8 @@ impl<'a> CheckedDiscrete<&'a [u64], f64> for Multinomial {
 #[cfg_attr(rustfmt, rustfmt_skip)]
 #[cfg(test)]
 mod test {
-    use statistics::*;
-    use distribution::{CheckedDiscrete, Discrete, Multinomial};
+    use crate::statistics::*;
+    use crate::distribution::{CheckedDiscrete, Discrete, Multinomial};
 
     fn try_create(p: &[f64], n: u64) -> Multinomial {
         let dist = Multinomial::new(p, n);

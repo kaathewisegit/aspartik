@@ -1,11 +1,11 @@
-use distribution::{Discrete, Univariate};
-use function::{factorial, gamma};
+use crate::distribution::{Discrete, Univariate};
+use crate::function::{factorial, gamma};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
 use std::u64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
 /// distribution
@@ -308,9 +308,9 @@ mod test {
     use std::fmt::Debug;
     use std::f64;
     use std::u64;
-    use statistics::*;
-    use distribution::{Univariate, Discrete, Poisson};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Discrete, Poisson};
+    use crate::distribution::internal::*;
 
     fn try_create(lambda: f64) -> Poisson {
         let n = Poisson::new(lambda);

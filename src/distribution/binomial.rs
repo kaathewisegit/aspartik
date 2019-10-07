@@ -1,10 +1,10 @@
-use distribution::{Discrete, Univariate};
-use function::{beta, factorial};
+use crate::distribution::{Discrete, Univariate};
+use crate::function::{beta, factorial};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the
 /// [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
@@ -323,9 +323,9 @@ impl Discrete<u64, f64> for Binomial {
 mod test {
     use std::fmt::Debug;
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Discrete, Binomial};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Discrete, Binomial};
+    use crate::distribution::internal::*;
 
     fn try_create(p: f64, n: u64) -> Binomial {
         let n = Binomial::new(p, n);

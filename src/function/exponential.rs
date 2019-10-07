@@ -1,6 +1,6 @@
 //! Provides functions related to exponential calculations
 
-use {consts, Result, StatsError};
+use crate::{consts, Result, StatsError};
 
 /// Computes the generalized Exponential Integral function
 /// where `x` is the argument and `n` is the integer power of the

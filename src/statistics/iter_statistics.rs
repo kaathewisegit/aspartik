@@ -1,5 +1,5 @@
-use error::StatsError;
-use statistics::*;
+use crate::error::StatsError;
+use crate::statistics::*;
 use std::borrow::Borrow;
 use std::f64;
 
@@ -247,10 +247,10 @@ mod test {
     use rand::rngs::StdRng;
     use rand::{SeedableRng};
     use rand::distributions::Distribution;
-    use distribution::Normal;
-    use statistics::Statistics;
-    use generate::{InfinitePeriodic, InfiniteSinusoidal};
-    use testing;
+    use crate::distribution::Normal;
+    use crate::statistics::Statistics;
+    use crate::generate::{InfinitePeriodic, InfiniteSinusoidal};
+    use crate::testing;
 
     #[test]
     fn test_mean() {

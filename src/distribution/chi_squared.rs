@@ -1,9 +1,9 @@
-use distribution::{Continuous, Gamma, Univariate};
+use crate::distribution::{Continuous, Gamma, Univariate};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use Result;
+use crate::Result;
 
 /// Implements the
 /// [Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution)
@@ -294,9 +294,9 @@ impl Continuous<f64, f64> for ChiSquared {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::Median;
-    use distribution::ChiSquared;
-    use distribution::internal::*;
+    use crate::statistics::Median;
+    use crate::distribution::ChiSquared;
+    use crate::distribution::internal::*;
 
     fn try_create(freedom: f64) -> ChiSquared {
         let n = ChiSquared::new(freedom);

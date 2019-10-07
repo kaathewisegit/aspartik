@@ -1,9 +1,9 @@
-use distribution::{ziggurat, Continuous, Univariate};
+use crate::distribution::{ziggurat, Continuous, Univariate};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the
 /// [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution)
@@ -263,9 +263,9 @@ impl Continuous<f64, f64> for Exponential {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Exponential};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Exponential};
+    use crate::distribution::internal::*;
 
     fn try_create(rate: f64) -> Exponential {
         let n = Exponential::new(rate);

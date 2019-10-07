@@ -1,11 +1,11 @@
 //! Provides functions related to factorial calculations (e.g. binomial
 //! coefficient, factorial, multinomial)
 
-use error::StatsError;
-use function::gamma;
+use crate::error::StatsError;
+use crate::function::gamma;
 use std::f64;
 use std::sync::{Once, ONCE_INIT};
-use Result;
+use crate::Result;
 
 /// The maximum factorial representable
 /// by a 64-bit floating point without

@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
-use function::gamma;
+use crate::distribution::{Continuous, Univariate};
+use crate::function::gamma;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Inverse
 /// Gamma](https://en.wikipedia.org/wiki/Inverse-gamma_distribution)
@@ -388,9 +388,9 @@ impl Continuous<f64, f64> for InverseGamma {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, InverseGamma};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, InverseGamma};
+    use crate::distribution::internal::*;
 
     fn try_create(shape: f64, rate: f64) -> InverseGamma {
         let n = InverseGamma::new(shape, rate);

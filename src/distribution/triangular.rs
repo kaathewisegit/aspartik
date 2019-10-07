@@ -1,9 +1,9 @@
-use distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, Univariate};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the
 /// [Triangular](https://en.wikipedia.org/wiki/Triangular_distribution)
@@ -310,9 +310,9 @@ fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, min: f64, max: f64, mode: f64) -
 mod test {
     use std::fmt::Debug;
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Triangular};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Triangular};
+    use crate::distribution::internal::*;
 
     fn try_create(min: f64, max: f64, mode: f64) -> Triangular {
         let n = Triangular::new(min, max, mode);

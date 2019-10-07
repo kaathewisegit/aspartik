@@ -1,5 +1,5 @@
-use error::StatsError;
-use statistics::*;
+use crate::error::StatsError;
+use crate::statistics::*;
 use std::f64;
 
 impl OrderStatistics<f64> for [f64] {
@@ -601,7 +601,7 @@ fn quick_sort_all(primary: &mut [f64], secondary: &mut [usize], left: usize, rig
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
+    use crate::statistics::*;
 
     #[test]
     fn test_order_statistic_short() {

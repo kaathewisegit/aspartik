@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, Univariate};
 use rand::distributions::Distribution;
 use rand::distributions::OpenClosed01;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Pareto](https://en.wikipedia.org/wiki/Pareto_distribution)
 /// distribution
@@ -356,9 +356,9 @@ impl Continuous<f64, f64> for Pareto {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Pareto};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Pareto};
+    use crate::distribution::internal::*;
 
     fn try_create(scale: f64, shape: f64) -> Pareto {
         let p = Pareto::new(scale, shape);

@@ -1,9 +1,9 @@
-use distribution::{Discrete, Univariate};
+use crate::distribution::{Discrete, Univariate};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Discrete
 /// Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
@@ -253,8 +253,8 @@ impl Discrete<i64, f64> for DiscreteUniform {
 mod test {
     use std::fmt::Debug;
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Discrete, DiscreteUniform};
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Discrete, DiscreteUniform};
 
     fn try_create(min: i64, max: i64) -> DiscreteUniform {
         let n = DiscreteUniform::new(min, max);

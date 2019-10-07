@@ -1,11 +1,11 @@
-use distribution::{Discrete, Univariate};
-use function::factorial;
+use crate::distribution::{Discrete, Univariate};
+use crate::function::factorial;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::cmp;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the
 /// [Hypergeometric](http://en.wikipedia.org/wiki/Hypergeometric_distribution)
@@ -430,9 +430,9 @@ impl Discrete<u64, f64> for Hypergeometric {
 mod test {
     use std::f64;
     use std::fmt::Debug;
-    use statistics::*;
-    use distribution::{Univariate, Discrete, Hypergeometric};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Discrete, Hypergeometric};
+    use crate::distribution::internal::*;
 
     fn try_create(population: u64, successes: u64, draws: u64) -> Hypergeometric {
         let n = Hypergeometric::new(population, successes, draws);

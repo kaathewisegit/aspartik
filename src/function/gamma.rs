@@ -1,11 +1,11 @@
 //! Provides the [gamma](https://en.wikipedia.org/wiki/Gamma_function) and
 //! related functions
 
-use consts;
-use error::StatsError;
-use prec;
+use crate::consts;
+use crate::error::StatsError;
+use crate::prec;
 use std::f64;
-use Result;
+use crate::Result;
 
 /// Auxiliary variable when evaluating the `gamma_ln` function
 const GAMMA_R: f64 = 10.900511;

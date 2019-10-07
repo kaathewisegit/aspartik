@@ -1,10 +1,10 @@
-use distribution::{ziggurat, CheckedInverseCDF, Continuous, InverseCDF, Univariate};
-use function::erf;
+use crate::distribution::{ziggurat, CheckedInverseCDF, Continuous, InverseCDF, Univariate};
+use crate::function::erf;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {consts, Result, StatsError};
+use crate::{consts, Result, StatsError};
 
 /// Implements the [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
 /// distribution
@@ -308,9 +308,9 @@ pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, mean: f64, std_dev: f64) -> 
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Normal, InverseCDF, CheckedInverseCDF};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Normal, InverseCDF, CheckedInverseCDF};
+    use crate::distribution::internal::*;
 
     fn try_create(mean: f64, std_dev: f64) -> Normal {
         let n = Normal::new(mean, std_dev);

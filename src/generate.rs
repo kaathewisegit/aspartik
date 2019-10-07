@@ -1,6 +1,6 @@
 //! Provides utility functions for generating data sequences
 
-use euclid::Modulus;
+use crate::euclid::Modulus;
 use std::f64::consts;
 use std::iter::Take;
 

@@ -1,10 +1,10 @@
-use distribution::{CheckedContinuous, Continuous};
-use function::gamma;
+use crate::distribution::{CheckedContinuous, Continuous};
+use crate::function::gamma;
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {prec, Result, StatsError};
+use crate::{prec, Result, StatsError};
 
 /// Implements the
 /// [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution)
@@ -377,9 +377,9 @@ fn test_is_valid_alpha() {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use function::gamma;
-    use statistics::*;
-    use distribution::{CheckedContinuous, Continuous, Dirichlet};
+    use crate::function::gamma;
+    use crate::statistics::*;
+    use crate::distribution::{CheckedContinuous, Continuous, Dirichlet};
 
     fn try_create(alpha: &[f64]) -> Dirichlet {
         let n = Dirichlet::new(alpha);

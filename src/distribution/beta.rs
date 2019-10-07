@@ -1,10 +1,10 @@
-use distribution::{Continuous, Univariate};
-use function::{beta, gamma};
+use crate::distribution::{Continuous, Univariate};
+use crate::function::{beta, gamma};
 use rand::distributions::Distribution;
 use rand::Rng;
-use statistics::*;
+use crate::statistics::*;
 use std::f64;
-use {Result, StatsError};
+use crate::{Result, StatsError};
 
 /// Implements the [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
 /// distribution
@@ -449,9 +449,9 @@ impl Continuous<f64, f64> for Beta {
 #[cfg(test)]
 mod test {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Beta};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{Univariate, Continuous, Beta};
+    use crate::distribution::internal::*;
 
     fn try_create(shape_a: f64, shape_b: f64) -> Beta {
         let n = Beta::new(shape_a, shape_b);

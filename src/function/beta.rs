@@ -1,11 +1,11 @@
 //! Provides the [beta](https://en.wikipedia.org/wiki/Beta_function) and related
 //! function
 
-use error::StatsError;
-use function::gamma;
-use prec;
+use crate::error::StatsError;
+use crate::function::gamma;
+use crate::prec;
 use std::f64;
-use Result;
+use crate::Result;
 
 /// Computes the natural logarithm
 /// of the beta function

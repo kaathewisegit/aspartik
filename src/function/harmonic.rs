@@ -2,8 +2,8 @@
 //! [harmonic](https://en.wikipedia.org/wiki/Harmonic_number)
 //! numbers
 
-use consts;
-use function::gamma;
+use crate::consts;
+use crate::function::gamma;
 
 /// Computes the `t`-th harmonic number
 ///
