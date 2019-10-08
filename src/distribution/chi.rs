@@ -1,10 +1,10 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::function::gamma;
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the [Chi](https://en.wikipedia.org/wiki/Chi_distribution)
 /// distribution

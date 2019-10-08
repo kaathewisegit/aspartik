@@ -3,9 +3,9 @@
 
 use crate::error::StatsError;
 use crate::function::gamma;
+use crate::Result;
 use std::f64;
 use std::sync::{Once, ONCE_INIT};
-use crate::Result;
 
 /// The maximum factorial representable
 /// by a 64-bit floating point without

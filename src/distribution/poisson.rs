@@ -1,11 +1,11 @@
 use crate::distribution::{Discrete, Univariate};
 use crate::function::{factorial, gamma};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
 use std::u64;
-use crate::{Result, StatsError};
 
 /// Implements the [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
 /// distribution

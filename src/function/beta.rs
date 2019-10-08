@@ -4,8 +4,8 @@
 use crate::error::StatsError;
 use crate::function::gamma;
 use crate::prec;
-use std::f64;
 use crate::Result;
+use std::f64;
 
 /// Computes the natural logarithm
 /// of the beta function

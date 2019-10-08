@@ -1,8 +1,8 @@
 use crate::distribution::{Continuous, Gamma, Univariate};
-use rand::distributions::Distribution;
-use rand::Rng;
 use crate::statistics::*;
 use crate::Result;
+use rand::distributions::Distribution;
+use rand::Rng;
 
 /// Implements the [Erlang](https://en.wikipedia.org/wiki/Erlang_distribution)
 /// distribution

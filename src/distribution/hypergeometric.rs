@@ -1,11 +1,11 @@
 use crate::distribution::{Discrete, Univariate};
 use crate::function::factorial;
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::cmp;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the
 /// [Hypergeometric](http://en.wikipedia.org/wiki/Hypergeometric_distribution)

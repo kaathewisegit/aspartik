@@ -1,8 +1,8 @@
 use crate::distribution::{Binomial, Discrete, Univariate};
-use rand::distributions::Distribution;
-use rand::Rng;
 use crate::statistics::*;
 use crate::Result;
+use rand::distributions::Distribution;
+use rand::Rng;
 
 /// Implements the
 /// [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution)

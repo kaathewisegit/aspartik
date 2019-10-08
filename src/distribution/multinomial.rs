@@ -1,9 +1,9 @@
 use crate::distribution::{CheckedDiscrete, Discrete};
 use crate::function::factorial;
-use rand::distributions::Distribution;
-use rand::Rng;
 use crate::statistics::*;
 use crate::{Result, StatsError};
+use rand::distributions::Distribution;
+use rand::Rng;
 
 /// Implements the
 /// [Multinomial](https://en.wikipedia.org/wiki/Multinomial_distribution)

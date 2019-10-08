@@ -1,9 +1,9 @@
 use crate::distribution::{Continuous, Gamma, Univariate};
+use crate::statistics::*;
+use crate::Result;
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::Result;
 
 /// Implements the
 /// [Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution)

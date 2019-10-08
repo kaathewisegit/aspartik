@@ -1,9 +1,9 @@
 use crate::distribution::{ziggurat, Continuous, Univariate};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the
 /// [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution)

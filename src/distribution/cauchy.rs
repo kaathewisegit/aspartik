@@ -1,9 +1,9 @@
 use crate::distribution::{Continuous, Univariate};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the [Cauchy](https://en.wikipedia.org/wiki/Cauchy_distribution)
 /// distribution, also known as the Lorentz distribution.

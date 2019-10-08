@@ -1,10 +1,10 @@
 use crate::distribution::{Discrete, Univariate};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::distributions::OpenClosed01;
 use rand::Rng;
-use crate::statistics::*;
 use std::{f64, u64};
-use crate::{Result, StatsError};
 
 /// Implements the
 /// [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)

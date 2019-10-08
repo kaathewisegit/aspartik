@@ -1,10 +1,10 @@
 use crate::distribution::{Continuous, Univariate};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::distributions::Uniform as RandUniform;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the [Continuous
 /// Uniform](https://en.wikipedia.org/wiki/Uniform_distribution_(continuous))

@@ -1,10 +1,10 @@
 use crate::distribution::{CheckedContinuous, Continuous};
 use crate::function::gamma;
+use crate::statistics::*;
+use crate::{prec, Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{prec, Result, StatsError};
 
 /// Implements the
 /// [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution)

@@ -1,10 +1,10 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::function::{beta, gamma};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the [Student's
 /// T](https://en.wikipedia.org/wiki/Student%27s_t-distribution) distribution

@@ -1,10 +1,10 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::function::erf;
+use crate::statistics::*;
+use crate::{consts, Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{consts, Result, StatsError};
 
 /// Implements the
 /// [Log-normal](https://en.wikipedia.org/wiki/Log-normal_distribution)

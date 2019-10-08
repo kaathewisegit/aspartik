@@ -1,9 +1,9 @@
 use crate::distribution::{Discrete, Univariate};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the [Discrete
 /// Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)

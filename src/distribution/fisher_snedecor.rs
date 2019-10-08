@@ -1,10 +1,10 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::function::beta;
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the
 /// [Fisher-Snedecor](https://en.wikipedia.org/wiki/F-distribution) distribution

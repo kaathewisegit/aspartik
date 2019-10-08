@@ -1,10 +1,10 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::function::gamma;
+use crate::statistics::*;
+use crate::{consts, Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{consts, Result, StatsError};
 
 /// Implements the [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
 /// distribution

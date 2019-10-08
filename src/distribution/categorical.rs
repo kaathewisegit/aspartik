@@ -1,9 +1,9 @@
 use crate::distribution::{CheckedInverseCDF, Discrete, InverseCDF, Univariate};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
-use crate::statistics::*;
 use std::f64;
-use crate::{Result, StatsError};
 
 /// Implements the
 /// [Categorical](https://en.wikipedia.org/wiki/Categorical_distribution)
