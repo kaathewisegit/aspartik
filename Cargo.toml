@@ -19,3 +19,4 @@ path = "src/lib.rs"
 
 [dependencies]
 rand = "0.7"
+nalgebra = "0.19"
