@@ -203,6 +203,16 @@ pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64> {
     }
 }
 
+/// Computes the inverse of the regularized incomplete beta function
+//
+// Just re-export the implementation from the "special" crate, with names
+// consistent with the other functions in this module.
+pub fn inv_beta_reg(a: f64, b: f64, x: f64) -> f64 {
+    use special::Beta;
+    let ln_beta = a.ln_beta(b);
+    x.inv_inc_beta(a, b, ln_beta)
+}
+
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
