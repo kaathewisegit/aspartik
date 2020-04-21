@@ -150,6 +150,22 @@ impl ContinuousCDF<f64, f64> for StudentsT {
             }
         }
     }
+
+    /// Calculates the inverse cumulative distribution function for the
+    /// student's t-distribution at `x`
+    fn inverse_cdf(&self, x: f64) -> f64 {
+        assert!(x >= 0.0 && x <= 1.0);
+        let x = 2. * x.min(1. - x);
+        let a = 0.5 * self.freedom;
+        let b = 0.5;
+        let y = beta::inv_beta_reg(a, b, x);
+        let y = (self.freedom * (1. - y) / y).sqrt();
+        if x <= 0.5 {
+            y
+        } else {
+            -y
+        }
+    }
 }
 
 impl Min<f64> for StudentsT {
