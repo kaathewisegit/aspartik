@@ -51,10 +51,7 @@ impl Pareto {
         if is_nan || scale <= 0.0 || shape <= 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(Pareto {
-                scale: scale,
-                shape: shape,
-            })
+            Ok(Pareto { scale, shape })
         }
     }
 

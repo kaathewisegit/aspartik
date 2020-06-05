@@ -51,10 +51,7 @@ impl Beta {
         match (shape_a, shape_b, is_nan) {
             (_, _, true) => Err(StatsError::BadParams),
             (_, _, false) if shape_a <= 0.0 || shape_b <= 0.0 => Err(StatsError::BadParams),
-            (_, _, false) => Ok(Beta {
-                shape_a: shape_a,
-                shape_b: shape_b,
-            }),
+            (_, _, false) => Ok(Beta { shape_a, shape_b }),
         }
     }
 

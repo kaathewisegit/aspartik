@@ -54,8 +54,8 @@ impl Weibull {
             (_, _, true) => Err(StatsError::BadParams),
             (_, _, false) if shape <= 0.0 || scale <= 0.0 => Err(StatsError::BadParams),
             (_, _, false) => Ok(Weibull {
-                shape: shape,
-                scale: scale,
+                shape,
+                scale,
                 scale_pow_shape_inv: scale.powf(-shape),
             }),
         }

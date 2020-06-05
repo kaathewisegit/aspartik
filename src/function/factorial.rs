@@ -5,7 +5,7 @@ use crate::error::StatsError;
 use crate::function::gamma;
 use crate::Result;
 use std::f64;
-use std::sync::{Once, ONCE_INIT};
+use std::sync::Once;
 
 /// The maximum factorial representable
 /// by a 64-bit floating point without
@@ -101,7 +101,7 @@ pub fn checked_multinomial(n: u64, ni: &[u64]) -> Result<f64> {
 const CACHE_SIZE: usize = 171;
 
 static mut FCACHE: &'static mut [f64; CACHE_SIZE] = &mut [1.0; CACHE_SIZE];
-static START: Once = ONCE_INIT;
+static START: Once = Once::new();
 
 fn get_fcache() -> &'static [f64; CACHE_SIZE] {
     unsafe {

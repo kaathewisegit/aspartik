@@ -47,10 +47,7 @@ impl Cauchy {
         if location.is_nan() || scale.is_nan() || scale <= 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(Cauchy {
-                location: location,
-                scale: scale,
-            })
+            Ok(Cauchy { location, scale })
         }
     }
 

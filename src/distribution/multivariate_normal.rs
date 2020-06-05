@@ -81,7 +81,7 @@ where
                 mu: mean.clone(),
                 cov: cov.clone(),
                 precision: cholesky_decomp.inverse(),
-                pdf_const: pdf_const,
+                pdf_const,
             }),
         }
     }

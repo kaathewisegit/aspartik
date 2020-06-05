@@ -49,7 +49,7 @@ impl Poisson {
         if lambda.is_nan() || lambda <= 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(Poisson { lambda: lambda })
+            Ok(Poisson { lambda })
         }
     }
 

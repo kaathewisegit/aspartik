@@ -20,3 +20,10 @@ path = "src/lib.rs"
 [dependencies]
 rand = "0.7"
 nalgebra = "0.19"
+
+[dev-dependencies]
+criterion = "*"
+
+[[bench]]
+name = "order_statistics"
+harness = false

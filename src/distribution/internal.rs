@@ -3,16 +3,15 @@
 /// IF `incl_zero` is true, it tests for `x < 0.0` instead of `x <= 0.0`
 pub fn is_valid_multinomial(arr: &[f64], incl_zero: bool) -> bool {
     let mut sum = 0.0;
-    for i in 0..arr.len() {
-        let el = *unsafe { arr.get_unchecked(i) };
-        if incl_zero && el < 0.0 {
+    for &elt in arr {
+        if incl_zero && elt < 0.0 {
             return false;
-        } else if !incl_zero && el <= 0.0 {
+        } else if !incl_zero && elt <= 0.0 {
             return false;
-        } else if el.is_nan() {
+        } else if elt.is_nan() {
             return false;
         }
-        sum += el;
+        sum += elt;
     }
     sum != 0.0
 }

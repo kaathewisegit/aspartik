@@ -51,10 +51,7 @@ impl LogNormal {
         if location.is_nan() || scale.is_nan() || scale <= 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(LogNormal {
-                location: location,
-                scale: scale,
-            })
+            Ok(LogNormal { location, scale })
         }
     }
 }

@@ -50,10 +50,7 @@ impl ChiSquared {
     /// assert!(result.is_err());
     /// ```
     pub fn new(freedom: f64) -> Result<ChiSquared> {
-        Gamma::new(freedom / 2.0, 0.5).map(|g| ChiSquared {
-            freedom: freedom,
-            g: g,
-        })
+        Gamma::new(freedom / 2.0, 0.5).map(|g| ChiSquared { freedom, g })
     }
 
     /// Returns the degrees of freedom of the chi-squared

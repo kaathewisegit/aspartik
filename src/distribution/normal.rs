@@ -49,10 +49,7 @@ impl Normal {
         if mean.is_nan() || std_dev.is_nan() || std_dev <= 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(Normal {
-                mean: mean,
-                std_dev: std_dev,
-            })
+            Ok(Normal { mean, std_dev })
         }
     }
 }

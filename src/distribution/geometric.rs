@@ -49,7 +49,7 @@ impl Geometric {
         if p <= 0.0 || p > 1.0 || p.is_nan() {
             Err(StatsError::BadParams)
         } else {
-            Ok(Geometric { p: p })
+            Ok(Geometric { p })
         }
     }
 

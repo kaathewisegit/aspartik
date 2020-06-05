@@ -51,10 +51,7 @@ impl Gamma {
         match (shape, rate, is_nan) {
             (_, _, true) => Err(StatsError::BadParams),
             (_, _, false) if shape <= 0.0 || rate <= 0.0 => Err(StatsError::BadParams),
-            (_, _, false) => Ok(Gamma {
-                shape: shape,
-                rate: rate,
-            }),
+            (_, _, false) => Ok(Gamma { shape, rate }),
         }
     }
 

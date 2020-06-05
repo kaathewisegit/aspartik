@@ -48,9 +48,9 @@ impl Hypergeometric {
             Err(StatsError::BadParams)
         } else {
             Ok(Hypergeometric {
-                population: population,
-                successes: successes,
-                draws: draws,
+                population,
+                successes,
+                draws,
             })
         }
     }

@@ -54,9 +54,9 @@ impl StudentsT {
             Err(StatsError::BadParams)
         } else {
             Ok(StudentsT {
-                location: location,
-                scale: scale,
-                freedom: freedom,
+                location,
+                scale,
+                freedom,
             })
         }
     }

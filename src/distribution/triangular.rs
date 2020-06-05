@@ -59,11 +59,7 @@ impl Triangular {
         if max == min {
             return Err(StatsError::BadParams);
         }
-        Ok(Triangular {
-            min: min,
-            max: max,
-            mode: mode,
-        })
+        Ok(Triangular { min, max, mode })
     }
 }
 

@@ -55,10 +55,7 @@ impl InverseGamma {
             (_, _, false) if shape == f64::INFINITY || rate == f64::INFINITY => {
                 Err(StatsError::BadParams)
             }
-            (_, _, false) => Ok(InverseGamma {
-                shape: shape,
-                rate: rate,
-            }),
+            (_, _, false) => Ok(InverseGamma { shape, rate }),
         }
     }
 
