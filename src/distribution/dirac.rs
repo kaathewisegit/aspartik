@@ -11,7 +11,8 @@ use std::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Dirac};
+/// use statrs::distribution::{Dirac, Continuous};
+/// use statrs::statistics::Mean;
 ///
 /// let n = Dirac::new(3.0).unwrap();
 /// assert_eq!(n.mean(), 3.0);
@@ -60,7 +61,11 @@ impl Univariate<f64, f64> for Dirac {
     /// Where the value is 1 if x > `v`, 0 otherwise.
     ///
     fn cdf(&self, x: f64) -> f64 {
-      if x < self.0 { 0.0 } else { 1.0 }
+        if x < self.0 {
+            0.0
+        } else {
+            1.0
+        }
     }
 }
 
@@ -73,7 +78,9 @@ impl Min<f64> for Dirac {
     /// ```ignore
     /// v
     /// ```
-    fn min(&self) -> f64 { self.0 }
+    fn min(&self) -> f64 {
+        self.0
+    }
 }
 
 impl Max<f64> for Dirac {
@@ -85,7 +92,9 @@ impl Max<f64> for Dirac {
     /// ```ignore
     /// v
     /// ```
-    fn max(&self) -> f64 { self.0 }
+    fn max(&self) -> f64 {
+        self.0
+    }
 }
 
 impl Mean<f64> for Dirac {
@@ -95,7 +104,9 @@ impl Mean<f64> for Dirac {
     ///
     /// Since the only value that can be produced by this distribution is `v` with probability
     /// 1, it is just `v`.
-    fn mean(&self) -> f64 { self.0 }
+    fn mean(&self) -> f64 {
+        self.0
+    }
 }
 
 impl Variance<f64> for Dirac {
@@ -108,7 +119,9 @@ impl Variance<f64> for Dirac {
     /// ```
     ///
     /// Since only one value can be produced there is no variance.
-    fn variance(&self) -> f64 { 0.0 }
+    fn variance(&self) -> f64 {
+        0.0
+    }
 
     /// Returns the standard deviation of the dirac distribution
     ///
@@ -116,7 +129,9 @@ impl Variance<f64> for Dirac {
     ///
     /// Since there is no variance in draws from this distribution the standard deviation is
     /// also 0.
-    fn std_dev(&self) -> f64 { 0.0 }
+    fn std_dev(&self) -> f64 {
+        0.0
+    }
 }
 
 impl Entropy<f64> for Dirac {
@@ -129,7 +144,9 @@ impl Entropy<f64> for Dirac {
     /// ```
     ///
     /// Since this distribution has full certainty, it encodes no information
-    fn entropy(&self) -> f64 { 0.0 }
+    fn entropy(&self) -> f64 {
+        0.0
+    }
 }
 
 impl Skewness<f64> for Dirac {
@@ -140,7 +157,9 @@ impl Skewness<f64> for Dirac {
     /// ```ignore
     /// 0
     /// ```
-    fn skewness(&self) -> f64 { 0.0 }
+    fn skewness(&self) -> f64 {
+        0.0
+    }
 }
 
 impl Median<f64> for Dirac {
@@ -185,7 +204,11 @@ impl Continuous<f64, f64> for Dirac {
     ///
     /// where `v` is point of this dirac distribution
     fn pdf(&self, x: f64) -> f64 {
-      if x == self.0 { 1.0 } else { 0.0 }
+        if x == self.0 {
+            1.0
+        } else {
+            0.0
+        }
     }
 
     /// Calculates the log probability density function for the dirac
@@ -203,7 +226,11 @@ impl Continuous<f64, f64> for Dirac {
     /// # Remarks
     /// This distribution is usually negative infinity everywhere except at `v`.
     fn ln_pdf(&self, x: f64) -> f64 {
-      if self.0 == x { 0.0 } else { f64::NEG_INFINITY }
+        if self.0 == x {
+            0.0
+        } else {
+            f64::NEG_INFINITY
+        }
     }
 }
 
@@ -213,7 +240,6 @@ mod test {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Dirac};
-    use crate::distribution::internal::*;
 
     fn try_create(v: f64) -> Dirac {
         let d = Dirac::new(v);
