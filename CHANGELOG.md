@@ -1,3 +1,8 @@
+v0.13.0
+- Implemented `MultivariateNormal` distribution (depends on `nalgebra 0.19`)
+- Implemented `Dirac` distribution
+- Implemented `Negative Binomial` distribution
+
 v0.12.0
 
 - upgrade `rand` dependency to `0.7`

@@ -1,13 +1,13 @@
 [package]
 
 name = "statrs"
-version = "0.12.0"
+version = "0.13.0"
 authors = ["Michael Ma"]
 description = "Statistical computing library for Rust"
 license = "MIT"
 keywords = ["probability", "statistics", "stats", "distribution", "math"]
 categories = ["science"]
-documentation = "https://docs.rs/statrs/0.12.0/statrs/"
+documentation = "https://docs.rs/statrs/0.13.0/statrs/"
 homepage = "https://github.com/boxtown/statrs"
 repository = "https://github.com/boxtown/statrs"
 edition = "2018"

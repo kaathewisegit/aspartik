@@ -97,7 +97,7 @@ impl Distribution<u64> for NegativeBinomial {
 impl Univariate<u64, f64> for NegativeBinomial {
     /// Calculates the cumulative distribution function for the
     /// negative binomial distribution at `x`
-    /// 
+    ///
     /// Note that due to extending the distribution to the reals
     /// (allowing positive real values for `r`), while still technically
     /// a discrete distribution the CDF behaves more like that of a
@@ -245,9 +245,7 @@ impl Discrete<u64, f64> for NegativeBinomial {
     /// ```
     fn ln_pmf(&self, x: u64) -> f64 {
         let k = x as f64;
-        gamma::ln_gamma(self.r + k)
-            - gamma::ln_gamma(self.r)
-            - gamma::ln_gamma(k + 1.0)
+        gamma::ln_gamma(self.r + k) - gamma::ln_gamma(self.r) - gamma::ln_gamma(k + 1.0)
             + (self.r * self.p.ln())
             + (k * (1.0 - self.p).ln())
     }
@@ -260,7 +258,7 @@ mod test {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Discrete, NegativeBinomial};
-    use crate::distribution::internal::*;
+    // use crate::distribution::internal::*;
 
     fn try_create(r: f64, p: f64) -> NegativeBinomial {
         let r = NegativeBinomial::new(r, p);
