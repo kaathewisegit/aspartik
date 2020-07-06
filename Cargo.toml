@@ -22,7 +22,7 @@ rand = "0.7"
 nalgebra = "0.19"
 
 [dev-dependencies]
-criterion = "*"
+criterion = "0.3"
 
 [[bench]]
 name = "order_statistics"
