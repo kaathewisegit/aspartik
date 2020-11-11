@@ -88,7 +88,7 @@ impl Univariate<u64, f64> for Poisson {
     fn cdf(&self, x: f64) -> f64 {
         if x < 0.0 {
             0.0
-        } else if x == f64::INFINITY {
+        } else if x.is_infinite() {
             1.0
         } else {
             1.0 - gamma::gamma_lr(x.floor() + 1.0, self.lambda)

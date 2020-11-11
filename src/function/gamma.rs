@@ -3,6 +3,7 @@
 
 use crate::consts;
 use crate::error::StatsError;
+use crate::is_zero;
 use crate::prec;
 use crate::Result;
 use std::f64;
@@ -215,7 +216,7 @@ pub fn checked_gamma_ur(a: f64, x: f64) -> Result<f64> {
             qkm1 *= big_inv;
         }
 
-        if qk != 0.0 {
+        if !is_zero(qk) {
             let r = pk / qk;
             let t = ((ans - r) / r).abs();
             ans = r;
@@ -363,7 +364,7 @@ pub fn digamma(x: f64) -> f64 {
     if x == f64::NEG_INFINITY || x.is_nan() {
         return f64::NAN;
     }
-    if x <= 0.0 && x.floor() == x {
+    if x <= 0.0 && ulps_eq!(x.floor(), x) {
         return f64::NEG_INFINITY;
     }
     if x < 0.0 {
