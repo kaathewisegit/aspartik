@@ -116,7 +116,7 @@ fn get_fcache() -> &'static [f64; CACHE_SIZE] {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     use std::{f64, u64};

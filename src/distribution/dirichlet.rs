@@ -373,7 +373,7 @@ fn test_is_valid_alpha() {
     assert!(!is_valid_alpha(&invalid));
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     use std::f64;

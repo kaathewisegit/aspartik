@@ -40,12 +40,19 @@ macro_rules! assert_almost_eq {
     };
 }
 
+#[allow(clippy::excessive_precision)]
 pub mod consts;
+#[allow(clippy::excessive_precision)]
 pub mod distribution;
+#[allow(clippy::excessive_precision)]
 pub mod euclid;
+#[allow(clippy::excessive_precision)]
 pub mod function;
+#[allow(clippy::excessive_precision)]
 pub mod generate;
+#[allow(clippy::excessive_precision)]
 pub mod prec;
+#[allow(clippy::excessive_precision)]
 pub mod statistics;
 
 mod error;

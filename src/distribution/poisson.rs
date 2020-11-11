@@ -302,7 +302,7 @@ pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, lambda: f64) -> f64 {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     use std::fmt::Debug;

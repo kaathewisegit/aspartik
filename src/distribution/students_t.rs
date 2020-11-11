@@ -508,7 +508,7 @@ impl Continuous<f64, f64> for StudentsT {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     use std::f64;

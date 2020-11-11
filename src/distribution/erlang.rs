@@ -273,7 +273,7 @@ impl Continuous<f64, f64> for Erlang {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     use std::f64;

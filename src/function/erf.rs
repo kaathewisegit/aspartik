@@ -737,7 +737,7 @@ fn erf_inv_impl(p: f64, q: f64, s: f64) -> f64 {
     s * result
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     use std::f64;

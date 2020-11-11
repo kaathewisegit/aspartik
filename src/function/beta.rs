@@ -202,7 +202,7 @@ pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64> {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     #[test]

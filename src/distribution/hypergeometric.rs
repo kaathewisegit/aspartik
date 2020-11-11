@@ -425,7 +425,7 @@ impl Discrete<u64, f64> for Hypergeometric {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     use std::f64;

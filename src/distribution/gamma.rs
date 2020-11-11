@@ -371,7 +371,7 @@ pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, shape: f64, rate: f64) -> f6
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
 mod test {
     use std::f64;
