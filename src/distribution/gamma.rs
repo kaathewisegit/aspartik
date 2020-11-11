@@ -338,34 +338,31 @@ impl Continuous<f64, f64> for Gamma {
 /// Pages 363-372
 /// </div>
 /// <br />
-pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, shape: f64, rate: f64) -> f64 {
-    if rate == f64::INFINITY {
-        return shape;
+pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, shape: f64, rate: f64) -> f64 {
+    let mut a = shape;
+    let mut afix = 1.0;
+    if shape < 1.0 {
+        a = shape + 1.0;
+        afix = rng.gen::<f64>().powf(1.0 / shape);
     }
 
-    let a = if shape < 1.0 { shape + 1.0 } else { shape };
-    let afix = if shape < 1.0 {
-        r.gen::<f64>().powf(1.0 / shape)
-    } else {
-        1.0
-    };
     let d = a - 1.0 / 3.0;
     let c = 1.0 / (9.0 * d).sqrt();
     loop {
-        let mut x = super::normal::sample_unchecked(r, 0.0, 1.0);
-        let mut v = 1.0 + c * x;
-        while v <= 0.0 {
-            x = super::normal::sample_unchecked(r, 0.0, 1.0);
+        let mut x;
+        let mut v;
+        loop {
+            x = super::normal::sample_unchecked(rng, 0.0, 1.0);
             v = 1.0 + c * x;
+            if v > 0.0 {
+                break;
+            };
         }
 
         v *= v * v;
         x *= x;
-        let u: f64 = r.gen();
-        if u < 1.0 - 0.0331 * x * x {
-            return afix * d * v / rate;
-        }
-        if u.ln() < 0.5 * x + d * (1.0 - v - v.ln()) {
+        let u: f64 = rng.gen();
+        if u < 1.0 - 0.0331 * x * x || u.ln() < 0.5 * x + d * (1.0 - v - v.ln()) {
             return afix * d * v / rate;
         }
     }
