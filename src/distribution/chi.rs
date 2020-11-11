@@ -49,7 +49,7 @@ impl Chi {
         if freedom.is_nan() || freedom <= 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(Chi { freedom: freedom })
+            Ok(Chi { freedom })
         }
     }
 

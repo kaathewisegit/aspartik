@@ -52,7 +52,7 @@ impl Binomial {
         if p.is_nan() || p < 0.0 || p > 1.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(Binomial { p: p, n: n })
+            Ok(Binomial { p, n })
         }
     }
 

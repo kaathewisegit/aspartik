@@ -48,7 +48,7 @@ impl DiscreteUniform {
         if max < min {
             Err(StatsError::BadParams)
         } else {
-            Ok(DiscreteUniform { min: min, max: max })
+            Ok(DiscreteUniform { min, max })
         }
     }
 }

@@ -50,7 +50,7 @@ impl Uniform {
         if min > max || min.is_nan() || max.is_nan() {
             Err(StatsError::BadParams)
         } else {
-            Ok(Uniform { min: min, max: max })
+            Ok(Uniform { min, max })
         }
     }
 }

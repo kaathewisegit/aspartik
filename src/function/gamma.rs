@@ -11,7 +11,7 @@ use std::f64;
 const GAMMA_R: f64 = 10.900511;
 
 /// Polynomial coefficients for approximating the `gamma_ln` function
-const GAMMA_DK: &'static [f64] = &[
+const GAMMA_DK: &[f64] = &[
     2.48574089138753565546e-5,
     1.05142378581721974210,
     -3.45687097222016235469,

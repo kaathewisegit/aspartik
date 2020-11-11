@@ -49,7 +49,7 @@ impl Exponential {
         if rate.is_nan() || rate <= 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(Exponential { rate: rate })
+            Ok(Exponential { rate })
         }
     }
 

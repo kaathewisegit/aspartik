@@ -57,8 +57,8 @@ impl InfinitePeriodic {
     ) -> InfinitePeriodic {
         let step = frequency / sampling_rate * amplitude;
         InfinitePeriodic {
-            amplitude: amplitude,
-            step: step,
+            amplitude,
+            step,
             phase: (phase - delay as f64 * step).modulus(amplitude),
             k: 0.0,
         }
@@ -131,9 +131,9 @@ impl InfiniteSinusoidal {
         let pi2 = consts::PI * 2.0;
         let step = frequency / sampling_rate * pi2;
         InfiniteSinusoidal {
-            amplitude: amplitude,
-            mean: mean,
-            step: step,
+            amplitude,
+            mean,
+            step,
             phase: (phase - delay as f64 * step) % pi2,
             i: 0,
         }
@@ -206,8 +206,8 @@ impl InfiniteSquare {
         InfiniteSquare {
             periodic: InfinitePeriodic::new(1.0, 1.0 / duration, duration, 0.0, delay),
             high_duration: high_duration as f64,
-            high_value: high_value,
-            low_value: low_value,
+            high_value,
+            low_value,
         }
     }
 }
@@ -216,11 +216,11 @@ impl Iterator for InfiniteSquare {
     type Item = f64;
 
     fn next(&mut self) -> Option<f64> {
-        self.periodic.next().and_then(|x| {
+        self.periodic.next().map(|x| {
             if x < self.high_duration {
-                Some(self.high_value)
+                self.high_value
             } else {
-                Some(self.low_value)
+                self.low_value
             }
         })
     }
@@ -272,8 +272,8 @@ impl InfiniteTriangle {
             raise_duration: raise_duration as f64,
             raise: height / raise_duration as f64,
             fall: height / fall_duration as f64,
-            high_value: high_value,
-            low_value: low_value,
+            high_value,
+            low_value,
         }
     }
 }
@@ -282,11 +282,11 @@ impl Iterator for InfiniteTriangle {
     type Item = f64;
 
     fn next(&mut self) -> Option<f64> {
-        self.periodic.next().and_then(|x| {
+        self.periodic.next().map(|x| {
             if x < self.raise_duration {
-                Some(self.low_value + x * self.raise)
+                self.low_value + x * self.raise
             } else {
-                Some(self.high_value - (x - self.raise_duration) * self.fall)
+                self.high_value - (x - self.raise_duration) * self.fall
             }
         })
     }
@@ -332,6 +332,6 @@ impl Iterator for InfiniteSawtooth {
     type Item = f64;
 
     fn next(&mut self) -> Option<f64> {
-        self.periodic.next().and_then(|x| Some(x + self.low_value))
+        self.periodic.next().map(|x| x + self.low_value)
     }
 }

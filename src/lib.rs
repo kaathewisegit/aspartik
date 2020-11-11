@@ -41,18 +41,25 @@ macro_rules! assert_almost_eq {
 }
 
 #[allow(clippy::excessive_precision)]
+#[allow(clippy::many_single_char_names)]
 pub mod consts;
 #[allow(clippy::excessive_precision)]
+#[allow(clippy::many_single_char_names)]
 pub mod distribution;
 #[allow(clippy::excessive_precision)]
+#[allow(clippy::many_single_char_names)]
 pub mod euclid;
 #[allow(clippy::excessive_precision)]
+#[allow(clippy::many_single_char_names)]
 pub mod function;
 #[allow(clippy::excessive_precision)]
+#[allow(clippy::many_single_char_names)]
 pub mod generate;
 #[allow(clippy::excessive_precision)]
+#[allow(clippy::many_single_char_names)]
 pub mod prec;
 #[allow(clippy::excessive_precision)]
+#[allow(clippy::many_single_char_names)]
 pub mod statistics;
 
 mod error;

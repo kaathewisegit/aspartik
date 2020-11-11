@@ -56,8 +56,8 @@ impl FisherSnedecor {
             Err(StatsError::BadParams)
         } else {
             Ok(FisherSnedecor {
-                freedom_1: freedom_1,
-                freedom_2: freedom_2,
+                freedom_1,
+                freedom_2,
             })
         }
     }
