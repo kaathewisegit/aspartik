@@ -94,7 +94,7 @@ pub fn integral(x: f64, n: u64) -> Result<f64> {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     #[test]
     fn test_integral() {
         assert_eq!(super::integral(0.001, 1).unwrap(), 6.33153936413614904);

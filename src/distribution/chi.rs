@@ -319,7 +319,7 @@ impl Continuous<f64, f64> for Chi {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::distribution::internal::*;
     use crate::distribution::{Chi, Continuous, Univariate};
     use crate::statistics::*;
@@ -560,8 +560,8 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(1.0), 0.0, 10.0);
-        test::check_continuous_distribution(&try_create(2.0), 0.0, 10.0);
-        test::check_continuous_distribution(&try_create(5.0), 0.0, 10.0);
+        tests::check_continuous_distribution(&try_create(1.0), 0.0, 10.0);
+        tests::check_continuous_distribution(&try_create(2.0), 0.0, 10.0);
+        tests::check_continuous_distribution(&try_create(5.0), 0.0, 10.0);
     }
 }

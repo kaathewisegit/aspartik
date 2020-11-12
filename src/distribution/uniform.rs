@@ -234,7 +234,7 @@ impl Continuous<f64, f64> for Uniform {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Uniform};
@@ -429,8 +429,8 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(0.0, 10.0), 0.0, 10.0);
-        test::check_continuous_distribution(&try_create(-2.0, 15.0), -2.0, 15.0);
+        tests::check_continuous_distribution(&try_create(0.0, 10.0), 0.0, 10.0);
+        tests::check_continuous_distribution(&try_create(-2.0, 15.0), -2.0, 15.0);
     }
 
     #[test]

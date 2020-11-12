@@ -354,7 +354,7 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, shape: f64, rate: f64) -> 
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Gamma};
@@ -547,7 +547,7 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(1.0, 0.5), 0.0, 20.0);
-        test::check_continuous_distribution(&try_create(9.0, 2.0), 0.0, 20.0);
+        tests::check_continuous_distribution(&try_create(1.0, 0.5), 0.0, 20.0);
+        tests::check_continuous_distribution(&try_create(9.0, 2.0), 0.0, 20.0);
     }
 }

@@ -275,7 +275,7 @@ impl Continuous<f64, f64> for Erlang {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::distribution::Erlang;
     use crate::distribution::internal::*;
@@ -316,8 +316,8 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(1, 2.5), 0.0, 20.0);
-        test::check_continuous_distribution(&try_create(2, 1.5), 0.0, 20.0);
-        test::check_continuous_distribution(&try_create(3, 0.5), 0.0, 20.0);
+        tests::check_continuous_distribution(&try_create(1, 2.5), 0.0, 20.0);
+        tests::check_continuous_distribution(&try_create(2, 1.5), 0.0, 20.0);
+        tests::check_continuous_distribution(&try_create(3, 0.5), 0.0, 20.0);
     }
 }

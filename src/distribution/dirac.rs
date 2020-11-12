@@ -236,7 +236,7 @@ impl Continuous<f64, f64> for Dirac {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Dirac};

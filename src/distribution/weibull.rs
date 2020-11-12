@@ -323,7 +323,7 @@ impl Continuous<f64, f64> for Weibull {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Weibull};
@@ -500,6 +500,6 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(1.0, 0.2), 0.0, 10.0);
+        tests::check_continuous_distribution(&try_create(1.0, 0.2), 0.0, 10.0);
     }
 }

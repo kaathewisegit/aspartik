@@ -475,7 +475,7 @@ impl Continuous<f64, f64> for FisherSnedecor {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, FisherSnedecor};
@@ -714,6 +714,6 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(10.0, 10.0), 0.0, 10.0);
+        tests::check_continuous_distribution(&try_create(10.0, 10.0), 0.0, 10.0);
     }
 }

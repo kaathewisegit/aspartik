@@ -423,7 +423,7 @@ fn signum(x: f64) -> f64 {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64::{self, consts};
 
     #[test]

@@ -363,7 +363,7 @@ fn test_binary_index() {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use std::fmt::Debug;
     use crate::statistics::*;
@@ -546,7 +546,7 @@ mod test {
 
     #[test]
     fn test_discrete() {
-        test::check_discrete_distribution(&try_create(&[1.0, 2.0, 3.0, 4.0]), 4);
-        test::check_discrete_distribution(&try_create(&[0.0, 1.0, 2.0, 3.0, 4.0]), 5);
+        tests::check_discrete_distribution(&try_create(&[1.0, 2.0, 3.0, 4.0]), 4);
+        tests::check_discrete_distribution(&try_create(&[0.0, 1.0, 2.0, 3.0, 4.0]), 5);
     }
 }

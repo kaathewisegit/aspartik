@@ -295,7 +295,7 @@ impl<'a> CheckedDiscrete<&'a [u64], f64> for Multinomial {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::statistics::*;
     use crate::distribution::{CheckedDiscrete, Discrete, Multinomial};
 

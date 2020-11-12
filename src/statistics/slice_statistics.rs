@@ -357,7 +357,7 @@ fn select_inplace(arr: &mut [f64], rank: usize) -> f64 {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::statistics::*;
 

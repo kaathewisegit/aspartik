@@ -376,7 +376,7 @@ fn test_is_valid_alpha() {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::function::gamma;
     use crate::statistics::*;

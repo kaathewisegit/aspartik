@@ -427,7 +427,7 @@ impl Discrete<u64, f64> for Hypergeometric {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use std::fmt::Debug;
     use crate::statistics::*;
@@ -650,7 +650,7 @@ mod test {
 
     #[test]
     fn test_discrete() {
-        test::check_discrete_distribution(&try_create(5, 4, 3), 4);
-        test::check_discrete_distribution(&try_create(3, 2, 1), 2);
+        tests::check_discrete_distribution(&try_create(5, 4, 3), 4);
+        tests::check_discrete_distribution(&try_create(3, 2, 1), 2);
     }
 }

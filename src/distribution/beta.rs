@@ -441,7 +441,7 @@ impl Continuous<f64, f64> for Beta {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::distribution::internal::*;
     use crate::distribution::{Beta, Continuous, Univariate};
     use crate::statistics::*;
@@ -704,7 +704,7 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(1.2, 3.4), 0.0, 1.0);
-        test::check_continuous_distribution(&try_create(4.5, 6.7), 0.0, 1.0);
+        tests::check_continuous_distribution(&try_create(1.2, 3.4), 0.0, 1.0);
+        tests::check_continuous_distribution(&try_create(4.5, 6.7), 0.0, 1.0);
     }
 }

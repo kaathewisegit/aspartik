@@ -250,7 +250,7 @@ impl Discrete<i64, f64> for DiscreteUniform {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::fmt::Debug;
     use std::f64;
     use crate::statistics::*;

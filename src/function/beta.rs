@@ -205,7 +205,7 @@ pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64> {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     #[test]
     fn test_ln_beta() {
         assert_almost_eq!(super::ln_beta(0.5, 0.5), 1.144729885849400174144, 1e-15);

@@ -212,7 +212,7 @@ impl Continuous<f64, f64> for Cauchy {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Cauchy};
@@ -405,7 +405,7 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(-1.2, 3.4), -1500.0, 1500.0);
-        test::check_continuous_distribution(&try_create(-4.5, 6.7), -5000.0, 5000.0);
+        tests::check_continuous_distribution(&try_create(-1.2, 3.4), -1500.0, 1500.0);
+        tests::check_continuous_distribution(&try_create(-4.5, 6.7), -5000.0, 5000.0);
     }
 }

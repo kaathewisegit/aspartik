@@ -304,7 +304,7 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, lambda: f64) -> f64 {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::fmt::Debug;
     use std::f64;
     use std::u64;
@@ -470,7 +470,7 @@ mod test {
 
     #[test]
     fn test_discrete() {
-        test::check_discrete_distribution(&try_create(0.3), 10);
-        test::check_discrete_distribution(&try_create(4.5), 30);
+        tests::check_discrete_distribution(&try_create(0.3), 10);
+        tests::check_discrete_distribution(&try_create(4.5), 30);
     }
 }

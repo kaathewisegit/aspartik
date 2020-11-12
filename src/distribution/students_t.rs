@@ -511,7 +511,7 @@ impl Continuous<f64, f64> for StudentsT {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use std::panic;
     use crate::statistics::*;
@@ -789,8 +789,8 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(0.0, 1.0, 3.0), -30.0, 30.0);
-        test::check_continuous_distribution(&try_create(0.0, 1.0, 10.0), -10.0, 10.0);
-        test::check_continuous_distribution(&try_create(20.0, 0.5, 10.0), 10.0, 30.0);
+        tests::check_continuous_distribution(&try_create(0.0, 1.0, 3.0), -30.0, 30.0);
+        tests::check_continuous_distribution(&try_create(0.0, 1.0, 10.0), -10.0, 10.0);
+        tests::check_continuous_distribution(&try_create(20.0, 0.5, 10.0), 10.0, 30.0);
     }
 }

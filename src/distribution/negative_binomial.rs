@@ -253,7 +253,7 @@ impl Discrete<u64, f64> for NegativeBinomial {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::fmt::Debug;
     use std::f64;
     use crate::statistics::*;
@@ -462,7 +462,7 @@ mod test {
     //
     // #[test]
     // fn test_discrete() {
-    //     test::check_discrete_distribution(&try_create(5.0, 0.3), 35);
-    //     test::check_discrete_distribution(&try_create(10.0, 0.7), 21);
+    //     tests::check_discrete_distribution(&try_create(5.0, 0.3), 35);
+    //     tests::check_discrete_distribution(&try_create(10.0, 0.7), 21);
     // }
 }
