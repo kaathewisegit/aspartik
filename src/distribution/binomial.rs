@@ -89,9 +89,9 @@ impl Binomial {
 }
 
 impl Distribution<f64> for Binomial {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         (0..self.n).fold(0.0, |acc, _| {
-            let n: f64 = r.gen();
+            let n: f64 = rng.gen();
             if n < self.p {
                 acc + 1.0
             } else {
@@ -102,7 +102,7 @@ impl Distribution<f64> for Binomial {
 }
 
 impl Univariate<u64, f64> for Binomial {
-    /// Calulcates the cumulative distribution function for the
+    /// Calculates the cumulative distribution function for the
     /// binomial distribution at `x`
     ///
     /// # Formula
@@ -249,7 +249,6 @@ impl Mode<u64> for Binomial {
         if is_zero(self.p) {
             0
         } else if ulps_eq!(self.p, 1.0) {
-            // TODO: check
             self.n
         } else {
             ((self.n as f64 + 1.0) * self.p).floor() as u64

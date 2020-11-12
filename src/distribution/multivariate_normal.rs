@@ -59,7 +59,7 @@ where
     ///
     /// Returns an error if the given covariance matrix is not
     /// symmetric or positive-definite
-    pub fn new(mean: &VectorN<f64, N>, cov: &MatrixN<f64, N>) -> Result<Self> {
+    pub fn new(mean: VectorN<f64, N>, cov: MatrixN<f64, N>) -> Result<Self> {
         // Check that the provided covariance matrix is symmetric
         // Check that mean and covariance do not contain NaN
         if cov.lower_triangle() != cov.upper_triangle().transpose()
@@ -78,8 +78,8 @@ where
             None => Err(StatsError::BadParams),
             Some(cholesky_decomp) => Ok(MultivariateNormal {
                 cov_chol_decomp: cholesky_decomp.clone().unpack(),
-                mu: mean.clone(),
-                cov: cov.clone(),
+                mu: mean,
+                cov,
                 precision: cholesky_decomp.inverse(),
                 pdf_const,
             }),
@@ -260,34 +260,37 @@ where
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
-    use std::f64;
+mod tests  {
+    use crate::distribution::{Continuous, MultivariateNormal};
     use crate::statistics::*;
-    use crate::distribution::{MultivariateNormal, Continuous};
-    use nalgebra::{Matrix2, Vector2, Matrix3, Vector3, VectorN, MatrixN, Dim, DimMin, DimName, DefaultAllocator, U1};
-    use nalgebra::base::allocator::Allocator;
     use core::fmt::Debug;
+    use nalgebra::base::allocator::Allocator;
+    use nalgebra::{
+        DefaultAllocator, Dim, DimMin, DimName, Matrix2, Matrix3, MatrixN, Vector2, Vector3,
+        VectorN, U1,
+    };
+    use std::f64;
 
     fn try_create<N>(mean: VectorN<f64, N>, covariance: MatrixN<f64, N>) -> MultivariateNormal<N>
-        where
-          N: Dim + DimMin<N, Output = N> + DimName,
-          DefaultAllocator: Allocator<f64, N>,
-          DefaultAllocator: Allocator<f64, N, N>,
-          DefaultAllocator: Allocator<f64, U1, N>,
-          DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+    where
+        N: Dim + DimMin<N, Output = N> + DimName,
+        DefaultAllocator: Allocator<f64, N>,
+        DefaultAllocator: Allocator<f64, N, N>,
+        DefaultAllocator: Allocator<f64, U1, N>,
+        DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
     {
-        let mvn = MultivariateNormal::new(&mean, &covariance);
+        let mvn = MultivariateNormal::new(mean, covariance);
         assert!(mvn.is_ok());
         mvn.unwrap()
     }
 
     fn create_case<N>(mean: VectorN<f64, N>, covariance: MatrixN<f64, N>)
-        where
-          N: Dim + DimMin<N, Output = N> + DimName,
-          DefaultAllocator: Allocator<f64, N>,
-          DefaultAllocator: Allocator<f64, N, N>,
-          DefaultAllocator: Allocator<f64, U1, N>,
-          DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+    where
+        N: Dim + DimMin<N, Output = N> + DimName,
+        DefaultAllocator: Allocator<f64, N>,
+        DefaultAllocator: Allocator<f64, N, N>,
+        DefaultAllocator: Allocator<f64, U1, N>,
+        DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
     {
         let mvn = try_create(mean.clone(), covariance.clone());
         assert_eq!(mean, mvn.mean());
@@ -295,40 +298,45 @@ mod test {
     }
 
     fn bad_create_case<N>(mean: VectorN<f64, N>, covariance: MatrixN<f64, N>)
-        where
-          N: Dim + DimMin<N, Output = N> + DimName,
-          DefaultAllocator: Allocator<f64, N>,
-          DefaultAllocator: Allocator<f64, N, N>,
-          DefaultAllocator: Allocator<f64, U1, N>,
-          DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+    where
+        N: Dim + DimMin<N, Output = N> + DimName,
+        DefaultAllocator: Allocator<f64, N>,
+        DefaultAllocator: Allocator<f64, N, N>,
+        DefaultAllocator: Allocator<f64, U1, N>,
+        DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
     {
-        let mvn = MultivariateNormal::new(&mean, &covariance);
+        let mvn = MultivariateNormal::new(mean, covariance);
         assert!(mvn.is_err());
     }
 
     fn test_case<T, F, N>(mean: VectorN<f64, N>, covariance: MatrixN<f64, N>, expected: T, eval: F)
-        where
-            T: Debug + PartialEq,
-            F: Fn(MultivariateNormal<N>) -> T,
-            N: Dim + DimMin<N, Output = N> + DimName,
-            DefaultAllocator: Allocator<f64, N>,
-            DefaultAllocator: Allocator<f64, N, N>,
-            DefaultAllocator: Allocator<f64, U1, N>,
-            DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+    where
+        T: Debug + PartialEq,
+        F: Fn(MultivariateNormal<N>) -> T,
+        N: Dim + DimMin<N, Output = N> + DimName,
+        DefaultAllocator: Allocator<f64, N>,
+        DefaultAllocator: Allocator<f64, N, N>,
+        DefaultAllocator: Allocator<f64, U1, N>,
+        DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
     {
         let mvn = try_create(mean, covariance);
         let x = eval(mvn);
         assert_eq!(expected, x);
     }
 
-    fn test_almost<F, N>(mean: VectorN<f64, N>, covariance: MatrixN<f64, N>, expected: f64, acc: f64, eval: F)
-        where
-          F: Fn(MultivariateNormal<N>) -> f64,
-          N: Dim + DimMin<N, Output = N> + DimName,
-          DefaultAllocator: Allocator<f64, N>,
-          DefaultAllocator: Allocator<f64, N, N>,
-          DefaultAllocator: Allocator<f64, U1, N>,
-          DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+    fn test_almost<F, N>(
+        mean: VectorN<f64, N>,
+        covariance: MatrixN<f64, N>,
+        expected: f64,
+        acc: f64,
+        eval: F,
+    ) where
+        F: Fn(MultivariateNormal<N>) -> f64,
+        N: Dim + DimMin<N, Output = N> + DimName,
+        DefaultAllocator: Allocator<f64, N>,
+        DefaultAllocator: Allocator<f64, N, N>,
+        DefaultAllocator: Allocator<f64, U1, N>,
+        DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
     {
         let mvn = try_create(mean, covariance);
         let x = eval(mvn);
