@@ -80,8 +80,8 @@ impl Erlang {
 }
 
 impl Distribution<f64> for Erlang {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        Distribution::sample(&self.g, r)
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        Distribution::sample(&self.g, rng)
     }
 }
 
@@ -148,7 +148,7 @@ impl Mean<f64> for Erlang {
     /// ```
     ///
     /// where `k` is the shape and `λ` is the rate
-    fn mean(&self) -> f64 {
+    fn mean(&self) -> Option<f64> {
         self.g.mean()
     }
 }
@@ -163,21 +163,8 @@ impl Variance<f64> for Erlang {
     /// ```
     ///
     /// where `α` is the shape and `λ` is the rate
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         self.g.variance()
-    }
-
-    /// Returns the standard deviation of the erlang distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(k) / λ
-    /// ```
-    ///
-    /// where `k` is the shape and `λ` is the rate
-    fn std_dev(&self) -> f64 {
-        self.g.std_dev()
     }
 }
 
@@ -192,7 +179,7 @@ impl Entropy<f64> for Erlang {
     ///
     /// where `k` is the shape, `λ` is the rate, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Option<f64> {
         self.g.entropy()
     }
 }
@@ -207,12 +194,12 @@ impl Skewness<f64> for Erlang {
     /// ```
     ///
     /// where `k` is the shape
-    fn skewness(&self) -> f64 {
+    fn skewness(&self) -> Option<f64> {
         self.g.skewness()
     }
 }
 
-impl Mode<f64> for Erlang {
+impl Mode<Option<f64>> for Erlang {
     /// Returns the mode for the erlang distribution
     ///
     /// # Remarks
@@ -227,7 +214,7 @@ impl Mode<f64> for Erlang {
     /// ```
     ///
     /// where `k` is the shape and `λ` is the rate
-    fn mode(&self) -> f64 {
+    fn mode(&self) -> Option<f64> {
         self.g.mode()
     }
 }

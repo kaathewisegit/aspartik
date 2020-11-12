@@ -132,8 +132,8 @@ impl Mean<f64> for Triangular {
     /// ```ignore
     /// (min + max + mode) / 3
     /// ```
-    fn mean(&self) -> f64 {
-        (self.min + self.max + self.mode) / 3.0
+    fn mean(&self) -> Option<f64> {
+        Some((self.min + self.max + self.mode) / 3.0)
     }
 }
 
@@ -145,23 +145,11 @@ impl Variance<f64> for Triangular {
     /// ```ignore
     /// (min^2 + max^2 + mode^2 - min * max - min * mode - max * mode) / 18
     /// ```
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         let a = self.min;
         let b = self.max;
         let c = self.mode;
-        (a * a + b * b + c * c - a * b - a * c - b * c) / 18.0
-    }
-
-    /// Returns the standard deviation of the triangular distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt((min^2 + max^2 + mode^2 - min * max - min * mode - max * mode) /
-    /// 18)
-    /// ```
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+        Some((a * a + b * b + c * c - a * b - a * c - b * c) / 18.0)
     }
 }
 
@@ -173,8 +161,8 @@ impl Entropy<f64> for Triangular {
     /// ```ignore
     /// 1 / 2 + ln((max - min) / 2)
     /// ```
-    fn entropy(&self) -> f64 {
-        0.5 + ((self.max - self.min) / 2.0).ln()
+    fn entropy(&self) -> Option<f64> {
+        Some(0.5 + ((self.max - self.min) / 2.0).ln())
     }
 }
 
@@ -189,13 +177,13 @@ impl Skewness<f64> for Triangular {
     /// ( 5 * (min^2 + max^2 + mode^2 - min * max - min * mode - max * mode)^(3
     /// / 2))
     /// ```
-    fn skewness(&self) -> f64 {
+    fn skewness(&self) -> Option<f64> {
         let a = self.min;
         let b = self.max;
         let c = self.mode;
         let q = f64::consts::SQRT_2 * (a + b - 2.0 * c) * (2.0 * a - b - c) * (a - 2.0 * b + c);
         let d = 5.0 * (a * a + b * b + c * c - a * b - a * c - b * c).powf(3.0 / 2.0);
-        q / d
+        Some(q / d)
     }
 }
 
@@ -223,7 +211,7 @@ impl Median<f64> for Triangular {
     }
 }
 
-impl Mode<f64> for Triangular {
+impl Mode<Option<f64>> for Triangular {
     /// Returns the mode of the triangular distribution
     ///
     /// # Formula
@@ -231,8 +219,8 @@ impl Mode<f64> for Triangular {
     /// ```ignore
     /// mode
     /// ```
-    fn mode(&self) -> f64 {
-        self.mode
+    fn mode(&self) -> Option<f64> {
+        Some(self.mode)
     }
 }
 

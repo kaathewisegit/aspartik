@@ -18,7 +18,7 @@ use std::u64;
 /// use statrs::prec;
 ///
 /// let n = Poisson::new(1.0).unwrap();
-/// assert_eq!(n.mean(), 1.0);
+/// assert_eq!(n.mean(), Some(1.0));
 /// assert!(prec::almost_eq(n.pmf(1), 0.367879441171442, 1e-15));
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -69,8 +69,8 @@ impl Poisson {
 }
 
 impl Distribution<f64> for Poisson {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        sample_unchecked(r, self.lambda)
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        sample_unchecked(rng, self.lambda)
     }
 }
 
@@ -134,8 +134,8 @@ impl Mean<f64> for Poisson {
     /// ```
     ///
     /// where `λ` is the rate
-    fn mean(&self) -> f64 {
-        self.lambda
+    fn mean(&self) -> Option<f64> {
+        Some(self.lambda)
     }
 }
 
@@ -149,21 +149,8 @@ impl Variance<f64> for Poisson {
     /// ```
     ///
     /// where `λ` is the rate
-    fn variance(&self) -> f64 {
-        self.lambda
-    }
-
-    /// Returns the standard deviation of the poisson distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(λ)
-    /// ```
-    ///
-    /// where `λ` is the rate
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+    fn variance(&self) -> Option<f64> {
+        Some(self.lambda)
     }
 }
 
@@ -177,11 +164,13 @@ impl Entropy<f64> for Poisson {
     /// ```
     ///
     /// where `λ` is the rate
-    fn entropy(&self) -> f64 {
-        0.5 * (2.0 * f64::consts::PI * f64::consts::E * self.lambda).ln()
-            - 1.0 / (12.0 * self.lambda)
-            - 1.0 / (24.0 * self.lambda * self.lambda)
-            - 19.0 / (360.0 * self.lambda * self.lambda * self.lambda)
+    fn entropy(&self) -> Option<f64> {
+        Some(
+            0.5 * (2.0 * f64::consts::PI * f64::consts::E * self.lambda).ln()
+                - 1.0 / (12.0 * self.lambda)
+                - 1.0 / (24.0 * self.lambda * self.lambda)
+                - 19.0 / (360.0 * self.lambda * self.lambda * self.lambda),
+        )
     }
 }
 
@@ -195,8 +184,8 @@ impl Skewness<f64> for Poisson {
     /// ```
     ///
     /// where `λ` is the rate
-    fn skewness(&self) -> f64 {
-        1.0 / self.lambda.sqrt()
+    fn skewness(&self) -> Option<f64> {
+        Some(1.0 / self.lambda.sqrt())
     }
 }
 
@@ -215,7 +204,7 @@ impl Median<f64> for Poisson {
     }
 }
 
-impl Mode<u64> for Poisson {
+impl Mode<Option<u64>> for Poisson {
     /// Returns the mode of the poisson distribution
     ///
     /// # Formula
@@ -225,8 +214,8 @@ impl Mode<u64> for Poisson {
     /// ```
     ///
     /// where `λ` is the rate
-    fn mode(&self) -> u64 {
-        self.lambda.floor() as u64
+    fn mode(&self) -> Option<u64> {
+        Some(self.lambda.floor() as u64)
     }
 }
 

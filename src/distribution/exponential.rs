@@ -132,8 +132,8 @@ impl Mean<f64> for Exponential {
     /// ```
     ///
     /// where `λ` is the rate
-    fn mean(&self) -> f64 {
-        1.0 / self.rate
+    fn mean(&self) -> Option<f64> {
+        Some(1.0 / self.rate)
     }
 }
 
@@ -147,21 +147,8 @@ impl Variance<f64> for Exponential {
     /// ```
     ///
     /// where `λ` is the rate
-    fn variance(&self) -> f64 {
-        1.0 / (self.rate * self.rate)
-    }
-
-    /// Returns the standard deviation of the exponential distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(1 / λ^2)
-    /// ```
-    ///
-    /// where `λ` is the rate
-    fn std_dev(&self) -> f64 {
-        1.0 / self.rate
+    fn variance(&self) -> Option<f64> {
+        Some(1.0 / (self.rate * self.rate))
     }
 }
 
@@ -175,8 +162,8 @@ impl Entropy<f64> for Exponential {
     /// ```
     ///
     /// where `λ` is the rate
-    fn entropy(&self) -> f64 {
-        1.0 - self.rate.ln()
+    fn entropy(&self) -> Option<f64> {
+        Some(1.0 - self.rate.ln())
     }
 }
 
@@ -188,8 +175,8 @@ impl Skewness<f64> for Exponential {
     /// ```ignore
     /// 2
     /// ```
-    fn skewness(&self) -> f64 {
-        2.0
+    fn skewness(&self) -> Option<f64> {
+        Some(2.0)
     }
 }
 
@@ -208,7 +195,7 @@ impl Median<f64> for Exponential {
     }
 }
 
-impl Mode<f64> for Exponential {
+impl Mode<Option<f64>> for Exponential {
     /// Returns the mode of the exponential distribution
     ///
     /// # Formula
@@ -216,8 +203,8 @@ impl Mode<f64> for Exponential {
     /// ```ignore
     /// 0
     /// ```
-    fn mode(&self) -> f64 {
-        0.0
+    fn mode(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 

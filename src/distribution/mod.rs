@@ -70,7 +70,8 @@ use crate::Result;
 /// distributions e.g. distributions that have a closed form cumulative
 /// distribution
 /// function
-pub trait Univariate<T, K>: Min<T> + Max<T> {
+pub trait Univariate<T, K> // : Min<T> + Max<T>
+{
     /// Returns the cumulative distribution function calculated
     /// at `x` for a given distribution. May panic depending
     /// on the implementor.

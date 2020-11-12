@@ -163,8 +163,8 @@ impl Mean<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn mean(&self) -> f64 {
-        self.shape / self.rate
+    fn mean(&self) -> Option<f64> {
+        Some(self.shape / self.rate)
     }
 }
 
@@ -178,21 +178,8 @@ impl Variance<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn variance(&self) -> f64 {
-        self.shape / (self.rate * self.rate)
-    }
-
-    /// Returns the standard deviation of the gamma distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(α) / β
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn std_dev(&self) -> f64 {
-        self.shape.sqrt() / self.rate
+    fn variance(&self) -> Option<f64> {
+        Some(self.shape / (self.rate * self.rate))
     }
 }
 
@@ -207,10 +194,11 @@ impl Entropy<f64> for Gamma {
     ///
     /// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
-        self.shape - self.rate.ln()
+    fn entropy(&self) -> Option<f64> {
+        let entr = self.shape - self.rate.ln()
             + gamma::ln_gamma(self.shape)
-            + (1.0 - self.shape) * gamma::digamma(self.shape)
+            + (1.0 - self.shape) * gamma::digamma(self.shape);
+        Some(entr)
     }
 }
 
@@ -224,12 +212,12 @@ impl Skewness<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape
-    fn skewness(&self) -> f64 {
-        2.0 / self.shape.sqrt()
+    fn skewness(&self) -> Option<f64> {
+        Some(2.0 / self.shape.sqrt())
     }
 }
 
-impl Mode<f64> for Gamma {
+impl Mode<Option<f64>> for Gamma {
     /// Returns the mode for the gamma distribution
     ///
     /// # Remarks
@@ -244,8 +232,8 @@ impl Mode<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn mode(&self) -> f64 {
-        (self.shape - 1.0) / self.rate
+    fn mode(&self) -> Option<f64> {
+        Some((self.shape - 1.0) / self.rate)
     }
 }
 

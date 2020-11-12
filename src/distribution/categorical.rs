@@ -196,11 +196,13 @@ impl Mean<f64> for Categorical {
     /// where `p_j` is the `j`th probability mass,
     /// `Σ` is the sum from `0` to `k - 1`,
     /// and `k` is the number of categories
-    fn mean(&self) -> f64 {
-        self.norm_pmf
-            .iter()
-            .enumerate()
-            .fold(0.0, |acc, (idx, &val)| acc + idx as f64 * val)
+    fn mean(&self) -> Option<f64> {
+        Some(
+            self.norm_pmf
+                .iter()
+                .enumerate()
+                .fold(0.0, |acc, (idx, &val)| acc + idx as f64 * val),
+        )
     }
 }
 
@@ -216,30 +218,17 @@ impl Variance<f64> for Categorical {
     /// where `p_j` is the `j`th probability mass, `μ` is the mean,
     /// `Σ` is the sum from `0` to `k - 1`,
     /// and `k` is the number of categories
-    fn variance(&self) -> f64 {
-        let mu = self.mean();
-        self.norm_pmf
+    fn variance(&self) -> Option<f64> {
+        let mu = self.mean()?;
+        let var = self
+            .norm_pmf
             .iter()
             .enumerate()
             .fold(0.0, |acc, (idx, &val)| {
                 let r = idx as f64 - mu;
                 acc + r * r * val
-            })
-    }
-
-    /// Returns the standard deviation of the categorical distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(Σ(p_j * (j - μ)^2))
-    /// ```
-    ///
-    /// where `p_j` is the `j`th probability mass, `μ` is the mean,
-    /// `Σ` is the sum from `0` to `k - 1`,
-    /// and `k` is the number of categories
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+            });
+        Some(var)
     }
 }
 
@@ -255,13 +244,14 @@ impl Entropy<f64> for Categorical {
     /// where `p_j` is the `j`th probability mass,
     /// `Σ` is the sum from `0` to `k - 1`,
     /// and `k` is the number of categories
-    fn entropy(&self) -> f64 {
-        -self
+    fn entropy(&self) -> Option<f64> {
+        let entr = -self
             .norm_pmf
             .iter()
             .filter(|&&p| p > 0.0)
             .map(|p| p * p.ln())
-            .sum::<f64>()
+            .sum::<f64>();
+        Some(entr)
     }
 }
 
@@ -300,8 +290,8 @@ impl Discrete<u64, f64> for Categorical {
 
 /// Draws a sample from the categorical distribution described by `cdf`
 /// without doing any bounds checking
-pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, cdf: &[f64]) -> f64 {
-    let draw = r.gen::<f64>() * cdf.last().unwrap();
+pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, cdf: &[f64]) -> f64 {
+    let draw = rng.gen::<f64>() * cdf.last().unwrap();
     cdf.iter()
         .enumerate()
         .find(|(_, val)| **val >= draw)

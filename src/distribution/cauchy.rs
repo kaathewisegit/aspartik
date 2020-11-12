@@ -140,8 +140,8 @@ impl Entropy<f64> for Cauchy {
     /// ```
     ///
     /// where `γ` is the scale
-    fn entropy(&self) -> f64 {
-        (4.0 * f64::consts::PI * self.scale).ln()
+    fn entropy(&self) -> Option<f64> {
+        Some((4.0 * f64::consts::PI * self.scale).ln())
     }
 }
 
@@ -160,7 +160,7 @@ impl Median<f64> for Cauchy {
     }
 }
 
-impl Mode<f64> for Cauchy {
+impl Mode<Option<f64>> for Cauchy {
     /// Returns the mode of the cauchy distribution
     ///
     /// # Formula
@@ -170,8 +170,8 @@ impl Mode<f64> for Cauchy {
     /// ```
     ///
     /// where `x_0` is the location
-    fn mode(&self) -> f64 {
-        self.location
+    fn mode(&self) -> Option<f64> {
+        Some(self.location)
     }
 }
 

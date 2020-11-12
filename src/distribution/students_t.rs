@@ -195,30 +195,11 @@ impl Mean<f64> for StudentsT {
     /// ```
     ///
     /// where `μ` is the location
-    fn mean(&self) -> f64 {
-        self.checked_mean().unwrap()
-    }
-}
-
-impl CheckedMean<f64> for StudentsT {
-    /// Returns the mean of the student's t-distribution
-    ///
-    /// # Errors
-    ///
-    /// If `freedom <= 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// μ
-    /// ```
-    ///
-    /// where `μ` is the location
-    fn checked_mean(&self) -> Result<f64> {
+    fn mean(&self) -> Option<f64> {
         if self.freedom <= 1.0 {
-            Err(StatsError::ArgGt("freedom", 1.0))
+            None
         } else {
-            Ok(self.location)
+            Some(self.location)
         }
     }
 }
@@ -243,96 +224,23 @@ impl Variance<f64> for StudentsT {
     /// ```
     ///
     /// where `σ` is the scale and `v` is the freedom
-    fn variance(&self) -> f64 {
-        self.checked_variance().unwrap()
-    }
-
-    /// Returns the standard deviation of the student's t-distribution
-    ///
-    /// # Panics
-    ///
-    /// If `freedom <= 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// let variance = if v == INF {
-    ///     σ^2
-    /// } else if freedom > 2.0 {
-    ///     v * σ^2 / (v - 2)
-    /// } else {
-    ///     INF
-    /// }
-    /// sqrt(variance)
-    /// ```
-    ///
-    /// where `σ` is the scale and `v` is the freedom
-    fn std_dev(&self) -> f64 {
-        self.checked_std_dev().unwrap()
-    }
-}
-
-impl CheckedVariance<f64> for StudentsT {
-    /// Returns the variance of the student's t-distribution
-    ///
-    /// # Errors
-    ///
-    /// If `freedom <= 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// if v == INF {
-    ///     σ^2
-    /// } else if freedom > 2.0 {
-    ///     v * σ^2 / (v - 2)
-    /// } else {
-    ///     INF
-    /// }
-    /// ```
-    ///
-    /// where `σ` is the scale and `v` is the freedom
-    fn checked_variance(&self) -> Result<f64> {
+    fn variance(&self) -> Option<f64> {
         if self.freedom <= 1.0 {
-            Err(StatsError::ArgGt("freedom", 1.0))
+            None
         } else if self.freedom.is_infinite() {
-            Ok(self.scale * self.scale)
+            Some(self.scale * self.scale)
         } else if self.freedom > 2.0 {
-            Ok(self.freedom * self.scale * self.scale / (self.freedom - 2.0))
+            Some(self.freedom * self.scale * self.scale / (self.freedom - 2.0))
         } else {
-            Ok(f64::INFINITY)
+            None
         }
-    }
-
-    /// Returns the standard deviation of the student's t-distribution
-    ///
-    /// # Errors
-    ///
-    /// If `freedom <= 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// let variance = if v == INF {
-    ///     σ^2
-    /// } else if freedom > 2.0 {
-    ///     v * σ^2 / (v - 2)
-    /// } else {
-    ///     INF
-    /// }
-    /// sqrt(variance)
-    /// ```
-    ///
-    /// where `σ` is the scale and `v` is the freedom
-    fn checked_std_dev(&self) -> Result<f64> {
-        self.checked_variance().map(|x| x.sqrt())
     }
 }
 
 impl Entropy<f64> for StudentsT {
     /// Returns the entropy for the student's t-distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `location != 0.0 && scale != 1.0`
     ///
@@ -345,38 +253,14 @@ impl Entropy<f64> for StudentsT {
     ///
     /// where `v` is the freedom, `ψ` is the digamma function, and `B` is the
     /// beta function
-    fn entropy(&self) -> f64 {
-        self.checked_entropy().unwrap()
-    }
-}
-
-impl CheckedEntropy<f64> for StudentsT {
-    /// Returns the entropy for the student's t-distribution
-    ///
-    /// # Errors
-    ///
-    /// If `location != 0.0 && scale != 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// (v + 1) / 2 * (ψ((v + 1) / 2) - ψ(v / 2)) + ln(sqrt(v) * B(v / 2, 1 /
-    /// 2))
-    /// ```
-    ///
-    /// where `v` is the freedom, `ψ` is the digamma function, and `B` is the
-    /// beta function
-    fn checked_entropy(&self) -> Result<f64> {
-        // TODO: investigate using prec::almost_eq for comparisons here
+    fn entropy(&self) -> Option<f64> {
         if !is_zero(self.location) || !ulps_eq!(self.scale, 1.0) {
-            Err(StatsError::SpecialCase(
-                "Cannot calculate entropy for StudentsT distribution where location is not 0 and scale is not 1",
-            ))
+            None
         } else {
             let result = (self.freedom + 1.0) / 2.0
                 * (gamma::digamma((self.freedom + 1.0) / 2.0) - gamma::digamma(self.freedom / 2.0))
                 + (self.freedom.sqrt() * beta::beta(self.freedom / 2.0, 0.5)).ln();
-            Ok(result)
+            Some(result)
         }
     }
 }
@@ -393,28 +277,11 @@ impl Skewness<f64> for StudentsT {
     /// ```ignore
     /// 0
     /// ```
-    fn skewness(&self) -> f64 {
-        self.checked_skewness().unwrap()
-    }
-}
-
-impl CheckedSkewness<f64> for StudentsT {
-    /// Returns the skewness of the student's t-distribution
-    ///
-    /// # Errors
-    ///
-    /// If `x <= 3.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// 0
-    /// ```
-    fn checked_skewness(&self) -> Result<f64> {
+    fn skewness(&self) -> Option<f64> {
         if self.freedom <= 3.0 {
-            Err(StatsError::ArgGt("freedom", 3.0))
+            None
         } else {
-            Ok(0.0)
+            Some(0.0)
         }
     }
 }
@@ -434,7 +301,7 @@ impl Median<f64> for StudentsT {
     }
 }
 
-impl Mode<f64> for StudentsT {
+impl Mode<Option<f64>> for StudentsT {
     /// Returns the mode of the student's t-distribution
     ///
     /// # Formula
@@ -444,8 +311,8 @@ impl Mode<f64> for StudentsT {
     /// ```
     ///
     /// where `μ` is the location
-    fn mode(&self) -> f64 {
-        self.location
+    fn mode(&self) -> Option<f64> {
+        Some(self.location)
     }
 }
 

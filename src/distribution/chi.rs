@@ -144,9 +144,13 @@ impl Mean<f64> for Chi {
     /// ```
     ///
     /// where `k` is degrees of freedom and `Γ` is the gamma function
-    fn mean(&self) -> f64 {
-        f64::consts::SQRT_2 * gamma::gamma((self.freedom + 1.0) / 2.0)
-            / gamma::gamma(self.freedom / 2.0)
+    fn mean(&self) -> Option<f64> {
+        if self.freedom.is_infinite() {
+            return None;
+        }
+        let mean = f64::consts::SQRT_2 * gamma::gamma((self.freedom + 1.0) / 2.0)
+            / gamma::gamma(self.freedom / 2.0);
+        Some(mean)
     }
 }
 
@@ -165,26 +169,9 @@ impl Variance<f64> for Chi {
     ///
     /// where `k` is degrees of freedom and `μ` is the mean
     /// of the distribution
-    fn variance(&self) -> f64 {
-        self.freedom - self.mean() * self.mean()
-    }
-
-    /// Returns the standard deviation of the chi distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `NaN` if `freedom` is `INF`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(k - μ^2)
-    /// ```
-    ///
-    /// where `k` is degrees of freedom and `μ` is the mean
-    /// of the distribution
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+    fn variance(&self) -> Option<f64> {
+        let mean = self.mean()?;
+        Some(self.freedom - mean * mean)
     }
 }
 
@@ -193,7 +180,7 @@ impl Entropy<f64> for Chi {
     ///
     /// # Remarks
     ///
-    /// Returns `NaN` if `freedom` is `INF`
+    /// Returns `None` if `freedom` is `INF`
     ///
     /// # Formula
     ///
@@ -203,12 +190,16 @@ impl Entropy<f64> for Chi {
     ///
     /// where `k` is degrees of freedom, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
-        gamma::ln_gamma(self.freedom / 2.0)
+    fn entropy(&self) -> Option<f64> {
+        if self.freedom.is_infinite() {
+            return None;
+        }
+        let entr = gamma::ln_gamma(self.freedom / 2.0)
             + (self.freedom
                 - (2.0f64).ln()
                 - (self.freedom - 1.0) * gamma::digamma(self.freedom / 2.0))
-                / 2.0
+                / 2.0;
+        Some(entr)
     }
 }
 
@@ -226,13 +217,14 @@ impl Skewness<f64> for Chi {
     /// ```
     /// where `μ` is the mean and `σ` the standard deviation
     /// of the distribution
-    fn skewness(&self) -> f64 {
-        let sigma = self.std_dev();
-        self.mean() * (1.0 - 2.0 * sigma * sigma) / (sigma * sigma * sigma)
+    fn skewness(&self) -> Option<f64> {
+        let sigma = self.std_dev()?;
+        let skew = self.mean()? * (1.0 - 2.0 * sigma * sigma) / (sigma * sigma * sigma);
+        Some(skew)
     }
 }
 
-impl Mode<f64> for Chi {
+impl Mode<Option<f64>> for Chi {
     /// Returns the mode for the chi distribution
     ///
     /// # Panics
@@ -246,31 +238,11 @@ impl Mode<f64> for Chi {
     /// ```
     ///
     /// where `k` is the degrees of freedom
-    fn mode(&self) -> f64 {
-        self.checked_mode().unwrap()
-    }
-}
-
-impl CheckedMode<f64> for Chi {
-    /// Returns the mode for the chi distribution
-    ///
-    /// # Errors
-    ///
-    /// If `freedom < 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(k - 1)
-    /// ```
-    ///
-    /// where `k` is the degrees of freedom
-    fn checked_mode(&self) -> Result<f64> {
-        if self.freedom < 1.0 {
-            Err(StatsError::ArgGte("freedom", 1.0))
-        } else {
-            Ok((self.freedom - 1.0).sqrt())
+    fn mode(&self) -> Option<f64> {
+        if self.freedom - 1.0 < 0.0 {
+            return None;
         }
+        Some((self.freedom - 1.0).sqrt())
     }
 }
 

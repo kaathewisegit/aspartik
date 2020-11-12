@@ -17,7 +17,7 @@ use std::f64;
 /// use statrs::statistics::Mean;
 ///
 /// let n = Uniform::new(0.0, 1.0).unwrap();
-/// assert_eq!(n.mean(), 0.5);
+/// assert_eq!(n.mean(), Some(0.5));
 /// assert_eq!(n.pdf(0.5), 1.0);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -103,8 +103,8 @@ impl Mean<f64> for Uniform {
     /// ```ignore
     /// (min + max) / 2
     /// ```
-    fn mean(&self) -> f64 {
-        (self.min + self.max) / 2.0
+    fn mean(&self) -> Option<f64> {
+        Some((self.min + self.max) / 2.0)
     }
 }
 
@@ -116,19 +116,8 @@ impl Variance<f64> for Uniform {
     /// ```ignore
     /// (max - min)^2 / 12
     /// ```
-    fn variance(&self) -> f64 {
-        (self.max - self.min) * (self.max - self.min) / 12.0
-    }
-
-    /// Returns the standard deviation for the continuous uniform distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt((max - min)^2 / 12)
-    /// ```
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+    fn variance(&self) -> Option<f64> {
+        Some((self.max - self.min) * (self.max - self.min) / 12.0)
     }
 }
 
@@ -140,8 +129,8 @@ impl Entropy<f64> for Uniform {
     /// ```ignore
     /// ln(max - min)
     /// ```
-    fn entropy(&self) -> f64 {
-        (self.max - self.min).ln()
+    fn entropy(&self) -> Option<f64> {
+        Some((self.max - self.min).ln())
     }
 }
 
@@ -153,8 +142,8 @@ impl Skewness<f64> for Uniform {
     /// ```ignore
     /// 0
     /// ```
-    fn skewness(&self) -> f64 {
-        0.0
+    fn skewness(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
@@ -171,7 +160,7 @@ impl Median<f64> for Uniform {
     }
 }
 
-impl Mode<f64> for Uniform {
+impl Mode<Option<f64>> for Uniform {
     /// Returns the mode for the continuous uniform distribution
     ///
     /// # Remarks
@@ -184,8 +173,8 @@ impl Mode<f64> for Uniform {
     /// ```ignore
     /// N/A // (max + min) / 2 for the middle element
     /// ```
-    fn mode(&self) -> f64 {
-        (self.min + self.max) / 2.0
+    fn mode(&self) -> Option<f64> {
+        Some((self.min + self.max) / 2.0)
     }
 }
 

@@ -2,6 +2,11 @@ use crate::distribution::{CheckedContinuous, Continuous};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{prec, Result, StatsError};
+use nalgebra::{
+    base::allocator::Allocator,
+    base::{dimension::DimName, MatrixN, VectorN},
+    DefaultAllocator, Dim, DimMin, U1,
+};
 use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
@@ -118,7 +123,14 @@ impl Distribution<Vec<f64>> for Dirichlet {
     }
 }
 
-impl Mean<Vec<f64>> for Dirichlet {
+impl<N> MeanN<N> for Dirichlet
+where
+    N: Dim + DimMin<N, Output = N> + DimName,
+    DefaultAllocator: Allocator<f64, N>,
+    DefaultAllocator: Allocator<f64, N, N>,
+    DefaultAllocator: Allocator<f64, U1, N>,
+    DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+{
     /// Returns the means of the dirichlet distribution
     ///
     /// # Formula
@@ -129,13 +141,20 @@ impl Mean<Vec<f64>> for Dirichlet {
     ///
     /// for the `i`th element where `α_i` is the `i`th concentration parameter
     /// and `α_0` is the sum of all concentration parameters
-    fn mean(&self) -> Vec<f64> {
+    fn mean(&self) -> VectorN<f64, N> {
         let sum = self.alpha_sum();
         self.alpha.iter().map(|x| x / sum).collect()
     }
 }
 
-impl Variance<Vec<f64>> for Dirichlet {
+impl<N> Covariance<N> for Dirichlet
+where
+    N: Dim + DimMin<N, Output = N> + DimName,
+    DefaultAllocator: Allocator<f64, N>,
+    DefaultAllocator: Allocator<f64, N, N>,
+    DefaultAllocator: Allocator<f64, U1, N>,
+    DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+{
     /// Returns the variances of the dirichlet distribution
     ///
     /// # Formula
@@ -146,26 +165,12 @@ impl Variance<Vec<f64>> for Dirichlet {
     ///
     /// for the `i`th element where `α_i` is the `i`th concentration parameter
     /// and `α_0` is the sum of all concentration parameters
-    fn variance(&self) -> Vec<f64> {
+    fn variance(&self) -> MatrixN<f64, N> {
         let sum = self.alpha_sum();
         self.alpha
             .iter()
             .map(|x| x * (sum - x) / (sum * sum * (sum + 1.0)))
             .collect()
-    }
-
-    /// Returns the standard deviation of the dirichlet distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt((α_i * (α_0 - α_i)) / (α_0^2 * (α_0 + 1)))
-    /// ```
-    ///
-    /// for the `i`th element where `α_i` is the `i`th concentration parameter
-    /// and `α_0` is the sum of all concentration parameters
-    fn std_dev(&self) -> Vec<f64> {
-        self.variance().iter().map(|x| x.sqrt()).collect()
     }
 }
 
@@ -188,13 +193,14 @@ impl Entropy<f64> for Dirichlet {
     /// `K` is the number of concentration parameters, `ψ` is the digamma
     /// function, `α_i`
     /// is the `i`th concentration parameter, and `Σ` is the sum from `1` to `K`
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Option<f64> {
         let sum = self.alpha_sum();
-        let num = self
-            .alpha
-            .iter()
-            .fold(0.0, |acc, &x| acc + (x - 1.0) * gamma::digamma(x));
-        gamma::ln_gamma(sum) + (sum - self.alpha.len() as f64) * gamma::digamma(sum) - num
+        let num = self.alpha.iter().fold(0.0, |acc, &x| {
+            acc + gamma::ln_gamma(x) + (x - 1.0) * gamma::digamma(x)
+        });
+        let entr =
+            -gamma::ln_gamma(sum) + (sum - self.alpha.len() as f64) * gamma::digamma(sum) - num;
+        Some(entr)
     }
 }
 

@@ -104,8 +104,8 @@ impl Mean<f64> for Dirac {
     ///
     /// Since the only value that can be produced by this distribution is `v` with probability
     /// 1, it is just `v`.
-    fn mean(&self) -> f64 {
-        self.0
+    fn mean(&self) -> Option<f64> {
+        Some(self.0)
     }
 }
 
@@ -119,18 +119,8 @@ impl Variance<f64> for Dirac {
     /// ```
     ///
     /// Since only one value can be produced there is no variance.
-    fn variance(&self) -> f64 {
-        0.0
-    }
-
-    /// Returns the standard deviation of the dirac distribution
-    ///
-    /// # Remarks
-    ///
-    /// Since there is no variance in draws from this distribution the standard deviation is
-    /// also 0.
-    fn std_dev(&self) -> f64 {
-        0.0
+    fn variance(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
@@ -144,8 +134,8 @@ impl Entropy<f64> for Dirac {
     /// ```
     ///
     /// Since this distribution has full certainty, it encodes no information
-    fn entropy(&self) -> f64 {
-        0.0
+    fn entropy(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
@@ -157,8 +147,8 @@ impl Skewness<f64> for Dirac {
     /// ```ignore
     /// 0
     /// ```
-    fn skewness(&self) -> f64 {
-        0.0
+    fn skewness(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
@@ -177,7 +167,7 @@ impl Median<f64> for Dirac {
     }
 }
 
-impl Mode<f64> for Dirac {
+impl Mode<Option<f64>> for Dirac {
     /// Returns the mode of the dirac distribution
     ///
     /// # Formula
@@ -187,8 +177,8 @@ impl Mode<f64> for Dirac {
     /// ```
     ///
     /// where `v` is the point of the dirac distribution
-    fn mode(&self) -> f64 {
-        self.0
+    fn mode(&self) -> Option<f64> {
+        Some(self.0)
     }
 }
 

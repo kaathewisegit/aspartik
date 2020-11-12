@@ -160,7 +160,7 @@ impl Mean<f64> for ChiSquared {
     /// ```
     ///
     /// where `k` is the degrees of freedom
-    fn mean(&self) -> f64 {
+    fn mean(&self) -> Option<f64> {
         self.g.mean()
     }
 }
@@ -175,21 +175,8 @@ impl Variance<f64> for ChiSquared {
     /// ```
     ///
     /// where `k` is the degrees of freedom
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         self.g.variance()
-    }
-
-    /// Returns the standard deviation of the chi-squared distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(2k)
-    /// ```
-    ///
-    /// where `k` is the degrees of freedom
-    fn std_dev(&self) -> f64 {
-        self.g.std_dev()
     }
 }
 
@@ -204,7 +191,7 @@ impl Entropy<f64> for ChiSquared {
     ///
     /// where `k` is the degrees of freedom, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Option<f64> {
         self.g.entropy()
     }
 }
@@ -219,7 +206,7 @@ impl Skewness<f64> for ChiSquared {
     /// ```
     ///
     /// where `k` is the degrees of freedom
-    fn skewness(&self) -> f64 {
+    fn skewness(&self) -> Option<f64> {
         self.g.skewness()
     }
 }
@@ -233,18 +220,19 @@ impl Median<f64> for ChiSquared {
     /// k * (1 - (2 / 9k))^3
     /// ```
     fn median(&self) -> f64 {
-        if self.freedom < 1.0 {
+        let median = if self.freedom < 1.0 {
             // if k is small, calculate using expansion of formula
             self.freedom - 2.0 / 3.0 + 12.0 / (81.0 * self.freedom)
                 - 8.0 / (729.0 * self.freedom * self.freedom)
         } else {
             // if k is large enough, median heads toward k - 2/3
             self.freedom - 2.0 / 3.0
-        }
+        };
+        median
     }
 }
 
-impl Mode<f64> for ChiSquared {
+impl Mode<Option<f64>> for ChiSquared {
     /// Returns the mode of the chi-squared distribution
     ///
     /// # Formula
@@ -254,7 +242,7 @@ impl Mode<f64> for ChiSquared {
     /// ```
     ///
     /// where `k` is the degrees of freedom
-    fn mode(&self) -> f64 {
+    fn mode(&self) -> Option<f64> {
         self.g.mode()
     }
 }

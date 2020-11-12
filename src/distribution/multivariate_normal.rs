@@ -1,6 +1,6 @@
 use crate::distribution::Continuous;
 use crate::distribution::Normal;
-use crate::statistics::{Covariance, Entropy, Max, Mean, Min, Mode};
+use crate::statistics::{Covariance, Entropy, Max, MeanN, Min, Mode};
 use crate::{Result, StatsError};
 use nalgebra::{
     base::allocator::Allocator,
@@ -37,6 +37,7 @@ where
     DefaultAllocator: Allocator<f64, U1, N>,
     DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
 {
+    dim: usize,
     cov_chol_decomp: MatrixN<f64, N>,
     mu: VectorN<f64, N>,
     cov: MatrixN<f64, N>,
@@ -60,6 +61,7 @@ where
     /// Returns an error if the given covariance matrix is not
     /// symmetric or positive-definite
     pub fn new(mean: VectorN<f64, N>, cov: MatrixN<f64, N>) -> Result<Self> {
+        let dim = mean.len();
         // Check that the provided covariance matrix is symmetric
         // Check that mean and covariance do not contain NaN
         if cov.lower_triangle() != cov.upper_triangle().transpose()
@@ -77,6 +79,7 @@ where
         match Cholesky::new(cov.clone()) {
             None => Err(StatsError::BadParams),
             Some(cholesky_decomp) => Ok(MultivariateNormal {
+                dim,
                 cov_chol_decomp: cholesky_decomp.clone().unpack(),
                 mu: mean,
                 cov,
@@ -111,7 +114,7 @@ where
     }
 }
 
-impl<N> Min<VectorN<f64, N>> for MultivariateNormal<N>
+impl<N> Min<Vec<Option<f64>>> for MultivariateNormal<N>
 where
     N: Dim + DimMin<N, Output = N> + DimName,
     DefaultAllocator: Allocator<f64, N>,
@@ -121,12 +124,12 @@ where
 {
     /// Returns the minimum value in the domain of the
     /// multivariate normal distribution represented by a real vector
-    fn min(&self) -> VectorN<f64, N> {
-        VectorN::<f64, N>::repeat(f64::NEG_INFINITY)
+    fn min(&self) -> Vec<Option<f64>> {
+        vec![None; self.dim]
     }
 }
 
-impl<N> Max<VectorN<f64, N>> for MultivariateNormal<N>
+impl<N> Max<Vec<Option<f64>>> for MultivariateNormal<N>
 where
     N: Dim + DimMin<N, Output = N> + DimName,
     DefaultAllocator: Allocator<f64, N>,
@@ -136,12 +139,12 @@ where
 {
     /// Returns the maximum value in the domain of the
     /// multivariate normal distribution represented by a real vector
-    fn max(&self) -> VectorN<f64, N> {
-        VectorN::<f64, N>::repeat(f64::INFINITY)
+    fn max(&self) -> Vec<Option<f64>> {
+        vec![None; self.dim]
     }
 }
 
-impl<N> Mean<VectorN<f64, N>> for MultivariateNormal<N>
+impl<N> MeanN<N> for MultivariateNormal<N>
 where
     N: Dim + DimMin<N, Output = N> + DimName,
     DefaultAllocator: Allocator<f64, N>,
@@ -159,7 +162,7 @@ where
     }
 }
 
-impl<N> Covariance<MatrixN<f64, N>> for MultivariateNormal<N>
+impl<N> Covariance<N> for MultivariateNormal<N>
 where
     N: Dim + DimMin<N, Output = N> + DimName,
     DefaultAllocator: Allocator<f64, N>,
@@ -190,10 +193,12 @@ where
     /// ```
     ///
     /// where `Σ` is the covariance matrix and `det` is the determinant
-    fn entropy(&self) -> f64 {
-        0.5 * LU::new(self.variance().scale(2. * PI * E))
-            .determinant()
-            .ln()
+    fn entropy(&self) -> Option<f64> {
+        Some(
+            0.5 * LU::new(self.variance().scale(2. * PI * E))
+                .determinant()
+                .ln(),
+        )
     }
 }
 

@@ -174,14 +174,15 @@ impl Mean<f64> for Beta {
     /// ```
     ///
     /// where `α` is shapeA and `β` is shapeB
-    fn mean(&self) -> f64 {
-        if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
-            0.5
+    fn mean(&self) -> Option<f64> {
+        let mean = if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
+            return None;
         } else if self.shape_a.is_infinite() {
             1.0
         } else {
             self.shape_a / (self.shape_a + self.shape_b)
-        }
+        };
+        Some(mean)
     }
 }
 
@@ -190,8 +191,9 @@ impl Variance<f64> for Beta {
     ///
     /// # Remarks
     ///
-    /// Returns `f64::NAN` if either `shape_a` or `shape_b` are
-    /// positive infinity
+    /// Returns `None` if both `shape_a` and `shape_b` are
+    /// positive infinity, since this limit cannot be consistently
+    /// defined.
     ///
     /// # Formula
     ///
@@ -200,29 +202,18 @@ impl Variance<f64> for Beta {
     /// ```
     ///
     /// where `α` is shapeA and `β` is shapeB
-    fn variance(&self) -> f64 {
-        self.shape_a * self.shape_b
-            / ((self.shape_a + self.shape_b)
-                * (self.shape_a + self.shape_b)
-                * (self.shape_a + self.shape_b + 1.0))
-    }
-
-    /// Returns the standard deviation of the beta distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `f64::NAN` if either `shape_a` or `shape_b` are
-    /// positive infinity
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt((α * β) / ((α + β)^2 * (α + β + 1)))
-    /// ```
-    ///
-    /// where `α` is shapeA and `β` is shapeB
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+    fn variance(&self) -> Option<f64> {
+        let var = if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
+            return None;
+        } else if self.shape_a.is_infinite() || self.shape_b.is_infinite() {
+            0.0
+        } else {
+            self.shape_a * self.shape_b
+                / ((self.shape_a + self.shape_b)
+                    * (self.shape_a + self.shape_b)
+                    * (self.shape_a + self.shape_b + 1.0))
+        };
+        Some(var)
     }
 }
 
@@ -236,15 +227,16 @@ impl Entropy<f64> for Beta {
     /// ```
     ///
     /// where `α` is shapeA, `β` is shapeB and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
-        if self.shape_a.is_infinite() || self.shape_b.is_infinite() {
-            0.0
+    fn entropy(&self) -> Option<f64> {
+        let entr = if self.shape_a.is_infinite() || self.shape_b.is_infinite() {
+            return None;
         } else {
             beta::ln_beta(self.shape_a, self.shape_b)
                 - (self.shape_a - 1.0) * gamma::digamma(self.shape_a)
                 - (self.shape_b - 1.0) * gamma::digamma(self.shape_b)
                 + (self.shape_a + self.shape_b - 2.0) * gamma::digamma(self.shape_a + self.shape_b)
-        }
+        };
+        Some(entr)
     }
 }
 
@@ -258,8 +250,8 @@ impl Skewness<f64> for Beta {
     /// ```
     ///
     /// where `α` is shapeA and `β` is shapeB
-    fn skewness(&self) -> f64 {
-        if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
+    fn skewness(&self) -> Option<f64> {
+        let skew = if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
             0.0
         } else if self.shape_a.is_infinite() {
             -2.0
@@ -268,11 +260,12 @@ impl Skewness<f64> for Beta {
         } else {
             2.0 * (self.shape_b - self.shape_a) * (self.shape_a + self.shape_b + 1.0).sqrt()
                 / ((self.shape_a + self.shape_b + 2.0) * (self.shape_a * self.shape_b).sqrt())
-        }
+        };
+        Some(skew)
     }
 }
 
-impl Mode<f64> for Beta {
+impl Mode<Option<f64>> for Beta {
     /// Returns the mode of the Beta distribution.
     ///
     /// # Remarks
@@ -293,45 +286,17 @@ impl Mode<f64> for Beta {
     /// ```
     ///
     /// where `α` is shapeA and `β` is shapeB
-    fn mode(&self) -> f64 {
-        self.checked_mode().unwrap()
-    }
-}
-
-impl CheckedMode<f64> for Beta {
-    /// Returns the mode of the Beta distribution.
-    ///
-    /// # Remarks
-    ///
-    /// Since the mode is technically only calculate for `α > 1, β > 1`, those
-    /// are the only values we allow. We may consider relaxing this constraint
-    /// in
-    /// the future.
-    ///
-    /// # Errors
-    ///
-    /// If `α <= 1` or `β <= 1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// (α - 1) / (α + β - 2)
-    /// ```
-    ///
-    /// where `α` is shapeA and `β` is shapeB
-    fn checked_mode(&self) -> Result<f64> {
+    fn mode(&self) -> Option<f64> {
         // TODO: perhaps relax constraint in order to allow calculation
         // of 'anti-mode;
-        if self.shape_a <= 1.0 {
-            Err(StatsError::ArgGt("shape_a", 1.0))
-        } else if self.shape_b <= 1.0 {
-            Err(StatsError::ArgGt("shape_b", 1.0))
+        if self.shape_a <= 1.0 || self.shape_b <= 1.0 {
+            None
         } else if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
-            Ok(0.5)
+            None
         } else if self.shape_a.is_infinite() {
-            Ok(1.0)
+            Some(1.0)
         } else {
-            Ok((self.shape_a - 1.0) / (self.shape_a + self.shape_b - 2.0))
+            Some((self.shape_a - 1.0) / (self.shape_a + self.shape_b - 2.0))
         }
     }
 }

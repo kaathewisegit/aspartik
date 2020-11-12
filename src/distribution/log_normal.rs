@@ -124,8 +124,8 @@ impl Mean<f64> for LogNormal {
     /// ```
     ///
     /// where `μ` is the location and `σ` is the scale
-    fn mean(&self) -> f64 {
-        (self.location + self.scale * self.scale / 2.0).exp()
+    fn mean(&self) -> Option<f64> {
+        Some((self.location + self.scale * self.scale / 2.0).exp())
     }
 }
 
@@ -139,22 +139,9 @@ impl Variance<f64> for LogNormal {
     /// ```
     ///
     /// where `μ` is the location and `σ` is the scale
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         let sigma2 = self.scale * self.scale;
-        (sigma2.exp() - 1.0) * (self.location + self.location + sigma2).exp()
-    }
-
-    /// Returns the standard deviation of the log-normal distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt((e^(σ^2) - 1) * e^(2μ + σ^2))
-    /// ```
-    ///
-    /// where `μ` is the location and `σ` is the scale
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
+        Some((sigma2.exp() - 1.0) * (self.location + self.location + sigma2).exp())
     }
 }
 
@@ -168,8 +155,8 @@ impl Entropy<f64> for LogNormal {
     /// ```
     ///
     /// where `μ` is the location and `σ` is the scale
-    fn entropy(&self) -> f64 {
-        0.5 + self.scale.ln() + self.location + consts::LN_SQRT_2PI
+    fn entropy(&self) -> Option<f64> {
+        Some(0.5 + self.scale.ln() + self.location + consts::LN_SQRT_2PI)
     }
 }
 
@@ -183,9 +170,9 @@ impl Skewness<f64> for LogNormal {
     /// ```
     ///
     /// where `μ` is the location and `σ` is the scale
-    fn skewness(&self) -> f64 {
+    fn skewness(&self) -> Option<f64> {
         let expsigma2 = (self.scale * self.scale).exp();
-        (expsigma2 + 2.0) * (expsigma2 - 1.0).sqrt()
+        Some((expsigma2 + 2.0) * (expsigma2 - 1.0).sqrt())
     }
 }
 
@@ -204,7 +191,7 @@ impl Median<f64> for LogNormal {
     }
 }
 
-impl Mode<f64> for LogNormal {
+impl Mode<Option<f64>> for LogNormal {
     /// Returns the mode of the log-normal distribution
     ///
     /// # Formula
@@ -214,8 +201,8 @@ impl Mode<f64> for LogNormal {
     /// ```
     ///
     /// where `μ` is the location and `σ` is the scale
-    fn mode(&self) -> f64 {
-        (self.location - self.scale * self.scale).exp()
+    fn mode(&self) -> Option<f64> {
+        Some((self.location - self.scale * self.scale).exp())
     }
 }
 

@@ -85,9 +85,9 @@ impl Pareto {
 }
 
 impl Distribution<f64> for Pareto {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         // Inverse transform sampling
-        let u: f64 = r.sample(OpenClosed01);
+        let u: f64 = rng.sample(OpenClosed01);
         self.scale * u.powf(-1.0 / self.shape)
     }
 }
@@ -160,11 +160,11 @@ impl Mean<f64> for Pareto {
     /// ```
     ///
     /// where `x_m` is the scale and `α` is the shape
-    fn mean(&self) -> f64 {
+    fn mean(&self) -> Option<f64> {
         if self.shape <= 1.0 {
-            f64::INFINITY
+            None
         } else {
-            (self.shape * self.scale) / (self.shape - 1.0)
+            Some((self.shape * self.scale) / (self.shape - 1.0))
         }
     }
 }
@@ -183,31 +183,13 @@ impl Variance<f64> for Pareto {
     /// ```
     ///
     /// where `x_m` is the scale and `α` is the shape
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         if self.shape <= 2.0 {
-            f64::INFINITY
+            None
         } else {
             let a = self.scale / (self.shape - 1.0); // just a temporary variable
-            a * a * self.shape / (self.shape - 2.0)
+            Some(a * a * self.shape / (self.shape - 2.0))
         }
-    }
-
-    /// Returns the standard deviation of the Pareto distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// let variance = if α <= 2 {
-    ///     INF
-    /// } else {
-    ///     (x_m/(α - 1))^2 * (α/(α - 2))
-    /// };
-    /// sqrt(variance)
-    /// ```
-    ///
-    /// where `x_m` is the scale and `α` is the shape
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
     }
 }
 
@@ -221,8 +203,8 @@ impl Entropy<f64> for Pareto {
     /// ```
     ///
     /// where `x_m` is the scale and `α` is the shape
-    fn entropy(&self) -> f64 {
-        self.shape.ln() - self.scale.ln() - (1.0 / self.shape) - 1.0
+    fn entropy(&self) -> Option<f64> {
+        Some(self.shape.ln() - self.scale.ln() - (1.0 / self.shape) - 1.0)
     }
 }
 
@@ -242,33 +224,14 @@ impl Skewness<f64> for Pareto {
     /// ```
     ///
     /// where `α` is the shape
-    fn skewness(&self) -> f64 {
-        self.checked_skewness().unwrap()
-    }
-}
-
-impl CheckedSkewness<f64> for Pareto {
-    /// Returns the skewness of the Pareto distribution
-    ///
-    /// # Errors
-    ///
-    /// If `α <= 3.0`
-    ///
-    /// where `α` is the shape
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    ///     (2*(α + 1)/(α - 3))*sqrt((α - 2)/α)
-    /// ```
-    ///
-    /// where `α` is the shape
-    fn checked_skewness(&self) -> Result<f64> {
+    fn skewness(&self) -> Option<f64> {
         if self.shape <= 3.0 {
-            Err(StatsError::ArgGt("shape", 3.0))
+            None
         } else {
-            Ok((2.0 * (self.shape + 1.0) / (self.shape - 3.0))
-                * ((self.shape - 2.0) / self.shape).sqrt())
+            Some(
+                (2.0 * (self.shape + 1.0) / (self.shape - 3.0))
+                    * ((self.shape - 2.0) / self.shape).sqrt(),
+            )
         }
     }
 }
@@ -288,7 +251,7 @@ impl Median<f64> for Pareto {
     }
 }
 
-impl Mode<f64> for Pareto {
+impl Mode<Option<f64>> for Pareto {
     /// Returns the mode of the Pareto distribution
     ///
     /// # Formula
@@ -298,8 +261,8 @@ impl Mode<f64> for Pareto {
     /// ```
     ///
     /// where `x_m` is the scale
-    fn mode(&self) -> f64 {
-        self.scale
+    fn mode(&self) -> Option<f64> {
+        Some(self.scale)
     }
 }
 
