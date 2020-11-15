@@ -26,11 +26,24 @@ use std::f64;
 /// assert_eq!(n.pdf(&[0.33333, 0.33333, 0.33333]), 2.222155556222205);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
-pub struct Dirichlet {
-    alpha: Vec<f64>,
+pub struct Dirichlet<D>
+where
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
+{
+    alpha: VectorN<f64, D>,
 }
-
-impl Dirichlet {
+impl<D> Dirichlet<D>
+where
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
+{
     /// Constructs a new dirichlet distribution with the given
     /// concenctration parameters (alpha)
     ///
@@ -53,13 +66,12 @@ impl Dirichlet {
     /// result = Dirichlet::new(&alpha_err);
     /// assert!(result.is_err());
     /// ```
-    pub fn new(alpha: &[f64]) -> Result<Dirichlet> {
-        if !is_valid_alpha(alpha) {
+    pub fn new(alpha: VectorN<f64, D>) -> Result<Dirichlet<D>> {
+        if !is_valid_alpha(&alpha) {
             Err(StatsError::BadParams)
         } else {
-            Ok(Dirichlet {
-                alpha: alpha.to_vec(),
-            })
+            // let vec = alpha.to_vec();
+            Ok(Dirichlet { alpha })
         }
     }
 
@@ -82,9 +94,9 @@ impl Dirichlet {
     /// result = Dirichlet::new_with_param(0.0, 1);
     /// assert!(result.is_err());
     /// ```
-    pub fn new_with_param(alpha: f64, n: usize) -> Result<Dirichlet> {
-        Self::new(&vec![alpha; n])
-    }
+    // pub fn new_with_param(alpha: f64, n: usize) -> Result<Dirichlet> {
+    //     Self::new(&vec![alpha; n])
+    // }
 
     /// Returns the concentration parameters of
     /// the dirichlet distribution as a slice
@@ -97,39 +109,43 @@ impl Dirichlet {
     /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
     /// assert_eq!(n.alpha(), [1.0, 2.0, 3.0]);
     /// ```
-    pub fn alpha(&self) -> &[f64] {
+    pub fn alpha(&self) -> &VectorN<f64, D> {
         &self.alpha
     }
 
     fn alpha_sum(&self) -> f64 {
-        self.alpha.iter().fold(0.0, |acc, x| acc + x)
+        self.alpha.fold(0.0, |acc, x| acc + x)
     }
 }
 
-impl Distribution<Vec<f64>> for Dirichlet {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
+impl<D> Distribution<VectorN<f64, D>> for Dirichlet<D>
+where
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
+{
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> VectorN<f64, D> {
+        // todo!()
         let mut sum = 0.0;
-        let mut samples: Vec<f64> = self
-            .alpha
-            .iter()
-            .map(|&a| {
-                let sample = super::gamma::sample_unchecked(rng, a, 1.0);
-                sum += sample;
-                sample
-            })
-            .collect();
+        let mut samples = self.alpha.map(|a| {
+            let sample = super::gamma::sample_unchecked(rng, a, 1.0);
+            sum += sample;
+            sample
+        });
         for _ in samples.iter_mut().map(|x| *x /= sum) {}
         samples
     }
 }
 
-impl<N> MeanN<N> for Dirichlet
+impl<D> MeanN<D> for Dirichlet<D>
 where
-    N: Dim + DimMin<N, Output = N> + DimName,
-    DefaultAllocator: Allocator<f64, N>,
-    DefaultAllocator: Allocator<f64, N, N>,
-    DefaultAllocator: Allocator<f64, U1, N>,
-    DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
 {
     /// Returns the means of the dirichlet distribution
     ///
@@ -141,19 +157,19 @@ where
     ///
     /// for the `i`th element where `α_i` is the `i`th concentration parameter
     /// and `α_0` is the sum of all concentration parameters
-    fn mean(&self) -> VectorN<f64, N> {
+    fn mean(&self) -> VectorN<f64, D> {
         let sum = self.alpha_sum();
-        self.alpha.iter().map(|x| x / sum).collect()
+        self.alpha.map(|x| x / sum)
     }
 }
 
-impl<N> Covariance<N> for Dirichlet
+impl<D> Covariance<D> for Dirichlet<D>
 where
-    N: Dim + DimMin<N, Output = N> + DimName,
-    DefaultAllocator: Allocator<f64, N>,
-    DefaultAllocator: Allocator<f64, N, N>,
-    DefaultAllocator: Allocator<f64, U1, N>,
-    DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
 {
     /// Returns the variances of the dirichlet distribution
     ///
@@ -165,16 +181,32 @@ where
     ///
     /// for the `i`th element where `α_i` is the `i`th concentration parameter
     /// and `α_0` is the sum of all concentration parameters
-    fn variance(&self) -> MatrixN<f64, N> {
+    fn variance(&self) -> MatrixN<f64, D> {
         let sum = self.alpha_sum();
-        self.alpha
-            .iter()
-            .map(|x| x * (sum - x) / (sum * sum * (sum + 1.0)))
-            .collect()
+        let normalizing = sum * sum * (sum + 1.0);
+        let mut cov = MatrixN::from_diagonal(&self.alpha.map(|x| x * (sum - x) / normalizing));
+        let mut offdiag = |x: usize, y: usize| {
+            let elt = -self.alpha[x] * self.alpha[y] / normalizing;
+            cov[(x, y)] = elt;
+            cov[(y, x)] = elt;
+        };
+        for i in 0..self.alpha.len() {
+            for j in 0..i {
+                offdiag(i, j);
+            }
+        }
+        cov
     }
 }
 
-impl Entropy<f64> for Dirichlet {
+impl<D> Entropy<f64> for Dirichlet<D>
+where
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
+{
     /// Returns the entropy of the dirichlet distribution
     ///
     /// # Formula
@@ -204,7 +236,14 @@ impl Entropy<f64> for Dirichlet {
     }
 }
 
-impl<'a> Continuous<&'a [f64], f64> for Dirichlet {
+impl<'a, D> Continuous<&'a [f64], f64> for Dirichlet<D>
+where
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
+{
     /// Calculates the probabiliy density function for the dirichlet
     /// distribution
     /// with given `x`'s corresponding to the concentration parameters for this
@@ -274,7 +313,14 @@ impl<'a> Continuous<&'a [f64], f64> for Dirichlet {
     }
 }
 
-impl<'a> CheckedContinuous<&'a [f64], f64> for Dirichlet {
+impl<'a, D> CheckedContinuous<&'a [f64], f64> for Dirichlet<D>
+where
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
+{
     /// Calculates the probabiliy density function for the dirichlet
     /// distribution
     /// with given `x`'s corresponding to the concentration parameters for this
@@ -370,8 +416,15 @@ impl<'a> CheckedContinuous<&'a [f64], f64> for Dirichlet {
 
 // determines if `a` is a valid alpha array
 // for the Dirichlet distribution
-fn is_valid_alpha(a: &[f64]) -> bool {
-    a.len() >= 2 && super::internal::is_valid_multinomial(a, false)
+fn is_valid_alpha<D>(a: &VectorN<f64, D>) -> bool
+where
+    D: Dim + DimMin<D, Output = D> + DimName,
+    DefaultAllocator: Allocator<f64, D>,
+    DefaultAllocator: Allocator<f64, D, D>,
+    DefaultAllocator: Allocator<f64, U1, D>,
+    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
+{
+    a.len() >= 2 && super::internal::is_valid_multinomial(a.as_slice(), false)
 }
 
 #[test]
@@ -421,14 +474,14 @@ mod tests {
         bad_create_case(&[0.0, 0.0, 0.0]);
     }
 
-    #[test]
-    fn test_mean() {
-        let n = Dirichlet::new_with_param(0.3, 5).unwrap();
-        let res = n.mean();
-        for x in res {
-            assert_eq!(x, 0.3 / 1.5);
-        }
-    }
+    // #[test]
+    // fn test_mean() {
+    //     let n = Dirichlet::new_with_param(0.3, 5).unwrap();
+    //     let res = n.mean();
+    //     for x in res {
+    //         assert_eq!(x, 0.3 / 1.5);
+    //     }
+    // }
 
     #[test]
     fn test_variance() {
