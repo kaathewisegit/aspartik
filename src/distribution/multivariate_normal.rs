@@ -1,6 +1,6 @@
 use crate::distribution::Continuous;
 use crate::distribution::Normal;
-use crate::statistics::{Covariance, Entropy, Max, MeanN, Min, Mode};
+use crate::statistics::{Covariance, Max, MeanN, Min, Mode};
 use crate::{Result, StatsError};
 use nalgebra::{
     base::allocator::Allocator,
@@ -88,6 +88,22 @@ where
             }),
         }
     }
+    /// Returns the entropy of the multivariate normal distribution
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// (1 / 2) * ln(det(2 * π * e * Σ))
+    /// ```
+    ///
+    /// where `Σ` is the covariance matrix and `det` is the determinant
+    pub fn entropy(&self) -> Option<f64> {
+        Some(
+            0.5 * LU::new(self.variance().scale(2. * PI * E))
+                .determinant()
+                .ln(),
+        )
+    }
 }
 
 impl<N> Distribution<VectorN<f64, N>> for MultivariateNormal<N>
@@ -173,32 +189,6 @@ where
     /// Returns the covariance matrix of the multivariate normal distribution
     fn variance(&self) -> MatrixN<f64, N> {
         self.cov.clone()
-    }
-}
-
-impl<N> Entropy<f64> for MultivariateNormal<N>
-where
-    N: Dim + DimMin<N, Output = N> + DimName,
-    DefaultAllocator: Allocator<f64, N>,
-    DefaultAllocator: Allocator<f64, N, N>,
-    DefaultAllocator: Allocator<f64, U1, N>,
-    DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
-{
-    /// Returns the entropy of the multivariate normal distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// (1 / 2) * ln(det(2 * π * e * Σ))
-    /// ```
-    ///
-    /// where `Σ` is the covariance matrix and `det` is the determinant
-    fn entropy(&self) -> Option<f64> {
-        Some(
-            0.5 * LU::new(self.variance().scale(2. * PI * E))
-                .determinant()
-                .ln(),
-        )
     }
 }
 

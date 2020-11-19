@@ -201,10 +201,10 @@ impl Max<u64> for Hypergeometric {
     }
 }
 
-impl Mean<f64> for Hypergeometric {
+impl ExtDistribution<f64> for Hypergeometric {
     /// Returns the mean of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N` is `0`
     ///
@@ -222,12 +222,9 @@ impl Mean<f64> for Hypergeometric {
             Some(self.successes as f64 * self.draws as f64 / self.population as f64)
         }
     }
-}
-
-impl Variance<f64> for Hypergeometric {
     /// Returns the variance of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N <= 1`
     ///
@@ -248,12 +245,9 @@ impl Variance<f64> for Hypergeometric {
             Some(val)
         }
     }
-}
-
-impl Skewness<f64> for Hypergeometric {
     /// Returns the skewness of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N <= 2`
     ///

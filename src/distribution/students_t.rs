@@ -181,10 +181,10 @@ impl Max<f64> for StudentsT {
     }
 }
 
-impl Mean<f64> for StudentsT {
+impl ExtDistribution<f64> for StudentsT {
     /// Returns the mean of the student's t-distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `freedom <= 1.0`
     ///
@@ -202,12 +202,9 @@ impl Mean<f64> for StudentsT {
             Some(self.location)
         }
     }
-}
-
-impl Variance<f64> for StudentsT {
     /// Returns the variance of the student's t-distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `freedom <= 1.0`
     ///
@@ -235,9 +232,6 @@ impl Variance<f64> for StudentsT {
             None
         }
     }
-}
-
-impl Entropy<f64> for StudentsT {
     /// Returns the entropy for the student's t-distribution
     ///
     /// # None
@@ -263,12 +257,9 @@ impl Entropy<f64> for StudentsT {
             Some(result)
         }
     }
-}
-
-impl Skewness<f64> for StudentsT {
     /// Returns the skewness of the student's t-distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `x <= 3.0`
     ///

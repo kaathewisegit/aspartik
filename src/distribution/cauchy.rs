@@ -130,7 +130,7 @@ impl Max<f64> for Cauchy {
     }
 }
 
-impl Entropy<f64> for Cauchy {
+impl ExtDistribution<f64> for Cauchy {
     /// Returns the entropy of the cauchy distribution
     ///
     /// # Formula

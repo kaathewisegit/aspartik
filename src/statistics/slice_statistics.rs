@@ -152,7 +152,7 @@ impl Max<f64> for [f64] {
     }
 }
 
-impl Mean<f64> for [f64] {
+impl ExtDistribution<f64> for [f64] {
     /// Evaluates the sample mean, an estimate of the population
     /// mean.
     ///
@@ -183,9 +183,6 @@ impl Mean<f64> for [f64] {
     fn mean(&self) -> Option<f64> {
         Some(Statistics::mean(self))
     }
-}
-
-impl Variance<f64> for [f64] {
     /// Estimates the unbiased population variance from the provided samples
     ///
     /// # Remarks

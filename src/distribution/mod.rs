@@ -30,7 +30,6 @@ pub use self::students_t::StudentsT;
 pub use self::triangular::Triangular;
 pub use self::uniform::Uniform;
 pub use self::weibull::Weibull;
-use crate::statistics::{Max, Min};
 
 mod bernoulli;
 mod beta;

@@ -95,7 +95,7 @@ impl Max<f64> for Uniform {
     }
 }
 
-impl Mean<f64> for Uniform {
+impl ExtDistribution<f64> for Uniform {
     /// Returns the mean for the continuous uniform distribution
     ///
     /// # Formula
@@ -106,9 +106,6 @@ impl Mean<f64> for Uniform {
     fn mean(&self) -> Option<f64> {
         Some((self.min + self.max) / 2.0)
     }
-}
-
-impl Variance<f64> for Uniform {
     /// Returns the variance for the continuous uniform distribution
     ///
     /// # Formula
@@ -119,9 +116,6 @@ impl Variance<f64> for Uniform {
     fn variance(&self) -> Option<f64> {
         Some((self.max - self.min) * (self.max - self.min) / 12.0)
     }
-}
-
-impl Entropy<f64> for Uniform {
     /// Returns the entropy for the continuous uniform distribution
     ///
     /// # Formula
@@ -132,9 +126,6 @@ impl Entropy<f64> for Uniform {
     fn entropy(&self) -> Option<f64> {
         Some((self.max - self.min).ln())
     }
-}
-
-impl Skewness<f64> for Uniform {
     /// Returns the skewness for the continuous uniform distribution
     ///
     /// # Formula

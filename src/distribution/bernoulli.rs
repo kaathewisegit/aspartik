@@ -82,8 +82,8 @@ impl Bernoulli {
 }
 
 impl Distribution<f64> for Bernoulli {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        r.gen_bool(self.p()) as u8 as f64
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        rng.gen_bool(self.p()) as u8 as f64
     }
 }
 
@@ -133,7 +133,7 @@ impl Max<u64> for Bernoulli {
     }
 }
 
-impl Mean<f64> for Bernoulli {
+impl ExtDistribution<f64> for Bernoulli {
     /// Returns the mean of the bernoulli
     /// distribution
     ///
@@ -145,9 +145,6 @@ impl Mean<f64> for Bernoulli {
     fn mean(&self) -> Option<f64> {
         self.b.mean()
     }
-}
-
-impl Variance<f64> for Bernoulli {
     /// Returns the variance of the bernoulli
     /// distribution
     ///
@@ -159,9 +156,6 @@ impl Variance<f64> for Bernoulli {
     fn variance(&self) -> Option<f64> {
         self.b.variance()
     }
-}
-
-impl Entropy<f64> for Bernoulli {
     /// Returns the entropy of the bernoulli
     /// distribution
     ///
@@ -174,9 +168,6 @@ impl Entropy<f64> for Bernoulli {
     fn entropy(&self) -> Option<f64> {
         self.b.entropy()
     }
-}
-
-impl Skewness<f64> for Bernoulli {
     /// Returns the skewness of the bernoulli
     /// distribution
     ///

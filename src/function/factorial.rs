@@ -104,16 +104,16 @@ static mut FCACHE: [f64; CACHE_SIZE] = [1.0; CACHE_SIZE];
 static START: Once = Once::new();
 
 fn get_fcache() -> [f64; CACHE_SIZE] {
-    unsafe {
-        START.call_once(|| {
-            (1..CACHE_SIZE).fold(FCACHE[0], |acc, i| {
-                let fac = acc * i as f64;
+    START.call_once(|| {
+        (1..CACHE_SIZE).fold(1.0, |acc, i| {
+            let fac = acc * i as f64;
+            unsafe {
                 FCACHE[i] = fac;
-                fac
-            });
+            }
+            fac
         });
-        FCACHE
-    }
+    });
+    unsafe { FCACHE }
 }
 
 #[rustfmt::skip]

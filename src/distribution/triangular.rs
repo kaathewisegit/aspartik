@@ -124,7 +124,7 @@ impl Max<f64> for Triangular {
     }
 }
 
-impl Mean<f64> for Triangular {
+impl ExtDistribution<f64> for Triangular {
     /// Returns the mean of the triangular distribution
     ///
     /// # Formula
@@ -135,9 +135,6 @@ impl Mean<f64> for Triangular {
     fn mean(&self) -> Option<f64> {
         Some((self.min + self.max + self.mode) / 3.0)
     }
-}
-
-impl Variance<f64> for Triangular {
     /// Returns the variance of the triangular distribution
     ///
     /// # Formula
@@ -151,9 +148,6 @@ impl Variance<f64> for Triangular {
         let c = self.mode;
         Some((a * a + b * b + c * c - a * b - a * c - b * c) / 18.0)
     }
-}
-
-impl Entropy<f64> for Triangular {
     /// Returns the entropy of the triangular distribution
     ///
     /// # Formula
@@ -164,9 +158,6 @@ impl Entropy<f64> for Triangular {
     fn entropy(&self) -> Option<f64> {
         Some(0.5 + ((self.max - self.min) / 2.0).ln())
     }
-}
-
-impl Skewness<f64> for Triangular {
     /// Returns the skewness of the triangular distribution
     ///
     /// # Formula

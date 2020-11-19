@@ -154,7 +154,7 @@ impl Max<u64> for Binomial {
     }
 }
 
-impl Mean<f64> for Binomial {
+impl ExtDistribution<f64> for Binomial {
     /// Returns the mean of the binomial distribution
     ///
     /// # Formula
@@ -165,9 +165,6 @@ impl Mean<f64> for Binomial {
     fn mean(&self) -> Option<f64> {
         Some(self.p * self.n as f64)
     }
-}
-
-impl Variance<f64> for Binomial {
     /// Returns the variance of the binomial distribution
     ///
     /// # Formula
@@ -178,9 +175,6 @@ impl Variance<f64> for Binomial {
     fn variance(&self) -> Option<f64> {
         Some(self.p * (1.0 - self.p) * self.n as f64)
     }
-}
-
-impl Entropy<f64> for Binomial {
     /// Returns the entropy of the binomial distribution
     ///
     /// # Formula
@@ -199,9 +193,6 @@ impl Entropy<f64> for Binomial {
         };
         Some(entr)
     }
-}
-
-impl Skewness<f64> for Binomial {
     /// Returns the skewness of the binomial distribution
     ///
     /// # Formula

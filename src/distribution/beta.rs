@@ -164,7 +164,7 @@ impl Max<f64> for Beta {
     }
 }
 
-impl Mean<f64> for Beta {
+impl ExtDistribution<f64> for Beta {
     /// Returns the mean of the beta distribution
     ///
     /// # Formula
@@ -184,9 +184,6 @@ impl Mean<f64> for Beta {
         };
         Some(mean)
     }
-}
-
-impl Variance<f64> for Beta {
     /// Returns the variance of the beta distribution
     ///
     /// # Remarks
@@ -215,9 +212,6 @@ impl Variance<f64> for Beta {
         };
         Some(var)
     }
-}
-
-impl Entropy<f64> for Beta {
     /// Returns the entropy of the beta distribution
     ///
     /// # Formula
@@ -238,9 +232,6 @@ impl Entropy<f64> for Beta {
         };
         Some(entr)
     }
-}
-
-impl Skewness<f64> for Beta {
     /// Returns the skewness of the Beta distribution
     ///
     /// # Formula

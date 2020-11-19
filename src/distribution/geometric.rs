@@ -130,7 +130,7 @@ impl Max<u64> for Geometric {
     }
 }
 
-impl Mean<f64> for Geometric {
+impl ExtDistribution<f64> for Geometric {
     /// Returns the mean of the geometric distribution
     ///
     /// # Formula
@@ -141,9 +141,6 @@ impl Mean<f64> for Geometric {
     fn mean(&self) -> Option<f64> {
         Some(1.0 / self.p)
     }
-}
-
-impl Variance<f64> for Geometric {
     /// Returns the standard deviation of the geometric distribution
     ///
     /// # Formula
@@ -154,9 +151,6 @@ impl Variance<f64> for Geometric {
     fn variance(&self) -> Option<f64> {
         Some((1.0 - self.p) / (self.p * self.p))
     }
-}
-
-impl Entropy<f64> for Geometric {
     /// Returns the entropy of the geometric distribution
     ///
     /// # Formula
@@ -168,9 +162,6 @@ impl Entropy<f64> for Geometric {
         let inv = 1.0 / self.p;
         Some(-inv * (1. - self.p).log(2.0) + (inv - 1.).log(2.0))
     }
-}
-
-impl Skewness<f64> for Geometric {
     /// Returns the skewness of the geometric distribution
     ///
     /// # Formula

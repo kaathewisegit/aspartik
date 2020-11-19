@@ -146,7 +146,7 @@ impl Max<f64> for Pareto {
     }
 }
 
-impl Mean<f64> for Pareto {
+impl ExtDistribution<f64> for Pareto {
     /// Returns the mean of the Pareto distribution
     ///
     /// # Formula
@@ -167,9 +167,6 @@ impl Mean<f64> for Pareto {
             Some((self.shape * self.scale) / (self.shape - 1.0))
         }
     }
-}
-
-impl Variance<f64> for Pareto {
     /// Returns the variance of the Pareto distribution
     ///
     /// # Formula
@@ -191,9 +188,6 @@ impl Variance<f64> for Pareto {
             Some(a * a * self.shape / (self.shape - 2.0))
         }
     }
-}
-
-impl Entropy<f64> for Pareto {
     /// Returns the entropy for the Pareto distribution
     ///
     /// # Formula
@@ -206,9 +200,6 @@ impl Entropy<f64> for Pareto {
     fn entropy(&self) -> Option<f64> {
         Some(self.shape.ln() - self.scale.ln() - (1.0 / self.shape) - 1.0)
     }
-}
-
-impl Skewness<f64> for Pareto {
     /// Returns the skewness of the Pareto distribution
     ///
     /// # Panics

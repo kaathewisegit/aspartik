@@ -1,6 +1,6 @@
 use crate::distribution::{CheckedDiscrete, Discrete};
 use crate::function::factorial;
-use crate::statistics::*;
+// use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
@@ -139,26 +139,26 @@ impl Distribution<Vec<f64>> for Multinomial {
 //     }
 // }
 
-impl Skewness<Vec<f64>> for Multinomial {
-    /// Returns the skewness of the multinomial distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// (1 - 2 * p_i) / (n * p_i * (1 - p_i)) for i in 1...k
-    /// ```
-    ///
-    /// where `n` is the number of trials, `p_i` is the `i`th probability,
-    /// and `k` is the total number of probabilities
-    fn skewness(&self) -> Option<Vec<f64>> {
-        Some(
-            self.p
-                .iter()
-                .map(|x| (1.0 - 2.0 * x) / (self.n as f64 * (1.0 - x) * x).sqrt())
-                .collect(),
-        )
-    }
-}
+// impl Skewness<Vec<f64>> for Multinomial {
+//     /// Returns the skewness of the multinomial distribution
+//     ///
+//     /// # Formula
+//     ///
+//     /// ```ignore
+//     /// (1 - 2 * p_i) / (n * p_i * (1 - p_i)) for i in 1...k
+//     /// ```
+//     ///
+//     /// where `n` is the number of trials, `p_i` is the `i`th probability,
+//     /// and `k` is the total number of probabilities
+//     fn skewness(&self) -> Option<Vec<f64>> {
+//         Some(
+//             self.p
+//                 .iter()
+//                 .map(|x| (1.0 - 2.0 * x) / (self.n as f64 * (1.0 - x) * x).sqrt())
+//                 .collect(),
+//         )
+//     }
+// }
 
 impl<'a> Discrete<&'a [u64], f64> for Multinomial {
     /// Calculates the probability mass function for the multinomial

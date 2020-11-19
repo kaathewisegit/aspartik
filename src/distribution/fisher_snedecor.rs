@@ -156,7 +156,7 @@ impl Max<f64> for FisherSnedecor {
     }
 }
 
-impl Mean<f64> for FisherSnedecor {
+impl ExtDistribution<f64> for FisherSnedecor {
     /// Returns the mean of the fisher-snedecor distribution
     ///
     /// # Panics
@@ -181,9 +181,6 @@ impl Mean<f64> for FisherSnedecor {
             Some(self.freedom_2 / (self.freedom_2 - 2.0))
         }
     }
-}
-
-impl Variance<f64> for FisherSnedecor {
     /// Returns the variance of the fisher-snedecor distribution
     ///
     /// # Panics
@@ -215,9 +212,6 @@ impl Variance<f64> for FisherSnedecor {
             Some(val)
         }
     }
-}
-
-impl Skewness<f64> for FisherSnedecor {
     /// Returns the skewness of the fisher-snedecor distribution
     ///
     /// # Panics

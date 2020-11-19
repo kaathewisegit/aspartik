@@ -57,8 +57,8 @@ impl LogNormal {
 }
 
 impl Distribution<f64> for LogNormal {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        super::normal::sample_unchecked(r, self.location, self.scale).exp()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        super::normal::sample_unchecked(rng, self.location, self.scale).exp()
     }
 }
 
@@ -114,7 +114,7 @@ impl Max<f64> for LogNormal {
     }
 }
 
-impl Mean<f64> for LogNormal {
+impl ExtDistribution<f64> for LogNormal {
     /// Returns the mean of the log-normal distribution
     ///
     /// # Formula
@@ -127,9 +127,6 @@ impl Mean<f64> for LogNormal {
     fn mean(&self) -> Option<f64> {
         Some((self.location + self.scale * self.scale / 2.0).exp())
     }
-}
-
-impl Variance<f64> for LogNormal {
     /// Returns the variance of the log-normal distribution
     ///
     /// # Formula
@@ -143,9 +140,6 @@ impl Variance<f64> for LogNormal {
         let sigma2 = self.scale * self.scale;
         Some((sigma2.exp() - 1.0) * (self.location + self.location + sigma2).exp())
     }
-}
-
-impl Entropy<f64> for LogNormal {
     /// Returns the entropy of the log-normal distribution
     ///
     /// # Formula
@@ -158,9 +152,6 @@ impl Entropy<f64> for LogNormal {
     fn entropy(&self) -> Option<f64> {
         Some(0.5 + self.scale.ln() + self.location + consts::LN_SQRT_2PI)
     }
-}
-
-impl Skewness<f64> for LogNormal {
     /// Returns the skewness of the log-normal distribution
     ///
     /// # Formula

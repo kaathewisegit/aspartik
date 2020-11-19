@@ -184,7 +184,7 @@ impl Max<u64> for Categorical {
     }
 }
 
-impl Mean<f64> for Categorical {
+impl ExtDistribution<f64> for Categorical {
     /// Returns the mean of the categorical distribution
     ///
     /// # Formula
@@ -204,9 +204,6 @@ impl Mean<f64> for Categorical {
                 .fold(0.0, |acc, (idx, &val)| acc + idx as f64 * val),
         )
     }
-}
-
-impl Variance<f64> for Categorical {
     /// Returns the variance of the categorical distribution
     ///
     /// # Formula
@@ -230,9 +227,6 @@ impl Variance<f64> for Categorical {
             });
         Some(var)
     }
-}
-
-impl Entropy<f64> for Categorical {
     /// Returns the entropy of the categorical distribution
     ///
     /// # Formula
@@ -254,7 +248,6 @@ impl Entropy<f64> for Categorical {
         Some(entr)
     }
 }
-
 impl Median<f64> for Categorical {
     /// Returns the median of the categorical distribution
     ///

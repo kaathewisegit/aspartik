@@ -148,10 +148,10 @@ impl Max<f64> for InverseGamma {
     }
 }
 
-impl Mean<f64> for InverseGamma {
+impl ExtDistribution<f64> for InverseGamma {
     /// Returns the mean of the inverse distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 1.0`
     ///
@@ -169,12 +169,9 @@ impl Mean<f64> for InverseGamma {
             Some(self.rate / (self.shape - 1.0))
         }
     }
-}
-
-impl Variance<f64> for InverseGamma {
     /// Returns the variance of the inverse gamma distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 2.0`
     ///
@@ -194,9 +191,6 @@ impl Variance<f64> for InverseGamma {
             Some(val)
         }
     }
-}
-
-impl Entropy<f64> for InverseGamma {
     /// Returns the entropy of the inverse gamma distribution
     ///
     /// # Formula
@@ -212,12 +206,9 @@ impl Entropy<f64> for InverseGamma {
             - (1.0 + self.shape) * gamma::digamma(self.shape);
         Some(entr)
     }
-}
-
-impl Skewness<f64> for InverseGamma {
     /// Returns the skewness of the inverse gamma distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 3`
     ///

@@ -130,7 +130,7 @@ impl Max<f64> for Chi {
     }
 }
 
-impl Mean<f64> for Chi {
+impl ExtDistribution<f64> for Chi {
     /// Returns the mean of the chi distribution
     ///
     /// # Remarks
@@ -152,9 +152,6 @@ impl Mean<f64> for Chi {
             / gamma::gamma(self.freedom / 2.0);
         Some(mean)
     }
-}
-
-impl Variance<f64> for Chi {
     /// Returns the variance of the chi distribution
     ///
     /// # Remarks
@@ -173,9 +170,6 @@ impl Variance<f64> for Chi {
         let mean = self.mean()?;
         Some(self.freedom - mean * mean)
     }
-}
-
-impl Entropy<f64> for Chi {
     /// Returns the entropy of the chi distribution
     ///
     /// # Remarks
@@ -201,9 +195,6 @@ impl Entropy<f64> for Chi {
                 / 2.0;
         Some(entr)
     }
-}
-
-impl Skewness<f64> for Chi {
     /// Returns the skewness of the chi distribution
     ///
     /// # Remarks

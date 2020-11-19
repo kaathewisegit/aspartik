@@ -146,7 +146,7 @@ impl Max<f64> for Weibull {
     }
 }
 
-impl Mean<f64> for Weibull {
+impl ExtDistribution<f64> for Weibull {
     /// Returns the mean of the weibull distribution
     ///
     /// # Formula
@@ -160,9 +160,6 @@ impl Mean<f64> for Weibull {
     fn mean(&self) -> Option<f64> {
         Some(self.scale * gamma::gamma(1.0 + 1.0 / self.shape))
     }
-}
-
-impl Variance<f64> for Weibull {
     /// Returns the variance of the weibull distribution
     ///
     /// # Formula
@@ -177,9 +174,6 @@ impl Variance<f64> for Weibull {
         let mean = self.mean()?;
         Some(self.scale * self.scale * gamma::gamma(1.0 + 2.0 / self.shape) - mean * mean)
     }
-}
-
-impl Entropy<f64> for Weibull {
     /// Returns the entropy of the weibull distribution
     ///
     /// # Formula
@@ -196,9 +190,6 @@ impl Entropy<f64> for Weibull {
             + 1.0;
         Some(entr)
     }
-}
-
-impl Skewness<f64> for Weibull {
     /// Returns the skewness of the weibull distribution
     ///
     /// # Formula

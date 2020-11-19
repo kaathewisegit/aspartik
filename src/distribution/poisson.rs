@@ -69,6 +69,11 @@ impl Poisson {
 }
 
 impl Distribution<f64> for Poisson {
+    /// Generates one sample from the Poisson distribution either by
+    /// Knuth's method if lambda < 30.0 or Rejection method PA by
+    /// A. C. Atkinson from the Journal of the Royal Statistical Society
+    /// Series C (Applied Statistics) Vol. 28 No. 1. (1979) pp. 29 - 35
+    /// otherwise
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         sample_unchecked(rng, self.lambda)
     }
@@ -124,7 +129,7 @@ impl Max<u64> for Poisson {
     }
 }
 
-impl Mean<f64> for Poisson {
+impl ExtDistribution<f64> for Poisson {
     /// Returns the mean of the poisson distribution
     ///
     /// # Formula
@@ -137,9 +142,6 @@ impl Mean<f64> for Poisson {
     fn mean(&self) -> Option<f64> {
         Some(self.lambda)
     }
-}
-
-impl Variance<f64> for Poisson {
     /// Returns the variance of the poisson distribution
     ///
     /// # Formula
@@ -152,9 +154,6 @@ impl Variance<f64> for Poisson {
     fn variance(&self) -> Option<f64> {
         Some(self.lambda)
     }
-}
-
-impl Entropy<f64> for Poisson {
     /// Returns the entropy of the poisson distribution
     ///
     /// # Formula
@@ -172,9 +171,6 @@ impl Entropy<f64> for Poisson {
                 - 19.0 / (360.0 * self.lambda * self.lambda * self.lambda),
         )
     }
-}
-
-impl Skewness<f64> for Poisson {
     /// Returns the skewness of the poisson distribution
     ///
     /// # Formula
@@ -249,7 +245,6 @@ impl Discrete<u64, f64> for Poisson {
         -self.lambda + x as f64 * self.lambda.ln() - factorial::ln_factorial(x as u64)
     }
 }
-
 /// Generates one sample from the Poisson distribution either by
 /// Knuth's method if lambda < 30.0 or Rejection method PA by
 /// A. C. Atkinson from the Journal of the Royal Statistical Society

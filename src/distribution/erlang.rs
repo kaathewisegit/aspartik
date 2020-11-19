@@ -133,7 +133,7 @@ impl Max<f64> for Erlang {
     }
 }
 
-impl Mean<f64> for Erlang {
+impl ExtDistribution<f64> for Erlang {
     /// Returns the mean of the erlang distribution
     ///
     /// # Remarks
@@ -151,9 +151,6 @@ impl Mean<f64> for Erlang {
     fn mean(&self) -> Option<f64> {
         self.g.mean()
     }
-}
-
-impl Variance<f64> for Erlang {
     /// Returns the variance of the erlang distribution
     ///
     /// # Formula
@@ -166,9 +163,6 @@ impl Variance<f64> for Erlang {
     fn variance(&self) -> Option<f64> {
         self.g.variance()
     }
-}
-
-impl Entropy<f64> for Erlang {
     /// Returns the entropy of the erlang distribution
     ///
     /// # Formula
@@ -182,9 +176,6 @@ impl Entropy<f64> for Erlang {
     fn entropy(&self) -> Option<f64> {
         self.g.entropy()
     }
-}
-
-impl Skewness<f64> for Erlang {
     /// Returns the skewness of the erlang distribution
     ///
     /// # Formula

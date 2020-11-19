@@ -152,7 +152,7 @@ impl Max<u64> for NegativeBinomial {
     }
 }
 
-impl Mean<f64> for NegativeBinomial {
+impl ExtDistributionDiscrete<f64> for NegativeBinomial {
     /// Returns the mean of the negative binomial distribution
     ///
     /// # Formula
@@ -163,9 +163,6 @@ impl Mean<f64> for NegativeBinomial {
     fn mean(&self) -> Option<f64> {
         Some(self.r * (1.0 - self.p) / self.p)
     }
-}
-
-impl Variance<f64> for NegativeBinomial {
     /// Returns the variance of the negative binomial distribution
     ///
     /// # Formula
@@ -176,9 +173,6 @@ impl Variance<f64> for NegativeBinomial {
     fn variance(&self) -> Option<f64> {
         Some(self.r * (1.0 - self.p) / (self.p * self.p))
     }
-}
-
-impl Skewness<f64> for NegativeBinomial {
     /// Returns the skewness of the negative binomial distribution
     ///
     /// # Formula

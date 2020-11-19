@@ -150,7 +150,7 @@ impl Max<f64> for ChiSquared {
     }
 }
 
-impl Mean<f64> for ChiSquared {
+impl ExtDistribution<f64> for ChiSquared {
     /// Returns the mean of the chi-squared distribution
     ///
     /// # Formula
@@ -163,9 +163,6 @@ impl Mean<f64> for ChiSquared {
     fn mean(&self) -> Option<f64> {
         self.g.mean()
     }
-}
-
-impl Variance<f64> for ChiSquared {
     /// Returns the variance of the chi-squared distribution
     ///
     /// # Formula
@@ -178,9 +175,6 @@ impl Variance<f64> for ChiSquared {
     fn variance(&self) -> Option<f64> {
         self.g.variance()
     }
-}
-
-impl Entropy<f64> for ChiSquared {
     /// Returns the entropy of the chi-squared distribution
     ///
     /// # Formula
@@ -194,9 +188,6 @@ impl Entropy<f64> for ChiSquared {
     fn entropy(&self) -> Option<f64> {
         self.g.entropy()
     }
-}
-
-impl Skewness<f64> for ChiSquared {
     /// Returns the skewness of the chi-squared distribution
     ///
     /// # Formula

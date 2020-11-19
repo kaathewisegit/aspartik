@@ -122,7 +122,7 @@ impl Max<f64> for Exponential {
     }
 }
 
-impl Mean<f64> for Exponential {
+impl ExtDistribution<f64> for Exponential {
     /// Returns the mean of the exponential distribution
     ///
     /// # Formula
@@ -135,9 +135,6 @@ impl Mean<f64> for Exponential {
     fn mean(&self) -> Option<f64> {
         Some(1.0 / self.rate)
     }
-}
-
-impl Variance<f64> for Exponential {
     /// Returns the variance of the exponential distribution
     ///
     /// # Formula
@@ -150,9 +147,6 @@ impl Variance<f64> for Exponential {
     fn variance(&self) -> Option<f64> {
         Some(1.0 / (self.rate * self.rate))
     }
-}
-
-impl Entropy<f64> for Exponential {
     /// Returns the entropy of the exponential distribution
     ///
     /// # Formula
@@ -165,9 +159,6 @@ impl Entropy<f64> for Exponential {
     fn entropy(&self) -> Option<f64> {
         Some(1.0 - self.rate.ln())
     }
-}
-
-impl Skewness<f64> for Exponential {
     /// Returns the skewness of the exponential distribution
     ///
     /// # Formula

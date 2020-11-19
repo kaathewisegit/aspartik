@@ -97,7 +97,7 @@ impl Max<f64> for Dirac {
     }
 }
 
-impl Mean<f64> for Dirac {
+impl ExtDistribution<f64> for Dirac {
     /// Returns the mean of the dirac distribution
     ///
     /// # Remarks
@@ -107,9 +107,6 @@ impl Mean<f64> for Dirac {
     fn mean(&self) -> Option<f64> {
         Some(self.0)
     }
-}
-
-impl Variance<f64> for Dirac {
     /// Returns the variance of the dirac distribution
     ///
     /// # Formula
@@ -122,9 +119,6 @@ impl Variance<f64> for Dirac {
     fn variance(&self) -> Option<f64> {
         Some(0.0)
     }
-}
-
-impl Entropy<f64> for Dirac {
     /// Returns the entropy of the dirac distribution
     ///
     /// # Formula
@@ -137,9 +131,6 @@ impl Entropy<f64> for Dirac {
     fn entropy(&self) -> Option<f64> {
         Some(0.0)
     }
-}
-
-impl Skewness<f64> for Dirac {
     /// Returns the skewness of the dirac distribution
     ///
     /// # Formula

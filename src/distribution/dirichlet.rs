@@ -116,6 +116,33 @@ where
     fn alpha_sum(&self) -> f64 {
         self.alpha.fold(0.0, |acc, x| acc + x)
     }
+    /// Returns the entropy of the dirichlet distribution
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// ln(B(α)) - (K - α_0)ψ(α_0) - Σ((α_i - 1)ψ(α_i))
+    /// ```
+    ///
+    /// where
+    ///
+    /// ```ignore
+    /// B(α) = Π(Γ(α_i)) / Γ(Σ(α_i))
+    /// ```
+    ///
+    /// `α_0` is the sum of all concentration parameters,
+    /// `K` is the number of concentration parameters, `ψ` is the digamma
+    /// function, `α_i`
+    /// is the `i`th concentration parameter, and `Σ` is the sum from `1` to `K`
+    pub fn entropy(&self) -> Option<f64> {
+        let sum = self.alpha_sum();
+        let num = self.alpha.iter().fold(0.0, |acc, &x| {
+            acc + gamma::ln_gamma(x) + (x - 1.0) * gamma::digamma(x)
+        });
+        let entr =
+            -gamma::ln_gamma(sum) + (sum - self.alpha.len() as f64) * gamma::digamma(sum) - num;
+        Some(entr)
+    }
 }
 
 impl<D> Distribution<VectorN<f64, D>> for Dirichlet<D>
@@ -127,7 +154,6 @@ where
     DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
 {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> VectorN<f64, D> {
-        // todo!()
         let mut sum = 0.0;
         let mut samples = self.alpha.map(|a| {
             let sample = super::gamma::sample_unchecked(rng, a, 1.0);
@@ -196,43 +222,6 @@ where
             }
         }
         cov
-    }
-}
-
-impl<D> Entropy<f64> for Dirichlet<D>
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
-    /// Returns the entropy of the dirichlet distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// ln(B(α)) - (K - α_0)ψ(α_0) - Σ((α_i - 1)ψ(α_i))
-    /// ```
-    ///
-    /// where
-    ///
-    /// ```ignore
-    /// B(α) = Π(Γ(α_i)) / Γ(Σ(α_i))
-    /// ```
-    ///
-    /// `α_0` is the sum of all concentration parameters,
-    /// `K` is the number of concentration parameters, `ψ` is the digamma
-    /// function, `α_i`
-    /// is the `i`th concentration parameter, and `Σ` is the sum from `1` to `K`
-    fn entropy(&self) -> Option<f64> {
-        let sum = self.alpha_sum();
-        let num = self.alpha.iter().fold(0.0, |acc, &x| {
-            acc + gamma::ln_gamma(x) + (x - 1.0) * gamma::digamma(x)
-        });
-        let entr =
-            -gamma::ln_gamma(sum) + (sum - self.alpha.len() as f64) * gamma::digamma(sum) - num;
-        Some(entr)
     }
 }
 

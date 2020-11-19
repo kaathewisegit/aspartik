@@ -85,8 +85,8 @@ impl Gamma {
 }
 
 impl Distribution<f64> for Gamma {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        sample_unchecked(r, self.shape, self.rate)
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        sample_unchecked(rng, self.shape, self.rate)
     }
 }
 
@@ -148,13 +148,8 @@ impl Max<f64> for Gamma {
     }
 }
 
-impl Mean<f64> for Gamma {
+impl ExtDistribution<f64> for Gamma {
     /// Returns the mean of the gamma distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `shape` if `rate == f64::INFINITY`. This behavior
-    /// is borrowed from the Math.NET implementation
     ///
     /// # Formula
     ///
@@ -166,9 +161,6 @@ impl Mean<f64> for Gamma {
     fn mean(&self) -> Option<f64> {
         Some(self.shape / self.rate)
     }
-}
-
-impl Variance<f64> for Gamma {
     /// Returns the variance of the gamma distribution
     ///
     /// # Formula
@@ -181,9 +173,6 @@ impl Variance<f64> for Gamma {
     fn variance(&self) -> Option<f64> {
         Some(self.shape / (self.rate * self.rate))
     }
-}
-
-impl Entropy<f64> for Gamma {
     /// Returns the entropy of the gamma distribution
     ///
     /// # Formula
@@ -200,9 +189,6 @@ impl Entropy<f64> for Gamma {
             + (1.0 - self.shape) * gamma::digamma(self.shape);
         Some(entr)
     }
-}
-
-impl Skewness<f64> for Gamma {
     /// Returns the skewness of the gamma distribution
     ///
     /// # Formula
@@ -219,11 +205,6 @@ impl Skewness<f64> for Gamma {
 
 impl Mode<Option<f64>> for Gamma {
     /// Returns the mode for the gamma distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `shape` if `rate == f64::INFINITY`. This behavior
-    /// is borrowed from the Math.NET implementation
     ///
     /// # Formula
     ///
@@ -298,9 +279,8 @@ impl Continuous<f64, f64> for Gamma {
         }
     }
 }
-
 /// Samples from a gamma distribution with a shape of `shape` and a
-/// rate of `rate` using `r` as the source of randomness. Implementation from:
+/// rate of `rate` using `rng` as the source of randomness. Implementation from:
 /// <br />
 /// <div>
 /// <i>"A Simple Method for Generating Gamma Variables"</i> - Marsaglia & Tsang

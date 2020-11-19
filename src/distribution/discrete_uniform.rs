@@ -110,7 +110,7 @@ impl Max<i64> for DiscreteUniform {
     }
 }
 
-impl Mean<f64> for DiscreteUniform {
+impl ExtDistribution<f64> for DiscreteUniform {
     /// Returns the mean of the discrete uniform distribution
     ///
     /// # Formula
@@ -121,9 +121,6 @@ impl Mean<f64> for DiscreteUniform {
     fn mean(&self) -> Option<f64> {
         Some((self.min + self.max) as f64 / 2.0)
     }
-}
-
-impl Variance<f64> for DiscreteUniform {
     /// Returns the variance of the discrete uniform distribution
     ///
     /// # Formula
@@ -135,9 +132,6 @@ impl Variance<f64> for DiscreteUniform {
         let diff = (self.max - self.min) as f64;
         Some(((diff + 1.0) * (diff + 1.0) - 1.0) / 12.0)
     }
-}
-
-impl Entropy<f64> for DiscreteUniform {
     /// Returns the entropy of the discrete uniform distribution
     ///
     /// # Formula
@@ -149,9 +143,6 @@ impl Entropy<f64> for DiscreteUniform {
         let diff = (self.max - self.min) as f64;
         Some((diff + 1.0).ln())
     }
-}
-
-impl Skewness<f64> for DiscreteUniform {
     /// Returns the skewness of the discrete uniform distribution
     ///
     /// # Formula
