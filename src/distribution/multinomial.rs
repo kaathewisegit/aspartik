@@ -1,6 +1,6 @@
 use crate::distribution::{CheckedDiscrete, Discrete};
 use crate::function::factorial;
-use crate::statistics::*;
+// use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
@@ -90,11 +90,11 @@ impl Multinomial {
 }
 
 impl Distribution<Vec<f64>> for Multinomial {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> Vec<f64> {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
         let p_cdf = super::categorical::prob_mass_to_cdf(self.p());
         let mut res = vec![0.0; self.p.len()];
         for _ in 0..self.n {
-            let i = super::categorical::sample_unchecked(r, &p_cdf);
+            let i = super::categorical::sample_unchecked(rng, &p_cdf);
             let el = res.get_mut(i as usize).unwrap();
             *el += 1.0;
         }
@@ -102,73 +102,63 @@ impl Distribution<Vec<f64>> for Multinomial {
     }
 }
 
-impl Mean<Vec<f64>> for Multinomial {
-    /// Returns the mean of the multinomial distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// n * p_i for i in 1...k
-    /// ```
-    ///
-    /// where `n` is the number of trials, `p_i` is the `i`th probability,
-    /// and `k` is the total number of probabilities
-    fn mean(&self) -> Vec<f64> {
-        self.p.iter().map(|x| x * self.n as f64).collect()
-    }
-}
+// impl MeanN<f64> for Multinomial {
+//     /// Returns the mean of the multinomial distribution
+//     ///
+//     /// # Formula
+//     ///
+//     /// ```ignore
+//     /// n * p_i for i in 1...k
+//     /// ```
+//     ///
+//     /// where `n` is the number of trials, `p_i` is the `i`th probability,
+//     /// and `k` is the total number of probabilities
+//     fn mean(&self) -> VectorN<f64,N> {
+//         Some(self.p.iter().map(|x| x * self.n as f64).collect())
+//     }
+// }
 
-impl Variance<Vec<f64>> for Multinomial {
-    /// Returns the variance of the multinomial distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// n * p_i * (1 - p_1) for i in 1...k
-    /// ```
-    ///
-    /// where `n` is the number of trials, `p_i` is the `i`th probability,
-    /// and `k` is the total number of probabilities
-    fn variance(&self) -> Vec<f64> {
-        self.p
-            .iter()
-            .map(|x| x * self.n as f64 * (1.0 - x))
-            .collect()
-    }
+// impl<N> Covariance<N> for Multinomial {
+//     /// Returns the variance of the multinomial distribution
+//     ///
+//     /// # Formula
+//     ///
+//     /// ```ignore
+//     /// n * p_i * (1 - p_i) for i in 1...k
+//     /// ```
+//     ///
+//     /// where `n` is the number of trials, `p_i` is the `i`th probability,
+//     /// and `k` is the total number of probabilities
+//     fn variance(&self) -> Option<Vec<f64>> {
+//         Some(
+//             self.p
+//                 .iter()
+//                 .map(|x| x * self.n as f64 * (1.0 - x))
+//                 .collect(),
+//         )
+//     }
+// }
 
-    /// Returns the standard deviation of the multinomial distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(n * p_i * (1 - p_1)) for i in 1...k
-    /// ```
-    ///
-    /// where `n` is the number of trials, `p_i` is the `i`th probability,
-    /// and `k` is the total number of probabilities
-    fn std_dev(&self) -> Vec<f64> {
-        self.variance().iter().map(|x| x.sqrt()).collect()
-    }
-}
-
-impl Skewness<Vec<f64>> for Multinomial {
-    /// Returns the skewness of the multinomial distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// (1 - 2 * p_i) / (n * p_i * (1 - p_i)) for i in 1...k
-    /// ```
-    ///
-    /// where `n` is the number of trials, `p_i` is the `i`th probability,
-    /// and `k` is the total number of probabilities
-    fn skewness(&self) -> Vec<f64> {
-        self.p
-            .iter()
-            .map(|x| (1.0 - 2.0 * x) / (self.n as f64 * (1.0 - x) * x).sqrt())
-            .collect()
-    }
-}
+// impl Skewness<Vec<f64>> for Multinomial {
+//     /// Returns the skewness of the multinomial distribution
+//     ///
+//     /// # Formula
+//     ///
+//     /// ```ignore
+//     /// (1 - 2 * p_i) / (n * p_i * (1 - p_i)) for i in 1...k
+//     /// ```
+//     ///
+//     /// where `n` is the number of trials, `p_i` is the `i`th probability,
+//     /// and `k` is the total number of probabilities
+//     fn skewness(&self) -> Option<Vec<f64>> {
+//         Some(
+//             self.p
+//                 .iter()
+//                 .map(|x| (1.0 - 2.0 * x) / (self.n as f64 * (1.0 - x) * x).sqrt())
+//                 .collect(),
+//         )
+//     }
+// }
 
 impl<'a> Discrete<&'a [u64], f64> for Multinomial {
     /// Calculates the probability mass function for the multinomial

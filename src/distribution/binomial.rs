@@ -154,7 +154,7 @@ impl Max<u64> for Binomial {
     }
 }
 
-impl Mean<f64> for Binomial {
+impl ExtDistribution<f64> for Binomial {
     /// Returns the mean of the binomial distribution
     ///
     /// # Formula
@@ -162,12 +162,9 @@ impl Mean<f64> for Binomial {
     /// ```ignore
     /// p * n
     /// ```
-    fn mean(&self) -> f64 {
-        self.p * self.n as f64
+    fn mean(&self) -> Option<f64> {
+        Some(self.p * self.n as f64)
     }
-}
-
-impl Variance<f64> for Binomial {
     /// Returns the variance of the binomial distribution
     ///
     /// # Formula
@@ -175,23 +172,9 @@ impl Variance<f64> for Binomial {
     /// ```ignore
     /// n * p * (1 - p)
     /// ```
-    fn variance(&self) -> f64 {
-        self.p * (1.0 - self.p) * self.n as f64
+    fn variance(&self) -> Option<f64> {
+        Some(self.p * (1.0 - self.p) * self.n as f64)
     }
-
-    /// Returns the standard deviation of the binomial distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(n * p * (1 - p))
-    /// ```
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
-    }
-}
-
-impl Entropy<f64> for Binomial {
     /// Returns the entropy of the binomial distribution
     ///
     /// # Formula
@@ -199,19 +182,17 @@ impl Entropy<f64> for Binomial {
     /// ```ignore
     /// (1 / 2) * ln (2 * π * e * n * p * (1 - p))
     /// ```
-    fn entropy(&self) -> f64 {
-        if is_zero(self.p) || ulps_eq!(self.p, 1.0) {
+    fn entropy(&self) -> Option<f64> {
+        let entr = if is_zero(self.p) || ulps_eq!(self.p, 1.0) {
             0.0
         } else {
             (0..self.n + 1).fold(0.0, |acc, x| {
                 let p = self.pmf(x);
                 acc - p * p.ln()
             })
-        }
+        };
+        Some(entr)
     }
-}
-
-impl Skewness<f64> for Binomial {
     /// Returns the skewness of the binomial distribution
     ///
     /// # Formula
@@ -219,8 +200,8 @@ impl Skewness<f64> for Binomial {
     /// ```ignore
     /// (1 - 2p) / sqrt(n * p * (1 - p)))
     /// ```
-    fn skewness(&self) -> f64 {
-        (1.0 - 2.0 * self.p) / (self.n as f64 * self.p * (1.0 - self.p)).sqrt()
+    fn skewness(&self) -> Option<f64> {
+        Some((1.0 - 2.0 * self.p) / (self.n as f64 * self.p * (1.0 - self.p)).sqrt())
     }
 }
 
@@ -237,7 +218,7 @@ impl Median<f64> for Binomial {
     }
 }
 
-impl Mode<u64> for Binomial {
+impl Mode<Option<u64>> for Binomial {
     /// Returns the mode for the binomial distribution
     ///
     /// # Formula
@@ -245,14 +226,15 @@ impl Mode<u64> for Binomial {
     /// ```ignore
     /// floor((n + 1) * p)
     /// ```
-    fn mode(&self) -> u64 {
-        if is_zero(self.p) {
+    fn mode(&self) -> Option<u64> {
+        let mode = if is_zero(self.p) {
             0
         } else if ulps_eq!(self.p, 1.0) {
             self.n
         } else {
             ((self.n as f64 + 1.0) * self.p).floor() as u64
-        }
+        };
+        Some(mode)
     }
 }
 

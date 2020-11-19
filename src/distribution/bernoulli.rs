@@ -82,8 +82,8 @@ impl Bernoulli {
 }
 
 impl Distribution<f64> for Bernoulli {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        r.gen_bool(self.p()) as u8 as f64
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        rng.gen_bool(self.p()) as u8 as f64
     }
 }
 
@@ -133,7 +133,7 @@ impl Max<u64> for Bernoulli {
     }
 }
 
-impl Mean<f64> for Bernoulli {
+impl ExtDistribution<f64> for Bernoulli {
     /// Returns the mean of the bernoulli
     /// distribution
     ///
@@ -142,12 +142,9 @@ impl Mean<f64> for Bernoulli {
     /// ```ignore
     /// p
     /// ```
-    fn mean(&self) -> f64 {
+    fn mean(&self) -> Option<f64> {
         self.b.mean()
     }
-}
-
-impl Variance<f64> for Bernoulli {
     /// Returns the variance of the bernoulli
     /// distribution
     ///
@@ -156,24 +153,9 @@ impl Variance<f64> for Bernoulli {
     /// ```ignore
     /// p * (1 - p)
     /// ```
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         self.b.variance()
     }
-
-    /// Returns the standard deviation of the bernoulli
-    /// distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(p * (1 - p))
-    /// ```
-    fn std_dev(&self) -> f64 {
-        self.b.std_dev()
-    }
-}
-
-impl Entropy<f64> for Bernoulli {
     /// Returns the entropy of the bernoulli
     /// distribution
     ///
@@ -183,12 +165,9 @@ impl Entropy<f64> for Bernoulli {
     /// q = (1 - p)
     /// -q * ln(q) - p * ln(p)
     /// ```
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Option<f64> {
         self.b.entropy()
     }
-}
-
-impl Skewness<f64> for Bernoulli {
     /// Returns the skewness of the bernoulli
     /// distribution
     ///
@@ -198,7 +177,7 @@ impl Skewness<f64> for Bernoulli {
     /// q = (1 - p)
     /// (1 - 2p) / sqrt(p * q)
     /// ```
-    fn skewness(&self) -> f64 {
+    fn skewness(&self) -> Option<f64> {
         self.b.skewness()
     }
 }
@@ -219,7 +198,7 @@ impl Median<f64> for Bernoulli {
     }
 }
 
-impl Mode<u64> for Bernoulli {
+impl Mode<Option<u64>> for Bernoulli {
     /// Returns the mode of the bernoulli distribution
     ///
     /// # Formula
@@ -228,7 +207,7 @@ impl Mode<u64> for Bernoulli {
     /// if p < 0.5 { 0 }
     /// else { 1 }
     /// ```
-    fn mode(&self) -> u64 {
+    fn mode(&self) -> Option<u64> {
         self.b.mode()
     }
 }

@@ -85,8 +85,8 @@ impl Gamma {
 }
 
 impl Distribution<f64> for Gamma {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        sample_unchecked(r, self.shape, self.rate)
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        sample_unchecked(rng, self.shape, self.rate)
     }
 }
 
@@ -148,13 +148,8 @@ impl Max<f64> for Gamma {
     }
 }
 
-impl Mean<f64> for Gamma {
+impl ExtDistribution<f64> for Gamma {
     /// Returns the mean of the gamma distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `shape` if `rate == f64::INFINITY`. This behavior
-    /// is borrowed from the Math.NET implementation
     ///
     /// # Formula
     ///
@@ -163,12 +158,9 @@ impl Mean<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn mean(&self) -> f64 {
-        self.shape / self.rate
+    fn mean(&self) -> Option<f64> {
+        Some(self.shape / self.rate)
     }
-}
-
-impl Variance<f64> for Gamma {
     /// Returns the variance of the gamma distribution
     ///
     /// # Formula
@@ -178,25 +170,9 @@ impl Variance<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn variance(&self) -> f64 {
-        self.shape / (self.rate * self.rate)
+    fn variance(&self) -> Option<f64> {
+        Some(self.shape / (self.rate * self.rate))
     }
-
-    /// Returns the standard deviation of the gamma distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(α) / β
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn std_dev(&self) -> f64 {
-        self.shape.sqrt() / self.rate
-    }
-}
-
-impl Entropy<f64> for Gamma {
     /// Returns the entropy of the gamma distribution
     ///
     /// # Formula
@@ -207,14 +183,12 @@ impl Entropy<f64> for Gamma {
     ///
     /// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
-        self.shape - self.rate.ln()
+    fn entropy(&self) -> Option<f64> {
+        let entr = self.shape - self.rate.ln()
             + gamma::ln_gamma(self.shape)
-            + (1.0 - self.shape) * gamma::digamma(self.shape)
+            + (1.0 - self.shape) * gamma::digamma(self.shape);
+        Some(entr)
     }
-}
-
-impl Skewness<f64> for Gamma {
     /// Returns the skewness of the gamma distribution
     ///
     /// # Formula
@@ -224,18 +198,13 @@ impl Skewness<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape
-    fn skewness(&self) -> f64 {
-        2.0 / self.shape.sqrt()
+    fn skewness(&self) -> Option<f64> {
+        Some(2.0 / self.shape.sqrt())
     }
 }
 
-impl Mode<f64> for Gamma {
+impl Mode<Option<f64>> for Gamma {
     /// Returns the mode for the gamma distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `shape` if `rate == f64::INFINITY`. This behavior
-    /// is borrowed from the Math.NET implementation
     ///
     /// # Formula
     ///
@@ -244,8 +213,8 @@ impl Mode<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn mode(&self) -> f64 {
-        (self.shape - 1.0) / self.rate
+    fn mode(&self) -> Option<f64> {
+        Some((self.shape - 1.0) / self.rate)
     }
 }
 
@@ -310,9 +279,8 @@ impl Continuous<f64, f64> for Gamma {
         }
     }
 }
-
 /// Samples from a gamma distribution with a shape of `shape` and a
-/// rate of `rate` using `r` as the source of randomness. Implementation from:
+/// rate of `rate` using `rng` as the source of randomness. Implementation from:
 /// <br />
 /// <div>
 /// <i>"A Simple Method for Generating Gamma Variables"</i> - Marsaglia & Tsang

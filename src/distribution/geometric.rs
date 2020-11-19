@@ -130,7 +130,7 @@ impl Max<u64> for Geometric {
     }
 }
 
-impl Mean<f64> for Geometric {
+impl ExtDistribution<f64> for Geometric {
     /// Returns the mean of the geometric distribution
     ///
     /// # Formula
@@ -138,12 +138,9 @@ impl Mean<f64> for Geometric {
     /// ```ignore
     /// 1 / p
     /// ```
-    fn mean(&self) -> f64 {
-        1.0 / self.p
+    fn mean(&self) -> Option<f64> {
+        Some(1.0 / self.p)
     }
-}
-
-impl Variance<f64> for Geometric {
     /// Returns the standard deviation of the geometric distribution
     ///
     /// # Formula
@@ -151,27 +148,9 @@ impl Variance<f64> for Geometric {
     /// ```ignore
     /// (1 - p) / p^2
     /// ```
-    fn variance(&self) -> f64 {
-        (1.0 - self.p) / (self.p * self.p)
+    fn variance(&self) -> Option<f64> {
+        Some((1.0 - self.p) / (self.p * self.p))
     }
-
-    /// Returns the standard deviation of the geometric distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `NAN` if `p` is `1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(1 - p) / p
-    /// ```
-    fn std_dev(&self) -> f64 {
-        (1.0 - self.p).sqrt() / self.p
-    }
-}
-
-impl Entropy<f64> for Geometric {
     /// Returns the entropy of the geometric distribution
     ///
     /// # Formula
@@ -179,12 +158,10 @@ impl Entropy<f64> for Geometric {
     /// ```ignore
     /// (-(1 - p) * log_2(1 - p) - p * log_2(p)) / p
     /// ```
-    fn entropy(&self) -> f64 {
-        (-self.p * self.p.log(2.0) - (1.0 - self.p) * (1.0 - self.p).log(2.0)) / self.p
+    fn entropy(&self) -> Option<f64> {
+        let inv = 1.0 / self.p;
+        Some(-inv * (1. - self.p).log(2.0) + (inv - 1.).log(2.0))
     }
-}
-
-impl Skewness<f64> for Geometric {
     /// Returns the skewness of the geometric distribution
     ///
     /// # Formula
@@ -192,12 +169,15 @@ impl Skewness<f64> for Geometric {
     /// ```ignore
     /// (2 - p) / sqrt(1 - p)
     /// ```
-    fn skewness(&self) -> f64 {
-        (2.0 - self.p) / (1.0 - self.p).sqrt()
+    fn skewness(&self) -> Option<f64> {
+        if ulps_eq!(self.p, 1.0) {
+            return Some(f64::INFINITY);
+        };
+        Some((2.0 - self.p) / (1.0 - self.p).sqrt())
     }
 }
 
-impl Mode<u64> for Geometric {
+impl Mode<Option<u64>> for Geometric {
     /// Returns the mode of the geometric distribution
     ///
     /// # Formula
@@ -205,8 +185,8 @@ impl Mode<u64> for Geometric {
     /// ```ignore
     /// 1
     /// ```
-    fn mode(&self) -> u64 {
-        1
+    fn mode(&self) -> Option<u64> {
+        Some(1)
     }
 }
 
@@ -215,8 +195,6 @@ impl Median<f64> for Geometric {
     ///
     /// # Remarks
     ///
-    /// Returns `1` if `p` is `1`
-    ///
     /// # Formula
     ///
     /// ```ignore
@@ -224,10 +202,9 @@ impl Median<f64> for Geometric {
     /// ```
     fn median(&self) -> f64 {
         if ulps_eq!(self.p, 1.0) {
-            1.0
-        } else {
-            (-f64::consts::LN_2 / (1.0 - self.p).ln()).ceil()
-        }
+            return f64::INFINITY;
+        };
+        (-f64::consts::LN_2 / (1.0 - self.p).ln()).ceil()
     }
 }
 

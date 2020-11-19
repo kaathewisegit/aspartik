@@ -30,7 +30,6 @@ pub use self::students_t::StudentsT;
 pub use self::triangular::Triangular;
 pub use self::uniform::Uniform;
 pub use self::weibull::Weibull;
-use crate::statistics::{Max, Min};
 
 mod bernoulli;
 mod beta;
@@ -70,7 +69,8 @@ use crate::Result;
 /// distributions e.g. distributions that have a closed form cumulative
 /// distribution
 /// function
-pub trait Univariate<T, K>: Min<T> + Max<T> {
+pub trait Univariate<T, K> // : Min<T> + Max<T>
+{
     /// Returns the cumulative distribution function calculated
     /// at `x` for a given distribution. May panic depending
     /// on the implementor.

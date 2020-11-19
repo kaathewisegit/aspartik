@@ -92,8 +92,8 @@ impl Weibull {
 }
 
 impl Distribution<f64> for Weibull {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        let x: f64 = r.gen();
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        let x: f64 = rng.gen();
         self.scale * (-x.ln()).powf(1.0 / self.shape)
     }
 }
@@ -146,7 +146,7 @@ impl Max<f64> for Weibull {
     }
 }
 
-impl Mean<f64> for Weibull {
+impl ExtDistribution<f64> for Weibull {
     /// Returns the mean of the weibull distribution
     ///
     /// # Formula
@@ -157,12 +157,9 @@ impl Mean<f64> for Weibull {
     ///
     /// where `k` is the shape, `λ` is the scale, and `Γ` is
     /// the gamma function
-    fn mean(&self) -> f64 {
-        self.scale * gamma::gamma(1.0 + 1.0 / self.shape)
+    fn mean(&self) -> Option<f64> {
+        Some(self.scale * gamma::gamma(1.0 + 1.0 / self.shape))
     }
-}
-
-impl Variance<f64> for Weibull {
     /// Returns the variance of the weibull distribution
     ///
     /// # Formula
@@ -173,26 +170,10 @@ impl Variance<f64> for Weibull {
     ///
     /// where `k` is the shape, `λ` is the scale, and `Γ` is
     /// the gamma function
-    fn variance(&self) -> f64 {
-        self.scale * self.scale * gamma::gamma(1.0 + 2.0 / self.shape) - self.mean() * self.mean()
+    fn variance(&self) -> Option<f64> {
+        let mean = self.mean()?;
+        Some(self.scale * self.scale * gamma::gamma(1.0 + 2.0 / self.shape) - mean * mean)
     }
-
-    /// Returns the standard deviation of the weibull distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(λ^2 * (Γ(1 + 2 / k) - Γ(1 + 1 / k)^2))
-    /// ```
-    ///
-    /// where `k` is the shape, `λ` is the scale, and `Γ` is
-    /// the gamma function
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
-    }
-}
-
-impl Entropy<f64> for Weibull {
     /// Returns the entropy of the weibull distribution
     ///
     /// # Formula
@@ -203,12 +184,12 @@ impl Entropy<f64> for Weibull {
     ///
     /// where `k` is the shape, `λ` is the scale, and `γ` is
     /// the Euler-Mascheroni constant
-    fn entropy(&self) -> f64 {
-        consts::EULER_MASCHERONI * (1.0 - 1.0 / self.shape) + (self.scale / self.shape).ln() + 1.0
+    fn entropy(&self) -> Option<f64> {
+        let entr = consts::EULER_MASCHERONI * (1.0 - 1.0 / self.shape)
+            + (self.scale / self.shape).ln()
+            + 1.0;
+        Some(entr)
     }
-}
-
-impl Skewness<f64> for Weibull {
     /// Returns the skewness of the weibull distribution
     ///
     /// # Formula
@@ -220,15 +201,16 @@ impl Skewness<f64> for Weibull {
     /// where `k` is the shape, `λ` is the scale, and `Γ` is
     /// the gamma function, `μ` is the mean of the distribution.
     /// and `σ` the standard deviation of the distribution
-    fn skewness(&self) -> f64 {
-        let mu = self.mean();
-        let sigma = self.std_dev();
+    fn skewness(&self) -> Option<f64> {
+        let mu = self.mean()?;
+        let sigma = self.std_dev()?;
         let sigma2 = sigma * sigma;
         let sigma3 = sigma2 * sigma;
-        (self.scale * self.scale * self.scale * gamma::gamma(1.0 + 3.0 / self.shape)
+        let skew = (self.scale * self.scale * self.scale * gamma::gamma(1.0 + 3.0 / self.shape)
             - 3.0 * sigma2 * mu
             - (mu * mu * mu))
-            / sigma3
+            / sigma3;
+        Some(skew)
     }
 }
 
@@ -247,7 +229,7 @@ impl Median<f64> for Weibull {
     }
 }
 
-impl Mode<f64> for Weibull {
+impl Mode<Option<f64>> for Weibull {
     /// Returns the median of the weibull distribution
     ///
     /// # Formula
@@ -261,12 +243,13 @@ impl Mode<f64> for Weibull {
     /// ```
     ///
     /// where `k` is the shape and `λ` is the scale
-    fn mode(&self) -> f64 {
-        if ulps_eq!(self.shape, 1.0) {
+    fn mode(&self) -> Option<f64> {
+        let mode = if ulps_eq!(self.shape, 1.0) {
             0.0
         } else {
             self.scale * ((self.shape - 1.0) / self.shape).powf(1.0 / self.shape)
-        }
+        };
+        Some(mode)
     }
 }
 

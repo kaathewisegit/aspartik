@@ -152,7 +152,7 @@ impl Max<u64> for NegativeBinomial {
     }
 }
 
-impl Mean<f64> for NegativeBinomial {
+impl ExtDistributionDiscrete<f64> for NegativeBinomial {
     /// Returns the mean of the negative binomial distribution
     ///
     /// # Formula
@@ -160,12 +160,9 @@ impl Mean<f64> for NegativeBinomial {
     /// ```ignore
     /// r * (1-p) / p
     /// ```
-    fn mean(&self) -> f64 {
-        self.r * (1.0 - self.p) / self.p
+    fn mean(&self) -> Option<f64> {
+        Some(self.r * (1.0 - self.p) / self.p)
     }
-}
-
-impl Variance<f64> for NegativeBinomial {
     /// Returns the variance of the negative binomial distribution
     ///
     /// # Formula
@@ -173,23 +170,9 @@ impl Variance<f64> for NegativeBinomial {
     /// ```ignore
     /// r * (1-p) / p^2
     /// ```
-    fn variance(&self) -> f64 {
-        self.r * (1.0 - self.p) / (self.p * self.p)
+    fn variance(&self) -> Option<f64> {
+        Some(self.r * (1.0 - self.p) / (self.p * self.p))
     }
-
-    /// Returns the standard deviation of the negative binomial distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(r * (1-p))/p
-    /// ```
-    fn std_dev(&self) -> f64 {
-        f64::sqrt(self.r * (1.0 - self.p)) / self.p
-    }
-}
-
-impl Skewness<f64> for NegativeBinomial {
     /// Returns the skewness of the negative binomial distribution
     ///
     /// # Formula
@@ -197,12 +180,12 @@ impl Skewness<f64> for NegativeBinomial {
     /// ```ignore
     /// (2-p) / sqrt(r * (1-p))
     /// ```
-    fn skewness(&self) -> f64 {
-        (2.0 - self.p) / f64::sqrt(self.r * (1.0 - self.p))
+    fn skewness(&self) -> Option<f64> {
+        Some((2.0 - self.p) / f64::sqrt(self.r * (1.0 - self.p)))
     }
 }
 
-impl Mode<f64> for NegativeBinomial {
+impl Mode<Option<f64>> for NegativeBinomial {
     /// Returns the mode for the negative binomial distribution
     ///
     /// # Formula
@@ -213,12 +196,13 @@ impl Mode<f64> for NegativeBinomial {
     /// else
     ///     0
     /// ```
-    fn mode(&self) -> f64 {
-        if self.r > 1.0 {
+    fn mode(&self) -> Option<f64> {
+        let mode = if self.r > 1.0 {
             f64::floor((self.r - 1.0) * (1.0 - self.p) / self.p)
         } else {
             0.0
-        }
+        };
+        Some(mode)
     }
 }
 

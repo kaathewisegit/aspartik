@@ -201,10 +201,10 @@ impl Max<u64> for Hypergeometric {
     }
 }
 
-impl Mean<f64> for Hypergeometric {
+impl ExtDistribution<f64> for Hypergeometric {
     /// Returns the mean of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N` is `0`
     ///
@@ -215,38 +215,16 @@ impl Mean<f64> for Hypergeometric {
     /// ```
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
-    fn mean(&self) -> f64 {
-        self.checked_mean().unwrap()
-    }
-}
-
-impl CheckedMean<f64> for Hypergeometric {
-    /// Returns the mean of the hypergeometric distribution
-    ///
-    /// # Errors
-    ///
-    /// If `N` is `0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// K * n / N
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn checked_mean(&self) -> Result<f64> {
+    fn mean(&self) -> Option<f64> {
         if self.population == 0 {
-            Err(StatsError::ArgGt("population", 0.0))
+            None
         } else {
-            Ok(self.successes as f64 * self.draws as f64 / self.population as f64)
+            Some(self.successes as f64 * self.draws as f64 / self.population as f64)
         }
     }
-}
-
-impl Variance<f64> for Hypergeometric {
     /// Returns the variance of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N <= 1`
     ///
@@ -257,75 +235,19 @@ impl Variance<f64> for Hypergeometric {
     /// ```
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
-    fn variance(&self) -> f64 {
-        self.checked_variance().unwrap()
-    }
-
-    /// Returns the standard deviation of the hypergeometric distribution
-    ///
-    /// # Panics
-    ///
-    /// If `N <= 1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)))
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn std_dev(&self) -> f64 {
-        self.checked_std_dev().unwrap()
-    }
-}
-
-impl CheckedVariance<f64> for Hypergeometric {
-    /// Returns the variance of the hypergeometric distribution
-    ///
-    /// # Errors
-    ///
-    /// If `N <= 1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1))
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn checked_variance(&self) -> Result<f64> {
+    fn variance(&self) -> Option<f64> {
         if self.population <= 1 {
-            Err(StatsError::ArgGt("population", 1.0))
+            None
         } else {
             let (population, successes, draws) = self.values_f64();
             let val = draws * successes * (population - draws) * (population - successes)
                 / (population * population * (population - 1.0));
-            Ok(val)
+            Some(val)
         }
     }
-
-    /// Returns the standard deviation of the hypergeometric distribution
-    ///
-    /// # Errors
-    ///
-    /// If `N <= 1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)))
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn checked_std_dev(&self) -> Result<f64> {
-        self.checked_variance().map(|x| x.sqrt())
-    }
-}
-
-impl Skewness<f64> for Hypergeometric {
     /// Returns the skewness of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N <= 2`
     ///
@@ -337,29 +259,9 @@ impl Skewness<f64> for Hypergeometric {
     /// ```
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
-    fn skewness(&self) -> f64 {
-        self.checked_skewness().unwrap()
-    }
-}
-
-impl CheckedSkewness<f64> for Hypergeometric {
-    /// Returns the skewness of the hypergeometric distribution
-    ///
-    /// # Errors
-    ///
-    /// If `N <= 2`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// ((N - 2K) * (N - 1)^(1 / 2) * (N - 2n)) / ([n * K * (N - K) * (N -
-    /// n)]^(1 / 2) * (N - 2))
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn checked_skewness(&self) -> Result<f64> {
+    fn skewness(&self) -> Option<f64> {
         if self.population <= 2 {
-            Err(StatsError::ArgGt("population", 2.0))
+            None
         } else {
             let (population, successes, draws) = self.values_f64();
             let val = (population - 1.0).sqrt()
@@ -367,12 +269,12 @@ impl CheckedSkewness<f64> for Hypergeometric {
                 * (population - 2.0 * successes)
                 / ((draws * successes * (population - successes) * (population - draws)).sqrt()
                     * (population - 2.0));
-            Ok(val)
+            Some(val)
         }
     }
 }
 
-impl Mode<u64> for Hypergeometric {
+impl Mode<Option<u64>> for Hypergeometric {
     /// Returns the mode of the hypergeometric distribution
     ///
     /// # Formula
@@ -382,8 +284,8 @@ impl Mode<u64> for Hypergeometric {
     /// ```
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
-    fn mode(&self) -> u64 {
-        ((self.draws + 1) * (self.successes + 1) / (self.population + 2)) as u64
+    fn mode(&self) -> Option<u64> {
+        Some(((self.draws + 1) * (self.successes + 1)) / (self.population + 2))
     }
 }
 

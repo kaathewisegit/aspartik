@@ -110,7 +110,7 @@ impl Max<i64> for DiscreteUniform {
     }
 }
 
-impl Mean<f64> for DiscreteUniform {
+impl ExtDistribution<f64> for DiscreteUniform {
     /// Returns the mean of the discrete uniform distribution
     ///
     /// # Formula
@@ -118,12 +118,9 @@ impl Mean<f64> for DiscreteUniform {
     /// ```ignore
     /// (min + max) / 2
     /// ```
-    fn mean(&self) -> f64 {
-        (self.min + self.max) as f64 / 2.0
+    fn mean(&self) -> Option<f64> {
+        Some((self.min + self.max) as f64 / 2.0)
     }
-}
-
-impl Variance<f64> for DiscreteUniform {
     /// Returns the variance of the discrete uniform distribution
     ///
     /// # Formula
@@ -131,24 +128,10 @@ impl Variance<f64> for DiscreteUniform {
     /// ```ignore
     /// ((max - min + 1)^2 - 1) / 12
     /// ```
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         let diff = (self.max - self.min) as f64;
-        ((diff + 1.0) * (diff + 1.0) - 1.0) / 12.0
+        Some(((diff + 1.0) * (diff + 1.0) - 1.0) / 12.0)
     }
-
-    /// Returns the standard deviation of the discrete uniform distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(((max - min + 1)^2 - 1) / 12)
-    /// ```
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
-    }
-}
-
-impl Entropy<f64> for DiscreteUniform {
     /// Returns the entropy of the discrete uniform distribution
     ///
     /// # Formula
@@ -156,13 +139,10 @@ impl Entropy<f64> for DiscreteUniform {
     /// ```ignore
     /// ln(max - min + 1)
     /// ```
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Option<f64> {
         let diff = (self.max - self.min) as f64;
-        (diff + 1.0).ln()
+        Some((diff + 1.0).ln())
     }
-}
-
-impl Skewness<f64> for DiscreteUniform {
     /// Returns the skewness of the discrete uniform distribution
     ///
     /// # Formula
@@ -170,8 +150,8 @@ impl Skewness<f64> for DiscreteUniform {
     /// ```ignore
     /// 0
     /// ```
-    fn skewness(&self) -> f64 {
-        0.0
+    fn skewness(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
@@ -188,7 +168,7 @@ impl Median<f64> for DiscreteUniform {
     }
 }
 
-impl Mode<i64> for DiscreteUniform {
+impl Mode<Option<i64>> for DiscreteUniform {
     /// Returns the mode for the discrete uniform distribution
     ///
     /// # Remarks
@@ -201,8 +181,8 @@ impl Mode<i64> for DiscreteUniform {
     /// ```ignore
     /// N/A // (max + min) / 2 for the middle element
     /// ```
-    fn mode(&self) -> i64 {
-        ((self.min + self.max) as f64 / 2.0).floor() as i64
+    fn mode(&self) -> Option<i64> {
+        Some(((self.min + self.max) as f64 / 2.0).floor() as i64)
     }
 }
 

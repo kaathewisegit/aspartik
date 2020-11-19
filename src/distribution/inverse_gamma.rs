@@ -148,10 +148,10 @@ impl Max<f64> for InverseGamma {
     }
 }
 
-impl Mean<f64> for InverseGamma {
+impl ExtDistribution<f64> for InverseGamma {
     /// Returns the mean of the inverse distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 1.0`
     ///
@@ -162,38 +162,16 @@ impl Mean<f64> for InverseGamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn mean(&self) -> f64 {
-        self.checked_mean().unwrap()
-    }
-}
-
-impl CheckedMean<f64> for InverseGamma {
-    /// Returns the mean of the inverse distribution
-    ///
-    /// # Errors
-    ///
-    /// If `shape <= 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// β / (α - 1)
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn checked_mean(&self) -> Result<f64> {
+    fn mean(&self) -> Option<f64> {
         if self.shape <= 1.0 {
-            Err(StatsError::ArgGt("shape", 1.0))
+            None
         } else {
-            Ok(self.rate / (self.shape - 1.0))
+            Some(self.rate / (self.shape - 1.0))
         }
     }
-}
-
-impl Variance<f64> for InverseGamma {
     /// Returns the variance of the inverse gamma distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 2.0`
     ///
@@ -204,71 +182,15 @@ impl Variance<f64> for InverseGamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn variance(&self) -> f64 {
-        self.checked_variance().unwrap()
-    }
-
-    /// Returns the standard deviation of the inverse gamma distribution
-    ///
-    /// # Panics
-    ///
-    /// If `shape <= 2.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(β^2 / ((α - 1)^2 * (α - 2)))
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn std_dev(&self) -> f64 {
-        self.checked_std_dev().unwrap()
-    }
-}
-
-impl CheckedVariance<f64> for InverseGamma {
-    /// Returns the variance of the inverse gamma distribution
-    ///
-    /// # Errors
-    ///
-    /// If `shape <= 2.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// β^2 / ((α - 1)^2 * (α - 2))
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn checked_variance(&self) -> Result<f64> {
+    fn variance(&self) -> Option<f64> {
         if self.shape <= 2.0 {
-            Err(StatsError::ArgGt("shape", 2.0))
+            None
         } else {
             let val = self.rate * self.rate
                 / ((self.shape - 1.0) * (self.shape - 1.0) * (self.shape - 2.0));
-            Ok(val)
+            Some(val)
         }
     }
-
-    /// Returns the standard deviation of the inverse gamma distribution
-    ///
-    /// # Errors
-    ///
-    /// If `shape <= 2.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(β^2 / ((α - 1)^2 * (α - 2)))
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn checked_std_dev(&self) -> Result<f64> {
-        self.checked_variance().map(|x| x.sqrt())
-    }
-}
-
-impl Entropy<f64> for InverseGamma {
     /// Returns the entropy of the inverse gamma distribution
     ///
     /// # Formula
@@ -279,16 +201,14 @@ impl Entropy<f64> for InverseGamma {
     ///
     /// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
-        self.shape + self.rate.ln() + gamma::ln_gamma(self.shape)
-            - (1.0 + self.shape) * gamma::digamma(self.shape)
+    fn entropy(&self) -> Option<f64> {
+        let entr = self.shape + self.rate.ln() + gamma::ln_gamma(self.shape)
+            - (1.0 + self.shape) * gamma::digamma(self.shape);
+        Some(entr)
     }
-}
-
-impl Skewness<f64> for InverseGamma {
     /// Returns the skewness of the inverse gamma distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 3`
     ///
@@ -299,35 +219,16 @@ impl Skewness<f64> for InverseGamma {
     /// ```
     ///
     /// where `α` is the shape
-    fn skewness(&self) -> f64 {
-        self.checked_skewness().unwrap()
-    }
-}
-
-impl CheckedSkewness<f64> for InverseGamma {
-    /// Returns the skewness of the inverse gamma distribution
-    ///
-    /// # Errors
-    ///
-    /// If `shape <= 3`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// 4 * sqrt(α - 2) / (α - 3)
-    /// ```
-    ///
-    /// where `α` is the shape
-    fn checked_skewness(&self) -> Result<f64> {
+    fn skewness(&self) -> Option<f64> {
         if self.shape <= 3.0 {
-            Err(StatsError::ArgGt("shape", 3.0))
+            None
         } else {
-            Ok(4.0 * (self.shape - 2.0).sqrt() / (self.shape - 3.0))
+            Some(4.0 * (self.shape - 2.0).sqrt() / (self.shape - 3.0))
         }
     }
 }
 
-impl Mode<f64> for InverseGamma {
+impl Mode<Option<f64>> for InverseGamma {
     /// Returns the mode of the inverse gamma distribution
     ///
     /// # Formula
@@ -337,8 +238,8 @@ impl Mode<f64> for InverseGamma {
     /// ```
     ///
     /// /// where `α` is the shape and `β` is the rate
-    fn mode(&self) -> f64 {
-        self.rate / (self.shape + 1.0)
+    fn mode(&self) -> Option<f64> {
+        Some(self.rate / (self.shape + 1.0))
     }
 }
 
