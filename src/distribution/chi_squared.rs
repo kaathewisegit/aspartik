@@ -15,11 +15,11 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{ChiSquared, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 /// use statrs::prec;
 ///
 /// let n = ChiSquared::new(3.0).unwrap();
-/// assert_eq!(n.mean(), 3.0);
+/// assert_eq!(n.mean().unwrap(), 3.0);
 /// assert!(prec::almost_eq(n.pdf(4.0), 0.107981933026376103901, 1e-15));
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]

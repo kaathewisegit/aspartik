@@ -167,17 +167,17 @@ impl ExtDistribution<f64> for [f64] {
     /// extern crate statrs;
     ///
     /// use std::f64;
-    /// use statrs::statistics::Mean;
+    /// use statrs::statistics::ExtDistribution;
     ///
     /// # fn main() {
     /// let x = [];
-    /// assert!(x.mean().is_nan());
+    /// assert!(x.mean().unwrap().is_nan());
     ///
     /// let y = [0.0, f64::NAN, 3.0, -2.0];
-    /// assert!(y.mean().is_nan());
+    /// assert!(y.mean().unwrap().is_nan());
     ///
     /// let z = [0.0, 3.0, -2.0];
-    /// assert_almost_eq!(z.mean(), 1.0 / 3.0, 1e-15);
+    /// assert_almost_eq!(z.mean().unwrap(), 1.0 / 3.0, 1e-15);
     /// # }
     /// ```
     fn mean(&self) -> Option<f64> {
@@ -197,16 +197,16 @@ impl ExtDistribution<f64> for [f64] {
     ///
     /// ```
     /// use std::f64;
-    /// use statrs::statistics::Variance;
+    /// use statrs::statistics::ExtDistribution;
     ///
     /// let x = [];
-    /// assert!(x.variance().is_nan());
+    /// assert!(x.variance().unwrap().is_nan());
     ///
     /// let y = [0.0, f64::NAN, 3.0, -2.0];
-    /// assert!(y.variance().is_nan());
+    /// assert!(y.variance().unwrap().is_nan());
     ///
     /// let z = [0.0, 3.0, -2.0];
-    /// assert_eq!(z.variance(), 19.0 / 3.0);
+    /// assert_eq!(z.variance().unwrap(), 19.0 / 3.0);
     /// ```
     fn variance(&self) -> Option<f64> {
         Some(Statistics::variance(self))

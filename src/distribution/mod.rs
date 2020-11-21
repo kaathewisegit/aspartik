@@ -10,7 +10,7 @@ pub use self::cauchy::Cauchy;
 pub use self::chi::Chi;
 pub use self::chi_squared::ChiSquared;
 pub use self::dirac::Dirac;
-pub use self::dirichlet::Dirichlet;
+// pub use self::dirichlet::Dirichlet;
 pub use self::discrete_uniform::DiscreteUniform;
 pub use self::erlang::Erlang;
 pub use self::exponential::Exponential;
@@ -20,7 +20,7 @@ pub use self::geometric::Geometric;
 pub use self::hypergeometric::Hypergeometric;
 pub use self::inverse_gamma::InverseGamma;
 pub use self::log_normal::LogNormal;
-pub use self::multinomial::Multinomial;
+// pub use self::multinomial::Multinomial;
 pub use self::multivariate_normal::MultivariateNormal;
 pub use self::negative_binomial::NegativeBinomial;
 pub use self::normal::Normal;
@@ -39,7 +39,7 @@ mod cauchy;
 mod chi;
 mod chi_squared;
 mod dirac;
-mod dirichlet;
+// mod dirichlet;
 mod discrete_uniform;
 mod erlang;
 mod exponential;
@@ -50,7 +50,7 @@ mod hypergeometric;
 mod internal;
 mod inverse_gamma;
 mod log_normal;
-mod multinomial;
+// mod multinomial;
 mod multivariate_normal;
 mod negative_binomial;
 mod normal;
@@ -167,37 +167,6 @@ pub trait Continuous<T, K> {
     fn ln_pdf(&self, x: T) -> K;
 }
 
-/// The `CheckedContinuous` trait provides an interface for
-/// interacting with continuous statistical distributions with possible
-/// failure modes
-pub trait CheckedContinuous<T, K> {
-    /// Returns the probability density function calculated at `x` for a given
-    /// distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::{CheckedContinuous, Dirichlet};
-    ///
-    /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
-    /// assert!(n.checked_pdf(&[0.0]).is_err());
-    /// ```
-    fn checked_pdf(&self, x: T) -> Result<K>;
-
-    /// Returns the log of the probability density function calculated at `x`
-    /// for a given distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::{CheckedContinuous, Dirichlet};
-    ///
-    /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
-    /// assert!(n.checked_ln_pdf(&[0.0]).is_err());
-    /// ```
-    fn checked_ln_pdf(&self, x: T) -> Result<K>;
-}
-
 /// The `Discrete` trait provides an interface for interacting with discrete
 /// statistical distributions
 ///
@@ -236,36 +205,4 @@ pub trait Discrete<T, K> {
     /// assert!(prec::almost_eq(n.ln_pmf(5), (0.24609375f64).ln(), 1e-15));
     /// ```
     fn ln_pmf(&self, x: T) -> K;
-}
-
-/// The `CheckedDiscrete` trait provides an interface for interacting
-/// with discrete statistical distributions with possible failure modes
-pub trait CheckedDiscrete<T, K> {
-    /// Returns the probability mass function calculated at `x` for a given
-    /// distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::{CheckedDiscrete, Multinomial};
-    /// use statrs::prec;
-    ///
-    /// let n = Multinomial::new(&[0.3, 0.7], 5).unwrap();
-    /// assert!(n.checked_pmf(&[1]).is_err());
-    /// ```
-    fn checked_pmf(&self, x: T) -> Result<K>;
-
-    /// Returns the log of the probability mass function calculated at `x` for
-    /// a given distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::{CheckedDiscrete, Multinomial};
-    /// use statrs::prec;
-    ///
-    /// let n = Multinomial::new(&[0.3, 0.7], 5).unwrap();
-    /// assert!(n.checked_ln_pmf(&[1]).is_err());
-    /// ```
-    fn checked_ln_pmf(&self, x: T) -> Result<K>;
 }

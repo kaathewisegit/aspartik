@@ -15,10 +15,10 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Binomial, Discrete};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 ///
 /// let n = Binomial::new(0.5, 5).unwrap();
-/// assert_eq!(n.mean(), 2.5);
+/// assert_eq!(n.mean().unwrap(), 2.5);
 /// assert_eq!(n.pmf(0), 0.03125);
 /// assert_eq!(n.pmf(3), 0.3125);
 /// ```

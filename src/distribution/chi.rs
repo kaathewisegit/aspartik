@@ -13,11 +13,11 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Chi, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 /// use statrs::prec;
 ///
 /// let n = Chi::new(2.0).unwrap();
-/// assert!(prec::almost_eq(n.mean(), 1.25331413731550025121, 1e-14));
+/// assert!(prec::almost_eq(n.mean().unwrap(), 1.25331413731550025121, 1e-14));
 /// assert!(prec::almost_eq(n.pdf(1.0), 0.60653065971263342360, 1e-15));
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]

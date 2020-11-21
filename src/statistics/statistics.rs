@@ -49,7 +49,7 @@ pub trait Statistics<T> {
     ///
     /// ```
     /// use std::f64;
-    /// use statrs::statistics::Max;
+    /// use statrs::statistics::Statistics;
     ///
     /// let x: [f64; 0] = [];
     /// assert!(x.max().is_nan());
@@ -122,7 +122,7 @@ pub trait Statistics<T> {
     /// extern crate statrs;
     ///
     /// use std::f64;
-    /// use statrs::statistics::Mean;
+    /// use statrs::statistics::Statistics;
     ///
     /// # fn main() {
     /// let x = [];
@@ -227,7 +227,7 @@ pub trait Statistics<T> {
     ///
     /// ```
     /// use std::f64;
-    /// use statrs::statistics::Variance;
+    /// use statrs::statistics::Statistics;
     ///
     /// let x = [];
     /// assert!(x.variance().is_nan());

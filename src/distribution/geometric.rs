@@ -14,10 +14,10 @@ use std::{f64, u64};
 ///
 /// ```
 /// use statrs::distribution::{Geometric, Discrete};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 ///
 /// let n = Geometric::new(0.3).unwrap();
-/// assert_eq!(n.mean(), 1.0 / 0.3);
+/// assert_eq!(n.mean().unwrap(), 1.0 / 0.3);
 /// assert_eq!(n.pmf(1), 0.3);
 /// assert_eq!(n.pmf(2), 0.21);
 /// ```

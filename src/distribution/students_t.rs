@@ -14,11 +14,11 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{StudentsT, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 /// use statrs::prec;
 ///
 /// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
-/// assert_eq!(n.mean(), 0.0);
+/// assert_eq!(n.mean().unwrap(), 0.0);
 /// assert!(prec::almost_eq(n.pdf(0.0), 0.353553390593274, 1e-15));
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]

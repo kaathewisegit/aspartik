@@ -12,10 +12,10 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Dirac, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 ///
 /// let n = Dirac::new(3.0).unwrap();
-/// assert_eq!(n.mean(), 3.0);
+/// assert_eq!(n.mean().unwrap(), 3.0);
 /// assert_eq!(n.pdf(1.0), 0.0);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]

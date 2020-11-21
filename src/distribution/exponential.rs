@@ -15,10 +15,10 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Exponential, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 ///
 /// let n = Exponential::new(1.0).unwrap();
-/// assert_eq!(n.mean(), 1.0);
+/// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]

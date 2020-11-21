@@ -14,11 +14,11 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{NegativeBinomial, Discrete};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistributionDiscrete;
 /// use statrs::prec::{almost_eq};
 ///
 /// let r = NegativeBinomial::new(4.0, 0.5).unwrap();
-/// assert_eq!(r.mean(), 4.0);
+/// assert_eq!(r.mean().unwrap(), 4.0);
 /// assert!(almost_eq(r.pmf(0), 0.0625, 1e-8));
 /// assert!(almost_eq(r.pmf(3), 0.15625, 1e-8));
 /// ```

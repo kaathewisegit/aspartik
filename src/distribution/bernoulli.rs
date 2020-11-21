@@ -14,10 +14,10 @@ use rand::Rng;
 ///
 /// ```
 /// use statrs::distribution::{Bernoulli, Discrete};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 ///
 /// let n = Bernoulli::new(0.5).unwrap();
-/// assert_eq!(n.mean(), 0.5);
+/// assert_eq!(n.mean().unwrap(), 0.5);
 /// assert_eq!(n.pmf(0), 0.5);
 /// assert_eq!(n.pmf(1), 0.5);
 /// ```

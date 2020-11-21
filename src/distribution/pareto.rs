@@ -13,11 +13,11 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Pareto, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 /// use statrs::prec;
 ///
 /// let p = Pareto::new(1.0, 2.0).unwrap();
-/// assert_eq!(p.mean(), 2.0);
+/// assert_eq!(p.mean().unwrap(), 2.0);
 /// assert!(prec::almost_eq(p.pdf(2.0), 0.25, 1e-15));
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]

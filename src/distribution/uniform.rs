@@ -14,10 +14,10 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Uniform, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 ///
 /// let n = Uniform::new(0.0, 1.0).unwrap();
-/// assert_eq!(n.mean(), Some(0.5));
+/// assert_eq!(n.mean().unwrap(), 0.5);
 /// assert_eq!(n.pdf(0.5), 1.0);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]

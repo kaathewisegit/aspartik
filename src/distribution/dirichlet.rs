@@ -19,10 +19,12 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Dirichlet, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
+/// use nalgebra::Vector3;
+/// use statrs::statistics::{MeanN, Covariance};
 ///
-/// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
-/// assert_eq!(n.mean(), [1.0 / 6.0, 1.0 / 3.0, 0.5]);
+/// let n = Dirichlet::new(Vector3::new(1.0, 2.0, 3.0)).unwrap();
+/// assert_eq!(n.mean(), Vector3::new(1.0 / 6.0, 1.0 / 3.0, 0.5));
 /// assert_eq!(n.pdf(&[0.33333, 0.33333, 0.33333]), 2.222155556222205);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
@@ -57,12 +59,14 @@ where
     ///
     /// ```
     /// use statrs::distribution::Dirichlet;
+    /// use nalgebra::Vector3;
+    /// use nalgebra::Vector1;
     ///
-    /// let alpha_ok = [1.0, 2.0, 3.0];
-    /// let mut result = Dirichlet::new(&alpha_ok);
+    /// let alpha_ok = Vector3::new(1.0, 2.0, 3.0);
+    /// let mut result = Dirichlet::new(alpha_ok);
     /// assert!(result.is_ok());
     ///
-    /// let alpha_err = [0.0];
+    /// let alpha_err = Vector1::new(0.0);
     /// result = Dirichlet::new(&alpha_err);
     /// assert!(result.is_err());
     /// ```
@@ -105,9 +109,10 @@ where
     ///
     /// ```
     /// use statrs::distribution::Dirichlet;
+    /// use nalgebra::Vector3;
     ///
-    /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
-    /// assert_eq!(n.alpha(), [1.0, 2.0, 3.0]);
+    /// let n = Dirichlet::new(Vector3::new(1.0, 2.0, 3.0)).unwrap();
+    /// assert_eq!(n.alpha(), Vector3::new(1.0, 2.0, 3.0));
     /// ```
     pub fn alpha(&self) -> &VectorN<f64, D> {
         &self.alpha

@@ -19,16 +19,15 @@ use std::f64::consts::{E, PI};
 ///
 /// ```
 /// use statrs::distribution::{MultivariateNormal, Continuous};
-/// use nalgebra::base::dimension::U2;
 /// use nalgebra::{Vector2, Matrix2};
-/// use statrs::statistics::{Mean, Covariance};
+/// use statrs::statistics::{MeanN, Covariance};
 ///
-/// let mvn = MultivariateNormal::<U2>::new(&Vector2::zeros(), &Matrix2::identity()).unwrap();
-/// assert_eq!(mvn.mean(), Vector2::new(0., 0.));
+/// let mvn = MultivariateNormal::new(Vector2::zeros(), Matrix2::identity()).unwrap();
+/// assert_eq!(mvn.mean(), Vector2::new(0.,  0.));
 /// assert_eq!(mvn.variance(), Matrix2::new(1., 0., 0., 1.));
-/// assert_eq!(mvn.pdf(Vector2::new(1., 1.)), 0.05854983152431917);
+/// assert_eq!(mvn.pdf(Vector2::new(1.,  1.)), 0.05854983152431917);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MultivariateNormal<N>
 where
     N: Dim + DimMin<N, Output = N> + DimName,
@@ -78,14 +77,17 @@ where
         // for sampling
         match Cholesky::new(cov.clone()) {
             None => Err(StatsError::BadParams),
-            Some(cholesky_decomp) => Ok(MultivariateNormal {
-                dim,
-                cov_chol_decomp: cholesky_decomp.clone().unpack(),
-                mu: mean,
-                cov,
-                precision: cholesky_decomp.inverse(),
-                pdf_const,
-            }),
+            Some(cholesky_decomp) => {
+                let precision = cholesky_decomp.inverse();
+                Ok(MultivariateNormal {
+                    dim,
+                    cov_chol_decomp: cholesky_decomp.unpack(),
+                    mu: mean,
+                    cov,
+                    precision,
+                    pdf_const,
+                })
+            }
         }
     }
     /// Returns the entropy of the multivariate normal distribution
@@ -126,11 +128,11 @@ where
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> VectorN<f64, N> {
         let d = Normal::new(0., 1.).unwrap();
         let z = VectorN::<f64, N>::from_distribution(&d, rng);
-        (self.cov_chol_decomp.clone() * z) + self.mu.clone()
+        (&self.cov_chol_decomp * z) + &self.mu
     }
 }
 
-impl<N> Min<Vec<Option<f64>>> for MultivariateNormal<N>
+impl<N> Min<Vec<f64>> for MultivariateNormal<N>
 where
     N: Dim + DimMin<N, Output = N> + DimName,
     DefaultAllocator: Allocator<f64, N>,
@@ -140,12 +142,12 @@ where
 {
     /// Returns the minimum value in the domain of the
     /// multivariate normal distribution represented by a real vector
-    fn min(&self) -> Vec<Option<f64>> {
-        vec![None; self.dim]
+    fn min(&self) -> Vec<f64> {
+        vec![f64::NEG_INFINITY; self.dim]
     }
 }
 
-impl<N> Max<Vec<Option<f64>>> for MultivariateNormal<N>
+impl<N> Max<Vec<f64>> for MultivariateNormal<N>
 where
     N: Dim + DimMin<N, Output = N> + DimName,
     DefaultAllocator: Allocator<f64, N>,
@@ -155,8 +157,8 @@ where
 {
     /// Returns the maximum value in the domain of the
     /// multivariate normal distribution represented by a real vector
-    fn max(&self) -> Vec<Option<f64>> {
-        vec![None; self.dim]
+    fn max(&self) -> Vec<f64> {
+        vec![f64::INFINITY; self.dim]
     }
 }
 

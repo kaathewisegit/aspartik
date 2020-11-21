@@ -13,10 +13,10 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{DiscreteUniform, Discrete};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 ///
 /// let n = DiscreteUniform::new(0, 5).unwrap();
-/// assert_eq!(n.mean(), 2.5);
+/// assert_eq!(n.mean().unwrap(), 2.5);
 /// assert_eq!(n.pmf(3), 1.0 / 6.0);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]

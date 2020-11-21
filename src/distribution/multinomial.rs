@@ -1,6 +1,5 @@
 use crate::distribution::{CheckedDiscrete, Discrete};
 use crate::function::factorial;
-// use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::distributions::Distribution;
 use rand::Rng;
@@ -15,10 +14,11 @@ use rand::Rng;
 ///
 /// ```
 /// use statrs::distribution::Multinomial;
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::MeanN;
+/// use nalgebra::Vector2;
 ///
 /// let n = Multinomial::new(&[0.3, 0.7], 5).unwrap();
-/// assert_eq!(n.mean(), [1.5, 3.5]);
+/// assert_eq!(n.mean(), Vector2::new(1.5, 3.5));
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Multinomial {

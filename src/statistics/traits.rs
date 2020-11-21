@@ -35,7 +35,7 @@ pub trait Max<T> {
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
-    /// assert_eq!(Some(1.0), n.max());
+    /// assert_eq!(1.0, n.max());
     /// ```
     fn max(&self) -> T;
 }
@@ -70,11 +70,11 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::Mean;
+    /// use statrs::statistics::ExtDistribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
-    /// assert_eq!(Some(0.5), n.mean());
+    /// assert_eq!(0.5, n.mean().unwrap());
     /// ```
     fn mean(&self) -> Option<T> {
         None
@@ -84,11 +84,11 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::Variance;
+    /// use statrs::statistics::ExtDistribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
-    /// assert_eq!(Some(1.0 / 12.0), n.variance());
+    /// assert_eq!(1.0 / 12.0, n.variance().unwrap());
     /// ```
     fn variance(&self) -> Option<T> {
         None
@@ -98,11 +98,11 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::Variance;
+    /// use statrs::statistics::ExtDistribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
-    /// assert_eq!(Some((1f64 / 12f64).sqrt()), n.std_dev());
+    /// assert_eq!((1f64 / 12f64).sqrt(), n.std_dev().unwrap());
     /// ```
     fn std_dev(&self) -> Option<T> {
         self.variance().map(|var| var.sqrt())
@@ -112,11 +112,11 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::Entropy;
+    /// use statrs::statistics::ExtDistribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
-    /// assert_eq!(0.0, n.entropy());
+    /// assert_eq!(0.0, n.entropy().unwrap());
     /// ```
     fn entropy(&self) -> Option<T> {
         None
@@ -126,11 +126,11 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::Skewness;
+    /// use statrs::statistics::ExtDistribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
-    /// assert_eq!(0.0, n.skewness());
+    /// assert_eq!(0.0, n.skewness().unwrap());
     /// ```
     fn skewness(&self) -> Option<T> {
         None

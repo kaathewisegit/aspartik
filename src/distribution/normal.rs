@@ -13,10 +13,10 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Normal, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::ExtDistribution;
 ///
 /// let n = Normal::new(0.0, 1.0).unwrap();
-/// assert_eq!(n.mean(), 0.0);
+/// assert_eq!(n.mean().unwrap(), 0.0);
 /// assert_eq!(n.pdf(1.0), 0.2419707245191433497978);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -55,8 +55,8 @@ impl Normal {
 }
 
 impl Distribution<f64> for Normal {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        sample_unchecked(r, self.mean, self.std_dev)
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        sample_unchecked(rng, self.mean, self.std_dev)
     }
 }
 
@@ -278,8 +278,8 @@ pub fn ln_pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
 }
 
 /// draws a sample from a normal distribution using the Box-Muller algorithm
-pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, mean: f64, std_dev: f64) -> f64 {
-    mean + std_dev * ziggurat::sample_std_normal(r)
+pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, mean: f64, std_dev: f64) -> f64 {
+    mean + std_dev * ziggurat::sample_std_normal(rng)
 }
 
 #[rustfmt::skip]
@@ -298,8 +298,8 @@ mod tests {
 
     fn create_case(mean: f64, std_dev: f64) {
         let n = try_create(mean, std_dev);
-        assert_eq!(mean, n.mean());
-        assert_eq!(std_dev, n.std_dev());
+        assert_eq!(mean, n.mean().unwrap());
+        assert_eq!(std_dev, n.std_dev().unwrap());
     }
 
     fn bad_create_case(mean: f64, std_dev: f64) {
