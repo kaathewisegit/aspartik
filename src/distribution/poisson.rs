@@ -290,11 +290,10 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, lambda: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
-    use std::f64;
-    use std::u64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Discrete, Poisson};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(lambda: f64) -> Poisson {
         let n = Poisson::new(lambda);

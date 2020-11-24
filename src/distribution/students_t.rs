@@ -364,11 +364,11 @@ impl Continuous<f64, f64> for StudentsT {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use std::panic;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, StudentsT};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(location: f64, scale: f64, freedom: f64) -> StudentsT {
         let n = StudentsT::new(location, scale, freedom);

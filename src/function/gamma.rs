@@ -386,7 +386,7 @@ pub fn digamma(x: f64) -> f64 {
         result += z.ln() - 0.5 * r;
         r *= r;
 
-        result -= r * (s3 - (r * (s4 - (r * (s5 - (r * (s6 - (r * s7))))))));
+        result -= r * (s3 - r * (s4 - r * (s5 - r * (s6 - r * s7))));
     }
     result
 }

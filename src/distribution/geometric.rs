@@ -247,10 +247,10 @@ impl Discrete<u64, f64> for Geometric {
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
-    use std::{u64, f64};
     use crate::statistics::*;
     use crate::distribution::{Univariate, Discrete, Geometric};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(p: f64) -> Geometric {
         let n = Geometric::new(p);

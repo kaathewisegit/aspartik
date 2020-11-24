@@ -306,10 +306,10 @@ impl Continuous<f64, f64> for Pareto {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Pareto};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(scale: f64, shape: f64) -> Pareto {
         let p = Pareto::new(scale, shape);

@@ -330,11 +330,11 @@ impl Discrete<u64, f64> for Hypergeometric {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use std::fmt::Debug;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Discrete, Hypergeometric};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(population: u64, successes: u64, draws: u64) -> Hypergeometric {
         let n = Hypergeometric::new(population, successes, draws);

@@ -288,6 +288,7 @@ impl<'a> CheckedDiscrete<&'a [u64], f64> for Multinomial {
 mod tests {
     use crate::statistics::*;
     use crate::distribution::{CheckedDiscrete, Discrete, Multinomial};
+    use crate::consts::ACC;
 
     fn try_create(p: &[f64], n: u64) -> Multinomial {
         let dist = Multinomial::new(p, n);

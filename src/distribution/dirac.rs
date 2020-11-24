@@ -218,9 +218,9 @@ impl Continuous<f64, f64> for Dirac {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Dirac};
+    use crate::consts::ACC;
 
     fn try_create(v: f64) -> Dirac {
         let d = Dirac::new(v);

@@ -323,10 +323,10 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, shape: f64, rate: f64) -> 
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Gamma};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(shape: f64, rate: f64) -> Gamma {
         let n = Gamma::new(shape, rate);

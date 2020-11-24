@@ -403,7 +403,7 @@ mod tests {
     use crate::distribution::internal::*;
     use crate::distribution::{Beta, Continuous, Univariate};
     use crate::statistics::*;
-    use std::f64;
+    use crate::consts::ACC;
 
     fn try_create(shape_a: f64, shape_b: f64) -> Beta {
         let n = Beta::new(shape_a, shape_b);

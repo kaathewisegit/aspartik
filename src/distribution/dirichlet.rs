@@ -430,10 +430,10 @@ fn test_is_valid_alpha() {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::function::gamma;
     use crate::statistics::*;
     use crate::distribution::{CheckedContinuous, Continuous, Dirichlet};
+    use crate::consts::ACC;
 
     fn try_create(alpha: &[f64]) -> Dirichlet {
         let n = Dirichlet::new(alpha);

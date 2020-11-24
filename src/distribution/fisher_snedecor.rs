@@ -330,10 +330,10 @@ impl Continuous<f64, f64> for FisherSnedecor {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, FisherSnedecor};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(freedom_1: f64, freedom_2: f64) -> FisherSnedecor {
         let n = FisherSnedecor::new(freedom_1, freedom_2);

@@ -240,10 +240,10 @@ impl Continuous<f64, f64> for LogNormal {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, LogNormal};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(mean: f64, std_dev: f64) -> LogNormal {
         let n = LogNormal::new(mean, std_dev);

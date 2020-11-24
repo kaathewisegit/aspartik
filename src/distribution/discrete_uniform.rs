@@ -232,9 +232,9 @@ impl Discrete<i64, f64> for DiscreteUniform {
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Discrete, DiscreteUniform};
+    use crate::consts::ACC;
 
     fn try_create(min: i64, max: i64) -> DiscreteUniform {
         let n = DiscreteUniform::new(min, max);

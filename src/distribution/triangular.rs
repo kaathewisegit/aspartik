@@ -281,10 +281,10 @@ fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, min: f64, max: f64, mode: f64)
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Triangular};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(min: f64, max: f64, mode: f64) -> Triangular {
         let n = Triangular::new(min, max, mode);

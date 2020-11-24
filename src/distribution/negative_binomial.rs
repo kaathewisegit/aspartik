@@ -239,10 +239,9 @@ impl Discrete<u64, f64> for NegativeBinomial {
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Discrete, NegativeBinomial};
-    // use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(r: f64, p: f64) -> NegativeBinomial {
         let r = NegativeBinomial::new(r, p);

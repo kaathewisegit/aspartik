@@ -213,10 +213,10 @@ impl Continuous<f64, f64> for Cauchy {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Cauchy};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(location: f64, scale: f64) -> Cauchy {
         let n = Cauchy::new(location, scale);

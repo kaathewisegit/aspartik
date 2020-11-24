@@ -283,10 +283,10 @@ impl Continuous<f64, f64> for InverseGamma {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, InverseGamma};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(shape: f64, rate: f64) -> InverseGamma {
         let n = InverseGamma::new(shape, rate);

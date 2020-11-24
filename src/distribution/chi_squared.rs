@@ -268,10 +268,10 @@ impl Continuous<f64, f64> for ChiSquared {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::Median;
     use crate::distribution::ChiSquared;
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(freedom: f64) -> ChiSquared {
         let n = ChiSquared::new(freedom);

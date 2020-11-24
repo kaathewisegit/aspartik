@@ -283,10 +283,11 @@ impl Continuous<f64, f64> for Chi {
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
+    use std::f64;
     use crate::distribution::internal::*;
     use crate::distribution::{Chi, Continuous, Univariate};
     use crate::statistics::*;
-    use std::f64;
+    use crate::consts::ACC;
 
     fn try_create(freedom: f64) -> Chi {
         let n = Chi::new(freedom);

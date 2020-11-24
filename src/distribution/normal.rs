@@ -285,10 +285,10 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, mean: f64, std_dev: f64) -
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Normal, InverseCDF, CheckedInverseCDF};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(mean: f64, std_dev: f64) -> Normal {
         let n = Normal::new(mean, std_dev);

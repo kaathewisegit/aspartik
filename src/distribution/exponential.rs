@@ -244,6 +244,7 @@ mod tests {
     use crate::statistics::*;
     use crate::distribution::{Univariate, Continuous, Exp};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(rate: f64) -> Exp {
         let n = Exp::new(rate);
