@@ -206,17 +206,17 @@ impl ExtDistribution<f64> for StudentsT {
     ///
     /// # None
     ///
-    /// If `freedom <= 1.0`
+    /// If `freedom <= 2.0`
     ///
     /// # Formula
     ///
     /// ```ignore
     /// if v == INF {
-    ///     σ^2
+    ///     Some(σ^2)
     /// } else if freedom > 2.0 {
-    ///     v * σ^2 / (v - 2)
+    ///     Some(v * σ^2 / (v - 2))
     /// } else {
-    ///     INF
+    ///     None
     /// }
     /// ```
     ///
@@ -232,28 +232,24 @@ impl ExtDistribution<f64> for StudentsT {
     }
     /// Returns the entropy for the student's t-distribution
     ///
-    /// # None
-    ///
-    /// If `location != 0.0 && scale != 1.0`
-    ///
     /// # Formula
     ///
     /// ```ignore
-    /// (v + 1) / 2 * (ψ((v + 1) / 2) - ψ(v / 2)) + ln(sqrt(v) * B(v / 2, 1 /
+    /// - ln(σ) + (v + 1) / 2 * (ψ((v + 1) / 2) - ψ(v / 2)) + ln(sqrt(v) * B(v / 2, 1 /
     /// 2))
     /// ```
     ///
-    /// where `v` is the freedom, `ψ` is the digamma function, and `B` is the
+    /// where `σ` is the scale, `v` is the freedom, `ψ` is the digamma function, and `B` is the
     /// beta function
     fn entropy(&self) -> Option<f64> {
-        if !is_zero(self.location) || !ulps_eq!(self.scale, 1.0) {
-            None
-        } else {
-            let result = (self.freedom + 1.0) / 2.0
-                * (gamma::digamma((self.freedom + 1.0) / 2.0) - gamma::digamma(self.freedom / 2.0))
-                + (self.freedom.sqrt() * beta::beta(self.freedom / 2.0, 0.5)).ln();
-            Some(result)
-        }
+        // generalised Student's T is related to normal Student's T by `Y = μ + σ X`
+        // where `X` is distributed as Student's T, plugging into the definition
+        // of entropy shows scaling affects the entropy by an additive constant `- ln σ`
+        let shift = -self.scale.ln();
+        let result = (self.freedom + 1.0) / 2.0
+            * (gamma::digamma((self.freedom + 1.0) / 2.0) - gamma::digamma(self.freedom / 2.0))
+            + (self.freedom.sqrt() * beta::beta(self.freedom / 2.0, 0.5)).ln();
+        Some(result + shift)
     }
     /// Returns the skewness of the student's t-distribution
     ///
@@ -483,21 +479,6 @@ mod tests {
     fn test_variance_freedom_lte1() {
         let variance = |x: StudentsT| x.variance().unwrap();
         get_value(1.0, 1.0, 0.5, variance);
-    }
-
-    // TODO: valid entropy tests
-    #[test]
-    #[should_panic]
-    fn test_entropy_location_not_0() {
-        let entropy = |x: StudentsT| x.entropy().unwrap();
-        get_value(1.0, 1.0, 0.5, entropy);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_entropy_scale_not_1() {
-        let entropy = |x: StudentsT| x.entropy().unwrap();
-        get_value(0.0, 0.5, 0.5, entropy);
     }
 
     // TODO: valid skewness tests
