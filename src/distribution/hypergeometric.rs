@@ -396,158 +396,134 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_case(1, 1, 1, 1.0, |x| x.mean());
-        test_case(2, 1, 1, 0.5, |x| x.mean());
-        test_case(2, 2, 2, 2.0, |x| x.mean());
-        test_case(10, 1, 1, 0.1, |x| x.mean());
-        test_case(10, 5, 3, 15.0 / 10.0, |x| x.mean());
+        let mean = |x: Hypergeometric| x.mean().unwrap();
+        test_case(1, 1, 1, 1.0, mean);
+        test_case(2, 1, 1, 0.5, mean);
+        test_case(2, 2, 2, 2.0, mean);
+        test_case(10, 1, 1, 0.1, mean);
+        test_case(10, 5, 3, 15.0 / 10.0, mean);
     }
 
     #[test]
     #[should_panic]
     fn test_mean_with_population_0() {
-        get_value(0, 0, 0, |x| x.mean());
-    }
-
-    #[test]
-    fn test_checked_mean_with_population_0() {
-        let n = try_create(0, 0, 0);
-        assert!(n.checked_mean().is_err());
+        let mean = |x: Hypergeometric| x.mean().unwrap();
+        get_value(0, 0, 0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(2, 1, 1, 0.25, |x| x.variance());
-        test_case(2, 2, 2, 0.0, |x| x.variance());
-        test_case(10, 1, 1, 81.0 / 900.0, |x| x.variance());
-        test_case(10, 5, 3, 525.0 / 900.0, |x| x.variance());
+        let variance = |x: Hypergeometric| x.variance().unwrap();
+        test_case(2, 1, 1, 0.25, variance);
+        test_case(2, 2, 2, 0.0, variance);
+        test_case(10, 1, 1, 81.0 / 900.0, variance);
+        test_case(10, 5, 3, 525.0 / 900.0, variance);
     }
 
     #[test]
     #[should_panic]
     fn test_variance_with_pop_lte_1() {
-        get_value(1, 1, 1, |x| x.variance());
-    }
-
-    #[test]
-    fn test_checked_variance_with_pop_lte_1() {
-        let n = try_create(1, 1, 1);
-        assert!(n.checked_variance().is_err());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(2, 1, 1, 0.25f64.sqrt(), |x| x.std_dev());
-        test_case(2, 2, 2, 0.0, |x| x.std_dev());
-        test_case(10, 1, 1, (81f64 / 900.0).sqrt(), |x| x.std_dev());
-        test_case(10, 5, 3, (525f64 / 900.0).sqrt(), |x| x.std_dev());
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_std_dev_with_pop_lte_1() {
-        get_value(1, 1, 1, |x| x.std_dev());
-    }
-
-    #[test]
-    fn test_checked_std_dev_with_pop_lte_1() {
-        let n = try_create(1, 1, 1);
-        assert!(n.checked_std_dev().is_err());
+        let variance = |x: Hypergeometric| x.variance().unwrap();
+        get_value(1, 1, 1, variance);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(10, 1, 1, 8.0 / 3.0, |x| x.skewness());
-        test_case(10, 5, 3, 0.0, |x| x.skewness());
+        let skewness = |x: Hypergeometric| x.skewness().unwrap();
+        test_case(10, 1, 1, 8.0 / 3.0, skewness);
+        test_case(10, 5, 3, 0.0, skewness);
     }
 
     #[test]
     #[should_panic]
     fn test_skewness_with_pop_lte_2() {
-        get_value(2, 2, 2, |x| x.skewness());
-    }
-
-    #[test]
-    fn test_checked_skewness_with_pop_lte_2() {
-        let n = try_create(2, 2, 2);
-        assert!(n.checked_skewness().is_err());
+        let skewness = |x: Hypergeometric| x.skewness().unwrap();
+        get_value(2, 2, 2, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0, 0, 0, 0, |x| x.mode());
-        test_case(1, 1, 1, 1, |x| x.mode());
-        test_case(2, 1, 1, 1, |x| x.mode());
-        test_case(2, 2, 2, 2, |x| x.mode());
-        test_case(10, 1, 1, 0, |x| x.mode());
-        test_case(10, 5, 3, 2, |x| x.mode());
+        let mode = |x: Hypergeometric| x.mode().unwrap();
+        test_case(0, 0, 0, 0, mode);
+        test_case(1, 1, 1, 1, mode);
+        test_case(2, 1, 1, 1, mode);
+        test_case(2, 2, 2, 2, mode);
+        test_case(10, 1, 1, 0, mode);
+        test_case(10, 5, 3, 2, mode);
     }
 
     #[test]
     fn test_min() {
-        test_case(0, 0, 0, 0, |x| x.min());
-        test_case(1, 1, 1, 1, |x| x.min());
-        test_case(2, 1, 1, 0, |x| x.min());
-        test_case(2, 2, 2, 2, |x| x.min());
-        test_case(10, 1, 1, 0, |x| x.min());
-        test_case(10, 5, 3, 0, |x| x.min());
+        let min = |x: Hypergeometric| x.min();
+        test_case(0, 0, 0, 0, min);
+        test_case(1, 1, 1, 1, min);
+        test_case(2, 1, 1, 0, min);
+        test_case(2, 2, 2, 2, min);
+        test_case(10, 1, 1, 0, min);
+        test_case(10, 5, 3, 0, min);
     }
 
     #[test]
     fn test_max() {
-        test_case(0, 0, 0, 0, |x| x.max());
-        test_case(1, 1, 1, 1, |x| x.max());
-        test_case(2, 1, 1, 1, |x| x.max());
-        test_case(2, 2, 2, 2, |x| x.max());
-        test_case(10, 1, 1, 1, |x| x.max());
-        test_case(10, 5, 3, 3, |x| x.max());
+        let max = |x: Hypergeometric| x.max();
+        test_case(0, 0, 0, 0, max);
+        test_case(1, 1, 1, 1, max);
+        test_case(2, 1, 1, 1, max);
+        test_case(2, 2, 2, 2, max);
+        test_case(10, 1, 1, 1, max);
+        test_case(10, 5, 3, 3, max);
     }
 
     #[test]
     fn test_pmf() {
-        test_case(0, 0, 0, 1.0, |x| x.pmf(0));
-        test_case(1, 1, 1, 1.0, |x| x.pmf(1));
-        test_case(2, 1, 1, 0.5, |x| x.pmf(0));
-        test_case(2, 1, 1, 0.5, |x| x.pmf(1));
-        test_case(2, 2, 2, 1.0, |x| x.pmf(2));
-        test_case(10, 1, 1, 0.9, |x| x.pmf(0));
-        test_case(10, 1, 1, 0.1, |x| x.pmf(1));
-        test_case(10, 5, 3, 0.41666666666666666667, |x| x.pmf(1));
-        test_case(10, 5, 3, 0.083333333333333333333, |x| x.pmf(3));
+        let pmf = |arg: u64| move |x: Hypergeometric| x.pmf(arg);
+        test_case(0, 0, 0, 1.0, pmf(0));
+        test_case(1, 1, 1, 1.0, pmf(1));
+        test_case(2, 1, 1, 0.5, pmf(0));
+        test_case(2, 1, 1, 0.5, pmf(1));
+        test_case(2, 2, 2, 1.0, pmf(2));
+        test_case(10, 1, 1, 0.9, pmf(0));
+        test_case(10, 1, 1, 0.1, pmf(1));
+        test_case(10, 5, 3, 0.41666666666666666667, pmf(1));
+        test_case(10, 5, 3, 0.083333333333333333333, pmf(3));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_case(0, 0, 0, 0.0, |x| x.ln_pmf(0));
-        test_case(1, 1, 1, 0.0, |x| x.ln_pmf(1));
-        test_case(2, 1, 1, -0.6931471805599453094172, |x| x.ln_pmf(0));
-        test_case(2, 1, 1, -0.6931471805599453094172, |x| x.ln_pmf(1));
-        test_case(2, 2, 2, 0.0, |x| x.ln_pmf(2));
-        test_almost(10, 1, 1, -0.1053605156578263012275, 1e-14, |x| x.ln_pmf(0));
-        test_almost(10, 1, 1, -2.302585092994045684018, 1e-14, |x| x.ln_pmf(1));
-        test_almost(10, 5, 3, -0.875468737353899935621, 1e-14, |x| x.ln_pmf(1));
-        test_almost(10, 5, 3, -2.484906649788000310234, 1e-14, |x| x.ln_pmf(3));
+        let ln_pmf = |arg: u64| move |x: Hypergeometric| x.ln_pmf(arg);
+        test_case(0, 0, 0, 0.0, ln_pmf(0));
+        test_case(1, 1, 1, 0.0, ln_pmf(1));
+        test_case(2, 1, 1, -0.6931471805599453094172, ln_pmf(0));
+        test_case(2, 1, 1, -0.6931471805599453094172, ln_pmf(1));
+        test_case(2, 2, 2, 0.0, ln_pmf(2));
+        test_almost(10, 1, 1, -0.1053605156578263012275, 1e-14, ln_pmf(0));
+        test_almost(10, 1, 1, -2.302585092994045684018, 1e-14, ln_pmf(1));
+        test_almost(10, 5, 3, -0.875468737353899935621, 1e-14, ln_pmf(1));
+        test_almost(10, 5, 3, -2.484906649788000310234, 1e-14, ln_pmf(3));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(2, 1, 1, 0.5, |x| x.cdf(0.3));
-        test_almost(10, 1, 1, 0.9, 1e-14, |x| x.cdf(0.3));
-        test_almost(10, 5, 3, 0.5, 1e-15, |x| x.cdf(1.1));
-        test_almost(10, 5, 3, 11.0 / 12.0, 1e-14, |x| x.cdf(2.0));
-        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, |x| x.cdf(0.0));
-        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, |x| x.cdf(0.5));
-        test_almost(10000, 2, 9800, 19799.0 / 499950.0, 1e-12, |x| x.cdf(1.5));
+        let cdf = |arg: f64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(2, 1, 1, 0.5, cdf(0.3));
+        test_almost(10, 1, 1, 0.9, 1e-14, cdf(0.3));
+        test_almost(10, 5, 3, 0.5, 1e-15, cdf(1.1));
+        test_almost(10, 5, 3, 11.0 / 12.0, 1e-14, cdf(2.0));
+        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, cdf(0.0));
+        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, cdf(0.5));
+        test_almost(10000, 2, 9800, 19799.0 / 499950.0, 1e-12, cdf(1.5));
     }
 
     #[test]
     fn test_cdf_arg_too_big() {
-        test_case(0, 0, 0, 1.0, |x| x.cdf(0.5));
+        let cdf = |arg: f64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(0, 0, 0, 1.0, cdf(0.5));
     }
 
     #[test]
     fn test_cdf_arg_too_small() {
-        test_case(2, 2, 2, 0.0, |x| x.cdf(0.0));
+        let cdf = |arg: f64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(2, 2, 2, 0.0, cdf(0.0));
     }
 
     #[test]

@@ -351,117 +351,94 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_almost(1.1, 0.1, 1.0, 1e-14, |x| x.mean());
-        test_almost(1.1, 1.0, 10.0, 1e-14, |x| x.mean());
+        let mean = |x: InverseGamma| x.mean().unwrap();
+        test_almost(1.1, 0.1, 1.0, 1e-14, mean);
+        test_almost(1.1, 1.0, 10.0, 1e-14, mean);
     }
 
     #[test]
     #[should_panic]
     fn test_mean_with_shape_lte_1() {
-        get_value(0.1, 0.1, |x| x.mean());
-    }
-
-    #[test]
-    fn test_checked_mean_with_shape_lte_1() {
-        let n = try_create(0.1, 0.1);
-        assert!(n.checked_mean().is_err());
+        let mean = |x: InverseGamma| x.mean().unwrap();
+        get_value(0.1, 0.1, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_almost(2.1, 0.1, 0.08264462809917355371901, 1e-15, |x| x.variance());
-        test_almost(2.1, 1.0, 8.264462809917355371901, 1e-13, |x| x.variance());
+        let variance = |x: InverseGamma| x.variance().unwrap();
+        test_almost(2.1, 0.1, 0.08264462809917355371901, 1e-15, variance);
+        test_almost(2.1, 1.0, 8.264462809917355371901, 1e-13, variance);
     }
 
     #[test]
     #[should_panic]
     fn test_variance_with_shape_lte_2() {
-        get_value(0.1, 0.1, |x| x.variance());
-    }
-
-    #[test]
-    fn test_checked_variance_with_shape_lte_2() {
-        let n = try_create(0.1, 0.1);
-        assert!(n.checked_variance().is_err());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_almost(2.1, 0.1, 0.2874797872880344847272, 1e-15, |x| x.std_dev());
-        test_almost(2.1, 1.0, 2.874797872880344847272, 1e-14, |x| x.std_dev());
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_std_dev_with_shape_lte_2() {
-        get_value(0.1, 0.1, |x| x.std_dev());
-    }
-
-    #[test]
-    fn test_checked_std_dev_with_shape_lte_2() {
-        let n = try_create(0.1, 0.1);
-        assert!(n.checked_std_dev().is_err());
+        let variance = |x: InverseGamma| x.variance().unwrap();
+        get_value(0.1, 0.1, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(0.1, 0.1, 11.51625799319234475054, 1e-14, |x| x.entropy());
-        test_almost(1.0, 1.0, 2.154431329803065721213, 1e-14, |x| x.entropy());
+        let entropy = |x: InverseGamma| x.entropy().unwrap();
+        test_almost(0.1, 0.1, 11.51625799319234475054, 1e-14, entropy);
+        test_almost(1.0, 1.0, 2.154431329803065721213, 1e-14, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_almost(3.1, 0.1, 41.95235392680606187966, 1e-13, |x| x.skewness());
-        test_almost(3.1, 1.0, 41.95235392680606187966, 1e-13, |x| x.skewness());
-        test_case(5.0, 0.1, 3.464101615137754587055, |x| x.skewness());
+        let skewness = |x: InverseGamma| x.skewness().unwrap();
+        test_almost(3.1, 0.1, 41.95235392680606187966, 1e-13, skewness);
+        test_almost(3.1, 1.0, 41.95235392680606187966, 1e-13, skewness);
+        test_case(5.0, 0.1, 3.464101615137754587055, skewness);
     }
 
     #[test]
     #[should_panic]
     fn test_skewness_with_shape_lte_3() {
-        get_value(0.1, 0.1, |x| x.skewness());
-    }
-
-    #[test]
-    fn test_checked_skewness_with_shape_lte_3() {
-        let n = try_create(0.1, 0.1);
-        assert!(n.checked_skewness().is_err());
+        let skewness = |x: InverseGamma| x.skewness().unwrap();
+        get_value(0.1, 0.1, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0.1, 0.1, 0.09090909090909090909091, |x| x.mode());
-        test_case(1.0, 1.0, 0.5, |x| x.mode());
+        let mode = |x: InverseGamma| x.mode().unwrap();
+        test_case(0.1, 0.1, 0.09090909090909090909091, mode);
+        test_case(1.0, 1.0, 0.5, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(1.0, 1.0, 0.0, |x| x.min());
-        test_case(1.0, 1.0, f64::INFINITY, |x| x.max());
+        let min = |x: InverseGamma| x.min();
+        let max = |x: InverseGamma| x.max();
+        test_case(1.0, 1.0, 0.0, min);
+        test_case(1.0, 1.0, f64::INFINITY, max);
     }
 
     #[test]
     fn test_pdf() {
-        test_almost(0.1, 0.1, 0.0628591853882328004197, 1e-15, |x| x.pdf(1.2));
-        test_almost(0.1, 1.0, 0.0297426109178248997426, 1e-15, |x| x.pdf(2.0));
-        test_case(1.0, 0.1, 0.04157808822362745501024, |x| x.pdf(1.5));
-        test_case(1.0, 1.0, 0.3018043114632487660842, |x| x.pdf(1.2));
+        let pdf = |arg: f64| move |x: InverseGamma| x.pdf(arg);
+        test_almost(0.1, 0.1, 0.0628591853882328004197, 1e-15, pdf(1.2));
+        test_almost(0.1, 1.0, 0.0297426109178248997426, 1e-15, pdf(2.0));
+        test_case(1.0, 0.1, 0.04157808822362745501024, pdf(1.5));
+        test_case(1.0, 1.0, 0.3018043114632487660842, pdf(1.2));
     }
 
     #[test]
     fn test_ln_pdf() {
-        test_almost(0.1, 0.1, 0.0628591853882328004197f64.ln(), 1e-15, |x| x.ln_pdf(1.2));
-        test_almost(0.1, 1.0, 0.0297426109178248997426f64.ln(), 1e-15, |x| x.ln_pdf(2.0));
-        test_case(1.0, 0.1, 0.04157808822362745501024f64.ln(), |x| x.ln_pdf(1.5));
-        test_case(1.0, 1.0, 0.3018043114632487660842f64.ln(), |x| x.ln_pdf(1.2));
+        let ln_pdf = |arg: f64| move |x: InverseGamma| x.ln_pdf(arg);
+        test_almost(0.1, 0.1, 0.0628591853882328004197f64.ln(), 1e-15, ln_pdf(1.2));
+        test_almost(0.1, 1.0, 0.0297426109178248997426f64.ln(), 1e-15, ln_pdf(2.0));
+        test_case(1.0, 0.1, 0.04157808822362745501024f64.ln(), ln_pdf(1.5));
+        test_case(1.0, 1.0, 0.3018043114632487660842f64.ln(), ln_pdf(1.2));
     }
 
     #[test]
     fn test_cdf() {
-        test_almost(0.1, 0.1, 0.1862151961946054271994, 1e-14, |x| x.cdf(1.2));
-        test_almost(0.1, 1.0, 0.05859755410986647796141, 1e-14, |x| x.cdf(2.0));
-        test_case(1.0, 0.1, 0.9355069850316177377304, |x| x.cdf(1.5));
-        test_almost(1.0, 1.0, 0.4345982085070782231613, 1e-14, |x| x.cdf(1.2));
+        let cdf = |arg: f64| move |x: InverseGamma| x.cdf(arg);
+        test_almost(0.1, 0.1, 0.1862151961946054271994, 1e-14, cdf(1.2));
+        test_almost(0.1, 1.0, 0.05859755410986647796141, 1e-14, cdf(2.0));
+        test_case(1.0, 0.1, 0.9355069850316177377304, cdf(1.5));
+        test_almost(1.0, 1.0, 0.4345982085070782231613, 1e-14, cdf(1.2));
     }
 
     #[test]

@@ -394,70 +394,78 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_case(1.0, 0.1, 10.0, |x| x.mean());
-        test_case(1.0, 1.0, 1.0, |x| x.mean());
-        test_case(10.0, 10.0, 1.0, |x| x.mean());
-        test_case(10.0, 1.0, 10.0, |x| x.mean());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.mean());
+        let mean = |x: Gamma| x.mean().unwrap();
+        test_case(1.0, 0.1, 10.0, mean);
+        test_case(1.0, 1.0, 1.0, mean);
+        test_case(10.0, 10.0, 1.0, mean);
+        test_case(10.0, 1.0, 10.0, mean);
+        test_case(10.0, f64::INFINITY, 0.0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_almost(1.0, 0.1, 100.0, 1e-13, |x| x.variance());
-        test_case(1.0, 1.0, 1.0, |x| x.variance());
-        test_case(10.0, 10.0, 0.1, |x| x.variance());
-        test_case(10.0, 1.0, 10.0, |x| x.variance());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.variance());
+        let variance = |x: Gamma| x.variance().unwrap();
+        test_almost(1.0, 0.1, 100.0, 1e-13, variance);
+        test_case(1.0, 1.0, 1.0, variance);
+        test_case(10.0, 10.0, 0.1, variance);
+        test_case(10.0, 1.0, 10.0, variance);
+        test_case(10.0, f64::INFINITY, 0.0, variance);
     }
 
     #[test]
     fn test_std_dev() {
-        test_case(1.0, 0.1, 10.0, |x| x.std_dev());
-        test_case(1.0, 1.0, 1.0, |x| x.std_dev());
-        test_case(10.0, 10.0, 0.31622776601683794197697302588502426416723164097476643, |x| x.std_dev());
-        test_case(10.0, 1.0, 3.1622776601683793319988935444327185337195551393252168, |x| x.std_dev());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.std_dev());
+        let std_dev = |x: Gamma| x.std_dev().unwrap();
+        test_case(1.0, 0.1, 10.0, std_dev);
+        test_case(1.0, 1.0, 1.0, std_dev);
+        test_case(10.0, 10.0, 0.31622776601683794197697302588502426416723164097476643, std_dev);
+        test_case(10.0, 1.0, 3.1622776601683793319988935444327185337195551393252168, std_dev);
+        test_case(10.0, f64::INFINITY, 0.0, std_dev);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(1.0, 0.1, 3.3025850929940456285068402234265387271634735938763824, 1e-15, |x| x.entropy());
-        test_almost(1.0, 1.0, 1.0, 1e-15, |x| x.entropy());
-        test_almost(10.0, 10.0, 0.23346908548693395836262094490967812177376750477943892, 1e-13, |x| x.entropy());
-        test_almost(10.0, 1.0, 2.5360541784809796423806123995940423293748689934081866, 1e-13, |x| x.entropy());
-        test_case(10.0, f64::INFINITY, f64::NEG_INFINITY, |x| x.entropy());
+        let entropy = |x: Gamma| x.entropy().unwrap();
+        test_almost(1.0, 0.1, 3.3025850929940456285068402234265387271634735938763824, 1e-15, entropy);
+        test_almost(1.0, 1.0, 1.0, 1e-15, entropy);
+        test_almost(10.0, 10.0, 0.23346908548693395836262094490967812177376750477943892, 1e-13, entropy);
+        test_almost(10.0, 1.0, 2.5360541784809796423806123995940423293748689934081866, 1e-13, entropy);
+        test_case(10.0, f64::INFINITY, f64::NEG_INFINITY, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(1.0, 0.1, 2.0, |x| x.skewness());
-        test_case(1.0, 1.0, 2.0, |x| x.skewness());
-        test_case(10.0, 10.0, 0.63245553203367586639977870888654370674391102786504337, |x| x.skewness());
-        test_case(10.0, 1.0, 0.63245553203367586639977870888654370674391102786504337, |x| x.skewness());
-        test_case(10.0, f64::INFINITY, 0.63245553203367586639977870888654370674391102786504337, |x| x.skewness());
+        let skewness = |x: Gamma| x.skewness().unwrap();
+        test_case(1.0, 0.1, 2.0, skewness);
+        test_case(1.0, 1.0, 2.0, skewness);
+        test_case(10.0, 10.0, 0.63245553203367586639977870888654370674391102786504337, skewness);
+        test_case(10.0, 1.0, 0.63245553203367586639977870888654370674391102786504337, skewness);
+        test_case(10.0, f64::INFINITY, 0.63245553203367586639977870888654370674391102786504337, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(1.0, 0.1, 0.0, |x| x.mode());
-        test_case(1.0, 1.0, 0.0, |x| x.mode());
-        test_case(10.0, 10.0, 0.9, |x| x.mode());
-        test_case(10.0, 1.0, 9.0, |x| x.mode());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.mode());
+        let mode = |x: Gamma| x.mode().unwrap();
+        test_case(1.0, 0.1, 0.0, mode);
+        test_case(1.0, 1.0, 0.0, mode);
+        test_case(10.0, 10.0, 0.9, mode);
+        test_case(10.0, 1.0, 9.0, mode);
+        test_case(10.0, f64::INFINITY, 0.0, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(1.0, 0.1, 0.0, |x| x.min());
-        test_case(1.0, 1.0, 0.0, |x| x.min());
-        test_case(10.0, 10.0, 0.0, |x| x.min());
-        test_case(10.0, 1.0, 0.0, |x| x.min());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.min());
-        test_case(1.0, 0.1, f64::INFINITY, |x| x.max());
-        test_case(1.0, 1.0, f64::INFINITY, |x| x.max());
-        test_case(10.0, 10.0, f64::INFINITY, |x| x.max());
-        test_case(10.0, 1.0, f64::INFINITY, |x| x.max());
-        test_case(10.0, f64::INFINITY, f64::INFINITY, |x| x.max());
+        let min = |x: Gamma| x.min();
+        let max = |x: Gamma| x.max();
+        test_case(1.0, 0.1, 0.0, min);
+        test_case(1.0, 1.0, 0.0, min);
+        test_case(10.0, 10.0, 0.0, min);
+        test_case(10.0, 1.0, 0.0, min);
+        test_case(10.0, f64::INFINITY, 0.0, min);
+        test_case(1.0, 0.1, f64::INFINITY, max);
+        test_case(1.0, 1.0, f64::INFINITY, max);
+        test_case(10.0, 10.0, f64::INFINITY, max);
+        test_case(10.0, 1.0, f64::INFINITY, max);
+        test_case(10.0, f64::INFINITY, f64::INFINITY, max);
     }
 
     #[test]

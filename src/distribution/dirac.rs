@@ -230,7 +230,7 @@ mod tests {
 
     fn create_case(v: f64) {
         let d = try_create(v);
-        assert_eq!(v, d.mean());
+        assert_eq!(v, d.mean().unwrap());
     }
 
     fn bad_create_case(v: f64) {
@@ -261,71 +261,81 @@ mod tests {
 
     #[test]
     fn test_variance() {
-        test_case(0.0, 0.0, |x| x.variance());
-        test_case(-5.0, 0.0, |x| x.variance());
-        test_case(f64::INFINITY, 0.0, |x| x.variance());
+        let variance = |x: Dirac| x.variance().unwrap();
+        test_case(0.0, 0.0, variance);
+        test_case(-5.0, 0.0, variance);
+        test_case(f64::INFINITY, 0.0, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_case(0.0, 0.0, |x| x.entropy());
-        test_case(f64::INFINITY, 0.0, |x| x.entropy());
+        let entropy = |x: Dirac| x.entropy().unwrap();
+        test_case(0.0, 0.0, entropy);
+        test_case(f64::INFINITY, 0.0, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(0.0, 0.0, |x| x.skewness());
-        test_case(4.0, 0.0, |x| x.skewness());
-        test_case(0.3, 0.0, |x| x.skewness());
-        test_case(f64::INFINITY, 0.0, |x| x.skewness());
+        let skewness = |x: Dirac| x.skewness().unwrap();
+        test_case(0.0, 0.0, skewness);
+        test_case(4.0, 0.0, skewness);
+        test_case(0.3, 0.0, skewness);
+        test_case(f64::INFINITY, 0.0, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0.0, 0.0, |x| x.mode());
-        test_case(3.0, 3.0, |x| x.mode());
-        test_case(f64::INFINITY, f64::INFINITY, |x| x.mode());
+        let mode = |x: Dirac| x.mode().unwrap();
+        test_case(0.0, 0.0, mode);
+        test_case(3.0, 3.0, mode);
+        test_case(f64::INFINITY, f64::INFINITY, mode);
     }
 
     #[test]
     fn test_median() {
-        test_case(0.0, 0.0, |x| x.median());
-        test_case(3.0, 3.0, |x| x.median());
-        test_case(f64::INFINITY, f64::INFINITY, |x| x.median());
+        let median = |x: Dirac| x.median();
+        test_case(0.0, 0.0, median);
+        test_case(3.0, 3.0, median);
+        test_case(f64::INFINITY, f64::INFINITY, median);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(0.0, 0.0, |x| x.min());
-        test_case(3.0, 3.0, |x| x.min());
-        test_case(f64::INFINITY, f64::INFINITY, |x| x.min());
+        let min = |x: Dirac| x.min();
+        let max = |x: Dirac| x.max();
+        test_case(0.0, 0.0, min);
+        test_case(3.0, 3.0, min);
+        test_case(f64::INFINITY, f64::INFINITY, min);
 
-        test_case(0.0, 0.0, |x| x.max());
-        test_case(3.0, 3.0, |x| x.max());
-        test_case(f64::NEG_INFINITY, f64::NEG_INFINITY, |x| x.max());
+        test_case(0.0, 0.0, max);
+        test_case(3.0, 3.0, max);
+        test_case(f64::NEG_INFINITY, f64::NEG_INFINITY, max);
     }
 
     #[test]
     fn test_pdf() {
-        test_case(0.0, 0.0, |x| x.pdf(1.0));
-        test_case(3.0, 1.0, |x| x.pdf(3.0));
-        test_case(f64::NEG_INFINITY, 0.0, |x| x.pdf(1.0));
-        test_case(f64::NEG_INFINITY, 1.0, |x| x.pdf(f64::NEG_INFINITY));
+        let pdf = |arg: f64| move |x: Dirac| x.pdf(arg);
+        test_case(0.0, 0.0, pdf(1.0));
+        test_case(3.0, 1.0, pdf(3.0));
+        test_case(f64::NEG_INFINITY, 0.0, pdf(1.0));
+        test_case(f64::NEG_INFINITY, 1.0, pdf(f64::NEG_INFINITY));
     }
 
     #[test]
     fn test_ln_pdf() {
-        test_case(0.0, 0.0, |x| x.ln_pdf(0.0));
-        test_case(3.0, 0.0, |x| x.ln_pdf(3.0));
-        test_case(f64::INFINITY, f64::NEG_INFINITY, |x| x.ln_pdf(1.0));
-        test_case(f64::INFINITY, 0.0, |x| x.ln_pdf(f64::INFINITY));
+        let ln_pdf = |arg: f64| move |x: Dirac| x.ln_pdf(arg);
+        test_case(0.0, 0.0, ln_pdf(0.0));
+        test_case(3.0, 0.0, ln_pdf(3.0));
+        test_case(f64::INFINITY, f64::NEG_INFINITY, ln_pdf(1.0));
+        test_case(f64::INFINITY, 0.0, ln_pdf(f64::INFINITY));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(0.0, 1.0, |x| x.cdf(0.0));
-        test_case(3.0, 1.0, |x| x.cdf(3.0));
-        test_case(f64::INFINITY, 0.0, |x| x.cdf(1.0));
-        test_case(f64::INFINITY, 1.0, |x| x.cdf(f64::INFINITY));
+        let cdf = |arg: f64| move |x: Dirac| x.cdf(arg);
+        test_case(0.0, 1.0, cdf(0.0));
+        test_case(3.0, 1.0, cdf(3.0));
+        test_case(f64::INFINITY, 0.0, cdf(1.0));
+        test_case(f64::INFINITY, 1.0, cdf(f64::INFINITY));
     }
 }

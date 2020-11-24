@@ -404,127 +404,122 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_case(&[0.0, 0.25, 0.5, 0.25], 2.0, |x| x.mean());
-        test_case(&[0.0, 1.0, 2.0, 1.0], 2.0, |x| x.mean());
-        test_case(&[0.0, 0.5, 0.5], 1.5, |x| x.mean());
-        test_case(&[0.75, 0.25], 0.25, |x| x.mean());
-        test_case(&[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 5.0, |x| x.mean());
+        let mean = |x: Categorical| x.mean().unwrap();
+        test_case(&[0.0, 0.25, 0.5, 0.25], 2.0, mean);
+        test_case(&[0.0, 1.0, 2.0, 1.0], 2.0, mean);
+        test_case(&[0.0, 0.5, 0.5], 1.5, mean);
+        test_case(&[0.75, 0.25], 0.25, mean);
+        test_case(&[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 5.0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(&[0.0, 0.25, 0.5, 0.25], 0.5, |x| x.variance());
-        test_case(&[0.0, 1.0, 2.0, 1.0], 0.5, |x| x.variance());
-        test_case(&[0.0, 0.5, 0.5], 0.25, |x| x.variance());
-        test_case(&[0.75, 0.25], 0.1875, |x| x.variance());
-        test_case(&[1.0, 0.0, 1.0], 1.0, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(&[0.0, 0.25, 0.5, 0.25], 0.70710678118654752440084436210485, |x| x.std_dev());
-        test_case(&[0.0, 1.0, 2.0, 1.0], 0.70710678118654752440084436210485, |x| x.std_dev());
-        test_case(&[0.0, 0.5, 0.5], 0.5, |x| x.std_dev());
-        test_case(&[0.75, 0.25], 0.43301270189221932338186158537647, |x| x.std_dev());
-        test_case(&[1.0, 0.0, 1.0], 1.0, |x| x.std_dev());
+        let variance = |x: Categorical| x.variance().unwrap();
+        test_case(&[0.0, 0.25, 0.5, 0.25], 0.5, variance);
+        test_case(&[0.0, 1.0, 2.0, 1.0], 0.5, variance);
+        test_case(&[0.0, 0.5, 0.5], 0.25, variance);
+        test_case(&[0.75, 0.25], 0.1875, variance);
+        test_case(&[1.0, 0.0, 1.0], 1.0, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_case(&[0.0, 1.0], 0.0, |x| x.entropy());
-        test_almost(&[0.0, 1.0, 1.0], 2f64.ln(), 1e-15, |x| x.entropy());
-        test_almost(&[1.0, 1.0, 1.0], 3f64.ln(), 1e-15, |x| x.entropy());
-        test_almost(&vec![1.0; 100], 100f64.ln(), 1e-14, |x| x.entropy());
-        test_almost(&[0.0, 0.25, 0.5, 0.25], 1.0397207708399179, 1e-15, |x| x.entropy());
+        let entropy = |x: Categorical| x.entropy().unwrap();
+        test_case(&[0.0, 1.0], 0.0, entropy);
+        test_almost(&[0.0, 1.0, 1.0], 2f64.ln(), 1e-15, entropy);
+        test_almost(&[1.0, 1.0, 1.0], 3f64.ln(), 1e-15, entropy);
+        test_almost(&vec![1.0; 100], 100f64.ln(), 1e-14, entropy);
+        test_almost(&[0.0, 0.25, 0.5, 0.25], 1.0397207708399179, 1e-15, entropy);
     }
 
     #[test]
     fn test_median() {
-        test_case(&[0.0, 3.0, 1.0, 1.0], 1.0, |x| x.median());
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, |x| x.median());
+        let median = |x: Categorical| x.median();
+        test_case(&[0.0, 3.0, 1.0, 1.0], 1.0, median);
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, median);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(&[4.0, 2.5, 2.5, 1.0], 0, |x| x.min());
-        test_case(&[4.0, 2.5, 2.5, 1.0], 3, |x| x.max());
+        let min = |x: Categorical| x.min();
+        let max = |x: Categorical| x.max();
+        test_case(&[4.0, 2.5, 2.5, 1.0], 0, min);
+        test_case(&[4.0, 2.5, 2.5, 1.0], 3, max);
     }
 
     #[test]
     fn test_pmf() {
-        test_case(&[0.0, 0.25, 0.5, 0.25], 0.0, |x| x.pmf(0));
-        test_case(&[0.0, 0.25, 0.5, 0.25], 0.25, |x| x.pmf(1));
-        test_case(&[0.0, 0.25, 0.5, 0.25], 0.25, |x| x.pmf(3));
+        let pmf = |arg: u64| move |x: Categorical| x.pmf(arg);
+        test_case(&[0.0, 0.25, 0.5, 0.25], 0.0, pmf(0));
+        test_case(&[0.0, 0.25, 0.5, 0.25], 0.25, pmf(1));
+        test_case(&[0.0, 0.25, 0.5, 0.25], 0.25, pmf(3));
     }
 
     #[test]
     fn test_pmf_x_too_high() {
-        test_case(&[4.0, 2.5, 2.5, 1.0], 0.0, |x| x.pmf(4));
+        let pmf = |arg: u64| move |x: Categorical| x.pmf(arg);
+        test_case(&[4.0, 2.5, 2.5, 1.0], 0.0, pmf(4));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_case(&[0.0, 0.25, 0.5, 0.25], 0f64.ln(), |x| x.ln_pmf(0));
-        test_case(&[0.0, 0.25, 0.5, 0.25], 0.25f64.ln(), |x| x.ln_pmf(1));
-        test_case(&[0.0, 0.25, 0.5, 0.25], 0.25f64.ln(), |x| x.ln_pmf(3));
+        let ln_pmf = |arg: u64| move |x: Categorical| x.ln_pmf(arg);
+        test_case(&[0.0, 0.25, 0.5, 0.25], 0f64.ln(), ln_pmf(0));
+        test_case(&[0.0, 0.25, 0.5, 0.25], 0.25f64.ln(), ln_pmf(1));
+        test_case(&[0.0, 0.25, 0.5, 0.25], 0.25f64.ln(), ln_pmf(3));
     }
 
     #[test]
     fn test_ln_pmf_x_too_high() {
-        test_case(&[4.0, 2.5, 2.5, 1.0], f64::NEG_INFINITY, |x| x.ln_pmf(4));
+        let ln_pmf = |arg: u64| move |x: Categorical| x.ln_pmf(arg);
+        test_case(&[4.0, 2.5, 2.5, 1.0], f64::NEG_INFINITY, ln_pmf(4));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(&[0.0, 3.0, 1.0, 1.0], 3.0 / 5.0, |x| x.cdf(1.5));
-        test_case(&[1.0, 1.0, 1.0, 1.0], 0.25, |x| x.cdf(0.0));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 0.4, |x| x.cdf(0.8));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, |x| x.cdf(3.2));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, |x| x.cdf(4.0));
+        let cdf = |arg: f64| move |x: Categorical| x.cdf(arg);
+        test_case(&[0.0, 3.0, 1.0, 1.0], 3.0 / 5.0, cdf(1.5));
+        test_case(&[1.0, 1.0, 1.0, 1.0], 0.25, cdf(0.0));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 0.4, cdf(0.8));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(3.2));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4.0));
     }
 
     #[test]
     fn test_cdf_input_low() {
-        test_case(&[4.0, 2.5, 2.5, 1.0], 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: f64| move |x: Categorical| x.cdf(arg);
+        test_case(&[4.0, 2.5, 2.5, 1.0], 0.0, cdf(-1.0));
     }
 
     #[test]
     fn test_cdf_input_high() {
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, |x| x.cdf(4.5));
+        let cdf = |arg: f64| move |x: Categorical| x.cdf(arg);
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4.5));
     }
 
     #[test]
     fn test_inverse_cdf() {
-        test_case(&[0.0, 3.0, 1.0, 1.0], 1.0, |x| x.inverse_cdf(0.2));
-        test_case(&[0.0, 3.0, 1.0, 1.0], 1.0, |x| x.inverse_cdf(0.5));
-        test_case(&[0.0, 3.0, 1.0, 1.0], 3.0, |x| x.inverse_cdf(0.95));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 0.0, |x| x.inverse_cdf(0.2));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, |x| x.inverse_cdf(0.5));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 3.0, |x| x.inverse_cdf(0.95));
+        let inverse_cdf = |arg: f64| move |x: Categorical| x.inverse_cdf(arg);
+        test_case(&[0.0, 3.0, 1.0, 1.0], 1.0, inverse_cdf(0.2));
+        test_case(&[0.0, 3.0, 1.0, 1.0], 1.0, inverse_cdf(0.5));
+        test_case(&[0.0, 3.0, 1.0, 1.0], 3.0, inverse_cdf(0.95));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 0.0, inverse_cdf(0.2));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, inverse_cdf(0.5));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 3.0, inverse_cdf(0.95));
     }
 
     #[test]
     #[should_panic]
     fn test_inverse_cdf_input_low() {
-        get_value(&[4.0, 2.5, 2.5, 1.0], |x| x.inverse_cdf(0.0));
+        let inverse_cdf = |arg: f64| move |x: Categorical| x.inverse_cdf(arg);
+        get_value(&[4.0, 2.5, 2.5, 1.0], inverse_cdf(0.0));
     }
 
     #[test]
     #[should_panic]
     fn test_inverse_cdf_input_high() {
-        get_value(&[4.0, 2.5, 2.5, 1.0], |x| x.inverse_cdf(1.0));
-    }
-
-    #[test]
-    fn test_checked_inverse_cdf_input_low() {
-        let n = try_create(&[4.0, 2.5, 2.5, 1.0]);
-        assert!(n.checked_inverse_cdf(0.0).is_err());
-    }
-
-    #[test]
-    fn test_checked_inverse_cdf_input_high() {
-        let n = try_create(&[4.0, 2.5, 2.5, 1.0]);
-        assert!(n.checked_inverse_cdf(1.0).is_err());
+        let inverse_cdf = |arg: f64| move |x: Categorical| x.inverse_cdf(arg);
+        get_value(&[4.0, 2.5, 2.5, 1.0], inverse_cdf(1.0));
     }
 
     #[test]

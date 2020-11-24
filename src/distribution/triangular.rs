@@ -296,7 +296,7 @@ mod tests {
         let n = try_create(min, max, mode);
         assert_eq!(n.min(), min);
         assert_eq!(n.max(), max);
-        assert_eq!(n.mode(), mode);
+        assert_eq!(n.mode().unwrap(), mode);
     }
 
     fn bad_create_case(min: f64, max: f64, mode: f64) {
@@ -354,123 +354,123 @@ mod tests {
 
     #[test]
     fn test_variance() {
-        test_case(0.0, 1.0, 0.5, 0.75 / 18.0, |x| x.variance());
-        test_case(0.0, 1.0, 0.75, 0.8125 / 18.0, |x| x.variance());
-        test_case(-5.0, 8.0, -3.5, 151.75 / 18.0, |x| x.variance());
-        test_case(-5.0, 8.0, 5.0, 139.0 / 18.0, |x| x.variance());
-        test_case(-5.0, -3.0, -4.0, 3.0 / 18.0, |x| x.variance());
-        test_case(15.0, 134.0, 21.0, 13483.0 / 18.0, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(0.0, 1.0, 0.5, (0.75f64 / 18.0).sqrt(), |x| x.std_dev());
-        test_case(0.0, 1.0, 0.75, (0.8125f64 / 18.0).sqrt(), |x| x.std_dev());
-        test_case(-5.0, 8.0, -3.5, (151.75f64 / 18.0).sqrt(), |x| x.std_dev());
-        test_case(-5.0, 8.0, 5.0, (139.0f64 / 18.0).sqrt(), |x| x.std_dev());
-        test_case(-5.0, -3.0, -4.0, (3.0f64 / 18.0).sqrt(), |x| x.std_dev());
-        test_case(15.0, 134.0, 21.0, (13483.0f64 / 18.0).sqrt(), |x| x.std_dev());
+        let variance = |x: Triangular| x.variance().unwrap();
+        test_case(0.0, 1.0, 0.5, 0.75 / 18.0, variance);
+        test_case(0.0, 1.0, 0.75, 0.8125 / 18.0, variance);
+        test_case(-5.0, 8.0, -3.5, 151.75 / 18.0, variance);
+        test_case(-5.0, 8.0, 5.0, 139.0 / 18.0, variance);
+        test_case(-5.0, -3.0, -4.0, 3.0 / 18.0, variance);
+        test_case(15.0, 134.0, 21.0, 13483.0 / 18.0, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(0.0, 1.0, 0.5, -0.1931471805599453094172, 1e-16, |x| x.entropy());
-        test_almost(0.0, 1.0, 0.75, -0.1931471805599453094172, 1e-16, |x| x.entropy());
-        test_case(-5.0, 8.0, -3.5, 2.371802176901591426636, |x| x.entropy());
-        test_case(-5.0, 8.0, 5.0, 2.371802176901591426636, |x| x.entropy());
-        test_case(-5.0, -3.0, -4.0, 0.5, |x| x.entropy());
-        test_case(15.0, 134.0, 21.0, 4.585976312551584075938, |x| x.entropy());
+        let entropy = |x: Triangular| x.entropy().unwrap();
+        test_almost(0.0, 1.0, 0.5, -0.1931471805599453094172, 1e-16, entropy);
+        test_almost(0.0, 1.0, 0.75, -0.1931471805599453094172, 1e-16, entropy);
+        test_case(-5.0, 8.0, -3.5, 2.371802176901591426636, entropy);
+        test_case(-5.0, 8.0, 5.0, 2.371802176901591426636, entropy);
+        test_case(-5.0, -3.0, -4.0, 0.5, entropy);
+        test_case(15.0, 134.0, 21.0, 4.585976312551584075938, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(0.0, 1.0, 0.5, 0.0, |x| x.skewness());
-        test_case(0.0, 1.0, 0.75, -0.4224039833745502226059, |x| x.skewness());
-        test_case(-5.0, 8.0, -3.5, 0.5375093589712976359809, |x| x.skewness());
-        test_case(-5.0, 8.0, 5.0, -0.4445991743012595633537, |x| x.skewness());
-        test_case(-5.0, -3.0, -4.0, 0.0, |x| x.skewness());
-        test_case(15.0, 134.0, 21.0, 0.5605920922751860613217, |x| x.skewness());
+        let skewness = |x: Triangular| x.skewness().unwrap();
+        test_case(0.0, 1.0, 0.5, 0.0, skewness);
+        test_case(0.0, 1.0, 0.75, -0.4224039833745502226059, skewness);
+        test_case(-5.0, 8.0, -3.5, 0.5375093589712976359809, skewness);
+        test_case(-5.0, 8.0, 5.0, -0.4445991743012595633537, skewness);
+        test_case(-5.0, -3.0, -4.0, 0.0, skewness);
+        test_case(15.0, 134.0, 21.0, 0.5605920922751860613217, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0.0, 1.0, 0.5, 0.5, |x| x.mode());
-        test_case(0.0, 1.0, 0.75, 0.75, |x| x.mode());
-        test_case(-5.0, 8.0, -3.5, -3.5, |x| x.mode());
-        test_case(-5.0, 8.0, 5.0, 5.0, |x| x.mode());
-        test_case(-5.0, -3.0, -4.0, -4.0, |x| x.mode());
-        test_case(15.0, 134.0, 21.0, 21.0, |x| x.mode());
+        let mode = |x: Triangular| x.mode().unwrap();
+        test_case(0.0, 1.0, 0.5, 0.5, mode);
+        test_case(0.0, 1.0, 0.75, 0.75, mode);
+        test_case(-5.0, 8.0, -3.5, -3.5, mode);
+        test_case(-5.0, 8.0, 5.0, 5.0, mode);
+        test_case(-5.0, -3.0, -4.0, -4.0, mode);
+        test_case(15.0, 134.0, 21.0, 21.0, mode);
     }
 
     #[test]
     fn test_median() {
-        test_case(0.0, 1.0, 0.5, 0.5, |x| x.median());
-        test_case(0.0, 1.0, 0.75, 0.6123724356957945245493, |x| x.median());
-        test_almost(-5.0, 8.0, -3.5, -0.6458082328952913226724, 1e-15, |x| x.median());
-        test_almost(-5.0, 8.0, 5.0, 3.062257748298549652367, 1e-15, |x| x.median());
-        test_case(-5.0, -3.0, -4.0, -4.0, |x| x.median());
-        test_almost(15.0, 134.0, 21.0, 52.00304883716712238797, 1e-14, |x| x.median());
+        let median = |x: Triangular| x.median();
+        test_case(0.0, 1.0, 0.5, 0.5, median);
+        test_case(0.0, 1.0, 0.75, 0.6123724356957945245493, median);
+        test_almost(-5.0, 8.0, -3.5, -0.6458082328952913226724, 1e-15, median);
+        test_almost(-5.0, 8.0, 5.0, 3.062257748298549652367, 1e-15, median);
+        test_case(-5.0, -3.0, -4.0, -4.0, median);
+        test_almost(15.0, 134.0, 21.0, 52.00304883716712238797, 1e-14, median);
     }
 
     #[test]
     fn test_pdf() {
-        test_case(0.0, 1.0, 0.5, 0.0, |x| x.pdf(-1.0));
-        test_case(0.0, 1.0, 0.5, 0.0, |x| x.pdf(1.1));
-        test_case(0.0, 1.0, 0.5, 1.0, |x| x.pdf(0.25));
-        test_case(0.0, 1.0, 0.5, 2.0, |x| x.pdf(0.5));
-        test_case(0.0, 1.0, 0.5, 1.0, |x| x.pdf(0.75));
-        test_case(-5.0, 8.0, -3.5, 0.0, |x| x.pdf(-5.1));
-        test_case(-5.0, 8.0, -3.5, 0.0, |x| x.pdf(8.1));
-        test_case(-5.0, 8.0, -3.5, 0.1025641025641025641026, |x| x.pdf(-4.0));
-        test_case(-5.0, 8.0, -3.5, 0.1538461538461538461538, |x| x.pdf(-3.5));
-        test_case(-5.0, 8.0, -3.5, 0.05351170568561872909699, |x| x.pdf(4.0));
-        test_case(-5.0, -3.0, -4.0, 0.0, |x| x.pdf(-5.1));
-        test_case(-5.0, -3.0, -4.0, 0.0, |x| x.pdf(-2.9));
-        test_case(-5.0, -3.0, -4.0, 0.5, |x| x.pdf(-4.5));
-        test_case(-5.0, -3.0, -4.0, 1.0, |x| x.pdf(-4.0));
-        test_case(-5.0, -3.0, -4.0, 0.5, |x| x.pdf(-3.5));
+        let pdf = |arg: f64| move |x: Triangular| x.pdf(arg);
+        test_case(0.0, 1.0, 0.5, 0.0, pdf(-1.0));
+        test_case(0.0, 1.0, 0.5, 0.0, pdf(1.1));
+        test_case(0.0, 1.0, 0.5, 1.0, pdf(0.25));
+        test_case(0.0, 1.0, 0.5, 2.0, pdf(0.5));
+        test_case(0.0, 1.0, 0.5, 1.0, pdf(0.75));
+        test_case(-5.0, 8.0, -3.5, 0.0, pdf(-5.1));
+        test_case(-5.0, 8.0, -3.5, 0.0, pdf(8.1));
+        test_case(-5.0, 8.0, -3.5, 0.1025641025641025641026, pdf(-4.0));
+        test_case(-5.0, 8.0, -3.5, 0.1538461538461538461538, pdf(-3.5));
+        test_case(-5.0, 8.0, -3.5, 0.05351170568561872909699, pdf(4.0));
+        test_case(-5.0, -3.0, -4.0, 0.0, pdf(-5.1));
+        test_case(-5.0, -3.0, -4.0, 0.0, pdf(-2.9));
+        test_case(-5.0, -3.0, -4.0, 0.5, pdf(-4.5));
+        test_case(-5.0, -3.0, -4.0, 1.0, pdf(-4.0));
+        test_case(-5.0, -3.0, -4.0, 0.5, pdf(-3.5));
     }
 
     #[test]
     fn test_ln_pdf() {
-        test_case(0.0, 1.0, 0.5, f64::NEG_INFINITY, |x| x.ln_pdf(-1.0));
-        test_case(0.0, 1.0, 0.5, f64::NEG_INFINITY, |x| x.ln_pdf(1.1));
-        test_case(0.0, 1.0, 0.5, 0.0, |x| x.ln_pdf(0.25));
-        test_case(0.0, 1.0, 0.5, 2f64.ln(), |x| x.ln_pdf(0.5));
-        test_case(0.0, 1.0, 0.5, 0.0, |x| x.ln_pdf(0.75));
-        test_case(-5.0, 8.0, -3.5, f64::NEG_INFINITY, |x| x.ln_pdf(-5.1));
-        test_case(-5.0, 8.0, -3.5, f64::NEG_INFINITY, |x| x.ln_pdf(8.1));
-        test_case(-5.0, 8.0, -3.5, 0.1025641025641025641026f64.ln(), |x| x.ln_pdf(-4.0));
-        test_case(-5.0, 8.0, -3.5, 0.1538461538461538461538f64.ln(), |x| x.ln_pdf(-3.5));
-        test_case(-5.0, 8.0, -3.5, 0.05351170568561872909699f64.ln(), |x| x.ln_pdf(4.0));
-        test_case(-5.0, -3.0, -4.0, f64::NEG_INFINITY, |x| x.ln_pdf(-5.1));
-        test_case(-5.0, -3.0, -4.0, f64::NEG_INFINITY, |x| x.ln_pdf(-2.9));
-        test_case(-5.0, -3.0, -4.0, 0.5f64.ln(), |x| x.ln_pdf(-4.5));
-        test_case(-5.0, -3.0, -4.0, 0.0, |x| x.ln_pdf(-4.0));
-        test_case(-5.0, -3.0, -4.0, 0.5f64.ln(), |x| x.ln_pdf(-3.5));
+        let ln_pdf = |arg: f64| move |x: Triangular| x.ln_pdf(arg);
+        test_case(0.0, 1.0, 0.5, f64::NEG_INFINITY, ln_pdf(-1.0));
+        test_case(0.0, 1.0, 0.5, f64::NEG_INFINITY, ln_pdf(1.1));
+        test_case(0.0, 1.0, 0.5, 0.0, ln_pdf(0.25));
+        test_case(0.0, 1.0, 0.5, 2f64.ln(), ln_pdf(0.5));
+        test_case(0.0, 1.0, 0.5, 0.0, ln_pdf(0.75));
+        test_case(-5.0, 8.0, -3.5, f64::NEG_INFINITY, ln_pdf(-5.1));
+        test_case(-5.0, 8.0, -3.5, f64::NEG_INFINITY, ln_pdf(8.1));
+        test_case(-5.0, 8.0, -3.5, 0.1025641025641025641026f64.ln(), ln_pdf(-4.0));
+        test_case(-5.0, 8.0, -3.5, 0.1538461538461538461538f64.ln(), ln_pdf(-3.5));
+        test_case(-5.0, 8.0, -3.5, 0.05351170568561872909699f64.ln(), ln_pdf(4.0));
+        test_case(-5.0, -3.0, -4.0, f64::NEG_INFINITY, ln_pdf(-5.1));
+        test_case(-5.0, -3.0, -4.0, f64::NEG_INFINITY, ln_pdf(-2.9));
+        test_case(-5.0, -3.0, -4.0, 0.5f64.ln(), ln_pdf(-4.5));
+        test_case(-5.0, -3.0, -4.0, 0.0, ln_pdf(-4.0));
+        test_case(-5.0, -3.0, -4.0, 0.5f64.ln(), ln_pdf(-3.5));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(0.0, 1.0, 0.5, 0.125, |x| x.cdf(0.25));
-        test_case(0.0, 1.0, 0.5, 0.5, |x| x.cdf(0.5));
-        test_case(0.0, 1.0, 0.5, 0.875, |x| x.cdf(0.75));
-        test_case(-5.0, 8.0, -3.5, 0.05128205128205128205128, |x| x.cdf(-4.0));
-        test_case(-5.0, 8.0, -3.5, 0.1153846153846153846154, |x| x.cdf(-3.5));
-        test_case(-5.0, 8.0, -3.5, 0.892976588628762541806, |x| x.cdf(4.0));
-        test_case(-5.0, -3.0, -4.0, 0.125, |x| x.cdf(-4.5));
-        test_case(-5.0, -3.0, -4.0, 0.5, |x| x.cdf(-4.0));
-        test_case(-5.0, -3.0, -4.0, 0.875, |x| x.cdf(-3.5));
+        let cdf = |arg: f64| move |x: Triangular| x.cdf(arg);
+        test_case(0.0, 1.0, 0.5, 0.125, cdf(0.25));
+        test_case(0.0, 1.0, 0.5, 0.5, cdf(0.5));
+        test_case(0.0, 1.0, 0.5, 0.875, cdf(0.75));
+        test_case(-5.0, 8.0, -3.5, 0.05128205128205128205128, cdf(-4.0));
+        test_case(-5.0, 8.0, -3.5, 0.1153846153846153846154, cdf(-3.5));
+        test_case(-5.0, 8.0, -3.5, 0.892976588628762541806, cdf(4.0));
+        test_case(-5.0, -3.0, -4.0, 0.125, cdf(-4.5));
+        test_case(-5.0, -3.0, -4.0, 0.5, cdf(-4.0));
+        test_case(-5.0, -3.0, -4.0, 0.875, cdf(-3.5));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        test_case(0.0, 3.0, 1.5, 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: f64| move |x: Triangular| x.cdf(arg);
+        test_case(0.0, 3.0, 1.5, 0.0, cdf(-1.0));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        test_case(0.0, 3.0, 1.5, 1.0, |x| x.cdf(5.0));
+        let cdf = |arg: f64| move |x: Triangular| x.cdf(arg);
+        test_case(0.0, 3.0, 1.5, 1.0, cdf(5.0));
     }
 
     #[test]

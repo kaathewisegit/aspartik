@@ -297,11 +297,12 @@ mod tests {
 
     #[test]
     fn test_median() {
-        test_almost(0.5, 0.0857338820301783264746, 1e-16, |x| x.median());
-        test_case(1.0, 1.0 - 2.0 / 3.0, |x| x.median());
-        test_case(2.0, 2.0 - 2.0 / 3.0, |x| x.median());
-        test_case(2.5, 2.5 - 2.0 / 3.0, |x| x.median());
-        test_case(3.0, 3.0 - 2.0 / 3.0, |x| x.median());
+        let median = |x: ChiSquared| x.median();
+        test_almost(0.5, 0.0857338820301783264746, 1e-16, median);
+        test_case(1.0, 1.0 - 2.0 / 3.0, median);
+        test_case(2.0, 2.0 - 2.0 / 3.0, median);
+        test_case(2.5, 2.5 - 2.0 / 3.0, median);
+        test_case(3.0, 3.0 - 2.0 / 3.0, median);
     }
 
     #[test]

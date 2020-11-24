@@ -351,105 +351,110 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_case(1.5, 1.5, |x| x.mean());
-        test_case(5.4, 5.4, |x| x.mean());
-        test_case(10.8, 10.8, |x| x.mean());
+        let mean = |x: Poisson| x.mean().unwrap();
+        test_case(1.5, 1.5, mean);
+        test_case(5.4, 5.4, mean);
+        test_case(10.8, 10.8, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(1.5, 1.5, |x| x.variance());
-        test_case(5.4, 5.4, |x| x.variance());
-        test_case(10.8, 10.8, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(1.5, (1.5f64).sqrt(), |x| x.std_dev());
-        test_case(5.4, (5.4f64).sqrt(), |x| x.std_dev());
-        test_case(10.8, (10.8f64).sqrt(), |x| x.std_dev());
+        let variance = |x: Poisson| x.variance().unwrap();
+        test_case(1.5, 1.5, variance);
+        test_case(5.4, 5.4, variance);
+        test_case(10.8, 10.8, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(1.5, 1.531959153102376331946, 1e-15, |x| x.entropy());
-        test_almost(5.4, 2.244941839577643504608, 1e-15, |x| x.entropy());
-        test_case(10.8, 2.600596429676975222694, |x| x.entropy());
+        let entropy = |x: Poisson| x.entropy().unwrap();
+        test_almost(1.5, 1.531959153102376331946, 1e-15, entropy);
+        test_almost(5.4, 2.244941839577643504608, 1e-15, entropy);
+        test_case(10.8, 2.600596429676975222694, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_almost(1.5, 0.8164965809277260327324, 1e-15, |x| x.skewness());
-        test_almost(5.4, 0.4303314829119352094644, 1e-16, |x| x.skewness());
-        test_almost(10.8, 0.3042903097250922852539, 1e-16, |x| x.skewness());
+        let skewness = |x: Poisson| x.skewness().unwrap();
+        test_almost(1.5, 0.8164965809277260327324, 1e-15, skewness);
+        test_almost(5.4, 0.4303314829119352094644, 1e-16, skewness);
+        test_almost(10.8, 0.3042903097250922852539, 1e-16, skewness);
     }
 
     #[test]
     fn test_median() {
-        test_case(1.5, 1.0, |x| x.median());
-        test_case(5.4, 5.0, |x| x.median());
-        test_case(10.8, 11.0, |x| x.median());
+        let median = |x: Poisson| x.median();
+        test_case(1.5, 1.0, median);
+        test_case(5.4, 5.0, median);
+        test_case(10.8, 11.0, median);
     }
 
     #[test]
     fn test_mode() {
-        test_case(1.5, 1, |x| x.mode());
-        test_case(5.4, 5, |x| x.mode());
-        test_case(10.8, 10, |x| x.mode());
+        let mode = |x: Poisson| x.mode().unwrap();
+        test_case(1.5, 1, mode);
+        test_case(5.4, 5, mode);
+        test_case(10.8, 10, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(1.5, 0, |x| x.min());
-        test_case(5.4, 0, |x| x.min());
-        test_case(10.8, 0, |x| x.min());
-        test_case(1.5, u64::MAX, |x| x.max());
-        test_case(5.4, u64::MAX, |x| x.max());
-        test_case(10.8, u64::MAX, |x| x.max());
+        let min = |x: Poisson| x.min();
+        let max = |x: Poisson| x.max();
+        test_case(1.5, 0, min);
+        test_case(5.4, 0, min);
+        test_case(10.8, 0, min);
+        test_case(1.5, u64::MAX, max);
+        test_case(5.4, u64::MAX, max);
+        test_case(10.8, u64::MAX, max);
     }
 
     #[test]
     fn test_pmf() {
-        test_almost(1.5, 0.334695240222645000000000000000, 1e-15, |x| x.pmf(1));
-        test_almost(1.5, 0.000003545747740570180000000000, 1e-20, |x| x.pmf(10));
-        test_almost(1.5, 0.000000000000000304971208961018, 1e-30, |x| x.pmf(20));
-        test_almost(5.4, 0.024389537090108400000000000000, 1e-17, |x| x.pmf(1));
-        test_almost(5.4, 0.026241240591792300000000000000, 1e-16, |x| x.pmf(10));
-        test_almost(5.4, 0.000000825202200316548000000000, 1e-20, |x| x.pmf(20));
-        test_almost(10.8, 0.000220314636840657000000000000, 1e-18, |x| x.pmf(1));
-        test_almost(10.8, 0.121365183659420000000000000000, 1e-15, |x| x.pmf(10));
-        test_almost(10.8, 0.003908139778574110000000000000, 1e-16, |x| x.pmf(20));
+        let pmf = |arg: u64| move |x: Poisson| x.pmf(arg);
+        test_almost(1.5, 0.334695240222645000000000000000, 1e-15, pmf(1));
+        test_almost(1.5, 0.000003545747740570180000000000, 1e-20, pmf(10));
+        test_almost(1.5, 0.000000000000000304971208961018, 1e-30, pmf(20));
+        test_almost(5.4, 0.024389537090108400000000000000, 1e-17, pmf(1));
+        test_almost(5.4, 0.026241240591792300000000000000, 1e-16, pmf(10));
+        test_almost(5.4, 0.000000825202200316548000000000, 1e-20, pmf(20));
+        test_almost(10.8, 0.000220314636840657000000000000, 1e-18, pmf(1));
+        test_almost(10.8, 0.121365183659420000000000000000, 1e-15, pmf(10));
+        test_almost(10.8, 0.003908139778574110000000000000, 1e-16, pmf(20));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_almost(1.5, -1.09453489189183485135413967177, 1e-15, |x| x.ln_pmf(1));
-        test_almost(1.5, -12.5497614919938728510400000000, 1e-14, |x| x.ln_pmf(10));
-        test_almost(1.5, -35.7263142985901000000000000000, 1e-13, |x| x.ln_pmf(20));
-        test_case(5.4, -3.71360104642977159156055355910, |x| x.ln_pmf(1));
-        test_almost(5.4, -3.64042303737322774736223038530, 1e-15, |x| x.ln_pmf(10));
-        test_almost(5.4, -14.0076373893489089949388000000, 1e-14, |x| x.ln_pmf(20));
-        test_almost(10.8, -8.42045386586982559781714423000, 1e-14, |x| x.ln_pmf(1));
-        test_almost(10.8, -2.10895123177378079525424989992, 1e-14, |x| x.ln_pmf(10));
-        test_almost(10.8, -5.54469377815000936289610059500, 1e-14, |x| x.ln_pmf(20));
+        let ln_pmf = |arg: u64| move |x: Poisson| x.ln_pmf(arg);
+        test_almost(1.5, -1.09453489189183485135413967177, 1e-15, ln_pmf(1));
+        test_almost(1.5, -12.5497614919938728510400000000, 1e-14, ln_pmf(10));
+        test_almost(1.5, -35.7263142985901000000000000000, 1e-13, ln_pmf(20));
+        test_case(5.4, -3.71360104642977159156055355910, ln_pmf(1));
+        test_almost(5.4, -3.64042303737322774736223038530, 1e-15, ln_pmf(10));
+        test_almost(5.4, -14.0076373893489089949388000000, 1e-14, ln_pmf(20));
+        test_almost(10.8, -8.42045386586982559781714423000, 1e-14, ln_pmf(1));
+        test_almost(10.8, -2.10895123177378079525424989992, 1e-14, ln_pmf(10));
+        test_almost(10.8, -5.54469377815000936289610059500, 1e-14, ln_pmf(20));
     }
 
     #[test]
     fn test_cdf() {
-        test_almost(1.5, 0.5578254003710750000000, 1e-15, |x| x.cdf(1.0));
-        test_almost(1.5, 0.9999994482467640000000, 1e-15, |x| x.cdf(10.0));
-        test_case(1.5, 1.0, |x| x.cdf(20.0));
-        test_almost(5.4, 0.0289061180327211000000, 1e-16, |x| x.cdf(1.0));
-        test_almost(5.4, 0.9774863006897650000000, 1e-15, |x| x.cdf(10.0));
-        test_almost(5.4, 0.9999997199928290000000, 1e-15, |x| x.cdf(20.0));
-        test_almost(10.8, 0.0002407141402518290000, 1e-16, |x| x.cdf(1.0));
-        test_almost(10.8, 0.4839692359955690000000, 1e-15, |x| x.cdf(10.0));
-        test_almost(10.8, 0.9961800769608090000000, 1e-15, |x| x.cdf(20.0));
+        let cdf = |arg: f64| move |x: Poisson| x.cdf(arg);
+        test_almost(1.5, 0.5578254003710750000000, 1e-15, cdf(1.0));
+        test_almost(1.5, 0.9999994482467640000000, 1e-15, cdf(10.0));
+        test_case(1.5, 1.0, cdf(20.0));
+        test_almost(5.4, 0.0289061180327211000000, 1e-16, cdf(1.0));
+        test_almost(5.4, 0.9774863006897650000000, 1e-15, cdf(10.0));
+        test_almost(5.4, 0.9999997199928290000000, 1e-15, cdf(20.0));
+        test_almost(10.8, 0.0002407141402518290000, 1e-16, cdf(1.0));
+        test_almost(10.8, 0.4839692359955690000000, 1e-15, cdf(10.0));
+        test_almost(10.8, 0.9961800769608090000000, 1e-15, cdf(20.0));
     }
 
     #[test]
     fn test_neg_cdf() {
-        test_case(1.5, 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: f64| move |x: Poisson| x.cdf(arg);
+        test_case(1.5, 0.0, cdf(-1.0));
     }
 
     #[test]

@@ -313,131 +313,135 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_case(4.0, 0.0, f64::INFINITY, |x| x.mean());
-        test_almost(3.0, 0.3, 7.0, 1e-15 , |x| x.mean());
-        test_case(2.0, 1.0, 0.0, |x| x.mean());
+        let mean = |x: NegativeBinomial| x.mean().unwrap();
+        test_case(4.0, 0.0, f64::INFINITY, mean);
+        test_almost(3.0, 0.3, 7.0, 1e-15 , mean);
+        test_case(2.0, 1.0, 0.0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(4.0, 0.0, f64::INFINITY, |x| x.variance());
-        test_almost(3.0, 0.3, 23.333333333333, 1e-12, |x| x.variance());
-        test_case(2.0, 1.0, 0.0, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(4.0, 0.0, f64::INFINITY, |x| x.std_dev());
-        test_almost(3.0, 0.3, 4.830458915, 1e-9, |x| x.std_dev());
-        test_case(2.0, 1.0, 0.0, |x| x.std_dev());
+        let variance = |x: NegativeBinomial| x.variance().unwrap();
+        test_case(4.0, 0.0, f64::INFINITY, variance);
+        test_almost(3.0, 0.3, 23.333333333333, 1e-12, variance);
+        test_case(2.0, 1.0, 0.0, variance);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(0.0, 0.0, f64::INFINITY, |x| x.skewness());
-        test_almost(0.1, 0.3, 6.425396041, 1e-09, |x| x.skewness());
-        test_case(1.0, 1.0, f64::INFINITY, |x| x.skewness());
+        let skewness = |x: NegativeBinomial| x.skewness().unwrap();
+        test_case(0.0, 0.0, f64::INFINITY, skewness);
+        test_almost(0.1, 0.3, 6.425396041, 1e-09, skewness);
+        test_case(1.0, 1.0, f64::INFINITY, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0.0, 0.0, 0.0, |x| x.mode());
-        test_case(0.3, 0.0, 0.0, |x| x.mode());
-        test_case(1.0, 1.0, 0.0, |x| x.mode());
-        test_case(10.0, 0.01, 891.0, |x| x.mode());
+        let mode = |x: NegativeBinomial| x.mode().unwrap();
+        test_case(0.0, 0.0, 0.0, mode);
+        test_case(0.3, 0.0, 0.0, mode);
+        test_case(1.0, 1.0, 0.0, mode);
+        test_case(10.0, 0.01, 891.0, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(1.0, 0.5, 0, |x| x.min());
-        test_case(1.0, 0.3, std::u64::MAX, |x| x.max());
+        let min = |x: NegativeBinomial| x.min();
+        let max = |x: NegativeBinomial| x.max();
+        test_case(1.0, 0.5, 0, min);
+        test_case(1.0, 0.3, std::u64::MAX, max);
     }
 
     #[test]
     fn test_pmf() {
-        test_almost(4.0, 0.5, 0.0625, 1e-8, |x| x.pmf(0));
-        test_almost(4.0, 0.5, 0.15625, 1e-8, |x| x.pmf(3));
-        test_case(1.0, 0.0, 0.0, |x| x.pmf(0));
-        test_case(1.0, 0.0, 0.0, |x| x.pmf(1));
-        test_almost(3.0, 0.2, 0.008, 1e-15, |x| x.pmf(0));
-        test_almost(3.0, 0.2, 0.0192, 1e-15, |x| x.pmf(1));
-        test_almost(3.0, 0.2, 0.04096, 1e-15, |x| x.pmf(3));
-        test_almost(10.0, 0.2, 1.024e-07, 1e-07, |x| x.pmf(0));
-        test_almost(10.0, 0.2, 8.192e-07, 1e-07, |x| x.pmf(1));
-        test_almost(10.0, 0.2, 0.001015706852, 1e-07, |x| x.pmf(10));
-        test_almost(1.0, 0.3, 0.3, 1e-15,  |x| x.pmf(0));
-        test_almost(1.0, 0.3, 0.21, 1e-15, |x| x.pmf(1));
-        test_almost(3.0, 0.3, 0.027, 1e-15, |x| x.pmf(0));
-        test_case(0.3, 1.0, 0.0, |x| x.pmf(1));
-        test_case(0.3, 1.0, 0.0, |x| x.pmf(3));
-        test_case_or_nan(0.3, 1.0, f64::NAN, |x| x.pmf(0));
-        test_case(0.3, 1.0, 0.0, |x| x.pmf(1));
-        test_case(0.3, 1.0, 0.0, |x| x.pmf(10));
-        test_case_or_nan(1.0, 1.0, f64::NAN, |x| x.pmf(0));
-        test_case(1.0, 1.0, 0.0, |x| x.pmf(1));
-        test_case_or_nan(3.0, 1.0, f64::NAN, |x| x.pmf(0));
-        test_case(3.0, 1.0, 0.0, |x| x.pmf(1));
-        test_case(3.0, 1.0, 0.0, |x| x.pmf(3));
-        test_case_or_nan(10.0, 1.0, f64::NAN, |x| x.pmf(0));
-        test_case(10.0, 1.0, 0.0, |x| x.pmf(1));
-        test_case(10.0, 1.0, 0.0, |x| x.pmf(10));
+        let pmf = |arg: u64| move |x: NegativeBinomial| x.pmf(arg);
+        test_almost(4.0, 0.5, 0.0625, 1e-8, pmf(0));
+        test_almost(4.0, 0.5, 0.15625, 1e-8, pmf(3));
+        test_case(1.0, 0.0, 0.0, pmf(0));
+        test_case(1.0, 0.0, 0.0, pmf(1));
+        test_almost(3.0, 0.2, 0.008, 1e-15, pmf(0));
+        test_almost(3.0, 0.2, 0.0192, 1e-15, pmf(1));
+        test_almost(3.0, 0.2, 0.04096, 1e-15, pmf(3));
+        test_almost(10.0, 0.2, 1.024e-07, 1e-07, pmf(0));
+        test_almost(10.0, 0.2, 8.192e-07, 1e-07, pmf(1));
+        test_almost(10.0, 0.2, 0.001015706852, 1e-07, pmf(10));
+        test_almost(1.0, 0.3, 0.3, 1e-15,  pmf(0));
+        test_almost(1.0, 0.3, 0.21, 1e-15, pmf(1));
+        test_almost(3.0, 0.3, 0.027, 1e-15, pmf(0));
+        test_case(0.3, 1.0, 0.0, pmf(1));
+        test_case(0.3, 1.0, 0.0, pmf(3));
+        test_case_or_nan(0.3, 1.0, f64::NAN, pmf(0));
+        test_case(0.3, 1.0, 0.0, pmf(1));
+        test_case(0.3, 1.0, 0.0, pmf(10));
+        test_case_or_nan(1.0, 1.0, f64::NAN, pmf(0));
+        test_case(1.0, 1.0, 0.0, pmf(1));
+        test_case_or_nan(3.0, 1.0, f64::NAN, pmf(0));
+        test_case(3.0, 1.0, 0.0, pmf(1));
+        test_case(3.0, 1.0, 0.0, pmf(3));
+        test_case_or_nan(10.0, 1.0, f64::NAN, pmf(0));
+        test_case(10.0, 1.0, 0.0, pmf(1));
+        test_case(10.0, 1.0, 0.0, pmf(10));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_case(1.0, 0.0, f64::NEG_INFINITY, |x| x.ln_pmf(0));
-        test_case(1.0, 0.0, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_almost(3.0, 0.2, -4.828313737, 1e-08, |x| x.ln_pmf(0));
-        test_almost(3.0, 0.2, -3.952845, 1e-08, |x| x.ln_pmf(1));
-        test_almost(3.0, 0.2, -3.195159298, 1e-08, |x| x.ln_pmf(3));
-        test_almost(10.0, 0.2, -16.09437912, 1e-08, |x| x.ln_pmf(0));
-        test_almost(10.0, 0.2, -14.01493758, 1e-08, |x| x.ln_pmf(1));
-        test_almost(10.0, 0.2, -6.892170503, 1e-08, |x| x.ln_pmf(10));
-        test_almost(1.0, 0.3, -1.203972804, 1e-08,  |x| x.ln_pmf(0));
-        test_almost(1.0, 0.3, -1.560647748, 1e-08, |x| x.ln_pmf(1));
-        test_almost(3.0, 0.3, -3.611918413, 1e-08, |x| x.ln_pmf(0));
-        test_case(0.3, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(0.3, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(3));
-        test_case_or_nan(0.3, 1.0, f64::NAN, |x| x.ln_pmf(0));
-        test_case(0.3, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(0.3, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(10));
-        test_case_or_nan(1.0, 1.0, f64::NAN, |x| x.ln_pmf(0));
-        test_case(1.0, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case_or_nan(3.0, 1.0, f64::NAN, |x| x.ln_pmf(0));
-        test_case(3.0, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(3.0, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(3));
-        test_case_or_nan(10.0, 1.0, f64::NAN, |x| x.ln_pmf(0));
-        test_case(10.0, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(10.0, 1.0, f64::NEG_INFINITY, |x| x.ln_pmf(10));
+        let ln_pmf = |arg: u64| move |x: NegativeBinomial| x.ln_pmf(arg);
+        test_case(1.0, 0.0, f64::NEG_INFINITY, ln_pmf(0));
+        test_case(1.0, 0.0, f64::NEG_INFINITY, ln_pmf(1));
+        test_almost(3.0, 0.2, -4.828313737, 1e-08, ln_pmf(0));
+        test_almost(3.0, 0.2, -3.952845, 1e-08, ln_pmf(1));
+        test_almost(3.0, 0.2, -3.195159298, 1e-08, ln_pmf(3));
+        test_almost(10.0, 0.2, -16.09437912, 1e-08, ln_pmf(0));
+        test_almost(10.0, 0.2, -14.01493758, 1e-08, ln_pmf(1));
+        test_almost(10.0, 0.2, -6.892170503, 1e-08, ln_pmf(10));
+        test_almost(1.0, 0.3, -1.203972804, 1e-08,  ln_pmf(0));
+        test_almost(1.0, 0.3, -1.560647748, 1e-08, ln_pmf(1));
+        test_almost(3.0, 0.3, -3.611918413, 1e-08, ln_pmf(0));
+        test_case(0.3, 1.0, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(0.3, 1.0, f64::NEG_INFINITY, ln_pmf(3));
+        test_case_or_nan(0.3, 1.0, f64::NAN, ln_pmf(0));
+        test_case(0.3, 1.0, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(0.3, 1.0, f64::NEG_INFINITY, ln_pmf(10));
+        test_case_or_nan(1.0, 1.0, f64::NAN, ln_pmf(0));
+        test_case(1.0, 1.0, f64::NEG_INFINITY, ln_pmf(1));
+        test_case_or_nan(3.0, 1.0, f64::NAN, ln_pmf(0));
+        test_case(3.0, 1.0, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(3.0, 1.0, f64::NEG_INFINITY, ln_pmf(3));
+        test_case_or_nan(10.0, 1.0, f64::NAN, ln_pmf(0));
+        test_case(10.0, 1.0, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(10.0, 1.0, f64::NEG_INFINITY, ln_pmf(10));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(1.0, 0.0, 0.0, |x| x.cdf(0.2));
-        test_almost(3.0, 0.2, 0.01090199062, 1e-08, |x| x.cdf(0.2));
-        test_almost(10.0, 0.2, 1.718008933e-07, 1e-08, |x| x.cdf(0.2));
-        test_almost(1.0, 0.3, 0.3481950594, 1e-08, |x| x.cdf(0.2));
-        test_almost(3.0, 0.3, 0.03611085389, 1e-08, |x| x.cdf(0.2));
-        test_almost(1.0, 0.3, 0.3, 1e-08, |x| x.cdf(0.0));
-        test_almost(1.0, 0.3, 0.3481950594, 1e-08, |x| x.cdf(0.2));
-        test_almost(1.0, 0.3, 0.51, 1e-08, |x| x.cdf(1.0));
-        test_almost(1.0, 0.3, 0.83193, 1e-08, |x| x.cdf(4.0));
-        test_almost(1.0, 0.3, 0.9802267326, 1e-08, |x| x.cdf(10.0));
-        test_case(1.0, 1.0, 1.0, |x| x.cdf(0.0));
-        test_case(1.0, 1.0, 1.0, |x| x.cdf(1.0));
-        test_almost(10.0, 0.75, 0.05631351471, 1e-08, |x| x.cdf(0.0));
-        test_almost(10.0, 0.75, 0.1970973015, 1e-08, |x| x.cdf(1.0));
-        test_almost(10.0, 0.75, 0.9960578583, 1e-08, |x| x.cdf(10.0));
+        let cdf = |arg: f64| move |x: NegativeBinomial| x.cdf(arg);
+        test_case(1.0, 0.0, 0.0, cdf(0.2));
+        test_almost(3.0, 0.2, 0.01090199062, 1e-08, cdf(0.2));
+        test_almost(10.0, 0.2, 1.718008933e-07, 1e-08, cdf(0.2));
+        test_almost(1.0, 0.3, 0.3481950594, 1e-08, cdf(0.2));
+        test_almost(3.0, 0.3, 0.03611085389, 1e-08, cdf(0.2));
+        test_almost(1.0, 0.3, 0.3, 1e-08, cdf(0.0));
+        test_almost(1.0, 0.3, 0.3481950594, 1e-08, cdf(0.2));
+        test_almost(1.0, 0.3, 0.51, 1e-08, cdf(1.0));
+        test_almost(1.0, 0.3, 0.83193, 1e-08, cdf(4.0));
+        test_almost(1.0, 0.3, 0.9802267326, 1e-08, cdf(10.0));
+        test_case(1.0, 1.0, 1.0, cdf(0.0));
+        test_case(1.0, 1.0, 1.0, cdf(1.0));
+        test_almost(10.0, 0.75, 0.05631351471, 1e-08, cdf(0.0));
+        test_almost(10.0, 0.75, 0.1970973015, 1e-08, cdf(1.0));
+        test_almost(10.0, 0.75, 0.9960578583, 1e-08, cdf(10.0));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        test_case(3.0, 0.5, 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: f64| move |x: NegativeBinomial| x.cdf(arg);
+        test_case(3.0, 0.5, 0.0, cdf(-1.0));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        test_case(3.0, 0.5, 1.0, |x| x.cdf(100.0));
+        let cdf = |arg: f64| move |x: NegativeBinomial| x.cdf(arg);
+        test_case(3.0, 0.5, 1.0, cdf(100.0));
     }
 
     // TODO: figure out the best way to re-implement this test. We currently

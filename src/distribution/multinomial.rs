@@ -347,42 +347,40 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_case(&[0.3, 0.7], 5, &[1.5, 3.5], |x| x.mean());
-        test_case(&[0.1, 0.3, 0.6], 10, &[1.0, 3.0, 6.0], |x| x.mean());
-        test_case(&[0.15, 0.35, 0.3, 0.2], 20, &[3.0, 7.0, 6.0, 4.0], |x| x.mean());
+        let mean = |x: Multinomial| x.mean().unwrap();
+        test_case(&[0.3, 0.7], 5, &[1.5, 3.5], mean);
+        test_case(&[0.1, 0.3, 0.6], 10, &[1.0, 3.0, 6.0], mean);
+        test_case(&[0.15, 0.35, 0.3, 0.2], 20, &[3.0, 7.0, 6.0, 4.0], mean);
     }
 
     #[test]
     fn test_variance() {
-        test_almost(&[0.3, 0.7], 5, &[1.05, 1.05], 1e-15, |x| x.variance());
-        test_almost(&[0.1, 0.3, 0.6], 10, &[0.9, 2.1, 2.4], 1e-15, |x| x.variance());
-        test_almost(&[0.15, 0.35, 0.3, 0.2], 20, &[2.55, 4.55, 4.2, 3.2], 1e-15, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_almost(&[0.3, 0.7], 5, &[1.05f64.sqrt(), 1.05f64.sqrt()], 1e-15, |x| x.std_dev());
-        test_almost(&[0.1, 0.3, 0.6], 10, &[0.9f64.sqrt(), 2.1f64.sqrt(), 2.4f64.sqrt()], 1e-15, |x| x.std_dev());
-        test_almost(&[0.15, 0.35, 0.3, 0.2], 20, &[2.55f64.sqrt(), 4.55f64.sqrt(), 4.2f64.sqrt(), 3.2f64.sqrt()], 1e-15, |x| x.std_dev());
+        let variance = |x: Multinomial| x.variance().unwrap();
+        test_almost(&[0.3, 0.7], 5, &[1.05, 1.05], 1e-15, variance);
+        test_almost(&[0.1, 0.3, 0.6], 10, &[0.9, 2.1, 2.4], 1e-15, variance);
+        test_almost(&[0.15, 0.35, 0.3, 0.2], 20, &[2.55, 4.55, 4.2, 3.2], 1e-15, variance);
     }
 
     #[test]
     fn test_skewness() {
-        test_almost(&[0.3, 0.7], 5, &[0.390360029179413, -0.390360029179413], 1e-15, |x| x.skewness());
-        test_almost(&[0.1, 0.3, 0.6], 10, &[0.843274042711568, 0.276026223736942, -0.12909944487358], 1e-15, |x| x.skewness());
-        test_almost(&[0.15, 0.35, 0.3, 0.2], 20, &[0.438357003759605, 0.140642169281549, 0.195180014589707, 0.335410196624968], 1e-15, |x| x.skewness());
+        let skewness = |x: Multinomial| x.skewness().unwrap();
+        test_almost(&[0.3, 0.7], 5, &[0.390360029179413, -0.390360029179413], 1e-15, skewness);
+        test_almost(&[0.1, 0.3, 0.6], 10, &[0.843274042711568, 0.276026223736942, -0.12909944487358], 1e-15, skewness);
+        test_almost(&[0.15, 0.35, 0.3, 0.2], 20, &[0.438357003759605, 0.140642169281549, 0.195180014589707, 0.335410196624968], 1e-15, skewness);
     }
 
     #[test]
     fn test_pmf() {
-        test_almost_sr(&[0.3, 0.7], 10, 0.121060821, 1e-15, |x| x.pmf(&[1, 9]));
-        test_almost_sr(&[0.1, 0.3, 0.6], 10, 0.105815808, 1e-15, |x| x.pmf(&[1, 3, 6]));
-        test_almost_sr(&[0.15, 0.35, 0.3, 0.2], 10, 0.000145152, 1e-15, |x| x.pmf(&[1, 1, 1, 7]));
+        let pmf = |arg: &[u64]| move |x: Multinomial| x.pmf(arg);
+        test_almost_sr(&[0.3, 0.7], 10, 0.121060821, 1e-15, pmf(&[1, 9]));
+        test_almost_sr(&[0.1, 0.3, 0.6], 10, 0.105815808, 1e-15, pmf(&[1, 3, 6]));
+        test_almost_sr(&[0.15, 0.35, 0.3, 0.2], 10, 0.000145152, 1e-15, pmf(&[1, 1, 1, 7]));
     }
 
     #[test]
     #[should_panic]
     fn test_pmf_x_wrong_length() {
+        let pmf = |arg: &[u64]| move |x: Multinomial| x.pmf(arg);
         let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
         n.pmf(&[1]);
     }
@@ -390,20 +388,9 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_pmf_x_wrong_sum() {
+        let pmf = |arg: &[u64]| move |x: Multinomial| x.pmf(arg);
         let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
         n.pmf(&[1, 3]);
-    }
-
-    #[test]
-    fn test_checked_pmf_x_wrong_length() {
-        let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
-        assert!(n.checked_pmf(&[1]).is_err());
-    }
-
-    #[test]
-    fn test_checked_pmf_x_wrong_sum() {
-        let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
-        assert!(n.checked_pmf(&[1, 3]).is_err());
     }
 
     #[test]
@@ -432,17 +419,5 @@ mod tests {
     fn test_ln_pmf_x_wrong_sum() {
         let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
         n.ln_pmf(&[1, 3]);
-    }
-
-    #[test]
-    fn test_checked_ln_pmf_x_wrong_length() {
-        let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
-        assert!(n.checked_ln_pmf(&[1]).is_err());
-    }
-
-    #[test]
-    fn test_checked_ln_pmf_x_wrong_sum() {
-        let n = Multinomial::new(&[0.3, 0.7], 10).unwrap();
-        assert!(n.checked_ln_pmf(&[1, 3]).is_err());
     }
 }

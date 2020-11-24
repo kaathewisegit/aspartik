@@ -13,7 +13,7 @@ pub use self::dirac::Dirac;
 // pub use self::dirichlet::Dirichlet;
 pub use self::discrete_uniform::DiscreteUniform;
 pub use self::erlang::Erlang;
-pub use self::exponential::Exponential;
+pub use self::exponential::Exp;
 pub use self::fisher_snedecor::FisherSnedecor;
 pub use self::gamma::Gamma;
 pub use self::geometric::Geometric;

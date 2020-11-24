@@ -305,7 +305,7 @@ impl Discrete<u64, f64> for Binomial {
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
-    use std::f64;
+    // use std::f64;
     use crate::statistics::*;
     use crate::distribution::{Univariate, Discrete, Binomial};
     use crate::distribution::internal::*;
@@ -366,151 +366,157 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_case(0.0, 4, 0.0, |x| x.mean());
-        test_almost(0.3, 3, 0.9, 1e-15, |x| x.mean());
-        test_case(1.0, 2, 2.0, |x| x.mean());
+        let mean = |x: Binomial| x.mean().unwrap();
+        test_case(0.0, 4, 0.0, mean);
+        test_almost(0.3, 3, 0.9, 1e-15, mean);
+        test_case(1.0, 2, 2.0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(0.0, 4, 0.0, |x| x.variance());
-        test_case(0.3, 3, 0.63, |x| x.variance());
-        test_case(1.0, 2, 0.0, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(0.0, 4, 0.0, |x| x.std_dev());
-        test_case(0.3, 3, 0.7937253933193771771505, |x| x.std_dev());
-        test_case(1.0, 2, 0.0, |x| x.std_dev());
+        let variance = |x: Binomial| x.variance().unwrap();
+        test_case(0.0, 4, 0.0, variance);
+        test_case(0.3, 3, 0.63, variance);
+        test_case(1.0, 2, 0.0, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_case(0.0, 4, 0.0, |x| x.entropy());
-        test_almost(0.3, 3, 1.1404671643037712668976423399228972051669206536461, 1e-15, |x| x.entropy());
-        test_case(1.0, 2, 0.0, |x| x.entropy());
+        let entropy = |x: Binomial| x.entropy().unwrap();
+        test_case(0.0, 4, 0.0, entropy);
+        test_almost(0.3, 3, 1.1404671643037712668976423399228972051669206536461, 1e-15, entropy);
+        test_case(1.0, 2, 0.0, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(0.0, 4, f64::INFINITY, |x| x.skewness());
-        test_case(0.3, 3, 0.503952630678969636286, |x| x.skewness());
-        test_case(1.0, 2, f64::NEG_INFINITY, |x| x.skewness());
+        let skewness = |x: Binomial| x.skewness().unwrap();
+        test_case(0.0, 4, f64::INFINITY, skewness);
+        test_case(0.3, 3, 0.503952630678969636286, skewness);
+        test_case(1.0, 2, f64::NEG_INFINITY, skewness);
     }
 
     #[test]
     fn test_median() {
-        test_case(0.0, 4, 0.0, |x| x.median());
-        test_case(0.3, 3, 0.0, |x| x.median());
-        test_case(1.0, 2, 2.0, |x| x.median());
+        let median = |x: Binomial| x.median();
+        test_case(0.0, 4, 0.0, median);
+        test_case(0.3, 3, 0.0, median);
+        test_case(1.0, 2, 2.0, median);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0.0, 4, 0, |x| x.mode());
-        test_case(0.3, 3, 1, |x| x.mode());
-        test_case(1.0, 2, 2, |x| x.mode());
+        let mode = |x: Binomial| x.mode().unwrap();
+        test_case(0.0, 4, 0, mode);
+        test_case(0.3, 3, 1, mode);
+        test_case(1.0, 2, 2, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(0.3, 10, 0, |x| x.min());
-        test_case(0.3, 10, 10, |x| x.max());
+        let min = |x: Binomial| x.min();
+        let max = |x: Binomial| x.max();
+        test_case(0.3, 10, 0, min);
+        test_case(0.3, 10, 10, max);
     }
 
     #[test]
     fn test_pmf() {
-        test_case(0.0, 1, 1.0, |x| x.pmf(0));
-        test_case(0.0, 1, 0.0, |x| x.pmf(1));
-        test_case(0.0, 3, 1.0, |x| x.pmf(0));
-        test_case(0.0, 3, 0.0, |x| x.pmf(1));
-        test_case(0.0, 3, 0.0, |x| x.pmf(3));
-        test_case(0.0, 10, 1.0, |x| x.pmf(0));
-        test_case(0.0, 10, 0.0, |x| x.pmf(1));
-        test_case(0.0, 10, 0.0, |x| x.pmf(10));
-        test_case(0.3, 1, 0.69999999999999995559107901499373838305473327636719, |x| x.pmf(0));
-        test_case(0.3, 1, 0.2999999999999999888977697537484345957636833190918, |x| x.pmf(1));
-        test_case(0.3, 3, 0.34299999999999993471888615204079956461021032657166, |x| x.pmf(0));
-        test_almost(0.3, 3, 0.44099999999999992772448109690231306411849135972008, 1e-15, |x| x.pmf(1));
-        test_almost(0.3, 3, 0.026999999999999997002397833512077451789759292859569, 1e-16, |x| x.pmf(3));
-        test_almost(0.3, 10, 0.02824752489999998207939855277004937778546385011091, 1e-17, |x| x.pmf(0));
-        test_almost(0.3, 10, 0.12106082099999992639752977030555903089040470780077, 1e-15, |x| x.pmf(1));
-        test_almost(0.3, 10, 0.0000059048999999999978147480206303047454017251032868501, 1e-20, |x| x.pmf(10));
-        test_case(1.0, 1, 0.0, |x| x.pmf(0));
-        test_case(1.0, 1, 1.0, |x| x.pmf(1));
-        test_case(1.0, 3, 0.0, |x| x.pmf(0));
-        test_case(1.0, 3, 0.0, |x| x.pmf(1));
-        test_case(1.0, 3, 1.0, |x| x.pmf(3));
-        test_case(1.0, 10, 0.0, |x| x.pmf(0));
-        test_case(1.0, 10, 0.0, |x| x.pmf(1));
-        test_case(1.0, 10, 1.0, |x| x.pmf(10));
+        let pmf = |arg: u64| move |x: Binomial| x.pmf(arg);
+        test_case(0.0, 1, 1.0, pmf(0));
+        test_case(0.0, 1, 0.0, pmf(1));
+        test_case(0.0, 3, 1.0, pmf(0));
+        test_case(0.0, 3, 0.0, pmf(1));
+        test_case(0.0, 3, 0.0, pmf(3));
+        test_case(0.0, 10, 1.0, pmf(0));
+        test_case(0.0, 10, 0.0, pmf(1));
+        test_case(0.0, 10, 0.0, pmf(10));
+        test_case(0.3, 1, 0.69999999999999995559107901499373838305473327636719, pmf(0));
+        test_case(0.3, 1, 0.2999999999999999888977697537484345957636833190918, pmf(1));
+        test_case(0.3, 3, 0.34299999999999993471888615204079956461021032657166, pmf(0));
+        test_almost(0.3, 3, 0.44099999999999992772448109690231306411849135972008, 1e-15, pmf(1));
+        test_almost(0.3, 3, 0.026999999999999997002397833512077451789759292859569, 1e-16, pmf(3));
+        test_almost(0.3, 10, 0.02824752489999998207939855277004937778546385011091, 1e-17, pmf(0));
+        test_almost(0.3, 10, 0.12106082099999992639752977030555903089040470780077, 1e-15, pmf(1));
+        test_almost(0.3, 10, 0.0000059048999999999978147480206303047454017251032868501, 1e-20, pmf(10));
+        test_case(1.0, 1, 0.0, pmf(0));
+        test_case(1.0, 1, 1.0, pmf(1));
+        test_case(1.0, 3, 0.0, pmf(0));
+        test_case(1.0, 3, 0.0, pmf(1));
+        test_case(1.0, 3, 1.0, pmf(3));
+        test_case(1.0, 10, 0.0, pmf(0));
+        test_case(1.0, 10, 0.0, pmf(1));
+        test_case(1.0, 10, 1.0, pmf(10));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_case(0.0, 1, 0.0, |x| x.ln_pmf(0));
-        test_case(0.0, 1, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(0.0, 3, 0.0, |x| x.ln_pmf(0));
-        test_case(0.0, 3, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(0.0, 3, f64::NEG_INFINITY, |x| x.ln_pmf(3));
-        test_case(0.0, 10, 0.0, |x| x.ln_pmf(0));
-        test_case(0.0, 10, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(0.0, 10, f64::NEG_INFINITY, |x| x.ln_pmf(10));
-        test_case(0.3, 1, -0.3566749439387324423539544041072745145718090708995, |x| x.ln_pmf(0));
-        test_case(0.3, 1, -1.2039728043259360296301803719337238685164245381839, |x| x.ln_pmf(1));
-        test_case(0.3, 3, -1.0700248318161973270618632123218235437154272126985, |x| x.ln_pmf(0));
-        test_almost(0.3, 3, -0.81871040353529122294284394322574719301255212216016, 1e-15, |x| x.ln_pmf(1));
-        test_almost(0.3, 3, -3.6119184129778080888905411158011716055492736145517, 1e-15, |x| x.ln_pmf(3));
-        test_case(0.3, 10, -3.566749439387324423539544041072745145718090708995, |x| x.ln_pmf(0));
-        test_almost(0.3, 10, -2.1114622067804823267977785542148302920616046876506, 1e-14, |x| x.ln_pmf(1));
-        test_case(0.3, 10, -12.039728043259360296301803719337238685164245381839, |x| x.ln_pmf(10));
-        test_case(1.0, 1, f64::NEG_INFINITY, |x| x.ln_pmf(0));
-        test_case(1.0, 1, 0.0, |x| x.ln_pmf(1));
-        test_case(1.0, 3, f64::NEG_INFINITY, |x| x.ln_pmf(0));
-        test_case(1.0, 3, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(1.0, 3, 0.0, |x| x.ln_pmf(3));
-        test_case(1.0, 10, f64::NEG_INFINITY, |x| x.ln_pmf(0));
-        test_case(1.0, 10, f64::NEG_INFINITY, |x| x.ln_pmf(1));
-        test_case(1.0, 10, 0.0, |x| x.ln_pmf(10));
+        let ln_pmf = |arg: u64| move |x: Binomial| x.ln_pmf(arg);
+        test_case(0.0, 1, 0.0, ln_pmf(0));
+        test_case(0.0, 1, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(0.0, 3, 0.0, ln_pmf(0));
+        test_case(0.0, 3, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(0.0, 3, f64::NEG_INFINITY, ln_pmf(3));
+        test_case(0.0, 10, 0.0, ln_pmf(0));
+        test_case(0.0, 10, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(0.0, 10, f64::NEG_INFINITY, ln_pmf(10));
+        test_case(0.3, 1, -0.3566749439387324423539544041072745145718090708995, ln_pmf(0));
+        test_case(0.3, 1, -1.2039728043259360296301803719337238685164245381839, ln_pmf(1));
+        test_case(0.3, 3, -1.0700248318161973270618632123218235437154272126985, ln_pmf(0));
+        test_almost(0.3, 3, -0.81871040353529122294284394322574719301255212216016, 1e-15, ln_pmf(1));
+        test_almost(0.3, 3, -3.6119184129778080888905411158011716055492736145517, 1e-15, ln_pmf(3));
+        test_case(0.3, 10, -3.566749439387324423539544041072745145718090708995, ln_pmf(0));
+        test_almost(0.3, 10, -2.1114622067804823267977785542148302920616046876506, 1e-14, ln_pmf(1));
+        test_case(0.3, 10, -12.039728043259360296301803719337238685164245381839, ln_pmf(10));
+        test_case(1.0, 1, f64::NEG_INFINITY, ln_pmf(0));
+        test_case(1.0, 1, 0.0, ln_pmf(1));
+        test_case(1.0, 3, f64::NEG_INFINITY, ln_pmf(0));
+        test_case(1.0, 3, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(1.0, 3, 0.0, ln_pmf(3));
+        test_case(1.0, 10, f64::NEG_INFINITY, ln_pmf(0));
+        test_case(1.0, 10, f64::NEG_INFINITY, ln_pmf(1));
+        test_case(1.0, 10, 0.0, ln_pmf(10));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(0.0, 1, 1.0, |x| x.cdf(0.0));
-        test_case(0.0, 1, 1.0, |x| x.cdf(1.0));
-        test_case(0.0, 3, 1.0, |x| x.cdf(0.0));
-        test_case(0.0, 3, 1.0, |x| x.cdf(1.0));
-        test_case(0.0, 3, 1.0, |x| x.cdf(3.0));
-        test_case(0.0, 10, 1.0, |x| x.cdf(0.0));
-        test_case(0.0, 10, 1.0, |x| x.cdf(1.0));
-        test_case(0.0, 10, 1.0, |x| x.cdf(10.0));
-        test_almost(0.3, 1, 0.7, 1e-15, |x| x.cdf(0.0));
-        test_case(0.3, 1, 1.0, |x| x.cdf(1.0));
-        test_almost(0.3, 3, 0.343, 1e-14, |x| x.cdf(0.0));
-        test_almost(0.3, 3, 0.784, 1e-15, |x| x.cdf(1.0));
-        test_case(0.3, 3, 1.0, |x| x.cdf(3.0));
-        test_almost(0.3, 10, 0.0282475249, 1e-16, |x| x.cdf(0.0));
-        test_almost(0.3, 10, 0.1493083459, 1e-14, |x| x.cdf(1.0));
-        test_case(0.3, 10, 1.0, |x| x.cdf(10.0));
-        test_case(1.0, 1, 0.0, |x| x.cdf(0.0));
-        test_case(1.0, 1, 1.0, |x| x.cdf(1.0));
-        test_case(1.0, 3, 0.0, |x| x.cdf(0.0));
-        test_case(1.0, 3, 0.0, |x| x.cdf(1.0));
-        test_case(1.0, 3, 1.0, |x| x.cdf(3.0));
-        test_case(1.0, 10, 0.0, |x| x.cdf(0.0));
-        test_case(1.0, 10, 0.0, |x| x.cdf(1.0));
-        test_case(1.0, 10, 1.0, |x| x.cdf(10.0));
+        let cdf = |arg: f64| move |x: Binomial| x.cdf(arg);
+        test_case(0.0, 1, 1.0, cdf(0.0));
+        test_case(0.0, 1, 1.0, cdf(1.0));
+        test_case(0.0, 3, 1.0, cdf(0.0));
+        test_case(0.0, 3, 1.0, cdf(1.0));
+        test_case(0.0, 3, 1.0, cdf(3.0));
+        test_case(0.0, 10, 1.0, cdf(0.0));
+        test_case(0.0, 10, 1.0, cdf(1.0));
+        test_case(0.0, 10, 1.0, cdf(10.0));
+        test_almost(0.3, 1, 0.7, 1e-15, cdf(0.0));
+        test_case(0.3, 1, 1.0, cdf(1.0));
+        test_almost(0.3, 3, 0.343, 1e-14, cdf(0.0));
+        test_almost(0.3, 3, 0.784, 1e-15, cdf(1.0));
+        test_case(0.3, 3, 1.0, cdf(3.0));
+        test_almost(0.3, 10, 0.0282475249, 1e-16, cdf(0.0));
+        test_almost(0.3, 10, 0.1493083459, 1e-14, cdf(1.0));
+        test_case(0.3, 10, 1.0, cdf(10.0));
+        test_case(1.0, 1, 0.0, cdf(0.0));
+        test_case(1.0, 1, 1.0, cdf(1.0));
+        test_case(1.0, 3, 0.0, cdf(0.0));
+        test_case(1.0, 3, 0.0, cdf(1.0));
+        test_case(1.0, 3, 1.0, cdf(3.0));
+        test_case(1.0, 10, 0.0, cdf(0.0));
+        test_case(1.0, 10, 0.0, cdf(1.0));
+        test_case(1.0, 10, 1.0, cdf(10.0));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        test_case(0.5, 3, 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: f64| move |x: Binomial| x.cdf(arg);
+        test_case(0.5, 3, 0.0, cdf(-1.0));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        test_case(0.5, 3, 1.0, |x| x.cdf(5.0));
+        let cdf = |arg: f64| move |x: Binomial| x.cdf(arg);
+        test_case(0.5, 3, 1.0, cdf(5.0));
     }
 
     #[test]

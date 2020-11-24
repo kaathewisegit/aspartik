@@ -285,93 +285,96 @@ mod tests {
 
     #[test]
     fn test_mean() {
-        test_case(-10, 10, 0.0, |x| x.mean());
-        test_case(0, 4, 2.0, |x| x.mean());
-        test_case(10, 20, 15.0, |x| x.mean());
-        test_case(20, 20, 20.0, |x| x.mean());
+        let mean = |x: DiscreteUniform| x.mean().unwrap();
+        test_case(-10, 10, 0.0, mean);
+        test_case(0, 4, 2.0, mean);
+        test_case(10, 20, 15.0, mean);
+        test_case(20, 20, 20.0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(-10, 10, 36.66666666666666666667, |x| x.variance());
-        test_case(0, 4, 2.0, |x| x.variance());
-        test_case(10, 20, 10.0, |x| x.variance());
-        test_case(20, 20, 0.0, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(-10, 10, (36.66666666666666666667f64).sqrt(), |x| x.std_dev());
-        test_case(0, 4, (2.0f64).sqrt(), |x| x.std_dev());
-        test_case(10, 20, (10.0f64).sqrt(), |x| x.std_dev());
-        test_case(20, 20, 0.0, |x| x.std_dev());
+        let variance = |x: DiscreteUniform| x.variance().unwrap();
+        test_case(-10, 10, 36.66666666666666666667, variance);
+        test_case(0, 4, 2.0, variance);
+        test_case(10, 20, 10.0, variance);
+        test_case(20, 20, 0.0, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_case(-10, 10, 3.0445224377234229965005979803657054342845752874046093, |x| x.entropy());
-        test_case(0, 4, 1.6094379124341003746007593332261876395256013542685181, |x| x.entropy());
-        test_case(10, 20, 2.3978952727983705440619435779651292998217068539374197, |x| x.entropy());
-        test_case(20, 20, 0.0, |x| x.entropy());
+        let entropy = |x: DiscreteUniform| x.entropy().unwrap();
+        test_case(-10, 10, 3.0445224377234229965005979803657054342845752874046093, entropy);
+        test_case(0, 4, 1.6094379124341003746007593332261876395256013542685181, entropy);
+        test_case(10, 20, 2.3978952727983705440619435779651292998217068539374197, entropy);
+        test_case(20, 20, 0.0, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(-10, 10, 0.0, |x| x.skewness());
-        test_case(0, 4, 0.0, |x| x.skewness());
-        test_case(10, 20, 0.0, |x| x.skewness());
-        test_case(20, 20, 0.0, |x| x.skewness());
+        let skewness = |x: DiscreteUniform| x.skewness().unwrap();
+        test_case(-10, 10, 0.0, skewness);
+        test_case(0, 4, 0.0, skewness);
+        test_case(10, 20, 0.0, skewness);
+        test_case(20, 20, 0.0, skewness);
     }
 
     #[test]
     fn test_median() {
-        test_case(-10, 10, 0.0, |x| x.median());
-        test_case(0, 4, 2.0, |x| x.median());
-        test_case(10, 20, 15.0, |x| x.median());
-        test_case(20, 20, 20.0, |x| x.median());
+        let median = |x: DiscreteUniform| x.median();
+        test_case(-10, 10, 0.0, median);
+        test_case(0, 4, 2.0, median);
+        test_case(10, 20, 15.0, median);
+        test_case(20, 20, 20.0, median);
     }
 
     #[test]
     fn test_mode() {
-        test_case(-10, 10, 0, |x| x.mode());
-        test_case(0, 4, 2, |x| x.mode());
-        test_case(10, 20, 15, |x| x.mode());
-        test_case(20, 20, 20, |x| x.mode());
+        let mode = |x: DiscreteUniform| x.mode().unwrap();
+        test_case(-10, 10, 0, mode);
+        test_case(0, 4, 2, mode);
+        test_case(10, 20, 15, mode);
+        test_case(20, 20, 20, mode);
     }
 
     #[test]
     fn test_pmf() {
-        test_case(-10, 10, 0.04761904761904761904762, |x| x.pmf(-5));
-        test_case(-10, 10, 0.04761904761904761904762, |x| x.pmf(1));
-        test_case(-10, 10, 0.04761904761904761904762, |x| x.pmf(10));
-        test_case(-10, -10, 0.0, |x| x.pmf(0));
-        test_case(-10, -10, 1.0, |x| x.pmf(-10));
+        let pmf = |arg: i64| move |x: DiscreteUniform| x.pmf(arg);
+        test_case(-10, 10, 0.04761904761904761904762, pmf(-5));
+        test_case(-10, 10, 0.04761904761904761904762, pmf(1));
+        test_case(-10, 10, 0.04761904761904761904762, pmf(10));
+        test_case(-10, -10, 0.0, pmf(0));
+        test_case(-10, -10, 1.0, pmf(-10));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, |x| x.ln_pmf(-5));
-        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, |x| x.ln_pmf(1));
-        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, |x| x.ln_pmf(10));
-        test_case(-10, -10, f64::NEG_INFINITY, |x| x.ln_pmf(0));
-        test_case(-10, -10, 0.0, |x| x.ln_pmf(-10));
+        let ln_pmf = |arg: i64| move |x: DiscreteUniform| x.ln_pmf(arg);
+        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, ln_pmf(-5));
+        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, ln_pmf(1));
+        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, ln_pmf(10));
+        test_case(-10, -10, f64::NEG_INFINITY, ln_pmf(0));
+        test_case(-10, -10, 0.0, ln_pmf(-10));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(-10, 10, 0.2857142857142857142857, |x| x.cdf(-5.0));
-        test_case(-10, 10, 0.5714285714285714285714, |x| x.cdf(1.0));
-        test_case(-10, 10, 1.0, |x| x.cdf(10.0));
-        test_case(-10, -10, 1.0, |x| x.cdf(-10.0));
+        let cdf = |arg: f64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(-10, 10, 0.2857142857142857142857, cdf(-5.0));
+        test_case(-10, 10, 0.5714285714285714285714, cdf(1.0));
+        test_case(-10, 10, 1.0, cdf(10.0));
+        test_case(-10, -10, 1.0, cdf(-10.0));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        test_case(0, 3, 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: f64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(0, 3, 0.0, cdf(-1.0));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        test_case(0, 3, 1.0, |x| x.cdf(5.0));
+        let cdf = |arg: f64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(0, 3, 1.0, cdf(5.0));
     }
 }
