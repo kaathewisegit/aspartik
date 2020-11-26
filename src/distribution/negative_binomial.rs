@@ -13,8 +13,8 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{NegativeBinomial, Discrete};
-/// use statrs::statistics::DistributionDiscrete;
-/// use statrs::prec::{almost_eq};
+/// use statrs::statistics::DiscreteDistribution;
+/// use statrs::prec::almost_eq;
 ///
 /// let r = NegativeBinomial::new(4.0, 0.5).unwrap();
 /// assert_eq!(r.mean().unwrap(), 4.0);
@@ -406,34 +406,22 @@ mod tests {
 
     #[test]
     fn test_cdf() {
-        let cdf = |arg: f64| move |x: NegativeBinomial| x.cdf(arg);
-        test_case(1.0, 0.0, 0.0, cdf(0.2));
-        test_almost(3.0, 0.2, 0.01090199062, 1e-08, cdf(0.2));
-        test_almost(10.0, 0.2, 1.718008933e-07, 1e-08, cdf(0.2));
-        test_almost(1.0, 0.3, 0.3481950594, 1e-08, cdf(0.2));
-        test_almost(3.0, 0.3, 0.03611085389, 1e-08, cdf(0.2));
-        test_almost(1.0, 0.3, 0.3, 1e-08, cdf(0.0));
-        test_almost(1.0, 0.3, 0.3481950594, 1e-08, cdf(0.2));
-        test_almost(1.0, 0.3, 0.51, 1e-08, cdf(1.0));
-        test_almost(1.0, 0.3, 0.83193, 1e-08, cdf(4.0));
-        test_almost(1.0, 0.3, 0.9802267326, 1e-08, cdf(10.0));
-        test_case(1.0, 1.0, 1.0, cdf(0.0));
-        test_case(1.0, 1.0, 1.0, cdf(1.0));
-        test_almost(10.0, 0.75, 0.05631351471, 1e-08, cdf(0.0));
-        test_almost(10.0, 0.75, 0.1970973015, 1e-08, cdf(1.0));
-        test_almost(10.0, 0.75, 0.9960578583, 1e-08, cdf(10.0));
-    }
-
-    #[test]
-    fn test_cdf_lower_bound() {
-        let cdf = |arg: f64| move |x: NegativeBinomial| x.cdf(arg);
-        test_case(3.0, 0.5, 0.0, cdf(-1.0));
+        let cdf = |arg: u64| move |x: NegativeBinomial| x.cdf(arg);
+        test_almost(1.0, 0.3, 0.3, 1e-08, cdf(0));
+        test_almost(1.0, 0.3, 0.51, 1e-08, cdf(1));
+        test_almost(1.0, 0.3, 0.83193, 1e-08, cdf(4));
+        test_almost(1.0, 0.3, 0.9802267326, 1e-08, cdf(10));
+        test_case(1.0, 1.0, 1.0, cdf(0));
+        test_case(1.0, 1.0, 1.0, cdf(1));
+        test_almost(10.0, 0.75, 0.05631351471, 1e-08, cdf(0));
+        test_almost(10.0, 0.75, 0.1970973015, 1e-08, cdf(1));
+        test_almost(10.0, 0.75, 0.9960578583, 1e-08, cdf(10));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        let cdf = |arg: f64| move |x: NegativeBinomial| x.cdf(arg);
-        test_case(3.0, 0.5, 1.0, cdf(100.0));
+        let cdf = |arg: u64| move |x: NegativeBinomial| x.cdf(arg);
+        test_case(3.0, 0.5, 1.0, cdf(100));
     }
 
     // TODO: figure out the best way to re-implement this test. We currently

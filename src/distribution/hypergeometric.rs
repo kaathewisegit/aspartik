@@ -503,26 +503,26 @@ mod tests {
 
     #[test]
     fn test_cdf() {
-        let cdf = |arg: f64| move |x: Hypergeometric| x.cdf(arg);
-        test_case(2, 1, 1, 0.5, cdf(0.3));
-        test_almost(10, 1, 1, 0.9, 1e-14, cdf(0.3));
-        test_almost(10, 5, 3, 0.5, 1e-15, cdf(1.1));
-        test_almost(10, 5, 3, 11.0 / 12.0, 1e-14, cdf(2.0));
-        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, cdf(0.0));
-        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, cdf(0.5));
-        test_almost(10000, 2, 9800, 19799.0 / 499950.0, 1e-12, cdf(1.5));
+        let cdf = |arg: u64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(2, 1, 1, 0.5, cdf(0));
+        test_almost(10, 1, 1, 0.9, 1e-14, cdf(0));
+        test_almost(10, 5, 3, 0.5, 1e-15, cdf(1));
+        test_almost(10, 5, 3, 11.0 / 12.0, 1e-14, cdf(2));
+        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, cdf(0));
+        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, cdf(0));
+        test_almost(10000, 2, 9800, 19799.0 / 499950.0, 1e-12, cdf(1));
     }
 
     #[test]
     fn test_cdf_arg_too_big() {
-        let cdf = |arg: f64| move |x: Hypergeometric| x.cdf(arg);
-        test_case(0, 0, 0, 1.0, cdf(0.5));
+        let cdf = |arg: u64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(0, 0, 0, 1.0, cdf(0));
     }
 
     #[test]
     fn test_cdf_arg_too_small() {
-        let cdf = |arg: f64| move |x: Hypergeometric| x.cdf(arg);
-        test_case(2, 2, 2, 0.0, cdf(0.0));
+        let cdf = |arg: u64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(2, 2, 2, 0.0, cdf(0));
     }
 
     #[test]

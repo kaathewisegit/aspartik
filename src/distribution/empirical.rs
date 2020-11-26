@@ -29,13 +29,13 @@ impl<T: PartialOrd> Ord for NonNAN<T> {
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Continuous};
+/// use statrs::distribution::{Continuous, Empirical};
 /// use statrs::statistics::Distribution;
 ///
 /// let samples = vec![0.0, 5.0, 10.0];
 ///
-/// let empirical = Empirical::from(samples).unwrap();
-/// assert_eq!(empirical.mean().unwrap(), 3.0);
+/// let empirical = Empirical::from_vec(samples);
+/// assert_eq!(empirical.mean().unwrap(), 5.0);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Empirical {

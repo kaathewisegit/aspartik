@@ -477,43 +477,37 @@ mod tests {
 
     #[test]
     fn test_cdf() {
-        let cdf = |arg: f64| move |x: Binomial| x.cdf(arg);
-        test_case(0.0, 1, 1.0, cdf(0.0));
-        test_case(0.0, 1, 1.0, cdf(1.0));
-        test_case(0.0, 3, 1.0, cdf(0.0));
-        test_case(0.0, 3, 1.0, cdf(1.0));
-        test_case(0.0, 3, 1.0, cdf(3.0));
-        test_case(0.0, 10, 1.0, cdf(0.0));
-        test_case(0.0, 10, 1.0, cdf(1.0));
-        test_case(0.0, 10, 1.0, cdf(10.0));
-        test_almost(0.3, 1, 0.7, 1e-15, cdf(0.0));
-        test_case(0.3, 1, 1.0, cdf(1.0));
-        test_almost(0.3, 3, 0.343, 1e-14, cdf(0.0));
-        test_almost(0.3, 3, 0.784, 1e-15, cdf(1.0));
-        test_case(0.3, 3, 1.0, cdf(3.0));
-        test_almost(0.3, 10, 0.0282475249, 1e-16, cdf(0.0));
-        test_almost(0.3, 10, 0.1493083459, 1e-14, cdf(1.0));
-        test_case(0.3, 10, 1.0, cdf(10.0));
-        test_case(1.0, 1, 0.0, cdf(0.0));
-        test_case(1.0, 1, 1.0, cdf(1.0));
-        test_case(1.0, 3, 0.0, cdf(0.0));
-        test_case(1.0, 3, 0.0, cdf(1.0));
-        test_case(1.0, 3, 1.0, cdf(3.0));
-        test_case(1.0, 10, 0.0, cdf(0.0));
-        test_case(1.0, 10, 0.0, cdf(1.0));
-        test_case(1.0, 10, 1.0, cdf(10.0));
-    }
-
-    #[test]
-    fn test_cdf_lower_bound() {
-        let cdf = |arg: f64| move |x: Binomial| x.cdf(arg);
-        test_case(0.5, 3, 0.0, cdf(-1.0));
+        let cdf = |arg: u64| move |x: Binomial| x.cdf(arg);
+        test_case(0.0, 1, 1.0, cdf(0));
+        test_case(0.0, 1, 1.0, cdf(1));
+        test_case(0.0, 3, 1.0, cdf(0));
+        test_case(0.0, 3, 1.0, cdf(1));
+        test_case(0.0, 3, 1.0, cdf(3));
+        test_case(0.0, 10, 1.0, cdf(0));
+        test_case(0.0, 10, 1.0, cdf(1));
+        test_case(0.0, 10, 1.0, cdf(10));
+        test_almost(0.3, 1, 0.7, 1e-15, cdf(0));
+        test_case(0.3, 1, 1.0, cdf(1));
+        test_almost(0.3, 3, 0.343, 1e-14, cdf(0));
+        test_almost(0.3, 3, 0.784, 1e-15, cdf(1));
+        test_case(0.3, 3, 1.0, cdf(3));
+        test_almost(0.3, 10, 0.0282475249, 1e-16, cdf(0));
+        test_almost(0.3, 10, 0.1493083459, 1e-14, cdf(1));
+        test_case(0.3, 10, 1.0, cdf(10));
+        test_case(1.0, 1, 0.0, cdf(0));
+        test_case(1.0, 1, 1.0, cdf(1));
+        test_case(1.0, 3, 0.0, cdf(0));
+        test_case(1.0, 3, 0.0, cdf(1));
+        test_case(1.0, 3, 1.0, cdf(3));
+        test_case(1.0, 10, 0.0, cdf(0));
+        test_case(1.0, 10, 0.0, cdf(1));
+        test_case(1.0, 10, 1.0, cdf(10));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        let cdf = |arg: f64| move |x: Binomial| x.cdf(arg);
-        test_case(0.5, 3, 1.0, cdf(5.0));
+        let cdf = |arg: u64| move |x: Binomial| x.cdf(arg);
+        test_case(0.5, 3, 1.0, cdf(5));
     }
 
     #[test]

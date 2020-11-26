@@ -104,7 +104,7 @@ impl DiscreteCDF<u64, f64> for Categorical {
     ///
     /// # Panics
     ///
-    /// If `x < 0.0` or `x > 1.0`
+    /// If `x <= 0.0` or `x >= 1.0`
     ///
     /// # Formula
     ///
@@ -116,7 +116,7 @@ impl DiscreteCDF<u64, f64> for Categorical {
     /// and `f(x)` is defined as `p_x + f(x - 1)` and `f(0) = p_0` where
     /// `p_x` is the `x`th probability mass
     fn inverse_cdf(&self, x: f64) -> u64 {
-        if x > 1.0 || x < 0.0 {
+        if x >= 1.0 || x <= 0.0 {
             panic!("x must be in [0, 1]")
         }
         let denorm_prob = x * self.cdf_max();
@@ -447,35 +447,29 @@ mod tests {
 
     #[test]
     fn test_cdf() {
-        let cdf = |arg: f64| move |x: Categorical| x.cdf(arg);
-        test_case(&[0.0, 3.0, 1.0, 1.0], 3.0 / 5.0, cdf(1.5));
-        test_case(&[1.0, 1.0, 1.0, 1.0], 0.25, cdf(0.0));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 0.4, cdf(0.8));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(3.2));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4.0));
-    }
-
-    #[test]
-    fn test_cdf_input_low() {
-        let cdf = |arg: f64| move |x: Categorical| x.cdf(arg);
-        test_case(&[4.0, 2.5, 2.5, 1.0], 0.0, cdf(-1.0));
+        let cdf = |arg: u64| move |x: Categorical| x.cdf(arg);
+        test_case(&[0.0, 3.0, 1.0, 1.0], 3.0 / 5.0, cdf(1));
+        test_case(&[1.0, 1.0, 1.0, 1.0], 0.25, cdf(0));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 0.4, cdf(0));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(3));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4));
     }
 
     #[test]
     fn test_cdf_input_high() {
-        let cdf = |arg: f64| move |x: Categorical| x.cdf(arg);
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4.5));
+        let cdf = |arg: u64| move |x: Categorical| x.cdf(arg);
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4));
     }
 
     #[test]
     fn test_inverse_cdf() {
         let inverse_cdf = |arg: f64| move |x: Categorical| x.inverse_cdf(arg);
-        test_case(&[0.0, 3.0, 1.0, 1.0], 1.0, inverse_cdf(0.2));
-        test_case(&[0.0, 3.0, 1.0, 1.0], 1.0, inverse_cdf(0.5));
-        test_case(&[0.0, 3.0, 1.0, 1.0], 3.0, inverse_cdf(0.95));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 0.0, inverse_cdf(0.2));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 1.0, inverse_cdf(0.5));
-        test_case(&[4.0, 2.5, 2.5, 1.0], 3.0, inverse_cdf(0.95));
+        test_case(&[0.0, 3.0, 1.0, 1.0], 1, inverse_cdf(0.2));
+        test_case(&[0.0, 3.0, 1.0, 1.0], 1, inverse_cdf(0.5));
+        test_case(&[0.0, 3.0, 1.0, 1.0], 3, inverse_cdf(0.95));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 0, inverse_cdf(0.2));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 1, inverse_cdf(0.5));
+        test_case(&[4.0, 2.5, 2.5, 1.0], 3, inverse_cdf(0.95));
     }
 
     #[test]

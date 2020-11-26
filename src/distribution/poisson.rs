@@ -431,22 +431,16 @@ mod tests {
 
     #[test]
     fn test_cdf() {
-        let cdf = |arg: f64| move |x: Poisson| x.cdf(arg);
-        test_almost(1.5, 0.5578254003710750000000, 1e-15, cdf(1.0));
-        test_almost(1.5, 0.9999994482467640000000, 1e-15, cdf(10.0));
-        test_case(1.5, 1.0, cdf(20.0));
-        test_almost(5.4, 0.0289061180327211000000, 1e-16, cdf(1.0));
-        test_almost(5.4, 0.9774863006897650000000, 1e-15, cdf(10.0));
-        test_almost(5.4, 0.9999997199928290000000, 1e-15, cdf(20.0));
-        test_almost(10.8, 0.0002407141402518290000, 1e-16, cdf(1.0));
-        test_almost(10.8, 0.4839692359955690000000, 1e-15, cdf(10.0));
-        test_almost(10.8, 0.9961800769608090000000, 1e-15, cdf(20.0));
-    }
-
-    #[test]
-    fn test_neg_cdf() {
-        let cdf = |arg: f64| move |x: Poisson| x.cdf(arg);
-        test_case(1.5, 0.0, cdf(-1.0));
+        let cdf = |arg: u64| move |x: Poisson| x.cdf(arg);
+        test_almost(1.5, 0.5578254003710750000000, 1e-15, cdf(1));
+        test_almost(1.5, 0.9999994482467640000000, 1e-15, cdf(10));
+        test_case(1.5, 1.0, cdf(20));
+        test_almost(5.4, 0.0289061180327211000000, 1e-16, cdf(1));
+        test_almost(5.4, 0.9774863006897650000000, 1e-15, cdf(10));
+        test_almost(5.4, 0.9999997199928290000000, 1e-15, cdf(20));
+        test_almost(10.8, 0.0002407141402518290000, 1e-16, cdf(1));
+        test_almost(10.8, 0.4839692359955690000000, 1e-15, cdf(10));
+        test_almost(10.8, 0.9961800769608090000000, 1e-15, cdf(20));
     }
 
     #[test]

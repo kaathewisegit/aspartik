@@ -397,17 +397,17 @@ mod tests {
 
     #[test]
     fn test_cdf() {
-        let cdf = |arg: f64| move |x: Geometric| x.cdf(arg);
-        test_case(1.0, 1.0, cdf(1.0));
-        test_case(1.0, 1.0, cdf(2.0));
-        test_almost(0.5, 0.5, 1e-10, cdf(1.0));
-        test_almost(0.5, 0.75, 1e-10, cdf(2.0));
+        let cdf = |arg: u64| move |x: Geometric| x.cdf(arg);
+        test_case(1.0, 1.0, cdf(1));
+        test_case(1.0, 1.0, cdf(2));
+        test_almost(0.5, 0.5, 1e-10, cdf(1));
+        test_almost(0.5, 0.75, 1e-10, cdf(2));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        let cdf = |arg: f64| move |x: Geometric| x.cdf(arg);
-        test_case(0.3, 0.0, cdf(0.0));
+        let cdf = |arg: u64| move |x: Geometric| x.cdf(arg);
+        test_case(0.3, 0.0, cdf(0));
     }
 
     #[test]

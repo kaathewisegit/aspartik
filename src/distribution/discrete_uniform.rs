@@ -357,22 +357,22 @@ mod tests {
 
     #[test]
     fn test_cdf() {
-        let cdf = |arg: f64| move |x: DiscreteUniform| x.cdf(arg);
-        test_case(-10, 10, 0.2857142857142857142857, cdf(-5.0));
-        test_case(-10, 10, 0.5714285714285714285714, cdf(1.0));
-        test_case(-10, 10, 1.0, cdf(10.0));
-        test_case(-10, -10, 1.0, cdf(-10.0));
+        let cdf = |arg: i64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(-10, 10, 0.2857142857142857142857, cdf(-5));
+        test_case(-10, 10, 0.5714285714285714285714, cdf(1));
+        test_case(-10, 10, 1.0, cdf(10));
+        test_case(-10, -10, 1.0, cdf(-10));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        let cdf = |arg: f64| move |x: DiscreteUniform| x.cdf(arg);
-        test_case(0, 3, 0.0, cdf(-1.0));
+        let cdf = |arg: i64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(0, 3, 0.0, cdf(-1));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        let cdf = |arg: f64| move |x: DiscreteUniform| x.cdf(arg);
-        test_case(0, 3, 1.0, cdf(5.0));
+        let cdf = |arg: i64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(0, 3, 1.0, cdf(5));
     }
 }

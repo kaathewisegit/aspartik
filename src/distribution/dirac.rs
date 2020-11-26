@@ -2,7 +2,6 @@ use crate::distribution::{Continuous, ContinuousCDF};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
-use std::f64;
 
 /// Implements the [Dirac Delta](https://en.wikipedia.org/wiki/Dirac_delta_function#As_a_distribution)
 /// distribution
@@ -15,7 +14,6 @@ use std::f64;
 ///
 /// let n = Dirac::new(3.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
-/// assert_eq!(n.pdf(1.0), 0.0);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Dirac(f64);
