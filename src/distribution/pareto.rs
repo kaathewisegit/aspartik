@@ -1,7 +1,6 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::distributions::OpenClosed01;
 use rand::Rng;
 use std::f64;
@@ -13,7 +12,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Pareto, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let p = Pareto::new(1.0, 2.0).unwrap();
@@ -84,7 +83,7 @@ impl Pareto {
     }
 }
 
-impl Distribution<f64> for Pareto {
+impl ::rand::distributions::Distribution<f64> for Pareto {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         // Inverse transform sampling
         let u: f64 = rng.sample(OpenClosed01);
@@ -146,7 +145,7 @@ impl Max<f64> for Pareto {
     }
 }
 
-impl ExtDistribution<f64> for Pareto {
+impl Distribution<f64> for Pareto {
     /// Returns the mean of the Pareto distribution
     ///
     /// # Formula

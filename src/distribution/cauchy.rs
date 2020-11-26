@@ -1,7 +1,6 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -80,7 +79,7 @@ impl Cauchy {
     }
 }
 
-impl Distribution<f64> for Cauchy {
+impl ::rand::distributions::Distribution<f64> for Cauchy {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         self.location + self.scale * (f64::consts::PI * (r.gen::<f64>() - 0.5)).tan()
     }
@@ -130,7 +129,7 @@ impl Max<f64> for Cauchy {
     }
 }
 
-impl ExtDistribution<f64> for Cauchy {
+impl Distribution<f64> for Cauchy {
     /// Returns the entropy of the cauchy distribution
     ///
     /// # Formula

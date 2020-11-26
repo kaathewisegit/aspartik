@@ -3,7 +3,6 @@ use crate::function::gamma;
 use crate::is_zero;
 use crate::statistics::*;
 use crate::{consts, Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -14,7 +13,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Weibull, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = Weibull::new(10.0, 1.0).unwrap();
@@ -91,7 +90,7 @@ impl Weibull {
     }
 }
 
-impl Distribution<f64> for Weibull {
+impl ::rand::distributions::Distribution<f64> for Weibull {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         let x: f64 = rng.gen();
         self.scale * (-x.ln()).powf(1.0 / self.shape)
@@ -146,7 +145,7 @@ impl Max<f64> for Weibull {
     }
 }
 
-impl ExtDistribution<f64> for Weibull {
+impl Distribution<f64> for Weibull {
     /// Returns the mean of the weibull distribution
     ///
     /// # Formula

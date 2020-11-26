@@ -1,7 +1,6 @@
 use crate::distribution::{Discrete, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::distributions::OpenClosed01;
 use rand::Rng;
 use std::{f64, u64};
@@ -14,7 +13,7 @@ use std::{f64, u64};
 ///
 /// ```
 /// use statrs::distribution::{Geometric, Discrete};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Geometric::new(0.3).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0 / 0.3);
@@ -69,7 +68,7 @@ impl Geometric {
     }
 }
 
-impl Distribution<f64> for Geometric {
+impl ::rand::distributions::Distribution<f64> for Geometric {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         if ulps_eq!(self.p, 1.0) {
             1.0
@@ -130,7 +129,7 @@ impl Max<u64> for Geometric {
     }
 }
 
-impl ExtDistribution<f64> for Geometric {
+impl Distribution<f64> for Geometric {
     /// Returns the mean of the geometric distribution
     ///
     /// # Formula

@@ -1,9 +1,7 @@
 use crate::distribution::{Discrete, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
-use std::f64;
 
 /// Implements the [Discrete
 /// Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
@@ -13,7 +11,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{DiscreteUniform, Discrete};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = DiscreteUniform::new(0, 5).unwrap();
 /// assert_eq!(n.mean().unwrap(), 2.5);
@@ -53,9 +51,9 @@ impl DiscreteUniform {
     }
 }
 
-impl Distribution<f64> for DiscreteUniform {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        r.gen_range(self.min, self.max + 1) as f64
+impl ::rand::distributions::Distribution<f64> for DiscreteUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        rng.gen_range(self.min, self.max + 1) as f64
     }
 }
 
@@ -110,7 +108,7 @@ impl Max<i64> for DiscreteUniform {
     }
 }
 
-impl ExtDistribution<f64> for DiscreteUniform {
+impl Distribution<f64> for DiscreteUniform {
     /// Returns the mean of the discrete uniform distribution
     ///
     /// # Formula

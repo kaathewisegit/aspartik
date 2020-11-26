@@ -1,7 +1,6 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::distributions::Uniform as RandUniform;
 use rand::Rng;
 use std::f64;
@@ -14,7 +13,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Uniform, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Uniform::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.5);
@@ -55,7 +54,7 @@ impl Uniform {
     }
 }
 
-impl Distribution<f64> for Uniform {
+impl ::rand::distributions::Distribution<f64> for Uniform {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         let d = RandUniform::new_inclusive(self.min, self.max);
         r.sample(d)
@@ -95,7 +94,7 @@ impl Max<f64> for Uniform {
     }
 }
 
-impl ExtDistribution<f64> for Uniform {
+impl Distribution<f64> for Uniform {
     /// Returns the mean for the continuous uniform distribution
     ///
     /// # Formula

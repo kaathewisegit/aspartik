@@ -7,7 +7,6 @@ use nalgebra::{
     base::{dimension::DimName, MatrixN, VectorN},
     DefaultAllocator, Dim, DimMin, U1,
 };
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -19,7 +18,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Dirichlet, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use nalgebra::Vector3;
 /// use statrs::statistics::{MeanN, Covariance};
 ///
@@ -150,7 +149,7 @@ where
     }
 }
 
-impl<D> Distribution<VectorN<f64, D>> for Dirichlet<D>
+impl<D> ::rand::distributions::Distribution<VectorN<f64, D>> for Dirichlet<D>
 where
     D: Dim + DimMin<D, Output = D> + DimName,
     DefaultAllocator: Allocator<f64, D>,

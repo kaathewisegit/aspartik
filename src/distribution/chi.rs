@@ -2,7 +2,6 @@ use crate::distribution::{Continuous, Univariate};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -13,7 +12,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Chi, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = Chi::new(2.0).unwrap();
@@ -69,7 +68,7 @@ impl Chi {
     }
 }
 
-impl Distribution<f64> for Chi {
+impl ::rand::distributions::Distribution<f64> for Chi {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         (0..self.freedom as i64)
             .fold(0.0, |acc, _| {
@@ -130,7 +129,7 @@ impl Max<f64> for Chi {
     }
 }
 
-impl ExtDistribution<f64> for Chi {
+impl Distribution<f64> for Chi {
     /// Returns the mean of the chi distribution
     ///
     /// # Remarks

@@ -1,7 +1,6 @@
 use crate::distribution::{CheckedDiscrete, Discrete};
 use crate::function::factorial;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 
 /// Implements the
@@ -89,7 +88,7 @@ impl Multinomial {
     }
 }
 
-impl Distribution<Vec<f64>> for Multinomial {
+impl ::rand::distributions::Distribution<Vec<f64>> for Multinomial {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
         let p_cdf = super::categorical::prob_mass_to_cdf(self.p());
         let mut res = vec![0.0; self.p.len()];

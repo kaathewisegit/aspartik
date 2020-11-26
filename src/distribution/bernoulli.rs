@@ -1,7 +1,6 @@
 use crate::distribution::{Binomial, Discrete, Univariate};
 use crate::statistics::*;
 use crate::Result;
-use rand::distributions::Distribution;
 use rand::Rng;
 
 /// Implements the
@@ -14,7 +13,7 @@ use rand::Rng;
 ///
 /// ```
 /// use statrs::distribution::{Bernoulli, Discrete};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Bernoulli::new(0.5).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.5);
@@ -81,7 +80,7 @@ impl Bernoulli {
     }
 }
 
-impl Distribution<f64> for Bernoulli {
+impl ::rand::distributions::Distribution<f64> for Bernoulli {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         rng.gen_bool(self.p()) as u8 as f64
     }
@@ -133,7 +132,7 @@ impl Max<u64> for Bernoulli {
     }
 }
 
-impl ExtDistribution<f64> for Bernoulli {
+impl Distribution<f64> for Bernoulli {
     /// Returns the mean of the bernoulli
     /// distribution
     ///

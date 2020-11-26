@@ -1,7 +1,6 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -13,7 +12,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Triangular, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Triangular::new(0.0, 5.0, 2.5).unwrap();
 /// assert_eq!(n.mean().unwrap(), 7.5 / 3.0);
@@ -60,7 +59,7 @@ impl Triangular {
     }
 }
 
-impl Distribution<f64> for Triangular {
+impl ::rand::distributions::Distribution<f64> for Triangular {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         sample_unchecked(rng, self.min, self.max, self.mode)
     }
@@ -124,7 +123,7 @@ impl Max<f64> for Triangular {
     }
 }
 
-impl ExtDistribution<f64> for Triangular {
+impl Distribution<f64> for Triangular {
     /// Returns the mean of the triangular distribution
     ///
     /// # Formula

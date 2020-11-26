@@ -2,7 +2,6 @@ use crate::distribution::{self, poisson, Discrete, Univariate};
 use crate::function::{beta, gamma};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -14,7 +13,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{NegativeBinomial, Discrete};
-/// use statrs::statistics::ExtDistributionDiscrete;
+/// use statrs::statistics::DistributionDiscrete;
 /// use statrs::prec::{almost_eq};
 ///
 /// let r = NegativeBinomial::new(4.0, 0.5).unwrap();
@@ -87,7 +86,7 @@ impl NegativeBinomial {
     }
 }
 
-impl Distribution<u64> for NegativeBinomial {
+impl ::rand::distributions::Distribution<u64> for NegativeBinomial {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> u64 {
         let lambda = distribution::gamma::sample_unchecked(r, self.r, (1.0 - self.p) / self.p);
         poisson::sample_unchecked(r, lambda).floor() as u64
@@ -152,7 +151,7 @@ impl Max<u64> for NegativeBinomial {
     }
 }
 
-impl ExtDistributionDiscrete<f64> for NegativeBinomial {
+impl DiscreteDistribution<f64> for NegativeBinomial {
     /// Returns the mean of the negative binomial distribution
     ///
     /// # Formula

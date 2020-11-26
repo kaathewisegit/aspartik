@@ -2,7 +2,6 @@ use crate::distribution::{Continuous, Univariate};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -14,7 +13,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{InverseGamma, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = InverseGamma::new(1.1, 0.1).unwrap();
@@ -88,7 +87,7 @@ impl InverseGamma {
     }
 }
 
-impl Distribution<f64> for InverseGamma {
+impl ::rand::distributions::Distribution<f64> for InverseGamma {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         1.0 / super::gamma::sample_unchecked(r, self.shape, self.rate)
     }
@@ -148,7 +147,7 @@ impl Max<f64> for InverseGamma {
     }
 }
 
-impl ExtDistribution<f64> for InverseGamma {
+impl Distribution<f64> for InverseGamma {
     /// Returns the mean of the inverse distribution
     ///
     /// # None

@@ -2,7 +2,6 @@ use crate::distribution::{Continuous, Univariate};
 use crate::function::erf;
 use crate::statistics::*;
 use crate::{consts, Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -14,7 +13,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{LogNormal, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = LogNormal::new(0.0, 1.0).unwrap();
@@ -56,7 +55,7 @@ impl LogNormal {
     }
 }
 
-impl Distribution<f64> for LogNormal {
+impl ::rand::distributions::Distribution<f64> for LogNormal {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         super::normal::sample_unchecked(rng, self.location, self.scale).exp()
     }
@@ -114,7 +113,7 @@ impl Max<f64> for LogNormal {
     }
 }
 
-impl ExtDistribution<f64> for LogNormal {
+impl Distribution<f64> for LogNormal {
     /// Returns the mean of the log-normal distribution
     ///
     /// # Formula

@@ -1,7 +1,6 @@
 use crate::distribution::{ziggurat, Continuous, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -15,7 +14,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Exp, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Exp::new(1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0);
@@ -68,7 +67,7 @@ impl Exp {
     }
 }
 
-impl Distribution<f64> for Exp {
+impl ::rand::distributions::Distribution<f64> for Exp {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         ziggurat::sample_exp_1(r) / self.rate
     }
@@ -122,7 +121,7 @@ impl Max<f64> for Exp {
     }
 }
 
-impl ExtDistribution<f64> for Exp {
+impl Distribution<f64> for Exp {
     /// Returns the mean of the exponential distribution
     ///
     /// # Formula

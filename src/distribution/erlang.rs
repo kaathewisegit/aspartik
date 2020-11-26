@@ -1,7 +1,6 @@
 use crate::distribution::{Continuous, Gamma, Univariate};
 use crate::statistics::*;
 use crate::Result;
-use rand::distributions::Distribution;
 use rand::Rng;
 
 /// Implements the [Erlang](https://en.wikipedia.org/wiki/Erlang_distribution)
@@ -14,7 +13,7 @@ use rand::Rng;
 ///
 /// ```
 /// use statrs::distribution::{Erlang, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = Erlang::new(3, 1.0).unwrap();
@@ -79,9 +78,9 @@ impl Erlang {
     }
 }
 
-impl Distribution<f64> for Erlang {
+impl ::rand::distributions::Distribution<f64> for Erlang {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        Distribution::sample(&self.g, rng)
+        ::rand::distributions::Distribution::sample(&self.g, rng)
     }
 }
 
@@ -133,7 +132,7 @@ impl Max<f64> for Erlang {
     }
 }
 
-impl ExtDistribution<f64> for Erlang {
+impl Distribution<f64> for Erlang {
     /// Returns the mean of the erlang distribution
     ///
     /// # Remarks

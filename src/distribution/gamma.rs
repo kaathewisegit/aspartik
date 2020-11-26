@@ -2,7 +2,6 @@ use crate::distribution::{Continuous, Univariate};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -13,7 +12,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Gamma, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = Gamma::new(3.0, 1.0).unwrap();
@@ -84,7 +83,7 @@ impl Gamma {
     }
 }
 
-impl Distribution<f64> for Gamma {
+impl ::rand::distributions::Distribution<f64> for Gamma {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         sample_unchecked(rng, self.shape, self.rate)
     }
@@ -148,7 +147,7 @@ impl Max<f64> for Gamma {
     }
 }
 
-impl ExtDistribution<f64> for Gamma {
+impl Distribution<f64> for Gamma {
     /// Returns the mean of the gamma distribution
     ///
     /// # Formula

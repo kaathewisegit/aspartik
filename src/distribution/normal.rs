@@ -2,7 +2,6 @@ use crate::distribution::{ziggurat, CheckedInverseCDF, Continuous, InverseCDF, U
 use crate::function::erf;
 use crate::statistics::*;
 use crate::{consts, Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -13,7 +12,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Normal, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Normal::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.0);
@@ -54,7 +53,7 @@ impl Normal {
     }
 }
 
-impl Distribution<f64> for Normal {
+impl ::rand::distributions::Distribution<f64> for Normal {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         sample_unchecked(rng, self.mean, self.std_dev)
     }
@@ -105,7 +104,7 @@ impl Max<f64> for Normal {
     }
 }
 
-impl ExtDistribution<f64> for Normal {
+impl Distribution<f64> for Normal {
     /// Returns the mean of the normal distribution
     ///
     /// # Remarks

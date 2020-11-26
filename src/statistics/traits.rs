@@ -4,7 +4,6 @@ use ::nalgebra::{
     DefaultAllocator, Dim, DimMin, U1,
 };
 use ::num_traits::float::Float;
-use ::rand::distributions::Distribution;
 
 /// The `Min` trait specifies than an object has a minimum value
 pub trait Min<T> {
@@ -39,7 +38,7 @@ pub trait Max<T> {
     /// ```
     fn max(&self) -> T;
 }
-pub trait ExtDistributionDiscrete<T: Float>: Distribution<u64> {
+pub trait DiscreteDistribution<T: Float>: ::rand::distributions::Distribution<u64> {
     /// Returns the mean, if it exists.
     fn mean(&self) -> Option<T> {
         None
@@ -63,14 +62,14 @@ pub trait ExtDistributionDiscrete<T: Float>: Distribution<u64> {
 }
 
 // TODO: Add extension trait back after fixed traits on [f64]
-pub trait ExtDistribution<T: Float> // : Distribution<T>
+pub trait Distribution<T: Float> // : ::rand::distributions::Distribution<T>
 {
     /// Returns the mean, if it exists.
     ///
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::ExtDistribution;
+    /// use statrs::statistics::Distribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
@@ -84,7 +83,7 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::ExtDistribution;
+    /// use statrs::statistics::Distribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
@@ -98,7 +97,7 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::ExtDistribution;
+    /// use statrs::statistics::Distribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
@@ -112,7 +111,7 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::ExtDistribution;
+    /// use statrs::statistics::Distribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
@@ -126,7 +125,7 @@ pub trait ExtDistribution<T: Float> // : Distribution<T>
     /// # Examples
     ///
     /// ```
-    /// use statrs::statistics::ExtDistribution;
+    /// use statrs::statistics::Distribution;
     /// use statrs::distribution::Uniform;
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();

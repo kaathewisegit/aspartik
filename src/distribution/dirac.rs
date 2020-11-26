@@ -1,7 +1,6 @@
 use crate::distribution::{Continuous, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -12,7 +11,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Dirac, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Dirac::new(3.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
@@ -48,7 +47,7 @@ impl Dirac {
     }
 }
 
-impl Distribution<f64> for Dirac {
+impl ::rand::distributions::Distribution<f64> for Dirac {
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
         self.0
     }
@@ -97,7 +96,7 @@ impl Max<f64> for Dirac {
     }
 }
 
-impl ExtDistribution<f64> for Dirac {
+impl Distribution<f64> for Dirac {
     /// Returns the mean of the dirac distribution
     ///
     /// # Remarks

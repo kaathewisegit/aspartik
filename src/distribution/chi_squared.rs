@@ -1,7 +1,6 @@
 use crate::distribution::{Continuous, Gamma, Univariate};
 use crate::statistics::*;
 use crate::Result;
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -15,7 +14,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{ChiSquared, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = ChiSquared::new(3.0).unwrap();
@@ -97,9 +96,9 @@ impl ChiSquared {
     }
 }
 
-impl Distribution<f64> for ChiSquared {
+impl ::rand::distributions::Distribution<f64> for ChiSquared {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        Distribution::sample(&self.g, r)
+        ::rand::distributions::Distribution::sample(&self.g, r)
     }
 }
 
@@ -150,7 +149,7 @@ impl Max<f64> for ChiSquared {
     }
 }
 
-impl ExtDistribution<f64> for ChiSquared {
+impl Distribution<f64> for ChiSquared {
     /// Returns the mean of the chi-squared distribution
     ///
     /// # Formula

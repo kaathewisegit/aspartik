@@ -2,7 +2,6 @@ use crate::distribution::{Discrete, Univariate};
 use crate::function::factorial;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::cmp;
 use std::f64;
@@ -111,7 +110,7 @@ impl Hypergeometric {
     }
 }
 
-impl Distribution<f64> for Hypergeometric {
+impl ::rand::distributions::Distribution<f64> for Hypergeometric {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         let mut population = self.population as f64;
         let mut successes = self.successes as f64;
@@ -201,7 +200,7 @@ impl Max<u64> for Hypergeometric {
     }
 }
 
-impl ExtDistribution<f64> for Hypergeometric {
+impl Distribution<f64> for Hypergeometric {
     /// Returns the mean of the hypergeometric distribution
     ///
     /// # None

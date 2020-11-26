@@ -2,7 +2,6 @@ use crate::distribution::{Discrete, Univariate};
 use crate::function::{factorial, gamma};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 use std::u64;
@@ -14,7 +13,7 @@ use std::u64;
 ///
 /// ```
 /// use statrs::distribution::{Poisson, Discrete};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = Poisson::new(1.0).unwrap();
@@ -68,7 +67,7 @@ impl Poisson {
     }
 }
 
-impl Distribution<f64> for Poisson {
+impl ::rand::distributions::Distribution<f64> for Poisson {
     /// Generates one sample from the Poisson distribution either by
     /// Knuth's method if lambda < 30.0 or Rejection method PA by
     /// A. C. Atkinson from the Journal of the Royal Statistical Society
@@ -129,7 +128,7 @@ impl Max<u64> for Poisson {
     }
 }
 
-impl ExtDistribution<f64> for Poisson {
+impl Distribution<f64> for Poisson {
     /// Returns the mean of the poisson distribution
     ///
     /// # Formula

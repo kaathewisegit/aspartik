@@ -2,7 +2,6 @@ use crate::distribution::{Continuous, Univariate};
 use crate::function::beta;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -14,7 +13,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{FisherSnedecor, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = FisherSnedecor::new(3.0, 3.0).unwrap();
@@ -90,7 +89,7 @@ impl FisherSnedecor {
     }
 }
 
-impl Distribution<f64> for FisherSnedecor {
+impl ::rand::distributions::Distribution<f64> for FisherSnedecor {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         (super::gamma::sample_unchecked(rng, self.freedom_1 / 2.0, 0.5) * self.freedom_2)
             / (super::gamma::sample_unchecked(rng, self.freedom_2 / 2.0, 0.5) * self.freedom_1)
@@ -156,7 +155,7 @@ impl Max<f64> for FisherSnedecor {
     }
 }
 
-impl ExtDistribution<f64> for FisherSnedecor {
+impl Distribution<f64> for FisherSnedecor {
     /// Returns the mean of the fisher-snedecor distribution
     ///
     /// # Panics

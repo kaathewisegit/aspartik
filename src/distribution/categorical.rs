@@ -1,7 +1,6 @@
 use crate::distribution::{CheckedInverseCDF, Discrete, InverseCDF, Univariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -15,7 +14,7 @@ use std::f64;
 /// ```
 ///
 /// use statrs::distribution::{Categorical, Discrete};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = Categorical::new(&[0.0, 1.0, 2.0]).unwrap();
@@ -75,7 +74,7 @@ impl Categorical {
     }
 }
 
-impl Distribution<f64> for Categorical {
+impl ::rand::distributions::Distribution<f64> for Categorical {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         sample_unchecked(r, &self.cdf)
     }
@@ -184,7 +183,7 @@ impl Max<u64> for Categorical {
     }
 }
 
-impl ExtDistribution<f64> for Categorical {
+impl Distribution<f64> for Categorical {
     /// Returns the mean of the categorical distribution
     ///
     /// # Formula

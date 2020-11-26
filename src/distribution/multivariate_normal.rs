@@ -7,7 +7,6 @@ use nalgebra::{
     base::{dimension::DimName, MatrixN, VectorN},
     Cholesky, DefaultAllocator, Dim, DimMin, LU, U1,
 };
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 use std::f64::consts::{E, PI};
@@ -108,7 +107,7 @@ where
     }
 }
 
-impl<N> Distribution<VectorN<f64, N>> for MultivariateNormal<N>
+impl<N> ::rand::distributions::Distribution<VectorN<f64, N>> for MultivariateNormal<N>
 where
     N: Dim + DimMin<N, Output = N> + DimName,
     DefaultAllocator: Allocator<f64, N>,

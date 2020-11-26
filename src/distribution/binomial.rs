@@ -3,7 +3,6 @@ use crate::function::{beta, factorial};
 use crate::is_zero;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -15,7 +14,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Binomial, Discrete};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Binomial::new(0.5, 5).unwrap();
 /// assert_eq!(n.mean().unwrap(), 2.5);
@@ -88,7 +87,7 @@ impl Binomial {
     }
 }
 
-impl Distribution<f64> for Binomial {
+impl ::rand::distributions::Distribution<f64> for Binomial {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         (0..self.n).fold(0.0, |acc, _| {
             let n: f64 = rng.gen();
@@ -154,7 +153,7 @@ impl Max<u64> for Binomial {
     }
 }
 
-impl ExtDistribution<f64> for Binomial {
+impl Distribution<f64> for Binomial {
     /// Returns the mean of the binomial distribution
     ///
     /// # Formula

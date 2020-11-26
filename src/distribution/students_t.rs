@@ -3,7 +3,6 @@ use crate::function::{beta, gamma};
 use crate::is_zero;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -14,7 +13,7 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{StudentsT, Continuous};
-/// use statrs::statistics::ExtDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
@@ -105,7 +104,7 @@ impl StudentsT {
     }
 }
 
-impl Distribution<f64> for StudentsT {
+impl ::rand::distributions::Distribution<f64> for StudentsT {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         // based on method 2, section 5 in chapter 9 of L. Devroye's
         // "Non-Uniform Random Variate Generation"
@@ -181,7 +180,7 @@ impl Max<f64> for StudentsT {
     }
 }
 
-impl ExtDistribution<f64> for StudentsT {
+impl Distribution<f64> for StudentsT {
     /// Returns the mean of the student's t-distribution
     ///
     /// # None

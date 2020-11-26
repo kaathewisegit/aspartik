@@ -152,7 +152,7 @@ impl Max<f64> for [f64] {
     }
 }
 
-impl ExtDistribution<f64> for [f64] {
+impl Distribution<f64> for [f64] {
     /// Evaluates the sample mean, an estimate of the population
     /// mean.
     ///
@@ -167,7 +167,7 @@ impl ExtDistribution<f64> for [f64] {
     /// extern crate statrs;
     ///
     /// use std::f64;
-    /// use statrs::statistics::ExtDistribution;
+    /// use statrs::statistics::Distribution;
     ///
     /// # fn main() {
     /// let x = [];
@@ -197,7 +197,7 @@ impl ExtDistribution<f64> for [f64] {
     ///
     /// ```
     /// use std::f64;
-    /// use statrs::statistics::ExtDistribution;
+    /// use statrs::statistics::Distribution;
     ///
     /// let x = [];
     /// assert!(x.variance().unwrap().is_nan());
@@ -355,7 +355,6 @@ mod tests {
         assert_almost_eq!(data.quantile(0.325), -37.0 / 240.0, 1e-15);
     }
 
-    // TODO: need coverage for case where data.length > 10 to cover quick sort
     #[test]
     fn test_ranks() {
         let mut sorted_distinct = [1.0, 2.0, 4.0, 7.0, 8.0, 9.0, 10.0, 12.0];
