@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, ContinuousUnivariate};
+use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{Result, StatsError};
@@ -89,7 +89,7 @@ impl ::rand::distributions::Distribution<f64> for Gamma {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for Gamma {
+impl ContinuousCDF<f64, f64> for Gamma {
     /// Calculates the cumulative distribution function for the gamma
     /// distribution
     /// at `x`
@@ -323,7 +323,7 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, shape: f64, rate: f64) -> 
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, Gamma};
+    use crate::distribution::{ContinuousCDF, Continuous, Gamma};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

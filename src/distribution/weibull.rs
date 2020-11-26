@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, ContinuousUnivariate};
+use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::gamma;
 use crate::is_zero;
 use crate::statistics::*;
@@ -97,7 +97,7 @@ impl ::rand::distributions::Distribution<f64> for Weibull {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for Weibull {
+impl ContinuousCDF<f64, f64> for Weibull {
     /// Calculates the cumulative distribution function for the weibull
     /// distribution at `x`
     ///
@@ -307,7 +307,7 @@ impl Continuous<f64, f64> for Weibull {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, Weibull};
+    use crate::distribution::{ContinuousCDF, Continuous, Weibull};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

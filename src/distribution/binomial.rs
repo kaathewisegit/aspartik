@@ -1,4 +1,4 @@
-use crate::distribution::{Discrete, DiscreteUnivariate};
+use crate::distribution::{Discrete, DiscreteCDF};
 use crate::function::{beta, factorial};
 use crate::is_zero;
 use crate::statistics::*;
@@ -100,7 +100,7 @@ impl ::rand::distributions::Distribution<f64> for Binomial {
     }
 }
 
-impl DiscreteUnivariate<u64, f64> for Binomial {
+impl DiscreteCDF<u64, f64> for Binomial {
     /// Calculates the cumulative distribution function for the
     /// binomial distribution at `x`
     ///
@@ -303,7 +303,7 @@ impl Discrete<u64, f64> for Binomial {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{DiscreteUnivariate, Discrete, Binomial};
+    use crate::distribution::{DiscreteCDF, Discrete, Binomial};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

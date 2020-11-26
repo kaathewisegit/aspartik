@@ -1,4 +1,4 @@
-use crate::distribution::{ziggurat, Continuous, ContinuousUnivariate};
+use crate::distribution::{ziggurat, Continuous, ContinuousCDF};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
@@ -73,7 +73,7 @@ impl ::rand::distributions::Distribution<f64> for Exp {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for Exp {
+impl ContinuousCDF<f64, f64> for Exp {
     /// Calculates the cumulative distribution function for the
     /// exponential distribution at `x`
     ///
@@ -241,7 +241,7 @@ impl Continuous<f64, f64> for Exp {
 mod tests {
     use std::f64;
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, Exp};
+    use crate::distribution::{ContinuousCDF, Continuous, Exp};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

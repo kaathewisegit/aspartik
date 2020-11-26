@@ -1,4 +1,4 @@
-use crate::distribution::{Discrete, DiscreteUnivariate};
+use crate::distribution::{Discrete, DiscreteCDF};
 use crate::function::{factorial, gamma};
 use crate::statistics::*;
 use crate::{Result, StatsError};
@@ -78,7 +78,7 @@ impl ::rand::distributions::Distribution<f64> for Poisson {
     }
 }
 
-impl DiscreteUnivariate<u64, f64> for Poisson {
+impl DiscreteCDF<u64, f64> for Poisson {
     /// Calculates the cumulative distribution function for the poisson
     /// distribution at `x`
     ///
@@ -284,7 +284,7 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, lambda: f64) -> f64 {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{DiscreteUnivariate, Discrete, Poisson};
+    use crate::distribution::{DiscreteCDF, Discrete, Poisson};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

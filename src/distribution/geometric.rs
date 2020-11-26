@@ -1,4 +1,4 @@
-use crate::distribution::{Discrete, DiscreteUnivariate};
+use crate::distribution::{Discrete, DiscreteCDF};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::distributions::OpenClosed01;
@@ -79,7 +79,7 @@ impl ::rand::distributions::Distribution<f64> for Geometric {
     }
 }
 
-impl DiscreteUnivariate<u64, f64> for Geometric {
+impl DiscreteCDF<u64, f64> for Geometric {
     /// Calculates the cumulative distribution function for the geometric
     /// distribution at `x`
     ///
@@ -245,7 +245,7 @@ impl Discrete<u64, f64> for Geometric {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{DiscreteUnivariate, Discrete, Geometric};
+    use crate::distribution::{DiscreteCDF, Discrete, Geometric};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

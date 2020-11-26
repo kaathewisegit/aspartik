@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, ContinuousUnivariate};
+use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{Result, StatsError};
@@ -93,7 +93,7 @@ impl ::rand::distributions::Distribution<f64> for InverseGamma {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for InverseGamma {
+impl ContinuousCDF<f64, f64> for InverseGamma {
     /// Calculates the cumulative distribution function for the inverse gamma
     /// distribution at `x`
     ///
@@ -283,7 +283,7 @@ impl Continuous<f64, f64> for InverseGamma {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, InverseGamma};
+    use crate::distribution::{ContinuousCDF, Continuous, InverseGamma};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

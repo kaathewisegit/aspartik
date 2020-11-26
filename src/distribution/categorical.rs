@@ -1,4 +1,4 @@
-use crate::distribution::{Discrete, DiscreteUnivariate};
+use crate::distribution::{Discrete, DiscreteCDF};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
@@ -80,7 +80,7 @@ impl ::rand::distributions::Distribution<f64> for Categorical {
     }
 }
 
-impl DiscreteUnivariate<u64, f64> for Categorical {
+impl DiscreteCDF<u64, f64> for Categorical {
     /// Calculates the cumulative distribution function for the categorical
     /// distribution at `x`
     ///
@@ -319,7 +319,7 @@ fn test_binary_index() {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{Categorical, Discrete, DiscreteUnivariate};
+    use crate::distribution::{Categorical, Discrete, DiscreteCDF};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

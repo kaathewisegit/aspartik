@@ -1,4 +1,4 @@
-use crate::distribution::{Discrete, DiscreteUnivariate};
+use crate::distribution::{Discrete, DiscreteCDF};
 use crate::function::factorial;
 use crate::statistics::*;
 use crate::{Result, StatsError};
@@ -133,7 +133,7 @@ impl ::rand::distributions::Distribution<f64> for Hypergeometric {
     }
 }
 
-impl DiscreteUnivariate<u64, f64> for Hypergeometric {
+impl DiscreteCDF<u64, f64> for Hypergeometric {
     /// Calculates the cumulative distribution function for the hypergeometric
     /// distribution at `x`
     ///
@@ -331,7 +331,7 @@ impl Discrete<u64, f64> for Hypergeometric {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{DiscreteUnivariate, Discrete, Hypergeometric};
+    use crate::distribution::{DiscreteCDF, Discrete, Hypergeometric};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

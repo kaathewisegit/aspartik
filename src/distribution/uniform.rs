@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, ContinuousUnivariate};
+use crate::distribution::{Continuous, ContinuousCDF};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::distributions::Uniform as RandUniform;
@@ -61,7 +61,7 @@ impl ::rand::distributions::Distribution<f64> for Uniform {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for Uniform {
+impl ContinuousCDF<f64, f64> for Uniform {
     /// Calculates the cumulative distribution function for the uniform
     /// distribution
     /// at `x`
@@ -215,7 +215,7 @@ impl Continuous<f64, f64> for Uniform {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, Uniform};
+    use crate::distribution::{ContinuousCDF, Continuous, Uniform};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

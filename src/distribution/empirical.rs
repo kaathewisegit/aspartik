@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, ContinuousUnivariate, Uniform};
+use crate::distribution::{Continuous, ContinuousCDF, Uniform};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use ::num_traits::float::Float;
@@ -118,7 +118,7 @@ impl Empirical {
     // of `F^-1(p) := inf { x | F(x) >= p }`. Needless to say, performance may
     // may be lacking.
     // This function is identical to the default method implementation in the
-    // `ContinuousUnivariate` trait and is used to implement the rand trait `Distribution`.
+    // `ContinuousCDF` trait and is used to implement the rand trait `Distribution`.
     fn __inverse_cdf(&self, p: f64) -> f64 {
         if p == 0.0 {
             return self.min();
@@ -178,7 +178,7 @@ impl Distribution<f64> for Empirical {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for Empirical {
+impl ContinuousCDF<f64, f64> for Empirical {
     fn cdf(&self, x: f64) -> f64 {
         let mut sum = 0;
         for (keys, values) in &self.data {

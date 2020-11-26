@@ -1,4 +1,4 @@
-use crate::distribution::{Binomial, Discrete, DiscreteUnivariate};
+use crate::distribution::{Binomial, Discrete, DiscreteCDF};
 use crate::statistics::*;
 use crate::Result;
 use rand::Rng;
@@ -86,7 +86,7 @@ impl ::rand::distributions::Distribution<f64> for Bernoulli {
     }
 }
 
-impl DiscreteUnivariate<u64, f64> for Bernoulli {
+impl DiscreteCDF<u64, f64> for Bernoulli {
     /// Calculates the cumulative distribution
     /// function for the bernoulli distribution at `x`.
     ///

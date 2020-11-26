@@ -16,10 +16,10 @@ pub fn is_valid_multinomial(arr: &[f64], incl_zero: bool) -> bool {
 pub mod tests {
     use super::is_valid_multinomial;
     use crate::consts::ACC;
-    use crate::distribution::{Continuous, ContinuousUnivariate, Discrete, DiscreteUnivariate};
+    use crate::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
 
     /// cdf should be the integral of the pdf
-    fn check_integrate_pdf_is_cdf<D: ContinuousUnivariate<f64, f64> + Continuous<f64, f64>>(
+    fn check_integrate_pdf_is_cdf<D: ContinuousCDF<f64, f64> + Continuous<f64, f64>>(
         dist: &D,
         x_min: f64,
         x_max: f64,
@@ -63,7 +63,7 @@ pub mod tests {
     }
 
     /// cdf should be the sum of the pmf
-    fn check_sum_pmf_is_cdf<D: DiscreteUnivariate<u64, f64> + Discrete<u64, f64>>(
+    fn check_sum_pmf_is_cdf<D: DiscreteCDF<u64, f64> + Discrete<u64, f64>>(
         dist: &D,
         x_max: u64,
     ) {
@@ -96,7 +96,7 @@ pub mod tests {
     /// Does a series of checks that all continuous distributions must obey.
     /// 99% of the probability mass should be between x_min and x_max.
     pub fn check_continuous_distribution<
-        D: ContinuousUnivariate<f64, f64> + Continuous<f64, f64>,
+        D: ContinuousCDF<f64, f64> + Continuous<f64, f64>,
     >(
         dist: &D,
         x_min: f64,
@@ -115,7 +115,7 @@ pub mod tests {
     /// Does a series of checks that all positive discrete distributions must
     /// obey.
     /// 99% of the probability mass should be between 0 and x_max (inclusive).
-    pub fn check_discrete_distribution<D: DiscreteUnivariate<u64, f64> + Discrete<u64, f64>>(
+    pub fn check_discrete_distribution<D: DiscreteCDF<u64, f64> + Discrete<u64, f64>>(
         dist: &D,
         x_max: u64,
     ) {

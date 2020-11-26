@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, ContinuousUnivariate};
+use crate::distribution::{Continuous, ContinuousCDF};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
@@ -53,7 +53,7 @@ impl ::rand::distributions::Distribution<f64> for Dirac {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for Dirac {
+impl ContinuousCDF<f64, f64> for Dirac {
     /// Calculates the cumulative distribution function for the
     /// dirac distribution at `x`
     ///
@@ -176,7 +176,7 @@ impl Mode<Option<f64>> for Dirac {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, Dirac};
+    use crate::distribution::{ContinuousCDF, Continuous, Dirac};
     use crate::consts::ACC;
 
     fn try_create(v: f64) -> Dirac {

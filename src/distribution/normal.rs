@@ -1,4 +1,4 @@
-use crate::distribution::{ziggurat, Continuous, ContinuousUnivariate};
+use crate::distribution::{ziggurat, Continuous, ContinuousCDF};
 use crate::function::erf;
 use crate::statistics::*;
 use crate::{consts, Result, StatsError};
@@ -59,7 +59,7 @@ impl ::rand::distributions::Distribution<f64> for Normal {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for Normal {
+impl ContinuousCDF<f64, f64> for Normal {
     /// Calculates the cumulative distribution function for the
     /// normal distribution at `x`
     ///
@@ -261,7 +261,7 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, mean: f64, std_dev: f64) -
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, Normal};
+    use crate::distribution::{ContinuousCDF, Continuous, Normal};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, ContinuousUnivariate};
+use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::{beta, gamma};
 use crate::is_zero;
 use crate::statistics::*;
@@ -117,7 +117,7 @@ impl ::rand::distributions::Distribution<f64> for StudentsT {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for StudentsT {
+impl ContinuousCDF<f64, f64> for StudentsT {
     /// Calculates the cumulative distribution function for the student's
     /// t-distribution
     /// at `x`
@@ -365,7 +365,7 @@ impl Continuous<f64, f64> for StudentsT {
 mod tests {
     use std::panic;
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, StudentsT};
+    use crate::distribution::{ContinuousCDF, Continuous, StudentsT};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

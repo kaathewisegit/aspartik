@@ -69,9 +69,9 @@ mod ziggurat_tables;
 
 use crate::Result;
 
-/// The `ContinuousUnivariate` trait is used to specify an interface for univariate
+/// The `ContinuousCDF` trait is used to specify an interface for univariate
 /// distributions for which cdf float arguments are sensible.
-pub trait ContinuousUnivariate<K: Float, T: Float>: Min<K> + Max<K> {
+pub trait ContinuousCDF<K: Float, T: Float>: Min<K> + Max<K> {
     /// Returns the cumulative distribution function calculated
     /// at `x` for a given distribution. May panic depending
     /// on the implementor.
@@ -79,7 +79,7 @@ pub trait ContinuousUnivariate<K: Float, T: Float>: Min<K> + Max<K> {
     /// # Examples
     ///
     /// ```
-    /// use statrs::distribution::{ContinuousUnivariate, Uniform};
+    /// use statrs::distribution::{ContinuousCDF, Uniform};
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
     /// assert_eq!(0.5, n.cdf(0.5));
@@ -121,9 +121,9 @@ pub trait ContinuousUnivariate<K: Float, T: Float>: Min<K> + Max<K> {
     }
 }
 
-/// The `DiscreteUnivariate` trait is used to specify an interface for univariate
+/// The `DiscreteCDF` trait is used to specify an interface for univariate
 /// discrete distributions.
-pub trait DiscreteUnivariate<K: Bounded + Clone + Num, T: Float>: Min<K> + Max<K> {
+pub trait DiscreteCDF<K: Bounded + Clone + Num, T: Float>: Min<K> + Max<K> {
     /// Returns the cumulative distribution function calculated
     /// at `x` for a given distribution. May panic depending
     /// on the implementor.
@@ -131,7 +131,7 @@ pub trait DiscreteUnivariate<K: Bounded + Clone + Num, T: Float>: Min<K> + Max<K
     /// # Examples
     ///
     /// ```
-    /// use statrs::distribution::{ContinuousUnivariate, Uniform};
+    /// use statrs::distribution::{ContinuousCDF, Uniform};
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
     /// assert_eq!(0.5, n.cdf(0.5));

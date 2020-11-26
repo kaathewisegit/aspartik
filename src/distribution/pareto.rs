@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, ContinuousUnivariate};
+use crate::distribution::{Continuous, ContinuousCDF};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::distributions::OpenClosed01;
@@ -91,7 +91,7 @@ impl ::rand::distributions::Distribution<f64> for Pareto {
     }
 }
 
-impl ContinuousUnivariate<f64, f64> for Pareto {
+impl ContinuousCDF<f64, f64> for Pareto {
     /// Calculates the cumulative distribution function for the Pareto
     /// distribution at `x`
     ///
@@ -306,7 +306,7 @@ impl Continuous<f64, f64> for Pareto {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{ContinuousUnivariate, Continuous, Pareto};
+    use crate::distribution::{ContinuousCDF, Continuous, Pareto};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 
