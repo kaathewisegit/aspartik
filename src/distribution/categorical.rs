@@ -1,4 +1,4 @@
-use crate::distribution::{CheckedInverseCDF, Discrete, InverseCDF, Univariate};
+use crate::distribution::{Discrete, DiscreteUnivariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
@@ -75,12 +75,12 @@ impl Categorical {
 }
 
 impl ::rand::distributions::Distribution<f64> for Categorical {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        sample_unchecked(r, &self.cdf)
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        sample_unchecked(rng, &self.cdf)
     }
 }
 
-impl Univariate<u64, f64> for Categorical {
+impl DiscreteUnivariate<u64, f64> for Categorical {
     /// Calculates the cumulative distribution function for the categorical
     /// distribution at `x`
     ///
@@ -91,25 +91,20 @@ impl Univariate<u64, f64> for Categorical {
     /// ```
     ///
     /// where `p_j` is the probability mass for the `j`th category
-    fn cdf(&self, x: f64) -> f64 {
-        if x < 0.0 {
-            0.0
-        } else if x >= self.cdf.len() as f64 {
+    fn cdf(&self, x: u64) -> f64 {
+        if x >= self.cdf.len() as u64 {
             1.0
         } else {
             self.cdf.get(x as usize).unwrap() / self.cdf_max()
         }
     }
-}
-
-impl InverseCDF<f64> for Categorical {
     /// Calculates the inverse cumulative distribution function for the
     /// categorical
     /// distribution at `x`
     ///
     /// # Panics
     ///
-    /// If `x <= 0.0` or `x >= 1.0`
+    /// If `x < 0.0` or `x > 1.0`
     ///
     /// # Formula
     ///
@@ -120,36 +115,12 @@ impl InverseCDF<f64> for Categorical {
     /// where `i` is the first index such that `x < f(i)`
     /// and `f(x)` is defined as `p_x + f(x - 1)` and `f(0) = p_0` where
     /// `p_x` is the `x`th probability mass
-    fn inverse_cdf(&self, x: f64) -> f64 {
-        self.checked_inverse_cdf(x).unwrap()
-    }
-}
-
-impl CheckedInverseCDF<f64> for Categorical {
-    /// Calculates the inverse cumulative distribution function for the
-    /// categorical
-    /// distribution at `x`
-    ///
-    /// # Errors
-    ///
-    /// If `x <= 0.0` or `x >= 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// i
-    /// ```
-    ///
-    /// where `i` is the first index such that `x < f(i)`
-    /// and `f(x)` is defined as `p_x + f(x - 1)` and `f(0) = p_0` where
-    /// `p_x` is the `x`th probability mass
-    fn checked_inverse_cdf(&self, x: f64) -> Result<f64> {
-        if x <= 0.0 || x >= 1.0 {
-            Err(StatsError::ArgIntervalExcl("x", 0.0, 1.0))
-        } else {
-            let denorm_prob = x * self.cdf_max();
-            Ok(binary_index(&self.cdf, denorm_prob) as f64)
+    fn inverse_cdf(&self, x: f64) -> u64 {
+        if x > 1.0 || x < 0.0 {
+            panic!("x must be in [0, 1]")
         }
+        let denorm_prob = x * self.cdf_max();
+        binary_index(&self.cdf, denorm_prob) as u64
     }
 }
 
@@ -256,7 +227,7 @@ impl Median<f64> for Categorical {
     /// CDF^-1(0.5)
     /// ```
     fn median(&self) -> f64 {
-        self.inverse_cdf(0.5)
+        self.inverse_cdf(0.5) as f64
     }
 }
 
@@ -348,7 +319,7 @@ fn test_binary_index() {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{Categorical, CheckedInverseCDF, Discrete, InverseCDF, Univariate};
+    use crate::distribution::{Categorical, Discrete, DiscreteUnivariate};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate};
 use crate::function::beta;
 use crate::statistics::*;
 use crate::{Result, StatsError};
@@ -96,7 +96,7 @@ impl ::rand::distributions::Distribution<f64> for FisherSnedecor {
     }
 }
 
-impl Univariate<f64, f64> for FisherSnedecor {
+impl ContinuousUnivariate<f64, f64> for FisherSnedecor {
     /// Calculates the cumulative distribution function for the fisher-snedecor
     /// distribution
     /// at `x`
@@ -330,7 +330,7 @@ impl Continuous<f64, f64> for FisherSnedecor {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, FisherSnedecor};
+    use crate::distribution::{ContinuousUnivariate, Continuous, FisherSnedecor};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

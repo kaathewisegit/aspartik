@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
@@ -85,7 +85,7 @@ impl ::rand::distributions::Distribution<f64> for Cauchy {
     }
 }
 
-impl Univariate<f64, f64> for Cauchy {
+impl ContinuousUnivariate<f64, f64> for Cauchy {
     /// Calculates the cumulative distribution function for the
     /// cauchy distribution at `x`
     ///
@@ -213,7 +213,7 @@ impl Continuous<f64, f64> for Cauchy {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, Cauchy};
+    use crate::distribution::{ContinuousUnivariate, Continuous, Cauchy};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

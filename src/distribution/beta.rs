@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate};
 use crate::function::{beta, gamma};
 use crate::is_zero;
 use crate::statistics::*;
@@ -93,7 +93,7 @@ impl ::rand::distributions::Distribution<f64> for Beta {
     }
 }
 
-impl Univariate<f64, f64> for Beta {
+impl ContinuousUnivariate<f64, f64> for Beta {
     /// Calculates the cumulative distribution function for the beta
     /// distribution
     /// at `x`
@@ -400,7 +400,7 @@ impl Continuous<f64, f64> for Beta {
 #[cfg(test)]
 mod tests {
     use crate::distribution::internal::*;
-    use crate::distribution::{Beta, Continuous, Univariate};
+    use crate::distribution::{Beta, Continuous, ContinuousUnivariate};
     use crate::statistics::*;
     use crate::consts::ACC;
 

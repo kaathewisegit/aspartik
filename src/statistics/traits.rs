@@ -5,6 +5,8 @@ use ::nalgebra::{
 };
 use ::num_traits::float::Float;
 
+const STEPS: usize = 1_000;
+
 /// The `Min` trait specifies than an object has a minimum value
 pub trait Min<T> {
     /// Returns the minimum value in the domain of a given distribution
@@ -61,10 +63,14 @@ pub trait DiscreteDistribution<T: Float>: ::rand::distributions::Distribution<u6
     }
 }
 
-// TODO: Add extension trait back after fixed traits on [f64]
-pub trait Distribution<T: Float> // : ::rand::distributions::Distribution<T>
-{
+pub trait Distribution<T: Float>: ::rand::distributions::Distribution<T> {
     /// Returns the mean, if it exists.
+    /// The default implementation returns an estimation
+    /// based on random samples. This is a crude estimate
+    /// for when no further information is known about the
+    /// distribution. More accurate statements about the
+    /// mean can and should be given by overriding the
+    /// default implementation.
     ///
     /// # Examples
     ///
@@ -76,9 +82,22 @@ pub trait Distribution<T: Float> // : ::rand::distributions::Distribution<T>
     /// assert_eq!(0.5, n.mean().unwrap());
     /// ```
     fn mean(&self) -> Option<T> {
-        None
+        let mut rng = ::rand::rngs::OsRng;
+        let mut mean = T::zero();
+        let mut steps = T::zero();
+        for _ in 0..STEPS {
+            steps = steps + T::one();
+            mean = mean + Self::sample(self, &mut rng);
+        }
+        Some(mean / steps)
     }
     /// Returns the variance, if it exists.
+    /// The default implementation returns an estimation
+    /// based on random samples. This is a crude estimate
+    /// for when no further information is known about the
+    /// distribution. More accurate statements about the
+    /// variance can and should be given by overriding the
+    /// default implementation.
     ///
     /// # Examples
     ///
@@ -90,7 +109,18 @@ pub trait Distribution<T: Float> // : ::rand::distributions::Distribution<T>
     /// assert_eq!(1.0 / 12.0, n.variance().unwrap());
     /// ```
     fn variance(&self) -> Option<T> {
-        None
+        let mut rng = ::rand::rngs::OsRng;
+        let mut mean = T::zero();
+        let mut variance = T::zero();
+        let mut steps = T::zero();
+        for _ in 0..STEPS {
+            steps = steps + T::one();
+            let sample = Self::sample(self, &mut rng);
+            variance = variance + (steps - T::one()) * (sample - mean) * (sample - mean) / steps;
+            mean = mean + (sample - mean) / steps;
+        }
+        steps = steps - T::one();
+        Some(variance / steps)
     }
     /// Returns the standard deviation, if it exists.
     ///

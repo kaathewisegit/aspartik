@@ -1,4 +1,4 @@
-use crate::distribution::{Discrete, Univariate};
+use crate::distribution::{Discrete, DiscreteUnivariate};
 use crate::function::factorial;
 use crate::statistics::*;
 use crate::{Result, StatsError};
@@ -133,7 +133,7 @@ impl ::rand::distributions::Distribution<f64> for Hypergeometric {
     }
 }
 
-impl Univariate<u64, f64> for Hypergeometric {
+impl DiscreteUnivariate<u64, f64> for Hypergeometric {
     /// Calculates the cumulative distribution function for the hypergeometric
     /// distribution at `x`
     ///
@@ -144,17 +144,17 @@ impl Univariate<u64, f64> for Hypergeometric {
     /// k+1-K, k+1-n; k+2, N+k+2-K-n; 1)
     /// ```
     ///
-    // where `N` is population, `K` is successes, `n` is draws,
+    /// where `N` is population, `K` is successes, `n` is draws,
     /// and `p_F_q` is the [generalized hypergeometric
     /// function](https://en.wikipedia.
     /// org/wiki/Generalized_hypergeometric_function)
-    fn cdf(&self, x: f64) -> f64 {
-        if x < self.min() as f64 {
+    fn cdf(&self, x: u64) -> f64 {
+        if x < self.min() {
             0.0
-        } else if x >= self.max() as f64 {
+        } else if x >= self.max() {
             1.0
         } else {
-            let k = x.floor() as u64;
+            let k = x;
             let ln_denom = factorial::ln_binomial(self.population, self.draws);
             (0..k + 1).fold(0.0, |acc, i| {
                 acc + (factorial::ln_binomial(self.successes, i)
@@ -331,7 +331,7 @@ impl Discrete<u64, f64> for Hypergeometric {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Discrete, Hypergeometric};
+    use crate::distribution::{DiscreteUnivariate, Discrete, Hypergeometric};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

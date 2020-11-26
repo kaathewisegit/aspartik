@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Gamma, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate, Gamma};
 use crate::statistics::*;
 use crate::Result;
 use rand::Rng;
@@ -102,7 +102,7 @@ impl ::rand::distributions::Distribution<f64> for ChiSquared {
     }
 }
 
-impl Univariate<f64, f64> for ChiSquared {
+impl ContinuousUnivariate<f64, f64> for ChiSquared {
     /// Calculates the cumulative distribution function for the
     /// chi-squared distribution at `x`
     ///

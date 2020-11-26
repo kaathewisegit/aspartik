@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::distributions::OpenClosed01;
@@ -91,7 +91,7 @@ impl ::rand::distributions::Distribution<f64> for Pareto {
     }
 }
 
-impl Univariate<f64, f64> for Pareto {
+impl ContinuousUnivariate<f64, f64> for Pareto {
     /// Calculates the cumulative distribution function for the Pareto
     /// distribution at `x`
     ///
@@ -306,7 +306,7 @@ impl Continuous<f64, f64> for Pareto {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, Pareto};
+    use crate::distribution::{ContinuousUnivariate, Continuous, Pareto};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 
@@ -462,11 +462,11 @@ mod tests {
         test_case(1.0, 1.0, f64::NEG_INFINITY, ln_pdf(0.1));
         test_case(1.0, 1.0, 0.0, ln_pdf(1.0));
         test_almost(1.0, 1.0, 4f64.ln() - 9f64.ln(), 1e-14, ln_pdf(1.5));
-        test_almost(1.0, 1.0, -25f64.ln(), 1e-14, ln_pdf(5.0));
-        test_almost(1.0, 1.0, -2500f64.ln(), 1e-14, ln_pdf(50.0));
+        test_almost(1.0, 1.0, -(25f64.ln()), 1e-14, ln_pdf(5.0));
+        test_almost(1.0, 1.0, -(2500f64.ln()), 1e-14, ln_pdf(50.0));
         test_almost(1.0, 4.0, 4f64.ln(), 1e-14, ln_pdf(1.0));
         test_almost(1.0, 4.0, 128f64.ln() - 243f64.ln(), 1e-14, ln_pdf(1.5));
-        test_almost(1.0, 4.0, -78125000f64.ln(), 1e-14, ln_pdf(50.0));
+        test_almost(1.0, 4.0, -(78125000f64.ln()), 1e-14, ln_pdf(50.0));
         test_almost(3.0, 2.0, 2f64.ln() - 3f64.ln(), 1e-14, ln_pdf(3.0));
         test_almost(3.0, 2.0, 18f64.ln() - 125f64.ln(), 1e-14, ln_pdf(5.0));
         test_almost(25.0, 100.0, 1.5777218104420236e-30f64.ln(), 1e-12, ln_pdf(50.0));

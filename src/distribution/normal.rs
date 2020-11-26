@@ -1,4 +1,4 @@
-use crate::distribution::{ziggurat, CheckedInverseCDF, Continuous, InverseCDF, Univariate};
+use crate::distribution::{ziggurat, Continuous, ContinuousUnivariate};
 use crate::function::erf;
 use crate::statistics::*;
 use crate::{consts, Result, StatsError};
@@ -59,7 +59,7 @@ impl ::rand::distributions::Distribution<f64> for Normal {
     }
 }
 
-impl Univariate<f64, f64> for Normal {
+impl ContinuousUnivariate<f64, f64> for Normal {
     /// Calculates the cumulative distribution function for the
     /// normal distribution at `x`
     ///
@@ -73,6 +73,28 @@ impl Univariate<f64, f64> for Normal {
     /// `erf` is the error function
     fn cdf(&self, x: f64) -> f64 {
         cdf_unchecked(x, self.mean, self.std_dev)
+    }
+    /// Calculates the inverse cumulative distribution function for the
+    /// normal distribution at `x`
+    ///
+    /// # Panics
+    ///
+    /// If `x < 0.0` or `x > 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// μ - sqrt(2) * σ * erfc_inv(2x)
+    /// ```
+    ///
+    /// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
+    /// the inverse of the complementary error function
+    fn inverse_cdf(&self, x: f64) -> f64 {
+        if x < 0.0 || x > 1.0 {
+            panic!("x must be in [0, 1]");
+        } else {
+            self.mean - (self.std_dev * f64::consts::SQRT_2 * erf::erfc_inv(2.0 * x))
+        }
     }
 }
 
@@ -210,52 +232,6 @@ impl Continuous<f64, f64> for Normal {
     }
 }
 
-impl InverseCDF<f64> for Normal {
-    /// Calculates the inverse cumulative distribution function for the
-    /// normal distribution at `x`
-    ///
-    /// # Panics
-    ///
-    /// If `x < 0.0` or `x > 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// μ - sqrt(2) * σ * erfc_inv(2x)
-    /// ```
-    ///
-    /// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
-    /// the inverse of the complementary error function
-    fn inverse_cdf(&self, x: f64) -> f64 {
-        self.checked_inverse_cdf(x).unwrap()
-    }
-}
-
-impl CheckedInverseCDF<f64> for Normal {
-    /// Calculates the inverse cumulative distribution function for the
-    /// normal distribution at `x`
-    ///
-    /// # Errors
-    ///
-    /// If `x < 0.0` or `x > 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// μ - sqrt(2) * σ * erfc_inv(2x)
-    /// ```
-    ///
-    /// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
-    /// the inverse of the complementary error function
-    fn checked_inverse_cdf(&self, x: f64) -> Result<f64> {
-        if x < 0.0 || x > 1.0 {
-            Err(StatsError::ArgIntervalIncl("x", 0.0, 1.0))
-        } else {
-            Ok(self.mean - (self.std_dev * f64::consts::SQRT_2 * erf::erfc_inv(2.0 * x)))
-        }
-    }
-}
-
 /// performs an unchecked cdf calculation for a normal distribution
 /// with the given mean and standard deviation at x
 pub fn cdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
@@ -285,7 +261,7 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, mean: f64, std_dev: f64) -
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, Normal, InverseCDF, CheckedInverseCDF};
+    use crate::distribution::{ContinuousUnivariate, Continuous, Normal};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 
@@ -472,18 +448,6 @@ mod tests {
     fn test_continuous() {
         tests::check_continuous_distribution(&try_create(0.0, 1.0), -10.0, 10.0);
         tests::check_continuous_distribution(&try_create(20.0, 0.5), 10.0, 30.0);
-    }
-
-    #[test]
-    fn test_checked_inverse_cdf_input_low() {
-        let n = try_create(5.0, 2.0);
-        assert!(n.checked_inverse_cdf(-0.1).is_err());
-    }
-
-    #[test]
-    fn test_checked_inverse_cdf_input_high() {
-        let n = try_create(5.0, 2.0);
-        assert!(n.checked_inverse_cdf(1.1).is_err());
     }
 
     #[test]

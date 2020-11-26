@@ -1,17 +1,24 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate, Uniform};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use ::num_traits::float::Float;
+use core::cmp::Ordering;
 use rand::Rng;
 use std::collections::BTreeMap;
 
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq)]
 struct NonNAN<T>(T);
 
-impl<T: Float> std::cmp::Eq for NonNAN<T> {}
+impl<T: PartialEq> Eq for NonNAN<T> {}
 
-impl<T: Float> std::cmp::Ord for NonNAN<T> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+impl<T: PartialOrd> PartialOrd for NonNAN<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl<T: PartialOrd> Ord for NonNAN<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
         self.partial_cmp(other).unwrap()
     }
 }
@@ -104,17 +111,61 @@ impl Empirical {
             }
         }
     }
-}
-
-impl Max<Option<f64>> for Empirical {
-    fn max(&self) -> Option<f64> {
-        self.data.iter().rev().map(|(key, _)| key.0).next()
+    // Due to issues with rounding and floating-point accuracy the default
+    // implementation may be ill-behaved.
+    // Specialized inverse cdfs should be used whenever possible.
+    // Performs a binary search on the domain of `cdf` to obtain an approximation
+    // of `F^-1(p) := inf { x | F(x) >= p }`. Needless to say, performance may
+    // may be lacking.
+    // This function is identical to the default method implementation in the
+    // `ContinuousUnivariate` trait and is used to implement the rand trait `Distribution`.
+    fn __inverse_cdf(&self, p: f64) -> f64 {
+        if p == 0.0 {
+            return self.min();
+        };
+        if p == 1.0 {
+            return self.max();
+        };
+        let mut high = 2.0;
+        let mut low = -high;
+        while self.cdf(low) > p {
+            low = low + low;
+        }
+        while self.cdf(high) < p {
+            high = high + high;
+        }
+        let mut i = 16;
+        while i != 0 {
+            let mid = (high + low) / 2.0;
+            if self.cdf(mid) >= p {
+                high = mid;
+            } else {
+                low = mid;
+            }
+            i -= 1;
+        }
+        (high + low) / 2.0
     }
 }
 
-impl Min<Option<f64>> for Empirical {
-    fn min(&self) -> Option<f64> {
-        self.data.iter().map(|(key, _)| key.0).next()
+impl ::rand::distributions::Distribution<f64> for Empirical {
+    fn sample<R: ?Sized + Rng>(&self, rng: &mut R) -> f64 {
+        let uniform = Uniform::new(0.0, 1.0).unwrap();
+        self.__inverse_cdf(uniform.sample(rng))
+    }
+}
+
+/// Panics if number of samples is zero
+impl Max<f64> for Empirical {
+    fn max(&self) -> f64 {
+        self.data.iter().rev().map(|(key, _)| key.0).next().unwrap()
+    }
+}
+
+/// Panics if number of samples is zero
+impl Min<f64> for Empirical {
+    fn min(&self) -> f64 {
+        self.data.iter().map(|(key, _)| key.0).next().unwrap()
     }
 }
 
@@ -127,7 +178,7 @@ impl Distribution<f64> for Empirical {
     }
 }
 
-impl Univariate<f64, f64> for Empirical {
+impl ContinuousUnivariate<f64, f64> for Empirical {
     fn cdf(&self, x: f64) -> f64 {
         let mut sum = 0;
         for (keys, values) in &self.data {
@@ -152,8 +203,8 @@ mod tests {
         assert_eq!(empirical.cdf(5.5), 0.5);
         assert_eq!(empirical.cdf(6.0), 0.5);
         assert_eq!(empirical.cdf(10.0), 1.0);
-        assert_eq!(empirical.min().unwrap(), 5.0);
-        assert_eq!(empirical.max().unwrap(), 10.0);
+        assert_eq!(empirical.min(), 5.0);
+        assert_eq!(empirical.max(), 10.0);
         empirical.add(2.0);
         empirical.add(2.0);
         assert_eq!(empirical.cdf(0.0), 0.0);
@@ -161,8 +212,8 @@ mod tests {
         assert_eq!(empirical.cdf(5.5), 0.75);
         assert_eq!(empirical.cdf(6.0), 0.75);
         assert_eq!(empirical.cdf(10.0), 1.0);
-        assert_eq!(empirical.min().unwrap(), 2.0);
-        assert_eq!(empirical.max().unwrap(), 10.0);
+        assert_eq!(empirical.min(), 2.0);
+        assert_eq!(empirical.max(), 10.0);
         let unchanged = empirical.clone();
         empirical.add(2.0);
         empirical.remove(2.0);

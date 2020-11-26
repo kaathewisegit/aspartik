@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
@@ -65,7 +65,7 @@ impl ::rand::distributions::Distribution<f64> for Triangular {
     }
 }
 
-impl Univariate<f64, f64> for Triangular {
+impl ContinuousUnivariate<f64, f64> for Triangular {
     /// Calculates the cumulative distribution function for the triangular
     /// distribution
     /// at `x`
@@ -281,7 +281,7 @@ fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, min: f64, max: f64, mode: f64)
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, Triangular};
+    use crate::distribution::{ContinuousUnivariate, Continuous, Triangular};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

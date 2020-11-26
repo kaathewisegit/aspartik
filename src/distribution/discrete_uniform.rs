@@ -1,4 +1,4 @@
-use crate::distribution::{Discrete, Univariate};
+use crate::distribution::{Discrete, DiscreteUnivariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
@@ -57,7 +57,7 @@ impl ::rand::distributions::Distribution<f64> for DiscreteUniform {
     }
 }
 
-impl Univariate<i64, f64> for DiscreteUniform {
+impl DiscreteUnivariate<i64, f64> for DiscreteUniform {
     /// Calculates the cumulative distribution function for the
     /// discrete uniform distribution at `x`
     ///
@@ -66,15 +66,15 @@ impl Univariate<i64, f64> for DiscreteUniform {
     /// ```ignore
     /// (floor(x) - min + 1) / (max - min + 1)
     /// ```
-    fn cdf(&self, x: f64) -> f64 {
-        if x < self.min as f64 {
+    fn cdf(&self, x: i64) -> f64 {
+        if x < self.min {
             0.0
-        } else if x >= self.max as f64 {
+        } else if x >= self.max {
             1.0
         } else {
             let lower = self.min as f64;
             let upper = self.max as f64;
-            let ans = (x.floor() - lower + 1.0) / (upper - lower + 1.0);
+            let ans = (x as f64 - lower + 1.0) / (upper - lower + 1.0);
             if ans > 1.0 {
                 1.0
             } else {
@@ -231,7 +231,7 @@ impl Discrete<i64, f64> for DiscreteUniform {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Discrete, DiscreteUniform};
+    use crate::distribution::{DiscreteUnivariate, Discrete, DiscreteUniform};
     use crate::consts::ACC;
 
     fn try_create(min: i64, max: i64) -> DiscreteUniform {

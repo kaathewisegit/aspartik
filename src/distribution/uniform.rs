@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::distributions::Uniform as RandUniform;
@@ -55,13 +55,13 @@ impl Uniform {
 }
 
 impl ::rand::distributions::Distribution<f64> for Uniform {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         let d = RandUniform::new_inclusive(self.min, self.max);
-        r.sample(d)
+        rng.sample(d)
     }
 }
 
-impl Univariate<f64, f64> for Uniform {
+impl ContinuousUnivariate<f64, f64> for Uniform {
     /// Calculates the cumulative distribution function for the uniform
     /// distribution
     /// at `x`
@@ -215,7 +215,7 @@ impl Continuous<f64, f64> for Uniform {
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, Uniform};
+    use crate::distribution::{ContinuousUnivariate, Continuous, Uniform};
     use crate::distribution::internal::*;
     use crate::consts::ACC;
 

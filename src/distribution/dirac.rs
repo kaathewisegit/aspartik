@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate};
 use crate::statistics::*;
 use crate::{Result, StatsError};
 use rand::Rng;
@@ -53,7 +53,7 @@ impl ::rand::distributions::Distribution<f64> for Dirac {
     }
 }
 
-impl Univariate<f64, f64> for Dirac {
+impl ContinuousUnivariate<f64, f64> for Dirac {
     /// Calculates the cumulative distribution function for the
     /// dirac distribution at `x`
     ///
@@ -172,53 +172,11 @@ impl Mode<Option<f64>> for Dirac {
     }
 }
 
-impl Continuous<f64, f64> for Dirac {
-    /// Calculates the probability density function for the dirac distribution
-    /// at `x`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// 1 if x = v, 0 otherwise
-    /// ```
-    ///
-    /// where `v` is point of this dirac distribution
-    fn pdf(&self, x: f64) -> f64 {
-        if x == self.0 {
-            1.0
-        } else {
-            0.0
-        }
-    }
-
-    /// Calculates the log probability density function for the dirac
-    /// distribution
-    /// at `x`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// ln(1 if x = v, 0 otherwise)
-    /// ```
-    ///
-    /// where `v` is the point of this dirac distribution
-    ///
-    /// # Remarks
-    /// This distribution is usually negative infinity everywhere except at `v`.
-    fn ln_pdf(&self, x: f64) -> f64 {
-        if self.0 == x {
-            0.0
-        } else {
-            f64::NEG_INFINITY
-        }
-    }
-}
-
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, Dirac};
+    use crate::distribution::{ContinuousUnivariate, Continuous, Dirac};
     use crate::consts::ACC;
 
     fn try_create(v: f64) -> Dirac {
@@ -309,24 +267,6 @@ mod tests {
         test_case(0.0, 0.0, max);
         test_case(3.0, 3.0, max);
         test_case(f64::NEG_INFINITY, f64::NEG_INFINITY, max);
-    }
-
-    #[test]
-    fn test_pdf() {
-        let pdf = |arg: f64| move |x: Dirac| x.pdf(arg);
-        test_case(0.0, 0.0, pdf(1.0));
-        test_case(3.0, 1.0, pdf(3.0));
-        test_case(f64::NEG_INFINITY, 0.0, pdf(1.0));
-        test_case(f64::NEG_INFINITY, 1.0, pdf(f64::NEG_INFINITY));
-    }
-
-    #[test]
-    fn test_ln_pdf() {
-        let ln_pdf = |arg: f64| move |x: Dirac| x.ln_pdf(arg);
-        test_case(0.0, 0.0, ln_pdf(0.0));
-        test_case(3.0, 0.0, ln_pdf(3.0));
-        test_case(f64::INFINITY, f64::NEG_INFINITY, ln_pdf(1.0));
-        test_case(f64::INFINITY, 0.0, ln_pdf(f64::INFINITY));
     }
 
     #[test]

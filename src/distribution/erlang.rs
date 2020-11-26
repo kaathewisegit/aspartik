@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Gamma, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate, Gamma};
 use crate::statistics::*;
 use crate::Result;
 use rand::Rng;
@@ -84,7 +84,7 @@ impl ::rand::distributions::Distribution<f64> for Erlang {
     }
 }
 
-impl Univariate<f64, f64> for Erlang {
+impl ContinuousUnivariate<f64, f64> for Erlang {
     /// Calculates the cumulative distribution function for the erlang
     /// distribution
     /// at `x`

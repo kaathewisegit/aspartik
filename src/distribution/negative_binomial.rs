@@ -1,4 +1,4 @@
-use crate::distribution::{self, poisson, Discrete, Univariate};
+use crate::distribution::{self, poisson, Discrete, DiscreteUnivariate};
 use crate::function::{beta, gamma};
 use crate::statistics::*;
 use crate::{Result, StatsError};
@@ -93,7 +93,7 @@ impl ::rand::distributions::Distribution<u64> for NegativeBinomial {
     }
 }
 
-impl Univariate<u64, f64> for NegativeBinomial {
+impl DiscreteUnivariate<u64, f64> for NegativeBinomial {
     /// Calculates the cumulative distribution function for the
     /// negative binomial distribution at `x`
     ///
@@ -110,14 +110,8 @@ impl Univariate<u64, f64> for NegativeBinomial {
     /// ```
     ///
     /// where `I_(x)(a, b)` is the regularized incomplete beta function
-    fn cdf(&self, x: f64) -> f64 {
-        if x < 0.0 {
-            0.0
-        } else if x.is_infinite() {
-            1.0
-        } else {
-            1.0 - beta::beta_reg(x + 1.0, self.r, 1.0 - self.p)
-        }
+    fn cdf(&self, x: u64) -> f64 {
+        1.0 - beta::beta_reg(x as f64 + 1.0, self.r, 1.0 - self.p)
     }
 }
 
@@ -239,7 +233,7 @@ impl Discrete<u64, f64> for NegativeBinomial {
 mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Discrete, NegativeBinomial};
+    use crate::distribution::{DiscreteUnivariate, Discrete, NegativeBinomial};
     use crate::consts::ACC;
 
     fn try_create(r: f64, p: f64) -> NegativeBinomial {

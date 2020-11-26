@@ -7,6 +7,7 @@ pub use self::traits::*;
 
 mod iter_statistics;
 mod order_statistics;
-mod slice_statistics;
+// TODO: fix later
+// mod slice_statistics;
 mod statistics;
 mod traits;

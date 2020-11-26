@@ -1,4 +1,4 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousUnivariate};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{Result, StatsError};
@@ -78,7 +78,7 @@ impl ::rand::distributions::Distribution<f64> for Chi {
     }
 }
 
-impl Univariate<f64, f64> for Chi {
+impl ContinuousUnivariate<f64, f64> for Chi {
     /// Calculates the cumulative distribution function for the chi
     /// distribution at `x`.
     ///
@@ -284,7 +284,7 @@ impl Continuous<f64, f64> for Chi {
 mod tests {
     use std::f64;
     use crate::distribution::internal::*;
-    use crate::distribution::{Chi, Continuous, Univariate};
+    use crate::distribution::{Chi, Continuous, ContinuousUnivariate};
     use crate::statistics::*;
     use crate::consts::ACC;
 
