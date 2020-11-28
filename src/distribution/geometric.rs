@@ -1,7 +1,6 @@
-use crate::distribution::{Discrete, Univariate};
+use crate::distribution::{Discrete, DiscreteCDF};
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::distributions::OpenClosed01;
 use rand::Rng;
 use std::{f64, u64};
@@ -14,10 +13,10 @@ use std::{f64, u64};
 ///
 /// ```
 /// use statrs::distribution::{Geometric, Discrete};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Geometric::new(0.3).unwrap();
-/// assert_eq!(n.mean(), 1.0 / 0.3);
+/// assert_eq!(n.mean().unwrap(), 1.0 / 0.3);
 /// assert_eq!(n.pmf(1), 0.3);
 /// assert_eq!(n.pmf(2), 0.21);
 /// ```
@@ -69,7 +68,7 @@ impl Geometric {
     }
 }
 
-impl Distribution<f64> for Geometric {
+impl ::rand::distributions::Distribution<f64> for Geometric {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         if ulps_eq!(self.p, 1.0) {
             1.0
@@ -80,7 +79,7 @@ impl Distribution<f64> for Geometric {
     }
 }
 
-impl Univariate<u64, f64> for Geometric {
+impl DiscreteCDF<u64, f64> for Geometric {
     /// Calculates the cumulative distribution function for the geometric
     /// distribution at `x`
     ///
@@ -89,13 +88,11 @@ impl Univariate<u64, f64> for Geometric {
     /// ```ignore
     /// 1 - (1 - p) ^ (x + 1)
     /// ```
-    fn cdf(&self, x: f64) -> f64 {
-        if x < 1.0 {
+    fn cdf(&self, x: u64) -> f64 {
+        if x == 0 {
             0.0
-        } else if x.is_infinite() {
-            1.0
         } else {
-            1.0 - (1.0 - self.p).powf(x.floor())
+            1.0 - (1.0 - self.p).powf(x as f64)
         }
     }
 }
@@ -130,7 +127,7 @@ impl Max<u64> for Geometric {
     }
 }
 
-impl Mean<f64> for Geometric {
+impl Distribution<f64> for Geometric {
     /// Returns the mean of the geometric distribution
     ///
     /// # Formula
@@ -138,12 +135,9 @@ impl Mean<f64> for Geometric {
     /// ```ignore
     /// 1 / p
     /// ```
-    fn mean(&self) -> f64 {
-        1.0 / self.p
+    fn mean(&self) -> Option<f64> {
+        Some(1.0 / self.p)
     }
-}
-
-impl Variance<f64> for Geometric {
     /// Returns the standard deviation of the geometric distribution
     ///
     /// # Formula
@@ -151,27 +145,9 @@ impl Variance<f64> for Geometric {
     /// ```ignore
     /// (1 - p) / p^2
     /// ```
-    fn variance(&self) -> f64 {
-        (1.0 - self.p) / (self.p * self.p)
+    fn variance(&self) -> Option<f64> {
+        Some((1.0 - self.p) / (self.p * self.p))
     }
-
-    /// Returns the standard deviation of the geometric distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `NAN` if `p` is `1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(1 - p) / p
-    /// ```
-    fn std_dev(&self) -> f64 {
-        (1.0 - self.p).sqrt() / self.p
-    }
-}
-
-impl Entropy<f64> for Geometric {
     /// Returns the entropy of the geometric distribution
     ///
     /// # Formula
@@ -179,12 +155,10 @@ impl Entropy<f64> for Geometric {
     /// ```ignore
     /// (-(1 - p) * log_2(1 - p) - p * log_2(p)) / p
     /// ```
-    fn entropy(&self) -> f64 {
-        (-self.p * self.p.log(2.0) - (1.0 - self.p) * (1.0 - self.p).log(2.0)) / self.p
+    fn entropy(&self) -> Option<f64> {
+        let inv = 1.0 / self.p;
+        Some(-inv * (1. - self.p).log(2.0) + (inv - 1.).log(2.0))
     }
-}
-
-impl Skewness<f64> for Geometric {
     /// Returns the skewness of the geometric distribution
     ///
     /// # Formula
@@ -192,12 +166,15 @@ impl Skewness<f64> for Geometric {
     /// ```ignore
     /// (2 - p) / sqrt(1 - p)
     /// ```
-    fn skewness(&self) -> f64 {
-        (2.0 - self.p) / (1.0 - self.p).sqrt()
+    fn skewness(&self) -> Option<f64> {
+        if ulps_eq!(self.p, 1.0) {
+            return Some(f64::INFINITY);
+        };
+        Some((2.0 - self.p) / (1.0 - self.p).sqrt())
     }
 }
 
-impl Mode<u64> for Geometric {
+impl Mode<Option<u64>> for Geometric {
     /// Returns the mode of the geometric distribution
     ///
     /// # Formula
@@ -205,8 +182,8 @@ impl Mode<u64> for Geometric {
     /// ```ignore
     /// 1
     /// ```
-    fn mode(&self) -> u64 {
-        1
+    fn mode(&self) -> Option<u64> {
+        Some(1)
     }
 }
 
@@ -215,19 +192,13 @@ impl Median<f64> for Geometric {
     ///
     /// # Remarks
     ///
-    /// Returns `1` if `p` is `1`
-    ///
     /// # Formula
     ///
     /// ```ignore
     /// ceil(-1 / log_2(1 - p))
     /// ```
     fn median(&self) -> f64 {
-        if ulps_eq!(self.p, 1.0) {
-            1.0
-        } else {
-            (-f64::consts::LN_2 / (1.0 - self.p).ln()).ceil()
-        }
+        (-f64::consts::LN_2 / (1.0 - self.p).ln()).ceil()
     }
 }
 
@@ -271,12 +242,12 @@ impl Discrete<u64, f64> for Geometric {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::fmt::Debug;
-    use std::{u64, f64};
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Discrete, Geometric};
+    use crate::distribution::{DiscreteCDF, Discrete, Geometric};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(p: f64) -> Geometric {
         let n = Geometric::new(p);
@@ -340,100 +311,109 @@ mod test {
 
     #[test]
     fn test_mean() {
-        test_case(0.3, 1.0 / 0.3, |x| x.mean());
-        test_case(1.0, 1.0, |x| x.mean());
+        let mean = |x: Geometric| x.mean().unwrap();
+        test_case(0.3, 1.0 / 0.3, mean);
+        test_case(1.0, 1.0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(0.3, 0.7 / (0.3 * 0.3), |x| x.variance());
-        test_case(1.0, 0.0, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(0.3, 0.7f64.sqrt() / 0.3, |x| x.std_dev());
-        test_case(1.0, 0.0, |x| x.std_dev());
+        let variance = |x: Geometric| x.variance().unwrap();
+        test_case(0.3, 0.7 / (0.3 * 0.3), variance);
+        test_case(1.0, 0.0, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(0.3, 2.937636330768973333333, 1e-14, |x| x.entropy());
-        test_is_nan(1.0, |x| x.entropy());
+        let entropy = |x: Geometric| x.entropy().unwrap();
+        test_almost(0.3, 2.937636330768973333333, 1e-14, entropy);
+        test_is_nan(1.0, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_almost(0.3, 2.031888635868469187947, 1e-15, |x| x.skewness());
-        test_case(1.0, f64::INFINITY, |x| x.skewness());
+        let skewness = |x: Geometric| x.skewness().unwrap();
+        test_almost(0.3, 2.031888635868469187947, 1e-15, skewness);
+        test_case(1.0, f64::INFINITY, skewness);
     }
 
     #[test]
     fn test_median() {
-        test_case(0.0001, 6932.0, |x| x.median());
-        test_case(0.1, 7.0, |x| x.median());
-        test_case(0.3, 2.0, |x| x.median());
-        test_case(0.9, 1.0, |x| x.median());
-        test_case(1.0, 1.0, |x| x.median());
+        let median = |x: Geometric| x.median();
+        test_case(0.0001, 6932.0, median);
+        test_case(0.1, 7.0, median);
+        test_case(0.3, 2.0, median);
+        test_case(0.9, 1.0, median);
+        // test_case(0.99, 1.0, median);
+        test_case(1.0, 0.0, median);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0.3, 1, |x| x.mode());
-        test_case(1.0, 1, |x| x.mode());
+        let mode = |x: Geometric| x.mode().unwrap();
+        test_case(0.3, 1, mode);
+        test_case(1.0, 1, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(0.3, 1, |x| x.min());
-        test_case(0.3, u64::MAX, |x| x.max());
+        let min = |x: Geometric| x.min();
+        let max = |x: Geometric| x.max();
+        test_case(0.3, 1, min);
+        test_case(0.3, u64::MAX, max);
     }
 
     #[test]
     fn test_pmf() {
-        test_case(0.3, 0.3, |x| x.pmf(1));
-        test_case(0.3, 0.21, |x| x.pmf(2));
-        test_case(1.0, 1.0, |x| x.pmf(1));
-        test_case(1.0, 0.0, |x| x.pmf(2));
-        test_almost(0.5, 0.5, 1e-10, |x| x.pmf(1));
-        test_almost(0.5, 0.25, 1e-10, |x| x.pmf(2));
+        let pmf = |arg: u64| move |x: Geometric| x.pmf(arg);
+        test_case(0.3, 0.3, pmf(1));
+        test_case(0.3, 0.21, pmf(2));
+        test_case(1.0, 1.0, pmf(1));
+        test_case(1.0, 0.0, pmf(2));
+        test_almost(0.5, 0.5, 1e-10, pmf(1));
+        test_almost(0.5, 0.25, 1e-10, pmf(2));
     }
 
     #[test]
     fn test_pmf_lower_bound() {
-        test_case(0.3, 0.0, |x| x.pmf(0));
+        let pmf = |arg: u64| move |x: Geometric| x.pmf(arg);
+        test_case(0.3, 0.0, pmf(0));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_almost(0.3, -1.203972804325935992623, 1e-15, |x| x.ln_pmf(1));
-        test_almost(0.3, -1.560647748264668371535, 1e-15, |x| x.ln_pmf(2));
-        test_case(1.0, 0.0, |x| x.ln_pmf(1));
-        test_case(1.0, f64::NEG_INFINITY, |x| x.ln_pmf(2));
+        let ln_pmf = |arg: u64| move |x: Geometric| x.ln_pmf(arg);
+        test_almost(0.3, -1.203972804325935992623, 1e-15, ln_pmf(1));
+        test_almost(0.3, -1.560647748264668371535, 1e-15, ln_pmf(2));
+        test_case(1.0, 0.0, ln_pmf(1));
+        test_case(1.0, f64::NEG_INFINITY, ln_pmf(2));
     }
 
     #[test]
     fn test_ln_pmf_lower_bound() {
-        test_case(0.3, f64::NEG_INFINITY, |x| x.ln_pmf(0));
+        let ln_pmf = |arg: u64| move |x: Geometric| x.ln_pmf(arg);
+        test_case(0.3, f64::NEG_INFINITY, ln_pmf(0));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(1.0, 1.0, |x| x.cdf(1.0));
-        test_case(1.0, 1.0, |x| x.cdf(2.0));
-        test_almost(0.5, 0.5, 1e-10, |x| x.cdf(1.0));
-        test_almost(0.5, 0.75, 1e-10, |x| x.cdf(2.0));
+        let cdf = |arg: u64| move |x: Geometric| x.cdf(arg);
+        test_case(1.0, 1.0, cdf(1));
+        test_case(1.0, 1.0, cdf(2));
+        test_almost(0.5, 0.5, 1e-10, cdf(1));
+        test_almost(0.5, 0.75, 1e-10, cdf(2));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        test_case(0.3, 0.0, |x| x.cdf(0.0));
+        let cdf = |arg: u64| move |x: Geometric| x.cdf(arg);
+        test_case(0.3, 0.0, cdf(0));
     }
 
     #[test]
     fn test_discrete() {
-        test::check_discrete_distribution(&try_create(0.3), 100);
-        test::check_discrete_distribution(&try_create(0.6), 100);
-        test::check_discrete_distribution(&try_create(1.0), 1);
+        tests::check_discrete_distribution(&try_create(0.3), 100);
+        tests::check_discrete_distribution(&try_create(0.6), 100);
+        tests::check_discrete_distribution(&try_create(1.0), 1);
     }
 }

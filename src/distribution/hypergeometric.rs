@@ -1,8 +1,7 @@
-use crate::distribution::{Discrete, Univariate};
+use crate::distribution::{Discrete, DiscreteCDF};
 use crate::function::factorial;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::cmp;
 use std::f64;
@@ -111,7 +110,7 @@ impl Hypergeometric {
     }
 }
 
-impl Distribution<f64> for Hypergeometric {
+impl ::rand::distributions::Distribution<f64> for Hypergeometric {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         let mut population = self.population as f64;
         let mut successes = self.successes as f64;
@@ -134,7 +133,7 @@ impl Distribution<f64> for Hypergeometric {
     }
 }
 
-impl Univariate<u64, f64> for Hypergeometric {
+impl DiscreteCDF<u64, f64> for Hypergeometric {
     /// Calculates the cumulative distribution function for the hypergeometric
     /// distribution at `x`
     ///
@@ -145,17 +144,17 @@ impl Univariate<u64, f64> for Hypergeometric {
     /// k+1-K, k+1-n; k+2, N+k+2-K-n; 1)
     /// ```
     ///
-    // where `N` is population, `K` is successes, `n` is draws,
+    /// where `N` is population, `K` is successes, `n` is draws,
     /// and `p_F_q` is the [generalized hypergeometric
     /// function](https://en.wikipedia.
     /// org/wiki/Generalized_hypergeometric_function)
-    fn cdf(&self, x: f64) -> f64 {
-        if x < self.min() as f64 {
+    fn cdf(&self, x: u64) -> f64 {
+        if x < self.min() {
             0.0
-        } else if x >= self.max() as f64 {
+        } else if x >= self.max() {
             1.0
         } else {
-            let k = x.floor() as u64;
+            let k = x;
             let ln_denom = factorial::ln_binomial(self.population, self.draws);
             (0..k + 1).fold(0.0, |acc, i| {
                 acc + (factorial::ln_binomial(self.successes, i)
@@ -201,10 +200,10 @@ impl Max<u64> for Hypergeometric {
     }
 }
 
-impl Mean<f64> for Hypergeometric {
+impl Distribution<f64> for Hypergeometric {
     /// Returns the mean of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N` is `0`
     ///
@@ -215,38 +214,16 @@ impl Mean<f64> for Hypergeometric {
     /// ```
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
-    fn mean(&self) -> f64 {
-        self.checked_mean().unwrap()
-    }
-}
-
-impl CheckedMean<f64> for Hypergeometric {
-    /// Returns the mean of the hypergeometric distribution
-    ///
-    /// # Errors
-    ///
-    /// If `N` is `0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// K * n / N
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn checked_mean(&self) -> Result<f64> {
+    fn mean(&self) -> Option<f64> {
         if self.population == 0 {
-            Err(StatsError::ArgGt("population", 0.0))
+            None
         } else {
-            Ok(self.successes as f64 * self.draws as f64 / self.population as f64)
+            Some(self.successes as f64 * self.draws as f64 / self.population as f64)
         }
     }
-}
-
-impl Variance<f64> for Hypergeometric {
     /// Returns the variance of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N <= 1`
     ///
@@ -257,75 +234,19 @@ impl Variance<f64> for Hypergeometric {
     /// ```
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
-    fn variance(&self) -> f64 {
-        self.checked_variance().unwrap()
-    }
-
-    /// Returns the standard deviation of the hypergeometric distribution
-    ///
-    /// # Panics
-    ///
-    /// If `N <= 1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)))
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn std_dev(&self) -> f64 {
-        self.checked_std_dev().unwrap()
-    }
-}
-
-impl CheckedVariance<f64> for Hypergeometric {
-    /// Returns the variance of the hypergeometric distribution
-    ///
-    /// # Errors
-    ///
-    /// If `N <= 1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1))
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn checked_variance(&self) -> Result<f64> {
+    fn variance(&self) -> Option<f64> {
         if self.population <= 1 {
-            Err(StatsError::ArgGt("population", 1.0))
+            None
         } else {
             let (population, successes, draws) = self.values_f64();
             let val = draws * successes * (population - draws) * (population - successes)
                 / (population * population * (population - 1.0));
-            Ok(val)
+            Some(val)
         }
     }
-
-    /// Returns the standard deviation of the hypergeometric distribution
-    ///
-    /// # Errors
-    ///
-    /// If `N <= 1`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(n * (K / N) * ((N - K) / N) * ((N - n) / (N - 1)))
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn checked_std_dev(&self) -> Result<f64> {
-        self.checked_variance().map(|x| x.sqrt())
-    }
-}
-
-impl Skewness<f64> for Hypergeometric {
     /// Returns the skewness of the hypergeometric distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `N <= 2`
     ///
@@ -337,29 +258,9 @@ impl Skewness<f64> for Hypergeometric {
     /// ```
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
-    fn skewness(&self) -> f64 {
-        self.checked_skewness().unwrap()
-    }
-}
-
-impl CheckedSkewness<f64> for Hypergeometric {
-    /// Returns the skewness of the hypergeometric distribution
-    ///
-    /// # Errors
-    ///
-    /// If `N <= 2`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// ((N - 2K) * (N - 1)^(1 / 2) * (N - 2n)) / ([n * K * (N - K) * (N -
-    /// n)]^(1 / 2) * (N - 2))
-    /// ```
-    ///
-    /// where `N` is population, `K` is successes, and `n` is draws
-    fn checked_skewness(&self) -> Result<f64> {
+    fn skewness(&self) -> Option<f64> {
         if self.population <= 2 {
-            Err(StatsError::ArgGt("population", 2.0))
+            None
         } else {
             let (population, successes, draws) = self.values_f64();
             let val = (population - 1.0).sqrt()
@@ -367,12 +268,12 @@ impl CheckedSkewness<f64> for Hypergeometric {
                 * (population - 2.0 * successes)
                 / ((draws * successes * (population - successes) * (population - draws)).sqrt()
                     * (population - 2.0));
-            Ok(val)
+            Some(val)
         }
     }
 }
 
-impl Mode<u64> for Hypergeometric {
+impl Mode<Option<u64>> for Hypergeometric {
     /// Returns the mode of the hypergeometric distribution
     ///
     /// # Formula
@@ -382,8 +283,8 @@ impl Mode<u64> for Hypergeometric {
     /// ```
     ///
     /// where `N` is population, `K` is successes, and `n` is draws
-    fn mode(&self) -> u64 {
-        ((self.draws + 1) * (self.successes + 1) / (self.population + 2)) as u64
+    fn mode(&self) -> Option<u64> {
+        Some(((self.draws + 1) * (self.successes + 1)) / (self.population + 2))
     }
 }
 
@@ -427,12 +328,12 @@ impl Discrete<u64, f64> for Hypergeometric {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
-    use std::f64;
+mod tests {
     use std::fmt::Debug;
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Discrete, Hypergeometric};
+    use crate::distribution::{DiscreteCDF, Discrete, Hypergeometric};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(population: u64, successes: u64, draws: u64) -> Hypergeometric {
         let n = Hypergeometric::new(population, successes, draws);
@@ -494,163 +395,139 @@ mod test {
 
     #[test]
     fn test_mean() {
-        test_case(1, 1, 1, 1.0, |x| x.mean());
-        test_case(2, 1, 1, 0.5, |x| x.mean());
-        test_case(2, 2, 2, 2.0, |x| x.mean());
-        test_case(10, 1, 1, 0.1, |x| x.mean());
-        test_case(10, 5, 3, 15.0 / 10.0, |x| x.mean());
+        let mean = |x: Hypergeometric| x.mean().unwrap();
+        test_case(1, 1, 1, 1.0, mean);
+        test_case(2, 1, 1, 0.5, mean);
+        test_case(2, 2, 2, 2.0, mean);
+        test_case(10, 1, 1, 0.1, mean);
+        test_case(10, 5, 3, 15.0 / 10.0, mean);
     }
 
     #[test]
     #[should_panic]
     fn test_mean_with_population_0() {
-        get_value(0, 0, 0, |x| x.mean());
-    }
-
-    #[test]
-    fn test_checked_mean_with_population_0() {
-        let n = try_create(0, 0, 0);
-        assert!(n.checked_mean().is_err());
+        let mean = |x: Hypergeometric| x.mean().unwrap();
+        get_value(0, 0, 0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(2, 1, 1, 0.25, |x| x.variance());
-        test_case(2, 2, 2, 0.0, |x| x.variance());
-        test_case(10, 1, 1, 81.0 / 900.0, |x| x.variance());
-        test_case(10, 5, 3, 525.0 / 900.0, |x| x.variance());
+        let variance = |x: Hypergeometric| x.variance().unwrap();
+        test_case(2, 1, 1, 0.25, variance);
+        test_case(2, 2, 2, 0.0, variance);
+        test_case(10, 1, 1, 81.0 / 900.0, variance);
+        test_case(10, 5, 3, 525.0 / 900.0, variance);
     }
 
     #[test]
     #[should_panic]
     fn test_variance_with_pop_lte_1() {
-        get_value(1, 1, 1, |x| x.variance());
-    }
-
-    #[test]
-    fn test_checked_variance_with_pop_lte_1() {
-        let n = try_create(1, 1, 1);
-        assert!(n.checked_variance().is_err());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(2, 1, 1, 0.25f64.sqrt(), |x| x.std_dev());
-        test_case(2, 2, 2, 0.0, |x| x.std_dev());
-        test_case(10, 1, 1, (81f64 / 900.0).sqrt(), |x| x.std_dev());
-        test_case(10, 5, 3, (525f64 / 900.0).sqrt(), |x| x.std_dev());
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_std_dev_with_pop_lte_1() {
-        get_value(1, 1, 1, |x| x.std_dev());
-    }
-
-    #[test]
-    fn test_checked_std_dev_with_pop_lte_1() {
-        let n = try_create(1, 1, 1);
-        assert!(n.checked_std_dev().is_err());
+        let variance = |x: Hypergeometric| x.variance().unwrap();
+        get_value(1, 1, 1, variance);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(10, 1, 1, 8.0 / 3.0, |x| x.skewness());
-        test_case(10, 5, 3, 0.0, |x| x.skewness());
+        let skewness = |x: Hypergeometric| x.skewness().unwrap();
+        test_case(10, 1, 1, 8.0 / 3.0, skewness);
+        test_case(10, 5, 3, 0.0, skewness);
     }
 
     #[test]
     #[should_panic]
     fn test_skewness_with_pop_lte_2() {
-        get_value(2, 2, 2, |x| x.skewness());
-    }
-
-    #[test]
-    fn test_checked_skewness_with_pop_lte_2() {
-        let n = try_create(2, 2, 2);
-        assert!(n.checked_skewness().is_err());
+        let skewness = |x: Hypergeometric| x.skewness().unwrap();
+        get_value(2, 2, 2, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0, 0, 0, 0, |x| x.mode());
-        test_case(1, 1, 1, 1, |x| x.mode());
-        test_case(2, 1, 1, 1, |x| x.mode());
-        test_case(2, 2, 2, 2, |x| x.mode());
-        test_case(10, 1, 1, 0, |x| x.mode());
-        test_case(10, 5, 3, 2, |x| x.mode());
+        let mode = |x: Hypergeometric| x.mode().unwrap();
+        test_case(0, 0, 0, 0, mode);
+        test_case(1, 1, 1, 1, mode);
+        test_case(2, 1, 1, 1, mode);
+        test_case(2, 2, 2, 2, mode);
+        test_case(10, 1, 1, 0, mode);
+        test_case(10, 5, 3, 2, mode);
     }
 
     #[test]
     fn test_min() {
-        test_case(0, 0, 0, 0, |x| x.min());
-        test_case(1, 1, 1, 1, |x| x.min());
-        test_case(2, 1, 1, 0, |x| x.min());
-        test_case(2, 2, 2, 2, |x| x.min());
-        test_case(10, 1, 1, 0, |x| x.min());
-        test_case(10, 5, 3, 0, |x| x.min());
+        let min = |x: Hypergeometric| x.min();
+        test_case(0, 0, 0, 0, min);
+        test_case(1, 1, 1, 1, min);
+        test_case(2, 1, 1, 0, min);
+        test_case(2, 2, 2, 2, min);
+        test_case(10, 1, 1, 0, min);
+        test_case(10, 5, 3, 0, min);
     }
 
     #[test]
     fn test_max() {
-        test_case(0, 0, 0, 0, |x| x.max());
-        test_case(1, 1, 1, 1, |x| x.max());
-        test_case(2, 1, 1, 1, |x| x.max());
-        test_case(2, 2, 2, 2, |x| x.max());
-        test_case(10, 1, 1, 1, |x| x.max());
-        test_case(10, 5, 3, 3, |x| x.max());
+        let max = |x: Hypergeometric| x.max();
+        test_case(0, 0, 0, 0, max);
+        test_case(1, 1, 1, 1, max);
+        test_case(2, 1, 1, 1, max);
+        test_case(2, 2, 2, 2, max);
+        test_case(10, 1, 1, 1, max);
+        test_case(10, 5, 3, 3, max);
     }
 
     #[test]
     fn test_pmf() {
-        test_case(0, 0, 0, 1.0, |x| x.pmf(0));
-        test_case(1, 1, 1, 1.0, |x| x.pmf(1));
-        test_case(2, 1, 1, 0.5, |x| x.pmf(0));
-        test_case(2, 1, 1, 0.5, |x| x.pmf(1));
-        test_case(2, 2, 2, 1.0, |x| x.pmf(2));
-        test_case(10, 1, 1, 0.9, |x| x.pmf(0));
-        test_case(10, 1, 1, 0.1, |x| x.pmf(1));
-        test_case(10, 5, 3, 0.41666666666666666667, |x| x.pmf(1));
-        test_case(10, 5, 3, 0.083333333333333333333, |x| x.pmf(3));
+        let pmf = |arg: u64| move |x: Hypergeometric| x.pmf(arg);
+        test_case(0, 0, 0, 1.0, pmf(0));
+        test_case(1, 1, 1, 1.0, pmf(1));
+        test_case(2, 1, 1, 0.5, pmf(0));
+        test_case(2, 1, 1, 0.5, pmf(1));
+        test_case(2, 2, 2, 1.0, pmf(2));
+        test_case(10, 1, 1, 0.9, pmf(0));
+        test_case(10, 1, 1, 0.1, pmf(1));
+        test_case(10, 5, 3, 0.41666666666666666667, pmf(1));
+        test_case(10, 5, 3, 0.083333333333333333333, pmf(3));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_case(0, 0, 0, 0.0, |x| x.ln_pmf(0));
-        test_case(1, 1, 1, 0.0, |x| x.ln_pmf(1));
-        test_case(2, 1, 1, -0.6931471805599453094172, |x| x.ln_pmf(0));
-        test_case(2, 1, 1, -0.6931471805599453094172, |x| x.ln_pmf(1));
-        test_case(2, 2, 2, 0.0, |x| x.ln_pmf(2));
-        test_almost(10, 1, 1, -0.1053605156578263012275, 1e-14, |x| x.ln_pmf(0));
-        test_almost(10, 1, 1, -2.302585092994045684018, 1e-14, |x| x.ln_pmf(1));
-        test_almost(10, 5, 3, -0.875468737353899935621, 1e-14, |x| x.ln_pmf(1));
-        test_almost(10, 5, 3, -2.484906649788000310234, 1e-14, |x| x.ln_pmf(3));
+        let ln_pmf = |arg: u64| move |x: Hypergeometric| x.ln_pmf(arg);
+        test_case(0, 0, 0, 0.0, ln_pmf(0));
+        test_case(1, 1, 1, 0.0, ln_pmf(1));
+        test_case(2, 1, 1, -0.6931471805599453094172, ln_pmf(0));
+        test_case(2, 1, 1, -0.6931471805599453094172, ln_pmf(1));
+        test_case(2, 2, 2, 0.0, ln_pmf(2));
+        test_almost(10, 1, 1, -0.1053605156578263012275, 1e-14, ln_pmf(0));
+        test_almost(10, 1, 1, -2.302585092994045684018, 1e-14, ln_pmf(1));
+        test_almost(10, 5, 3, -0.875468737353899935621, 1e-14, ln_pmf(1));
+        test_almost(10, 5, 3, -2.484906649788000310234, 1e-14, ln_pmf(3));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(2, 1, 1, 0.5, |x| x.cdf(0.3));
-        test_almost(10, 1, 1, 0.9, 1e-14, |x| x.cdf(0.3));
-        test_almost(10, 5, 3, 0.5, 1e-15, |x| x.cdf(1.1));
-        test_almost(10, 5, 3, 11.0 / 12.0, 1e-14, |x| x.cdf(2.0));
-        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, |x| x.cdf(0.0));
-        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, |x| x.cdf(0.5));
-        test_almost(10000, 2, 9800, 19799.0 / 499950.0, 1e-12, |x| x.cdf(1.5));
+        let cdf = |arg: u64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(2, 1, 1, 0.5, cdf(0));
+        test_almost(10, 1, 1, 0.9, 1e-14, cdf(0));
+        test_almost(10, 5, 3, 0.5, 1e-15, cdf(1));
+        test_almost(10, 5, 3, 11.0 / 12.0, 1e-14, cdf(2));
+        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, cdf(0));
+        test_almost(10000, 2, 9800, 199.0 / 499950.0, 1e-14, cdf(0));
+        test_almost(10000, 2, 9800, 19799.0 / 499950.0, 1e-12, cdf(1));
     }
 
     #[test]
     fn test_cdf_arg_too_big() {
-        test_case(0, 0, 0, 1.0, |x| x.cdf(0.5));
+        let cdf = |arg: u64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(0, 0, 0, 1.0, cdf(0));
     }
 
     #[test]
     fn test_cdf_arg_too_small() {
-        test_case(2, 2, 2, 0.0, |x| x.cdf(0.0));
+        let cdf = |arg: u64| move |x: Hypergeometric| x.cdf(arg);
+        test_case(2, 2, 2, 0.0, cdf(0));
     }
 
     #[test]
     fn test_discrete() {
-        test::check_discrete_distribution(&try_create(5, 4, 3), 4);
-        test::check_discrete_distribution(&try_create(3, 2, 1), 2);
+        tests::check_discrete_distribution(&try_create(5, 4, 3), 4);
+        tests::check_discrete_distribution(&try_create(3, 2, 1), 2);
     }
 }

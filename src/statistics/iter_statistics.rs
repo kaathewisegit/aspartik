@@ -242,7 +242,7 @@ where
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64::consts;
     use rand::rngs::StdRng;
     use rand::{SeedableRng};

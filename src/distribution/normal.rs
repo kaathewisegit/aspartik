@@ -1,8 +1,7 @@
-use crate::distribution::{ziggurat, CheckedInverseCDF, Continuous, InverseCDF, Univariate};
+use crate::distribution::{ziggurat, Continuous, ContinuousCDF};
 use crate::function::erf;
 use crate::statistics::*;
 use crate::{consts, Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -13,10 +12,10 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Normal, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Normal::new(0.0, 1.0).unwrap();
-/// assert_eq!(n.mean(), 0.0);
+/// assert_eq!(n.mean().unwrap(), 0.0);
 /// assert_eq!(n.pdf(1.0), 0.2419707245191433497978);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -54,13 +53,13 @@ impl Normal {
     }
 }
 
-impl Distribution<f64> for Normal {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        sample_unchecked(r, self.mean, self.std_dev)
+impl ::rand::distributions::Distribution<f64> for Normal {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        sample_unchecked(rng, self.mean, self.std_dev)
     }
 }
 
-impl Univariate<f64, f64> for Normal {
+impl ContinuousCDF<f64, f64> for Normal {
     /// Calculates the cumulative distribution function for the
     /// normal distribution at `x`
     ///
@@ -74,6 +73,28 @@ impl Univariate<f64, f64> for Normal {
     /// `erf` is the error function
     fn cdf(&self, x: f64) -> f64 {
         cdf_unchecked(x, self.mean, self.std_dev)
+    }
+    /// Calculates the inverse cumulative distribution function for the
+    /// normal distribution at `x`
+    ///
+    /// # Panics
+    ///
+    /// If `x < 0.0` or `x > 1.0`
+    ///
+    /// # Formula
+    ///
+    /// ```ignore
+    /// μ - sqrt(2) * σ * erfc_inv(2x)
+    /// ```
+    ///
+    /// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
+    /// the inverse of the complementary error function
+    fn inverse_cdf(&self, x: f64) -> f64 {
+        if x < 0.0 || x > 1.0 {
+            panic!("x must be in [0, 1]");
+        } else {
+            self.mean - (self.std_dev * f64::consts::SQRT_2 * erf::erfc_inv(2.0 * x))
+        }
     }
 }
 
@@ -105,18 +126,15 @@ impl Max<f64> for Normal {
     }
 }
 
-impl Mean<f64> for Normal {
+impl Distribution<f64> for Normal {
     /// Returns the mean of the normal distribution
     ///
     /// # Remarks
     ///
     /// This is the same mean used to construct the distribution
-    fn mean(&self) -> f64 {
-        self.mean
+    fn mean(&self) -> Option<f64> {
+        Some(self.mean)
     }
-}
-
-impl Variance<f64> for Normal {
     /// Returns the variance of the normal distribution
     ///
     /// # Formula
@@ -126,22 +144,9 @@ impl Variance<f64> for Normal {
     /// ```
     ///
     /// where `σ` is the standard deviation
-    fn variance(&self) -> f64 {
-        self.std_dev * self.std_dev
+    fn variance(&self) -> Option<f64> {
+        Some(self.std_dev * self.std_dev)
     }
-
-    /// Returns the standard deviation of the normal distribution
-    ///
-    /// # Remarks
-    ///
-    /// This is the same standard deviation used to construct the
-    /// distribution
-    fn std_dev(&self) -> f64 {
-        self.std_dev
-    }
-}
-
-impl Entropy<f64> for Normal {
     /// Returns the entropy of the normal distribution
     ///
     /// # Formula
@@ -151,12 +156,9 @@ impl Entropy<f64> for Normal {
     /// ```
     ///
     /// where `σ` is the standard deviation
-    fn entropy(&self) -> f64 {
-        self.std_dev.ln() + consts::LN_SQRT_2PIE
+    fn entropy(&self) -> Option<f64> {
+        Some(self.std_dev.ln() + consts::LN_SQRT_2PIE)
     }
-}
-
-impl Skewness<f64> for Normal {
     /// Returns the skewness of the normal distribution
     ///
     /// # Formula
@@ -164,8 +166,8 @@ impl Skewness<f64> for Normal {
     /// ```ignore
     /// 0
     /// ```
-    fn skewness(&self) -> f64 {
-        0.0
+    fn skewness(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
@@ -184,7 +186,7 @@ impl Median<f64> for Normal {
     }
 }
 
-impl Mode<f64> for Normal {
+impl Mode<Option<f64>> for Normal {
     /// Returns the mode of the normal distribution
     ///
     /// # Formula
@@ -194,8 +196,8 @@ impl Mode<f64> for Normal {
     /// ```
     ///
     /// where `μ` is the mean
-    fn mode(&self) -> f64 {
-        self.mean
+    fn mode(&self) -> Option<f64> {
+        Some(self.mean)
     }
 }
 
@@ -230,52 +232,6 @@ impl Continuous<f64, f64> for Normal {
     }
 }
 
-impl InverseCDF<f64> for Normal {
-    /// Calculates the inverse cumulative distribution function for the
-    /// normal distribution at `x`
-    ///
-    /// # Panics
-    ///
-    /// If `x < 0.0` or `x > 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// μ - sqrt(2) * σ * erfc_inv(2x)
-    /// ```
-    ///
-    /// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
-    /// the inverse of the complementary error function
-    fn inverse_cdf(&self, x: f64) -> f64 {
-        self.checked_inverse_cdf(x).unwrap()
-    }
-}
-
-impl CheckedInverseCDF<f64> for Normal {
-    /// Calculates the inverse cumulative distribution function for the
-    /// normal distribution at `x`
-    ///
-    /// # Errors
-    ///
-    /// If `x < 0.0` or `x > 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// μ - sqrt(2) * σ * erfc_inv(2x)
-    /// ```
-    ///
-    /// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
-    /// the inverse of the complementary error function
-    fn checked_inverse_cdf(&self, x: f64) -> Result<f64> {
-        if x < 0.0 || x > 1.0 {
-            Err(StatsError::ArgIntervalIncl("x", 0.0, 1.0))
-        } else {
-            Ok(self.mean - (self.std_dev * f64::consts::SQRT_2 * erf::erfc_inv(2.0 * x)))
-        }
-    }
-}
-
 /// performs an unchecked cdf calculation for a normal distribution
 /// with the given mean and standard deviation at x
 pub fn cdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
@@ -297,17 +253,17 @@ pub fn ln_pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
 }
 
 /// draws a sample from a normal distribution using the Box-Muller algorithm
-pub fn sample_unchecked<R: Rng + ?Sized>(r: &mut R, mean: f64, std_dev: f64) -> f64 {
-    mean + std_dev * ziggurat::sample_std_normal(r)
+pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, mean: f64, std_dev: f64) -> f64 {
+    mean + std_dev * ziggurat::sample_std_normal(rng)
 }
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
-    use std::f64;
+mod tests {
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, Normal, InverseCDF, CheckedInverseCDF};
+    use crate::distribution::{ContinuousCDF, Continuous, Normal};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(mean: f64, std_dev: f64) -> Normal {
         let n = Normal::new(mean, std_dev);
@@ -317,8 +273,8 @@ mod test {
 
     fn create_case(mean: f64, std_dev: f64) {
         let n = try_create(mean, std_dev);
-        assert_eq!(mean, n.mean());
-        assert_eq!(std_dev, n.std_dev());
+        assert_eq!(mean, n.mean().unwrap());
+        assert_eq!(std_dev, n.std_dev().unwrap());
     }
 
     fn bad_create_case(mean: f64, std_dev: f64) {
@@ -362,151 +318,150 @@ mod test {
 
     #[test]
     fn test_variance() {
-        test_case(0.0, 0.1, 0.1 * 0.1, |x| x.variance());
-        test_case(0.0, 1.0, 1.0, |x| x.variance());
-        test_case(0.0, 10.0, 100.0, |x| x.variance());
-        test_case(0.0, f64::INFINITY, f64::INFINITY, |x| x.variance());
+        let variance = |x: Normal| x.variance().unwrap();
+        test_case(0.0, 0.1, 0.1 * 0.1, variance);
+        test_case(0.0, 1.0, 1.0, variance);
+        test_case(0.0, 10.0, 100.0, variance);
+        test_case(0.0, f64::INFINITY, f64::INFINITY, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(0.0, 0.1, -0.8836465597893729422377, 1e-15, |x| x.entropy());
-        test_case(0.0, 1.0, 1.41893853320467274178, |x| x.entropy());
-        test_case(0.0, 10.0, 3.721523626198718425798, |x| x.entropy());
-        test_case(0.0, f64::INFINITY, f64::INFINITY, |x| x.entropy());
+        let entropy = |x: Normal| x.entropy().unwrap();
+        test_almost(0.0, 0.1, -0.8836465597893729422377, 1e-15, entropy);
+        test_case(0.0, 1.0, 1.41893853320467274178, entropy);
+        test_case(0.0, 10.0, 3.721523626198718425798, entropy);
+        test_case(0.0, f64::INFINITY, f64::INFINITY, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(0.0, 0.1, 0.0, |x| x.skewness());
-        test_case(4.0, 1.0, 0.0, |x| x.skewness());
-        test_case(0.3, 10.0, 0.0, |x| x.skewness());
-        test_case(0.0, f64::INFINITY, 0.0, |x| x.skewness());
+        let skewness = |x: Normal| x.skewness().unwrap();
+        test_case(0.0, 0.1, 0.0, skewness);
+        test_case(4.0, 1.0, 0.0, skewness);
+        test_case(0.3, 10.0, 0.0, skewness);
+        test_case(0.0, f64::INFINITY, 0.0, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(-0.0, 1.0, 0.0, |x| x.mode());
-        test_case(0.0, 1.0, 0.0, |x| x.mode());
-        test_case(0.1, 1.0, 0.1, |x| x.mode());
-        test_case(1.0, 1.0, 1.0, |x| x.mode());
-        test_case(-10.0, 1.0, -10.0, |x| x.mode());
-        test_case(f64::INFINITY, 1.0, f64::INFINITY, |x| x.mode());
+        let mode = |x: Normal| x.mode().unwrap();
+        test_case(-0.0, 1.0, 0.0, mode);
+        test_case(0.0, 1.0, 0.0, mode);
+        test_case(0.1, 1.0, 0.1, mode);
+        test_case(1.0, 1.0, 1.0, mode);
+        test_case(-10.0, 1.0, -10.0, mode);
+        test_case(f64::INFINITY, 1.0, f64::INFINITY, mode);
     }
 
     #[test]
     fn test_median() {
-        test_case(-0.0, 1.0, 0.0, |x| x.median());
-        test_case(0.0, 1.0, 0.0, |x| x.median());
-        test_case(0.1, 1.0, 0.1, |x| x.median());
-        test_case(1.0, 1.0, 1.0, |x| x.median());
-        test_case(-0.0, 1.0, -0.0, |x| x.median());
-        test_case(f64::INFINITY, 1.0, f64::INFINITY, |x| x.median());
+        let median = |x: Normal| x.median();
+        test_case(-0.0, 1.0, 0.0, median);
+        test_case(0.0, 1.0, 0.0, median);
+        test_case(0.1, 1.0, 0.1, median);
+        test_case(1.0, 1.0, 1.0, median);
+        test_case(-0.0, 1.0, -0.0, median);
+        test_case(f64::INFINITY, 1.0, f64::INFINITY, median);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(0.0, 0.1, f64::NEG_INFINITY, |x| x.min());
-        test_case(-3.0, 10.0, f64::NEG_INFINITY, |x| x.min());
-        test_case(0.0, 0.1, f64::INFINITY, |x| x.max());
-        test_case(-3.0, 10.0, f64::INFINITY, |x| x.max());
+        let min = |x: Normal| x.min();
+        let max = |x: Normal| x.max();
+        test_case(0.0, 0.1, f64::NEG_INFINITY, min);
+        test_case(-3.0, 10.0, f64::NEG_INFINITY, min);
+        test_case(0.0, 0.1, f64::INFINITY, max);
+        test_case(-3.0, 10.0, f64::INFINITY, max);
     }
 
     #[test]
     fn test_pdf() {
-        test_almost(10.0, 0.1, 5.530709549844416159162E-49, 1e-64, |x| x.pdf(8.5));
-        test_almost(10.0, 0.1, 0.5399096651318805195056, 1e-14, |x| x.pdf(9.8));
-        test_almost(10.0, 0.1, 3.989422804014326779399, 1e-15, |x| x.pdf(10.0));
-        test_almost(10.0, 0.1, 0.5399096651318805195056, 1e-14, |x| x.pdf(10.2));
-        test_almost(10.0, 0.1, 5.530709549844416159162E-49, 1e-64, |x| x.pdf(11.5));
-        test_case(-5.0, 1.0, 1.486719514734297707908E-6, |x| x.pdf(-10.0));
-        test_case(-5.0, 1.0, 0.01752830049356853736216, |x| x.pdf(-7.5));
-        test_almost(-5.0, 1.0, 0.3989422804014326779399, 1e-16, |x| x.pdf(-5.0));
-        test_case(-5.0, 1.0, 0.01752830049356853736216, |x| x.pdf(-2.5));
-        test_case(-5.0, 1.0, 1.486719514734297707908E-6, |x| x.pdf(0.0));
-        test_case(0.0, 10.0, 0.03520653267642994777747, |x| x.pdf(-5.0));
-        test_almost(0.0, 10.0, 0.03866681168028492069412, 1e-17, |x| x.pdf(-2.5));
-        test_almost(0.0, 10.0, 0.03989422804014326779399, 1e-17, |x| x.pdf(0.0));
-        test_almost(0.0, 10.0, 0.03866681168028492069412, 1e-17, |x| x.pdf(2.5));
-        test_case(0.0, 10.0, 0.03520653267642994777747, |x| x.pdf(5.0));
-        test_almost(10.0, 100.0, 4.398359598042719404845E-4, 1e-19, |x| x.pdf(-200.0));
-        test_case(10.0, 100.0, 0.002178521770325505313831, |x| x.pdf(-100.0));
-        test_case(10.0, 100.0, 0.003969525474770117655105, |x| x.pdf(0.0));
-        test_almost(10.0, 100.0, 0.002660852498987548218204, 1e-18, |x| x.pdf(100.0));
-        test_case(10.0, 100.0, 6.561581477467659126534E-4, |x| x.pdf(200.0));
-        test_case(-5.0, f64::INFINITY, 0.0, |x| x.pdf(-5.0));
-        test_case(-5.0, f64::INFINITY, 0.0, |x| x.pdf(0.0));
-        test_case(-5.0, f64::INFINITY, 0.0, |x| x.pdf(100.0));
+        let pdf = |arg: f64| move |x: Normal| x.pdf(arg);
+        test_almost(10.0, 0.1, 5.530709549844416159162E-49, 1e-64, pdf(8.5));
+        test_almost(10.0, 0.1, 0.5399096651318805195056, 1e-14, pdf(9.8));
+        test_almost(10.0, 0.1, 3.989422804014326779399, 1e-15, pdf(10.0));
+        test_almost(10.0, 0.1, 0.5399096651318805195056, 1e-14, pdf(10.2));
+        test_almost(10.0, 0.1, 5.530709549844416159162E-49, 1e-64, pdf(11.5));
+        test_case(-5.0, 1.0, 1.486719514734297707908E-6, pdf(-10.0));
+        test_case(-5.0, 1.0, 0.01752830049356853736216, pdf(-7.5));
+        test_almost(-5.0, 1.0, 0.3989422804014326779399, 1e-16, pdf(-5.0));
+        test_case(-5.0, 1.0, 0.01752830049356853736216, pdf(-2.5));
+        test_case(-5.0, 1.0, 1.486719514734297707908E-6, pdf(0.0));
+        test_case(0.0, 10.0, 0.03520653267642994777747, pdf(-5.0));
+        test_almost(0.0, 10.0, 0.03866681168028492069412, 1e-17, pdf(-2.5));
+        test_almost(0.0, 10.0, 0.03989422804014326779399, 1e-17, pdf(0.0));
+        test_almost(0.0, 10.0, 0.03866681168028492069412, 1e-17, pdf(2.5));
+        test_case(0.0, 10.0, 0.03520653267642994777747, pdf(5.0));
+        test_almost(10.0, 100.0, 4.398359598042719404845E-4, 1e-19, pdf(-200.0));
+        test_case(10.0, 100.0, 0.002178521770325505313831, pdf(-100.0));
+        test_case(10.0, 100.0, 0.003969525474770117655105, pdf(0.0));
+        test_almost(10.0, 100.0, 0.002660852498987548218204, 1e-18, pdf(100.0));
+        test_case(10.0, 100.0, 6.561581477467659126534E-4, pdf(200.0));
+        test_case(-5.0, f64::INFINITY, 0.0, pdf(-5.0));
+        test_case(-5.0, f64::INFINITY, 0.0, pdf(0.0));
+        test_case(-5.0, f64::INFINITY, 0.0, pdf(100.0));
     }
 
     #[test]
     fn test_ln_pdf() {
-        test_almost(10.0, 0.1, (5.530709549844416159162E-49f64).ln(), 1e-13, |x| x.ln_pdf(8.5));
-        test_almost(10.0, 0.1, (0.5399096651318805195056f64).ln(), 1e-13, |x| x.ln_pdf(9.8));
-        test_almost(10.0, 0.1, (3.989422804014326779399f64).ln(), 1e-15, |x| x.ln_pdf(10.0));
-        test_almost(10.0, 0.1, (0.5399096651318805195056f64).ln(), 1e-13, |x| x.ln_pdf(10.2));
-        test_almost(10.0, 0.1, (5.530709549844416159162E-49f64).ln(), 1e-13, |x| x.ln_pdf(11.5));
-        test_case(-5.0, 1.0, (1.486719514734297707908E-6f64).ln(), |x| x.ln_pdf(-10.0));
-        test_case(-5.0, 1.0, (0.01752830049356853736216f64).ln(), |x| x.ln_pdf(-7.5));
-        test_almost(-5.0, 1.0, (0.3989422804014326779399f64).ln(), 1e-15, |x| x.ln_pdf(-5.0));
-        test_case(-5.0, 1.0, (0.01752830049356853736216f64).ln(), |x| x.ln_pdf(-2.5));
-        test_case(-5.0, 1.0, (1.486719514734297707908E-6f64).ln(), |x| x.ln_pdf(0.0));
-        test_case(0.0, 10.0, (0.03520653267642994777747f64).ln(), |x| x.ln_pdf(-5.0));
-        test_case(0.0, 10.0, (0.03866681168028492069412f64).ln(), |x| x.ln_pdf(-2.5));
-        test_case(0.0, 10.0, (0.03989422804014326779399f64).ln(), |x| x.ln_pdf(0.0));
-        test_case(0.0, 10.0, (0.03866681168028492069412f64).ln(), |x| x.ln_pdf(2.5));
-        test_case(0.0, 10.0, (0.03520653267642994777747f64).ln(), |x| x.ln_pdf(5.0));
-        test_case(10.0, 100.0, (4.398359598042719404845E-4f64).ln(), |x| x.ln_pdf(-200.0));
-        test_case(10.0, 100.0, (0.002178521770325505313831f64).ln(), |x| x.ln_pdf(-100.0));
-        test_almost(10.0, 100.0, (0.003969525474770117655105f64).ln(),1e-15, |x| x.ln_pdf(0.0));
-        test_almost(10.0, 100.0, (0.002660852498987548218204f64).ln(), 1e-15, |x| x.ln_pdf(100.0));
-        test_almost(10.0, 100.0, (6.561581477467659126534E-4f64).ln(), 1e-15, |x| x.ln_pdf(200.0));
-        test_case(-5.0, f64::INFINITY, f64::NEG_INFINITY, |x| x.ln_pdf(-5.0));
-        test_case(-5.0, f64::INFINITY, f64::NEG_INFINITY, |x| x.ln_pdf(0.0));
-        test_case(-5.0, f64::INFINITY, f64::NEG_INFINITY, |x| x.ln_pdf(100.0));
+        let ln_pdf = |arg: f64| move |x: Normal| x.ln_pdf(arg);
+        test_almost(10.0, 0.1, (5.530709549844416159162E-49f64).ln(), 1e-13, ln_pdf(8.5));
+        test_almost(10.0, 0.1, (0.5399096651318805195056f64).ln(), 1e-13, ln_pdf(9.8));
+        test_almost(10.0, 0.1, (3.989422804014326779399f64).ln(), 1e-15, ln_pdf(10.0));
+        test_almost(10.0, 0.1, (0.5399096651318805195056f64).ln(), 1e-13, ln_pdf(10.2));
+        test_almost(10.0, 0.1, (5.530709549844416159162E-49f64).ln(), 1e-13, ln_pdf(11.5));
+        test_case(-5.0, 1.0, (1.486719514734297707908E-6f64).ln(), ln_pdf(-10.0));
+        test_case(-5.0, 1.0, (0.01752830049356853736216f64).ln(), ln_pdf(-7.5));
+        test_almost(-5.0, 1.0, (0.3989422804014326779399f64).ln(), 1e-15, ln_pdf(-5.0));
+        test_case(-5.0, 1.0, (0.01752830049356853736216f64).ln(), ln_pdf(-2.5));
+        test_case(-5.0, 1.0, (1.486719514734297707908E-6f64).ln(), ln_pdf(0.0));
+        test_case(0.0, 10.0, (0.03520653267642994777747f64).ln(), ln_pdf(-5.0));
+        test_case(0.0, 10.0, (0.03866681168028492069412f64).ln(), ln_pdf(-2.5));
+        test_case(0.0, 10.0, (0.03989422804014326779399f64).ln(), ln_pdf(0.0));
+        test_case(0.0, 10.0, (0.03866681168028492069412f64).ln(), ln_pdf(2.5));
+        test_case(0.0, 10.0, (0.03520653267642994777747f64).ln(), ln_pdf(5.0));
+        test_case(10.0, 100.0, (4.398359598042719404845E-4f64).ln(), ln_pdf(-200.0));
+        test_case(10.0, 100.0, (0.002178521770325505313831f64).ln(), ln_pdf(-100.0));
+        test_almost(10.0, 100.0, (0.003969525474770117655105f64).ln(),1e-15, ln_pdf(0.0));
+        test_almost(10.0, 100.0, (0.002660852498987548218204f64).ln(), 1e-15, ln_pdf(100.0));
+        test_almost(10.0, 100.0, (6.561581477467659126534E-4f64).ln(), 1e-15, ln_pdf(200.0));
+        test_case(-5.0, f64::INFINITY, f64::NEG_INFINITY, ln_pdf(-5.0));
+        test_case(-5.0, f64::INFINITY, f64::NEG_INFINITY, ln_pdf(0.0));
+        test_case(-5.0, f64::INFINITY, f64::NEG_INFINITY, ln_pdf(100.0));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(5.0, 2.0, 0.0, |x| x.cdf(f64::NEG_INFINITY));
-        test_almost(5.0, 2.0, 0.0000002866515718, 1e-16, |x| x.cdf(-5.0));
-        test_almost(5.0, 2.0, 0.0002326290790, 1e-13, |x| x.cdf(-2.0));
-        test_almost(5.0, 2.0, 0.006209665325, 1e-12, |x| x.cdf(0.0));
-        test_case(5.0, 2.0, 0.30853753872598689636229538939166226011639782444542207, |x| x.cdf(4.0));
-        test_case(5.0, 2.0, 0.5, |x| x.cdf(5.0));
-        test_case(5.0, 2.0, 0.69146246127401310363770461060833773988360217555457859, |x| x.cdf(6.0));
-        test_almost(5.0, 2.0, 0.993790334674, 1e-12, |x| x.cdf(10.0));
+        let cdf = |arg: f64| move |x: Normal| x.cdf(arg);
+        test_case(5.0, 2.0, 0.0, cdf(f64::NEG_INFINITY));
+        test_almost(5.0, 2.0, 0.0000002866515718, 1e-16, cdf(-5.0));
+        test_almost(5.0, 2.0, 0.0002326290790, 1e-13, cdf(-2.0));
+        test_almost(5.0, 2.0, 0.006209665325, 1e-12, cdf(0.0));
+        test_case(5.0, 2.0, 0.30853753872598689636229538939166226011639782444542207, cdf(4.0));
+        test_case(5.0, 2.0, 0.5, cdf(5.0));
+        test_case(5.0, 2.0, 0.69146246127401310363770461060833773988360217555457859, cdf(6.0));
+        test_almost(5.0, 2.0, 0.993790334674, 1e-12, cdf(10.0));
     }
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(0.0, 1.0), -10.0, 10.0);
-        test::check_continuous_distribution(&try_create(20.0, 0.5), 10.0, 30.0);
-    }
-
-    #[test]
-    fn test_checked_inverse_cdf_input_low() {
-        let n = try_create(5.0, 2.0);
-        assert!(n.checked_inverse_cdf(-0.1).is_err());
-    }
-
-    #[test]
-    fn test_checked_inverse_cdf_input_high() {
-        let n = try_create(5.0, 2.0);
-        assert!(n.checked_inverse_cdf(1.1).is_err());
+        tests::check_continuous_distribution(&try_create(0.0, 1.0), -10.0, 10.0);
+        tests::check_continuous_distribution(&try_create(20.0, 0.5), 10.0, 30.0);
     }
 
     #[test]
     fn test_inverse_cdf() {
-        test_case(5.0, 2.0, f64::NEG_INFINITY, |x| x.inverse_cdf( 0.0));
-        test_almost(5.0, 2.0, -5.0, 1e-14, |x| x.inverse_cdf(0.00000028665157187919391167375233287464535385442301361187883));
-        test_almost(5.0, 2.0, -2.0, 1e-14, |x| x.inverse_cdf(0.0002326290790355250363499258867279847735487493358890356));
-        test_almost(5.0, 2.0, -0.0, 1e-14, |x| x.inverse_cdf(0.0062096653257761351669781045741922211278977469230927036));
-        test_almost(5.0, 2.0, 0.0, 1e-14, |x| x.inverse_cdf(0.0062096653257761351669781045741922211278977469230927036));
-        test_almost(5.0, 2.0, 4.0, 1e-14, |x| x.inverse_cdf(0.30853753872598689636229538939166226011639782444542207));
-        test_almost(5.0, 2.0, 5.0, 1e-14, |x| x.inverse_cdf(0.5));
-        test_almost(5.0, 2.0, 6.0, 1e-14, |x| x.inverse_cdf(0.69146246127401310363770461060833773988360217555457859));
-        test_almost(5.0, 2.0, 10.0, 1e-14, |x| x.inverse_cdf(0.9937903346742238648330218954258077788721022530769078));
-        test_case(5.0, 2.0, f64::INFINITY, |x| x.inverse_cdf(1.0));
+        let inverse_cdf = |arg: f64| move |x: Normal| x.inverse_cdf(arg);
+        test_case(5.0, 2.0, f64::NEG_INFINITY, inverse_cdf( 0.0));
+        test_almost(5.0, 2.0, -5.0, 1e-14, inverse_cdf(0.00000028665157187919391167375233287464535385442301361187883));
+        test_almost(5.0, 2.0, -2.0, 1e-14, inverse_cdf(0.0002326290790355250363499258867279847735487493358890356));
+        test_almost(5.0, 2.0, -0.0, 1e-14, inverse_cdf(0.0062096653257761351669781045741922211278977469230927036));
+        test_almost(5.0, 2.0, 0.0, 1e-14, inverse_cdf(0.0062096653257761351669781045741922211278977469230927036));
+        test_almost(5.0, 2.0, 4.0, 1e-14, inverse_cdf(0.30853753872598689636229538939166226011639782444542207));
+        test_almost(5.0, 2.0, 5.0, 1e-14, inverse_cdf(0.5));
+        test_almost(5.0, 2.0, 6.0, 1e-14, inverse_cdf(0.69146246127401310363770461060833773988360217555457859));
+        test_almost(5.0, 2.0, 10.0, 1e-14, inverse_cdf(0.9937903346742238648330218954258077788721022530769078));
+        test_case(5.0, 2.0, f64::INFINITY, inverse_cdf(1.0));
     }
 }

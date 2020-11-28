@@ -152,7 +152,7 @@ impl Max<f64> for [f64] {
     }
 }
 
-impl Mean<f64> for [f64] {
+impl Distribution<f64> for [f64] {
     /// Evaluates the sample mean, an estimate of the population
     /// mean.
     ///
@@ -167,25 +167,22 @@ impl Mean<f64> for [f64] {
     /// extern crate statrs;
     ///
     /// use std::f64;
-    /// use statrs::statistics::Mean;
+    /// use statrs::statistics::Distribution;
     ///
     /// # fn main() {
     /// let x = [];
-    /// assert!(x.mean().is_nan());
+    /// assert!(x.mean().unwrap().is_nan());
     ///
     /// let y = [0.0, f64::NAN, 3.0, -2.0];
-    /// assert!(y.mean().is_nan());
+    /// assert!(y.mean().unwrap().is_nan());
     ///
     /// let z = [0.0, 3.0, -2.0];
-    /// assert_almost_eq!(z.mean(), 1.0 / 3.0, 1e-15);
+    /// assert_almost_eq!(z.mean().unwrap(), 1.0 / 3.0, 1e-15);
     /// # }
     /// ```
-    fn mean(&self) -> f64 {
-        Statistics::mean(self)
+    fn mean(&self) -> Option<f64> {
+        Some(Statistics::mean(self))
     }
-}
-
-impl Variance<f64> for [f64] {
     /// Estimates the unbiased population variance from the provided samples
     ///
     /// # Remarks
@@ -200,49 +197,19 @@ impl Variance<f64> for [f64] {
     ///
     /// ```
     /// use std::f64;
-    /// use statrs::statistics::Variance;
+    /// use statrs::statistics::Distribution;
     ///
     /// let x = [];
-    /// assert!(x.variance().is_nan());
+    /// assert!(x.variance().unwrap().is_nan());
     ///
     /// let y = [0.0, f64::NAN, 3.0, -2.0];
-    /// assert!(y.variance().is_nan());
+    /// assert!(y.variance().unwrap().is_nan());
     ///
     /// let z = [0.0, 3.0, -2.0];
-    /// assert_eq!(z.variance(), 19.0 / 3.0);
+    /// assert_eq!(z.variance().unwrap(), 19.0 / 3.0);
     /// ```
-    fn variance(&self) -> f64 {
-        Statistics::variance(self)
-    }
-
-    /// Estimates the unbiased population standard deviation from the provided
-    /// samples
-    ///
-    /// # Remarks
-    ///
-    /// On a dataset of size `N`, `N-1` is used as a normalizer (Bessel's
-    /// correction).
-    ///
-    /// Returns `f64::NAN` if data has less than two entries or if any entry is
-    /// `f64::NAN`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::f64;
-    /// use statrs::statistics::Variance;
-    ///
-    /// let x = [];
-    /// assert!(x.std_dev().is_nan());
-    ///
-    /// let y = [0.0, f64::NAN, 3.0, -2.0];
-    /// assert!(y.std_dev().is_nan());
-    ///
-    /// let z = [0.0, 3.0, -2.0];
-    /// assert_eq!(z.std_dev(), (19f64 / 3.0).sqrt());
-    /// ```
-    fn std_dev(&self) -> f64 {
-        Statistics::std_dev(self)
+    fn variance(&self) -> Option<f64> {
+        Some(Statistics::variance(self))
     }
 }
 
@@ -357,7 +324,7 @@ fn select_inplace(arr: &mut [f64], rank: usize) -> f64 {
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
     use crate::statistics::*;
 
@@ -388,7 +355,6 @@ mod test {
         assert_almost_eq!(data.quantile(0.325), -37.0 / 240.0, 1e-15);
     }
 
-    // TODO: need coverage for case where data.length > 10 to cover quick sort
     #[test]
     fn test_ranks() {
         let mut sorted_distinct = [1.0, 2.0, 4.0, 7.0, 8.0, 9.0, 10.0, 12.0];

@@ -1,8 +1,7 @@
-use crate::distribution::{Continuous, Univariate};
+use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::distributions::Distribution;
 use rand::Rng;
 use std::f64;
 
@@ -13,11 +12,11 @@ use std::f64;
 ///
 /// ```
 /// use statrs::distribution::{Gamma, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = Gamma::new(3.0, 1.0).unwrap();
-/// assert_eq!(n.mean(), 3.0);
+/// assert_eq!(n.mean().unwrap(), 3.0);
 /// assert!(prec::almost_eq(n.pdf(2.0), 0.270670566473225383788, 1e-15));
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -84,13 +83,13 @@ impl Gamma {
     }
 }
 
-impl Distribution<f64> for Gamma {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        sample_unchecked(r, self.shape, self.rate)
+impl ::rand::distributions::Distribution<f64> for Gamma {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        sample_unchecked(rng, self.shape, self.rate)
     }
 }
 
-impl Univariate<f64, f64> for Gamma {
+impl ContinuousCDF<f64, f64> for Gamma {
     /// Calculates the cumulative distribution function for the gamma
     /// distribution
     /// at `x`
@@ -148,13 +147,8 @@ impl Max<f64> for Gamma {
     }
 }
 
-impl Mean<f64> for Gamma {
+impl Distribution<f64> for Gamma {
     /// Returns the mean of the gamma distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `shape` if `rate == f64::INFINITY`. This behavior
-    /// is borrowed from the Math.NET implementation
     ///
     /// # Formula
     ///
@@ -163,12 +157,9 @@ impl Mean<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn mean(&self) -> f64 {
-        self.shape / self.rate
+    fn mean(&self) -> Option<f64> {
+        Some(self.shape / self.rate)
     }
-}
-
-impl Variance<f64> for Gamma {
     /// Returns the variance of the gamma distribution
     ///
     /// # Formula
@@ -178,25 +169,9 @@ impl Variance<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn variance(&self) -> f64 {
-        self.shape / (self.rate * self.rate)
+    fn variance(&self) -> Option<f64> {
+        Some(self.shape / (self.rate * self.rate))
     }
-
-    /// Returns the standard deviation of the gamma distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(α) / β
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn std_dev(&self) -> f64 {
-        self.shape.sqrt() / self.rate
-    }
-}
-
-impl Entropy<f64> for Gamma {
     /// Returns the entropy of the gamma distribution
     ///
     /// # Formula
@@ -207,14 +182,12 @@ impl Entropy<f64> for Gamma {
     ///
     /// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
-        self.shape - self.rate.ln()
+    fn entropy(&self) -> Option<f64> {
+        let entr = self.shape - self.rate.ln()
             + gamma::ln_gamma(self.shape)
-            + (1.0 - self.shape) * gamma::digamma(self.shape)
+            + (1.0 - self.shape) * gamma::digamma(self.shape);
+        Some(entr)
     }
-}
-
-impl Skewness<f64> for Gamma {
     /// Returns the skewness of the gamma distribution
     ///
     /// # Formula
@@ -224,18 +197,13 @@ impl Skewness<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape
-    fn skewness(&self) -> f64 {
-        2.0 / self.shape.sqrt()
+    fn skewness(&self) -> Option<f64> {
+        Some(2.0 / self.shape.sqrt())
     }
 }
 
-impl Mode<f64> for Gamma {
+impl Mode<Option<f64>> for Gamma {
     /// Returns the mode for the gamma distribution
-    ///
-    /// # Remarks
-    ///
-    /// Returns `shape` if `rate == f64::INFINITY`. This behavior
-    /// is borrowed from the Math.NET implementation
     ///
     /// # Formula
     ///
@@ -244,8 +212,8 @@ impl Mode<f64> for Gamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn mode(&self) -> f64 {
-        (self.shape - 1.0) / self.rate
+    fn mode(&self) -> Option<f64> {
+        Some((self.shape - 1.0) / self.rate)
     }
 }
 
@@ -310,9 +278,8 @@ impl Continuous<f64, f64> for Gamma {
         }
     }
 }
-
 /// Samples from a gamma distribution with a shape of `shape` and a
-/// rate of `rate` using `r` as the source of randomness. Implementation from:
+/// rate of `rate` using `rng` as the source of randomness. Implementation from:
 /// <br />
 /// <div>
 /// <i>"A Simple Method for Generating Gamma Variables"</i> - Marsaglia & Tsang
@@ -354,11 +321,11 @@ pub fn sample_unchecked<R: Rng + ?Sized>(rng: &mut R, shape: f64, rate: f64) -> 
 
 #[rustfmt::skip]
 #[cfg(test)]
-mod test {
-    use std::f64;
+mod tests {
     use crate::statistics::*;
-    use crate::distribution::{Univariate, Continuous, Gamma};
+    use crate::distribution::{ContinuousCDF, Continuous, Gamma};
     use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(shape: f64, rate: f64) -> Gamma {
         let n = Gamma::new(shape, rate);
@@ -426,70 +393,78 @@ mod test {
 
     #[test]
     fn test_mean() {
-        test_case(1.0, 0.1, 10.0, |x| x.mean());
-        test_case(1.0, 1.0, 1.0, |x| x.mean());
-        test_case(10.0, 10.0, 1.0, |x| x.mean());
-        test_case(10.0, 1.0, 10.0, |x| x.mean());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.mean());
+        let mean = |x: Gamma| x.mean().unwrap();
+        test_case(1.0, 0.1, 10.0, mean);
+        test_case(1.0, 1.0, 1.0, mean);
+        test_case(10.0, 10.0, 1.0, mean);
+        test_case(10.0, 1.0, 10.0, mean);
+        test_case(10.0, f64::INFINITY, 0.0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_almost(1.0, 0.1, 100.0, 1e-13, |x| x.variance());
-        test_case(1.0, 1.0, 1.0, |x| x.variance());
-        test_case(10.0, 10.0, 0.1, |x| x.variance());
-        test_case(10.0, 1.0, 10.0, |x| x.variance());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.variance());
+        let variance = |x: Gamma| x.variance().unwrap();
+        test_almost(1.0, 0.1, 100.0, 1e-13, variance);
+        test_case(1.0, 1.0, 1.0, variance);
+        test_case(10.0, 10.0, 0.1, variance);
+        test_case(10.0, 1.0, 10.0, variance);
+        test_case(10.0, f64::INFINITY, 0.0, variance);
     }
 
     #[test]
     fn test_std_dev() {
-        test_case(1.0, 0.1, 10.0, |x| x.std_dev());
-        test_case(1.0, 1.0, 1.0, |x| x.std_dev());
-        test_case(10.0, 10.0, 0.31622776601683794197697302588502426416723164097476643, |x| x.std_dev());
-        test_case(10.0, 1.0, 3.1622776601683793319988935444327185337195551393252168, |x| x.std_dev());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.std_dev());
+        let std_dev = |x: Gamma| x.std_dev().unwrap();
+        test_case(1.0, 0.1, 10.0, std_dev);
+        test_case(1.0, 1.0, 1.0, std_dev);
+        test_case(10.0, 10.0, 0.31622776601683794197697302588502426416723164097476643, std_dev);
+        test_case(10.0, 1.0, 3.1622776601683793319988935444327185337195551393252168, std_dev);
+        test_case(10.0, f64::INFINITY, 0.0, std_dev);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(1.0, 0.1, 3.3025850929940456285068402234265387271634735938763824, 1e-15, |x| x.entropy());
-        test_almost(1.0, 1.0, 1.0, 1e-15, |x| x.entropy());
-        test_almost(10.0, 10.0, 0.23346908548693395836262094490967812177376750477943892, 1e-13, |x| x.entropy());
-        test_almost(10.0, 1.0, 2.5360541784809796423806123995940423293748689934081866, 1e-13, |x| x.entropy());
-        test_case(10.0, f64::INFINITY, f64::NEG_INFINITY, |x| x.entropy());
+        let entropy = |x: Gamma| x.entropy().unwrap();
+        test_almost(1.0, 0.1, 3.3025850929940456285068402234265387271634735938763824, 1e-15, entropy);
+        test_almost(1.0, 1.0, 1.0, 1e-15, entropy);
+        test_almost(10.0, 10.0, 0.23346908548693395836262094490967812177376750477943892, 1e-13, entropy);
+        test_almost(10.0, 1.0, 2.5360541784809796423806123995940423293748689934081866, 1e-13, entropy);
+        test_case(10.0, f64::INFINITY, f64::NEG_INFINITY, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(1.0, 0.1, 2.0, |x| x.skewness());
-        test_case(1.0, 1.0, 2.0, |x| x.skewness());
-        test_case(10.0, 10.0, 0.63245553203367586639977870888654370674391102786504337, |x| x.skewness());
-        test_case(10.0, 1.0, 0.63245553203367586639977870888654370674391102786504337, |x| x.skewness());
-        test_case(10.0, f64::INFINITY, 0.63245553203367586639977870888654370674391102786504337, |x| x.skewness());
+        let skewness = |x: Gamma| x.skewness().unwrap();
+        test_case(1.0, 0.1, 2.0, skewness);
+        test_case(1.0, 1.0, 2.0, skewness);
+        test_case(10.0, 10.0, 0.63245553203367586639977870888654370674391102786504337, skewness);
+        test_case(10.0, 1.0, 0.63245553203367586639977870888654370674391102786504337, skewness);
+        test_case(10.0, f64::INFINITY, 0.63245553203367586639977870888654370674391102786504337, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(1.0, 0.1, 0.0, |x| x.mode());
-        test_case(1.0, 1.0, 0.0, |x| x.mode());
-        test_case(10.0, 10.0, 0.9, |x| x.mode());
-        test_case(10.0, 1.0, 9.0, |x| x.mode());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.mode());
+        let mode = |x: Gamma| x.mode().unwrap();
+        test_case(1.0, 0.1, 0.0, mode);
+        test_case(1.0, 1.0, 0.0, mode);
+        test_case(10.0, 10.0, 0.9, mode);
+        test_case(10.0, 1.0, 9.0, mode);
+        test_case(10.0, f64::INFINITY, 0.0, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(1.0, 0.1, 0.0, |x| x.min());
-        test_case(1.0, 1.0, 0.0, |x| x.min());
-        test_case(10.0, 10.0, 0.0, |x| x.min());
-        test_case(10.0, 1.0, 0.0, |x| x.min());
-        test_case(10.0, f64::INFINITY, 0.0, |x| x.min());
-        test_case(1.0, 0.1, f64::INFINITY, |x| x.max());
-        test_case(1.0, 1.0, f64::INFINITY, |x| x.max());
-        test_case(10.0, 10.0, f64::INFINITY, |x| x.max());
-        test_case(10.0, 1.0, f64::INFINITY, |x| x.max());
-        test_case(10.0, f64::INFINITY, f64::INFINITY, |x| x.max());
+        let min = |x: Gamma| x.min();
+        let max = |x: Gamma| x.max();
+        test_case(1.0, 0.1, 0.0, min);
+        test_case(1.0, 1.0, 0.0, min);
+        test_case(10.0, 10.0, 0.0, min);
+        test_case(10.0, 1.0, 0.0, min);
+        test_case(10.0, f64::INFINITY, 0.0, min);
+        test_case(1.0, 0.1, f64::INFINITY, max);
+        test_case(1.0, 1.0, f64::INFINITY, max);
+        test_case(10.0, 10.0, f64::INFINITY, max);
+        test_case(10.0, 1.0, f64::INFINITY, max);
+        test_case(10.0, f64::INFINITY, f64::INFINITY, max);
     }
 
     #[test]
@@ -547,7 +522,7 @@ mod test {
 
     #[test]
     fn test_continuous() {
-        test::check_continuous_distribution(&try_create(1.0, 0.5), 0.0, 20.0);
-        test::check_continuous_distribution(&try_create(9.0, 2.0), 0.0, 20.0);
+        tests::check_continuous_distribution(&try_create(1.0, 0.5), 0.0, 20.0);
+        tests::check_continuous_distribution(&try_create(9.0, 2.0), 0.0, 20.0);
     }
 }
