@@ -82,6 +82,7 @@ pub trait Distribution<T: Float>: ::rand::distributions::Distribution<T> {
     /// assert_eq!(0.5, n.mean().unwrap());
     /// ```
     fn mean(&self) -> Option<T> {
+        // TODO: Does not need cryptographic rng
         let mut rng = ::rand::rngs::OsRng;
         let mut mean = T::zero();
         let mut steps = T::zero();
@@ -109,6 +110,7 @@ pub trait Distribution<T: Float>: ::rand::distributions::Distribution<T> {
     /// assert_eq!(1.0 / 12.0, n.variance().unwrap());
     /// ```
     fn variance(&self) -> Option<T> {
+        // TODO: Does not need cryptographic rng
         let mut rng = ::rand::rngs::OsRng;
         let mut mean = T::zero();
         let mut variance = T::zero();
@@ -166,31 +168,18 @@ pub trait Distribution<T: Float>: ::rand::distributions::Distribution<T> {
     }
 }
 
-/// The `MeanN` trait is the multivariable version of the `Mean` trait.
-pub trait MeanN<N>
-where
-    N: Dim + DimMin<N, Output = N> + DimName,
-    DefaultAllocator: Allocator<f64, N>,
-    DefaultAllocator: Allocator<f64, N, N>,
-    DefaultAllocator: Allocator<f64, U1, N>,
-    DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
-{
-    fn mean(&self) -> VectorN<f64, N>;
+/// The `Mean` trait implements the calculation of a mean.
+// TODO: Clarify the traits of multidimensional distributions
+pub trait MeanN<T> {
+    fn mean(&self) -> Option<T>;
 }
 
-pub trait Covariance<N>: MeanN<N>
-where
-    N: Dim + DimMin<N, Output = N> + DimName,
-    DefaultAllocator: Allocator<f64, N>,
-    DefaultAllocator: Allocator<f64, N, N>,
-    DefaultAllocator: Allocator<f64, U1, N>,
-    DefaultAllocator: Allocator<(usize, usize), <N as DimMin<N>>::Output>,
-{
-    fn variance(&self) -> MatrixN<f64, N>;
+// TODO: Clarify the traits of multidimensional distributions
+pub trait VarianceN<T> {
+    fn variance(&self) -> Option<T>;
 }
 
-/// The `Median` trait specifies than an object has a closed form solution
-/// for its median
+/// The `Median` trait returns the median of the distribution.
 pub trait Median<T> {
     /// Returns the median.
     ///
