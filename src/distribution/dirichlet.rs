@@ -1,7 +1,9 @@
-use crate::distribution::{CheckedContinuous, Continuous};
+use crate::distribution::Continuous;
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{prec, Result, StatsError};
+use nalgebra::DMatrix;
+use nalgebra::DVector;
 use nalgebra::{
     base::allocator::Allocator,
     base::{dimension::DimName, MatrixN, VectorN},
@@ -19,34 +21,20 @@ use std::f64;
 /// ```
 /// use statrs::distribution::{Dirichlet, Continuous};
 /// use statrs::statistics::Distribution;
-/// use nalgebra::Vector3;
-/// use statrs::statistics::{MeanN, Covariance};
+/// use nalgebra::DVector;
+/// use statrs::statistics::MeanN;
 ///
-/// let n = Dirichlet::new(Vector3::new(1.0, 2.0, 3.0)).unwrap();
-/// assert_eq!(n.mean(), Vector3::new(1.0 / 6.0, 1.0 / 3.0, 0.5));
-/// assert_eq!(n.pdf(&[0.33333, 0.33333, 0.33333]), 2.222155556222205);
+/// let n = Dirichlet::new(vec![1.0, 2.0, 3.0]).unwrap();
+/// assert_eq!(n.mean().unwrap(), DVector::from_vec(vec![1.0 / 6.0, 1.0 / 3.0, 0.5]));
+/// assert_eq!(n.pdf(&DVector::from_vec(vec![0.33333, 0.33333, 0.33333])), 2.222155556222205);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
-pub struct Dirichlet<D>
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
-    alpha: VectorN<f64, D>,
+pub struct Dirichlet {
+    alpha: DVector<f64>,
 }
-impl<D> Dirichlet<D>
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
+impl Dirichlet {
     /// Constructs a new dirichlet distribution with the given
-    /// concenctration parameters (alpha)
+    /// concentration parameters (alpha)
     ///
     /// # Errors
     ///
@@ -58,23 +46,24 @@ where
     ///
     /// ```
     /// use statrs::distribution::Dirichlet;
-    /// use nalgebra::Vector3;
-    /// use nalgebra::Vector1;
+    /// use nalgebra::DVector;
     ///
-    /// let alpha_ok = Vector3::new(1.0, 2.0, 3.0);
+    /// let alpha_ok = vec![1.0, 2.0, 3.0];
     /// let mut result = Dirichlet::new(alpha_ok);
     /// assert!(result.is_ok());
     ///
-    /// let alpha_err = Vector1::new(0.0);
-    /// result = Dirichlet::new(&alpha_err);
+    /// let alpha_err = vec![0.0];
+    /// result = Dirichlet::new(alpha_err);
     /// assert!(result.is_err());
     /// ```
-    pub fn new(alpha: VectorN<f64, D>) -> Result<Dirichlet<D>> {
+    pub fn new(alpha: Vec<f64>) -> Result<Dirichlet> {
         if !is_valid_alpha(&alpha) {
             Err(StatsError::BadParams)
         } else {
             // let vec = alpha.to_vec();
-            Ok(Dirichlet { alpha })
+            Ok(Dirichlet {
+                alpha: DVector::from_vec(alpha.to_vec()),
+            })
         }
     }
 
@@ -97,9 +86,9 @@ where
     /// result = Dirichlet::new_with_param(0.0, 1);
     /// assert!(result.is_err());
     /// ```
-    // pub fn new_with_param(alpha: f64, n: usize) -> Result<Dirichlet> {
-    //     Self::new(&vec![alpha; n])
-    // }
+    pub fn new_with_param(alpha: f64, n: usize) -> Result<Dirichlet> {
+        Self::new(vec![alpha; n])
+    }
 
     /// Returns the concentration parameters of
     /// the dirichlet distribution as a slice
@@ -108,12 +97,12 @@ where
     ///
     /// ```
     /// use statrs::distribution::Dirichlet;
-    /// use nalgebra::Vector3;
+    /// use nalgebra::DVector;
     ///
-    /// let n = Dirichlet::new(Vector3::new(1.0, 2.0, 3.0)).unwrap();
-    /// assert_eq!(n.alpha(), Vector3::new(1.0, 2.0, 3.0));
+    /// let n = Dirichlet::new(vec![1.0, 2.0, 3.0]).unwrap();
+    /// assert_eq!(n.alpha(), &DVector::from_vec(vec![1.0, 2.0, 3.0]));
     /// ```
-    pub fn alpha(&self) -> &VectorN<f64, D> {
+    pub fn alpha(&self) -> &DVector<f64> {
         &self.alpha
     }
 
@@ -149,34 +138,24 @@ where
     }
 }
 
-impl<D> ::rand::distributions::Distribution<VectorN<f64, D>> for Dirichlet<D>
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> VectorN<f64, D> {
+impl ::rand::distributions::Distribution<DVector<f64>> for Dirichlet {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> DVector<f64> {
         let mut sum = 0.0;
-        let mut samples = self.alpha.map(|a| {
-            let sample = super::gamma::sample_unchecked(rng, a, 1.0);
-            sum += sample;
-            sample
-        });
+        let mut samples: Vec<_> = self
+            .alpha
+            .iter()
+            .map(|&a| {
+                let sample = super::gamma::sample_unchecked(rng, a, 1.0);
+                sum += sample;
+                sample
+            })
+            .collect();
         for _ in samples.iter_mut().map(|x| *x /= sum) {}
-        samples
+        DVector::from_vec(samples)
     }
 }
 
-impl<D> MeanN<D> for Dirichlet<D>
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
+impl MeanN<DVector<f64>> for Dirichlet {
     /// Returns the means of the dirichlet distribution
     ///
     /// # Formula
@@ -187,20 +166,13 @@ where
     ///
     /// for the `i`th element where `α_i` is the `i`th concentration parameter
     /// and `α_0` is the sum of all concentration parameters
-    fn mean(&self) -> VectorN<f64, D> {
+    fn mean(&self) -> Option<DVector<f64>> {
         let sum = self.alpha_sum();
-        self.alpha.map(|x| x / sum)
+        Some(self.alpha.map(|x| x / sum))
     }
 }
 
-impl<D> Covariance<D> for Dirichlet<D>
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
+impl VarianceN<DMatrix<f64>> for Dirichlet {
     /// Returns the variances of the dirichlet distribution
     ///
     /// # Formula
@@ -211,10 +183,10 @@ where
     ///
     /// for the `i`th element where `α_i` is the `i`th concentration parameter
     /// and `α_0` is the sum of all concentration parameters
-    fn variance(&self) -> MatrixN<f64, D> {
+    fn variance(&self) -> Option<DMatrix<f64>> {
         let sum = self.alpha_sum();
         let normalizing = sum * sum * (sum + 1.0);
-        let mut cov = MatrixN::from_diagonal(&self.alpha.map(|x| x * (sum - x) / normalizing));
+        let mut cov = DMatrix::from_diagonal(&self.alpha.map(|x| x * (sum - x) / normalizing));
         let mut offdiag = |x: usize, y: usize| {
             let elt = -self.alpha[x] * self.alpha[y] / normalizing;
             cov[(x, y)] = elt;
@@ -225,18 +197,11 @@ where
                 offdiag(i, j);
             }
         }
-        cov
+        Some(cov)
     }
 }
 
-impl<'a, D> Continuous<&'a [f64], f64> for Dirichlet<D>
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
+impl<'a> Continuous<&'a DVector<f64>, f64> for Dirichlet {
     /// Calculates the probabiliy density function for the dirichlet
     /// distribution
     /// with given `x`'s corresponding to the concentration parameters for this
@@ -267,8 +232,8 @@ where
     /// the `i`th concentration parameter, `Γ` is the gamma function,
     /// `Π` is the product from `1` to `K`, `Σ` is the sum from `1` to `K`,
     /// and `K` is the number of concentration parameters
-    fn pdf(&self, x: &[f64]) -> f64 {
-        self.checked_pdf(x).unwrap()
+    fn pdf(&self, x: &DVector<f64>) -> f64 {
+        self.ln_pdf(x).exp()
     }
 
     /// Calculates the log probabiliy density function for the dirichlet
@@ -301,91 +266,14 @@ where
     /// the `i`th concentration parameter, `Γ` is the gamma function,
     /// `Π` is the product from `1` to `K`, `Σ` is the sum from `1` to `K`,
     /// and `K` is the number of concentration parameters
-    fn ln_pdf(&self, x: &[f64]) -> f64 {
-        self.checked_ln_pdf(x).unwrap()
-    }
-}
-
-impl<'a, D> CheckedContinuous<&'a [f64], f64> for Dirichlet<D>
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
-    /// Calculates the probabiliy density function for the dirichlet
-    /// distribution
-    /// with given `x`'s corresponding to the concentration parameters for this
-    /// distribution
-    ///
-    /// # Errors
-    ///
-    /// If any element in `x` is not in `(0, 1)`, the elements in `x` do not
-    /// sum to
-    /// `1` with a tolerance of `1e-4`,  or if `x` is not the same length as
-    /// the vector of
-    /// concentration parameters for this distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// (1 / B(α)) * Π(x_i^(α_i - 1))
-    /// ```
-    ///
-    /// where
-    ///
-    /// ```ignore
-    /// B(α) = Π(Γ(α_i)) / Γ(Σ(α_i))
-    /// ```
-    ///
-    /// `α` is the vector of concentration parameters, `α_i` is the `i`th
-    /// concentration parameter, `x_i` is the `i`th argument corresponding to
-    /// the `i`th concentration parameter, `Γ` is the gamma function,
-    /// `Π` is the product from `1` to `K`, `Σ` is the sum from `1` to `K`,
-    /// and `K` is the number of concentration parameters
-    fn checked_pdf(&self, x: &[f64]) -> Result<f64> {
-        self.checked_ln_pdf(x).map(|x| x.exp())
-    }
-
-    /// Calculates the log probabiliy density function for the dirichlet
-    /// distribution
-    /// with given `x`'s corresponding to the concentration parameters for this
-    /// distribution
-    ///
-    /// # Errors
-    ///
-    /// If any element in `x` is not in `(0, 1)`, the elements in `x` do not
-    /// sum to
-    /// `1` with a tolerance of `1e-4`,  or if `x` is not the same length as
-    /// the vector of
-    /// concentration parameters for this distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// ln((1 / B(α)) * Π(x_i^(α_i - 1)))
-    /// ```
-    ///
-    /// where
-    ///
-    /// ```ignore
-    /// B(α) = Π(Γ(α_i)) / Γ(Σ(α_i))
-    /// ```
-    ///
-    /// `α` is the vector of concentration parameters, `α_i` is the `i`th
-    /// concentration parameter, `x_i` is the `i`th argument corresponding to
-    /// the `i`th concentration parameter, `Γ` is the gamma function,
-    /// `Π` is the product from `1` to `K`, `Σ` is the sum from `1` to `K`,
-    /// and `K` is the number of concentration parameters
-    fn checked_ln_pdf(&self, x: &[f64]) -> Result<f64> {
+    fn ln_pdf(&self, x: &DVector<f64>) -> f64 {
         // TODO: would it be clearer here to just do a for loop instead
         // of using iterators?
         if self.alpha.len() != x.len() {
-            return Err(StatsError::ContainersMustBeSameLength);
+            panic!("Arguments must have correct dimensions.");
         }
         if x.iter().any(|&x| x <= 0.0 || x >= 1.0) {
-            return Err(StatsError::ArgIntervalExcl("x", 0.0, 1.0));
+            panic!("Arguments must be in (0, 1)");
         }
         let (term, sum_xi, sum_alpha) = x
             .iter()
@@ -400,47 +288,44 @@ where
             });
 
         if !prec::almost_eq(sum_xi, 1.0, 1e-4) {
-            Err(StatsError::ContainerExpectedSum("x", 1.0))
+            panic!();
         } else {
-            Ok(term + gamma::ln_gamma(sum_alpha))
+            term + gamma::ln_gamma(sum_alpha)
         }
     }
 }
 
 // determines if `a` is a valid alpha array
 // for the Dirichlet distribution
-fn is_valid_alpha<D>(a: &VectorN<f64, D>) -> bool
-where
-    D: Dim + DimMin<D, Output = D> + DimName,
-    DefaultAllocator: Allocator<f64, D>,
-    DefaultAllocator: Allocator<f64, D, D>,
-    DefaultAllocator: Allocator<f64, U1, D>,
-    DefaultAllocator: Allocator<(usize, usize), <D as DimMin<D>>::Output>,
-{
-    a.len() >= 2 && super::internal::is_valid_multinomial(a.as_slice(), false)
-}
-
-#[test]
-fn test_is_valid_alpha() {
-    let invalid = [1.0];
-    assert!(!is_valid_alpha(&invalid));
+fn is_valid_alpha(a: &[f64]) -> bool {
+    a.len() >= 2 && super::internal::is_valid_multinomial(a, false)
 }
 
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use nalgebra::{DVector};
     use crate::function::gamma;
     use crate::statistics::*;
-    use crate::distribution::{CheckedContinuous, Continuous, Dirichlet};
+    use crate::distribution::{Continuous, Dirichlet};
     use crate::consts::ACC;
 
-    fn try_create(alpha: &[f64]) -> Dirichlet {
-        let n = Dirichlet::new(alpha);
+    #[test]
+    fn test_is_valid_alpha() {
+        let invalid = [1.0];
+        assert!(!is_valid_alpha(&invalid));
+    }
+
+    fn try_create(alpha: &[f64]) -> Dirichlet
+    {
+        let n = Dirichlet::new(alpha.to_vec());
         assert!(n.is_ok());
         n.unwrap()
     }
 
-    fn create_case(alpha: &[f64]) {
+    fn create_case(alpha: &[f64])
+    {
         let n = try_create(alpha);
         let a2 = n.alpha();
         for i in 0..alpha.len() {
@@ -448,8 +333,9 @@ mod tests {
         }
     }
 
-    fn bad_create_case(alpha: &[f64]) {
-        let n = Dirichlet::new(alpha);
+    fn bad_create_case(alpha: &[f64])
+    {
+        let n = Dirichlet::new(alpha.to_vec());
         assert!(n.is_err());
     }
 
@@ -476,134 +362,96 @@ mod tests {
     //     }
     // }
 
-    #[test]
-    fn test_variance() {
-        let alpha = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
-        let sum = alpha.iter().fold(0.0, |acc, x| acc + x);
-        let n = Dirichlet::new(&alpha).unwrap();
-        let res = n.variance();
-        for i in 1..11 {
-            let f = i as f64;
-            assert_almost_eq!(res[i-1], f * (sum - f) / (sum * sum * (sum + 1.0)), 1e-15);
-        }
-    }
+    // #[test]
+    // fn test_variance() {
+    //     let alpha = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
+    //     let sum = alpha.iter().fold(0.0, |acc, x| acc + x);
+    //     let n = Dirichlet::new(&alpha).unwrap();
+    //     let res = n.variance();
+    //     for i in 1..11 {
+    //         let f = i as f64;
+    //         assert_almost_eq!(res[i-1], f * (sum - f) / (sum * sum * (sum + 1.0)), 1e-15);
+    //     }
+    // }
 
-    #[test]
-    fn test_std_dev() {
-        let alpha = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
-        let sum = alpha.iter().fold(0.0, |acc, x| acc + x);
-        let n = Dirichlet::new(&alpha).unwrap();
-        let res = n.std_dev();
-        for i in 1..11 {
-            let f = i as f64;
-            assert_almost_eq!(res[i-1], (f * (sum - f) / (sum * sum * (sum + 1.0))).sqrt(), 1e-15);
-        }
-    }
+    // #[test]
+    // fn test_std_dev() {
+    //     let alpha = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
+    //     let sum = alpha.iter().fold(0.0, |acc, x| acc + x);
+    //     let n = Dirichlet::new(&alpha).unwrap();
+    //     let res = n.std_dev();
+    //     for i in 1..11 {
+    //         let f = i as f64;
+    //         assert_almost_eq!(res[i-1], (f * (sum - f) / (sum * sum * (sum + 1.0))).sqrt(), 1e-15);
+    //     }
+    // }
 
     #[test]
     fn test_entropy() {
-        let mut alpha = [0.1, 0.3, 0.5, 0.8];
         let mut n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        let mut sum = alpha.iter().fold(0.0, |acc, x| acc + x);
-        let mut num = alpha.iter().fold(0.0, |acc, x| acc + (x - 1.0) * gamma::digamma(*x));
-        assert_eq!(n.entropy(), gamma::ln_gamma(sum) + (sum - 4.0) * gamma::digamma(sum) - num);
+        assert_eq!(n.entropy().unwrap(), -17.46469081094079);
 
-        alpha = [0.1, 0.2, 0.3, 0.4];
-        n = try_create(&alpha);
-        sum = alpha.iter().fold(0.0, |acc, x| acc + x);
-        num = alpha.iter().fold(0.0, |acc, x| acc + (x - 1.0) * gamma::digamma(*x));
-        assert_eq!(n.entropy(), gamma::ln_gamma(sum) + (sum - 4.0) * gamma::digamma(sum) - num);
+        n = try_create(&[0.1, 0.2, 0.3, 0.4]);
+        assert_eq!(n.entropy().unwrap(), -21.53881433791513);
+    }
+
+    macro_rules! dvec {
+        ($($x:expr),*) => (DVector::from_vec(vec![$($x),*]));
     }
 
     #[test]
     fn test_pdf() {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        assert_almost_eq!(n.pdf(&[0.01, 0.03, 0.5, 0.46]), 18.77225681167061, 1e-12);
-        assert_almost_eq!(n.pdf(&[0.1,0.2,0.3,0.4]), 0.8314656481199253, 1e-14);
+        assert_almost_eq!(n.pdf(&dvec![0.01, 0.03, 0.5, 0.46]), 18.77225681167061, 1e-12);
+        assert_almost_eq!(n.pdf(&dvec![0.1,0.2,0.3,0.4]), 0.8314656481199253, 1e-14);
     }
 
     #[test]
     fn test_ln_pdf() {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        assert_almost_eq!(n.ln_pdf(&[0.01, 0.03, 0.5, 0.46]), 18.77225681167061f64.ln(), 1e-12);
-        assert_almost_eq!(n.ln_pdf(&[0.1,0.2,0.3,0.4]), 0.8314656481199253f64.ln(), 1e-14);
+        assert_almost_eq!(n.ln_pdf(&dvec![0.01, 0.03, 0.5, 0.46]), 18.77225681167061f64.ln(), 1e-12);
+        assert_almost_eq!(n.ln_pdf(&dvec![0.1,0.2,0.3,0.4]), 0.8314656481199253f64.ln(), 1e-14);
     }
 
     #[test]
     #[should_panic]
     fn test_pdf_bad_input_length() {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        n.pdf(&[0.5]);
+        n.pdf(&dvec![0.5]);
     }
 
     #[test]
     #[should_panic]
     fn test_pdf_bad_input_range() {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        n.pdf(&[1.5, 0.0, 0.0, 0.0]);
+        n.pdf(&dvec![1.5, 0.0, 0.0, 0.0]);
     }
 
     #[test]
     #[should_panic]
     fn test_pdf_bad_input_sum() {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        n.pdf(&[0.5, 0.25, 0.8, 0.9]);
+        n.pdf(&dvec![0.5, 0.25, 0.8, 0.9]);
     }
 
     #[test]
     #[should_panic]
     fn test_ln_pdf_bad_input_length() {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        n.ln_pdf(&[0.5]);
+        n.ln_pdf(&dvec![0.5]);
     }
 
     #[test]
     #[should_panic]
     fn test_ln_pdf_bad_input_range() {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        n.ln_pdf(&[1.5, 0.0, 0.0, 0.0]);
+        n.ln_pdf(&dvec![1.5, 0.0, 0.0, 0.0]);
     }
 
     #[test]
     #[should_panic]
     fn test_ln_pdf_bad_input_sum() {
         let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        n.ln_pdf(&[0.5, 0.25, 0.8, 0.9]);
-    }
-
-    #[test]
-    fn test_checked_pdf_bad_input_length() {
-        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        assert!(n.checked_pdf(&[0.5]).is_err());
-    }
-
-    #[test]
-    fn test_checked_pdf_bad_input_range() {
-        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        assert!(n.checked_pdf(&[1.5, 0.0, 0.0, 0.0]).is_err());
-    }
-
-    #[test]
-    fn test_checked_pdf_bad_input_sum() {
-        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        assert!(n.checked_pdf(&[0.5, 0.25, 0.8, 0.9]).is_err());
-    }
-
-    #[test]
-    fn test_checked_ln_pdf_bad_input_length() {
-        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        assert!(n.checked_ln_pdf(&[0.5]).is_err());
-    }
-
-    #[test]
-    fn test_checked_ln_pdf_bad_input_range() {
-        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        assert!(n.checked_ln_pdf(&[1.5, 0.0, 0.0, 0.0]).is_err());
-    }
-
-    #[test]
-    fn test_checked_ln_pdf_bad_input_sum() {
-        let n = try_create(&[0.1, 0.3, 0.5, 0.8]);
-        assert!(n.checked_ln_pdf(&[0.5, 0.25, 0.8, 0.9]).is_err());
+        n.ln_pdf(&dvec![0.5, 0.25, 0.8, 0.9]);
     }
 }
