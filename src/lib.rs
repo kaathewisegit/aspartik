@@ -29,6 +29,8 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![cfg_attr(test, feature(unboxed_closures))]
+#![cfg_attr(test, feature(fn_traits))]
 
 #[macro_use]
 extern crate approx;
