@@ -3,8 +3,8 @@ use crate::function::{beta, gamma};
 use crate::is_zero;
 use crate::statistics::*;
 use crate::{Result, StatsError};
-use rand::Rng;
 use core::f64::INFINITY as INF;
+use rand::Rng;
 
 /// Implements the [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
 /// distribution

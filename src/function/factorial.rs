@@ -4,8 +4,7 @@
 use crate::error::StatsError;
 use crate::function::gamma;
 use crate::Result;
-use std::f64;
-use std::sync::Once;
+use core::f64;
 
 /// The maximum factorial representable
 /// by a 64-bit floating point without
@@ -23,7 +22,7 @@ pub fn factorial(x: u64) -> f64 {
     if x > MAX_ARG {
         f64::INFINITY
     } else {
-        get_fcache()[x as usize]
+        FCACHE[x as usize]
     }
 }
 
@@ -39,7 +38,7 @@ pub fn ln_factorial(x: u64) -> f64 {
     } else if x > MAX_ARG {
         gamma::ln_gamma(x as f64 + 1.0)
     } else {
-        get_fcache()[x as usize].ln()
+        FCACHE[x as usize].ln()
     }
 }
 
@@ -98,28 +97,26 @@ pub fn checked_multinomial(n: u64, ni: &[u64]) -> Result<f64> {
 
 // Initialization for pre-computed cache of 171 factorial
 // values 0!...170!
-const CACHE_SIZE: usize = 171;
-
-static mut FCACHE: [f64; CACHE_SIZE] = [1.0; CACHE_SIZE];
-static START: Once = Once::new();
-
-fn get_fcache() -> [f64; CACHE_SIZE] {
-    START.call_once(|| {
-        (1..CACHE_SIZE).fold(1.0, |acc, i| {
-            let fac = acc * i as f64;
-            unsafe {
-                FCACHE[i] = fac;
-            }
-            fac
-        });
-    });
-    unsafe { FCACHE }
+lazy_static! {
+    static ref FCACHE: [f64; MAX_ARGS + 1] = {
+        let mut fcache = [1.0; MAX_ARGS + 1];
+        fcache
+            .iter_mut()
+            .enumerate()
+            .skip(1)
+            .fold(1.0, |acc, (i, elt)| {
+                let fac = acc * i as f64;
+                *elt = fac;
+                fac
+            });
+        fcache
+    };
 }
 
 #[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use std::{f64, u64};
+    use core::{f64, u64};
 
     #[test]
     fn test_factorial_and_ln_factorial() {

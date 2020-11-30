@@ -16,7 +16,7 @@ pub fn is_valid_multinomial(arr: &[f64], incl_zero: bool) -> bool {
 pub mod test {
     use super::is_valid_multinomial;
     use crate::consts::ACC;
-    use crate::distribution::{Continuous, Discrete, ContinuousCDF, DiscreteCDF};
+    use crate::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
 
     #[macro_export]
     macro_rules! testing_boiler {
