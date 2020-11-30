@@ -522,7 +522,7 @@ mod tests {
 
     #[test]
     fn test_continuous() {
-        tests::check_continuous_distribution(&try_create(1.0, 0.5), 0.0, 20.0);
-        tests::check_continuous_distribution(&try_create(9.0, 2.0), 0.0, 20.0);
+        test::check_continuous_distribution(&try_create(1.0, 0.5), 0.0, 20.0);
+        test::check_continuous_distribution(&try_create(9.0, 2.0), 0.0, 20.0);
     }
 }

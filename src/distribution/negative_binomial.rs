@@ -430,7 +430,7 @@ mod tests {
     //
     // #[test]
     // fn test_discrete() {
-    //     tests::check_discrete_distribution(&try_create(5.0, 0.3), 35);
-    //     tests::check_discrete_distribution(&try_create(10.0, 0.7), 21);
+    //     test::check_discrete_distribution(&try_create(5.0, 0.3), 35);
+    //     test::check_discrete_distribution(&try_create(10.0, 0.7), 21);
     // }
 }

@@ -412,8 +412,8 @@ mod tests {
 
     #[test]
     fn test_discrete() {
-        tests::check_discrete_distribution(&try_create(0.3), 100);
-        tests::check_discrete_distribution(&try_create(0.6), 100);
-        tests::check_discrete_distribution(&try_create(1.0), 1);
+        test::check_discrete_distribution(&try_create(0.3), 100);
+        test::check_discrete_distribution(&try_create(0.6), 100);
+        test::check_discrete_distribution(&try_create(1.0), 1);
     }
 }

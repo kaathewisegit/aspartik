@@ -527,7 +527,7 @@ mod tests {
 
     #[test]
     fn test_discrete() {
-        tests::check_discrete_distribution(&try_create(5, 4, 3), 4);
-        tests::check_discrete_distribution(&try_create(3, 2, 1), 2);
+        test::check_discrete_distribution(&try_create(5, 4, 3), 4);
+        test::check_discrete_distribution(&try_create(3, 2, 1), 2);
     }
 }

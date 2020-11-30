@@ -307,8 +307,8 @@ mod tests {
     #[test]
     fn test_continuous() {
         // TODO: figure out why this test fails:
-        //tests::check_continuous_distribution(&try_create(1.0), 0.0, 10.0);
-        tests::check_continuous_distribution(&try_create(2.0), 0.0, 10.0);
-        tests::check_continuous_distribution(&try_create(5.0), 0.0, 50.0);
+        //test::check_continuous_distribution(&try_create(1.0), 0.0, 10.0);
+        test::check_continuous_distribution(&try_create(2.0), 0.0, 10.0);
+        test::check_continuous_distribution(&try_create(5.0), 0.0, 50.0);
     }
 }

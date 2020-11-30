@@ -13,7 +13,7 @@ pub fn is_valid_multinomial(arr: &[f64], incl_zero: bool) -> bool {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub mod test {
     use super::is_valid_multinomial;
     use crate::consts::ACC;
     use crate::distribution::{Continuous, Discrete, ContinuousCDF, DiscreteCDF};

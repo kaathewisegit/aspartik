@@ -445,7 +445,7 @@ mod tests {
 
     #[test]
     fn test_discrete() {
-        tests::check_discrete_distribution(&try_create(0.3), 10);
-        tests::check_discrete_distribution(&try_create(4.5), 30);
+        test::check_discrete_distribution(&try_create(0.3), 10);
+        test::check_discrete_distribution(&try_create(4.5), 30);
     }
 }
