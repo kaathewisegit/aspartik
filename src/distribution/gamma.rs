@@ -2,8 +2,8 @@ use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::gamma;
 use crate::statistics::*;
 use crate::{Result, StatsError};
+use core::f64::INFINITY as INF;
 use rand::Rng;
-use std::f64;
 
 /// Implements the [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
 /// distribution
@@ -31,7 +31,7 @@ impl Gamma {
     ///
     /// # Errors
     ///
-    /// Returns an error if `shape` or `rate` are `NaN`.
+    /// Returns an error if `shape` is 'NaN' or inf or `rate` is `NaN` or inf.
     /// Also returns an error if `shape <= 0.0` or `rate <= 0.0`
     ///
     /// # Examples
@@ -46,12 +46,15 @@ impl Gamma {
     /// assert!(result.is_err());
     /// ```
     pub fn new(shape: f64, rate: f64) -> Result<Gamma> {
-        let is_nan = shape.is_nan() || rate.is_nan();
-        match (shape, rate, is_nan) {
-            (_, _, true) => Err(StatsError::BadParams),
-            (_, _, false) if shape <= 0.0 || rate <= 0.0 => Err(StatsError::BadParams),
-            (_, _, false) => Ok(Gamma { shape, rate }),
+        if shape.is_nan()
+            || rate.is_nan()
+            || shape.is_infinite() && rate.is_infinite()
+            || shape <= 0.0
+            || rate <= 0.0
+        {
+            return Err(StatsError::BadParams);
         }
+        Ok(Gamma { shape, rate })
     }
 
     /// Returns the shape (α) of the gamma distribution
@@ -143,7 +146,7 @@ impl Max<f64> for Gamma {
     /// INF
     /// ```
     fn max(&self) -> f64 {
-        f64::INFINITY
+        INF
     }
 }
 
