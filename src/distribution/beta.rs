@@ -47,12 +47,15 @@ impl Beta {
     /// assert!(result.is_err());
     /// ```
     pub fn new(shape_a: f64, shape_b: f64) -> Result<Beta> {
-        let is_nan = shape_a.is_nan() || shape_b.is_nan();
-        match (shape_a, shape_b, is_nan) {
-            (_, _, true) => Err(StatsError::BadParams),
-            (_, _, false) if shape_a <= 0.0 || shape_b <= 0.0 => Err(StatsError::BadParams),
-            (_, _, false) => Ok(Beta { shape_a, shape_b }),
-        }
+        if shape_a.is_nan()
+            || shape_b.is_nan()
+            || shape_a.is_infinite() && shape_b.is_infinite()
+            || shape_a <= 0.0
+            || shape_b <= 0.0
+        {
+            return Err(StatsError::BadParams);
+        };
+        Ok(Beta { shape_a, shape_b })
     }
 
     /// Returns the shapeA (α) of the beta distribution
@@ -111,12 +114,6 @@ impl ContinuousCDF<f64, f64> for Beta {
             0.0
         } else if x >= 1.0 {
             1.0
-        } else if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
-            if x < 0.5 {
-                0.0
-            } else {
-                1.0
-            }
         } else if self.shape_a.is_infinite() {
             if x < 1.0 {
                 0.0
@@ -174,9 +171,7 @@ impl Distribution<f64> for Beta {
     ///
     /// where `α` is shapeA and `β` is shapeB
     fn mean(&self) -> Option<f64> {
-        let mean = if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
-            return None;
-        } else if self.shape_a.is_infinite() {
+        let mean = if self.shape_a.is_infinite() {
             1.0
         } else {
             self.shape_a / (self.shape_a + self.shape_b)
@@ -187,10 +182,6 @@ impl Distribution<f64> for Beta {
     ///
     /// # Remarks
     ///
-    /// Returns `None` if both `shape_a` and `shape_b` are
-    /// positive infinity, since this limit cannot be consistently
-    /// defined.
-    ///
     /// # Formula
     ///
     /// ```ignore
@@ -199,9 +190,7 @@ impl Distribution<f64> for Beta {
     ///
     /// where `α` is shapeA and `β` is shapeB
     fn variance(&self) -> Option<f64> {
-        let var = if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
-            return None;
-        } else if self.shape_a.is_infinite() || self.shape_b.is_infinite() {
+        let var = if self.shape_a.is_infinite() || self.shape_b.is_infinite() {
             0.0
         } else {
             self.shape_a * self.shape_b
@@ -242,9 +231,7 @@ impl Distribution<f64> for Beta {
     ///
     /// where `α` is shapeA and `β` is shapeB
     fn skewness(&self) -> Option<f64> {
-        let skew = if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
-            0.0
-        } else if self.shape_a.is_infinite() {
+        let skew = if self.shape_a.is_infinite() {
             -2.0
         } else if self.shape_b.is_infinite() {
             2.0
@@ -280,10 +267,7 @@ impl Mode<Option<f64>> for Beta {
     fn mode(&self) -> Option<f64> {
         // TODO: perhaps relax constraint in order to allow calculation
         // of 'anti-mode;
-        if self.shape_a <= 1.0
-            || self.shape_b <= 1.0
-            || self.shape_a.is_infinite() && self.shape_b.is_infinite()
-        {
+        if self.shape_a <= 1.0 || self.shape_b <= 1.0 {
             None
         } else if self.shape_a.is_infinite() {
             Some(1.0)
@@ -309,12 +293,6 @@ impl Continuous<f64, f64> for Beta {
     fn pdf(&self, x: f64) -> f64 {
         if x < 0.0 || x > 1.0 {
             0.0
-        } else if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
-            if ulps_eq!(x, 0.5) {
-                INF
-            } else {
-                0.0
-            }
         } else if self.shape_a.is_infinite() {
             if ulps_eq!(x, 1.0) {
                 INF
@@ -353,12 +331,6 @@ impl Continuous<f64, f64> for Beta {
     fn ln_pdf(&self, x: f64) -> f64 {
         if x < 0.0 || x > 1.0 {
             -INF
-        } else if self.shape_a.is_infinite() && self.shape_b.is_infinite() {
-            if ulps_eq!(x, 0.5) {
-                INF
-            } else {
-                -INF
-            }
         } else if self.shape_a.is_infinite() {
             if ulps_eq!(x, 1.0) {
                 INF
@@ -398,7 +370,6 @@ impl Continuous<f64, f64> for Beta {
 
 #[rustfmt::skip]
 #[cfg(test)]
-#[cfg(test)]
 mod tests {
     use super::*;
     use crate::consts::ACC;
@@ -430,6 +401,7 @@ mod tests {
             (1.0, -1.0),
             (-1.0, 1.0),
             (-1.0, -1.0),
+            (INF, INF),
         ];
         for &arg in invalid.iter() {
             bad_create_case(arg);
@@ -449,8 +421,6 @@ mod tests {
         for &(arg, res) in test.iter() {
             test_case(arg, res, f);
         }
-        let mean = |x: Beta| x.mean();
-        test_none((INF, INF), mean);
     }
 
     #[test]
@@ -466,8 +436,6 @@ mod tests {
         for &(arg, res) in test.iter() {
             test_case(arg, res, f);
         }
-        let variance = |x: Beta| x.variance();
-        test_none((INF, INF), variance);
     }
 
     #[test]
@@ -484,7 +452,6 @@ mod tests {
         let entropy = |x: Beta| x.entropy();
         test_none((1.0, INF), entropy);
         test_none((INF, 1.0), entropy);
-        test_none((INF, INF), entropy);
     }
 
     #[test]
@@ -495,7 +462,6 @@ mod tests {
         test_case((5.0, 100.0), 0.817594109275534303545831591, skewness);
         test_case((1.0, INF), 2.0, skewness);
         test_case((INF, 1.0), -2.0, skewness);
-        test_case((INF, INF), 0.0, skewness);
     }
 
     #[test]
@@ -504,8 +470,6 @@ mod tests {
         test_case((5.0, 100.0), 0.038834951456310676243255386, mode);
         test_case((92.0, INF), 0.0, mode);
         test_case((INF, 2.0), 1.0, mode);
-        let mode = |x: Beta| x.mode();
-        test_none((INF, INF), mode);
     }
 
     #[test]
@@ -550,9 +514,6 @@ mod tests {
             ((INF, 1.0), 0.0, 0.0),
             ((INF, 1.0), 0.5, 0.0),
             ((INF, 1.0), 1.0, INF),
-            ((INF, INF), 0.0, 0.0),
-            ((INF, INF), 0.5, INF),
-            ((INF, INF), 1.0, 0.0),
         ];
         for &(arg, x, expect) in test.iter() {
             test_case(arg, expect, f(x));
@@ -590,9 +551,6 @@ mod tests {
             ((INF, 1.0), 0.0, -INF),
             ((INF, 1.0), 0.5, -INF),
             ((INF, 1.0), 1.0, INF),
-            ((INF, INF), 0.0, -INF),
-            ((INF, INF), 0.5, INF),
-            ((INF, INF), 1.0, -INF),
         ];
         for &(arg, x, expect) in test.iter() {
             test_case(arg, expect, f(x));
@@ -630,9 +588,6 @@ mod tests {
             ((INF, 1.0), 0.0, 0.0),
             ((INF, 1.0), 0.5, 0.0),
             ((INF, 1.0), 1.0, 1.0),
-            ((INF, INF), 0.0, 0.0),
-            ((INF, INF), 0.5, 1.0),
-            ((INF, INF), 1.0, 1.0),
         ];
         for &(arg, x, expect) in test.iter() {
             test_case(arg, expect, cdf(x));
