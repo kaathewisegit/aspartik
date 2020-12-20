@@ -159,13 +159,9 @@ impl ContinuousCDF<f64, f64> for StudentsT {
         let x = 2. * x.min(1. - x);
         let a = 0.5 * self.freedom;
         let b = 0.5;
-        let y = beta::inv_beta_reg(a, b, x);
+        let mut y = beta::inv_beta_reg(a, b, x);
         y = (self.freedom * (1. - y) / y).sqrt();
-        y = if x <= 0.5 {
-            y
-        } else {
-            -y
-        }
+        y = if x <= 0.5 { y } else { -y };
         // generalised Student's T is related to normal Student's T by `Y = μ + σ X`
         // where `X` is distributed as Student's T, so this result has to be scaled and shifted back
         // formally: F_Y(t) = P(Y <= t) = P(X <= (t - μ) / σ) = F_X((t - μ) / σ)
