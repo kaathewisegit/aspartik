@@ -146,10 +146,23 @@ impl Distribution<f64> for Chi {
     fn mean(&self) -> Option<f64> {
         if self.freedom.is_infinite() {
             return None;
+        } else if self.freedom > 300.0 {
+            // Large n approximation based on the Stirling series approximation to the Gamma function
+            // This avoids call the Gamma function with large arguments and returning NaN
+            //
+            // Relative accuracy follows O(1/n^4) and at 300 d.o.f. is better than 1e-12
+            // For a f32 impl the threshold should be changed to 150
+            Some(
+                self.freedom.sqrt()
+                    / ((1.0 + 0.25 / self.freedom)
+                        * (1.0 + 0.03125 / (self.freedom * self.freedom))
+                        * (1.0 - 0.046875 / (self.freedom * self.freedom * self.freedom))),
+            )
+        } else {
+            let mean = f64::consts::SQRT_2 * gamma::gamma((self.freedom + 1.0) / 2.0)
+                / gamma::gamma(self.freedom / 2.0);
+            Some(mean)
         }
-        let mean = f64::consts::SQRT_2 * gamma::gamma((self.freedom + 1.0) / 2.0)
-            / gamma::gamma(self.freedom / 2.0);
-        Some(mean)
     }
     /// Returns the variance of the chi distribution
     ///
@@ -359,6 +372,7 @@ mod tests {
         test_almost(2.0, 1.25331413731550025121, 1e-14, mean);
         test_almost(2.5, 1.43396639245837498609, 1e-14, mean);
         test_almost(5.0, 2.12769216214097428235, 1e-14, mean);
+        test_almost(336.0, 18.31666925443713, 1e-12, mean);
     }
 
     #[test]
