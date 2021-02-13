@@ -1,3 +1,17 @@
+v0.13.0
+- Implemented `MultivariateNormal` distribution (depends on `nalgebra 0.19`)
+- Implemented `Dirac` distribution
+- Implemented `Negative Binomial` distribution
+
+v0.12.0
+
+- upgrade `rand` dependency to `0.7`
+
+v0.11.0
+
+- upgrade `rand` dependency to `0.6`
+- Implement `CheckedInverseCDF` and `InverseCDF` for `Normal` distribution
+
 v0.10.0
 
 - upgrade `rand` dependency to `0.5`

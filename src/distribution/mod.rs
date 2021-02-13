@@ -1,6 +1,8 @@
 //! Defines common interfaces for interacting with statistical distributions
 //! and provides
 //! concrete implementations for a variety of distributions.
+use super::statistics::{Max, Min};
+use ::num_traits::{float::Float, Bounded, Num};
 
 pub use self::bernoulli::Bernoulli;
 pub use self::beta::Beta;
@@ -9,10 +11,12 @@ pub use self::categorical::Categorical;
 pub use self::cauchy::Cauchy;
 pub use self::chi::Chi;
 pub use self::chi_squared::ChiSquared;
+pub use self::dirac::Dirac;
 pub use self::dirichlet::Dirichlet;
 pub use self::discrete_uniform::DiscreteUniform;
+pub use self::empirical::Empirical;
 pub use self::erlang::Erlang;
-pub use self::exponential::Exponential;
+pub use self::exponential::Exp;
 pub use self::fisher_snedecor::FisherSnedecor;
 pub use self::gamma::Gamma;
 pub use self::geometric::Geometric;
@@ -21,6 +25,8 @@ pub use self::inverse_gamma::InverseGamma;
 pub use self::laplace::Laplace;
 pub use self::log_normal::LogNormal;
 pub use self::multinomial::Multinomial;
+pub use self::multivariate_normal::MultivariateNormal;
+pub use self::negative_binomial::NegativeBinomial;
 pub use self::normal::Normal;
 pub use self::pareto::Pareto;
 pub use self::poisson::Poisson;
@@ -28,7 +34,6 @@ pub use self::students_t::StudentsT;
 pub use self::triangular::Triangular;
 pub use self::uniform::Uniform;
 pub use self::weibull::Weibull;
-use statistics::{Max, Min};
 
 mod bernoulli;
 mod beta;
@@ -37,8 +42,10 @@ mod categorical;
 mod cauchy;
 mod chi;
 mod chi_squared;
+mod dirac;
 mod dirichlet;
 mod discrete_uniform;
+mod empirical;
 mod erlang;
 mod exponential;
 mod fisher_snedecor;
@@ -47,8 +54,11 @@ mod geometric;
 mod hypergeometric;
 mod internal;
 mod inverse_gamma;
+mod laplace;
 mod log_normal;
 mod multinomial;
+mod multivariate_normal;
+mod negative_binomial;
 mod normal;
 mod pareto;
 mod poisson;
@@ -60,13 +70,11 @@ mod ziggurat;
 mod ziggurat_tables;
 mod laplace;
 
-use Result;
+use crate::Result;
 
-/// The `Univariate` trait is used to specify an interface for univariate
-/// distributions e.g. distributions that have a closed form cumulative
-/// distribution
-/// function
-pub trait Univariate<T, K>: Min<T> + Max<T> {
+/// The `ContinuousCDF` trait is used to specify an interface for univariate
+/// distributions for which cdf float arguments are sensible.
+pub trait ContinuousCDF<K: Float, T: Float>: Min<K> + Max<K> {
     /// Returns the cumulative distribution function calculated
     /// at `x` for a given distribution. May panic depending
     /// on the implementor.
@@ -74,55 +82,90 @@ pub trait Univariate<T, K>: Min<T> + Max<T> {
     /// # Examples
     ///
     /// ```
-    /// use statrs::distribution::{Univariate, Uniform};
+    /// use statrs::distribution::{ContinuousCDF, Uniform};
     ///
     /// let n = Uniform::new(0.0, 1.0).unwrap();
     /// assert_eq!(0.5, n.cdf(0.5));
     /// ```
-    fn cdf(&self, x: K) -> K;
+    fn cdf(&self, x: K) -> T;
+    /// Due to issues with rounding and floating-point accuracy the default
+    /// implementation may be ill-behaved.
+    /// Specialized inverse cdfs should be used whenever possible.
+    /// Performs a binary search on the domain of `cdf` to obtain an approximation
+    /// of `F^-1(p) := inf { x | F(x) >= p }`. Needless to say, performance may
+    /// may be lacking.
+    fn inverse_cdf(&self, p: T) -> K {
+        if p == T::zero() {
+            return self.min();
+        };
+        if p == T::one() {
+            return self.max();
+        };
+        let two = K::one() + K::one();
+        let mut high = two;
+        let mut low = -high;
+        while self.cdf(low) > p {
+            low = low + low;
+        }
+        while self.cdf(high) < p {
+            high = high + high;
+        }
+        let mut i = 16;
+        while i != 0 {
+            let mid = (high + low) / two;
+            if self.cdf(mid) >= p {
+                high = mid;
+            } else {
+                low = mid;
+            }
+            i -= 1;
+        }
+        (high + low) / two
+    }
 }
 
-/// The `InverseCDF` trait is used to specify an interface for distributions
-/// with a closed form solution to the inverse cumulative distribution function.
-/// This trait will probably be merged into `Univariate` in a future release
-/// when already implemented distributions have `InverseCDF` back ported
-pub trait InverseCDF<T> {
-    /// Returns the inverse cumulative distribution function
-    /// calculated at `x` for a given distribution. May panic
-    /// depending on the implementor.
+/// The `DiscreteCDF` trait is used to specify an interface for univariate
+/// discrete distributions.
+pub trait DiscreteCDF<K: Bounded + Clone + Num, T: Float>: Min<K> + Max<K> {
+    /// Returns the cumulative distribution function calculated
+    /// at `x` for a given distribution. May panic depending
+    /// on the implementor.
     ///
     /// # Examples
     ///
     /// ```
-    /// use statrs::distribution::InverseCDF;
-    /// use statrs::distribution::Categorical;
+    /// use statrs::distribution::{ContinuousCDF, Uniform};
     ///
-    /// let n = Categorical::new(&[0.0, 1.0, 2.0]).unwrap();
-    /// assert_eq!(n.inverse_cdf(0.5), 2.0);
+    /// let n = Uniform::new(0.0, 1.0).unwrap();
+    /// assert_eq!(0.5, n.cdf(0.5));
     /// ```
-    fn inverse_cdf(&self, x: T) -> T;
-}
-
-/// The `CheckedInverseCDF` trait is used to specify an interface
-/// for  distributions with a closed form solution to the inverse
-/// cumulative distribution function with possible failure modes.
-/// This trait should be merged into a `CheckedUnivarite` trait
-/// alongside `InverseCDF` in a future release.
-pub trait CheckedInverseCDF<T> {
-    /// Returns the inverse cumulative distribution function
-    /// calculated at `x` for a given distribution. May panic
-    /// depending on the implementor.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::CheckedInverseCDF;
-    /// use statrs::distribution::Categorical;
-    ///
-    /// let n = Categorical::new(&[0.0, 1.0, 2.0]).unwrap();
-    /// assert!(n.checked_inverse_cdf(-1.0).is_err());
-    /// ```
-    fn checked_inverse_cdf(&self, x: T) -> Result<T>;
+    fn cdf(&self, x: K) -> T;
+    /// Due to issues with rounding and floating-point accuracy the default implementation may be ill-behaved
+    /// Specialized inverse cdfs should be used whenever possible.
+    fn inverse_cdf(&self, p: T) -> K {
+        // TODO: fix integer implementation
+        if p == T::zero() {
+            return self.min();
+        };
+        if p == T::one() {
+            return self.max();
+        };
+        let two = K::one() + K::one();
+        let mut high = two.clone();
+        let mut low = K::min_value();
+        while self.cdf(high.clone()) < p {
+            high = high.clone() + high.clone();
+        }
+        while high != low {
+            let mid = (high.clone() + low.clone()) / two.clone();
+            if self.cdf(mid.clone()) >= p {
+                high = mid;
+            } else {
+                low = mid;
+            }
+        }
+        high
+    }
 }
 
 /// The `Continuous` trait  provides an interface for interacting with
@@ -133,7 +176,7 @@ pub trait CheckedInverseCDF<T> {
 /// All methods provided by the `Continuous` trait are unchecked, meaning
 /// they can panic if in an invalid state or encountering invalid input
 /// depending on the implementing distribution.
-pub trait Continuous<T, K> {
+pub trait Continuous<K, T> {
     /// Returns the probability density function calculated at `x` for a given
     /// distribution.
     /// May panic depending on the implementor.
@@ -146,7 +189,7 @@ pub trait Continuous<T, K> {
     /// let n = Uniform::new(0.0, 1.0).unwrap();
     /// assert_eq!(1.0, n.pdf(0.5));
     /// ```
-    fn pdf(&self, x: T) -> K;
+    fn pdf(&self, x: K) -> T;
 
     /// Returns the log of the probability density function calculated at `x`
     /// for a given distribution.
@@ -160,38 +203,7 @@ pub trait Continuous<T, K> {
     /// let n = Uniform::new(0.0, 1.0).unwrap();
     /// assert_eq!(0.0, n.ln_pdf(0.5));
     /// ```
-    fn ln_pdf(&self, x: T) -> K;
-}
-
-/// The `CheckedContinuous` trait provides an interface for
-/// interacting with continuous statistical distributions with possible
-/// failure modes
-pub trait CheckedContinuous<T, K> {
-    /// Returns the probability density function calculated at `x` for a given
-    /// distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::{CheckedContinuous, Dirichlet};
-    ///
-    /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
-    /// assert!(n.checked_pdf(&[0.0]).is_err());
-    /// ```
-    fn checked_pdf(&self, x: T) -> Result<K>;
-
-    /// Returns the log of the probability density function calculated at `x`
-    /// for a given distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::{CheckedContinuous, Dirichlet};
-    ///
-    /// let n = Dirichlet::new(&[1.0, 2.0, 3.0]).unwrap();
-    /// assert!(n.checked_ln_pdf(&[0.0]).is_err());
-    /// ```
-    fn checked_ln_pdf(&self, x: T) -> Result<K>;
+    fn ln_pdf(&self, x: K) -> T;
 }
 
 /// The `Discrete` trait provides an interface for interacting with discrete
@@ -202,7 +214,7 @@ pub trait CheckedContinuous<T, K> {
 /// All methods provided by the `Discrete` trait are unchecked, meaning
 /// they can panic if in an invalid state or encountering invalid input
 /// depending on the implementing distribution.
-pub trait Discrete<T, K> {
+pub trait Discrete<K, T> {
     /// Returns the probability mass function calculated at `x` for a given
     /// distribution.
     /// May panic depending on the implementor.
@@ -216,7 +228,7 @@ pub trait Discrete<T, K> {
     /// let n = Binomial::new(0.5, 10).unwrap();
     /// assert!(prec::almost_eq(n.pmf(5), 0.24609375, 1e-15));
     /// ```
-    fn pmf(&self, x: T) -> K;
+    fn pmf(&self, x: K) -> T;
 
     /// Returns the log of the probability mass function calculated at `x` for
     /// a given distribution.
@@ -231,37 +243,5 @@ pub trait Discrete<T, K> {
     /// let n = Binomial::new(0.5, 10).unwrap();
     /// assert!(prec::almost_eq(n.ln_pmf(5), (0.24609375f64).ln(), 1e-15));
     /// ```
-    fn ln_pmf(&self, x: T) -> K;
-}
-
-/// The `CheckedDiscrete` trait provides an interface for interacting
-/// with discrete statistical distributions with possible failure modes
-pub trait CheckedDiscrete<T, K> {
-    /// Returns the probability mass function calculated at `x` for a given
-    /// distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::{CheckedDiscrete, Multinomial};
-    /// use statrs::prec;
-    ///
-    /// let n = Multinomial::new(&[0.3, 0.7], 5).unwrap();
-    /// assert!(n.checked_pmf(&[1]).is_err());
-    /// ```
-    fn checked_pmf(&self, x: T) -> Result<K>;
-
-    /// Returns the log of the probability mass function calculated at `x` for
-    /// a given distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::{CheckedDiscrete, Multinomial};
-    /// use statrs::prec;
-    ///
-    /// let n = Multinomial::new(&[0.3, 0.7], 5).unwrap();
-    /// assert!(n.checked_ln_pmf(&[1]).is_err());
-    /// ```
-    fn checked_ln_pmf(&self, x: T) -> Result<K>;
+    fn ln_pmf(&self, x: K) -> T;
 }

@@ -1,6 +1,6 @@
 //! Provides functions related to exponential calculations
 
-use {consts, Result, StatsError};
+use crate::{consts, Result, StatsError};
 
 /// Computes the generalized Exponential Integral function
 /// where `x` is the argument and `n` is the integer power of the
@@ -92,9 +92,9 @@ pub fn integral(x: f64, n: u64) -> Result<f64> {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     #[test]
     fn test_integral() {
         assert_eq!(super::integral(0.001, 1).unwrap(), 6.33153936413614904);

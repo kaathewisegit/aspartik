@@ -1,9 +1,7 @@
-use distribution::{Discrete, Univariate};
-use rand::distributions::Distribution;
+use crate::distribution::{Discrete, DiscreteCDF};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::Rng;
-use statistics::*;
-use std::f64;
-use {Result, StatsError};
 
 /// Implements the [Discrete
 /// Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
@@ -13,10 +11,10 @@ use {Result, StatsError};
 ///
 /// ```
 /// use statrs::distribution::{DiscreteUniform, Discrete};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = DiscreteUniform::new(0, 5).unwrap();
-/// assert_eq!(n.mean(), 2.5);
+/// assert_eq!(n.mean().unwrap(), 2.5);
 /// assert_eq!(n.pmf(3), 1.0 / 6.0);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -48,18 +46,18 @@ impl DiscreteUniform {
         if max < min {
             Err(StatsError::BadParams)
         } else {
-            Ok(DiscreteUniform { min: min, max: max })
+            Ok(DiscreteUniform { min, max })
         }
     }
 }
 
-impl Distribution<f64> for DiscreteUniform {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        r.gen_range(self.min, self.max + 1) as f64
+impl ::rand::distributions::Distribution<f64> for DiscreteUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        rng.gen_range(self.min, self.max + 1) as f64
     }
 }
 
-impl Univariate<i64, f64> for DiscreteUniform {
+impl DiscreteCDF<i64, f64> for DiscreteUniform {
     /// Calculates the cumulative distribution function for the
     /// discrete uniform distribution at `x`
     ///
@@ -68,15 +66,15 @@ impl Univariate<i64, f64> for DiscreteUniform {
     /// ```ignore
     /// (floor(x) - min + 1) / (max - min + 1)
     /// ```
-    fn cdf(&self, x: f64) -> f64 {
-        if x < self.min as f64 {
+    fn cdf(&self, x: i64) -> f64 {
+        if x < self.min {
             0.0
-        } else if x >= self.max as f64 {
+        } else if x >= self.max {
             1.0
         } else {
             let lower = self.min as f64;
             let upper = self.max as f64;
-            let ans = (x.floor() - lower + 1.0) / (upper - lower + 1.0);
+            let ans = (x as f64 - lower + 1.0) / (upper - lower + 1.0);
             if ans > 1.0 {
                 1.0
             } else {
@@ -110,7 +108,7 @@ impl Max<i64> for DiscreteUniform {
     }
 }
 
-impl Mean<f64> for DiscreteUniform {
+impl Distribution<f64> for DiscreteUniform {
     /// Returns the mean of the discrete uniform distribution
     ///
     /// # Formula
@@ -118,12 +116,9 @@ impl Mean<f64> for DiscreteUniform {
     /// ```ignore
     /// (min + max) / 2
     /// ```
-    fn mean(&self) -> f64 {
-        (self.min + self.max) as f64 / 2.0
+    fn mean(&self) -> Option<f64> {
+        Some((self.min + self.max) as f64 / 2.0)
     }
-}
-
-impl Variance<f64> for DiscreteUniform {
     /// Returns the variance of the discrete uniform distribution
     ///
     /// # Formula
@@ -131,24 +126,10 @@ impl Variance<f64> for DiscreteUniform {
     /// ```ignore
     /// ((max - min + 1)^2 - 1) / 12
     /// ```
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         let diff = (self.max - self.min) as f64;
-        ((diff + 1.0) * (diff + 1.0) - 1.0) / 12.0
+        Some(((diff + 1.0) * (diff + 1.0) - 1.0) / 12.0)
     }
-
-    /// Returns the standard deviation of the discrete uniform distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(((max - min + 1)^2 - 1) / 12)
-    /// ```
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
-    }
-}
-
-impl Entropy<f64> for DiscreteUniform {
     /// Returns the entropy of the discrete uniform distribution
     ///
     /// # Formula
@@ -156,13 +137,10 @@ impl Entropy<f64> for DiscreteUniform {
     /// ```ignore
     /// ln(max - min + 1)
     /// ```
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Option<f64> {
         let diff = (self.max - self.min) as f64;
-        (diff + 1.0).ln()
+        Some((diff + 1.0).ln())
     }
-}
-
-impl Skewness<f64> for DiscreteUniform {
     /// Returns the skewness of the discrete uniform distribution
     ///
     /// # Formula
@@ -170,8 +148,8 @@ impl Skewness<f64> for DiscreteUniform {
     /// ```ignore
     /// 0
     /// ```
-    fn skewness(&self) -> f64 {
-        0.0
+    fn skewness(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
@@ -188,7 +166,7 @@ impl Median<f64> for DiscreteUniform {
     }
 }
 
-impl Mode<i64> for DiscreteUniform {
+impl Mode<Option<i64>> for DiscreteUniform {
     /// Returns the mode for the discrete uniform distribution
     ///
     /// # Remarks
@@ -201,8 +179,8 @@ impl Mode<i64> for DiscreteUniform {
     /// ```ignore
     /// N/A // (max + min) / 2 for the middle element
     /// ```
-    fn mode(&self) -> i64 {
-        ((self.min + self.max) as f64 / 2.0).floor() as i64
+    fn mode(&self) -> Option<i64> {
+        Some(((self.min + self.max) as f64 / 2.0).floor() as i64)
     }
 }
 
@@ -248,13 +226,13 @@ impl Discrete<i64, f64> for DiscreteUniform {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::fmt::Debug;
-    use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Discrete, DiscreteUniform};
+    use crate::statistics::*;
+    use crate::distribution::{DiscreteCDF, Discrete, DiscreteUniform};
+    use crate::consts::ACC;
 
     fn try_create(min: i64, max: i64) -> DiscreteUniform {
         let n = DiscreteUniform::new(min, max);
@@ -305,93 +283,96 @@ mod test {
 
     #[test]
     fn test_mean() {
-        test_case(-10, 10, 0.0, |x| x.mean());
-        test_case(0, 4, 2.0, |x| x.mean());
-        test_case(10, 20, 15.0, |x| x.mean());
-        test_case(20, 20, 20.0, |x| x.mean());
+        let mean = |x: DiscreteUniform| x.mean().unwrap();
+        test_case(-10, 10, 0.0, mean);
+        test_case(0, 4, 2.0, mean);
+        test_case(10, 20, 15.0, mean);
+        test_case(20, 20, 20.0, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_case(-10, 10, 36.66666666666666666667, |x| x.variance());
-        test_case(0, 4, 2.0, |x| x.variance());
-        test_case(10, 20, 10.0, |x| x.variance());
-        test_case(20, 20, 0.0, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(-10, 10, (36.66666666666666666667f64).sqrt(), |x| x.std_dev());
-        test_case(0, 4, (2.0f64).sqrt(), |x| x.std_dev());
-        test_case(10, 20, (10.0f64).sqrt(), |x| x.std_dev());
-        test_case(20, 20, 0.0, |x| x.std_dev());
+        let variance = |x: DiscreteUniform| x.variance().unwrap();
+        test_case(-10, 10, 36.66666666666666666667, variance);
+        test_case(0, 4, 2.0, variance);
+        test_case(10, 20, 10.0, variance);
+        test_case(20, 20, 0.0, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_case(-10, 10, 3.0445224377234229965005979803657054342845752874046093, |x| x.entropy());
-        test_case(0, 4, 1.6094379124341003746007593332261876395256013542685181, |x| x.entropy());
-        test_case(10, 20, 2.3978952727983705440619435779651292998217068539374197, |x| x.entropy());
-        test_case(20, 20, 0.0, |x| x.entropy());
+        let entropy = |x: DiscreteUniform| x.entropy().unwrap();
+        test_case(-10, 10, 3.0445224377234229965005979803657054342845752874046093, entropy);
+        test_case(0, 4, 1.6094379124341003746007593332261876395256013542685181, entropy);
+        test_case(10, 20, 2.3978952727983705440619435779651292998217068539374197, entropy);
+        test_case(20, 20, 0.0, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(-10, 10, 0.0, |x| x.skewness());
-        test_case(0, 4, 0.0, |x| x.skewness());
-        test_case(10, 20, 0.0, |x| x.skewness());
-        test_case(20, 20, 0.0, |x| x.skewness());
+        let skewness = |x: DiscreteUniform| x.skewness().unwrap();
+        test_case(-10, 10, 0.0, skewness);
+        test_case(0, 4, 0.0, skewness);
+        test_case(10, 20, 0.0, skewness);
+        test_case(20, 20, 0.0, skewness);
     }
 
     #[test]
     fn test_median() {
-        test_case(-10, 10, 0.0, |x| x.median());
-        test_case(0, 4, 2.0, |x| x.median());
-        test_case(10, 20, 15.0, |x| x.median());
-        test_case(20, 20, 20.0, |x| x.median());
+        let median = |x: DiscreteUniform| x.median();
+        test_case(-10, 10, 0.0, median);
+        test_case(0, 4, 2.0, median);
+        test_case(10, 20, 15.0, median);
+        test_case(20, 20, 20.0, median);
     }
 
     #[test]
     fn test_mode() {
-        test_case(-10, 10, 0, |x| x.mode());
-        test_case(0, 4, 2, |x| x.mode());
-        test_case(10, 20, 15, |x| x.mode());
-        test_case(20, 20, 20, |x| x.mode());
+        let mode = |x: DiscreteUniform| x.mode().unwrap();
+        test_case(-10, 10, 0, mode);
+        test_case(0, 4, 2, mode);
+        test_case(10, 20, 15, mode);
+        test_case(20, 20, 20, mode);
     }
 
     #[test]
     fn test_pmf() {
-        test_case(-10, 10, 0.04761904761904761904762, |x| x.pmf(-5));
-        test_case(-10, 10, 0.04761904761904761904762, |x| x.pmf(1));
-        test_case(-10, 10, 0.04761904761904761904762, |x| x.pmf(10));
-        test_case(-10, -10, 0.0, |x| x.pmf(0));
-        test_case(-10, -10, 1.0, |x| x.pmf(-10));
+        let pmf = |arg: i64| move |x: DiscreteUniform| x.pmf(arg);
+        test_case(-10, 10, 0.04761904761904761904762, pmf(-5));
+        test_case(-10, 10, 0.04761904761904761904762, pmf(1));
+        test_case(-10, 10, 0.04761904761904761904762, pmf(10));
+        test_case(-10, -10, 0.0, pmf(0));
+        test_case(-10, -10, 1.0, pmf(-10));
     }
 
     #[test]
     fn test_ln_pmf() {
-        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, |x| x.ln_pmf(-5));
-        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, |x| x.ln_pmf(1));
-        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, |x| x.ln_pmf(10));
-        test_case(-10, -10, f64::NEG_INFINITY, |x| x.ln_pmf(0));
-        test_case(-10, -10, 0.0, |x| x.ln_pmf(-10));
+        let ln_pmf = |arg: i64| move |x: DiscreteUniform| x.ln_pmf(arg);
+        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, ln_pmf(-5));
+        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, ln_pmf(1));
+        test_case(-10, 10, -3.0445224377234229965005979803657054342845752874046093, ln_pmf(10));
+        test_case(-10, -10, f64::NEG_INFINITY, ln_pmf(0));
+        test_case(-10, -10, 0.0, ln_pmf(-10));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(-10, 10, 0.2857142857142857142857, |x| x.cdf(-5.0));
-        test_case(-10, 10, 0.5714285714285714285714, |x| x.cdf(1.0));
-        test_case(-10, 10, 1.0, |x| x.cdf(10.0));
-        test_case(-10, -10, 1.0, |x| x.cdf(-10.0));
+        let cdf = |arg: i64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(-10, 10, 0.2857142857142857142857, cdf(-5));
+        test_case(-10, 10, 0.5714285714285714285714, cdf(1));
+        test_case(-10, 10, 1.0, cdf(10));
+        test_case(-10, -10, 1.0, cdf(-10));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        test_case(0, 3, 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: i64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(0, 3, 0.0, cdf(-1));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        test_case(0, 3, 1.0, |x| x.cdf(5.0));
+        let cdf = |arg: i64| move |x: DiscreteUniform| x.cdf(arg);
+        test_case(0, 3, 1.0, cdf(5));
     }
 }

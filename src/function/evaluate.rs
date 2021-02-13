@@ -16,19 +16,16 @@ pub fn polynomial(z: f64, coeff: &[f64]) -> f64 {
         return 0.0;
     }
 
-    unsafe {
-        let mut sum = *coeff.get_unchecked(n - 1);
-        for i in (0..n - 1).rev() {
-            sum *= z;
-            sum += *coeff.get_unchecked(i);
-        }
-        sum
+    let mut sum = *coeff.last().unwrap();
+    for c in coeff[0..n - 1].iter().rev() {
+        sum = *c + z * sum;
     }
+    sum
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
 
     // these tests probably could be more robust

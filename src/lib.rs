@@ -25,8 +25,18 @@
 
 #![crate_type = "lib"]
 #![crate_name = "statrs"]
+#![allow(clippy::excessive_precision)]
+#![allow(clippy::many_single_char_names)]
+#![allow(unused_imports)]
+#![forbid(unsafe_code)]
+#![cfg_attr(test, feature(unboxed_closures))]
+#![cfg_attr(test, feature(fn_traits))]
 
-extern crate rand;
+#[macro_use]
+extern crate approx;
+
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_export]
 macro_rules! assert_almost_eq {
@@ -50,10 +60,16 @@ pub mod statistics;
 
 mod error;
 
+// function to silence clippy on the special case when comparing to zero.
+#[inline(always)]
+pub(crate) fn is_zero(x: f64) -> bool {
+    ulps_eq!(x, 0.0, max_ulps = 0)
+}
+
 #[cfg(test)]
 mod testing;
 
-pub use error::StatsError;
+pub use crate::error::StatsError;
 
 /// Result type for the statrs library package that returns
 /// either a result type `T` or a `StatsError`

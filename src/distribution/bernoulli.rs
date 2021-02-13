@@ -1,8 +1,7 @@
-use distribution::{Binomial, Discrete, Univariate};
-use rand::distributions::Distribution;
+use crate::distribution::{Binomial, Discrete, DiscreteCDF};
+use crate::statistics::*;
+use crate::Result;
 use rand::Rng;
-use statistics::*;
-use Result;
 
 /// Implements the
 /// [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution)
@@ -14,10 +13,10 @@ use Result;
 ///
 /// ```
 /// use statrs::distribution::{Bernoulli, Discrete};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Bernoulli::new(0.5).unwrap();
-/// assert_eq!(n.mean(), 0.5);
+/// assert_eq!(n.mean().unwrap(), 0.5);
 /// assert_eq!(n.pmf(0), 0.5);
 /// assert_eq!(n.pmf(1), 0.5);
 /// ```
@@ -47,7 +46,7 @@ impl Bernoulli {
     /// assert!(result.is_err());
     /// ```
     pub fn new(p: f64) -> Result<Bernoulli> {
-        Binomial::new(p, 1).map(|b| Bernoulli { b: b })
+        Binomial::new(p, 1).map(|b| Bernoulli { b })
     }
 
     /// Returns the probability of success `p` of the
@@ -81,13 +80,13 @@ impl Bernoulli {
     }
 }
 
-impl Distribution<f64> for Bernoulli {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        r.gen_bool(self.p()) as u8 as f64
+impl ::rand::distributions::Distribution<f64> for Bernoulli {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        rng.gen_bool(self.p()) as u8 as f64
     }
 }
 
-impl Univariate<u64, f64> for Bernoulli {
+impl DiscreteCDF<u64, f64> for Bernoulli {
     /// Calculates the cumulative distribution
     /// function for the bernoulli distribution at `x`.
     ///
@@ -98,7 +97,7 @@ impl Univariate<u64, f64> for Bernoulli {
     /// else if x >= 1 { 1 }
     /// else { 1 - p }
     /// ```
-    fn cdf(&self, x: f64) -> f64 {
+    fn cdf(&self, x: u64) -> f64 {
         self.b.cdf(x)
     }
 }
@@ -133,7 +132,7 @@ impl Max<u64> for Bernoulli {
     }
 }
 
-impl Mean<f64> for Bernoulli {
+impl Distribution<f64> for Bernoulli {
     /// Returns the mean of the bernoulli
     /// distribution
     ///
@@ -142,12 +141,9 @@ impl Mean<f64> for Bernoulli {
     /// ```ignore
     /// p
     /// ```
-    fn mean(&self) -> f64 {
+    fn mean(&self) -> Option<f64> {
         self.b.mean()
     }
-}
-
-impl Variance<f64> for Bernoulli {
     /// Returns the variance of the bernoulli
     /// distribution
     ///
@@ -156,24 +152,9 @@ impl Variance<f64> for Bernoulli {
     /// ```ignore
     /// p * (1 - p)
     /// ```
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         self.b.variance()
     }
-
-    /// Returns the standard deviation of the bernoulli
-    /// distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(p * (1 - p))
-    /// ```
-    fn std_dev(&self) -> f64 {
-        self.b.std_dev()
-    }
-}
-
-impl Entropy<f64> for Bernoulli {
     /// Returns the entropy of the bernoulli
     /// distribution
     ///
@@ -183,12 +164,9 @@ impl Entropy<f64> for Bernoulli {
     /// q = (1 - p)
     /// -q * ln(q) - p * ln(p)
     /// ```
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Option<f64> {
         self.b.entropy()
     }
-}
-
-impl Skewness<f64> for Bernoulli {
     /// Returns the skewness of the bernoulli
     /// distribution
     ///
@@ -198,7 +176,7 @@ impl Skewness<f64> for Bernoulli {
     /// q = (1 - p)
     /// (1 - 2p) / sqrt(p * q)
     /// ```
-    fn skewness(&self) -> f64 {
+    fn skewness(&self) -> Option<f64> {
         self.b.skewness()
     }
 }
@@ -219,7 +197,7 @@ impl Median<f64> for Bernoulli {
     }
 }
 
-impl Mode<u64> for Bernoulli {
+impl Mode<Option<u64>> for Bernoulli {
     /// Returns the mode of the bernoulli distribution
     ///
     /// # Formula
@@ -228,7 +206,7 @@ impl Mode<u64> for Bernoulli {
     /// if p < 0.5 { 0 }
     /// else { 1 }
     /// ```
-    fn mode(&self) -> u64 {
+    fn mode(&self) -> Option<u64> {
         self.b.mode()
     }
 }

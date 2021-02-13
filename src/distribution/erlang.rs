@@ -1,8 +1,7 @@
-use distribution::{Continuous, Gamma, Univariate};
-use rand::distributions::Distribution;
+use crate::distribution::{Continuous, ContinuousCDF, Gamma};
+use crate::statistics::*;
+use crate::Result;
 use rand::Rng;
-use statistics::*;
-use Result;
 
 /// Implements the [Erlang](https://en.wikipedia.org/wiki/Erlang_distribution)
 /// distribution
@@ -14,11 +13,11 @@ use Result;
 ///
 /// ```
 /// use statrs::distribution::{Erlang, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = Erlang::new(3, 1.0).unwrap();
-/// assert_eq!(n.mean(), 3.0);
+/// assert_eq!(n.mean().unwrap(), 3.0);
 /// assert!(prec::almost_eq(n.pdf(2.0), 0.270670566473225383788, 1e-15));
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -47,7 +46,7 @@ impl Erlang {
     /// assert!(result.is_err());
     /// ```
     pub fn new(shape: u64, rate: f64) -> Result<Erlang> {
-        Gamma::new(shape as f64, rate).map(|g| Erlang { g: g })
+        Gamma::new(shape as f64, rate).map(|g| Erlang { g })
     }
 
     /// Returns the shape (k) of the erlang distribution
@@ -79,13 +78,13 @@ impl Erlang {
     }
 }
 
-impl Distribution<f64> for Erlang {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        Distribution::sample(&self.g, r)
+impl ::rand::distributions::Distribution<f64> for Erlang {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        ::rand::distributions::Distribution::sample(&self.g, rng)
     }
 }
 
-impl Univariate<f64, f64> for Erlang {
+impl ContinuousCDF<f64, f64> for Erlang {
     /// Calculates the cumulative distribution function for the erlang
     /// distribution
     /// at `x`
@@ -133,7 +132,7 @@ impl Max<f64> for Erlang {
     }
 }
 
-impl Mean<f64> for Erlang {
+impl Distribution<f64> for Erlang {
     /// Returns the mean of the erlang distribution
     ///
     /// # Remarks
@@ -148,12 +147,9 @@ impl Mean<f64> for Erlang {
     /// ```
     ///
     /// where `k` is the shape and `λ` is the rate
-    fn mean(&self) -> f64 {
+    fn mean(&self) -> Option<f64> {
         self.g.mean()
     }
-}
-
-impl Variance<f64> for Erlang {
     /// Returns the variance of the erlang distribution
     ///
     /// # Formula
@@ -163,25 +159,9 @@ impl Variance<f64> for Erlang {
     /// ```
     ///
     /// where `α` is the shape and `λ` is the rate
-    fn variance(&self) -> f64 {
+    fn variance(&self) -> Option<f64> {
         self.g.variance()
     }
-
-    /// Returns the standard deviation of the erlang distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(k) / λ
-    /// ```
-    ///
-    /// where `k` is the shape and `λ` is the rate
-    fn std_dev(&self) -> f64 {
-        self.g.std_dev()
-    }
-}
-
-impl Entropy<f64> for Erlang {
     /// Returns the entropy of the erlang distribution
     ///
     /// # Formula
@@ -192,12 +172,9 @@ impl Entropy<f64> for Erlang {
     ///
     /// where `k` is the shape, `λ` is the rate, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
+    fn entropy(&self) -> Option<f64> {
         self.g.entropy()
     }
-}
-
-impl Skewness<f64> for Erlang {
     /// Returns the skewness of the erlang distribution
     ///
     /// # Formula
@@ -207,12 +184,12 @@ impl Skewness<f64> for Erlang {
     /// ```
     ///
     /// where `k` is the shape
-    fn skewness(&self) -> f64 {
+    fn skewness(&self) -> Option<f64> {
         self.g.skewness()
     }
 }
 
-impl Mode<f64> for Erlang {
+impl Mode<Option<f64>> for Erlang {
     /// Returns the mode for the erlang distribution
     ///
     /// # Remarks
@@ -227,7 +204,7 @@ impl Mode<f64> for Erlang {
     /// ```
     ///
     /// where `k` is the shape and `λ` is the rate
-    fn mode(&self) -> f64 {
+    fn mode(&self) -> Option<f64> {
         self.g.mode()
     }
 }
@@ -273,12 +250,12 @@ impl Continuous<f64, f64> for Erlang {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
-mod test {
-    use std::f64;
-    use distribution::Erlang;
-    use distribution::internal::*;
+mod tests {
+    use crate::distribution::Erlang;
+    use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(shape: u64, rate: f64) -> Erlang {
         let n = Erlang::new(shape, rate);

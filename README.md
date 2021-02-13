@@ -1,27 +1,27 @@
-# statrs  
-  
+# statrs
+
 [![Build Status](https://travis-ci.org/boxtown/statrs.svg?branch=master)](https://travis-ci.org/boxtown/statrs)
 [![Codecov](https://codecov.io/gh/boxtown/statrs/branch/master/graph/badge.svg)](https://codecov.io/gh/boxtown/statrs)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.md)
-[![Crates.io](https://img.shields.io/crates/v/statrs.svg?maxAge=2592000)](https://crates.io/crates/statrs)  
+[![Crates.io](https://img.shields.io/crates/v/statrs.svg?maxAge=2592000)](https://crates.io/crates/statrs)
 
-## Current Version: v0.10.0
+## Current Version: v0.13.0
 
 Should work for both nightly and stable Rust.
 
 **NOTE:** While I will try to maintain backwards compatibility as much as possible, since this is still a 0.x.x project the API is not considered stable and thus subject to possible breaking changes up until v1.0.0
 
 ## Description
-  
+
 Statrs provides a host of statistical utilities for Rust scientific computing.
 Included are a number of common distributions that can be sampled (i.e. Normal, Exponential,
 Student's T, Gamma, Uniform, etc.) plus common statistical functions like the gamma function,
-beta function, and error function.  
-  
+beta function, and error function.
+
 This library is a work-in-progress port of the statistical capabilities
 in the C# Math.NET library. All unit tests in the library borrowed from Math.NET when possible
-and filled-in when not.  
-  
+and filled-in when not.
+
 This library is a work-in-progress and not complete. Planned for future releases are continued implementations
 of distributions as well as porting over more statistical utilities
 
@@ -33,7 +33,7 @@ Add the following to your `Cargo.toml`
 
 ```Rust
 [dependencies]
-statrs = "0.10.0"
+statrs = "0.13.0"
 ```
 
 and this to your crate root
@@ -41,10 +41,10 @@ and this to your crate root
 ```Rust
 extern crate statrs;
 ```
-  
+
 ## Examples
 
-Statrs v0.10.0 comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.
+Statrs v0.13.0 comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.
 The common use case is to set up the distributions and sample from them which depends on the `Rand` crate for random number generation
 
 ```Rust
@@ -74,7 +74,7 @@ assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
 as well as utility functions including `erf`, `gamma`, `ln_gamma`, `beta`, etc.
 
 For functions or methods with failure modes, Statrs provides a checked and unchecked interface. The unchecked
-interface will panic on an error while the checked interface returns a `Result`. 
+interface will panic on an error while the checked interface returns a `Result`.
 
 ```Rust
 use statrs::statistics::CheckedVariance;
@@ -123,10 +123,13 @@ the `src` directory before committing.
 Please be explicit and and purposeful with commit messages.
 
 #### Bad
+
 ```
 Modify test code
 ```
+
 #### Good
+
 ```
 test: Update statrs::distribution::Normal test_cdf
 ```

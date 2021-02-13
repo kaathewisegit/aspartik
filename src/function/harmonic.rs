@@ -2,8 +2,8 @@
 //! [harmonic](https://en.wikipedia.org/wiki/Harmonic_number)
 //! numbers
 
-use consts;
-use function::gamma;
+use crate::consts;
+use crate::function::gamma;
 
 /// Computes the `t`-th harmonic number
 ///
@@ -30,9 +30,9 @@ pub fn gen_harmonic(n: u64, m: f64) -> f64 {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
 
     #[test]

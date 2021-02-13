@@ -1,10 +1,9 @@
-use distribution::{Continuous, Univariate};
-use rand::distributions::Distribution;
+use crate::distribution::{Continuous, ContinuousCDF};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::distributions::Uniform as RandUniform;
 use rand::Rng;
-use statistics::*;
 use std::f64;
-use {Result, StatsError};
 
 /// Implements the [Continuous
 /// Uniform](https://en.wikipedia.org/wiki/Uniform_distribution_(continuous))
@@ -14,10 +13,10 @@ use {Result, StatsError};
 ///
 /// ```
 /// use statrs::distribution::{Uniform, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Uniform::new(0.0, 1.0).unwrap();
-/// assert_eq!(n.mean(), 0.5);
+/// assert_eq!(n.mean().unwrap(), 0.5);
 /// assert_eq!(n.pdf(0.5), 1.0);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -50,19 +49,19 @@ impl Uniform {
         if min > max || min.is_nan() || max.is_nan() {
             Err(StatsError::BadParams)
         } else {
-            Ok(Uniform { min: min, max: max })
+            Ok(Uniform { min, max })
         }
     }
 }
 
-impl Distribution<f64> for Uniform {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
+impl ::rand::distributions::Distribution<f64> for Uniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         let d = RandUniform::new_inclusive(self.min, self.max);
-        r.sample(d)
+        rng.sample(d)
     }
 }
 
-impl Univariate<f64, f64> for Uniform {
+impl ContinuousCDF<f64, f64> for Uniform {
     /// Calculates the cumulative distribution function for the uniform
     /// distribution
     /// at `x`
@@ -95,7 +94,7 @@ impl Max<f64> for Uniform {
     }
 }
 
-impl Mean<f64> for Uniform {
+impl Distribution<f64> for Uniform {
     /// Returns the mean for the continuous uniform distribution
     ///
     /// # Formula
@@ -103,12 +102,9 @@ impl Mean<f64> for Uniform {
     /// ```ignore
     /// (min + max) / 2
     /// ```
-    fn mean(&self) -> f64 {
-        (self.min + self.max) / 2.0
+    fn mean(&self) -> Option<f64> {
+        Some((self.min + self.max) / 2.0)
     }
-}
-
-impl Variance<f64> for Uniform {
     /// Returns the variance for the continuous uniform distribution
     ///
     /// # Formula
@@ -116,23 +112,9 @@ impl Variance<f64> for Uniform {
     /// ```ignore
     /// (max - min)^2 / 12
     /// ```
-    fn variance(&self) -> f64 {
-        (self.max - self.min) * (self.max - self.min) / 12.0
+    fn variance(&self) -> Option<f64> {
+        Some((self.max - self.min) * (self.max - self.min) / 12.0)
     }
-
-    /// Returns the standard deviation for the continuous uniform distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt((max - min)^2 / 12)
-    /// ```
-    fn std_dev(&self) -> f64 {
-        self.variance().sqrt()
-    }
-}
-
-impl Entropy<f64> for Uniform {
     /// Returns the entropy for the continuous uniform distribution
     ///
     /// # Formula
@@ -140,12 +122,9 @@ impl Entropy<f64> for Uniform {
     /// ```ignore
     /// ln(max - min)
     /// ```
-    fn entropy(&self) -> f64 {
-        (self.max - self.min).ln()
+    fn entropy(&self) -> Option<f64> {
+        Some((self.max - self.min).ln())
     }
-}
-
-impl Skewness<f64> for Uniform {
     /// Returns the skewness for the continuous uniform distribution
     ///
     /// # Formula
@@ -153,8 +132,8 @@ impl Skewness<f64> for Uniform {
     /// ```ignore
     /// 0
     /// ```
-    fn skewness(&self) -> f64 {
-        0.0
+    fn skewness(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
@@ -171,7 +150,7 @@ impl Median<f64> for Uniform {
     }
 }
 
-impl Mode<f64> for Uniform {
+impl Mode<Option<f64>> for Uniform {
     /// Returns the mode for the continuous uniform distribution
     ///
     /// # Remarks
@@ -184,8 +163,8 @@ impl Mode<f64> for Uniform {
     /// ```ignore
     /// N/A // (max + min) / 2 for the middle element
     /// ```
-    fn mode(&self) -> f64 {
-        (self.min + self.max) / 2.0
+    fn mode(&self) -> Option<f64> {
+        Some((self.min + self.max) / 2.0)
     }
 }
 
@@ -232,13 +211,13 @@ impl Continuous<f64, f64> for Uniform {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
-mod test {
-    use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Uniform};
-    use distribution::internal::*;
+mod tests {
+    use crate::statistics::*;
+    use crate::distribution::{ContinuousCDF, Continuous, Uniform};
+    use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(min: f64, max: f64) -> Uniform {
         let n = Uniform::new(min, max);
@@ -300,131 +279,132 @@ mod test {
 
     #[test]
     fn test_variance() {
-        test_case(-0.0, 2.0, 1.0 / 3.0, |x| x.variance());
-        test_case(0.0, 2.0, 1.0 / 3.0, |x| x.variance());
-        test_almost(0.1, 4.0, 1.2675, 1e-15, |x| x.variance());
-        test_case(10.0, 11.0, 1.0 / 12.0, |x| x.variance());
-        test_case(0.0, f64::INFINITY, f64::INFINITY, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(-0.0, 2.0, (1f64 / 3.0).sqrt(), |x| x.std_dev());
-        test_case(0.0, 2.0, (1f64 / 3.0).sqrt(), |x| x.std_dev());
-        test_almost(0.1, 4.0, (1.2675f64).sqrt(), 1e-15, |x| x.std_dev());
-        test_case(10.0, 11.0, (1f64 / 12.0).sqrt(), |x| x.std_dev());
-        test_case(0.0, f64::INFINITY, f64::INFINITY, |x| x.std_dev());
+        let variance = |x: Uniform| x.variance().unwrap();
+        test_case(-0.0, 2.0, 1.0 / 3.0, variance);
+        test_case(0.0, 2.0, 1.0 / 3.0, variance);
+        test_almost(0.1, 4.0, 1.2675, 1e-15, variance);
+        test_case(10.0, 11.0, 1.0 / 12.0, variance);
+        test_case(0.0, f64::INFINITY, f64::INFINITY, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_case(-0.0, 2.0, 0.6931471805599453094172, |x| x.entropy());
-        test_case(0.0, 2.0, 0.6931471805599453094172, |x| x.entropy());
-        test_almost(0.1, 4.0, 1.360976553135600743431, 1e-15, |x| x.entropy());
-        test_case(1.0, 10.0, 2.19722457733621938279, |x| x.entropy());
-        test_case(10.0, 11.0, 0.0, |x| x.entropy());
-        test_case(0.0, f64::INFINITY, f64::INFINITY, |x| x.entropy());
+        let entropy = |x: Uniform| x.entropy().unwrap();
+        test_case(-0.0, 2.0, 0.6931471805599453094172, entropy);
+        test_case(0.0, 2.0, 0.6931471805599453094172, entropy);
+        test_almost(0.1, 4.0, 1.360976553135600743431, 1e-15, entropy);
+        test_case(1.0, 10.0, 2.19722457733621938279, entropy);
+        test_case(10.0, 11.0, 0.0, entropy);
+        test_case(0.0, f64::INFINITY, f64::INFINITY, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(-0.0, 2.0, 0.0, |x| x.skewness());
-        test_case(0.0, 2.0, 0.0, |x| x.skewness());
-        test_case(0.1, 4.0, 0.0, |x| x.skewness());
-        test_case(1.0, 10.0, 0.0, |x| x.skewness());
-        test_case(10.0, 11.0, 0.0, |x| x.skewness());
-        test_case(0.0, f64::INFINITY, 0.0, |x| x.skewness());
+        let skewness = |x: Uniform| x.skewness().unwrap();
+        test_case(-0.0, 2.0, 0.0, skewness);
+        test_case(0.0, 2.0, 0.0, skewness);
+        test_case(0.1, 4.0, 0.0, skewness);
+        test_case(1.0, 10.0, 0.0, skewness);
+        test_case(10.0, 11.0, 0.0, skewness);
+        test_case(0.0, f64::INFINITY, 0.0, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(-0.0, 2.0, 1.0, |x| x.mode());
-        test_case(0.0, 2.0, 1.0, |x| x.mode());
-        test_case(0.1, 4.0, 2.05, |x| x.mode());
-        test_case(1.0, 10.0, 5.5, |x| x.mode());
-        test_case(10.0, 11.0, 10.5, |x| x.mode());
-        test_case(0.0, f64::INFINITY, f64::INFINITY, |x| x.mode());
+        let mode = |x: Uniform| x.mode().unwrap();
+        test_case(-0.0, 2.0, 1.0, mode);
+        test_case(0.0, 2.0, 1.0, mode);
+        test_case(0.1, 4.0, 2.05, mode);
+        test_case(1.0, 10.0, 5.5, mode);
+        test_case(10.0, 11.0, 10.5, mode);
+        test_case(0.0, f64::INFINITY, f64::INFINITY, mode);
     }
 
     #[test]
     fn test_median() {
-        test_case(-0.0, 2.0, 1.0, |x| x.median());
-        test_case(0.0, 2.0, 1.0, |x| x.median());
-        test_case(0.1, 4.0, 2.05, |x| x.median());
-        test_case(1.0, 10.0, 5.5, |x| x.median());
-        test_case(10.0, 11.0, 10.5, |x| x.median());
-        test_case(0.0, f64::INFINITY, f64::INFINITY, |x| x.median());
+        let median = |x: Uniform| x.median();
+        test_case(-0.0, 2.0, 1.0, median);
+        test_case(0.0, 2.0, 1.0, median);
+        test_case(0.1, 4.0, 2.05, median);
+        test_case(1.0, 10.0, 5.5, median);
+        test_case(10.0, 11.0, 10.5, median);
+        test_case(0.0, f64::INFINITY, f64::INFINITY, median);
     }
 
     #[test]
     fn test_pdf() {
-        test_case(0.0, 0.0, 0.0, |x| x.pdf(-5.0));
-        test_case(0.0, 0.0, f64::INFINITY, |x| x.pdf(0.0));
-        test_case(0.0, 0.0, 0.0, |x| x.pdf(5.0));
-        test_case(0.0, 0.1, 0.0, |x| x.pdf(-5.0));
-        test_case(0.0, 0.1, 10.0, |x| x.pdf(0.05));
-        test_case(0.0, 0.1, 0.0, |x| x.pdf(5.0));
-        test_case(0.0, 1.0, 0.0, |x| x.pdf(-5.0));
-        test_case(0.0, 1.0, 1.0, |x| x.pdf(0.5));
-        test_case(0.0, 0.1, 0.0, |x| x.pdf(5.0));
-        test_case(0.0, 10.0, 0.0, |x| x.pdf(-5.0));
-        test_case(0.0, 10.0, 0.1, |x| x.pdf(1.0));
-        test_case(0.0, 10.0, 0.1, |x| x.pdf(5.0));
-        test_case(0.0, 10.0, 0.0, |x| x.pdf(11.0));
-        test_case(-5.0, 100.0, 0.0, |x| x.pdf(-10.0));
-        test_case(-5.0, 100.0, 0.009523809523809523809524, |x| x.pdf(-5.0));
-        test_case(-5.0, 100.0, 0.009523809523809523809524, |x| x.pdf(0.0));
-        test_case(-5.0, 100.0, 0.0, |x| x.pdf(101.0));
-        test_case(0.0, f64::INFINITY, 0.0, |x| x.pdf(-5.0));
-        test_case(0.0, f64::INFINITY, 0.0, |x| x.pdf(10.0));
-        test_case(0.0, f64::INFINITY, 0.0, |x| x.pdf(f64::INFINITY));
+        let pdf = |arg: f64| move |x: Uniform| x.pdf(arg);
+        test_case(0.0, 0.0, 0.0, pdf(-5.0));
+        test_case(0.0, 0.0, f64::INFINITY, pdf(0.0));
+        test_case(0.0, 0.0, 0.0, pdf(5.0));
+        test_case(0.0, 0.1, 0.0, pdf(-5.0));
+        test_case(0.0, 0.1, 10.0, pdf(0.05));
+        test_case(0.0, 0.1, 0.0, pdf(5.0));
+        test_case(0.0, 1.0, 0.0, pdf(-5.0));
+        test_case(0.0, 1.0, 1.0, pdf(0.5));
+        test_case(0.0, 0.1, 0.0, pdf(5.0));
+        test_case(0.0, 10.0, 0.0, pdf(-5.0));
+        test_case(0.0, 10.0, 0.1, pdf(1.0));
+        test_case(0.0, 10.0, 0.1, pdf(5.0));
+        test_case(0.0, 10.0, 0.0, pdf(11.0));
+        test_case(-5.0, 100.0, 0.0, pdf(-10.0));
+        test_case(-5.0, 100.0, 0.009523809523809523809524, pdf(-5.0));
+        test_case(-5.0, 100.0, 0.009523809523809523809524, pdf(0.0));
+        test_case(-5.0, 100.0, 0.0, pdf(101.0));
+        test_case(0.0, f64::INFINITY, 0.0, pdf(-5.0));
+        test_case(0.0, f64::INFINITY, 0.0, pdf(10.0));
+        test_case(0.0, f64::INFINITY, 0.0, pdf(f64::INFINITY));
     }
 
     #[test]
     fn test_ln_pdf() {
-        test_case(0.0, 0.0, f64::NEG_INFINITY, |x| x.ln_pdf(-5.0));
-        test_case(0.0, 0.0, f64::INFINITY, |x| x.ln_pdf(0.0));
-        test_case(0.0, 0.0, f64::NEG_INFINITY, |x| x.ln_pdf(5.0));
-        test_case(0.0, 0.1, f64::NEG_INFINITY, |x| x.ln_pdf(-5.0));
-        test_almost(0.0, 0.1, 2.302585092994045684018, 1e-15, |x| x.ln_pdf(0.05));
-        test_case(0.0, 0.1, f64::NEG_INFINITY, |x| x.ln_pdf(5.0));
-        test_case(0.0, 1.0, f64::NEG_INFINITY, |x| x.ln_pdf(-5.0));
-        test_case(0.0, 1.0, 0.0, |x| x.ln_pdf(0.5));
-        test_case(0.0, 0.1, f64::NEG_INFINITY, |x| x.ln_pdf(5.0));
-        test_case(0.0, 10.0, f64::NEG_INFINITY, |x| x.ln_pdf(-5.0));
-        test_case(0.0, 10.0, -2.302585092994045684018, |x| x.ln_pdf(1.0));
-        test_case(0.0, 10.0, -2.302585092994045684018, |x| x.ln_pdf(5.0));
-        test_case(0.0, 10.0, f64::NEG_INFINITY, |x| x.ln_pdf(11.0));
-        test_case(-5.0, 100.0, f64::NEG_INFINITY, |x| x.ln_pdf(-10.0));
-        test_case(-5.0, 100.0, -4.653960350157523371101, |x| x.ln_pdf(-5.0));
-        test_case(-5.0, 100.0, -4.653960350157523371101, |x| x.ln_pdf(0.0));
-        test_case(-5.0, 100.0, f64::NEG_INFINITY, |x| x.ln_pdf(101.0));
-        test_case(0.0, f64::INFINITY, f64::NEG_INFINITY, |x| x.ln_pdf(-5.0));
-        test_case(0.0, f64::INFINITY, f64::NEG_INFINITY, |x| x.ln_pdf(10.0));
-        test_case(0.0, f64::INFINITY, f64::NEG_INFINITY, |x| x.ln_pdf(f64::INFINITY));
+        let ln_pdf = |arg: f64| move |x: Uniform| x.ln_pdf(arg);
+        test_case(0.0, 0.0, f64::NEG_INFINITY, ln_pdf(-5.0));
+        test_case(0.0, 0.0, f64::INFINITY, ln_pdf(0.0));
+        test_case(0.0, 0.0, f64::NEG_INFINITY, ln_pdf(5.0));
+        test_case(0.0, 0.1, f64::NEG_INFINITY, ln_pdf(-5.0));
+        test_almost(0.0, 0.1, 2.302585092994045684018, 1e-15, ln_pdf(0.05));
+        test_case(0.0, 0.1, f64::NEG_INFINITY, ln_pdf(5.0));
+        test_case(0.0, 1.0, f64::NEG_INFINITY, ln_pdf(-5.0));
+        test_case(0.0, 1.0, 0.0, ln_pdf(0.5));
+        test_case(0.0, 0.1, f64::NEG_INFINITY, ln_pdf(5.0));
+        test_case(0.0, 10.0, f64::NEG_INFINITY, ln_pdf(-5.0));
+        test_case(0.0, 10.0, -2.302585092994045684018, ln_pdf(1.0));
+        test_case(0.0, 10.0, -2.302585092994045684018, ln_pdf(5.0));
+        test_case(0.0, 10.0, f64::NEG_INFINITY, ln_pdf(11.0));
+        test_case(-5.0, 100.0, f64::NEG_INFINITY, ln_pdf(-10.0));
+        test_case(-5.0, 100.0, -4.653960350157523371101, ln_pdf(-5.0));
+        test_case(-5.0, 100.0, -4.653960350157523371101, ln_pdf(0.0));
+        test_case(-5.0, 100.0, f64::NEG_INFINITY, ln_pdf(101.0));
+        test_case(0.0, f64::INFINITY, f64::NEG_INFINITY, ln_pdf(-5.0));
+        test_case(0.0, f64::INFINITY, f64::NEG_INFINITY, ln_pdf(10.0));
+        test_case(0.0, f64::INFINITY, f64::NEG_INFINITY, ln_pdf(f64::INFINITY));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(0.0, 0.0, 0.0, |x| x.cdf(0.0));
-        test_case(0.0, 0.1, 0.5, |x| x.cdf(0.05));
-        test_case(0.0, 1.0, 0.5, |x| x.cdf(0.5));
-        test_case(0.0, 10.0, 0.1, |x| x.cdf(1.0));
-        test_case(0.0, 10.0, 0.5, |x| x.cdf(5.0));
-        test_case(-5.0, 100.0, 0.0, |x| x.cdf(-5.0));
-        test_case(-5.0, 100.0, 0.04761904761904761904762, |x| x.cdf(0.0));
-        test_case(0.0, f64::INFINITY, 0.0, |x| x.cdf(10.0));
-        test_case(0.0, f64::INFINITY, 1.0, |x| x.cdf(f64::INFINITY));
+        let cdf = |arg: f64| move |x: Uniform| x.cdf(arg);
+        test_case(0.0, 0.0, 0.0, cdf(0.0));
+        test_case(0.0, 0.1, 0.5, cdf(0.05));
+        test_case(0.0, 1.0, 0.5, cdf(0.5));
+        test_case(0.0, 10.0, 0.1, cdf(1.0));
+        test_case(0.0, 10.0, 0.5, cdf(5.0));
+        test_case(-5.0, 100.0, 0.0, cdf(-5.0));
+        test_case(-5.0, 100.0, 0.04761904761904761904762, cdf(0.0));
+        test_case(0.0, f64::INFINITY, 0.0, cdf(10.0));
+        test_case(0.0, f64::INFINITY, 1.0, cdf(f64::INFINITY));
     }
 
     #[test]
     fn test_cdf_lower_bound() {
-        test_case(0.0, 3.0, 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: f64| move |x: Uniform| x.cdf(arg);
+        test_case(0.0, 3.0, 0.0, cdf(-1.0));
     }
 
     #[test]
     fn test_cdf_upper_bound() {
-        test_case(0.0, 3.0, 1.0, |x| x.cdf(5.0));
+        let cdf = |arg: f64| move |x: Uniform| x.cdf(arg);
+        test_case(0.0, 3.0, 1.0, cdf(5.0));
     }
 
     #[test]

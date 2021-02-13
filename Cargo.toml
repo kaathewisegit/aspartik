@@ -1,15 +1,16 @@
 [package]
 
 name = "statrs"
-version = "0.10.0"
+version = "0.13.0"
 authors = ["Michael Ma"]
 description = "Statistical computing library for Rust"
 license = "MIT"
 keywords = ["probability", "statistics", "stats", "distribution", "math"]
 categories = ["science"]
-documentation = "https://docs.rs/statrs/0.10.0/statrs/"
+documentation = "https://docs.rs/statrs/0.13.0/statrs/"
 homepage = "https://github.com/boxtown/statrs"
 repository = "https://github.com/boxtown/statrs"
+edition = "2018"
 
 [lib]
 
@@ -17,4 +18,15 @@ name = "statrs"
 path = "src/lib.rs"
 
 [dependencies]
-rand = "0.6.3"
+rand = "0.7.3"
+nalgebra = "0.23.0"
+approx = "0.4.0"
+num-traits = "0.2.14"
+lazy_static = "1.4.0"
+
+[dev-dependencies]
+criterion = "0.3.3"
+
+[[bench]]
+name = "order_statistics"
+harness = false

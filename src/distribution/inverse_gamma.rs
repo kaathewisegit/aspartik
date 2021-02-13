@@ -1,10 +1,9 @@
-use distribution::{Continuous, Univariate};
-use function::gamma;
-use rand::distributions::Distribution;
+use crate::distribution::{Continuous, ContinuousCDF};
+use crate::function::gamma;
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::Rng;
-use statistics::*;
 use std::f64;
-use {Result, StatsError};
 
 /// Implements the [Inverse
 /// Gamma](https://en.wikipedia.org/wiki/Inverse-gamma_distribution)
@@ -14,11 +13,11 @@ use {Result, StatsError};
 ///
 /// ```
 /// use statrs::distribution::{InverseGamma, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec;
 ///
 /// let n = InverseGamma::new(1.1, 0.1).unwrap();
-/// assert!(prec::almost_eq(n.mean(), 1.0, 1e-14));
+/// assert!(prec::almost_eq(n.mean().unwrap(), 1.0, 1e-14));
 /// assert_eq!(n.pdf(1.0), 0.07554920138253064);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -52,13 +51,10 @@ impl InverseGamma {
         match (shape, rate, is_nan) {
             (_, _, true) => Err(StatsError::BadParams),
             (_, _, false) if shape <= 0.0 || rate <= 0.0 => Err(StatsError::BadParams),
-            (_, _, false) if shape == f64::INFINITY || rate == f64::INFINITY => {
+            (_, _, false) if shape.is_infinite() || rate.is_infinite() => {
                 Err(StatsError::BadParams)
             }
-            (_, _, false) => Ok(InverseGamma {
-                shape: shape,
-                rate: rate,
-            }),
+            (_, _, false) => Ok(InverseGamma { shape, rate }),
         }
     }
 
@@ -91,13 +87,13 @@ impl InverseGamma {
     }
 }
 
-impl Distribution<f64> for InverseGamma {
+impl ::rand::distributions::Distribution<f64> for InverseGamma {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         1.0 / super::gamma::sample_unchecked(r, self.shape, self.rate)
     }
 }
 
-impl Univariate<f64, f64> for InverseGamma {
+impl ContinuousCDF<f64, f64> for InverseGamma {
     /// Calculates the cumulative distribution function for the inverse gamma
     /// distribution at `x`
     ///
@@ -113,7 +109,7 @@ impl Univariate<f64, f64> for InverseGamma {
     fn cdf(&self, x: f64) -> f64 {
         if x <= 0.0 {
             0.0
-        } else if x == f64::INFINITY {
+        } else if x.is_infinite() {
             1.0
         } else {
             gamma::gamma_ur(self.shape, self.rate / x)
@@ -151,10 +147,10 @@ impl Max<f64> for InverseGamma {
     }
 }
 
-impl Mean<f64> for InverseGamma {
+impl Distribution<f64> for InverseGamma {
     /// Returns the mean of the inverse distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 1.0`
     ///
@@ -165,38 +161,16 @@ impl Mean<f64> for InverseGamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn mean(&self) -> f64 {
-        self.checked_mean().unwrap()
-    }
-}
-
-impl CheckedMean<f64> for InverseGamma {
-    /// Returns the mean of the inverse distribution
-    ///
-    /// # Errors
-    ///
-    /// If `shape <= 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// β / (α - 1)
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn checked_mean(&self) -> Result<f64> {
+    fn mean(&self) -> Option<f64> {
         if self.shape <= 1.0 {
-            Err(StatsError::ArgGt("shape", 1.0))
+            None
         } else {
-            Ok(self.rate / (self.shape - 1.0))
+            Some(self.rate / (self.shape - 1.0))
         }
     }
-}
-
-impl Variance<f64> for InverseGamma {
     /// Returns the variance of the inverse gamma distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 2.0`
     ///
@@ -207,71 +181,15 @@ impl Variance<f64> for InverseGamma {
     /// ```
     ///
     /// where `α` is the shape and `β` is the rate
-    fn variance(&self) -> f64 {
-        self.checked_variance().unwrap()
-    }
-
-    /// Returns the standard deviation of the inverse gamma distribution
-    ///
-    /// # Panics
-    ///
-    /// If `shape <= 2.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(β^2 / ((α - 1)^2 * (α - 2)))
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn std_dev(&self) -> f64 {
-        self.checked_std_dev().unwrap()
-    }
-}
-
-impl CheckedVariance<f64> for InverseGamma {
-    /// Returns the variance of the inverse gamma distribution
-    ///
-    /// # Errors
-    ///
-    /// If `shape <= 2.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// β^2 / ((α - 1)^2 * (α - 2))
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn checked_variance(&self) -> Result<f64> {
+    fn variance(&self) -> Option<f64> {
         if self.shape <= 2.0 {
-            Err(StatsError::ArgGt("shape", 2.0))
+            None
         } else {
             let val = self.rate * self.rate
                 / ((self.shape - 1.0) * (self.shape - 1.0) * (self.shape - 2.0));
-            Ok(val)
+            Some(val)
         }
     }
-
-    /// Returns the standard deviation of the inverse gamma distribution
-    ///
-    /// # Errors
-    ///
-    /// If `shape <= 2.0`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(β^2 / ((α - 1)^2 * (α - 2)))
-    /// ```
-    ///
-    /// where `α` is the shape and `β` is the rate
-    fn checked_std_dev(&self) -> Result<f64> {
-        self.checked_variance().map(|x| x.sqrt())
-    }
-}
-
-impl Entropy<f64> for InverseGamma {
     /// Returns the entropy of the inverse gamma distribution
     ///
     /// # Formula
@@ -282,16 +200,14 @@ impl Entropy<f64> for InverseGamma {
     ///
     /// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
     /// and `ψ` is the digamma function
-    fn entropy(&self) -> f64 {
-        self.shape + self.rate.ln() + gamma::ln_gamma(self.shape)
-            - (1.0 + self.shape) * gamma::digamma(self.shape)
+    fn entropy(&self) -> Option<f64> {
+        let entr = self.shape + self.rate.ln() + gamma::ln_gamma(self.shape)
+            - (1.0 + self.shape) * gamma::digamma(self.shape);
+        Some(entr)
     }
-}
-
-impl Skewness<f64> for InverseGamma {
     /// Returns the skewness of the inverse gamma distribution
     ///
-    /// # Panics
+    /// # None
     ///
     /// If `shape <= 3`
     ///
@@ -302,35 +218,16 @@ impl Skewness<f64> for InverseGamma {
     /// ```
     ///
     /// where `α` is the shape
-    fn skewness(&self) -> f64 {
-        self.checked_skewness().unwrap()
-    }
-}
-
-impl CheckedSkewness<f64> for InverseGamma {
-    /// Returns the skewness of the inverse gamma distribution
-    ///
-    /// # Errors
-    ///
-    /// If `shape <= 3`
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// 4 * sqrt(α - 2) / (α - 3)
-    /// ```
-    ///
-    /// where `α` is the shape
-    fn checked_skewness(&self) -> Result<f64> {
+    fn skewness(&self) -> Option<f64> {
         if self.shape <= 3.0 {
-            Err(StatsError::ArgGt("shape", 3.0))
+            None
         } else {
-            Ok(4.0 * (self.shape - 2.0).sqrt() / (self.shape - 3.0))
+            Some(4.0 * (self.shape - 2.0).sqrt() / (self.shape - 3.0))
         }
     }
 }
 
-impl Mode<f64> for InverseGamma {
+impl Mode<Option<f64>> for InverseGamma {
     /// Returns the mode of the inverse gamma distribution
     ///
     /// # Formula
@@ -340,8 +237,8 @@ impl Mode<f64> for InverseGamma {
     /// ```
     ///
     /// /// where `α` is the shape and `β` is the rate
-    fn mode(&self) -> f64 {
-        self.rate / (self.shape + 1.0)
+    fn mode(&self) -> Option<f64> {
+        Some(self.rate / (self.shape + 1.0))
     }
 }
 
@@ -357,11 +254,9 @@ impl Continuous<f64, f64> for InverseGamma {
     ///
     /// where `α` is the shape, `β` is the rate, and `Γ` is the gamma function
     fn pdf(&self, x: f64) -> f64 {
-        if x <= 0.0 {
+        if x <= 0.0 || x.is_infinite() {
             0.0
-        } else if x == f64::INFINITY {
-            0.0
-        } else if self.shape == 1.0 {
+        } else if ulps_eq!(self.shape, 1.0) {
             self.rate / (x * x) * (-self.rate / x).exp()
         } else {
             self.rate.powf(self.shape) * x.powf(-self.shape - 1.0) * (-self.rate / x).exp()
@@ -384,13 +279,13 @@ impl Continuous<f64, f64> for InverseGamma {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
-mod test {
-    use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, InverseGamma};
-    use distribution::internal::*;
+mod tests {
+    use crate::statistics::*;
+    use crate::distribution::{ContinuousCDF, Continuous, InverseGamma};
+    use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
     fn try_create(shape: f64, rate: f64) -> InverseGamma {
         let n = InverseGamma::new(shape, rate);
@@ -455,117 +350,94 @@ mod test {
 
     #[test]
     fn test_mean() {
-        test_almost(1.1, 0.1, 1.0, 1e-14, |x| x.mean());
-        test_almost(1.1, 1.0, 10.0, 1e-14, |x| x.mean());
+        let mean = |x: InverseGamma| x.mean().unwrap();
+        test_almost(1.1, 0.1, 1.0, 1e-14, mean);
+        test_almost(1.1, 1.0, 10.0, 1e-14, mean);
     }
 
     #[test]
     #[should_panic]
     fn test_mean_with_shape_lte_1() {
-        get_value(0.1, 0.1, |x| x.mean());
-    }
-
-    #[test]
-    fn test_checked_mean_with_shape_lte_1() {
-        let n = try_create(0.1, 0.1);
-        assert!(n.checked_mean().is_err());
+        let mean = |x: InverseGamma| x.mean().unwrap();
+        get_value(0.1, 0.1, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_almost(2.1, 0.1, 0.08264462809917355371901, 1e-15, |x| x.variance());
-        test_almost(2.1, 1.0, 8.264462809917355371901, 1e-13, |x| x.variance());
+        let variance = |x: InverseGamma| x.variance().unwrap();
+        test_almost(2.1, 0.1, 0.08264462809917355371901, 1e-15, variance);
+        test_almost(2.1, 1.0, 8.264462809917355371901, 1e-13, variance);
     }
 
     #[test]
     #[should_panic]
     fn test_variance_with_shape_lte_2() {
-        get_value(0.1, 0.1, |x| x.variance());
-    }
-
-    #[test]
-    fn test_checked_variance_with_shape_lte_2() {
-        let n = try_create(0.1, 0.1);
-        assert!(n.checked_variance().is_err());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_almost(2.1, 0.1, 0.2874797872880344847272, 1e-15, |x| x.std_dev());
-        test_almost(2.1, 1.0, 2.874797872880344847272, 1e-14, |x| x.std_dev());
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_std_dev_with_shape_lte_2() {
-        get_value(0.1, 0.1, |x| x.std_dev());
-    }
-
-    #[test]
-    fn test_checked_std_dev_with_shape_lte_2() {
-        let n = try_create(0.1, 0.1);
-        assert!(n.checked_std_dev().is_err());
+        let variance = |x: InverseGamma| x.variance().unwrap();
+        get_value(0.1, 0.1, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(0.1, 0.1, 11.51625799319234475054, 1e-14, |x| x.entropy());
-        test_almost(1.0, 1.0, 2.154431329803065721213, 1e-14, |x| x.entropy());
+        let entropy = |x: InverseGamma| x.entropy().unwrap();
+        test_almost(0.1, 0.1, 11.51625799319234475054, 1e-14, entropy);
+        test_almost(1.0, 1.0, 2.154431329803065721213, 1e-14, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_almost(3.1, 0.1, 41.95235392680606187966, 1e-13, |x| x.skewness());
-        test_almost(3.1, 1.0, 41.95235392680606187966, 1e-13, |x| x.skewness());
-        test_case(5.0, 0.1, 3.464101615137754587055, |x| x.skewness());
+        let skewness = |x: InverseGamma| x.skewness().unwrap();
+        test_almost(3.1, 0.1, 41.95235392680606187966, 1e-13, skewness);
+        test_almost(3.1, 1.0, 41.95235392680606187966, 1e-13, skewness);
+        test_case(5.0, 0.1, 3.464101615137754587055, skewness);
     }
 
     #[test]
     #[should_panic]
     fn test_skewness_with_shape_lte_3() {
-        get_value(0.1, 0.1, |x| x.skewness());
-    }
-
-    #[test]
-    fn test_checked_skewness_with_shape_lte_3() {
-        let n = try_create(0.1, 0.1);
-        assert!(n.checked_skewness().is_err());
+        let skewness = |x: InverseGamma| x.skewness().unwrap();
+        get_value(0.1, 0.1, skewness);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0.1, 0.1, 0.09090909090909090909091, |x| x.mode());
-        test_case(1.0, 1.0, 0.5, |x| x.mode());
+        let mode = |x: InverseGamma| x.mode().unwrap();
+        test_case(0.1, 0.1, 0.09090909090909090909091, mode);
+        test_case(1.0, 1.0, 0.5, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(1.0, 1.0, 0.0, |x| x.min());
-        test_case(1.0, 1.0, f64::INFINITY, |x| x.max());
+        let min = |x: InverseGamma| x.min();
+        let max = |x: InverseGamma| x.max();
+        test_case(1.0, 1.0, 0.0, min);
+        test_case(1.0, 1.0, f64::INFINITY, max);
     }
 
     #[test]
     fn test_pdf() {
-        test_almost(0.1, 0.1, 0.0628591853882328004197, 1e-15, |x| x.pdf(1.2));
-        test_almost(0.1, 1.0, 0.0297426109178248997426, 1e-15, |x| x.pdf(2.0));
-        test_case(1.0, 0.1, 0.04157808822362745501024, |x| x.pdf(1.5));
-        test_case(1.0, 1.0, 0.3018043114632487660842, |x| x.pdf(1.2));
+        let pdf = |arg: f64| move |x: InverseGamma| x.pdf(arg);
+        test_almost(0.1, 0.1, 0.0628591853882328004197, 1e-15, pdf(1.2));
+        test_almost(0.1, 1.0, 0.0297426109178248997426, 1e-15, pdf(2.0));
+        test_case(1.0, 0.1, 0.04157808822362745501024, pdf(1.5));
+        test_case(1.0, 1.0, 0.3018043114632487660842, pdf(1.2));
     }
 
     #[test]
     fn test_ln_pdf() {
-        test_almost(0.1, 0.1, 0.0628591853882328004197f64.ln(), 1e-15, |x| x.ln_pdf(1.2));
-        test_almost(0.1, 1.0, 0.0297426109178248997426f64.ln(), 1e-15, |x| x.ln_pdf(2.0));
-        test_case(1.0, 0.1, 0.04157808822362745501024f64.ln(), |x| x.ln_pdf(1.5));
-        test_case(1.0, 1.0, 0.3018043114632487660842f64.ln(), |x| x.ln_pdf(1.2));
+        let ln_pdf = |arg: f64| move |x: InverseGamma| x.ln_pdf(arg);
+        test_almost(0.1, 0.1, 0.0628591853882328004197f64.ln(), 1e-15, ln_pdf(1.2));
+        test_almost(0.1, 1.0, 0.0297426109178248997426f64.ln(), 1e-15, ln_pdf(2.0));
+        test_case(1.0, 0.1, 0.04157808822362745501024f64.ln(), ln_pdf(1.5));
+        test_case(1.0, 1.0, 0.3018043114632487660842f64.ln(), ln_pdf(1.2));
     }
 
     #[test]
     fn test_cdf() {
-        test_almost(0.1, 0.1, 0.1862151961946054271994, 1e-14, |x| x.cdf(1.2));
-        test_almost(0.1, 1.0, 0.05859755410986647796141, 1e-14, |x| x.cdf(2.0));
-        test_case(1.0, 0.1, 0.9355069850316177377304, |x| x.cdf(1.5));
-        test_almost(1.0, 1.0, 0.4345982085070782231613, 1e-14, |x| x.cdf(1.2));
+        let cdf = |arg: f64| move |x: InverseGamma| x.cdf(arg);
+        test_almost(0.1, 0.1, 0.1862151961946054271994, 1e-14, cdf(1.2));
+        test_almost(0.1, 1.0, 0.05859755410986647796141, 1e-14, cdf(2.0));
+        test_case(1.0, 0.1, 0.9355069850316177377304, cdf(1.5));
+        test_almost(1.0, 1.0, 0.4345982085070782231613, 1e-14, cdf(1.2));
     }
 
     #[test]

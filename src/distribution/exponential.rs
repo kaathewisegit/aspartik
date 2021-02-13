@@ -1,12 +1,11 @@
-use distribution::{ziggurat, Continuous, Univariate};
-use rand::distributions::Distribution;
+use crate::distribution::{ziggurat, Continuous, ContinuousCDF};
+use crate::statistics::*;
+use crate::{Result, StatsError};
 use rand::Rng;
-use statistics::*;
 use std::f64;
-use {Result, StatsError};
 
 /// Implements the
-/// [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution)
+/// [Exp](https://en.wikipedia.org/wiki/Exp_distribution)
 /// distribution and is a special case of the
 /// [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) distribution
 /// (referenced [here](./struct.Gamma.html))
@@ -14,19 +13,19 @@ use {Result, StatsError};
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Exponential, Continuous};
-/// use statrs::statistics::Mean;
+/// use statrs::distribution::{Exp, Continuous};
+/// use statrs::statistics::Distribution;
 ///
-/// let n = Exponential::new(1.0).unwrap();
-/// assert_eq!(n.mean(), 1.0);
+/// let n = Exp::new(1.0).unwrap();
+/// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Exponential {
+pub struct Exp {
     rate: f64,
 }
 
-impl Exponential {
+impl Exp {
     /// Constructs a new exponential distribution with a
     /// rate (λ) of `rate`.
     ///
@@ -37,19 +36,19 @@ impl Exponential {
     /// # Examples
     ///
     /// ```
-    /// use statrs::distribution::Exponential;
+    /// use statrs::distribution::Exp;
     ///
-    /// let mut result = Exponential::new(1.0);
+    /// let mut result = Exp::new(1.0);
     /// assert!(result.is_ok());
     ///
-    /// result = Exponential::new(-1.0);
+    /// result = Exp::new(-1.0);
     /// assert!(result.is_err());
     /// ```
-    pub fn new(rate: f64) -> Result<Exponential> {
+    pub fn new(rate: f64) -> Result<Exp> {
         if rate.is_nan() || rate <= 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(Exponential { rate: rate })
+            Ok(Exp { rate })
         }
     }
 
@@ -58,9 +57,9 @@ impl Exponential {
     /// # Examples
     ///
     /// ```
-    /// use statrs::distribution::Exponential;
+    /// use statrs::distribution::Exp;
     ///
-    /// let n = Exponential::new(1.0).unwrap();
+    /// let n = Exp::new(1.0).unwrap();
     /// assert_eq!(n.rate(), 1.0);
     /// ```
     pub fn rate(&self) -> f64 {
@@ -68,13 +67,13 @@ impl Exponential {
     }
 }
 
-impl Distribution<f64> for Exponential {
+impl ::rand::distributions::Distribution<f64> for Exp {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> f64 {
         ziggurat::sample_exp_1(r) / self.rate
     }
 }
 
-impl Univariate<f64, f64> for Exponential {
+impl ContinuousCDF<f64, f64> for Exp {
     /// Calculates the cumulative distribution function for the
     /// exponential distribution at `x`
     ///
@@ -94,7 +93,7 @@ impl Univariate<f64, f64> for Exponential {
     }
 }
 
-impl Min<f64> for Exponential {
+impl Min<f64> for Exp {
     /// Returns the minimum value in the domain of the exponential
     /// distribution representable by a double precision float
     ///
@@ -108,7 +107,7 @@ impl Min<f64> for Exponential {
     }
 }
 
-impl Max<f64> for Exponential {
+impl Max<f64> for Exp {
     /// Returns the maximum value in the domain of the exponential
     /// distribution representable by a double precision float
     ///
@@ -122,7 +121,7 @@ impl Max<f64> for Exponential {
     }
 }
 
-impl Mean<f64> for Exponential {
+impl Distribution<f64> for Exp {
     /// Returns the mean of the exponential distribution
     ///
     /// # Formula
@@ -132,12 +131,9 @@ impl Mean<f64> for Exponential {
     /// ```
     ///
     /// where `λ` is the rate
-    fn mean(&self) -> f64 {
-        1.0 / self.rate
+    fn mean(&self) -> Option<f64> {
+        Some(1.0 / self.rate)
     }
-}
-
-impl Variance<f64> for Exponential {
     /// Returns the variance of the exponential distribution
     ///
     /// # Formula
@@ -147,25 +143,9 @@ impl Variance<f64> for Exponential {
     /// ```
     ///
     /// where `λ` is the rate
-    fn variance(&self) -> f64 {
-        1.0 / (self.rate * self.rate)
+    fn variance(&self) -> Option<f64> {
+        Some(1.0 / (self.rate * self.rate))
     }
-
-    /// Returns the standard deviation of the exponential distribution
-    ///
-    /// # Formula
-    ///
-    /// ```ignore
-    /// sqrt(1 / λ^2)
-    /// ```
-    ///
-    /// where `λ` is the rate
-    fn std_dev(&self) -> f64 {
-        1.0 / self.rate
-    }
-}
-
-impl Entropy<f64> for Exponential {
     /// Returns the entropy of the exponential distribution
     ///
     /// # Formula
@@ -175,12 +155,9 @@ impl Entropy<f64> for Exponential {
     /// ```
     ///
     /// where `λ` is the rate
-    fn entropy(&self) -> f64 {
-        1.0 - self.rate.ln()
+    fn entropy(&self) -> Option<f64> {
+        Some(1.0 - self.rate.ln())
     }
-}
-
-impl Skewness<f64> for Exponential {
     /// Returns the skewness of the exponential distribution
     ///
     /// # Formula
@@ -188,12 +165,12 @@ impl Skewness<f64> for Exponential {
     /// ```ignore
     /// 2
     /// ```
-    fn skewness(&self) -> f64 {
-        2.0
+    fn skewness(&self) -> Option<f64> {
+        Some(2.0)
     }
 }
 
-impl Median<f64> for Exponential {
+impl Median<f64> for Exp {
     /// Returns the median of the exponential distribution
     ///
     /// # Formula
@@ -208,7 +185,7 @@ impl Median<f64> for Exponential {
     }
 }
 
-impl Mode<f64> for Exponential {
+impl Mode<Option<f64>> for Exp {
     /// Returns the mode of the exponential distribution
     ///
     /// # Formula
@@ -216,12 +193,12 @@ impl Mode<f64> for Exponential {
     /// ```ignore
     /// 0
     /// ```
-    fn mode(&self) -> f64 {
-        0.0
+    fn mode(&self) -> Option<f64> {
+        Some(0.0)
     }
 }
 
-impl Continuous<f64, f64> for Exponential {
+impl Continuous<f64, f64> for Exp {
     /// Calculates the probability density function for the exponential
     /// distribution at `x`
     ///
@@ -259,16 +236,17 @@ impl Continuous<f64, f64> for Exponential {
     }
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(test)]
-mod test {
+mod tests {
     use std::f64;
-    use statistics::*;
-    use distribution::{Univariate, Continuous, Exponential};
-    use distribution::internal::*;
+    use crate::statistics::*;
+    use crate::distribution::{ContinuousCDF, Continuous, Exp};
+    use crate::distribution::internal::*;
+    use crate::consts::ACC;
 
-    fn try_create(rate: f64) -> Exponential {
-        let n = Exponential::new(rate);
+    fn try_create(rate: f64) -> Exp {
+        let n = Exp::new(rate);
         assert!(n.is_ok());
         n.unwrap()
     }
@@ -279,33 +257,33 @@ mod test {
     }
 
     fn bad_create_case(rate: f64) {
-        let n = Exponential::new(rate);
+        let n = Exp::new(rate);
         assert!(n.is_err());
     }
 
     fn get_value<F>(rate: f64, eval: F) -> f64
-        where F: Fn(Exponential) -> f64
+        where F: Fn(Exp) -> f64
     {
         let n = try_create(rate);
         eval(n)
     }
 
     fn test_case<F>(rate: f64, expected: f64, eval: F)
-        where F: Fn(Exponential) -> f64
+        where F: Fn(Exp) -> f64
     {
         let x = get_value(rate, eval);
         assert_eq!(expected, x);
     }
 
     fn test_almost<F>(rate: f64, expected: f64, acc: f64, eval: F)
-        where F: Fn(Exponential) -> f64
+        where F: Fn(Exp) -> f64
     {
         let x = get_value(rate, eval);
         assert_almost_eq!(expected, x, acc);
     }
 
     fn test_is_nan<F>(rate: f64, eval: F)
-        where F : Fn(Exponential) -> f64
+        where F : Fn(Exp) -> f64
     {
         let x = get_value(rate, eval);
         assert!(x.is_nan());
@@ -328,136 +306,143 @@ mod test {
 
     #[test]
     fn test_mean() {
-        test_case(0.1, 10.0, |x| x.mean());
-        test_case(1.0, 1.0, |x| x.mean());
-        test_case(10.0, 0.1, |x| x.mean());
+        let mean = |x: Exp| x.mean().unwrap();
+        test_case(0.1, 10.0, mean);
+        test_case(1.0, 1.0, mean);
+        test_case(10.0, 0.1, mean);
     }
 
     #[test]
     fn test_variance() {
-        test_almost(0.1, 100.0, 1e-13, |x| x.variance());
-        test_case(1.0, 1.0, |x| x.variance());
-        test_case(10.0, 0.01, |x| x.variance());
-    }
-
-    #[test]
-    fn test_std_dev() {
-        test_case(0.1, 10.0, |x| x.std_dev());
-        test_case(1.0, 1.0, |x| x.std_dev());
-        test_case(10.0, 0.1, |x| x.std_dev());
+        let variance = |x: Exp| x.variance().unwrap();
+        test_almost(0.1, 100.0, 1e-13, variance);
+        test_case(1.0, 1.0, variance);
+        test_case(10.0, 0.01, variance);
     }
 
     #[test]
     fn test_entropy() {
-        test_almost(0.1, 3.302585092994045684018, 1e-15, |x| x.entropy());
-        test_case(1.0, 1.0, |x| x.entropy());
-        test_almost(10.0, -1.302585092994045684018, 1e-15, |x| x.entropy());
+        let entropy = |x: Exp| x.entropy().unwrap();
+        test_almost(0.1, 3.302585092994045684018, 1e-15, entropy);
+        test_case(1.0, 1.0, entropy);
+        test_almost(10.0, -1.302585092994045684018, 1e-15, entropy);
     }
 
     #[test]
     fn test_skewness() {
-        test_case(0.1, 2.0, |x| x.skewness());
-        test_case(1.0, 2.0, |x| x.skewness());
-        test_case(10.0, 2.0, |x| x.skewness());
+        let skewness = |x: Exp| x.skewness().unwrap();
+        test_case(0.1, 2.0, skewness);
+        test_case(1.0, 2.0, skewness);
+        test_case(10.0, 2.0, skewness);
     }
 
     #[test]
     fn test_median() {
-        test_almost(0.1, 6.931471805599453094172, 1e-15, |x| x.median());
-        test_case(1.0, f64::consts::LN_2, |x| x.median());
-        test_case(10.0, 0.06931471805599453094172, |x| x.median());
+        let median = |x: Exp| x.median();
+        test_almost(0.1, 6.931471805599453094172, 1e-15, median);
+        test_case(1.0, f64::consts::LN_2, median);
+        test_case(10.0, 0.06931471805599453094172, median);
     }
 
     #[test]
     fn test_mode() {
-        test_case(0.1, 0.0, |x| x.mode());
-        test_case(1.0, 0.0, |x| x.mode());
-        test_case(10.0, 0.0, |x| x.mode());
+        let mode = |x: Exp| x.mode().unwrap();
+        test_case(0.1, 0.0, mode);
+        test_case(1.0, 0.0, mode);
+        test_case(10.0, 0.0, mode);
     }
 
     #[test]
     fn test_min_max() {
-        test_case(0.1, 0.0, |x| x.min());
-        test_case(1.0, 0.0, |x| x.min());
-        test_case(10.0, 0.0, |x| x.min());
-        test_case(0.1, f64::INFINITY, |x| x.max());
-        test_case(1.0, f64::INFINITY, |x| x.max());
-        test_case(10.0, f64::INFINITY, |x| x.max());
+        let min = |x: Exp| x.min();
+        let max = |x: Exp| x.max();
+        test_case(0.1, 0.0, min);
+        test_case(1.0, 0.0, min);
+        test_case(10.0, 0.0, min);
+        test_case(0.1, f64::INFINITY, max);
+        test_case(1.0, f64::INFINITY, max);
+        test_case(10.0, f64::INFINITY, max);
     }
 
     #[test]
     fn test_pdf() {
-        test_case(0.1, 0.1, |x| x.pdf(0.0));
-        test_case(1.0, 1.0, |x| x.pdf(0.0));
-        test_case(10.0, 10.0, |x| x.pdf(0.0));
-        test_is_nan(f64::INFINITY, |x| x.pdf(0.0));
-        test_case(0.1, 0.09900498337491680535739, |x| x.pdf(0.1));
-        test_almost(1.0, 0.9048374180359595731642, 1e-15, |x| x.pdf(0.1));
-        test_case(10.0, 3.678794411714423215955, |x| x.pdf(0.1));
-        test_is_nan(f64::INFINITY, |x| x.pdf(0.1));
-        test_case(0.1, 0.09048374180359595731642, |x| x.pdf(1.0));
-        test_case(1.0, 0.3678794411714423215955, |x| x.pdf(1.0));
-        test_almost(10.0, 4.539992976248485153559e-4, 1e-19, |x| x.pdf(1.0));
-        test_is_nan(f64::INFINITY, |x| x.pdf(1.0));
-        test_case(0.1, 0.0, |x| x.pdf(f64::INFINITY));
-        test_case(1.0, 0.0, |x| x.pdf(f64::INFINITY));
-        test_case(10.0, 0.0, |x| x.pdf(f64::INFINITY));
-        test_is_nan(f64::INFINITY, |x| x.pdf(f64::INFINITY));
+        let pdf = |arg: f64| move |x: Exp| x.pdf(arg);
+        test_case(0.1, 0.1, pdf(0.0));
+        test_case(1.0, 1.0, pdf(0.0));
+        test_case(10.0, 10.0, pdf(0.0));
+        test_is_nan(f64::INFINITY, pdf(0.0));
+        test_case(0.1, 0.09900498337491680535739, pdf(0.1));
+        test_almost(1.0, 0.9048374180359595731642, 1e-15, pdf(0.1));
+        test_case(10.0, 3.678794411714423215955, pdf(0.1));
+        test_is_nan(f64::INFINITY, pdf(0.1));
+        test_case(0.1, 0.09048374180359595731642, pdf(1.0));
+        test_case(1.0, 0.3678794411714423215955, pdf(1.0));
+        test_almost(10.0, 4.539992976248485153559e-4, 1e-19, pdf(1.0));
+        test_is_nan(f64::INFINITY, pdf(1.0));
+        test_case(0.1, 0.0, pdf(f64::INFINITY));
+        test_case(1.0, 0.0, pdf(f64::INFINITY));
+        test_case(10.0, 0.0, pdf(f64::INFINITY));
+        test_is_nan(f64::INFINITY, pdf(f64::INFINITY));
     }
 
     #[test]
     fn test_neg_pdf() {
-        test_case(0.1, 0.0, |x| x.pdf(-1.0));
+        let pdf = |arg: f64| move |x: Exp| x.pdf(arg);
+        test_case(0.1, 0.0, pdf(-1.0));
     }
 
     #[test]
     fn test_ln_pdf() {
-        test_almost(0.1, -2.302585092994045684018, 1e-15, |x| x.ln_pdf(0.0));
-        test_case(1.0, 0.0, |x| x.ln_pdf(0.0));
-        test_case(10.0, 2.302585092994045684018, |x| x.ln_pdf(0.0));
-        test_is_nan(f64::INFINITY, |x| x.ln_pdf(0.0));
-        test_almost(0.1, -2.312585092994045684018, 1e-15, |x| x.ln_pdf(0.1));
-        test_case(1.0, -0.1, |x| x.ln_pdf(0.1));
-        test_almost(10.0, 1.302585092994045684018, 1e-15, |x| x.ln_pdf(0.1));
-        test_is_nan(f64::INFINITY, |x| x.ln_pdf(0.1));
-        test_case(0.1, -2.402585092994045684018, |x| x.ln_pdf(1.0));
-        test_case(1.0, -1.0, |x| x.ln_pdf(1.0));
-        test_case(10.0, -7.697414907005954315982, |x| x.ln_pdf(1.0));
-        test_is_nan(f64::INFINITY, |x| x.ln_pdf(1.0));
-        test_case(0.1, f64::NEG_INFINITY, |x| x.ln_pdf(f64::INFINITY));
-        test_case(1.0, f64::NEG_INFINITY, |x| x.ln_pdf(f64::INFINITY));
-        test_case(10.0, f64::NEG_INFINITY, |x| x.ln_pdf(f64::INFINITY));
-        test_is_nan(f64::INFINITY, |x| x.ln_pdf(f64::INFINITY));
+        let ln_pdf = |arg: f64| move |x: Exp| x.ln_pdf(arg);
+        test_almost(0.1, -2.302585092994045684018, 1e-15, ln_pdf(0.0));
+        test_case(1.0, 0.0, ln_pdf(0.0));
+        test_case(10.0, 2.302585092994045684018, ln_pdf(0.0));
+        test_is_nan(f64::INFINITY, ln_pdf(0.0));
+        test_almost(0.1, -2.312585092994045684018, 1e-15, ln_pdf(0.1));
+        test_case(1.0, -0.1, ln_pdf(0.1));
+        test_almost(10.0, 1.302585092994045684018, 1e-15, ln_pdf(0.1));
+        test_is_nan(f64::INFINITY, ln_pdf(0.1));
+        test_case(0.1, -2.402585092994045684018, ln_pdf(1.0));
+        test_case(1.0, -1.0, ln_pdf(1.0));
+        test_case(10.0, -7.697414907005954315982, ln_pdf(1.0));
+        test_is_nan(f64::INFINITY, ln_pdf(1.0));
+        test_case(0.1, f64::NEG_INFINITY, ln_pdf(f64::INFINITY));
+        test_case(1.0, f64::NEG_INFINITY, ln_pdf(f64::INFINITY));
+        test_case(10.0, f64::NEG_INFINITY, ln_pdf(f64::INFINITY));
+        test_is_nan(f64::INFINITY, ln_pdf(f64::INFINITY));
     }
 
     #[test]
     fn test_neg_ln_pdf() {
-        test_case(0.1, f64::NEG_INFINITY, |x| x.ln_pdf(-1.0));
+        let ln_pdf = |arg: f64| move |x: Exp| x.ln_pdf(arg);
+        test_case(0.1, f64::NEG_INFINITY, ln_pdf(-1.0));
     }
 
     #[test]
     fn test_cdf() {
-        test_case(0.1, 0.0, |x| x.cdf(0.0));
-        test_case(1.0, 0.0, |x| x.cdf(0.0));
-        test_case(10.0, 0.0, |x| x.cdf(0.0));
-        test_is_nan(f64::INFINITY, |x| x.cdf(0.0));
-        test_almost(0.1, 0.009950166250831946426094, 1e-16, |x| x.cdf(0.1));
-        test_almost(1.0, 0.0951625819640404268358, 1e-16, |x| x.cdf(0.1));
-        test_case(10.0, 0.6321205588285576784045, |x| x.cdf(0.1));
-        test_case(f64::INFINITY, 1.0, |x| x.cdf(0.1));
-        test_almost(0.1, 0.0951625819640404268358, 1e-16, |x| x.cdf(1.0));
-        test_case(1.0, 0.6321205588285576784045, |x| x.cdf(1.0));
-        test_case(10.0, 0.9999546000702375151485, |x| x.cdf(1.0));
-        test_case(f64::INFINITY, 1.0, |x| x.cdf(1.0));
-        test_case(0.1, 1.0, |x| x.cdf(f64::INFINITY));
-        test_case(1.0, 1.0, |x| x.cdf(f64::INFINITY));
-        test_case(10.0, 1.0, |x| x.cdf(f64::INFINITY));
-        test_case(f64::INFINITY, 1.0, |x| x.cdf(f64::INFINITY));
+        let cdf = |arg: f64| move |x: Exp| x.cdf(arg);
+        test_case(0.1, 0.0, cdf(0.0));
+        test_case(1.0, 0.0, cdf(0.0));
+        test_case(10.0, 0.0, cdf(0.0));
+        test_is_nan(f64::INFINITY, cdf(0.0));
+        test_almost(0.1, 0.009950166250831946426094, 1e-16, cdf(0.1));
+        test_almost(1.0, 0.0951625819640404268358, 1e-16, cdf(0.1));
+        test_case(10.0, 0.6321205588285576784045, cdf(0.1));
+        test_case(f64::INFINITY, 1.0, cdf(0.1));
+        test_almost(0.1, 0.0951625819640404268358, 1e-16, cdf(1.0));
+        test_case(1.0, 0.6321205588285576784045, cdf(1.0));
+        test_case(10.0, 0.9999546000702375151485, cdf(1.0));
+        test_case(f64::INFINITY, 1.0, cdf(1.0));
+        test_case(0.1, 1.0, cdf(f64::INFINITY));
+        test_case(1.0, 1.0, cdf(f64::INFINITY));
+        test_case(10.0, 1.0, cdf(f64::INFINITY));
+        test_case(f64::INFINITY, 1.0, cdf(f64::INFINITY));
     }
 
     #[test]
     fn test_neg_cdf() {
-        test_case(0.1, 0.0, |x| x.cdf(-1.0));
+        let cdf = |arg: f64| move |x: Exp| x.cdf(arg);
+        test_case(0.1, 0.0, cdf(-1.0));
     }
 
     #[test]
