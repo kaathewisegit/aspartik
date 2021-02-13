@@ -538,6 +538,6 @@ mod tests {
 
     #[test]
     fn test_continuous() {
-        tests::check_continuous_distribution(&try_create(10.0, 10.0), 0.0, 10.0);
+        test::check_continuous_distribution(&try_create(10.0, 10.0), 0.0, 10.0);
     }
 }

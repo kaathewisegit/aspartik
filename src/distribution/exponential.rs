@@ -447,8 +447,8 @@ mod tests {
 
     #[test]
     fn test_continuous() {
-        tests::check_continuous_distribution(&try_create(0.5), 0.0, 10.0);
-        tests::check_continuous_distribution(&try_create(1.5), 0.0, 20.0);
-        tests::check_continuous_distribution(&try_create(2.5), 0.0, 50.0);
+        test::check_continuous_distribution(&try_create(0.5), 0.0, 10.0);
+        test::check_continuous_distribution(&try_create(1.5), 0.0, 20.0);
+        test::check_continuous_distribution(&try_create(2.5), 0.0, 50.0);
     }
 }
