@@ -68,6 +68,7 @@ mod uniform;
 mod weibull;
 mod ziggurat;
 mod ziggurat_tables;
+mod laplace;
 
 use crate::Result;
 

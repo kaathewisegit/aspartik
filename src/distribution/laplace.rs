@@ -302,6 +302,7 @@ mod tests {
 
     fn test_is_nan<F>(location: f64, scale: f64, eval: F)
     where
+        F: Fn(laplace::Laplace) -> f64,
         F: Fn(Laplace) -> f64,
     {
         let n = try_create(location, scale);
@@ -404,7 +405,7 @@ mod tests {
     #[test]
     fn test_max() {
         test_case(0.0, 1.0, INF, |l| l.max());
-    }
+  }
 
     #[test]
     fn test_density() {
