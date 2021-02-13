@@ -27,7 +27,6 @@
 #![crate_name = "statrs"]
 #![allow(clippy::excessive_precision)]
 #![allow(clippy::many_single_char_names)]
-#![allow(dead_code)]
 #![allow(unused_imports)]
 #![forbid(unsafe_code)]
 #![cfg_attr(test, feature(unboxed_closures))]
