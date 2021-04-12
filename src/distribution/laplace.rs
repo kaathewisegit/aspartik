@@ -302,7 +302,6 @@ mod tests {
 
     fn test_is_nan<F>(location: f64, scale: f64, eval: F)
     where
-        F: Fn(laplace::Laplace) -> f64,
         F: Fn(Laplace) -> f64,
     {
         let n = try_create(location, scale);
