@@ -280,12 +280,6 @@ mod tests {
         n.unwrap()
     }
 
-    fn create_case(location: f64, scale: f64) {
-        let n = try_create(location, scale);
-        assert_eq!(location, n.location);
-        assert_eq!(scale, n.scale);
-    }
-
     fn bad_create_case(location: f64, scale: f64) {
         let n = Laplace::new(location, scale);
         assert!(n.is_err());
