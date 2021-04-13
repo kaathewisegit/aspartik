@@ -81,7 +81,7 @@ impl Laplace {
 
 impl ::rand::distributions::Distribution<f64> for Laplace {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        let x: f64 = rng.gen_range(-0.5, 0.5);
+        let x: f64 = rng.gen_range(-0.5..0.5);
         self.location - self.scale * x.signum() * (1. - 2. * x).ln()
     }
 }
