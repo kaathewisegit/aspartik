@@ -398,7 +398,7 @@ mod tests {
     #[test]
     fn test_max() {
         test_case(0.0, 1.0, INF, |l| l.max());
-  }
+    }
 
     #[test]
     fn test_density() {
