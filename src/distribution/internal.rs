@@ -58,6 +58,7 @@ pub mod test {
                 assert_abs_diff_eq!(expected, x, epsilon = acc);
             }
 
+            #[allow(dead_code)]  // This is not used by all distributions.
             fn test_none<F, T>(arg: $arg, eval: F)
             where
                 F: Fn($dist) -> Option<T>,
