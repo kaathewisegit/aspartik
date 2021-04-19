@@ -29,8 +29,8 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(unused_imports)]
 #![forbid(unsafe_code)]
-#![cfg_attr(test, feature(unboxed_closures))]
-#![cfg_attr(test, feature(fn_traits))]
+#![cfg_attr(all(test, feature = "nightly"), feature(unboxed_closures))]
+#![cfg_attr(all(test, feature = "nightly"), feature(fn_traits))]
 
 #[macro_use]
 extern crate approx;
@@ -42,10 +42,10 @@ extern crate lazy_static;
 macro_rules! assert_almost_eq {
     ($a:expr, $b:expr, $prec:expr) => {
         if !$crate::prec::almost_eq($a, $b, $prec) {
-            panic!(format!(
+            panic!(
                 "assertion failed: `abs(left - right) < {:e}`, (left: `{}`, right: `{}`)",
                 $prec, $a, $b
-            ));
+            );
         }
     };
 }

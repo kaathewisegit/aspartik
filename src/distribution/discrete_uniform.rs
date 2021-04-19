@@ -53,7 +53,7 @@ impl DiscreteUniform {
 
 impl ::rand::distributions::Distribution<f64> for DiscreteUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        rng.gen_range(self.min, self.max + 1) as f64
+        rng.gen_range(self.min..=self.max) as f64
     }
 }
 

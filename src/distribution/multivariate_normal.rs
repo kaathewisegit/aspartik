@@ -3,9 +3,8 @@ use crate::distribution::Normal;
 use crate::statistics::{Max, MeanN, Min, Mode, VarianceN};
 use crate::{Result, StatsError};
 use nalgebra::{
-    base::allocator::Allocator,
-    base::{dimension::DimName, MatrixN, VectorN},
-    Cholesky, DefaultAllocator, Dim, DimMin, LU, U1,
+    base::allocator::Allocator, base::dimension::DimName, Cholesky, DefaultAllocator, Dim, DimMin,
+    LU, U1,
 };
 use nalgebra::{DMatrix, DVector};
 use rand::Rng;
@@ -212,8 +211,8 @@ mod tests  {
     use core::fmt::Debug;
     use nalgebra::base::allocator::Allocator;
     use nalgebra::{
-        DefaultAllocator, Dim, DimMin, DimName, Matrix2, Matrix3, MatrixN, Vector2, Vector3,
-        VectorN, U1, U2,
+        DefaultAllocator, Dim, DimMin, DimName, Matrix2, Matrix3, Vector2, Vector3,
+        U1, U2,
     };
 
     fn try_create(mean: Vec<f64>, covariance: Vec<f64>) -> MultivariateNormal

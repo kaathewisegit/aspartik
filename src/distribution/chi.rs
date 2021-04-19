@@ -341,14 +341,6 @@ mod tests {
         assert_almost_eq!(expected, x, acc);
     }
 
-    fn test_is_nan<F>(freedom: f64, eval: F)
-    where
-        F: Fn(Chi) -> f64,
-    {
-        let x = get_value(freedom, eval);
-        assert!(x.is_nan());
-    }
-
     #[test]
     fn test_create() {
         create_case(1.0);
