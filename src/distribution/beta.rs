@@ -369,7 +369,7 @@ impl Continuous<f64, f64> for Beta {
 }
 
 #[rustfmt::skip]
-#[cfg(test)]
+#[cfg(all(test, feature = "nightly"))]
 mod tests {
     use super::*;
     use crate::consts::ACC;

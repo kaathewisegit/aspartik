@@ -29,8 +29,8 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(unused_imports)]
 #![forbid(unsafe_code)]
-#![cfg_attr(test, feature(unboxed_closures))]
-#![cfg_attr(test, feature(fn_traits))]
+#![cfg_attr(all(test, feature = "nightly"), feature(unboxed_closures))]
+#![cfg_attr(all(test, feature = "nightly"), feature(fn_traits))]
 
 #[macro_use]
 extern crate approx;

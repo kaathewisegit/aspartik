@@ -18,6 +18,7 @@ pub mod test {
     use crate::consts::ACC;
     use crate::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
 
+    #[cfg(feature = "nightly")]
     #[macro_export]
     macro_rules! testing_boiler {
         ($arg:ty, $dist:ty) => {

@@ -13,9 +13,11 @@ repository = "https://github.com/boxtown/statrs"
 edition = "2018"
 
 [lib]
-
 name = "statrs"
 path = "src/lib.rs"
+
+[features]
+nightly = []
 
 [dependencies]
 rand = "0.8"
