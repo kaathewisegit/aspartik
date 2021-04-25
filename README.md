@@ -29,60 +29,50 @@ Please check out the documentation [here](https://docs.rs/statrs/*/statrs/)
 
 ## Usage
 
-Add the following to your `Cargo.toml`
+Add the most recent release to your `Cargo.toml`
 
 ```Rust
 [dependencies]
-statrs = "0.13.0"
+statrs = "*"
+# statrs = "0.13"
 ```
-
-and this to your crate root
-
-```Rust
-extern crate statrs;
-```
-
 ## Examples
 
-Statrs v0.13.0 comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.
+Statrs comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.
 The common use case is to set up the distributions and sample from them which depends on the `Rand` crate for random number generation
 
 ```Rust
-use rand;
-use statrs::distribution::{Exponential, Distribution};
+use statrs::distribution::Exp;
+use rand::distributions::Distribution;
 
-let mut r = rand::StdRng::new().unwrap();
-let n = Exponential::new(0.5).unwrap();
-print!("{}", n.Sample::<StdRng>(&mut r);
+let mut r = rand::rngs::OsRng;
+let n = Exp::new(0.5).unwrap();
+print!("{}", n.sample(&mut r);
 ```
 
 Statrs also comes with a number of useful utility traits for more detailed introspection of distributions
 
 ```Rust
-use statrs::distribution::{Exponential, Univariate, Continuous};
-use statrs::statistics::{Mean, Variance, Entropy, Skewness};
+use statrs::distribution::{Exp, Continuous, ContinuousCDF};
+use statrs::statistics::Distribution;
 
-let n = Exponential::new(1.0).unwrap();
-assert_eq!(n.mean(), 1.0);
-assert_eq!(n.variance(), 1.0);
-assert_eq!(n.entropy(), 1.0);
-assert_eq!(n.skewness(), 2.0);
+let n = Exp::new(1.0).unwrap();
+assert_eq!(n.mean(), Some(1.0));
+assert_eq!(n.variance(), Some(1.0));
+assert_eq!(n.entropy(), Some(1.0));
+assert_eq!(n.skewness(), Some(2.0));
 assert_eq!(n.cdf(1.0), 0.6321205588285576784045);
 assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
 ```
 
 as well as utility functions including `erf`, `gamma`, `ln_gamma`, `beta`, etc.
 
-For functions or methods with failure modes, Statrs provides a checked and unchecked interface. The unchecked
-interface will panic on an error while the checked interface returns a `Result`.
-
 ```Rust
-use statrs::statistics::CheckedVariance;
+use statrs::statistics::Distribution;
 use statrs::distribution::FisherSnedecor;
 
 let n = FisherSnedecor::new(1.0, 1.0).unwrap();
-assert!(n.checked_variance().is_err());
-// n.variance(); // uncomment this line to see it panic
+assert!(n.variance().is_none());
 ```
 
 ## Contributing
