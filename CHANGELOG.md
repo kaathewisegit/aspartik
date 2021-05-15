@@ -1,3 +1,7 @@
+v0.14.0
+- upgrade `rand` dependency to `0.8`
+- fix inaccurate sampling of `Gamma`
+
 v0.13.0
 - Implemented `MultivariateNormal` distribution (depends on `nalgebra 0.19`)
 - Implemented `Dirac` distribution
