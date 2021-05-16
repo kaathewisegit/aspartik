@@ -90,7 +90,7 @@ impl ContinuousCDF<f64, f64> for Normal {
     /// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
     /// the inverse of the complementary error function
     fn inverse_cdf(&self, x: f64) -> f64 {
-        if x < 0.0 || x > 1.0 {
+        if !(0.0..=1.0).contains(&x) {
             panic!("x must be in [0, 1]");
         } else {
             self.mean - (self.std_dev * f64::consts::SQRT_2 * erf::erfc_inv(2.0 * x))

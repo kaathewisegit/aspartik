@@ -282,7 +282,7 @@ pub fn prob_mass_to_cdf(prob_mass: &[f64]) -> Vec<f64> {
 fn binary_index(search: &[f64], val: f64) -> usize {
     use std::cmp;
 
-    let mut low = 0 as isize;
+    let mut low = 0_isize;
     let mut high = search.len() as isize - 1;
     while low <= high {
         let mid = low + ((high - low) / 2);

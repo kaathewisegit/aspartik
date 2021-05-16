@@ -291,7 +291,7 @@ impl Continuous<f64, f64> for Beta {
     ///
     /// where `α` is shapeA, `β` is shapeB, and `Γ` is the gamma function
     fn pdf(&self, x: f64) -> f64 {
-        if x < 0.0 || x > 1.0 {
+        if !(0.0..=1.0).contains(&x) {
             0.0
         } else if self.shape_a.is_infinite() {
             if ulps_eq!(x, 1.0) {
@@ -329,7 +329,7 @@ impl Continuous<f64, f64> for Beta {
     ///
     /// where `α` is shapeA, `β` is shapeB, and `Γ` is the gamma function
     fn ln_pdf(&self, x: f64) -> f64 {
-        if x < 0.0 || x > 1.0 {
+        if !(0.0..=1.0).contains(&x) {
             -INF
         } else if self.shape_a.is_infinite() {
             if ulps_eq!(x, 1.0) {

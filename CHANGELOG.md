@@ -1,3 +1,16 @@
+v0.14.0
+- upgrade `rand` dependency to `0.8`
+- fix inaccurate sampling of `Gamma`
+- Implemented Empirical distribution
+- Implemented Laplace distribution
+- Removed Checked* traits
+- Almost clippy-clean
+- Almost fully enabled rustfmt
+- Begin applying consistent numeric relative-accuracy targets with the approx crate
+- Introduce macro to generate testing boilerplate, yet not all tests use this yet
+- Moved to dynamic vectors in the MultivariateNormal distribution
+- Reduced a number of distribution-specific traits into the Distribution and DiscreteDistribution traits
+
 v0.13.0
 - Implemented `MultivariateNormal` distribution (depends on `nalgebra 0.19`)
 - Implemented `Dirac` distribution

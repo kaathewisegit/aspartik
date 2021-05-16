@@ -51,7 +51,7 @@ impl NegativeBinomial {
         if p.is_nan() || p < 0.0 || p > 1.0 || r.is_nan() || r < 0.0 {
             Err(StatsError::BadParams)
         } else {
-            Ok(NegativeBinomial { p, r })
+            Ok(NegativeBinomial { r, p })
         }
     }
 
