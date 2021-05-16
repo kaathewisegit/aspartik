@@ -145,7 +145,7 @@ impl Distribution<f64> for Chi {
     /// where `k` is degrees of freedom and `Γ` is the gamma function
     fn mean(&self) -> Option<f64> {
         if self.freedom.is_infinite() {
-            return None;
+            None
         } else if self.freedom > 300.0 {
             // Large n approximation based on the Stirling series approximation to the Gamma function
             // This avoids call the Gamma function with large arguments and returning NaN

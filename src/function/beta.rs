@@ -115,7 +115,7 @@ pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64> {
         Err(StatsError::ArgMustBePositive("a"))
     } else if b <= 0.0 {
         Err(StatsError::ArgMustBePositive("b"))
-    } else if x < 0.0 || x > 1.0 {
+    } else if !(0.0..=1.0).contains(&x) {
         Err(StatsError::ArgIntervalIncl("x", 0.0, 1.0))
     } else {
         let bt = if is_zero(x) || ulps_eq!(x, 1.0) {
@@ -275,7 +275,7 @@ pub fn inv_beta_reg(mut a: f64, mut b: f64, mut x: f64) -> f64 {
     const SAE: i32 = -30;
     const FPU: f64 = 1e-30; // 10^SAE
 
-    debug_assert!(x >= 0.0 && x <= 1.0 && a > 0.0 && b > 0.0);
+    debug_assert!((0.0..=1.0).contains(&x) && a > 0.0 && b > 0.0);
 
     if x == 0.0 {
         return 0.0;

@@ -129,7 +129,7 @@ impl<D: AsMut<[f64]> + AsRef<[f64]>> OrderStatistics<f64> for Data<D> {
     }
 
     fn quantile(&mut self, tau: f64) -> f64 {
-        if tau < 0.0 || tau > 1.0 || self.is_empty() {
+        if !(0.0..=1.0).contains(&tau) || self.is_empty() {
             return f64::NAN;
         }
 
