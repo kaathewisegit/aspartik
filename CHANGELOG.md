@@ -1,3 +1,6 @@
+v0.15.0
+- upgrade `nalgebra` to `0.27.1` to avoid RUSTSEC-2021-0070
+
 v0.14.0
 - upgrade `rand` dependency to `0.8`
 - fix inaccurate sampling of `Gamma`
