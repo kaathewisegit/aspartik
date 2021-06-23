@@ -5,7 +5,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.md)
 [![Crates.io](https://img.shields.io/crates/v/statrs.svg?maxAge=2592000)](https://crates.io/crates/statrs)
 
-## Current Version: v0.13.0
+## Current Version: v0.14.0
 
 Should work for both nightly and stable Rust.
 
@@ -33,8 +33,7 @@ Add the most recent release to your `Cargo.toml`
 
 ```Rust
 [dependencies]
-statrs = "*"
-# statrs = "0.13"
+statrs = "0.14"
 ```
 ## Examples
 
