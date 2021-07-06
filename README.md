@@ -1,7 +1,6 @@
 # statrs
 
 [![Build Status](https://travis-ci.org/boxtown/statrs.svg?branch=master)](https://travis-ci.org/boxtown/statrs)
-[![Codecov](https://codecov.io/gh/boxtown/statrs/branch/master/graph/badge.svg)](https://codecov.io/gh/boxtown/statrs)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.md)
 [![Crates.io](https://img.shields.io/crates/v/statrs.svg)](https://crates.io/crates/statrs)
 
