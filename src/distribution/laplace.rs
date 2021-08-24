@@ -486,7 +486,7 @@ mod tests {
             });
             assert!(
                 result > -tolerance && result < tolerance,
-                "Balanace is {} for seed {}",
+                "Balance is {} for seed {}",
                 result,
                 seed
             );
