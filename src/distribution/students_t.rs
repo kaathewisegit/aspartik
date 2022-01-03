@@ -156,12 +156,12 @@ impl ContinuousCDF<f64, f64> for StudentsT {
     fn inverse_cdf(&self, x: f64) -> f64 {
         // first calculate inverse_cdf for normal Student's T
         assert!((0.0..=1.0).contains(&x));
-        let x = 2. * x.min(1. - x);
+        let x1 = if x >= 0.5 { 1.0 - x } else { x };
         let a = 0.5 * self.freedom;
         let b = 0.5;
-        let mut y = beta::inv_beta_reg(a, b, x);
+        let mut y = beta::inv_beta_reg(a, b, 2.0 * x1);
         y = (self.freedom * (1. - y) / y).sqrt();
-        y = if x <= 0.5 { y } else { -y };
+        y = if x >= 0.5 { y } else { -y };
         // generalised Student's T is related to normal Student's T by `Y = μ + σ X`
         // where `X` is distributed as Student's T, so this result has to be scaled and shifted back
         // formally: F_Y(t) = P(Y <= t) = P(X <= (t - μ) / σ) = F_X((t - μ) / σ)
@@ -1019,5 +1019,91 @@ mod tests {
         test(0.9975, 120.0, 2.860);
         test(0.999, 120.0, 3.160);
         test(0.9995, 120.0, 3.373);
+    }
+
+    #[test]
+    fn test_inv_cdf_high_precision() {
+        let test = |x: f64, freedom: f64, expected: f64| {
+            use approx::assert_relative_eq;
+            let d = StudentsT::new(0., 1., freedom).unwrap();
+            assert_relative_eq!(d.inverse_cdf(x), expected, max_relative = 5e-13);
+        };
+        // The data in this table of expected values was generated in
+        // Python, using the mpsci package (based on mpmath):
+        //
+        //   import mpmath
+        //   from mpsci.distributions import t
+        //
+        //   # Set the number of digits of precision
+        //   mpmath.mp.dps = 200
+        //
+        //   ps = [0.001, 0.01, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]
+        //   dfs = [1.0, 10.0, 100.0]
+        //
+        //   for df in dfs:
+        //       for p in ps:
+        //           q = t.invcdf(p, df)
+        //           print(f"({p:5.3f}, {df:5.1f}, {float(q)}),")
+        //
+        let invcdf_data = [
+            // p       df    inverse_cdf(p, df)
+            (0.001,   1.0, -318.30883898555044),
+            (0.010,   1.0, -31.820515953773956),
+            (0.100,   1.0, -3.077683537175253),
+            (0.150,   1.0, -1.9626105055051506),
+            (0.200,   1.0, -1.3763819204711734),
+            (0.250,   1.0, -1.0),
+            (0.300,   1.0, -0.7265425280053609),
+            (0.350,   1.0, -0.5095254494944289),
+            (0.400,   1.0, -0.32491969623290623),
+            (0.450,   1.0, -0.15838444032453625),
+            (0.001,  10.0, -4.143700494046589),
+            (0.010,  10.0, -2.763769458112696),
+            (0.100,  10.0, -1.3721836411103356),
+            (0.150,  10.0, -1.093058073590526),
+            (0.200,  10.0, -0.8790578285505887),
+            (0.250,  10.0, -0.6998120613124317),
+            (0.300,  10.0, -0.5415280387550157),
+            (0.350,  10.0, -0.3965914937556218),
+            (0.400,  10.0, -0.26018482949208016),
+            (0.450,  10.0, -0.12889018929327375),
+            (0.001, 100.0, -3.173739493738783),
+            (0.010, 100.0, -2.364217366238482),
+            (0.100, 100.0, -1.290074761346516),
+            (0.150, 100.0, -1.041835900908347),
+            (0.200, 100.0, -0.845230424491016),
+            (0.250, 100.0, -0.6769510430114715),
+            (0.300, 100.0, -0.5260762706003463),
+            (0.350, 100.0, -0.3864289804076715),
+            (0.400, 100.0, -0.2540221824582278),
+            (0.450, 100.0, -0.12598088204153965),
+        ];
+        for (p, df, expected) in invcdf_data.iter() {
+            test(*p, *df, *expected);
+            test(1.0 - *p, *df, -*expected);
+        }
+    }
+
+    #[test]
+    fn test_inv_cdf_midpoint() {
+        for loc in [0.0, 1.0, -3.5] {
+            let d = StudentsT::new(loc, 1.0, 12.0).unwrap();
+            // inverse_cdf(p) is a floating point calculation, so using
+            // assert_eq here is optimistic.  For the given location values,
+            // the check passes, so let's use the optimistic check for now.
+            assert_eq!(d.inverse_cdf(0.5), loc);
+        }
+    }
+
+    #[test]
+    fn test_inv_cdf_p0() {
+        let d = StudentsT::new(0.0, 1.0, 12.0).unwrap();
+        assert_eq!(d.inverse_cdf(0.0), std::f64::NEG_INFINITY);
+    }
+
+    #[test]
+    fn test_inv_cdf_p1() {
+        let d = StudentsT::new(0.0, 1.0, 12.0).unwrap();
+        assert_eq!(d.inverse_cdf(1.0), std::f64::INFINITY);
     }
 }
