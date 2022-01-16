@@ -1,5 +1,5 @@
 use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::*;
+use crate::statistics::{Distribution, Max, Median, Min, Mode};
 use crate::{Result, StatsError};
 use rand::Rng;
 use std::f64;
@@ -125,9 +125,9 @@ impl ContinuousCDF<f64, f64> for Laplace {
             panic!("p must be in [0, 1]");
         };
         if p <= 0.5 {
-            self.location + self.scale * (2. * p)
+            self.location + self.scale * (2. * p).ln()
         } else {
-            self.location - self.scale * (2. - 2. * p)
+            self.location - self.scale * (2. - 2. * p).ln()
         }
     }
 }
@@ -312,6 +312,20 @@ mod tests {
         assert_almost_eq!(expected, x, acc);
     }
 
+    // A wrapper for the `assert_relative_eq!` macro from the approx crate.
+    //
+    // `rtol` is the accepable relative error.  This function is for testing
+    // relative tolerance *only*.  It should not be used with `expected = 0`.
+    //
+    fn test_rel_close<F>(location: f64, scale: f64, expected: f64, rtol: f64, eval: F)
+    where
+        F: Fn(Laplace) -> f64,
+    {
+        let n = try_create(location, scale);
+        let x = eval(n);
+        assert_relative_eq!(expected, x, epsilon = 0.0, max_relative = rtol);
+    }
+
     #[test]
     fn test_create() {
         try_create(1.0, 2.0);
@@ -450,6 +464,46 @@ mod tests {
         test_case(-5.0, INF, -INF, ln_pdf(-10.0));
         test_is_nan(INF, INF, ln_pdf(2.0));
         test_is_nan(-INF, INF, ln_pdf(-5.1));
+    }
+
+    #[test]
+    fn test_cdf() {
+        let cdf = |arg: f64| move |x: Laplace| x.cdf(arg);
+        let loc = 0.0f64;
+        let scale = 1.0f64;
+        let reltol = 1e-15f64;
+
+        // Expected value from Wolfram Alpha: CDF[LaplaceDistribution[0, 1], 1/2].
+        let expected = 0.69673467014368328819810023250440977f64;
+        test_rel_close(loc, scale, expected, reltol, cdf(0.5));
+
+        // Wolfram Alpha: CDF[LaplaceDistribution[0, 1], -1/2]
+        let expected = 0.30326532985631671180189976749559023f64;
+        test_rel_close(loc, scale, expected, reltol, cdf(-0.5));
+
+        // Wolfram Alpha: CDF[LaplaceDistribution[0, 1], -100]
+        let expected = 1.8600379880104179814798479019315592e-44f64;
+        test_rel_close(loc, scale, expected, reltol, cdf(-100.0));
+    }
+
+    #[test]
+    fn test_inverse_cdf() {
+        let inverse_cdf = |arg: f64| move |x: Laplace| x.inverse_cdf(arg);
+        let loc = 0.0f64;
+        let scale = 1.0f64;
+        let reltol = 1e-15f64;
+
+        // Wolfram Alpha: Inverse CDF[LaplaceDistribution[0, 1], 1/10000000000]
+        let expected = -22.3327037493805115307626824253854655f64;
+        test_rel_close(loc, scale, expected, reltol, inverse_cdf(1e-10));
+
+        // Wolfram Alpha: Inverse CDF[LaplaceDistribution[0, 1], 1/1000].
+        let expected = -6.2146080984221917426367422425949161f64;
+        test_rel_close(loc, scale, expected, reltol, inverse_cdf(0.001));
+
+        // Wolfram Alpha: Inverse CDF[LaplaceDistribution[0, 1], 95/100]
+        let expected = 2.3025850929940456840179914546843642f64;
+        test_rel_close(loc, scale, expected, reltol, inverse_cdf(0.95));
     }
 
     #[test]
