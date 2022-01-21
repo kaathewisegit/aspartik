@@ -12,13 +12,13 @@ pub fn is_valid_multinomial(arr: &[f64], incl_zero: bool) -> bool {
     sum != 0.0
 }
 
-#[cfg(test)]
+#[macro_use]
+#[cfg(all(test, feature = "nightly"))]
 pub mod test {
     use super::is_valid_multinomial;
     use crate::consts::ACC;
     use crate::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
 
-    #[cfg(feature = "nightly")]
     #[macro_export]
     macro_rules! testing_boiler {
         ($arg:ty, $dist:ty) => {
@@ -50,6 +50,7 @@ pub mod test {
                 assert_relative_eq!(expected, x, max_relative = ACC);
             }
 
+            #[allow(dead_code)] // This is not used by all distributions.
             fn test_case_special<F, T>(arg: $arg, expected: T, acc: f64, eval: F)
             where
                 F: Fn($dist) -> T,

@@ -51,6 +51,7 @@ macro_rules! assert_almost_eq {
 }
 
 pub mod consts;
+#[macro_use]
 pub mod distribution;
 pub mod euclid;
 pub mod function;
@@ -66,7 +67,7 @@ pub(crate) fn is_zero(x: f64) -> bool {
     ulps_eq!(x, 0.0, max_ulps = 0)
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 mod testing;
 
 pub use crate::error::StatsError;

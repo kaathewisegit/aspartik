@@ -52,6 +52,7 @@ mod fisher_snedecor;
 mod gamma;
 mod geometric;
 mod hypergeometric;
+#[macro_use]
 mod internal;
 mod inverse_gamma;
 mod laplace;

@@ -251,7 +251,7 @@ impl Continuous<f64, f64> for Erlang {
 }
 
 #[rustfmt::skip]
-#[cfg(test)]
+#[cfg(all(test, feature = "nightly"))]
 mod tests {
     use crate::distribution::Erlang;
     use crate::distribution::internal::*;

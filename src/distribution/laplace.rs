@@ -268,7 +268,7 @@ impl Continuous<f64, f64> for Laplace {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "nightly"))]
 mod tests {
     use super::*;
     use core::f64::INFINITY as INF;

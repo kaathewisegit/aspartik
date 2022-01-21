@@ -237,7 +237,7 @@ impl Continuous<f64, f64> for Exp {
 }
 
 #[rustfmt::skip]
-#[cfg(test)]
+#[cfg(all(test, feature = "nightly"))]
 mod tests {
     use std::f64;
     use crate::statistics::*;

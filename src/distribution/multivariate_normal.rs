@@ -203,7 +203,7 @@ impl<'a> Continuous<&'a DVector<f64>, f64> for MultivariateNormal {
 }
 
 #[rustfmt::skip]
-#[cfg(test)]
+#[cfg(all(test, feature = "nightly"))]
 mod tests  {
     use crate::distribution::{Continuous, MultivariateNormal};
     use crate::statistics::*;
