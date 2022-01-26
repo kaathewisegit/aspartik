@@ -86,13 +86,16 @@ impl DiscreteCDF<u64, f64> for Geometric {
     /// # Formula
     ///
     /// ```ignore
-    /// 1 - (1 - p) ^ (x + 1)
+    /// 1 - (1 - p) ^ x
     /// ```
     fn cdf(&self, x: u64) -> f64 {
         if x == 0 {
             0.0
         } else {
-            1.0 - (1.0 - self.p).powf(x as f64)
+            // 1 - (1 - p) ^ x = 1 - exp(log(1 - p)*x)
+            //                 = -expm1(log1p(-p)*x))
+            //                 = -((-p).ln_1p() * x).exp_m1()
+            -((-self.p).ln_1p() * (x as f64)).exp_m1()
         }
     }
 }
@@ -400,8 +403,52 @@ mod tests {
         let cdf = |arg: u64| move |x: Geometric| x.cdf(arg);
         test_case(1.0, 1.0, cdf(1));
         test_case(1.0, 1.0, cdf(2));
-        test_almost(0.5, 0.5, 1e-10, cdf(1));
-        test_almost(0.5, 0.75, 1e-10, cdf(2));
+        test_almost(0.5, 0.5, 1e-15, cdf(1));
+        test_almost(0.5, 0.75, 1e-15, cdf(2));
+    }
+
+    #[test]
+    fn test_cdf_small_p() {
+        //
+        // Expected values were computed with the arbitrary precision
+        // library mpmath in Python, e.g.:
+        //
+        //   import mpmath
+        //   mpmath.mp.dps = 400
+        //   p = mpmath.mpf(1e-9)
+        //   k = 5
+        //   cdf = float(1 - (1 - p)**k)
+        //   # cdf is 4.99999999e-09
+        //
+        let geom = Geometric::new(1e-9f64).unwrap();
+
+        let cdf = geom.cdf(5u64);
+        let expected = 4.99999999e-09;
+        assert_relative_eq!(cdf, expected, epsilon = 0.0, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn test_cdf_very_small_p() {
+        //
+        // Expected values were computed with the arbitrary precision
+        // library mpmath in Python, e.g.:
+        //
+        //   import mpmath
+        //   mpmath.mp.dps = 400
+        //   p = mpmath.mpf(1e-17)
+        //   k = 100000000000000
+        //   cdf = float(1 - (1 - p)**k)
+        //   # cdf is 0.0009995001666250085
+        //
+        let geom = Geometric::new(1e-17f64).unwrap();
+
+        let cdf = geom.cdf(10u64);
+        let expected = 1e-16f64;
+        assert_relative_eq!(cdf, expected, epsilon = 0.0, max_relative = 1e-15);
+
+        let cdf = geom.cdf(100000000000000u64);
+        let expected = 0.0009995001666250085f64;
+        assert_relative_eq!(cdf, expected, epsilon = 0.0, max_relative = 1e-15);
     }
 
     #[test]
