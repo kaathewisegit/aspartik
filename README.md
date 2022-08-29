@@ -32,8 +32,9 @@ Add the most recent release to your `Cargo.toml`
 
 ```Rust
 [dependencies]
-statrs = "0.15"
+statrs = "0.16"
 ```
+
 ## Examples
 
 Statrs comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc.

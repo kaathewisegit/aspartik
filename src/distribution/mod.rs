@@ -102,7 +102,7 @@ pub trait ContinuousCDF<K: Float, T: Float>: Min<K> + Max<K> {
     /// assert_eq!(0.5, n.sf(0.5));
     /// ```
     fn sf(&self, x: K) -> T;
-    
+
     /// Due to issues with rounding and floating-point accuracy the default
     /// implementation may be ill-behaved.
     /// Specialized inverse cdfs should be used whenever possible.
@@ -156,7 +156,7 @@ pub trait DiscreteCDF<K: Bounded + Clone + Num, T: Float>: Min<K> + Max<K> {
     /// ```
     fn cdf(&self, x: K) -> T;
 
-    /// Returns the survival function calculated at `x` for 
+    /// Returns the survival function calculated at `x` for
     /// a given distribution. May panic depending on the implementor.
     ///
     /// # Examples
