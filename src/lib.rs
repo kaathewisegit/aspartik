@@ -55,9 +55,6 @@
 #[macro_use]
 extern crate approx;
 
-#[macro_use]
-extern crate lazy_static;
-
 #[macro_export]
 macro_rules! assert_almost_eq {
     ($a:expr, $b:expr, $prec:expr) => {
