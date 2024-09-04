@@ -139,6 +139,7 @@ pub mod test {
 
             /// Returns the error when creating a distribution with the given parameters,
             /// panicking if `::new` succeeds.
+            #[allow(dead_code)]
             fn create_err($($arg_name: $arg_ty),+) -> $crate::StatsError {
                 match <$dist>::new($($arg_name),+) {
                     Err(e) => e,
@@ -168,7 +169,7 @@ pub mod test {
             /// to `expected` exactly.
             ///
             /// Panics if `::new` fails.
-            #[allow(dead_code)] // This is not used by all distributions.
+            #[allow(dead_code)]
             fn test_exact<F, T>($($arg_name: $arg_ty),+, expected: T, get_fn: F)
             where
                 F: Fn($dist) -> T,
@@ -191,7 +192,7 @@ pub mod test {
             /// Allows relative error of up to [`crate::consts::ACC`].
             ///
             /// Panics if `::new` fails.
-            #[allow(dead_code)] // This is not used by all distributions.
+            #[allow(dead_code)]
             fn test_relative<F>($($arg_name: $arg_ty),+, expected: f64, get_fn: F)
             where
                 F: Fn($dist) -> f64,
@@ -216,7 +217,7 @@ pub mod test {
             /// Allows absolute error of up to `acc`.
             ///
             /// Panics if `::new` fails.
-            #[allow(dead_code)] // This is not used by all distributions.
+            #[allow(dead_code)]
             fn test_absolute<F>($($arg_name: $arg_ty),+, expected: f64, acc: f64, get_fn: F)
             where
                 F: Fn($dist) -> f64,
@@ -243,7 +244,7 @@ pub mod test {
             /// and asserts that it is [`None`].
             ///
             /// Panics if `::new` fails.
-            #[allow(dead_code)] // This is not used by all distributions.
+            #[allow(dead_code)]
             fn test_none<F, T>($($arg_name: $arg_ty),+, get_fn: F)
             where
                 F: Fn($dist) -> Option<T>,
