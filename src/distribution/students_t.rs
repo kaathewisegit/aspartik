@@ -505,7 +505,7 @@ impl Continuous<f64, f64> for StudentsT {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::consts::ACC;
+	use crate::consts::ACCURACY;
 	use crate::distribution::internal::*;
 	use crate::testing_boiler;
 
@@ -1253,7 +1253,7 @@ mod tests {
 			assert_relative_eq!(
 				d.inverse_cdf(x),
 				expected,
-				max_relative = ACC
+				max_relative = ACCURACY
 			);
 		};
 		// The data in this table of expected values was generated in

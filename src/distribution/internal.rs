@@ -142,7 +142,7 @@ pub mod test {
             /// Gets a value for the given parameters by calling `create_and_get`
             /// and compares it to `expected`.
             ///
-            /// Allows relative error of up to [`crate::consts::ACC`].
+            /// Allows relative error of up to [`crate::consts::ACCURACY`].
             ///
             /// Panics if `::new` fails.
             #[allow(dead_code)]
@@ -151,7 +151,7 @@ pub mod test {
                 F: Fn($dist) -> f64,
             {
                 let x = create_and_get($($arg_name),+, get_fn);
-                let max_relative = $crate::consts::ACC;
+                let max_relative = $crate::consts::ACCURACY;
 
                 if !::approx::relative_eq!(expected, x, max_relative = max_relative) {
                     panic!(
