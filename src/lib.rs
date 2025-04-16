@@ -6,20 +6,31 @@
 //! values. This crate depends on the `rand` crate to provide RNG.
 //!
 //! # Sampling
-//! The common use case is to set up the distributions and sample from them which depends on the `Rand` crate for random number generation.
+//!
+//! The common use case is to set up the distributions and sample from them
+//! which depends on the `Rand` crate for random number generation.
+//!
 #![cfg_attr(feature = "rand", doc = "```")]
 #![cfg_attr(not(feature = "rand"), doc = "```ignore")]
 //! use statrs::distribution::Exp;
 //! use rand::distr::Distribution;
-//! let mut r = rand::rngs::OsRng;
+//!
+//! let mut r = rand::rng();
 //! let n = Exp::new(0.5).unwrap();
 //! print!("{}", n.sample(&mut r));
 //! ```
 //!
 //! # Introspecting distributions
-//! Statrs also comes with a number of useful utility traits for more detailed introspection of distributions.
+//!
+//! Statrs also comes with a number of useful utility traits for more detailed
+//! introspection of distributions.
+//!
 //! ```
-//! use statrs::distribution::{Exp, Continuous, ContinuousCDF}; // `cdf` and `pdf`
+//! use statrs::distribution::{
+//!     Exp,
+//!     // `cdf` and `pdf` methods
+//!     Continuous, ContinuousCDF,
+//! };
 //! use statrs::statistics::Distribution; // statistical moments and entropy
 //!
 //! let n = Exp::new(1.0).unwrap();
@@ -32,7 +43,9 @@
 //! ```
 //!
 //! # Utility functions
-//! as well as utility functions including `erf`, `gamma`, `ln_gamma`, `beta`, etc.
+//!
+//! As well as utility functions including `erf`, `gamma`, `ln_gamma`, `beta`,
+//! etc.
 //!
 //! ```
 //! use statrs::distribution::FisherSnedecor;
@@ -41,13 +54,15 @@
 //! let n = FisherSnedecor::new(1.0, 1.0).unwrap();
 //! assert!(n.variance().is_none());
 //! ```
+//!
 //! ## Distributions implemented
-//! Statrs comes with a number of commonly used distributions including Normal, Gamma, Student's T, Exponential, Weibull, etc. view all implemented in `distributions` module.
+//!
+//! Statrs comes with a number of commonly used distributions including Normal,
+//! Gamma, Student's T, Exponential, Weibull, etc. view all implemented in
+//! `distributions` module.
 
 #![crate_type = "lib"]
-#![crate_name = "statrs"]
 #![allow(clippy::excessive_precision)]
-#![allow(clippy::many_single_char_names)]
 #![forbid(unsafe_code)]
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
