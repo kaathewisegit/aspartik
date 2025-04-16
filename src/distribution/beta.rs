@@ -158,7 +158,7 @@ impl ContinuousCDF<f64, f64> for Beta {
 		} else if ulps_eq!(self.shape_a, 1.0)
 			&& ulps_eq!(self.shape_b, 1.0)
 		{
-			1. - x
+			1.0 - x
 		} else {
 			beta::beta_reg(self.shape_b, self.shape_a, 1.0 - x)
 		}
@@ -326,264 +326,281 @@ impl Continuous<f64, f64> for Beta {
 	}
 }
 
-#[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::super::internal::*;
-    use crate::testing_boiler;
+	use super::super::internal::*;
+	use super::*;
+	use crate::testing_boiler;
 
-    testing_boiler!(a: f64, b: f64; Beta; BetaError);
+	testing_boiler!(a: f64, b: f64; Beta; BetaError);
 
-    #[test]
-    fn test_create() {
-        let valid = [(1.0, 1.0), (9.0, 1.0), (5.0, 100.0)];
-        for (a, b) in valid {
-            create_ok(a, b);
-        }
-    }
+	#[test]
+	fn test_create() {
+		let valid = [(1.0, 1.0), (9.0, 1.0), (5.0, 100.0)];
+		for (a, b) in valid {
+			create_ok(a, b);
+		}
+	}
 
-    #[test]
-    fn test_bad_create() {
-        let invalid = [
-            (0.0, 0.0),
-            (0.0, 0.1),
-            (1.0, 0.0),
-            (0.5, f64::INFINITY),
-            (f64::INFINITY, 0.5),
-            (f64::NAN, 1.0),
-            (1.0, f64::NAN),
-            (f64::NAN, f64::NAN),
-            (1.0, -1.0),
-            (-1.0, 1.0),
-            (-1.0, -1.0),
-            (f64::INFINITY, f64::INFINITY),
-        ];
-        for (a, b) in invalid {
-            create_err(a, b);
-        }
-    }
+	#[test]
+	fn test_bad_create() {
+		let invalid = [
+			(0.0, 0.0),
+			(0.0, 0.1),
+			(1.0, 0.0),
+			(0.5, f64::INFINITY),
+			(f64::INFINITY, 0.5),
+			(f64::NAN, 1.0),
+			(1.0, f64::NAN),
+			(f64::NAN, f64::NAN),
+			(1.0, -1.0),
+			(-1.0, 1.0),
+			(-1.0, -1.0),
+			(f64::INFINITY, f64::INFINITY),
+		];
+		for (a, b) in invalid {
+			create_err(a, b);
+		}
+	}
 
-    #[test]
-    fn test_mean() {
-        let f = |x: Beta| x.mean().unwrap();
-        let test = [
-            ((1.0, 1.0), 0.5),
-            ((9.0, 1.0), 0.9),
-            ((5.0, 100.0), 0.047619047619047619047616),
-        ];
-        for ((a, b), res) in test {
-            test_relative(a, b, res, f);
-        }
-    }
+	#[test]
+	fn test_mean() {
+		let f = |x: Beta| x.mean().unwrap();
+		let test = [
+			((1.0, 1.0), 0.5),
+			((9.0, 1.0), 0.9),
+			((5.0, 100.0), 0.047619047619047619047616),
+		];
+		for ((a, b), res) in test {
+			test_relative(a, b, res, f);
+		}
+	}
 
-    #[test]
-    fn test_variance() {
-        let f = |x: Beta| x.variance().unwrap();
-        let test = [
-            ((1.0, 1.0), 1.0 / 12.0),
-            ((9.0, 1.0), 9.0 / 1100.0),
-            ((5.0, 100.0), 500.0 / 1168650.0),
-        ];
-        for ((a, b), res) in test {
-            test_relative(a, b, res, f);
-        }
-    }
+	#[test]
+	fn test_variance() {
+		let f = |x: Beta| x.variance().unwrap();
+		let test = [
+			((1.0, 1.0), 1.0 / 12.0),
+			((9.0, 1.0), 9.0 / 1100.0),
+			((5.0, 100.0), 500.0 / 1168650.0),
+		];
+		for ((a, b), res) in test {
+			test_relative(a, b, res, f);
+		}
+	}
 
-    #[test]
-    fn test_entropy() {
-        let f = |x: Beta| x.entropy().unwrap();
-        let test = [
-            ((9.0, 1.0), -1.3083356884473304939016015),
-            ((5.0, 100.0), -2.52016231876027436794592),
-        ];
-        for ((a, b), res) in test {
-            test_relative(a, b, res, f);
-        }
-        test_absolute(1.0, 1.0, 0.0, 1e-14, f);
-    }
+	#[test]
+	fn test_entropy() {
+		let f = |x: Beta| x.entropy().unwrap();
+		let test = [
+			((9.0, 1.0), -1.3083356884473304939016015),
+			((5.0, 100.0), -2.52016231876027436794592),
+		];
+		for ((a, b), res) in test {
+			test_relative(a, b, res, f);
+		}
+		test_absolute(1.0, 1.0, 0.0, 1e-14, f);
+	}
 
-    #[test]
-    fn test_skewness() {
-        let skewness = |x: Beta| x.skewness().unwrap();
-        test_relative(1.0, 1.0, 0.0, skewness);
-        test_relative(9.0, 1.0, -1.4740554623801777107177478829, skewness);
-        test_relative(5.0, 100.0, 0.817594109275534303545831591, skewness);
-    }
+	#[test]
+	fn test_skewness() {
+		let skewness = |x: Beta| x.skewness().unwrap();
+		test_relative(1.0, 1.0, 0.0, skewness);
+		test_relative(
+			9.0,
+			1.0,
+			-1.4740554623801777107177478829,
+			skewness,
+		);
+		test_relative(
+			5.0,
+			100.0,
+			0.817594109275534303545831591,
+			skewness,
+		);
+	}
 
-    #[test]
-    fn test_mode() {
-        let mode = |x: Beta| x.mode().unwrap();
-        test_relative(5.0, 100.0, 0.038834951456310676243255386, mode);
-    }
+	#[test]
+	fn test_mode() {
+		let mode = |x: Beta| x.mode().unwrap();
+		test_relative(5.0, 100.0, 0.038834951456310676243255386, mode);
+	}
 
-    #[test]
-    fn test_mode_shape_a_lte_1() {
-        test_none(1.0, 5.0, |dist| dist.mode());
-    }
+	#[test]
+	fn test_mode_shape_a_lte_1() {
+		test_none(1.0, 5.0, |dist| dist.mode());
+	}
 
-    #[test]
-    fn test_mode_shape_b_lte_1() {
-        test_none(5.0, 1.0, |dist| dist.mode());
-    }
+	#[test]
+	fn test_mode_shape_b_lte_1() {
+		test_none(5.0, 1.0, |dist| dist.mode());
+	}
 
-    #[test]
-    fn test_min_max() {
-        let min = |x: Beta| x.min();
-        let max = |x: Beta| x.max();
-        test_relative(1.0, 1.0, 0.0, min);
-        test_relative(1.0, 1.0, 1.0, max);
-    }
+	#[test]
+	fn test_min_max() {
+		let min = |x: Beta| x.min();
+		let max = |x: Beta| x.max();
+		test_relative(1.0, 1.0, 0.0, min);
+		test_relative(1.0, 1.0, 1.0, max);
+	}
 
-    #[test]
-    fn test_pdf() {
-        let f = |arg: f64| move |x: Beta| x.pdf(arg);
-        let test = [
-            ((1.0, 1.0), 0.0, 1.0),
-            ((1.0, 1.0), 0.5, 1.0),
-            ((1.0, 1.0), 1.0, 1.0),
-            ((9.0, 1.0), 0.0, 0.0),
-            ((9.0, 1.0), 0.5, 0.03515625),
-            ((9.0, 1.0), 1.0, 9.0),
-            ((5.0, 100.0), 0.0, 0.0),
-            ((5.0, 100.0), 0.5, 4.534102298350337661e-23),
-            ((5.0, 100.0), 1.0, 0.0),
-            ((5.0, 100.0), 1.0, 0.0)
-        ];
-        for ((a, b), x, expect) in test {
-            test_relative(a, b, expect, f(x));
-        }
-    }
+	#[test]
+	fn test_pdf() {
+		let f = |arg: f64| move |x: Beta| x.pdf(arg);
+		let test = [
+			((1.0, 1.0), 0.0, 1.0),
+			((1.0, 1.0), 0.5, 1.0),
+			((1.0, 1.0), 1.0, 1.0),
+			((9.0, 1.0), 0.0, 0.0),
+			((9.0, 1.0), 0.5, 0.03515625),
+			((9.0, 1.0), 1.0, 9.0),
+			((5.0, 100.0), 0.0, 0.0),
+			((5.0, 100.0), 0.5, 4.534102298350337661e-23),
+			((5.0, 100.0), 1.0, 0.0),
+			((5.0, 100.0), 1.0, 0.0),
+		];
+		for ((a, b), x, expect) in test {
+			test_relative(a, b, expect, f(x));
+		}
+	}
 
-    #[test]
-    fn test_pdf_input_lt_0() {
-        let pdf = |arg: f64| move |x: Beta| x.pdf(arg);
-        test_relative(1.0, 1.0, 0.0, pdf(-1.0));
-    }
+	#[test]
+	fn test_pdf_input_lt_0() {
+		let pdf = |arg: f64| move |x: Beta| x.pdf(arg);
+		test_relative(1.0, 1.0, 0.0, pdf(-1.0));
+	}
 
-    #[test]
-    fn test_pdf_input_gt_0() {
-        let pdf = |arg: f64| move |x: Beta| x.pdf(arg);
-        test_relative(1.0, 1.0, 0.0, pdf(2.0));
-    }
+	#[test]
+	fn test_pdf_input_gt_0() {
+		let pdf = |arg: f64| move |x: Beta| x.pdf(arg);
+		test_relative(1.0, 1.0, 0.0, pdf(2.0));
+	}
 
-    #[test]
-    fn test_ln_pdf() {
-        let f = |arg: f64| move |x: Beta| x.ln_pdf(arg);
-        let test = [
-            ((1.0, 1.0), 0.0, 0.0),
-            ((1.0, 1.0), 0.5, 0.0),
-            ((1.0, 1.0), 1.0, 0.0),
-            ((9.0, 1.0), 0.0, f64::NEG_INFINITY),
-            ((9.0, 1.0), 0.5, -3.347952867143343092547366497),
-            ((9.0, 1.0), 1.0, 2.1972245773362193827904904738),
-            ((5.0, 100.0), 0.0, f64::NEG_INFINITY),
-            ((5.0, 100.0), 0.5, -51.447830024537682154565870),
-            ((5.0, 100.0), 1.0, f64::NEG_INFINITY),
-        ];
-        for ((a, b), x, expect) in test {
-            test_relative(a, b, expect, f(x));
-        }
-    }
+	#[test]
+	fn test_ln_pdf() {
+		let f = |arg: f64| move |x: Beta| x.ln_pdf(arg);
+		let test = [
+			((1.0, 1.0), 0.0, 0.0),
+			((1.0, 1.0), 0.5, 0.0),
+			((1.0, 1.0), 1.0, 0.0),
+			((9.0, 1.0), 0.0, f64::NEG_INFINITY),
+			((9.0, 1.0), 0.5, -3.347952867143343092547366497),
+			((9.0, 1.0), 1.0, 2.1972245773362193827904904738),
+			((5.0, 100.0), 0.0, f64::NEG_INFINITY),
+			((5.0, 100.0), 0.5, -51.447830024537682154565870),
+			((5.0, 100.0), 1.0, f64::NEG_INFINITY),
+		];
+		for ((a, b), x, expect) in test {
+			test_relative(a, b, expect, f(x));
+		}
+	}
 
-    #[test]
-    fn test_ln_pdf_input_lt_0() {
-        let ln_pdf = |arg: f64| move |x: Beta| x.ln_pdf(arg);
-        test_relative(1.0, 1.0, f64::NEG_INFINITY, ln_pdf(-1.0));
-    }
+	#[test]
+	fn test_ln_pdf_input_lt_0() {
+		let ln_pdf = |arg: f64| move |x: Beta| x.ln_pdf(arg);
+		test_relative(1.0, 1.0, f64::NEG_INFINITY, ln_pdf(-1.0));
+	}
 
-    #[test]
-    fn test_ln_pdf_input_gt_1() {
-        let ln_pdf = |arg: f64| move |x: Beta| x.ln_pdf(arg);
-        test_relative(1.0, 1.0, f64::NEG_INFINITY, ln_pdf(2.0));
-    }
+	#[test]
+	fn test_ln_pdf_input_gt_1() {
+		let ln_pdf = |arg: f64| move |x: Beta| x.ln_pdf(arg);
+		test_relative(1.0, 1.0, f64::NEG_INFINITY, ln_pdf(2.0));
+	}
 
-    #[test]
-    fn test_cdf() {
-        let cdf = |arg: f64| move |x: Beta| x.cdf(arg);
-        let test = [
-            ((1.0, 1.0), 0.0, 0.0),
-            ((1.0, 1.0), 0.5, 0.5),
-            ((1.0, 1.0), 1.0, 1.0),
-            ((9.0, 1.0), 0.0, 0.0),
-            ((9.0, 1.0), 0.5, 0.001953125),
-            ((9.0, 1.0), 1.0, 1.0),
-            ((5.0, 100.0), 0.0, 0.0),
-            ((5.0, 100.0), 0.5, 1.0),
-            ((5.0, 100.0), 1.0, 1.0),
-        ];
-        for ((a, b), x, expect) in test {
-            test_relative(a, b, expect, cdf(x));
-        }
-    }
+	#[test]
+	fn test_cdf() {
+		let cdf = |arg: f64| move |x: Beta| x.cdf(arg);
+		let test = [
+			((1.0, 1.0), 0.0, 0.0),
+			((1.0, 1.0), 0.5, 0.5),
+			((1.0, 1.0), 1.0, 1.0),
+			((9.0, 1.0), 0.0, 0.0),
+			((9.0, 1.0), 0.5, 0.001953125),
+			((9.0, 1.0), 1.0, 1.0),
+			((5.0, 100.0), 0.0, 0.0),
+			((5.0, 100.0), 0.5, 1.0),
+			((5.0, 100.0), 1.0, 1.0),
+		];
+		for ((a, b), x, expect) in test {
+			test_relative(a, b, expect, cdf(x));
+		}
+	}
 
-    #[test]
-    fn test_sf() {
-        let sf = |arg: f64| move |x: Beta| x.sf(arg);
-        let test = [
-            ((1.0, 1.0), 0.0, 1.0),
-            ((1.0, 1.0), 0.5, 0.5),
-            ((1.0, 1.0), 1.0, 0.0),
-            ((9.0, 1.0), 0.0, 1.0),
-            ((9.0, 1.0), 0.5, 0.998046875),
-            ((9.0, 1.0), 1.0, 0.0),
-            ((5.0, 100.0), 0.0, 1.0),
-            ((5.0, 100.0), 0.5, 0.0),
-            ((5.0, 100.0), 1.0, 0.0),
-        ];
-        for ((a, b), x, expect) in test {
-            test_relative(a, b, expect, sf(x));
-        }
-    }
+	#[test]
+	fn test_sf() {
+		let sf = |arg: f64| move |x: Beta| x.sf(arg);
+		let test = [
+			((1.0, 1.0), 0.0, 1.0),
+			((1.0, 1.0), 0.5, 0.5),
+			((1.0, 1.0), 1.0, 0.0),
+			((9.0, 1.0), 0.0, 1.0),
+			((9.0, 1.0), 0.5, 0.998046875),
+			((9.0, 1.0), 1.0, 0.0),
+			((5.0, 100.0), 0.0, 1.0),
+			((5.0, 100.0), 0.5, 0.0),
+			((5.0, 100.0), 1.0, 0.0),
+		];
+		for ((a, b), x, expect) in test {
+			test_relative(a, b, expect, sf(x));
+		}
+	}
 
-    #[test]
-    fn test_inverse_cdf() {
-        // let inverse_cdf = |arg: f64| move |x: Beta| x.inverse_cdf(arg);
-        let func = |arg: f64| move |x: Beta| x.inverse_cdf(x.cdf(arg));
-        let test = [
-            ((1.0, 1.0), 0.0, 0.0),
-            ((1.0, 1.0), 0.5, 0.5),
-            ((1.0, 1.0), 1.0, 1.0),
-            ((9.0, 1.0), 0.0, 0.0),
-            ((9.0, 1.0), 0.001953125, 0.001953125),
-            ((9.0, 1.0), 0.5, 0.5),
-            ((9.0, 1.0), 1.0, 1.0),
-            ((5.0, 100.0), 0.0, 0.0),
-            ((5.0, 100.0), 0.01, 0.01),
-            ((5.0, 100.0), 1.0, 1.0),
-        ];
-        for ((a, b), x, expect) in test {
-           test_relative(a, b, expect, func(x));
-        };
-    }
+	#[test]
+	fn test_inverse_cdf() {
+		// let inverse_cdf = |arg: f64| move |x: Beta| x.inverse_cdf(arg);
+		let func = |arg: f64| move |x: Beta| x.inverse_cdf(x.cdf(arg));
+		let test = [
+			((1.0, 1.0), 0.0, 0.0),
+			((1.0, 1.0), 0.5, 0.5),
+			((1.0, 1.0), 1.0, 1.0),
+			((9.0, 1.0), 0.0, 0.0),
+			((9.0, 1.0), 0.001953125, 0.001953125),
+			((9.0, 1.0), 0.5, 0.5),
+			((9.0, 1.0), 1.0, 1.0),
+			((5.0, 100.0), 0.0, 0.0),
+			((5.0, 100.0), 0.01, 0.01),
+			((5.0, 100.0), 1.0, 1.0),
+		];
+		for ((a, b), x, expect) in test {
+			test_relative(a, b, expect, func(x));
+		}
+	}
 
-    #[test]
-    fn test_cdf_input_lt_0() {
-        let cdf = |arg: f64| move |x: Beta| x.cdf(arg);
-        test_relative(1.0, 1.0, 0.0, cdf(-1.0));
-    }
+	#[test]
+	fn test_cdf_input_lt_0() {
+		let cdf = |arg: f64| move |x: Beta| x.cdf(arg);
+		test_relative(1.0, 1.0, 0.0, cdf(-1.0));
+	}
 
-    #[test]
-    fn test_cdf_input_gt_1() {
-        let cdf = |arg: f64| move |x: Beta| x.cdf(arg);
-        test_relative(1.0, 1.0, 1.0, cdf(2.0));
-    }
+	#[test]
+	fn test_cdf_input_gt_1() {
+		let cdf = |arg: f64| move |x: Beta| x.cdf(arg);
+		test_relative(1.0, 1.0, 1.0, cdf(2.0));
+	}
 
-    #[test]
-    fn test_sf_input_lt_0() {
-        let sf = |arg: f64| move |x: Beta| x.sf(arg);
-        test_relative(1.0, 1.0, 1.0, sf(-1.0));
-    }
+	#[test]
+	fn test_sf_input_lt_0() {
+		let sf = |arg: f64| move |x: Beta| x.sf(arg);
+		test_relative(1.0, 1.0, 1.0, sf(-1.0));
+	}
 
-    #[test]
-    fn test_sf_input_gt_1() {
-        let sf = |arg: f64| move |x: Beta| x.sf(arg);
-        test_relative(1.0, 1.0, 0.0, sf(2.0));
-    }
+	#[test]
+	fn test_sf_input_gt_1() {
+		let sf = |arg: f64| move |x: Beta| x.sf(arg);
+		test_relative(1.0, 1.0, 0.0, sf(2.0));
+	}
 
-    #[test]
-    fn test_continuous() {
-        test::check_continuous_distribution(&create_ok(1.2, 3.4), 0.0, 1.0);
-        test::check_continuous_distribution(&create_ok(4.5, 6.7), 0.0, 1.0);
-    }
+	#[test]
+	fn test_continuous() {
+		test::check_continuous_distribution(
+			&create_ok(1.2, 3.4),
+			0.0,
+			1.0,
+		);
+		test::check_continuous_distribution(
+			&create_ok(4.5, 6.7),
+			0.0,
+			1.0,
+		);
+	}
 }

@@ -21,11 +21,7 @@ mod non_nan {
 	impl NonNan<f64> {
 		#[inline]
 		pub fn new(x: f64) -> Option<Self> {
-			if x.is_nan() {
-				None
-			} else {
-				Some(Self(x))
-			}
+			if x.is_nan() { None } else { Some(Self(x)) }
 		}
 	}
 
@@ -102,7 +98,7 @@ impl Empirical {
 
 		self.sum += 1;
 		let sum = self.sum as f64;
-		self.var += (sum - 1.)
+		self.var += (sum - 1.0)
 			* (data_point - self.mean)
 			* (data_point - self.mean)
 			/ sum;
@@ -141,8 +137,8 @@ impl Empirical {
 
 		// reset mean and var
 		let sum = self.sum as f64;
-		self.mean = (sum * self.mean - data_point) / (sum - 1.);
-		self.var -= (sum - 1.)
+		self.mean = (sum * self.mean - data_point) / (sum - 1.0);
+		self.var -= (sum - 1.0)
 			* (data_point - self.mean)
 			* (data_point - self.mean)
 			/ sum;
@@ -257,7 +253,7 @@ impl Distribution<f64> for Empirical {
 		if self.data.is_empty() {
 			None
 		} else {
-			Some(self.var / (self.sum as f64 - 1.))
+			Some(self.var / (self.sum as f64 - 1.0))
 		}
 	}
 }
@@ -372,10 +368,9 @@ mod tests {
 
 		test_var_for_samples(0.0, vec![4.0; 100]);
 		test_var_for_samples(0.0, vec![-0.2; 100]);
-		test_var_for_samples(
-			190.36666666666667,
-			vec![21.3, 38.4, 12.7, 41.6],
-		);
+		test_var_for_samples(190.36666666666667, vec![
+			21.3, 38.4, 12.7, 41.6,
+		]);
 	}
 
 	#[test]
@@ -454,13 +449,13 @@ mod tests {
 		);
 		e.add(5.0);
 		assert_eq!(
-            e.to_string(),
-            "Empirical([1.000e0, 1.000e0, 2.000e0, 2.000e0, 5.000e0])"
-        );
+			e.to_string(),
+			"Empirical([1.000e0, 1.000e0, 2.000e0, 2.000e0, 5.000e0])"
+		);
 		e.add(5.0);
 		assert_eq!(
-            e.to_string(),
-            "Empirical([1.000e0, 1.000e0, 2.000e0, 2.000e0, 5.000e0, ...])"
-        );
+			e.to_string(),
+			"Empirical([1.000e0, 1.000e0, 2.000e0, 2.000e0, 5.000e0, ...])"
+		);
 	}
 }

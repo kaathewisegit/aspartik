@@ -304,30 +304,29 @@ impl Continuous<f64, f64> for ChiSquared {
 	}
 }
 
-#[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::distribution::internal::*;
-    use crate::testing_boiler;
+	use super::*;
+	use crate::distribution::internal::*;
+	use crate::testing_boiler;
 
-    testing_boiler!(freedom: f64; ChiSquared; GammaError);
+	testing_boiler!(freedom: f64; ChiSquared; GammaError);
 
-    #[test]
-    fn test_median() {
-        let median = |x: ChiSquared| x.median();
-        test_absolute(0.5, 0.0857338820301783264746, 1e-16, median);
-        test_exact(1.0, 1.0 - 2.0 / 3.0, median);
-        test_exact(2.0, 2.0 - 2.0 / 3.0, median);
-        test_exact(2.5, 2.5 - 2.0 / 3.0, median);
-        test_exact(3.0, 3.0 - 2.0 / 3.0, median);
-    }
+	#[test]
+	fn test_median() {
+		let median = |x: ChiSquared| x.median();
+		test_absolute(0.5, 0.0857338820301783264746, 1e-16, median);
+		test_exact(1.0, 1.0 - 2.0 / 3.0, median);
+		test_exact(2.0, 2.0 - 2.0 / 3.0, median);
+		test_exact(2.5, 2.5 - 2.0 / 3.0, median);
+		test_exact(3.0, 3.0 - 2.0 / 3.0, median);
+	}
 
-    #[test]
-    fn test_continuous() {
-        // TODO: figure out why this test fails:
-        //test::check_continuous_distribution(&create_ok(1.0), 0.0, 10.0);
-        test::check_continuous_distribution(&create_ok(2.0), 0.0, 10.0);
-        test::check_continuous_distribution(&create_ok(5.0), 0.0, 50.0);
-    }
+	#[test]
+	fn test_continuous() {
+		// TODO: figure out why this test fails:
+		//test::check_continuous_distribution(&create_ok(1.0), 0.0, 10.0);
+		test::check_continuous_distribution(&create_ok(2.0), 0.0, 10.0);
+		test::check_continuous_distribution(&create_ok(5.0), 0.0, 50.0);
+	}
 }

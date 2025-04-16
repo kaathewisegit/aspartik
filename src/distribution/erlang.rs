@@ -290,42 +290,53 @@ impl Continuous<f64, f64> for Erlang {
 	}
 }
 
-#[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::distribution::internal::*;
-    use crate::testing_boiler;
+	use super::*;
+	use crate::distribution::internal::*;
+	use crate::testing_boiler;
 
-    testing_boiler!(shape: u64, rate: f64; Erlang; GammaError);
+	testing_boiler!(shape: u64, rate: f64; Erlang; GammaError);
 
-    #[test]
-    fn test_create() {
-        create_ok(1, 0.1);
-        create_ok(1, 1.0);
-        create_ok(10, 10.0);
-        create_ok(10, 1.0);
-        create_ok(10, f64::INFINITY);
-    }
+	#[test]
+	fn test_create() {
+		create_ok(1, 0.1);
+		create_ok(1, 1.0);
+		create_ok(10, 10.0);
+		create_ok(10, 1.0);
+		create_ok(10, f64::INFINITY);
+	}
 
-    #[test]
-    fn test_bad_create() {
-        let invalid = [
-            (0, 1.0, GammaError::ShapeInvalid),
-            (1, 0.0, GammaError::RateInvalid),
-            (1, f64::NAN, GammaError::RateInvalid),
-            (1, -1.0, GammaError::RateInvalid),
-        ];
+	#[test]
+	fn test_bad_create() {
+		let invalid = [
+			(0, 1.0, GammaError::ShapeInvalid),
+			(1, 0.0, GammaError::RateInvalid),
+			(1, f64::NAN, GammaError::RateInvalid),
+			(1, -1.0, GammaError::RateInvalid),
+		];
 
-        for (s, r, err) in invalid {
-            test_create_err(s, r, err);
-        }
-    }
+		for (s, r, err) in invalid {
+			test_create_err(s, r, err);
+		}
+	}
 
-    #[test]
-    fn test_continuous() {
-        test::check_continuous_distribution(&create_ok(1, 2.5), 0.0, 20.0);
-        test::check_continuous_distribution(&create_ok(2, 1.5), 0.0, 20.0);
-        test::check_continuous_distribution(&create_ok(3, 0.5), 0.0, 20.0);
-    }
+	#[test]
+	fn test_continuous() {
+		test::check_continuous_distribution(
+			&create_ok(1, 2.5),
+			0.0,
+			20.0,
+		);
+		test::check_continuous_distribution(
+			&create_ok(2, 1.5),
+			0.0,
+			20.0,
+		);
+		test::check_continuous_distribution(
+			&create_ok(3, 0.5),
+			0.0,
+			20.0,
+		);
+	}
 }

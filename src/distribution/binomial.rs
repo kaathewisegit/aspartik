@@ -120,11 +120,7 @@ impl rand::distr::Distribution<u64> for Binomial {
 	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> u64 {
 		(0..self.n).fold(0, |acc, _| {
 			let n: f64 = rng.random();
-			if n < self.p {
-				acc + 1
-			} else {
-				acc
-			}
+			if n < self.p { acc + 1 } else { acc }
 		})
 	}
 }
@@ -316,17 +312,9 @@ impl Discrete<u64, f64> for Binomial {
 		if x > self.n {
 			0.0
 		} else if self.p == 0.0 {
-			if x == 0 {
-				1.0
-			} else {
-				0.0
-			}
+			if x == 0 { 1.0 } else { 0.0 }
 		} else if ulps_eq!(self.p, 1.0) {
-			if x == self.n {
-				1.0
-			} else {
-				0.0
-			}
+			if x == self.n { 1.0 } else { 0.0 }
 		} else {
 			(factorial::ln_binomial(self.n, x)
 				+ x as f64 * self.p.ln() + (self.n - x) as f64
@@ -347,17 +335,9 @@ impl Discrete<u64, f64> for Binomial {
 		if x > self.n {
 			f64::NEG_INFINITY
 		} else if self.p == 0.0 {
-			if x == 0 {
-				0.0
-			} else {
-				f64::NEG_INFINITY
-			}
+			if x == 0 { 0.0 } else { f64::NEG_INFINITY }
 		} else if ulps_eq!(self.p, 1.0) {
-			if x == self.n {
-				0.0
-			} else {
-				f64::NEG_INFINITY
-			}
+			if x == self.n { 0.0 } else { f64::NEG_INFINITY }
 		} else {
 			factorial::ln_binomial(self.n, x)
 				+ x as f64 * self.p.ln() + (self.n - x) as f64
@@ -366,238 +346,326 @@ impl Discrete<u64, f64> for Binomial {
 	}
 }
 
-#[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::distribution::internal::*;
-    use crate::testing_boiler;
+	use super::*;
+	use crate::distribution::internal::*;
+	use crate::testing_boiler;
 
-    testing_boiler!(p: f64, n: u64; Binomial; BinomialError);
+	testing_boiler!(p: f64, n: u64; Binomial; BinomialError);
 
-    #[test]
-    fn test_create() {
-        create_ok(0.0, 4);
-        create_ok(0.3, 3);
-        create_ok(1.0, 2);
-    }
+	#[test]
+	fn test_create() {
+		create_ok(0.0, 4);
+		create_ok(0.3, 3);
+		create_ok(1.0, 2);
+	}
 
-    #[test]
-    fn test_bad_create() {
-        create_err(f64::NAN, 1);
-        create_err(-1.0, 1);
-        create_err(2.0, 1);
-    }
+	#[test]
+	fn test_bad_create() {
+		create_err(f64::NAN, 1);
+		create_err(-1.0, 1);
+		create_err(2.0, 1);
+	}
 
-    #[test]
-    fn test_mean() {
-        let mean = |x: Binomial| x.mean().unwrap();
-        test_exact(0.0, 4, 0.0, mean);
-        test_absolute(0.3, 3, 0.9, 1e-15, mean);
-        test_exact(1.0, 2, 2.0, mean);
-    }
+	#[test]
+	fn test_mean() {
+		let mean = |x: Binomial| x.mean().unwrap();
+		test_exact(0.0, 4, 0.0, mean);
+		test_absolute(0.3, 3, 0.9, 1e-15, mean);
+		test_exact(1.0, 2, 2.0, mean);
+	}
 
-    #[test]
-    fn test_variance() {
-        let variance = |x: Binomial| x.variance().unwrap();
-        test_exact(0.0, 4, 0.0, variance);
-        test_exact(0.3, 3, 0.63, variance);
-        test_exact(1.0, 2, 0.0, variance);
-    }
+	#[test]
+	fn test_variance() {
+		let variance = |x: Binomial| x.variance().unwrap();
+		test_exact(0.0, 4, 0.0, variance);
+		test_exact(0.3, 3, 0.63, variance);
+		test_exact(1.0, 2, 0.0, variance);
+	}
 
-    #[test]
-    fn test_entropy() {
-        let entropy = |x: Binomial| x.entropy().unwrap();
-        test_exact(0.0, 4, 0.0, entropy);
-        test_absolute(0.3, 3, 1.1404671643037712668976423399228972051669206536461, 1e-15, entropy);
-        test_exact(1.0, 2, 0.0, entropy);
-    }
+	#[test]
+	fn test_entropy() {
+		let entropy = |x: Binomial| x.entropy().unwrap();
+		test_exact(0.0, 4, 0.0, entropy);
+		test_absolute(
+			0.3,
+			3,
+			1.1404671643037712668976423399228972051669206536461,
+			1e-15,
+			entropy,
+		);
+		test_exact(1.0, 2, 0.0, entropy);
+	}
 
-    #[test]
-    fn test_skewness() {
-        let skewness = |x: Binomial| x.skewness().unwrap();
-        test_exact(0.0, 4, f64::INFINITY, skewness);
-        test_exact(0.3, 3, 0.503952630678969636286, skewness);
-        test_exact(1.0, 2, f64::NEG_INFINITY, skewness);
-    }
+	#[test]
+	fn test_skewness() {
+		let skewness = |x: Binomial| x.skewness().unwrap();
+		test_exact(0.0, 4, f64::INFINITY, skewness);
+		test_exact(0.3, 3, 0.503952630678969636286, skewness);
+		test_exact(1.0, 2, f64::NEG_INFINITY, skewness);
+	}
 
-    #[test]
-    fn test_median() {
-        let median = |x: Binomial| x.median();
-        test_exact(0.0, 4, 0.0, median);
-        test_exact(0.3, 3, 0.0, median);
-        test_exact(1.0, 2, 2.0, median);
-    }
+	#[test]
+	fn test_median() {
+		let median = |x: Binomial| x.median();
+		test_exact(0.0, 4, 0.0, median);
+		test_exact(0.3, 3, 0.0, median);
+		test_exact(1.0, 2, 2.0, median);
+	}
 
-    #[test]
-    fn test_mode() {
-        let mode = |x: Binomial| x.mode().unwrap();
-        test_exact(0.0, 4, 0, mode);
-        test_exact(0.3, 3, 1, mode);
-        test_exact(1.0, 2, 2, mode);
-    }
+	#[test]
+	fn test_mode() {
+		let mode = |x: Binomial| x.mode().unwrap();
+		test_exact(0.0, 4, 0, mode);
+		test_exact(0.3, 3, 1, mode);
+		test_exact(1.0, 2, 2, mode);
+	}
 
-    #[test]
-    fn test_min_max() {
-        let min = |x: Binomial| x.min();
-        let max = |x: Binomial| x.max();
-        test_exact(0.3, 10, 0, min);
-        test_exact(0.3, 10, 10, max);
-    }
+	#[test]
+	fn test_min_max() {
+		let min = |x: Binomial| x.min();
+		let max = |x: Binomial| x.max();
+		test_exact(0.3, 10, 0, min);
+		test_exact(0.3, 10, 10, max);
+	}
 
-    #[test]
-    fn test_pmf() {
-        let pmf = |arg: u64| move |x: Binomial| x.pmf(arg);
-        test_exact(0.0, 1, 1.0, pmf(0));
-        test_exact(0.0, 1, 0.0, pmf(1));
-        test_exact(0.0, 3, 1.0, pmf(0));
-        test_exact(0.0, 3, 0.0, pmf(1));
-        test_exact(0.0, 3, 0.0, pmf(3));
-        test_exact(0.0, 10, 1.0, pmf(0));
-        test_exact(0.0, 10, 0.0, pmf(1));
-        test_exact(0.0, 10, 0.0, pmf(10));
-        test_exact(0.3, 1, 0.69999999999999995559107901499373838305473327636719, pmf(0));
-        test_exact(0.3, 1, 0.2999999999999999888977697537484345957636833190918, pmf(1));
-        test_exact(0.3, 3, 0.34299999999999993471888615204079956461021032657166, pmf(0));
-        test_absolute(0.3, 3, 0.44099999999999992772448109690231306411849135972008, 1e-15, pmf(1));
-        test_absolute(0.3, 3, 0.026999999999999997002397833512077451789759292859569, 1e-16, pmf(3));
-        test_absolute(0.3, 10, 0.02824752489999998207939855277004937778546385011091, 1e-17, pmf(0));
-        test_absolute(0.3, 10, 0.12106082099999992639752977030555903089040470780077, 1e-15, pmf(1));
-        test_absolute(0.3, 10, 0.0000059048999999999978147480206303047454017251032868501, 1e-20, pmf(10));
-        test_exact(1.0, 1, 0.0, pmf(0));
-        test_exact(1.0, 1, 1.0, pmf(1));
-        test_exact(1.0, 3, 0.0, pmf(0));
-        test_exact(1.0, 3, 0.0, pmf(1));
-        test_exact(1.0, 3, 1.0, pmf(3));
-        test_exact(1.0, 10, 0.0, pmf(0));
-        test_exact(1.0, 10, 0.0, pmf(1));
-        test_exact(1.0, 10, 1.0, pmf(10));
-    }
+	#[test]
+	fn test_pmf() {
+		let pmf = |arg: u64| move |x: Binomial| x.pmf(arg);
+		test_exact(0.0, 1, 1.0, pmf(0));
+		test_exact(0.0, 1, 0.0, pmf(1));
+		test_exact(0.0, 3, 1.0, pmf(0));
+		test_exact(0.0, 3, 0.0, pmf(1));
+		test_exact(0.0, 3, 0.0, pmf(3));
+		test_exact(0.0, 10, 1.0, pmf(0));
+		test_exact(0.0, 10, 0.0, pmf(1));
+		test_exact(0.0, 10, 0.0, pmf(10));
+		test_exact(
+			0.3,
+			1,
+			0.69999999999999995559107901499373838305473327636719,
+			pmf(0),
+		);
+		test_exact(
+			0.3,
+			1,
+			0.2999999999999999888977697537484345957636833190918,
+			pmf(1),
+		);
+		test_exact(
+			0.3,
+			3,
+			0.34299999999999993471888615204079956461021032657166,
+			pmf(0),
+		);
+		test_absolute(
+			0.3,
+			3,
+			0.44099999999999992772448109690231306411849135972008,
+			1e-15,
+			pmf(1),
+		);
+		test_absolute(
+			0.3,
+			3,
+			0.026999999999999997002397833512077451789759292859569,
+			1e-16,
+			pmf(3),
+		);
+		test_absolute(
+			0.3,
+			10,
+			0.02824752489999998207939855277004937778546385011091,
+			1e-17,
+			pmf(0),
+		);
+		test_absolute(
+			0.3,
+			10,
+			0.12106082099999992639752977030555903089040470780077,
+			1e-15,
+			pmf(1),
+		);
+		test_absolute(0.3, 10, 0.0000059048999999999978147480206303047454017251032868501, 1e-20, pmf(10));
+		test_exact(1.0, 1, 0.0, pmf(0));
+		test_exact(1.0, 1, 1.0, pmf(1));
+		test_exact(1.0, 3, 0.0, pmf(0));
+		test_exact(1.0, 3, 0.0, pmf(1));
+		test_exact(1.0, 3, 1.0, pmf(3));
+		test_exact(1.0, 10, 0.0, pmf(0));
+		test_exact(1.0, 10, 0.0, pmf(1));
+		test_exact(1.0, 10, 1.0, pmf(10));
+	}
 
-    #[test]
-    fn test_ln_pmf() {
-        let ln_pmf = |arg: u64| move |x: Binomial| x.ln_pmf(arg);
-        test_exact(0.0, 1, 0.0, ln_pmf(0));
-        test_exact(0.0, 1, f64::NEG_INFINITY, ln_pmf(1));
-        test_exact(0.0, 3, 0.0, ln_pmf(0));
-        test_exact(0.0, 3, f64::NEG_INFINITY, ln_pmf(1));
-        test_exact(0.0, 3, f64::NEG_INFINITY, ln_pmf(3));
-        test_exact(0.0, 10, 0.0, ln_pmf(0));
-        test_exact(0.0, 10, f64::NEG_INFINITY, ln_pmf(1));
-        test_exact(0.0, 10, f64::NEG_INFINITY, ln_pmf(10));
-        test_exact(0.3, 1, -0.3566749439387324423539544041072745145718090708995, ln_pmf(0));
-        test_exact(0.3, 1, -1.2039728043259360296301803719337238685164245381839, ln_pmf(1));
-        test_exact(0.3, 3, -1.0700248318161973270618632123218235437154272126985, ln_pmf(0));
-        test_absolute(0.3, 3, -0.81871040353529122294284394322574719301255212216016, 1e-15, ln_pmf(1));
-        test_absolute(0.3, 3, -3.6119184129778080888905411158011716055492736145517, 1e-15, ln_pmf(3));
-        test_exact(0.3, 10, -3.566749439387324423539544041072745145718090708995, ln_pmf(0));
-        test_absolute(0.3, 10, -2.1114622067804823267977785542148302920616046876506, 1e-14, ln_pmf(1));
-        test_exact(0.3, 10, -12.039728043259360296301803719337238685164245381839, ln_pmf(10));
-        test_exact(1.0, 1, f64::NEG_INFINITY, ln_pmf(0));
-        test_exact(1.0, 1, 0.0, ln_pmf(1));
-        test_exact(1.0, 3, f64::NEG_INFINITY, ln_pmf(0));
-        test_exact(1.0, 3, f64::NEG_INFINITY, ln_pmf(1));
-        test_exact(1.0, 3, 0.0, ln_pmf(3));
-        test_exact(1.0, 10, f64::NEG_INFINITY, ln_pmf(0));
-        test_exact(1.0, 10, f64::NEG_INFINITY, ln_pmf(1));
-        test_exact(1.0, 10, 0.0, ln_pmf(10));
-    }
+	#[test]
+	fn test_ln_pmf() {
+		let ln_pmf = |arg: u64| move |x: Binomial| x.ln_pmf(arg);
+		test_exact(0.0, 1, 0.0, ln_pmf(0));
+		test_exact(0.0, 1, f64::NEG_INFINITY, ln_pmf(1));
+		test_exact(0.0, 3, 0.0, ln_pmf(0));
+		test_exact(0.0, 3, f64::NEG_INFINITY, ln_pmf(1));
+		test_exact(0.0, 3, f64::NEG_INFINITY, ln_pmf(3));
+		test_exact(0.0, 10, 0.0, ln_pmf(0));
+		test_exact(0.0, 10, f64::NEG_INFINITY, ln_pmf(1));
+		test_exact(0.0, 10, f64::NEG_INFINITY, ln_pmf(10));
+		test_exact(
+			0.3,
+			1,
+			-0.3566749439387324423539544041072745145718090708995,
+			ln_pmf(0),
+		);
+		test_exact(
+			0.3,
+			1,
+			-1.2039728043259360296301803719337238685164245381839,
+			ln_pmf(1),
+		);
+		test_exact(
+			0.3,
+			3,
+			-1.0700248318161973270618632123218235437154272126985,
+			ln_pmf(0),
+		);
+		test_absolute(
+			0.3,
+			3,
+			-0.81871040353529122294284394322574719301255212216016,
+			1e-15,
+			ln_pmf(1),
+		);
+		test_absolute(
+			0.3,
+			3,
+			-3.6119184129778080888905411158011716055492736145517,
+			1e-15,
+			ln_pmf(3),
+		);
+		test_exact(
+			0.3,
+			10,
+			-3.566749439387324423539544041072745145718090708995,
+			ln_pmf(0),
+		);
+		test_absolute(
+			0.3,
+			10,
+			-2.1114622067804823267977785542148302920616046876506,
+			1e-14,
+			ln_pmf(1),
+		);
+		test_exact(
+			0.3,
+			10,
+			-12.039728043259360296301803719337238685164245381839,
+			ln_pmf(10),
+		);
+		test_exact(1.0, 1, f64::NEG_INFINITY, ln_pmf(0));
+		test_exact(1.0, 1, 0.0, ln_pmf(1));
+		test_exact(1.0, 3, f64::NEG_INFINITY, ln_pmf(0));
+		test_exact(1.0, 3, f64::NEG_INFINITY, ln_pmf(1));
+		test_exact(1.0, 3, 0.0, ln_pmf(3));
+		test_exact(1.0, 10, f64::NEG_INFINITY, ln_pmf(0));
+		test_exact(1.0, 10, f64::NEG_INFINITY, ln_pmf(1));
+		test_exact(1.0, 10, 0.0, ln_pmf(10));
+	}
 
-    #[test]
-    fn test_cdf() {
-        let cdf = |arg: u64| move |x: Binomial| x.cdf(arg);
-        test_exact(0.0, 1, 1.0, cdf(0));
-        test_exact(0.0, 1, 1.0, cdf(1));
-        test_exact(0.0, 3, 1.0, cdf(0));
-        test_exact(0.0, 3, 1.0, cdf(1));
-        test_exact(0.0, 3, 1.0, cdf(3));
-        test_exact(0.0, 10, 1.0, cdf(0));
-        test_exact(0.0, 10, 1.0, cdf(1));
-        test_exact(0.0, 10, 1.0, cdf(10));
-        test_absolute(0.3, 1, 0.7, 1e-15, cdf(0));
-        test_exact(0.3, 1, 1.0, cdf(1));
-        test_absolute(0.3, 3, 0.343, 1e-14, cdf(0));
-        test_absolute(0.3, 3, 0.784, 1e-15, cdf(1));
-        test_exact(0.3, 3, 1.0, cdf(3));
-        test_absolute(0.3, 10, 0.0282475249, 1e-16, cdf(0));
-        test_absolute(0.3, 10, 0.1493083459, 1e-14, cdf(1));
-        test_exact(0.3, 10, 1.0, cdf(10));
-        test_exact(1.0, 1, 0.0, cdf(0));
-        test_exact(1.0, 1, 1.0, cdf(1));
-        test_exact(1.0, 3, 0.0, cdf(0));
-        test_exact(1.0, 3, 0.0, cdf(1));
-        test_exact(1.0, 3, 1.0, cdf(3));
-        test_exact(1.0, 10, 0.0, cdf(0));
-        test_exact(1.0, 10, 0.0, cdf(1));
-        test_exact(1.0, 10, 1.0, cdf(10));
-    }
+	#[test]
+	fn test_cdf() {
+		let cdf = |arg: u64| move |x: Binomial| x.cdf(arg);
+		test_exact(0.0, 1, 1.0, cdf(0));
+		test_exact(0.0, 1, 1.0, cdf(1));
+		test_exact(0.0, 3, 1.0, cdf(0));
+		test_exact(0.0, 3, 1.0, cdf(1));
+		test_exact(0.0, 3, 1.0, cdf(3));
+		test_exact(0.0, 10, 1.0, cdf(0));
+		test_exact(0.0, 10, 1.0, cdf(1));
+		test_exact(0.0, 10, 1.0, cdf(10));
+		test_absolute(0.3, 1, 0.7, 1e-15, cdf(0));
+		test_exact(0.3, 1, 1.0, cdf(1));
+		test_absolute(0.3, 3, 0.343, 1e-14, cdf(0));
+		test_absolute(0.3, 3, 0.784, 1e-15, cdf(1));
+		test_exact(0.3, 3, 1.0, cdf(3));
+		test_absolute(0.3, 10, 0.0282475249, 1e-16, cdf(0));
+		test_absolute(0.3, 10, 0.1493083459, 1e-14, cdf(1));
+		test_exact(0.3, 10, 1.0, cdf(10));
+		test_exact(1.0, 1, 0.0, cdf(0));
+		test_exact(1.0, 1, 1.0, cdf(1));
+		test_exact(1.0, 3, 0.0, cdf(0));
+		test_exact(1.0, 3, 0.0, cdf(1));
+		test_exact(1.0, 3, 1.0, cdf(3));
+		test_exact(1.0, 10, 0.0, cdf(0));
+		test_exact(1.0, 10, 0.0, cdf(1));
+		test_exact(1.0, 10, 1.0, cdf(10));
+	}
 
-    #[test]
-    fn test_sf() {
-        let sf = |arg: u64| move |x: Binomial| x.sf(arg);
-        test_exact(0.0, 1, 0.0, sf(0));
-        test_exact(0.0, 1, 0.0, sf(1));
-        test_exact(0.0, 3, 0.0, sf(0));
-        test_exact(0.0, 3, 0.0, sf(1));
-        test_exact(0.0, 3, 0.0, sf(3));
-        test_exact(0.0, 10, 0.0, sf(0));
-        test_exact(0.0, 10, 0.0, sf(1));
-        test_exact(0.0, 10, 0.0, sf(10));
-        test_absolute(0.3, 1, 0.3, 1e-15, sf(0));
-        test_exact(0.3, 1, 0.0, sf(1));
-        test_absolute(0.3, 3, 0.657, 1e-14, sf(0));
-        test_absolute(0.3, 3, 0.216, 1e-15, sf(1));
-        test_exact(0.3, 3, 0.0, sf(3));
-        test_absolute(0.3, 10, 0.9717524751000001, 1e-16, sf(0));
-        test_absolute(0.3, 10, 0.850691654100002, 1e-14, sf(1));
-        test_exact(0.3, 10, 0.0, sf(10));
-        test_exact(1.0, 1, 1.0, sf(0));
-        test_exact(1.0, 1, 0.0, sf(1));
-        test_exact(1.0, 3, 1.0, sf(0));
-        test_exact(1.0, 3, 1.0, sf(1));
-        test_exact(1.0, 3, 0.0, sf(3));
-        test_exact(1.0, 10, 1.0, sf(0));
-        test_exact(1.0, 10, 1.0, sf(1));
-        test_exact(1.0, 10, 0.0, sf(10));
-    }
+	#[test]
+	fn test_sf() {
+		let sf = |arg: u64| move |x: Binomial| x.sf(arg);
+		test_exact(0.0, 1, 0.0, sf(0));
+		test_exact(0.0, 1, 0.0, sf(1));
+		test_exact(0.0, 3, 0.0, sf(0));
+		test_exact(0.0, 3, 0.0, sf(1));
+		test_exact(0.0, 3, 0.0, sf(3));
+		test_exact(0.0, 10, 0.0, sf(0));
+		test_exact(0.0, 10, 0.0, sf(1));
+		test_exact(0.0, 10, 0.0, sf(10));
+		test_absolute(0.3, 1, 0.3, 1e-15, sf(0));
+		test_exact(0.3, 1, 0.0, sf(1));
+		test_absolute(0.3, 3, 0.657, 1e-14, sf(0));
+		test_absolute(0.3, 3, 0.216, 1e-15, sf(1));
+		test_exact(0.3, 3, 0.0, sf(3));
+		test_absolute(0.3, 10, 0.9717524751000001, 1e-16, sf(0));
+		test_absolute(0.3, 10, 0.850691654100002, 1e-14, sf(1));
+		test_exact(0.3, 10, 0.0, sf(10));
+		test_exact(1.0, 1, 1.0, sf(0));
+		test_exact(1.0, 1, 0.0, sf(1));
+		test_exact(1.0, 3, 1.0, sf(0));
+		test_exact(1.0, 3, 1.0, sf(1));
+		test_exact(1.0, 3, 0.0, sf(3));
+		test_exact(1.0, 10, 1.0, sf(0));
+		test_exact(1.0, 10, 1.0, sf(1));
+		test_exact(1.0, 10, 0.0, sf(10));
+	}
 
-    #[test]
-    fn test_cdf_upper_bound() {
-        let cdf = |arg: u64| move |x: Binomial| x.cdf(arg);
-        test_exact(0.5, 3, 1.0, cdf(5));
-    }
+	#[test]
+	fn test_cdf_upper_bound() {
+		let cdf = |arg: u64| move |x: Binomial| x.cdf(arg);
+		test_exact(0.5, 3, 1.0, cdf(5));
+	}
 
-    #[test]
-    fn test_sf_upper_bound() {
-        let sf = |arg: u64| move |x: Binomial| x.sf(arg);
-        test_exact(0.5, 3, 0.0, sf(5));
-    }
+	#[test]
+	fn test_sf_upper_bound() {
+		let sf = |arg: u64| move |x: Binomial| x.sf(arg);
+		test_exact(0.5, 3, 0.0, sf(5));
+	}
 
-    #[test]
-    fn test_inverse_cdf() {
-        let invcdf = |arg: f64| move |x: Binomial| x.inverse_cdf(arg);
-        test_exact(0.4, 5, 2, invcdf(0.3456));
+	#[test]
+	fn test_inverse_cdf() {
+		let invcdf = |arg: f64| move |x: Binomial| x.inverse_cdf(arg);
+		test_exact(0.4, 5, 2, invcdf(0.3456));
 
-        // cases in issue #185
-        test_exact(0.018, 465, 1, invcdf(3.472e-4));
-        test_exact(0.5, 6, 4, invcdf(0.75));
+		// cases in issue #185
+		test_exact(0.018, 465, 1, invcdf(3.472e-4));
+		test_exact(0.5, 6, 4, invcdf(0.75));
 
-        // case in issue #330
-        test_exact(0.05, 2, 0, invcdf(0.5));
-        test_exact(0.005, 10, 0, invcdf(0.9));
-    }
+		// case in issue #330
+		test_exact(0.05, 2, 0, invcdf(0.5));
+		test_exact(0.005, 10, 0, invcdf(0.9));
+	}
 
-    #[test]
-    fn test_cdf_inverse_cdf() {
-        let cdf_invcdf = |arg: u64| move |x: Binomial| x.inverse_cdf(x.cdf(arg));
-        test_exact(0.3, 10, 3, cdf_invcdf(3));
-        test_exact(0.3, 10, 4, cdf_invcdf(4));
-        test_exact(0.5, 6, 4, cdf_invcdf(4));
-    }
+	#[test]
+	fn test_cdf_inverse_cdf() {
+		let cdf_invcdf =
+			|arg: u64| move |x: Binomial| x.inverse_cdf(x.cdf(arg));
+		test_exact(0.3, 10, 3, cdf_invcdf(3));
+		test_exact(0.3, 10, 4, cdf_invcdf(4));
+		test_exact(0.5, 6, 4, cdf_invcdf(4));
+	}
 
-    #[test]
-    fn test_discrete() {
-        test::check_discrete_distribution(&create_ok(0.3, 5), 5);
-        test::check_discrete_distribution(&create_ok(0.7, 10), 10);
-    }
+	#[test]
+	fn test_discrete() {
+		test::check_discrete_distribution(&create_ok(0.3, 5), 5);
+		test::check_discrete_distribution(&create_ok(0.7, 10), 10);
+	}
 }

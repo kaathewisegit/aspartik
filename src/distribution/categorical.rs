@@ -43,13 +43,17 @@ impl core::fmt::Display for CategoricalError {
 	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
-            CategoricalError::ProbMassEmpty => write!(f, "Probability mass is empty"),
-            CategoricalError::ProbMassSumZero => write!(f, "Probabilities sum up to zero"),
-            CategoricalError::ProbMassHasInvalidElements => write!(
-                f,
-                "Probability mass contains at least one element which is NaN or less than zero"
-            ),
-        }
+			CategoricalError::ProbMassEmpty => {
+				write!(f, "Probability mass is empty")
+			}
+			CategoricalError::ProbMassSumZero => {
+				write!(f, "Probabilities sum up to zero")
+			}
+			CategoricalError::ProbMassHasInvalidElements => write!(
+				f,
+				"Probability mass contains at least one element which is NaN or less than zero"
+			),
+		}
 	}
 }
 
@@ -406,176 +410,197 @@ fn test_binary_index() {
 	assert_eq!(5, binary_index(&arr, 10.1));
 }
 
-#[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::distribution::internal::*;
-    use crate::testing_boiler;
+	use super::*;
+	use crate::distribution::internal::*;
+	use crate::testing_boiler;
 
-    testing_boiler!(prob_mass: &[f64]; Categorical; CategoricalError);
+	testing_boiler!(prob_mass: &[f64]; Categorical; CategoricalError);
 
-    #[test]
-    fn test_create() {
-        create_ok(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
-    }
+	#[test]
+	fn test_create() {
+		create_ok(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
+	}
 
-    #[test]
-    fn test_bad_create() {
-        let invalid: &[(&[f64], CategoricalError)] = &[
-            (&[], CategoricalError::ProbMassEmpty),
-            (&[-1.0, 1.0], CategoricalError::ProbMassHasInvalidElements),
-            (&[0.0, 0.0, 0.0], CategoricalError::ProbMassSumZero),
-        ];
+	#[test]
+	fn test_bad_create() {
+		let invalid: &[(&[f64], CategoricalError)] = &[
+			(&[], CategoricalError::ProbMassEmpty),
+			(
+				&[-1.0, 1.0],
+				CategoricalError::ProbMassHasInvalidElements,
+			),
+			(&[0.0, 0.0, 0.0], CategoricalError::ProbMassSumZero),
+		];
 
-        for &(prob_mass, err) in invalid {
-            test_create_err(prob_mass, err);
-        }
-    }
+		for &(prob_mass, err) in invalid {
+			test_create_err(prob_mass, err);
+		}
+	}
 
-    #[test]
-    fn test_mean() {
-        let mean = |x: Categorical| x.mean().unwrap();
-        test_exact(&[0.0, 0.25, 0.5, 0.25], 2.0, mean);
-        test_exact(&[0.0, 1.0, 2.0, 1.0], 2.0, mean);
-        test_exact(&[0.0, 0.5, 0.5], 1.5, mean);
-        test_exact(&[0.75, 0.25], 0.25, mean);
-        test_exact(&[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 5.0, mean);
-    }
+	#[test]
+	fn test_mean() {
+		let mean = |x: Categorical| x.mean().unwrap();
+		test_exact(&[0.0, 0.25, 0.5, 0.25], 2.0, mean);
+		test_exact(&[0.0, 1.0, 2.0, 1.0], 2.0, mean);
+		test_exact(&[0.0, 0.5, 0.5], 1.5, mean);
+		test_exact(&[0.75, 0.25], 0.25, mean);
+		test_exact(
+			&[
+				1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+				1.0, 1.0,
+			],
+			5.0,
+			mean,
+		);
+	}
 
-    #[test]
-    fn test_variance() {
-        let variance = |x: Categorical| x.variance().unwrap();
-        test_exact(&[0.0, 0.25, 0.5, 0.25], 0.5, variance);
-        test_exact(&[0.0, 1.0, 2.0, 1.0], 0.5, variance);
-        test_exact(&[0.0, 0.5, 0.5], 0.25, variance);
-        test_exact(&[0.75, 0.25], 0.1875, variance);
-        test_exact(&[1.0, 0.0, 1.0], 1.0, variance);
-    }
+	#[test]
+	fn test_variance() {
+		let variance = |x: Categorical| x.variance().unwrap();
+		test_exact(&[0.0, 0.25, 0.5, 0.25], 0.5, variance);
+		test_exact(&[0.0, 1.0, 2.0, 1.0], 0.5, variance);
+		test_exact(&[0.0, 0.5, 0.5], 0.25, variance);
+		test_exact(&[0.75, 0.25], 0.1875, variance);
+		test_exact(&[1.0, 0.0, 1.0], 1.0, variance);
+	}
 
-    #[test]
-    fn test_entropy() {
-        let entropy = |x: Categorical| x.entropy().unwrap();
-        test_exact(&[0.0, 1.0], 0.0, entropy);
-        test_absolute(&[0.0, 1.0, 1.0], 2f64.ln(), 1e-15, entropy);
-        test_absolute(&[1.0, 1.0, 1.0], 3f64.ln(), 1e-15, entropy);
-        test_absolute(&vec![1.0; 100], 100f64.ln(), 1e-14, entropy);
-        test_absolute(&[0.0, 0.25, 0.5, 0.25], 1.0397207708399179, 1e-15, entropy);
-    }
+	#[test]
+	fn test_entropy() {
+		let entropy = |x: Categorical| x.entropy().unwrap();
+		test_exact(&[0.0, 1.0], 0.0, entropy);
+		test_absolute(&[0.0, 1.0, 1.0], 2f64.ln(), 1e-15, entropy);
+		test_absolute(&[1.0, 1.0, 1.0], 3f64.ln(), 1e-15, entropy);
+		test_absolute(&vec![1.0; 100], 100f64.ln(), 1e-14, entropy);
+		test_absolute(
+			&[0.0, 0.25, 0.5, 0.25],
+			1.0397207708399179,
+			1e-15,
+			entropy,
+		);
+	}
 
-    #[test]
-    fn test_median() {
-        let median = |x: Categorical| x.median();
-        test_exact(&[0.0, 3.0, 1.0, 1.0], 1.0, median);
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, median);
-    }
+	#[test]
+	fn test_median() {
+		let median = |x: Categorical| x.median();
+		test_exact(&[0.0, 3.0, 1.0, 1.0], 1.0, median);
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, median);
+	}
 
-    #[test]
-    fn test_min_max() {
-        let min = |x: Categorical| x.min();
-        let max = |x: Categorical| x.max();
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 0, min);
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 3, max);
-    }
+	#[test]
+	fn test_min_max() {
+		let min = |x: Categorical| x.min();
+		let max = |x: Categorical| x.max();
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 0, min);
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 3, max);
+	}
 
-    #[test]
-    fn test_pmf() {
-        let pmf = |arg: u64| move |x: Categorical| x.pmf(arg);
-        test_exact(&[0.0, 0.25, 0.5, 0.25], 0.0, pmf(0));
-        test_exact(&[0.0, 0.25, 0.5, 0.25], 0.25, pmf(1));
-        test_exact(&[0.0, 0.25, 0.5, 0.25], 0.25, pmf(3));
-    }
+	#[test]
+	fn test_pmf() {
+		let pmf = |arg: u64| move |x: Categorical| x.pmf(arg);
+		test_exact(&[0.0, 0.25, 0.5, 0.25], 0.0, pmf(0));
+		test_exact(&[0.0, 0.25, 0.5, 0.25], 0.25, pmf(1));
+		test_exact(&[0.0, 0.25, 0.5, 0.25], 0.25, pmf(3));
+	}
 
-    #[test]
-    fn test_pmf_x_too_high() {
-        let pmf = |arg: u64| move |x: Categorical| x.pmf(arg);
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 0.0, pmf(4));
-    }
+	#[test]
+	fn test_pmf_x_too_high() {
+		let pmf = |arg: u64| move |x: Categorical| x.pmf(arg);
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 0.0, pmf(4));
+	}
 
-    #[test]
-    fn test_ln_pmf() {
-        let ln_pmf = |arg: u64| move |x: Categorical| x.ln_pmf(arg);
-        test_exact(&[0.0, 0.25, 0.5, 0.25], 0f64.ln(), ln_pmf(0));
-        test_exact(&[0.0, 0.25, 0.5, 0.25], 0.25f64.ln(), ln_pmf(1));
-        test_exact(&[0.0, 0.25, 0.5, 0.25], 0.25f64.ln(), ln_pmf(3));
-    }
+	#[test]
+	fn test_ln_pmf() {
+		let ln_pmf = |arg: u64| move |x: Categorical| x.ln_pmf(arg);
+		test_exact(&[0.0, 0.25, 0.5, 0.25], 0f64.ln(), ln_pmf(0));
+		test_exact(&[0.0, 0.25, 0.5, 0.25], 0.25f64.ln(), ln_pmf(1));
+		test_exact(&[0.0, 0.25, 0.5, 0.25], 0.25f64.ln(), ln_pmf(3));
+	}
 
-    #[test]
-    fn test_ln_pmf_x_too_high() {
-        let ln_pmf = |arg: u64| move |x: Categorical| x.ln_pmf(arg);
-        test_exact(&[4.0, 2.5, 2.5, 1.0], f64::NEG_INFINITY, ln_pmf(4));
-    }
+	#[test]
+	fn test_ln_pmf_x_too_high() {
+		let ln_pmf = |arg: u64| move |x: Categorical| x.ln_pmf(arg);
+		test_exact(&[4.0, 2.5, 2.5, 1.0], f64::NEG_INFINITY, ln_pmf(4));
+	}
 
-    #[test]
-    fn test_cdf() {
-        let cdf = |arg: u64| move |x: Categorical| x.cdf(arg);
-        test_exact(&[0.0, 3.0, 1.0, 1.0], 3.0 / 5.0, cdf(1));
-        test_exact(&[1.0, 1.0, 1.0, 1.0], 0.25, cdf(0));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 0.4, cdf(0));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(3));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4));
-    }
+	#[test]
+	fn test_cdf() {
+		let cdf = |arg: u64| move |x: Categorical| x.cdf(arg);
+		test_exact(&[0.0, 3.0, 1.0, 1.0], 3.0 / 5.0, cdf(1));
+		test_exact(&[1.0, 1.0, 1.0, 1.0], 0.25, cdf(0));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 0.4, cdf(0));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(3));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4));
+	}
 
-    #[test]
-    fn test_sf() {
-        let sf = |arg: u64| move |x: Categorical| x.sf(arg);
-        test_exact(&[0.0, 3.0, 1.0, 1.0], 2.0 / 5.0, sf(1));
-        test_exact(&[1.0, 1.0, 1.0, 1.0], 0.75, sf(0));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 0.6, sf(0));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 0.0, sf(3));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 0.0, sf(4));
-    }
+	#[test]
+	fn test_sf() {
+		let sf = |arg: u64| move |x: Categorical| x.sf(arg);
+		test_exact(&[0.0, 3.0, 1.0, 1.0], 2.0 / 5.0, sf(1));
+		test_exact(&[1.0, 1.0, 1.0, 1.0], 0.75, sf(0));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 0.6, sf(0));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 0.0, sf(3));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 0.0, sf(4));
+	}
 
-    #[test]
-    fn test_cdf_input_high() {
-        let cdf = |arg: u64| move |x: Categorical| x.cdf(arg);
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4));
-    }
+	#[test]
+	fn test_cdf_input_high() {
+		let cdf = |arg: u64| move |x: Categorical| x.cdf(arg);
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, cdf(4));
+	}
 
-    #[test]
-    fn test_sf_input_high() {
-        let sf = |arg: u64| move |x: Categorical| x.sf(arg);
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 0.0, sf(4));
-    }
+	#[test]
+	fn test_sf_input_high() {
+		let sf = |arg: u64| move |x: Categorical| x.sf(arg);
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 0.0, sf(4));
+	}
 
-    #[test]
-    fn test_cdf_sf_mirror() {
-        let mass = [4.0, 2.5, 2.5, 1.0];
-        let cat = Categorical::new(&mass).unwrap();
-        assert_eq!(cat.cdf(0), 1.-cat.sf(0));
-        assert_eq!(cat.cdf(1), 1.-cat.sf(1));
-        assert_eq!(cat.cdf(2), 1.-cat.sf(2));
-        assert_eq!(cat.cdf(3), 1.-cat.sf(3));
-    }
+	#[test]
+	fn test_cdf_sf_mirror() {
+		let mass = [4.0, 2.5, 2.5, 1.0];
+		let cat = Categorical::new(&mass).unwrap();
+		assert_eq!(cat.cdf(0), 1.0 - cat.sf(0));
+		assert_eq!(cat.cdf(1), 1.0 - cat.sf(1));
+		assert_eq!(cat.cdf(2), 1.0 - cat.sf(2));
+		assert_eq!(cat.cdf(3), 1.0 - cat.sf(3));
+	}
 
-    #[test]
-    fn test_inverse_cdf() {
-        let inverse_cdf = |arg: f64| move |x: Categorical| x.inverse_cdf(arg);
-        test_exact(&[0.0, 3.0, 1.0, 1.0], 1, inverse_cdf(0.2));
-        test_exact(&[0.0, 3.0, 1.0, 1.0], 1, inverse_cdf(0.5));
-        test_exact(&[0.0, 3.0, 1.0, 1.0], 3, inverse_cdf(0.95));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 0, inverse_cdf(0.2));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 1, inverse_cdf(0.5));
-        test_exact(&[4.0, 2.5, 2.5, 1.0], 3, inverse_cdf(0.95));
-    }
+	#[test]
+	fn test_inverse_cdf() {
+		let inverse_cdf =
+			|arg: f64| move |x: Categorical| x.inverse_cdf(arg);
+		test_exact(&[0.0, 3.0, 1.0, 1.0], 1, inverse_cdf(0.2));
+		test_exact(&[0.0, 3.0, 1.0, 1.0], 1, inverse_cdf(0.5));
+		test_exact(&[0.0, 3.0, 1.0, 1.0], 3, inverse_cdf(0.95));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 0, inverse_cdf(0.2));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 1, inverse_cdf(0.5));
+		test_exact(&[4.0, 2.5, 2.5, 1.0], 3, inverse_cdf(0.95));
+	}
 
-    #[test]
-    #[should_panic]
-    fn test_inverse_cdf_input_low() {
-        let dist = create_ok(&[4.0, 2.5, 2.5, 1.0]);
-        dist.inverse_cdf(0.0);
-    }
+	#[test]
+	#[should_panic]
+	fn test_inverse_cdf_input_low() {
+		let dist = create_ok(&[4.0, 2.5, 2.5, 1.0]);
+		dist.inverse_cdf(0.0);
+	}
 
-    #[test]
-    #[should_panic]
-    fn test_inverse_cdf_input_high() {
-        let dist = create_ok(&[4.0, 2.5, 2.5, 1.0]);
-        dist.inverse_cdf(1.0);
-    }
+	#[test]
+	#[should_panic]
+	fn test_inverse_cdf_input_high() {
+		let dist = create_ok(&[4.0, 2.5, 2.5, 1.0]);
+		dist.inverse_cdf(1.0);
+	}
 
-    #[test]
-    fn test_discrete() {
-        test::check_discrete_distribution(&create_ok(&[1.0, 2.0, 3.0, 4.0]), 4);
-        test::check_discrete_distribution(&create_ok(&[0.0, 1.0, 2.0, 3.0, 4.0]), 5);
-    }
+	#[test]
+	fn test_discrete() {
+		test::check_discrete_distribution(
+			&create_ok(&[1.0, 2.0, 3.0, 4.0]),
+			4,
+		);
+		test::check_discrete_distribution(
+			&create_ok(&[0.0, 1.0, 2.0, 3.0, 4.0]),
+			5,
+		);
+	}
 }

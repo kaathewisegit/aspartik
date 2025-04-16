@@ -481,75 +481,59 @@ mod tests {
 		let mut sorted_distinct = Data::new(sorted_distinct);
 		let sorted_ties = [1.0, 2.0, 2.0, 7.0, 9.0, 9.0, 10.0, 12.0];
 		let mut sorted_ties = Data::new(sorted_ties);
-		assert_eq!(
-			sorted_distinct.ranks(RankTieBreaker::Average),
-			[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-		);
-		assert_eq!(
-			sorted_ties.ranks(RankTieBreaker::Average),
-			[1.0, 2.5, 2.5, 4.0, 5.5, 5.5, 7.0, 8.0]
-		);
-		assert_eq!(
-			sorted_distinct.ranks(RankTieBreaker::Min),
-			[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-		);
-		assert_eq!(
-			sorted_ties.ranks(RankTieBreaker::Min),
-			[1.0, 2.0, 2.0, 4.0, 5.0, 5.0, 7.0, 8.0]
-		);
-		assert_eq!(
-			sorted_distinct.ranks(RankTieBreaker::Max),
-			[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-		);
-		assert_eq!(
-			sorted_ties.ranks(RankTieBreaker::Max),
-			[1.0, 3.0, 3.0, 4.0, 6.0, 6.0, 7.0, 8.0]
-		);
-		assert_eq!(
-			sorted_distinct.ranks(RankTieBreaker::First),
-			[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-		);
-		assert_eq!(
-			sorted_ties.ranks(RankTieBreaker::First),
-			[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-		);
+		assert_eq!(sorted_distinct.ranks(RankTieBreaker::Average), [
+			1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0
+		]);
+		assert_eq!(sorted_ties.ranks(RankTieBreaker::Average), [
+			1.0, 2.5, 2.5, 4.0, 5.5, 5.5, 7.0, 8.0
+		]);
+		assert_eq!(sorted_distinct.ranks(RankTieBreaker::Min), [
+			1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0
+		]);
+		assert_eq!(sorted_ties.ranks(RankTieBreaker::Min), [
+			1.0, 2.0, 2.0, 4.0, 5.0, 5.0, 7.0, 8.0
+		]);
+		assert_eq!(sorted_distinct.ranks(RankTieBreaker::Max), [
+			1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0
+		]);
+		assert_eq!(sorted_ties.ranks(RankTieBreaker::Max), [
+			1.0, 3.0, 3.0, 4.0, 6.0, 6.0, 7.0, 8.0
+		]);
+		assert_eq!(sorted_distinct.ranks(RankTieBreaker::First), [
+			1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0
+		]);
+		assert_eq!(sorted_ties.ranks(RankTieBreaker::First), [
+			1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0
+		]);
 
 		let distinct = [1.0, 8.0, 12.0, 7.0, 2.0, 9.0, 10.0, 4.0];
 		let distinct = Data::new(distinct);
 		let ties = [1.0, 9.0, 12.0, 7.0, 2.0, 9.0, 10.0, 2.0];
 		let ties = Data::new(ties);
-		assert_eq!(
-			distinct.clone().ranks(RankTieBreaker::Average),
-			[1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0]
-		);
-		assert_eq!(
-			ties.clone().ranks(RankTieBreaker::Average),
-			[1.0, 5.5, 8.0, 4.0, 2.5, 5.5, 7.0, 2.5]
-		);
-		assert_eq!(
-			distinct.clone().ranks(RankTieBreaker::Min),
-			[1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0]
-		);
-		assert_eq!(
-			ties.clone().ranks(RankTieBreaker::Min),
-			[1.0, 5.0, 8.0, 4.0, 2.0, 5.0, 7.0, 2.0]
-		);
-		assert_eq!(
-			distinct.clone().ranks(RankTieBreaker::Max),
-			[1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0]
-		);
-		assert_eq!(
-			ties.clone().ranks(RankTieBreaker::Max),
-			[1.0, 6.0, 8.0, 4.0, 3.0, 6.0, 7.0, 3.0]
-		);
-		assert_eq!(
-			distinct.clone().ranks(RankTieBreaker::First),
-			[1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0]
-		);
-		assert_eq!(
-			ties.clone().ranks(RankTieBreaker::First),
-			[1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0]
-		);
+		assert_eq!(distinct.clone().ranks(RankTieBreaker::Average), [
+			1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0
+		]);
+		assert_eq!(ties.clone().ranks(RankTieBreaker::Average), [
+			1.0, 5.5, 8.0, 4.0, 2.5, 5.5, 7.0, 2.5
+		]);
+		assert_eq!(distinct.clone().ranks(RankTieBreaker::Min), [
+			1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0
+		]);
+		assert_eq!(ties.clone().ranks(RankTieBreaker::Min), [
+			1.0, 5.0, 8.0, 4.0, 2.0, 5.0, 7.0, 2.0
+		]);
+		assert_eq!(distinct.clone().ranks(RankTieBreaker::Max), [
+			1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0
+		]);
+		assert_eq!(ties.clone().ranks(RankTieBreaker::Max), [
+			1.0, 6.0, 8.0, 4.0, 3.0, 6.0, 7.0, 3.0
+		]);
+		assert_eq!(distinct.clone().ranks(RankTieBreaker::First), [
+			1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0
+		]);
+		assert_eq!(ties.clone().ranks(RankTieBreaker::First), [
+			1.0, 5.0, 8.0, 4.0, 2.0, 6.0, 7.0, 3.0
+		]);
 	}
 
 	#[test]

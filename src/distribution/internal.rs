@@ -153,7 +153,7 @@ pub mod test {
                 let x = create_and_get($($arg_name),+, get_fn);
                 let max_relative = $crate::consts::ACCURACY;
 
-                if !::approx::relative_eq!(expected, x, max_relative = max_relative) {
+                if !approx::relative_eq!(expected, x, max_relative = max_relative) {
                     panic!(
                         "Expected {:?} to be almost equal to {:?} (max. relative error of {:?}), but wasn't for {}",
                         x,
@@ -182,7 +182,7 @@ pub mod test {
                     return;
                 }
 
-                if !::approx::abs_diff_eq!(expected, x, epsilon = acc) {
+                if !approx::abs_diff_eq!(expected, x, epsilon = acc) {
                     panic!(
                         "Expected {:?} to be almost equal to {:?} (max. absolute error of {:?}), but wasn't for {}",
                         x,
@@ -233,7 +233,7 @@ pub mod test {
             fn test_none<F, T>($($arg_name: $arg_ty),+, get_fn: F)
             where
                 F: Fn($dist) -> Option<T>,
-                T: ::core::fmt::Debug,
+                T: core::fmt::Debug,
             {
                 let x = create_and_get($($arg_name),+, get_fn);
 
@@ -518,7 +518,9 @@ pub mod test {
 		}))
 		.is_err()
 		{
-			panic!("Integration of pdf doesn't equal cdf and derivative of cdf doesn't equal pdf!");
+			panic!(
+				"Integration of pdf doesn't equal cdf and derivative of cdf doesn't equal pdf!"
+			);
 		}
 	}
 

@@ -50,7 +50,10 @@ impl core::fmt::Display for StudentsTError {
 				"Scale is NaN, zero or less than zero"
 			),
 			StudentsTError::FreedomInvalid => {
-				write!(f, "Degrees of freedom are NaN, zero or less than zero")
+				write!(
+					f,
+					"Degrees of freedom are NaN, zero or less than zero"
+				)
 			}
 		}
 	}
@@ -208,11 +211,7 @@ impl ContinuousCDF<f64, f64> for StudentsT {
 				0.5,
 				h,
 			);
-			if x <= self.location {
-				ib
-			} else {
-				1.0 - ib
-			}
+			if x <= self.location { ib } else { 1.0 - ib }
 		}
 	}
 
@@ -248,11 +247,7 @@ impl ContinuousCDF<f64, f64> for StudentsT {
 				0.5,
 				h,
 			);
-			if x <= self.location {
-				1.0 - ib
-			} else {
-				ib
-			}
+			if x <= self.location { 1.0 - ib } else { ib }
 		}
 	}
 
@@ -265,7 +260,7 @@ impl ContinuousCDF<f64, f64> for StudentsT {
 		let a = 0.5 * self.freedom;
 		let b = 0.5;
 		let mut y = beta::inv_beta_reg(a, b, 2.0 * x1);
-		y = (self.freedom * (1. - y) / y).sqrt();
+		y = (self.freedom * (1.0 - y) / y).sqrt();
 		y = if x >= 0.5 { y } else { -y };
 		// generalised Student's T is related to normal Student's T by `Y = μ + σ X`
 		// where `X` is distributed as Student's T, so this result has to be scaled and shifted back
@@ -394,11 +389,7 @@ impl Distribution<f64> for StudentsT {
 	/// 0
 	/// ```
 	fn skewness(&self) -> Option<f64> {
-		if self.freedom <= 3.0 {
-			None
-		} else {
-			Some(0.0)
-		}
+		if self.freedom <= 3.0 { None } else { Some(0.0) }
 	}
 }
 
@@ -796,7 +787,7 @@ mod tests {
 	fn test_inv_cdf() {
 		let test = |x: f64, freedom: f64, expected: f64| {
 			use approx::*;
-			let d = StudentsT::new(0., 1., freedom).unwrap();
+			let d = StudentsT::new(0.0, 1.0, freedom).unwrap();
 			// Checks that left == right to 4 significant figures, unlike
 			// test_almost() which uses decimal places
 			assert_relative_eq!(
@@ -1249,7 +1240,7 @@ mod tests {
 	fn test_inv_cdf_high_precision() {
 		let test = |x: f64, freedom: f64, expected: f64| {
 			use approx::assert_relative_eq;
-			let d = StudentsT::new(0., 1., freedom).unwrap();
+			let d = StudentsT::new(0.0, 1.0, freedom).unwrap();
 			assert_relative_eq!(
 				d.inverse_cdf(x),
 				expected,
@@ -1272,40 +1263,39 @@ mod tests {
 		//       for p in ps:
 		//           q = t.invcdf(p, df)
 		//           print(f"({p:5.3f}, {df:5.1f}, {float(q)}),")
-		#[rustfmt::skip]
-        let invcdf_data = [
-            // p       df    inverse_cdf(p, df)
-            (0.001,   1.0, -318.30883898555044),
-            (0.010,   1.0, -31.820515953773956),
-            (0.100,   1.0, -3.077683537175253),
-            (0.150,   1.0, -1.9626105055051506),
-            (0.200,   1.0, -1.3763819204711734),
-            (0.250,   1.0, -1.0),
-            (0.300,   1.0, -0.7265425280053609),
-            (0.350,   1.0, -0.5095254494944289),
-            (0.400,   1.0, -0.32491969623290623),
-            (0.450,   1.0, -0.15838444032453625),
-            (0.001,  10.0, -4.143700494046589),
-            (0.010,  10.0, -2.763769458112696),
-            (0.100,  10.0, -1.3721836411103356),
-            (0.150,  10.0, -1.093058073590526),
-            (0.200,  10.0, -0.8790578285505887),
-            (0.250,  10.0, -0.6998120613124317),
-            (0.300,  10.0, -0.5415280387550157),
-            (0.350,  10.0, -0.3965914937556218),
-            (0.400,  10.0, -0.26018482949208016),
-            (0.450,  10.0, -0.12889018929327375),
-            (0.001, 100.0, -3.173739493738783),
-            (0.010, 100.0, -2.364217366238482),
-            (0.100, 100.0, -1.290074761346516),
-            (0.150, 100.0, -1.041835900908347),
-            (0.200, 100.0, -0.845230424491016),
-            (0.250, 100.0, -0.6769510430114715),
-            (0.300, 100.0, -0.5260762706003463),
-            (0.350, 100.0, -0.3864289804076715),
-            (0.400, 100.0, -0.2540221824582278),
-            (0.450, 100.0, -0.12598088204153965),
-        ];
+		let invcdf_data = [
+			//   p   df    inverse_cdf(p, df)
+			(0.001, 1.0, -318.30883898555044),
+			(0.010, 1.0, -31.820515953773956),
+			(0.100, 1.0, -3.077683537175253),
+			(0.150, 1.0, -1.9626105055051506),
+			(0.200, 1.0, -1.3763819204711734),
+			(0.250, 1.0, -1.0),
+			(0.300, 1.0, -0.7265425280053609),
+			(0.350, 1.0, -0.5095254494944289),
+			(0.400, 1.0, -0.32491969623290623),
+			(0.450, 1.0, -0.15838444032453625),
+			(0.001, 10.0, -4.143700494046589),
+			(0.010, 10.0, -2.763769458112696),
+			(0.100, 10.0, -1.3721836411103356),
+			(0.150, 10.0, -1.093058073590526),
+			(0.200, 10.0, -0.8790578285505887),
+			(0.250, 10.0, -0.6998120613124317),
+			(0.300, 10.0, -0.5415280387550157),
+			(0.350, 10.0, -0.3965914937556218),
+			(0.400, 10.0, -0.26018482949208016),
+			(0.450, 10.0, -0.12889018929327375),
+			(0.001, 100.0, -3.173739493738783),
+			(0.010, 100.0, -2.364217366238482),
+			(0.100, 100.0, -1.290074761346516),
+			(0.150, 100.0, -1.041835900908347),
+			(0.200, 100.0, -0.845230424491016),
+			(0.250, 100.0, -0.6769510430114715),
+			(0.300, 100.0, -0.5260762706003463),
+			(0.350, 100.0, -0.3864289804076715),
+			(0.400, 100.0, -0.2540221824582278),
+			(0.450, 100.0, -0.12598088204153965),
+		];
 		for (p, df, expected) in invcdf_data.iter() {
 			test(*p, *df, *expected);
 			test(1.0 - *p, *df, -*expected);

@@ -122,7 +122,7 @@ impl rand::distr::Distribution<f64> for Laplace {
 	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
 		let x: f64 = rng.random_range(-0.5..0.5);
 		self.location
-			- self.scale * x.signum() * (1. - 2. * x.abs()).ln()
+			- self.scale * x.signum() * (1.0 - 2.0 * x.abs()).ln()
 	}
 }
 
@@ -138,12 +138,8 @@ impl ContinuousCDF<f64, f64> for Laplace {
 	///
 	/// where `μ` is the location, `b` is the scale
 	fn cdf(&self, x: f64) -> f64 {
-		let y = (-(x - self.location).abs() / self.scale).exp() / 2.;
-		if x >= self.location {
-			1. - y
-		} else {
-			y
-		}
+		let y = (-(x - self.location).abs() / self.scale).exp() / 2.0;
+		if x >= self.location { 1.0 - y } else { y }
 	}
 
 	/// Calculates the survival function for the
@@ -157,12 +153,8 @@ impl ContinuousCDF<f64, f64> for Laplace {
 	///
 	/// where `μ` is the location, `b` is the scale
 	fn sf(&self, x: f64) -> f64 {
-		let y = (-(x - self.location).abs() / self.scale).exp() / 2.;
-		if x >= self.location {
-			y
-		} else {
-			1. - y
-		}
+		let y = (-(x - self.location).abs() / self.scale).exp() / 2.0;
+		if x >= self.location { y } else { 1.0 - y }
 	}
 
 	/// Calculates the inverse cumulative distribution function for the
@@ -181,13 +173,13 @@ impl ContinuousCDF<f64, f64> for Laplace {
 	///
 	/// where `μ` is the location, `b` is the scale
 	fn inverse_cdf(&self, p: f64) -> f64 {
-		if p <= 0. || 1. <= p {
+		if p <= 0.0 || 1.0 <= p {
 			panic!("p must be in [0, 1]");
 		};
 		if p <= 0.5 {
-			self.location + self.scale * (2. * p).ln()
+			self.location + self.scale * (2.0 * p).ln()
 		} else {
-			self.location - self.scale * (2. - 2. * p).ln()
+			self.location - self.scale * (2.0 - 2.0 * p).ln()
 		}
 	}
 }
@@ -244,7 +236,7 @@ impl Distribution<f64> for Laplace {
 	///
 	/// where `b` is the scale
 	fn variance(&self) -> Option<f64> {
-		Some(2. * self.scale * self.scale)
+		Some(2.0 * self.scale * self.scale)
 	}
 
 	/// Returns the entropy of the laplace distribution
@@ -257,7 +249,7 @@ impl Distribution<f64> for Laplace {
 	///
 	/// where `b` is the scale
 	fn entropy(&self) -> Option<f64> {
-		Some((2. * self.scale).ln() + 1.)
+		Some((2.0 * self.scale).ln() + 1.0)
 	}
 
 	/// Returns the skewness of the laplace distribution
@@ -268,7 +260,7 @@ impl Distribution<f64> for Laplace {
 	/// 0
 	/// ```
 	fn skewness(&self) -> Option<f64> {
-		Some(0.)
+		Some(0.0)
 	}
 }
 
@@ -314,7 +306,7 @@ impl Continuous<f64, f64> for Laplace {
 	/// where `μ` is the location and `b` is the scale
 	fn pdf(&self, x: f64) -> f64 {
 		(-(x - self.location).abs() / self.scale).exp()
-			/ (2. * self.scale)
+			/ (2.0 * self.scale)
 	}
 
 	/// Calculates the log probability density function for the laplace
@@ -329,7 +321,7 @@ impl Continuous<f64, f64> for Laplace {
 	/// where `μ` is the location and `b` is the scale
 	fn ln_pdf(&self, x: f64) -> f64 {
 		((-(x - self.location).abs() / self.scale).exp()
-			/ (2. * self.scale))
+			/ (2.0 * self.scale))
 			.ln()
 	}
 }
@@ -436,9 +428,9 @@ mod tests {
 			entropy,
 		);
 		test_absolute(
-			5.,
-			10.,
-			(2. * f64::consts::E * 10.).ln(),
+			5.0,
+			10.0,
+			(2.0 * f64::consts::E * 10.0).ln(),
 			1E-12,
 			entropy,
 		);
@@ -704,9 +696,9 @@ mod tests {
 	#[cfg(feature = "rand")]
 	#[test]
 	fn test_sample_distribution() {
+		use rand::SeedableRng;
 		use rand::distr::Distribution;
 		use rand::rngs::StdRng;
-		use rand::SeedableRng;
 
 		// sanity check sampling
 		let location = 0.0;

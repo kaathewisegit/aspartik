@@ -82,11 +82,7 @@ where
 			i += 1.0;
 			mean += (x.borrow() - mean) / i;
 		}
-		if i > 0.0 {
-			mean
-		} else {
-			f64::NAN
-		}
+		if i > 0.0 { mean } else { f64::NAN }
 	}
 
 	fn geometric_mean(self) -> f64 {
@@ -96,11 +92,7 @@ where
 			i += 1.0;
 			sum += x.borrow().ln();
 		}
-		if i > 0.0 {
-			(sum / i).exp()
-		} else {
-			f64::NAN
-		}
+		if i > 0.0 { (sum / i).exp() } else { f64::NAN }
 	}
 
 	fn harmonic_mean(self) -> f64 {
@@ -115,11 +107,7 @@ where
 			}
 			sum += 1.0 / borrow;
 		}
-		if i > 0.0 {
-			i / sum
-		} else {
-			f64::NAN
-		}
+		if i > 0.0 { i / sum } else { f64::NAN }
 	}
 
 	fn variance(self) -> f64 {
@@ -228,11 +216,7 @@ where
 		if iter.next().is_some() {
 			panic!("Iterators must have the same length")
 		}
-		if n > 0.0 {
-			comoment / n
-		} else {
-			f64::NAN
-		}
+		if n > 0.0 { comoment / n } else { f64::NAN }
 	}
 
 	fn quadratic_mean(self) -> f64 {
@@ -243,54 +227,52 @@ where
 			i += 1.0;
 			mean += (borrow * borrow - mean) / i;
 		}
-		if i > 0.0 {
-			mean.sqrt()
-		} else {
-			f64::NAN
-		}
+		if i > 0.0 { mean.sqrt() } else { f64::NAN }
 	}
 }
 
-#[rustfmt::skip]
 #[cfg(test)]
 mod tests {
-    use core::f64::consts;
-    use crate::statistics::Statistics;
-    use crate::generate::{InfinitePeriodic, InfiniteSinusoidal};
+	use crate::generate::{InfinitePeriodic, InfiniteSinusoidal};
+	use crate::statistics::Statistics;
+	use core::f64::consts;
 
-    #[test]
-    fn test_empty_data_returns_nan() {
-        let data = [0.0; 0];
-        assert!(data.min().is_nan());
-        assert!(data.max().is_nan());
-        assert!(data.mean().is_nan());
-        assert!(data.quadratic_mean().is_nan());
-        assert!(data.variance().is_nan());
-        assert!(data.population_variance().is_nan());
-    }
+	#[test]
+	fn test_empty_data_returns_nan() {
+		let data = [0.0; 0];
+		assert!(data.min().is_nan());
+		assert!(data.max().is_nan());
+		assert!(data.mean().is_nan());
+		assert!(data.quadratic_mean().is_nan());
+		assert!(data.variance().is_nan());
+		assert!(data.population_variance().is_nan());
+	}
 
-    // TODO: test github issue 137 (Math.NET)
+	// TODO: test github issue 137 (Math.NET)
 
-    #[test]
-    fn test_large_samples() {
-        let shorter = || InfinitePeriodic::default(4.0, 1.0).take(4*4096);
-        let longer = || InfinitePeriodic::default(4.0, 1.0).take(4*32768);
-        let s_mean = shorter().mean();
-        let s_qmean = shorter().quadratic_mean();
-        let l_mean = longer().mean();
-        let l_qmean = longer().quadratic_mean();
+	#[test]
+	fn test_large_samples() {
+		let shorter =
+			|| InfinitePeriodic::default(4.0, 1.0).take(4 * 4096);
+		let longer =
+			|| InfinitePeriodic::default(4.0, 1.0).take(4 * 32768);
+		let s_mean = shorter().mean();
+		let s_qmean = shorter().quadratic_mean();
+		let l_mean = longer().mean();
+		let l_qmean = longer().quadratic_mean();
 
-        assert_almost_eq!(s_mean, 0.375, 1e-14);
-        assert_almost_eq!(l_mean, 0.375, 1e-14);
-        assert_almost_eq!(s_qmean, (0.21875f64).sqrt(), 1e-14);
-        assert_almost_eq!(l_qmean, (0.21875f64).sqrt(), 1e-14);
-    }
+		assert_almost_eq!(s_mean, 0.375, 1e-14);
+		assert_almost_eq!(l_mean, 0.375, 1e-14);
+		assert_almost_eq!(s_qmean, (0.21875f64).sqrt(), 1e-14);
+		assert_almost_eq!(l_qmean, (0.21875f64).sqrt(), 1e-14);
+	}
 
-    #[test]
-    fn test_quadratic_mean_of_sinusoidal() {
-        let data = InfiniteSinusoidal::default(64.0, 16.0, 2.0).take(128);
-        let qmean = data.quadratic_mean();
+	#[test]
+	fn test_quadratic_mean_of_sinusoidal() {
+		let data =
+			InfiniteSinusoidal::default(64.0, 16.0, 2.0).take(128);
+		let qmean = data.quadratic_mean();
 
-        assert_almost_eq!(qmean, 2.0 / consts::SQRT_2, 1e-15);
-    }
+		assert_almost_eq!(qmean, 2.0 / consts::SQRT_2, 1e-15);
+	}
 }

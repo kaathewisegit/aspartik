@@ -16,11 +16,7 @@ rand = ["dep:rand"]
 [dependencies]
 approx = "0.5"
 num-traits = "0.2"
-
-[dependencies.rand]
-version = "0.9"
-optional = true
-default-features = false
+rand = { version = "0.9", default-features = false, optional = true }
 
 [lints.rust.unexpected_cfgs]
 level = "warn"

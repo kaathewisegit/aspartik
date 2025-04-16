@@ -2,8 +2,7 @@
 //! and provides
 //! concrete implementations for a variety of distributions.
 use super::statistics::{Max, Min};
-use ::num_traits::{Float, Num};
-use num_traits::NumAssignOps;
+use num_traits::{Float, Num, NumAssignOps};
 
 mod bernoulli;
 mod beta;
