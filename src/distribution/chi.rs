@@ -32,7 +32,6 @@ pub enum ChiError {
 }
 
 impl core::fmt::Display for ChiError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			ChiError::FreedomInvalid => {

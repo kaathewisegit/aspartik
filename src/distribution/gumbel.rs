@@ -36,7 +36,6 @@ pub enum GumbelError {
 }
 
 impl core::fmt::Display for GumbelError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			GumbelError::LocationInvalid => {

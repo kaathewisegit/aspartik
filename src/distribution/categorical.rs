@@ -40,7 +40,6 @@ pub enum CategoricalError {
 }
 
 impl core::fmt::Display for CategoricalError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			CategoricalError::ProbMassEmpty => {

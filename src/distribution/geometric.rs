@@ -33,7 +33,6 @@ pub enum GeometricError {
 }
 
 impl core::fmt::Display for GeometricError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			GeometricError::ProbabilityInvalid => {

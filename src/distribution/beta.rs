@@ -35,7 +35,6 @@ pub enum BetaError {
 }
 
 impl core::fmt::Display for BetaError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			BetaError::InvalidAlpha => write!(

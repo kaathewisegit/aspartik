@@ -35,7 +35,6 @@ pub enum BinomialError {
 }
 
 impl core::fmt::Display for BinomialError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			BinomialError::ProbabilityInvalid => {

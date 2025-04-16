@@ -33,7 +33,6 @@ pub enum LaplaceError {
 }
 
 impl core::fmt::Display for LaplaceError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			LaplaceError::LocationInvalid => {

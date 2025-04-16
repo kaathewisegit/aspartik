@@ -33,7 +33,6 @@ pub enum CauchyError {
 }
 
 impl core::fmt::Display for CauchyError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			CauchyError::LocationInvalid => {

@@ -34,7 +34,6 @@ pub enum ParetoError {
 }
 
 impl core::fmt::Display for ParetoError {
-	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			ParetoError::ScaleInvalid => write!(
