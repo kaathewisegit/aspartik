@@ -126,7 +126,7 @@ impl core::fmt::Display for Categorical {
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl ::rand::distributions::Distribution<usize> for Categorical {
+impl ::rand::distr::Distribution<usize> for Categorical {
     fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> usize {
         sample_unchecked(rng, &self.cdf)
     }
@@ -134,7 +134,7 @@ impl ::rand::distributions::Distribution<usize> for Categorical {
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl ::rand::distributions::Distribution<u64> for Categorical {
+impl ::rand::distr::Distribution<u64> for Categorical {
     fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> u64 {
         sample_unchecked(rng, &self.cdf) as u64
     }
@@ -142,7 +142,7 @@ impl ::rand::distributions::Distribution<u64> for Categorical {
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl ::rand::distributions::Distribution<f64> for Categorical {
+impl ::rand::distr::Distribution<f64> for Categorical {
     fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         sample_unchecked(rng, &self.cdf) as f64
     }
@@ -343,7 +343,7 @@ impl Discrete<u64, f64> for Categorical {
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 pub fn sample_unchecked<R: ::rand::Rng + ?Sized>(rng: &mut R, cdf: &[f64]) -> usize {
-    let draw = rng.r#gen::<f64>() * cdf.last().unwrap();
+    let draw = rng.random::<f64>() * cdf.last().unwrap();
     cdf.iter().position(|val| *val >= draw).unwrap()
 }
 

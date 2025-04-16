@@ -115,9 +115,9 @@ impl core::fmt::Display for Gumbel {
 }
 
 #[cfg(feature = "rand")]
-impl ::rand::distributions::Distribution<f64> for Gumbel {
+impl ::rand::distr::Distribution<f64> for Gumbel {
     fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> f64 {
-        self.location - self.scale * ((-(r.r#gen::<f64>())).ln()).ln()
+        self.location - self.scale * ((-(r.random::<f64>())).ln()).ln()
     }
 }
 

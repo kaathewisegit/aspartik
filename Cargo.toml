@@ -10,15 +10,15 @@ edition = "2024"
 
 [features]
 default = ["std", "rand"]
-std = ["rand?/std", "rand?/std_rng"]
+std = ["rand?/std", "rand?/std_rng", "rand?/thread_rng"]
 rand = ["dep:rand"]
 
 [dependencies]
-approx = "0.5.0"
-num-traits = "0.2.14"
+approx = "0.5"
+num-traits = "0.2"
 
 [dependencies.rand]
-version = "0.8"
+version = "0.9"
 optional = true
 default-features = false
 
