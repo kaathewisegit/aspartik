@@ -277,7 +277,7 @@ pub mod test {
 		#[test]
 		fn create_err_success() {
 			let err = create_err(-0.5, 1.2);
-			assert_eq!(err, BetaError::ShapeAInvalid);
+			assert_eq!(err, BetaError::InvalidAlpha);
 		}
 
 		#[test]
@@ -339,13 +339,13 @@ pub mod test {
 
 		#[test]
 		fn test_create_err_success() {
-			test_create_err(0.0, 0.5, BetaError::ShapeAInvalid);
+			test_create_err(0.0, 0.5, BetaError::InvalidAlpha);
 		}
 
 		#[test]
 		#[should_panic]
 		fn test_create_err_failure() {
-			test_create_err(0.0, 0.5, BetaError::ShapeBInvalid);
+			test_create_err(0.0, 0.5, BetaError::InvalidBeta);
 		}
 
 		#[test]

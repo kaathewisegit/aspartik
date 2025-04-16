@@ -4,8 +4,7 @@ use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::{beta, gamma};
 use crate::statistics::*;
 
-/// Implements the [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
-/// distribution
+/// [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution)
 ///
 /// # Examples
 ///
@@ -28,22 +27,22 @@ pub struct Beta {
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
 pub enum BetaError {
-	/// Shape A is NaN, infinite, zero or negative.
-	ShapeAInvalid,
+	/// The alpha parameter (α) is NaN, infinite, zero or negative.
+	InvalidAlpha,
 
-	/// Shape B is NaN, infinite, zero or negative.
-	ShapeBInvalid,
+	/// The beta parameter (β) is NaN, infinite, zero or negative.
+	InvalidBeta,
 }
 
 impl core::fmt::Display for BetaError {
 	#[cfg_attr(coverage_nightly, coverage(off))]
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
-			BetaError::ShapeAInvalid => write!(
+			BetaError::InvalidAlpha => write!(
 				f,
 				"Shape A is NaN, infinite, zero or negative"
 			),
-			BetaError::ShapeBInvalid => write!(
+			BetaError::InvalidBeta => write!(
 				f,
 				"Shape B is NaN, infinite, zero or negative"
 			),
@@ -55,13 +54,13 @@ impl core::fmt::Display for BetaError {
 impl std::error::Error for BetaError {}
 
 impl Beta {
-	/// Constructs a new beta distribution with shapeA (α) of `shape_a`
-	/// and shapeB (β) of `shape_b`
+	/// Constructs a new beta distribution with `shape_a` as alpha (α) and
+	/// and `shape_b` as beta (β).
 	///
 	/// # Errors
 	///
-	/// Returns an error if `shape_a` or `shape_b` are `NaN` or infinite.
-	/// Also returns an error if `shape_a <= 0.0` or `shape_b <= 0.0`
+	/// - `shape_a` or `shape_b` are `NaN` or infinite
+	/// - `shape_a <= 0.0` or `shape_b <= 0.0`
 	///
 	/// # Examples
 	///
@@ -76,17 +75,17 @@ impl Beta {
 	/// ```
 	pub fn new(shape_a: f64, shape_b: f64) -> Result<Beta, BetaError> {
 		if shape_a.is_nan() || shape_a.is_infinite() || shape_a <= 0.0 {
-			return Err(BetaError::ShapeAInvalid);
+			return Err(BetaError::InvalidAlpha);
 		}
 
 		if shape_b.is_nan() || shape_b.is_infinite() || shape_b <= 0.0 {
-			return Err(BetaError::ShapeBInvalid);
+			return Err(BetaError::InvalidBeta);
 		}
 
 		Ok(Beta { shape_a, shape_b })
 	}
 
-	/// Returns the shapeA (α) of the beta distribution
+	/// The alpha parameter (α)
 	///
 	/// # Examples
 	///
@@ -100,7 +99,7 @@ impl Beta {
 		self.shape_a
 	}
 
-	/// Returns the shapeB (β) of the beta distributionβ
+	/// The beta parameter (β)
 	///
 	/// # Examples
 	///
@@ -133,16 +132,7 @@ impl rand::distr::Distribution<f64> for Beta {
 }
 
 impl ContinuousCDF<f64, f64> for Beta {
-	/// Calculates the cumulative distribution function for the beta
-	/// distribution at `x`.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// I_x(α, β)
-	/// ```
-	///
-	/// where `α` is shapeA, `β` is shapeB, and `I_x` is the regularized
+	/// The formula is `I_x(α, β)`, where `I_x` is the regularized
 	/// lower incomplete beta function.
 	fn cdf(&self, x: f64) -> f64 {
 		if x < 0.0 {
@@ -158,16 +148,8 @@ impl ContinuousCDF<f64, f64> for Beta {
 		}
 	}
 
-	/// Calculates the survival function for the beta distribution at `x`.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// I_(1-x)(β, α)
-	/// ```
-	///
-	/// where `α` is shapeA, `β` is shapeB, and `I_x` is the regularized
-	/// lower incomplete beta function.
+	/// The formula is `I_(1-x)(β, α)`, where `I_x` is the regularized lower
+	/// incomplete beta function.
 	fn sf(&self, x: f64) -> f64 {
 		if x < 0.0 {
 			1.0
@@ -182,21 +164,12 @@ impl ContinuousCDF<f64, f64> for Beta {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the beta
-	/// distribution at `x`.
+	/// The formula is `I_x^{-1}(β, α)`, where `I_x` is the regularized lower
+	/// incomplete beta function.
 	///
 	/// # Panics
 	///
 	/// If x is not in `[0, 1]`.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// I^{-1}_x(α, β)
-	/// ```
-	///
-	/// where `α` is shapeA, `β` is shapeB, and `I_x` is the inverse of the
-	/// regularized lower incomplete beta function.
 	fn inverse_cdf(&self, x: f64) -> f64 {
 		if !(0.0..=1.0).contains(&x) {
 			panic!("x must be in [0, 1]");
@@ -207,56 +180,26 @@ impl ContinuousCDF<f64, f64> for Beta {
 }
 
 impl Min<f64> for Beta {
-	/// Returns the minimum value in the domain of the beta distribution
-	/// representable by a double precision float.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
+	/// Always `0`.
 	fn min(&self) -> f64 {
 		0.0
 	}
 }
 
 impl Max<f64> for Beta {
-	/// Returns the maximum value in the domain of the beta distribution
-	/// representable by a double precision float.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 1
-	/// ```
+	/// Always `1`.
 	fn max(&self) -> f64 {
 		1.0
 	}
 }
 
 impl Distribution<f64> for Beta {
-	/// Returns the mean of the beta distribution.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// α / (α + β)
-	/// ```
-	///
-	/// where `α` is shapeA and `β` is shapeB.
+	/// The function is `α / (α + β)`.
 	fn mean(&self) -> Option<f64> {
 		Some(self.shape_a / (self.shape_a + self.shape_b))
 	}
 
-	/// Returns the variance of the beta distribution.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (α * β) / ((α + β)^2 * (α + β + 1))
-	/// ```
-	///
-	/// where `α` is shapeA and `β` is shapeB.
+	/// The formula is `(α * β) / ((α + β)^2 * (α + β + 1))`.
 	fn variance(&self) -> Option<f64> {
 		Some(self.shape_a * self.shape_b
 			/ ((self.shape_a + self.shape_b)
@@ -264,15 +207,13 @@ impl Distribution<f64> for Beta {
 				* (self.shape_a + self.shape_b + 1.0)))
 	}
 
-	/// Returns the entropy of the beta distribution.
-	///
-	/// # Formula
+	/// The formula is:
 	///
 	/// ```text
-	/// ln(B(α, β)) - (α - 1)ψ(α) - (β - 1)ψ(β) + (α + β - 2)ψ(α + β)
+	/// ln(B(α, β)) - (α - 1) ψ(α) - (β - 1) ψ(β) + (α + β - 2) ψ(α + β)
 	/// ```
 	///
-	/// where `α` is shapeA, `β` is shapeB and `ψ` is the digamma function.
+	/// where `ψ` is the digamma function.
 	fn entropy(&self) -> Option<f64> {
 		Some(beta::ln_beta(self.shape_a, self.shape_b)
 			- (self.shape_a - 1.0) * gamma::digamma(self.shape_a)
@@ -281,15 +222,11 @@ impl Distribution<f64> for Beta {
 				* gamma::digamma(self.shape_a + self.shape_b))
 	}
 
-	/// Returns the skewness of the Beta distribution.
-	///
-	/// # Formula
+	/// The formula is:
 	///
 	/// ```text
 	/// 2(β - α) * sqrt(α + β + 1) / ((α + β + 2) * sqrt(αβ))
 	/// ```
-	///
-	/// where `α` is shapeA and `β` is shapeB.
 	fn skewness(&self) -> Option<f64> {
 		Some(2.0 * (self.shape_b - self.shape_a)
 			* (self.shape_a + self.shape_b + 1.0).sqrt()
@@ -299,22 +236,15 @@ impl Distribution<f64> for Beta {
 }
 
 impl Mode<Option<f64>> for Beta {
-	/// Returns the mode of the Beta distribution. Returns `None` if `α <= 1`
-	/// or `β <= 1`.
+	/// The mode of the Beta distribution or `None` if `α <= 1` or `β <= 1`.
 	///
 	/// # Remarks
 	///
-	/// Since the mode is technically only calculated for `α > 1, β > 1`, those
-	/// are the only values we allow. We may consider relaxing this constraint
-	/// in the future.
+	/// Since the mode is technically only calculated for `α > 1, β > 1`,
+	/// those are the only values we allow.  We may consider relaxing this
+	/// constraint in the future.
 	///
-	/// # Formula
-	///
-	/// ```text
-	/// (α - 1) / (α + β - 2)
-	/// ```
-	///
-	/// where `α` is shapeA and `β` is shapeB
+	/// The formula is `(α - 1) / (α + β - 2)`.
 	fn mode(&self) -> Option<f64> {
 		// TODO: perhaps relax constraint in order to allow calculation
 		// of 'anti-mode;
@@ -328,10 +258,7 @@ impl Mode<Option<f64>> for Beta {
 }
 
 impl Continuous<f64, f64> for Beta {
-	/// Calculates the probability density function for the beta distribution
-	/// at `x`.
-	///
-	/// # Formula
+	/// The formula is:
 	///
 	/// ```text
 	/// let B(α, β) = Γ(α)Γ(β)/Γ(α + β)
@@ -339,7 +266,7 @@ impl Continuous<f64, f64> for Beta {
 	/// x^(α - 1) * (1 - x)^(β - 1) / B(α, β)
 	/// ```
 	///
-	/// where `α` is shapeA, `β` is shapeB, and `Γ` is the gamma function
+	/// where `Γ` is the gamma function
 	fn pdf(&self, x: f64) -> f64 {
 		if !(0.0..=1.0).contains(&x) {
 			0.0
@@ -358,18 +285,15 @@ impl Continuous<f64, f64> for Beta {
 		}
 	}
 
-	/// Calculates the log probability density function for the beta
-	/// distribution at `x`.
-	///
-	/// # Formula
+	/// The formula is
 	///
 	/// ```text
-	/// let B(α, β) = Γ(α)Γ(β)/Γ(α + β)
+	/// let B(α, β) = Γ(α) Γ(β) / Γ(α + β)
 	///
 	/// ln(x^(α - 1) * (1 - x)^(β - 1) / B(α, β))
 	/// ```
 	///
-	/// where `α` is shapeA, `β` is shapeB, and `Γ` is the gamma function.
+	/// where `Γ` is the gamma function.
 	fn ln_pdf(&self, x: f64) -> f64 {
 		if !(0.0..=1.0).contains(&x) {
 			f64::NEG_INFINITY
