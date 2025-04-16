@@ -168,7 +168,7 @@ impl ::rand::distributions::Distribution<u64> for Hypergeometric {
         let mut x = 0;
         loop {
             let p = successes / population;
-            let next: f64 = rng.gen();
+            let next: f64 = rng.r#gen();
             if next < p {
                 x += 1;
                 successes -= 1.0;

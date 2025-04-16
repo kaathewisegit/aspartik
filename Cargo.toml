@@ -6,11 +6,11 @@ description = "Statistical computing library for Rust"
 license = "MIT"
 keywords = ["probability", "statistics", "stats", "distribution", "math"]
 categories = ["science"]
-edition = "2021"
+edition = "2024"
 
 [features]
 default = ["std", "rand"]
-std = ["rand?/std"]
+std = ["rand?/std", "rand?/std_rng"]
 rand = ["dep:rand"]
 
 [dependencies]

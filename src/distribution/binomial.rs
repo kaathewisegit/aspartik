@@ -115,7 +115,7 @@ impl core::fmt::Display for Binomial {
 impl ::rand::distributions::Distribution<u64> for Binomial {
     fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> u64 {
         (0..self.n).fold(0, |acc, _| {
-            let n: f64 = rng.gen();
+            let n: f64 = rng.r#gen();
             if n < self.p {
                 acc + 1
             } else {
