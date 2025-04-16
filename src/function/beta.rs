@@ -1,6 +1,8 @@
 //! Provides the [beta](https://en.wikipedia.org/wiki/Beta_function) and related
 //! function
 
+use approx::ulps_eq;
+
 use crate::function::gamma;
 use crate::prec;
 use core::f64;

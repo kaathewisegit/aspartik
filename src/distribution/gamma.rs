@@ -1,3 +1,5 @@
+use approx::ulps_eq;
+
 use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::gamma;
 use crate::prec;

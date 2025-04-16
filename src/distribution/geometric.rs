@@ -1,3 +1,5 @@
+use approx::ulps_eq;
+
 use crate::distribution::{Discrete, DiscreteCDF};
 use crate::statistics::*;
 use core::f64;
@@ -306,6 +308,7 @@ impl Discrete<u64, f64> for Geometric {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use approx::assert_relative_eq;
     use crate::distribution::internal::*;
     use crate::testing_boiler;
 

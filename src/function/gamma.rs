@@ -1,6 +1,8 @@
 //! Provides the [gamma](https://en.wikipedia.org/wiki/Gamma_function) and
 //! related functions
 
+use approx::ulps_eq;
+
 use crate::consts;
 use crate::prec;
 use core::f64;

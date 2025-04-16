@@ -338,6 +338,8 @@ impl Continuous<f64, f64> for Laplace {
 mod tests {
 	use super::*;
 
+	use approx::assert_relative_eq;
+
 	use crate::testing_boiler;
 
 	testing_boiler!(location: f64, scale: f64; Laplace; LaplaceError);

@@ -1,3 +1,5 @@
+use approx::ulps_eq;
+
 use crate::statistics::*;
 use core::ops::{Index, IndexMut};
 

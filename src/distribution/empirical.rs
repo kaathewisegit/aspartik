@@ -1,9 +1,10 @@
-use crate::distribution::ContinuousCDF;
-use crate::statistics::*;
-use non_nan::NonNan;
 use std::collections::btree_map::{BTreeMap, Entry};
 use std::convert::Infallible;
 use std::ops::Bound;
+
+use crate::distribution::ContinuousCDF;
+use crate::statistics::*;
+use non_nan::NonNan;
 
 mod non_nan {
 	use core::cmp::Ordering;
@@ -292,6 +293,7 @@ impl ContinuousCDF<f64, f64> for Empirical {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use approx::assert_relative_eq;
 
 	#[test]
 	fn test_add_nan() {

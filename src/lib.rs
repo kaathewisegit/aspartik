@@ -68,9 +68,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[macro_use]
-extern crate approx;
-
 #[macro_export]
 macro_rules! assert_almost_eq {
     ($a:expr, $b:expr, $prec:expr $(,)?) => {

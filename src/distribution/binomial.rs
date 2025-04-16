@@ -1,3 +1,5 @@
+use approx::ulps_eq;
+
 use crate::distribution::{Discrete, DiscreteCDF};
 use crate::function::{beta, factorial};
 use crate::statistics::*;
@@ -581,8 +583,8 @@ mod tests {
         test_exact(0.5, 6, 4, invcdf(0.75));
 
         // case in issue #330
-        test_exact(0.05, 2, 0, invcdf(0.5));      
-        test_exact(0.005, 10, 0, invcdf(0.9));      
+        test_exact(0.05, 2, 0, invcdf(0.5));
+        test_exact(0.005, 10, 0, invcdf(0.9));
     }
 
     #[test]
