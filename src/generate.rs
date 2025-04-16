@@ -1,7 +1,8 @@
-//! Provides utility functions for generating data sequences
+//! Utility functions for generating data sequences
 
 use crate::euclid::Modulus;
 use core::f64::consts;
+
 /// Generates a base 10 log spaced vector of the given length between the
 /// specified decade exponents (inclusive). Equivalent to MATLAB logspace
 ///
@@ -25,6 +26,7 @@ pub fn log_spaced(length: usize, start_exp: f64, stop_exp: f64) -> Vec<f64> {
 					10f64.powf(start_exp + (x as f64) * step)
 				})
 				.collect::<Vec<f64>>();
+			// XXX: is this necessary?
 			vec[length - 1] = 10f64.powf(stop_exp);
 			vec
 		}
@@ -163,7 +165,8 @@ impl InfiniteSinusoidal {
 	///     [0.0, 1.0, 0.00000000000000012246467991473532,
 	///     -1.0, -0.00000000000000024492935982947064, 1.0,
 	///     0.00000000000000036739403974420594, -1.0,
-	///     -0.0000000000000004898587196589413, 1.0]);
+	///     -0.0000000000000004898587196589413, 1.0]
+	/// );
 	/// ```
 	pub fn default(
 		sampling_rate: f64,
