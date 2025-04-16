@@ -14,8 +14,6 @@ pub use self::cauchy::{Cauchy, CauchyError};
 pub use self::chi::{Chi, ChiError};
 pub use self::chi_squared::ChiSquared;
 pub use self::dirac::{Dirac, DiracError};
-#[cfg(feature = "nalgebra")]
-pub use self::dirichlet::{Dirichlet, DirichletError};
 pub use self::discrete_uniform::{DiscreteUniform, DiscreteUniformError};
 #[cfg(feature = "std")]
 pub use self::empirical::Empirical;
@@ -30,12 +28,6 @@ pub use self::inverse_gamma::{InverseGamma, InverseGammaError};
 pub use self::laplace::{Laplace, LaplaceError};
 pub use self::levy::{Levy, LevyError};
 pub use self::log_normal::{LogNormal, LogNormalError};
-#[cfg(feature = "nalgebra")]
-pub use self::multinomial::{Multinomial, MultinomialError};
-#[cfg(feature = "nalgebra")]
-pub use self::multivariate_normal::{MultivariateNormal, MultivariateNormalError};
-#[cfg(feature = "nalgebra")]
-pub use self::multivariate_students_t::{MultivariateStudent, MultivariateStudentError};
 pub use self::negative_binomial::{NegativeBinomial, NegativeBinomialError};
 pub use self::normal::{Normal, NormalError};
 pub use self::pareto::{Pareto, ParetoError};
@@ -54,9 +46,6 @@ mod cauchy;
 mod chi;
 mod chi_squared;
 mod dirac;
-#[cfg(feature = "nalgebra")]
-#[cfg_attr(docsrs, doc(cfg(feature = "nalgebra")))]
-mod dirichlet;
 mod discrete_uniform;
 #[cfg(feature = "std")]
 mod empirical;
@@ -73,15 +62,6 @@ mod inverse_gamma;
 mod laplace;
 mod levy;
 mod log_normal;
-#[cfg(feature = "nalgebra")]
-#[cfg_attr(docsrs, doc(cfg(feature = "nalgebra")))]
-mod multinomial;
-#[cfg(feature = "nalgebra")]
-#[cfg_attr(docsrs, doc(cfg(feature = "nalgebra")))]
-mod multivariate_normal;
-#[cfg(feature = "nalgebra")]
-#[cfg_attr(docsrs, doc(cfg(feature = "nalgebra")))]
-mod multivariate_students_t;
 mod negative_binomial;
 mod normal;
 mod pareto;
