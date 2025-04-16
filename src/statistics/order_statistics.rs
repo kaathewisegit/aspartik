@@ -1,18 +1,17 @@
 #[cfg(feature = "std")]
 use super::RankTieBreaker;
 
-/// The `OrderStatistics` trait provides statistical utilities
-/// having to do with ordering. All the algorithms are in-place thus requiring
-/// a mutable borrow.
+/// The `OrderStatistics` trait provides statistical utilities having to do with
+/// ordering.  All the algorithms are in-place and thus require a mutable
+/// borrow.
 pub trait OrderStatistics<T> {
 	/// Returns the order statistic `(order 1..N)` from the data
 	///
 	/// # Remarks
 	///
-	/// No sorting is assumed. Order must be one-based (between `1` and `N`
-	/// inclusive)
-	/// Returns `f64::NAN` if order is outside the viable range or data is
-	/// empty.
+	/// No sorting is assumed.  Order must be one-based (between `1` and `N`
+	/// inclusive) Returns `f64::NAN` if order is outside the viable range
+	/// or data is empty.
 	///
 	/// # Examples
 	///
