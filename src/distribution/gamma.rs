@@ -268,7 +268,7 @@ impl Max<f64> for Gamma {
 	}
 }
 
-impl Distribution<f64> for Gamma {
+impl Distribution for Gamma {
 	/// Returns the mean of the gamma distribution
 	///
 	/// # Formula

@@ -205,7 +205,7 @@ impl Max<f64> for Gumbel {
 	}
 }
 
-impl Distribution<f64> for Gumbel {
+impl Distribution for Gumbel {
 	/// Returns the entropy of the Gumbel distribution
 	///
 	/// # Formula
@@ -276,7 +276,7 @@ impl Distribution<f64> for Gumbel {
 	}
 }
 
-impl Median<f64> for Gumbel {
+impl Median for Gumbel {
 	/// Returns the median of the Gumbel distribution
 	///
 	/// # Formula

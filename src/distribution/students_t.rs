@@ -299,7 +299,7 @@ impl Max<f64> for StudentsT {
 	}
 }
 
-impl Distribution<f64> for StudentsT {
+impl Distribution for StudentsT {
 	/// Returns the mean of the student's t-distribution
 	///
 	/// # None
@@ -392,7 +392,7 @@ impl Distribution<f64> for StudentsT {
 	}
 }
 
-impl Median<f64> for StudentsT {
+impl Median for StudentsT {
 	/// Returns the median of the student's t-distribution
 	///
 	/// # Formula

@@ -252,7 +252,7 @@ impl Max<f64> for LogNormal {
 	}
 }
 
-impl Distribution<f64> for LogNormal {
+impl Distribution for LogNormal {
 	/// Returns the mean of the log-normal distribution
 	///
 	/// # Formula
@@ -310,7 +310,7 @@ impl Distribution<f64> for LogNormal {
 	}
 }
 
-impl Median<f64> for LogNormal {
+impl Median for LogNormal {
 	/// Returns the median of the log-normal distribution
 	///
 	/// # Formula

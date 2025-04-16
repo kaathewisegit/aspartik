@@ -210,7 +210,7 @@ impl Max<f64> for Cauchy {
 	}
 }
 
-impl Distribution<f64> for Cauchy {
+impl Distribution for Cauchy {
 	/// Returns the entropy of the cauchy distribution
 	///
 	/// # Formula
@@ -225,7 +225,7 @@ impl Distribution<f64> for Cauchy {
 	}
 }
 
-impl Median<f64> for Cauchy {
+impl Median for Cauchy {
 	/// Returns the median of the cauchy distribution
 	///
 	/// # Formula

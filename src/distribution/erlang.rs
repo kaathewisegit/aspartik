@@ -169,7 +169,7 @@ impl Max<f64> for Erlang {
 	}
 }
 
-impl Distribution<f64> for Erlang {
+impl Distribution for Erlang {
 	/// Returns the mean of the erlang distribution
 	///
 	/// # Remarks

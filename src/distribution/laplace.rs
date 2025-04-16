@@ -211,7 +211,7 @@ impl Max<f64> for Laplace {
 	}
 }
 
-impl Distribution<f64> for Laplace {
+impl Distribution for Laplace {
 	/// Returns the mode of the laplace distribution
 	///
 	/// # Formula
@@ -263,7 +263,7 @@ impl Distribution<f64> for Laplace {
 	}
 }
 
-impl Median<f64> for Laplace {
+impl Median for Laplace {
 	/// Returns the median of the laplace distribution
 	///
 	/// # Formula

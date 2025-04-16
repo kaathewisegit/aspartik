@@ -213,7 +213,7 @@ impl Max<f64> for Normal {
 	}
 }
 
-impl Distribution<f64> for Normal {
+impl Distribution for Normal {
 	/// Returns the mean of the normal distribution
 	///
 	/// # Remarks
@@ -268,7 +268,7 @@ impl Distribution<f64> for Normal {
 	}
 }
 
-impl Median<f64> for Normal {
+impl Median for Normal {
 	/// Returns the median of the normal distribution
 	///
 	/// # Formula

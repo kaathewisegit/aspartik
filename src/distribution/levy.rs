@@ -217,7 +217,7 @@ impl Max<f64> for Levy {
 	}
 }
 
-impl Distribution<f64> for Levy {
+impl Distribution for Levy {
 	/// Returns the mean of the Levy distribution
 	///
 	/// # Formula
@@ -266,7 +266,7 @@ impl Distribution<f64> for Levy {
 	}
 }
 
-impl Median<f64> for Levy {
+impl Median for Levy {
 	/// Returns the median of the Levy distribution
 	///
 	/// # Formula

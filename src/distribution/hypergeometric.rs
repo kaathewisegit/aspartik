@@ -310,7 +310,7 @@ impl Max<u64> for Hypergeometric {
 	}
 }
 
-impl Distribution<f64> for Hypergeometric {
+impl Distribution for Hypergeometric {
 	/// Returns the mean of the hypergeometric distribution
 	///
 	/// # None

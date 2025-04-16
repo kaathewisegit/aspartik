@@ -192,7 +192,7 @@ impl Max<f64> for Beta {
 	}
 }
 
-impl Distribution<f64> for Beta {
+impl Distribution for Beta {
 	/// The function is `α / (α + β)`.
 	fn mean(&self) -> Option<f64> {
 		Some(self.shape_a / (self.shape_a + self.shape_b))

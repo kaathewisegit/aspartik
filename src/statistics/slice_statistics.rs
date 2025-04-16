@@ -322,7 +322,7 @@ impl<D: AsMut<[f64]> + AsRef<[f64]>> Max<f64> for Data<D> {
 	}
 }
 
-impl<D: AsMut<[f64]> + AsRef<[f64]>> Distribution<f64> for Data<D> {
+impl<D: AsMut<[f64]> + AsRef<[f64]>> Distribution for Data<D> {
 	/// Evaluates the sample mean, an estimate of the population
 	/// mean.
 	///
@@ -390,7 +390,7 @@ impl<D: AsMut<[f64]> + AsRef<[f64]>> Distribution<f64> for Data<D> {
 	}
 }
 
-impl<D: AsMut<[f64]> + AsRef<[f64]> + Clone> Median<f64> for Data<D> {
+impl<D: AsMut<[f64]> + AsRef<[f64]> + Clone> Median for Data<D> {
 	/// Returns the median value from the data
 	///
 	/// # Remarks

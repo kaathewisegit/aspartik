@@ -259,7 +259,7 @@ impl Max<f64> for FisherSnedecor {
 	}
 }
 
-impl Distribution<f64> for FisherSnedecor {
+impl Distribution for FisherSnedecor {
 	/// Returns the mean of the fisher-snedecor distribution
 	///
 	/// # Panics

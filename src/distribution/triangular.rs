@@ -293,7 +293,7 @@ impl Max<f64> for Triangular {
 	}
 }
 
-impl Distribution<f64> for Triangular {
+impl Distribution for Triangular {
 	/// Returns the mean of the triangular distribution
 	///
 	/// # Formula
@@ -354,7 +354,7 @@ impl Distribution<f64> for Triangular {
 	}
 }
 
-impl Median<f64> for Triangular {
+impl Median for Triangular {
 	/// Returns the median of the triangular distribution
 	///
 	/// # Formula

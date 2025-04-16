@@ -213,7 +213,7 @@ impl Max<f64> for InverseGamma {
 	}
 }
 
-impl Distribution<f64> for InverseGamma {
+impl Distribution for InverseGamma {
 	/// Returns the mean of the inverse distribution
 	///
 	/// # None

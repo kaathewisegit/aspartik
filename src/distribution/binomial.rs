@@ -210,7 +210,7 @@ impl Max<u64> for Binomial {
 	}
 }
 
-impl Distribution<f64> for Binomial {
+impl Distribution for Binomial {
 	/// Returns the mean of the binomial distribution
 	///
 	/// # Formula
@@ -265,7 +265,7 @@ impl Distribution<f64> for Binomial {
 	}
 }
 
-impl Median<f64> for Binomial {
+impl Median for Binomial {
 	/// Returns the median of the binomial distribution
 	///
 	/// # Formula

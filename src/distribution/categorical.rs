@@ -241,7 +241,7 @@ impl Max<u64> for Categorical {
 	}
 }
 
-impl Distribution<f64> for Categorical {
+impl Distribution for Categorical {
 	/// Returns the mean of the categorical distribution
 	///
 	/// # Formula
@@ -305,7 +305,7 @@ impl Distribution<f64> for Categorical {
 		Some(entr)
 	}
 }
-impl Median<f64> for Categorical {
+impl Median for Categorical {
 	/// Returns the median of the categorical distribution
 	///
 	/// # Formula

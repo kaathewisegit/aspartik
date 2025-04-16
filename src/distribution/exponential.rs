@@ -177,7 +177,7 @@ impl Max<f64> for Exp {
 	}
 }
 
-impl Distribution<f64> for Exp {
+impl Distribution for Exp {
 	/// Returns the mean of the exponential distribution
 	///
 	/// # Formula
@@ -229,7 +229,7 @@ impl Distribution<f64> for Exp {
 	}
 }
 
-impl Median<f64> for Exp {
+impl Median for Exp {
 	/// Returns the median of the exponential distribution
 	///
 	/// # Formula

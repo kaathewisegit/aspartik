@@ -176,7 +176,7 @@ impl Max<u64> for Poisson {
 	}
 }
 
-impl Distribution<f64> for Poisson {
+impl Distribution for Poisson {
 	/// Returns the mean of the poisson distribution
 	///
 	/// # Formula
@@ -236,7 +236,7 @@ impl Distribution<f64> for Poisson {
 	}
 }
 
-impl Median<f64> for Poisson {
+impl Median for Poisson {
 	/// Returns the median of the poisson distribution
 	///
 	/// # Formula

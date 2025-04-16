@@ -240,7 +240,7 @@ impl Min<f64> for Empirical {
 	}
 }
 
-impl Distribution<f64> for Empirical {
+impl Distribution for Empirical {
 	fn mean(&self) -> Option<f64> {
 		if self.data.is_empty() {
 			None

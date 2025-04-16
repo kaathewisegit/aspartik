@@ -195,7 +195,7 @@ impl Max<i64> for DiscreteUniform {
 	}
 }
 
-impl Distribution<f64> for DiscreteUniform {
+impl Distribution for DiscreteUniform {
 	/// Returns the mean of the discrete uniform distribution
 	///
 	/// # Formula
@@ -243,7 +243,7 @@ impl Distribution<f64> for DiscreteUniform {
 	}
 }
 
-impl Median<f64> for DiscreteUniform {
+impl Median for DiscreteUniform {
 	/// Returns the median of the discrete uniform distribution
 	///
 	/// # Formula

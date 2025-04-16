@@ -229,7 +229,7 @@ impl Max<f64> for Uniform {
 	}
 }
 
-impl Distribution<f64> for Uniform {
+impl Distribution for Uniform {
 	/// Returns the mean for the continuous uniform distribution
 	///
 	/// # Formula
@@ -275,7 +275,7 @@ impl Distribution<f64> for Uniform {
 	}
 }
 
-impl Median<f64> for Uniform {
+impl Median for Uniform {
 	/// Returns the median for the continuous uniform distribution
 	///
 	/// # Formula

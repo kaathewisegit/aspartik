@@ -187,7 +187,7 @@ impl Max<u64> for Geometric {
 	}
 }
 
-impl Distribution<f64> for Geometric {
+impl Distribution for Geometric {
 	/// Returns the mean of the geometric distribution
 	///
 	/// # Formula
@@ -250,7 +250,7 @@ impl Mode<Option<u64>> for Geometric {
 	}
 }
 
-impl Median<f64> for Geometric {
+impl Median for Geometric {
 	/// Returns the median of the geometric distribution
 	///
 	/// # Remarks

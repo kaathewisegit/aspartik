@@ -159,7 +159,7 @@ impl Max<u64> for Bernoulli {
 	}
 }
 
-impl Distribution<f64> for Bernoulli {
+impl Distribution for Bernoulli {
 	/// Returns the mean of the bernoulli
 	/// distribution
 	///
@@ -211,7 +211,7 @@ impl Distribution<f64> for Bernoulli {
 	}
 }
 
-impl Median<f64> for Bernoulli {
+impl Median for Bernoulli {
 	/// Returns the median of the bernoulli
 	/// distribution
 	///

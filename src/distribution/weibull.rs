@@ -223,7 +223,7 @@ impl Max<f64> for Weibull {
 	}
 }
 
-impl Distribution<f64> for Weibull {
+impl Distribution for Weibull {
 	/// Returns the mean of the weibull distribution
 	///
 	/// # Formula
@@ -297,7 +297,7 @@ impl Distribution<f64> for Weibull {
 	}
 }
 
-impl Median<f64> for Weibull {
+impl Median for Weibull {
 	/// Returns the median of the weibull distribution
 	///
 	/// # Formula

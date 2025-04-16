@@ -136,7 +136,7 @@ impl Max<f64> for Dirac {
 	}
 }
 
-impl Distribution<f64> for Dirac {
+impl Distribution for Dirac {
 	/// Returns the mean of the dirac distribution
 	///
 	/// # Remarks
@@ -185,7 +185,7 @@ impl Distribution<f64> for Dirac {
 	}
 }
 
-impl Median<f64> for Dirac {
+impl Median for Dirac {
 	/// Returns the median of the dirac distribution
 	///
 	/// # Formula

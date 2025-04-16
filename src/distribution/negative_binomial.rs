@@ -223,7 +223,7 @@ impl Max<u64> for NegativeBinomial {
 	}
 }
 
-impl DiscreteDistribution<f64> for NegativeBinomial {
+impl DiscreteDistribution for NegativeBinomial {
 	/// Returns the mean of the negative binomial distribution.
 	///
 	/// # Formula

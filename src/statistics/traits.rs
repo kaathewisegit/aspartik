@@ -1,5 +1,3 @@
-use num_traits::float::Float;
-
 /// The `Min` trait specifies than an object has a minimum value
 pub trait Min<T> {
 	/// Returns the minimum value in the domain of a given distribution
@@ -33,31 +31,36 @@ pub trait Max<T> {
 	/// ```
 	fn max(&self) -> T;
 }
-pub trait DiscreteDistribution<T: Float> {
-	/// Returns the mean, if it exists.
-	fn mean(&self) -> Option<T> {
+
+pub trait DiscreteDistribution {
+	/// Mean, or `None` if it doesn't exist
+	fn mean(&self) -> Option<f64> {
 		None
 	}
-	/// Returns the variance, if it exists.
-	fn variance(&self) -> Option<T> {
+
+	/// Variance, or `None` if it doesn't exist
+	fn variance(&self) -> Option<f64> {
 		None
 	}
-	/// Returns the standard deviation, if it exists.
-	fn std_dev(&self) -> Option<T> {
+
+	/// Standard deviation, or `None` if it doesn't exist
+	fn std_dev(&self) -> Option<f64> {
 		self.variance().map(|var| var.sqrt())
 	}
-	/// Returns the entropy, if it exists.
-	fn entropy(&self) -> Option<T> {
+
+	/// Entropy, or `None` if it doesn't exist
+	fn entropy(&self) -> Option<f64> {
 		None
 	}
-	/// Returns the skewness, if it exists.
-	fn skewness(&self) -> Option<T> {
+
+	/// Skewness, of `None` if it doesn't exist
+	fn skewness(&self) -> Option<f64> {
 		None
 	}
 }
 
-pub trait Distribution<T: Float> {
-	/// Returns the mean, if it exists.
+pub trait Distribution {
+	/// Mean, or `None` if it doesn't exist
 	///
 	/// # Examples
 	///
@@ -68,10 +71,11 @@ pub trait Distribution<T: Float> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.mean().unwrap());
 	/// ```
-	fn mean(&self) -> Option<T> {
+	fn mean(&self) -> Option<f64> {
 		None
 	}
-	/// Returns the variance, if it exists.
+
+	/// Variance, or `None` if it doesn't exist
 	///
 	/// # Examples
 	///
@@ -82,10 +86,11 @@ pub trait Distribution<T: Float> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(1.0 / 12.0, n.variance().unwrap());
 	/// ```
-	fn variance(&self) -> Option<T> {
+	fn variance(&self) -> Option<f64> {
 		None
 	}
-	/// Returns the standard deviation, if it exists.
+
+	/// Standard deviation, or `None` if it doesn't exist
 	///
 	/// # Examples
 	///
@@ -96,10 +101,11 @@ pub trait Distribution<T: Float> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!((1f64 / 12f64).sqrt(), n.std_dev().unwrap());
 	/// ```
-	fn std_dev(&self) -> Option<T> {
+	fn std_dev(&self) -> Option<f64> {
 		self.variance().map(|var| var.sqrt())
 	}
-	/// Returns the entropy, if it exists.
+
+	/// Entropy, or `None` if it doesn't exist
 	///
 	/// # Examples
 	///
@@ -110,10 +116,11 @@ pub trait Distribution<T: Float> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.0, n.entropy().unwrap());
 	/// ```
-	fn entropy(&self) -> Option<T> {
+	fn entropy(&self) -> Option<f64> {
 		None
 	}
-	/// Returns the skewness, if it exists.
+
+	/// Skewness, of `None` if it doesn't exist
 	///
 	/// # Examples
 	///
@@ -124,7 +131,7 @@ pub trait Distribution<T: Float> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.0, n.skewness().unwrap());
 	/// ```
-	fn skewness(&self) -> Option<T> {
+	fn skewness(&self) -> Option<f64> {
 		None
 	}
 }
@@ -141,7 +148,7 @@ pub trait VarianceN<T> {
 }
 
 /// The `Median` trait returns the median of the distribution.
-pub trait Median<T> {
+pub trait Median {
 	/// Returns the median.
 	///
 	/// # Examples
@@ -153,7 +160,7 @@ pub trait Median<T> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.median());
 	/// ```
-	fn median(&self) -> T;
+	fn median(&self) -> f64;
 }
 
 /// The `Mode` trait specifies that an object has a closed form solution

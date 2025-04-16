@@ -186,7 +186,7 @@ impl Max<f64> for ChiSquared {
 	}
 }
 
-impl Distribution<f64> for ChiSquared {
+impl Distribution for ChiSquared {
 	/// Returns the mean of the chi-squared distribution
 	///
 	/// # Formula
@@ -241,7 +241,7 @@ impl Distribution<f64> for ChiSquared {
 	}
 }
 
-impl Median<f64> for ChiSquared {
+impl Median for ChiSquared {
 	/// Returns the median  of the chi-squared distribution
 	///
 	/// # Formula

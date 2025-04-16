@@ -185,7 +185,7 @@ impl Max<f64> for Chi {
 	}
 }
 
-impl Distribution<f64> for Chi {
+impl Distribution for Chi {
 	/// Returns the mean of the chi distribution
 	///
 	/// # Remarks

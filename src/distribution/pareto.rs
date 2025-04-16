@@ -224,7 +224,7 @@ impl Max<f64> for Pareto {
 	}
 }
 
-impl Distribution<f64> for Pareto {
+impl Distribution for Pareto {
 	/// Returns the mean of the Pareto distribution
 	///
 	/// # Formula
@@ -308,7 +308,7 @@ impl Distribution<f64> for Pareto {
 	}
 }
 
-impl Median<f64> for Pareto {
+impl Median for Pareto {
 	/// Returns the median of the Pareto distribution
 	///
 	/// # Formula
