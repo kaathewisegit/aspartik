@@ -32,33 +32,6 @@ pub trait Max<T> {
 	fn max(&self) -> T;
 }
 
-pub trait DiscreteDistribution {
-	/// Mean, or `None` if it doesn't exist
-	fn mean(&self) -> Option<f64> {
-		None
-	}
-
-	/// Variance, or `None` if it doesn't exist
-	fn variance(&self) -> Option<f64> {
-		None
-	}
-
-	/// Standard deviation, or `None` if it doesn't exist
-	fn std_dev(&self) -> Option<f64> {
-		self.variance().map(|var| var.sqrt())
-	}
-
-	/// Entropy, or `None` if it doesn't exist
-	fn entropy(&self) -> Option<f64> {
-		None
-	}
-
-	/// Skewness, of `None` if it doesn't exist
-	fn skewness(&self) -> Option<f64> {
-		None
-	}
-}
-
 pub trait Distribution {
 	/// Mean, or `None` if it doesn't exist
 	///

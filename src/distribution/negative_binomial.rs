@@ -3,20 +3,17 @@ use crate::function::{beta, gamma};
 use crate::statistics::*;
 use core::f64;
 
-/// Implements the
-/// [negative binomial](http://en.wikipedia.org/wiki/Negative_binomial_distribution)
-/// distribution.
+/// [Negative binomial
+/// distribution](http://en.wikipedia.org/wiki/Negative_binomial_distribution)
 ///
-/// *Please note carefully the meaning of the parameters.*  As noted in the
-/// wikipedia article, there are several different commonly used conventions
-/// for the parameters of the negative binomial distribution.
+/// As noted in the wikipedia article, there are several different commonly used
+/// conventions for the parameters of the negative binomial distribution.
 ///
 /// The negative binomial distribution is a discrete distribution with two
 /// parameters, `r` and `p`.  When `r` is an integer, the negative binomial
 /// distribution can be interpreted as the distribution of the number of
-/// failures in a sequence of Bernoulli trials that continue until `r`
-/// successes occur.  `p` is the probability of success in a single Bernoulli
-/// trial.
+/// failures in a sequence of Bernoulli trials that continue until `r` successes
+/// occur.  `p` is the probability of success in a single Bernoulli trial.
 ///
 /// `NegativeBinomial` accepts non-integer values for `r`.  This is a
 /// generalization of the more common case where `r` is an integer.
@@ -25,7 +22,7 @@ use core::f64;
 ///
 /// ```
 /// use statrs::distribution::{NegativeBinomial, Discrete};
-/// use statrs::statistics::DiscreteDistribution;
+/// use statrs::statistics::Distribution;
 /// use statrs::prec::almost_eq;
 ///
 /// let r = NegativeBinomial::new(4.0, 0.5).unwrap();
@@ -223,7 +220,7 @@ impl Max<u64> for NegativeBinomial {
 	}
 }
 
-impl DiscreteDistribution for NegativeBinomial {
+impl Distribution for NegativeBinomial {
 	/// Returns the mean of the negative binomial distribution.
 	///
 	/// # Formula
