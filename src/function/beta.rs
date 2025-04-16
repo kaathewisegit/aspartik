@@ -10,24 +10,30 @@ use core::f64;
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
 pub enum BetaFuncError {
-    /// `a` is zero or less than zero.
-    ANotGreaterThanZero,
+	/// `a` is zero or less than zero.
+	ANotGreaterThanZero,
 
-    /// `b` is zero or less than zero.
-    BNotGreaterThanZero,
+	/// `b` is zero or less than zero.
+	BNotGreaterThanZero,
 
-    /// `x` is not in `[0, 1]`.
-    XOutOfRange,
+	/// `x` is not in `[0, 1]`.
+	XOutOfRange,
 }
 
 impl core::fmt::Display for BetaFuncError {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            BetaFuncError::ANotGreaterThanZero => write!(f, "a is zero or less than zero"),
-            BetaFuncError::BNotGreaterThanZero => write!(f, "b is zero or less than zero"),
-            BetaFuncError::XOutOfRange => write!(f, "x is not in [0, 1]"),
-        }
-    }
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		match self {
+			BetaFuncError::ANotGreaterThanZero => {
+				write!(f, "a is zero or less than zero")
+			}
+			BetaFuncError::BNotGreaterThanZero => {
+				write!(f, "b is zero or less than zero")
+			}
+			BetaFuncError::XOutOfRange => {
+				write!(f, "x is not in [0, 1]")
+			}
+		}
+	}
 }
 
 #[cfg(feature = "std")]
@@ -43,7 +49,7 @@ impl std::error::Error for BetaFuncError {}
 ///
 /// if `a <= 0.0` or `b <= 0.0`
 pub fn ln_beta(a: f64, b: f64) -> f64 {
-    checked_ln_beta(a, b).unwrap()
+	checked_ln_beta(a, b).unwrap()
 }
 
 /// Computes the natural logarithm
@@ -56,13 +62,14 @@ pub fn ln_beta(a: f64, b: f64) -> f64 {
 ///
 /// if `a <= 0.0` or `b <= 0.0`
 pub fn checked_ln_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
-    if a <= 0.0 {
-        Err(BetaFuncError::ANotGreaterThanZero)
-    } else if b <= 0.0 {
-        Err(BetaFuncError::BNotGreaterThanZero)
-    } else {
-        Ok(gamma::ln_gamma(a) + gamma::ln_gamma(b) - gamma::ln_gamma(a + b))
-    }
+	if a <= 0.0 {
+		Err(BetaFuncError::ANotGreaterThanZero)
+	} else if b <= 0.0 {
+		Err(BetaFuncError::BNotGreaterThanZero)
+	} else {
+		Ok(gamma::ln_gamma(a) + gamma::ln_gamma(b)
+			- gamma::ln_gamma(a + b))
+	}
 }
 
 /// Computes the beta function
@@ -74,7 +81,7 @@ pub fn checked_ln_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
 ///
 /// if `a <= 0.0` or `b <= 0.0`
 pub fn beta(a: f64, b: f64) -> f64 {
-    checked_beta(a, b).unwrap()
+	checked_beta(a, b).unwrap()
 }
 
 /// Computes the beta function
@@ -86,7 +93,7 @@ pub fn beta(a: f64, b: f64) -> f64 {
 ///
 /// if `a <= 0.0` or `b <= 0.0`
 pub fn checked_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
-    checked_ln_beta(a, b).map(|x| x.exp())
+	checked_ln_beta(a, b).map(|x| x.exp())
 }
 
 /// Computes the lower incomplete (unregularized) beta function
@@ -98,7 +105,7 @@ pub fn checked_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
 ///
 /// If `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
 pub fn beta_inc(a: f64, b: f64, x: f64) -> f64 {
-    checked_beta_inc(a, b, x).unwrap()
+	checked_beta_inc(a, b, x).unwrap()
 }
 
 /// Computes the lower incomplete (unregularized) beta function
@@ -110,7 +117,8 @@ pub fn beta_inc(a: f64, b: f64, x: f64) -> f64 {
 ///
 /// If `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
 pub fn checked_beta_inc(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
-    checked_beta_reg(a, b, x).and_then(|x| checked_beta(a, b).map(|y| x * y))
+	checked_beta_reg(a, b, x)
+		.and_then(|x| checked_beta(a, b).map(|y| x * y))
 }
 
 /// Computes the regularized lower incomplete beta function
@@ -123,7 +131,7 @@ pub fn checked_beta_inc(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
 ///
 /// if `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
 pub fn beta_reg(a: f64, b: f64, x: f64) -> f64 {
-    checked_beta_reg(a, b, x).unwrap()
+	checked_beta_reg(a, b, x).unwrap()
 }
 
 /// Computes the regularized lower incomplete beta function
@@ -136,100 +144,100 @@ pub fn beta_reg(a: f64, b: f64, x: f64) -> f64 {
 ///
 /// if `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
 pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
-    if a <= 0.0 {
-        return Err(BetaFuncError::ANotGreaterThanZero);
-    }
+	if a <= 0.0 {
+		return Err(BetaFuncError::ANotGreaterThanZero);
+	}
 
-    if b <= 0.0 {
-        return Err(BetaFuncError::BNotGreaterThanZero);
-    }
+	if b <= 0.0 {
+		return Err(BetaFuncError::BNotGreaterThanZero);
+	}
 
-    if !(0.0..=1.0).contains(&x) {
-        return Err(BetaFuncError::XOutOfRange);
-    }
+	if !(0.0..=1.0).contains(&x) {
+		return Err(BetaFuncError::XOutOfRange);
+	}
 
-    let bt = if x == 0.0 || ulps_eq!(x, 1.0) {
-        0.0
-    } else {
-        (gamma::ln_gamma(a + b) - gamma::ln_gamma(a) - gamma::ln_gamma(b)
-            + a * x.ln()
-            + b * (1.0 - x).ln())
-        .exp()
-    };
-    let symm_transform = x >= (a + 1.0) / (a + b + 2.0);
-    let eps = prec::F64_PREC;
-    let fpmin = f64::MIN_POSITIVE / eps;
+	let bt = if x == 0.0 || ulps_eq!(x, 1.0) {
+		0.0
+	} else {
+		(gamma::ln_gamma(a + b)
+			- gamma::ln_gamma(a) - gamma::ln_gamma(b)
+			+ a * x.ln() + b * (1.0 - x).ln())
+		.exp()
+	};
+	let symm_transform = x >= (a + 1.0) / (a + b + 2.0);
+	let eps = prec::F64_PREC;
+	let fpmin = f64::MIN_POSITIVE / eps;
 
-    let mut a = a;
-    let mut b = b;
-    let mut x = x;
-    if symm_transform {
-        let swap = a;
-        x = 1.0 - x;
-        a = b;
-        b = swap;
-    }
+	let mut a = a;
+	let mut b = b;
+	let mut x = x;
+	if symm_transform {
+		let swap = a;
+		x = 1.0 - x;
+		a = b;
+		b = swap;
+	}
 
-    let qab = a + b;
-    let qap = a + 1.0;
-    let qam = a - 1.0;
-    let mut c = 1.0;
-    let mut d = 1.0 - qab * x / qap;
+	let qab = a + b;
+	let qap = a + 1.0;
+	let qam = a - 1.0;
+	let mut c = 1.0;
+	let mut d = 1.0 - qab * x / qap;
 
-    if d.abs() < fpmin {
-        d = fpmin;
-    }
-    d = 1.0 / d;
-    let mut h = d;
+	if d.abs() < fpmin {
+		d = fpmin;
+	}
+	d = 1.0 / d;
+	let mut h = d;
 
-    for m in 1..141 {
-        let m = f64::from(m);
-        let m2 = m * 2.0;
-        let mut aa = m * (b - m) * x / ((qam + m2) * (a + m2));
-        d = 1.0 + aa * d;
+	for m in 1..141 {
+		let m = f64::from(m);
+		let m2 = m * 2.0;
+		let mut aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+		d = 1.0 + aa * d;
 
-        if d.abs() < fpmin {
-            d = fpmin;
-        }
+		if d.abs() < fpmin {
+			d = fpmin;
+		}
 
-        c = 1.0 + aa / c;
-        if c.abs() < fpmin {
-            c = fpmin;
-        }
+		c = 1.0 + aa / c;
+		if c.abs() < fpmin {
+			c = fpmin;
+		}
 
-        d = 1.0 / d;
-        h = h * d * c;
-        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
-        d = 1.0 + aa * d;
+		d = 1.0 / d;
+		h = h * d * c;
+		aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+		d = 1.0 + aa * d;
 
-        if d.abs() < fpmin {
-            d = fpmin;
-        }
+		if d.abs() < fpmin {
+			d = fpmin;
+		}
 
-        c = 1.0 + aa / c;
+		c = 1.0 + aa / c;
 
-        if c.abs() < fpmin {
-            c = fpmin;
-        }
+		if c.abs() < fpmin {
+			c = fpmin;
+		}
 
-        d = 1.0 / d;
-        let del = d * c;
-        h *= del;
+		d = 1.0 / d;
+		let del = d * c;
+		h *= del;
 
-        if (del - 1.0).abs() <= eps {
-            return if symm_transform {
-                Ok(1.0 - bt * h / a)
-            } else {
-                Ok(bt * h / a)
-            };
-        }
-    }
+		if (del - 1.0).abs() <= eps {
+			return if symm_transform {
+				Ok(1.0 - bt * h / a)
+			} else {
+				Ok(bt * h / a)
+			};
+		}
+	}
 
-    if symm_transform {
-        Ok(1.0 - bt * h / a)
-    } else {
-        Ok(bt * h / a)
-    }
+	if symm_transform {
+		Ok(1.0 - bt * h / a)
+	} else {
+		Ok(bt * h / a)
+	}
 }
 
 /// Computes the inverse of the regularized incomplete beta function
@@ -262,165 +270,169 @@ pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
 // > IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // > CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 pub fn inv_beta_reg(mut a: f64, mut b: f64, mut x: f64) -> f64 {
-    // Algorithm AS 64
-    // http://www.jstor.org/stable/2346798
-    //
-    // An approximation x₀ to x if found from (cf. Scheffé and Tukey, 1944)
-    //
-    // 1 + x₀   4p + 2q - 2
-    // ------ = -----------
-    // 1 - x₀      χ²(α)
-    //
-    // where χ²(α) is the upper α point of the χ² distribution with 2q
-    // degrees of freedom and is obtained from Wilson and Hilferty’s
-    // approximation (cf. Wilson and Hilferty, 1931)
-    //
-    // χ²(α) = 2q (1 - 1 / (9q) + y(α) sqrt(1 / (9q)))^3,
-    //
-    // y(α) being Hastings’ approximation (cf. Hastings, 1955) for the upper
-    // α point of the standard normal distribution. If χ²(α) < 0, then
-    //
-    // x₀ = 1 - ((1 - α)q B(p, q))^(1 / q).
-    //
-    // Again if (4p + 2q - 2) / χ²(α) does not exceed 1, x₀ is obtained from
-    //
-    // x₀ = (αp B(p, q))^(1 / p).
-    //
-    // The final solution is obtained by the Newton–Raphson method from the
-    // relation
-    //
-    //                    f(x[i - 1])
-    // x[i] = x[i - 1] - ------------
-    //                   f'(x[i - 1])
-    //
-    // where
-    //
-    // f(x) = I(x, p, q) - α.
-    let ln_beta = ln_beta(a, b);
+	// Algorithm AS 64
+	// http://www.jstor.org/stable/2346798
+	//
+	// An approximation x₀ to x if found from (cf. Scheffé and Tukey, 1944)
+	//
+	// 1 + x₀   4p + 2q - 2
+	// ------ = -----------
+	// 1 - x₀      χ²(α)
+	//
+	// where χ²(α) is the upper α point of the χ² distribution with 2q
+	// degrees of freedom and is obtained from Wilson and Hilferty’s
+	// approximation (cf. Wilson and Hilferty, 1931)
+	//
+	// χ²(α) = 2q (1 - 1 / (9q) + y(α) sqrt(1 / (9q)))^3,
+	//
+	// y(α) being Hastings’ approximation (cf. Hastings, 1955) for the upper
+	// α point of the standard normal distribution. If χ²(α) < 0, then
+	//
+	// x₀ = 1 - ((1 - α)q B(p, q))^(1 / q).
+	//
+	// Again if (4p + 2q - 2) / χ²(α) does not exceed 1, x₀ is obtained from
+	//
+	// x₀ = (αp B(p, q))^(1 / p).
+	//
+	// The final solution is obtained by the Newton–Raphson method from the
+	// relation
+	//
+	//                    f(x[i - 1])
+	// x[i] = x[i - 1] - ------------
+	//                   f'(x[i - 1])
+	//
+	// where
+	//
+	// f(x) = I(x, p, q) - α.
+	let ln_beta = ln_beta(a, b);
 
-    // Remark AS R83
-    // http://www.jstor.org/stable/2347779
-    const SAE: i32 = -30;
-    const FPU: f64 = 1e-30; // 10^SAE
+	// Remark AS R83
+	// http://www.jstor.org/stable/2347779
+	const SAE: i32 = -30;
+	const FPU: f64 = 1e-30; // 10^SAE
 
-    debug_assert!((0.0..=1.0).contains(&x) && a > 0.0 && b > 0.0);
+	debug_assert!((0.0..=1.0).contains(&x) && a > 0.0 && b > 0.0);
 
-    if x == 0.0 {
-        return 0.0;
-    }
-    if x == 1.0 {
-        return 1.0;
-    }
+	if x == 0.0 {
+		return 0.0;
+	}
+	if x == 1.0 {
+		return 1.0;
+	}
 
-    let mut p;
-    let mut q;
+	let mut p;
+	let mut q;
 
-    let flip = 0.5 < x;
-    if flip {
-        p = a;
-        a = b;
-        b = p;
-        x = 1.0 - x;
-    }
+	let flip = 0.5 < x;
+	if flip {
+		p = a;
+		a = b;
+		b = p;
+		x = 1.0 - x;
+	}
 
-    p = (-(x * x).ln()).sqrt();
-    q = p - (2.30753 + 0.27061 * p) / (1.0 + (0.99229 + 0.04481 * p) * p);
+	p = (-(x * x).ln()).sqrt();
+	q = p - (2.30753 + 0.27061 * p) / (1.0 + (0.99229 + 0.04481 * p) * p);
 
-    if 1.0 < a && 1.0 < b {
-        // Remark AS R19 and Algorithm AS 109
-        // http://www.jstor.org/stable/2346887
-        //
-        // For a and b > 1, the approximation given by Carter (1947), which
-        // improves the Fisher–Cochran formula, is generally better. For
-        // other values of a and b en empirical investigation has shown that
-        // the approximation given in AS 64 is adequate.
-        let r = (q * q - 3.0) / 6.0;
-        let s = 1.0 / (2.0 * a - 1.0);
-        let t = 1.0 / (2.0 * b - 1.0);
-        let h = 2.0 / (s + t);
-        let w = q * (h + r).sqrt() / h - (t - s) * (r + 5.0 / 6.0 - 2.0 / (3.0 * h));
-        p = a / (a + b * (2.0 * w).exp());
-    } else {
-        let mut t = 1.0 / (9.0 * b);
-        t = 2.0 * b * (1.0 - t + q * t.sqrt()).powf(3.0);
-        if t <= 0.0 {
-            p = 1.0 - ((((1.0 - x) * b).ln() + ln_beta) / b).exp();
-        } else {
-            t = 2.0 * (2.0 * a + b - 1.0) / t;
-            if t <= 1.0 {
-                p = (((x * a).ln() + ln_beta) / a).exp();
-            } else {
-                p = 1.0 - 2.0 / (t + 1.0);
-            }
-        }
-    }
+	if 1.0 < a && 1.0 < b {
+		// Remark AS R19 and Algorithm AS 109
+		// http://www.jstor.org/stable/2346887
+		//
+		// For a and b > 1, the approximation given by Carter (1947), which
+		// improves the Fisher–Cochran formula, is generally better. For
+		// other values of a and b en empirical investigation has shown that
+		// the approximation given in AS 64 is adequate.
+		let r = (q * q - 3.0) / 6.0;
+		let s = 1.0 / (2.0 * a - 1.0);
+		let t = 1.0 / (2.0 * b - 1.0);
+		let h = 2.0 / (s + t);
+		let w = q * (h + r).sqrt() / h
+			- (t - s) * (r + 5.0 / 6.0 - 2.0 / (3.0 * h));
+		p = a / (a + b * (2.0 * w).exp());
+	} else {
+		let mut t = 1.0 / (9.0 * b);
+		t = 2.0 * b * (1.0 - t + q * t.sqrt()).powf(3.0);
+		if t <= 0.0 {
+			p = 1.0 - ((((1.0 - x) * b).ln() + ln_beta) / b).exp();
+		} else {
+			t = 2.0 * (2.0 * a + b - 1.0) / t;
+			if t <= 1.0 {
+				p = (((x * a).ln() + ln_beta) / a).exp();
+			} else {
+				p = 1.0 - 2.0 / (t + 1.0);
+			}
+		}
+	}
 
-    p = p.clamp(0.0001, 0.9999);
+	p = p.clamp(0.0001, 0.9999);
 
-    // Remark AS R83
-    // http://www.jstor.org/stable/2347779
-    let e = (-5.0 / a / a - 1.0 / x.powf(0.2) - 13.0) as i32;
-    let acu = if e > SAE { f64::powi(10.0, e) } else { FPU };
+	// Remark AS R83
+	// http://www.jstor.org/stable/2347779
+	let e = (-5.0 / a / a - 1.0 / x.powf(0.2) - 13.0) as i32;
+	let acu = if e > SAE { f64::powi(10.0, e) } else { FPU };
 
-    let mut pnext;
-    let mut qprev = 0.0;
-    let mut sq = 1.0;
-    let mut prev = 1.0;
+	let mut pnext;
+	let mut qprev = 0.0;
+	let mut sq = 1.0;
+	let mut prev = 1.0;
 
-    'outer: loop {
-        // Remark AS R19 and Algorithm AS 109
-        // http://www.jstor.org/stable/2346887
-        q = beta_reg(a, b, p);
-        q = (q - x) * (ln_beta + (1.0 - a) * p.ln() + (1.0 - b) * (1.0 - p).ln()).exp();
+	'outer: loop {
+		// Remark AS R19 and Algorithm AS 109
+		// http://www.jstor.org/stable/2346887
+		q = beta_reg(a, b, p);
+		q = (q - x)
+			* (ln_beta
+				+ (1.0 - a) * p.ln() + (1.0 - b) * (1.0 - p).ln())
+			.exp();
 
-        // Remark AS R83
-        // http://www.jstor.org/stable/2347779
-        if q * qprev <= 0.0 {
-            prev = if sq > FPU { sq } else { FPU };
-        }
+		// Remark AS R83
+		// http://www.jstor.org/stable/2347779
+		if q * qprev <= 0.0 {
+			prev = if sq > FPU { sq } else { FPU };
+		}
 
-        // Remark AS R19 and Algorithm AS 109
-        // http://www.jstor.org/stable/2346887
-        let mut g = 1.0;
-        loop {
-            loop {
-                let adj = g * q;
-                sq = adj * adj;
+		// Remark AS R19 and Algorithm AS 109
+		// http://www.jstor.org/stable/2346887
+		let mut g = 1.0;
+		loop {
+			loop {
+				let adj = g * q;
+				sq = adj * adj;
 
-                if sq < prev {
-                    pnext = p - adj;
-                    if (0.0..=1.0).contains(&pnext) {
-                        break;
-                    }
-                }
-                g /= 3.0;
-            }
+				if sq < prev {
+					pnext = p - adj;
+					if (0.0..=1.0).contains(&pnext) {
+						break;
+					}
+				}
+				g /= 3.0;
+			}
 
-            if prev <= acu || q * q <= acu {
-                p = pnext;
-                break 'outer;
-            }
+			if prev <= acu || q * q <= acu {
+				p = pnext;
+				break 'outer;
+			}
 
-            if pnext != 0.0 && pnext != 1.0 {
-                break;
-            }
+			if pnext != 0.0 && pnext != 1.0 {
+				break;
+			}
 
-            g /= 3.0;
-        }
+			g /= 3.0;
+		}
 
-        if pnext == p {
-            break;
-        }
+		if pnext == p {
+			break;
+		}
 
-        p = pnext;
-        qprev = q;
-    }
+		p = pnext;
+		qprev = q;
+	}
 
-    if flip {
-        1.0 - p
-    } else {
-        p
-    }
+	if flip {
+		1.0 - p
+	} else {
+		p
+	}
 }
 
 #[rustfmt::skip]

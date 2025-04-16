@@ -11,16 +11,16 @@
 ///
 /// Returns 0 for a 0 length coefficient slice
 pub fn polynomial(z: f64, coeff: &[f64]) -> f64 {
-    let n = coeff.len();
-    if n == 0 {
-        return 0.0;
-    }
+	let n = coeff.len();
+	if n == 0 {
+		return 0.0;
+	}
 
-    let mut sum = *coeff.last().unwrap();
-    for c in coeff[0..n - 1].iter().rev() {
-        sum = *c + z * sum;
-    }
-    sum
+	let mut sum = *coeff.last().unwrap();
+	for c in coeff[0..n - 1].iter().rev() {
+		sum = *c + z * sum;
+	}
+	sum
 }
 
 #[rustfmt::skip]

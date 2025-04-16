@@ -10,40 +10,42 @@ use num_traits::Num;
 ///
 /// Evaluates to `Some(k)`, where `k` satisfies the search criteria
 pub fn integral_bisection_search<K: Num + Clone, T: Num + PartialOrd>(
-    f: impl Fn(&K) -> T,
-    z: T,
-    lb: K,
-    ub: K,
+	f: impl Fn(&K) -> T,
+	z: T,
+	lb: K,
+	ub: K,
 ) -> Option<K> {
-    if !(f(&lb)..=f(&ub)).contains(&z) {
-        return None;
-    }
-    let two = K::one() + K::one();
-    let mut lb = lb;
-    let mut ub = ub;
-    loop {
-        let mid = (lb.clone() + ub.clone()) / two.clone();
-        if !(f(&lb)..=f(&ub)).contains(&f(&mid)) {
-            return None; // f found not monotone on interval
-        } else if f(&lb) == z {
-            return Some(lb);
-        } else if f(&ub) == z || (lb.clone() + K::one()) == ub {
-            return Some(ub); // found or no more integers between
-        } else if f(&mid) >= z {
-            ub = mid;
-        } else {
-            lb = mid;
-        }
-    }
+	if !(f(&lb)..=f(&ub)).contains(&z) {
+		return None;
+	}
+	let two = K::one() + K::one();
+	let mut lb = lb;
+	let mut ub = ub;
+	loop {
+		let mid = (lb.clone() + ub.clone()) / two.clone();
+		if !(f(&lb)..=f(&ub)).contains(&f(&mid)) {
+			return None; // f found not monotone on interval
+		} else if f(&lb) == z {
+			return Some(lb);
+		} else if f(&ub) == z || (lb.clone() + K::one()) == ub {
+			return Some(ub); // found or no more integers between
+		} else if f(&mid) >= z {
+			ub = mid;
+		} else {
+			lb = mid;
+		}
+	}
 }
 
 #[macro_use]
 #[cfg(test)]
 pub mod test {
-    use crate::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
+	use crate::distribution::{
+		Continuous, ContinuousCDF, Discrete, DiscreteCDF,
+	};
 
-    #[macro_export]
-    macro_rules! testing_boiler {
+	#[macro_export]
+	macro_rules! testing_boiler {
         ($($arg_name:ident: $arg_ty:ty),+; $dist:ty; $dist_err:ty) => {
             #[cfg(feature = "std")]
             fn make_param_text($($arg_name: $arg_ty),+) -> String {
@@ -253,274 +255,318 @@ pub mod test {
         };
     }
 
-    pub mod boiler_tests {
-        use crate::distribution::{Beta, BetaError};
-        use crate::statistics::*;
+	pub mod boiler_tests {
+		use crate::distribution::{Beta, BetaError};
+		use crate::statistics::*;
 
-        testing_boiler!(shape_a: f64, shape_b: f64; Beta; BetaError);
+		testing_boiler!(shape_a: f64, shape_b: f64; Beta; BetaError);
 
-        #[test]
-        fn create_ok_success() {
-            let b = create_ok(0.8, 1.2);
-            assert_eq!(b.shape_a(), 0.8);
-            assert_eq!(b.shape_b(), 1.2);
-        }
+		#[test]
+		fn create_ok_success() {
+			let b = create_ok(0.8, 1.2);
+			assert_eq!(b.shape_a(), 0.8);
+			assert_eq!(b.shape_b(), 1.2);
+		}
 
-        #[test]
-        #[should_panic]
-        fn create_err_failure() {
-            create_err(0.8, 1.2);
-        }
+		#[test]
+		#[should_panic]
+		fn create_err_failure() {
+			create_err(0.8, 1.2);
+		}
 
-        #[test]
-        fn create_err_success() {
-            let err = create_err(-0.5, 1.2);
-            assert_eq!(err, BetaError::ShapeAInvalid);
-        }
+		#[test]
+		fn create_err_success() {
+			let err = create_err(-0.5, 1.2);
+			assert_eq!(err, BetaError::ShapeAInvalid);
+		}
 
-        #[test]
-        #[should_panic]
-        fn create_ok_failure() {
-            create_ok(-0.5, 1.2);
-        }
+		#[test]
+		#[should_panic]
+		fn create_ok_failure() {
+			create_ok(-0.5, 1.2);
+		}
 
-        #[test]
-        fn test_exact_success() {
-            test_exact(1.5, 1.5, 0.5, |dist| dist.mode().unwrap());
-        }
+		#[test]
+		fn test_exact_success() {
+			test_exact(1.5, 1.5, 0.5, |dist| dist.mode().unwrap());
+		}
 
-        #[test]
-        #[should_panic]
-        fn test_exact_failure() {
-            test_exact(1.2, 1.4, 0.333333333333, |dist| dist.mode().unwrap());
-        }
+		#[test]
+		#[should_panic]
+		fn test_exact_failure() {
+			test_exact(1.2, 1.4, 0.333333333333, |dist| {
+				dist.mode().unwrap()
+			});
+		}
 
-        #[test]
-        fn test_relative_success() {
-            test_relative(1.2, 1.4, 0.333333333333, |dist| dist.mode().unwrap());
-        }
+		#[test]
+		fn test_relative_success() {
+			test_relative(1.2, 1.4, 0.333333333333, |dist| {
+				dist.mode().unwrap()
+			});
+		}
 
-        #[test]
-        #[should_panic]
-        fn test_relative_failure() {
-            test_relative(1.2, 1.4, 0.333, |dist| dist.mode().unwrap());
-        }
+		#[test]
+		#[should_panic]
+		fn test_relative_failure() {
+			test_relative(1.2, 1.4, 0.333, |dist| {
+				dist.mode().unwrap()
+			});
+		}
 
-        #[test]
-        fn test_absolute_success() {
-            test_absolute(1.2, 1.4, 0.333333333333, 1e-12, |dist| dist.mode().unwrap());
-        }
+		#[test]
+		fn test_absolute_success() {
+			test_absolute(
+				1.2,
+				1.4,
+				0.333333333333,
+				1e-12,
+				|dist| dist.mode().unwrap(),
+			);
+		}
 
-        #[test]
-        #[should_panic]
-        fn test_absolute_failure() {
-            test_absolute(1.2, 1.4, 0.333333333333, 1e-15, |dist| dist.mode().unwrap());
-        }
+		#[test]
+		#[should_panic]
+		fn test_absolute_failure() {
+			test_absolute(
+				1.2,
+				1.4,
+				0.333333333333,
+				1e-15,
+				|dist| dist.mode().unwrap(),
+			);
+		}
 
-        #[test]
-        fn test_create_err_success() {
-            test_create_err(0.0, 0.5, BetaError::ShapeAInvalid);
-        }
+		#[test]
+		fn test_create_err_success() {
+			test_create_err(0.0, 0.5, BetaError::ShapeAInvalid);
+		}
 
-        #[test]
-        #[should_panic]
-        fn test_create_err_failure() {
-            test_create_err(0.0, 0.5, BetaError::ShapeBInvalid);
-        }
+		#[test]
+		#[should_panic]
+		fn test_create_err_failure() {
+			test_create_err(0.0, 0.5, BetaError::ShapeBInvalid);
+		}
 
-        #[test]
-        fn test_is_nan_success() {
-            // Not sure that any Beta API can return a NaN, so we force the issue
-            test_is_nan(0.8, 1.2, |_| f64::NAN);
-        }
+		#[test]
+		fn test_is_nan_success() {
+			// Not sure that any Beta API can return a NaN, so we force the issue
+			test_is_nan(0.8, 1.2, |_| f64::NAN);
+		}
 
-        #[test]
-        #[should_panic]
-        fn test_is_nan_failure() {
-            test_is_nan(0.8, 1.2, |dist| dist.mean().unwrap());
-        }
+		#[test]
+		#[should_panic]
+		fn test_is_nan_failure() {
+			test_is_nan(0.8, 1.2, |dist| dist.mean().unwrap());
+		}
 
-        #[test]
-        fn test_is_none_success() {
-            test_none(0.5, 1.2, |dist| dist.mode());
-        }
+		#[test]
+		fn test_is_none_success() {
+			test_none(0.5, 1.2, |dist| dist.mode());
+		}
 
-        #[test]
-        #[should_panic]
-        fn test_is_none_failure() {
-            test_none(0.8, 1.2, |dist| dist.mean());
-        }
-    }
+		#[test]
+		#[should_panic]
+		fn test_is_none_failure() {
+			test_none(0.8, 1.2, |dist| dist.mean());
+		}
+	}
 
-    /// cdf should be the integral of the pdf
-    fn check_integrate_pdf_is_cdf<D: ContinuousCDF<f64, f64> + Continuous<f64, f64>>(
-        dist: &D,
-        x_min: f64,
-        x_max: f64,
-        step: f64,
-    ) {
-        let mut prev_x = x_min;
-        let mut prev_density = dist.pdf(x_min);
-        let mut sum = 0.0;
+	/// cdf should be the integral of the pdf
+	fn check_integrate_pdf_is_cdf<
+		D: ContinuousCDF<f64, f64> + Continuous<f64, f64>,
+	>(
+		dist: &D,
+		x_min: f64,
+		x_max: f64,
+		step: f64,
+	) {
+		let mut prev_x = x_min;
+		let mut prev_density = dist.pdf(x_min);
+		let mut sum = 0.0;
 
-        loop {
-            let x = prev_x + step;
-            let density = dist.pdf(x);
+		loop {
+			let x = prev_x + step;
+			let density = dist.pdf(x);
 
-            assert!(density >= 0.0);
+			assert!(density >= 0.0);
 
-            let ln_density = dist.ln_pdf(x);
+			let ln_density = dist.ln_pdf(x);
 
-            assert_almost_eq!(density.ln(), ln_density, 1e-10);
+			assert_almost_eq!(density.ln(), ln_density, 1e-10);
 
-            // triangle rule
-            sum += (prev_density + density) * step / 2.0;
+			// triangle rule
+			sum += (prev_density + density) * step / 2.0;
 
-            let cdf = dist.cdf(x);
-            if (sum - cdf).abs() > 1e-3 {
-                panic!(
-                    "Integral of pdf doesn't equal cdf!\n\
+			let cdf = dist.cdf(x);
+			if (sum - cdf).abs() > 1e-3 {
+				panic!("Integral of pdf doesn't equal cdf!\n\
                         Integration from {x_min} by {step} to {x} = {sum}\n\
-                        cdf = {cdf}"
-                );
-            }
+                        cdf = {cdf}");
+			}
 
-            if x >= x_max {
-                break;
-            } else {
-                prev_x = x;
-                prev_density = density;
-            }
-        }
+			if x >= x_max {
+				break;
+			} else {
+				prev_x = x;
+				prev_density = density;
+			}
+		}
 
-        assert!(sum > 0.99);
-        assert!(sum <= 1.001);
-    }
+		assert!(sum > 0.99);
+		assert!(sum <= 1.001);
+	}
 
-    /// cdf should be the sum of the pmf
-    fn check_sum_pmf_is_cdf<D: DiscreteCDF<u64, f64> + Discrete<u64, f64>>(dist: &D, x_max: u64) {
-        let mut sum = 0.0;
+	/// cdf should be the sum of the pmf
+	fn check_sum_pmf_is_cdf<
+		D: DiscreteCDF<u64, f64> + Discrete<u64, f64>,
+	>(
+		dist: &D,
+		x_max: u64,
+	) {
+		let mut sum = 0.0;
 
-        // go slightly beyond x_max to test for off-by-one errors
-        for i in 0..x_max + 3 {
-            let prob = dist.pmf(i);
+		// go slightly beyond x_max to test for off-by-one errors
+		for i in 0..x_max + 3 {
+			let prob = dist.pmf(i);
 
-            assert!(prob >= 0.0);
-            assert!(prob <= 1.0);
+			assert!(prob >= 0.0);
+			assert!(prob <= 1.0);
 
-            sum += prob;
+			sum += prob;
 
-            if i == x_max {
-                assert!(sum > 0.99);
-            }
+			if i == x_max {
+				assert!(sum > 0.99);
+			}
 
-            assert_almost_eq!(sum, dist.cdf(i), 1e-10);
-            // assert_almost_eq!(sum, dist.cdf(i as f64), 1e-10);
-            // assert_almost_eq!(sum, dist.cdf(i as f64 + 0.1), 1e-10);
-            // assert_almost_eq!(sum, dist.cdf(i as f64 + 0.5), 1e-10);
-            // assert_almost_eq!(sum, dist.cdf(i as f64 + 0.9), 1e-10);
-        }
+			assert_almost_eq!(sum, dist.cdf(i), 1e-10);
+			// assert_almost_eq!(sum, dist.cdf(i as f64), 1e-10);
+			// assert_almost_eq!(sum, dist.cdf(i as f64 + 0.1), 1e-10);
+			// assert_almost_eq!(sum, dist.cdf(i as f64 + 0.5), 1e-10);
+			// assert_almost_eq!(sum, dist.cdf(i as f64 + 0.9), 1e-10);
+		}
 
-        assert!(sum > 0.99);
-        assert!(sum <= 1.0 + 1e-10);
-    }
+		assert!(sum > 0.99);
+		assert!(sum <= 1.0 + 1e-10);
+	}
 
-    /// pdf should be derivative of cdf
-    fn check_derivative_of_cdf_is_pdf<D: ContinuousCDF<f64, f64> + Continuous<f64, f64>>(
-        dist: &D,
-        x_min: f64,
-        x_max: f64,
-        step: f64,
-    ) {
-        const DELTA: f64 = 1e-12;
-        const DX: f64 = 2.0 * DELTA;
-        let mut prev_x = x_min;
+	/// pdf should be derivative of cdf
+	fn check_derivative_of_cdf_is_pdf<
+		D: ContinuousCDF<f64, f64> + Continuous<f64, f64>,
+	>(
+		dist: &D,
+		x_min: f64,
+		x_max: f64,
+		step: f64,
+	) {
+		const DELTA: f64 = 1e-12;
+		const DX: f64 = 2.0 * DELTA;
+		let mut prev_x = x_min;
 
-        loop {
-            let x = prev_x + step;
-            let x_ahead = x + DELTA;
-            let x_behind = x - DELTA;
-            let density = dist.pdf(x);
+		loop {
+			let x = prev_x + step;
+			let x_ahead = x + DELTA;
+			let x_behind = x - DELTA;
+			let density = dist.pdf(x);
 
-            let d_cdf = dist.cdf(x_ahead) - dist.cdf(x_behind);
+			let d_cdf = dist.cdf(x_ahead) - dist.cdf(x_behind);
 
-            assert_almost_eq!(d_cdf, DX * density, 1e-11);
+			assert_almost_eq!(d_cdf, DX * density, 1e-11);
 
-            if x >= x_max {
-                break;
-            } else {
-                prev_x = x;
-            }
-        }
-    }
+			if x >= x_max {
+				break;
+			} else {
+				prev_x = x;
+			}
+		}
+	}
 
-    /// Does a series of checks that all continuous distributions must obey.
-    /// 99% of the probability mass should be between x_min and x_max or the finite
-    /// difference of cdf should be near to the pdf for much of the support.
-    pub fn check_continuous_distribution<
-        D: ContinuousCDF<f64, f64> + Continuous<f64, f64> + std::panic::RefUnwindSafe,
-    >(
-        dist: &D,
-        x_min: f64,
-        x_max: f64,
-    ) {
-        assert_eq!(dist.pdf(f64::NEG_INFINITY), 0.0);
-        assert_eq!(dist.pdf(f64::INFINITY), 0.0);
-        assert_eq!(dist.ln_pdf(f64::NEG_INFINITY), f64::NEG_INFINITY);
-        assert_eq!(dist.ln_pdf(f64::INFINITY), f64::NEG_INFINITY);
-        assert_eq!(dist.cdf(f64::NEG_INFINITY), 0.0);
-        assert_eq!(dist.cdf(f64::INFINITY), 1.0);
+	/// Does a series of checks that all continuous distributions must obey.
+	/// 99% of the probability mass should be between x_min and x_max or the finite
+	/// difference of cdf should be near to the pdf for much of the support.
+	pub fn check_continuous_distribution<
+		D: ContinuousCDF<f64, f64>
+			+ Continuous<f64, f64>
+			+ std::panic::RefUnwindSafe,
+	>(
+		dist: &D,
+		x_min: f64,
+		x_max: f64,
+	) {
+		assert_eq!(dist.pdf(f64::NEG_INFINITY), 0.0);
+		assert_eq!(dist.pdf(f64::INFINITY), 0.0);
+		assert_eq!(dist.ln_pdf(f64::NEG_INFINITY), f64::NEG_INFINITY);
+		assert_eq!(dist.ln_pdf(f64::INFINITY), f64::NEG_INFINITY);
+		assert_eq!(dist.cdf(f64::NEG_INFINITY), 0.0);
+		assert_eq!(dist.cdf(f64::INFINITY), 1.0);
 
-        if std::panic::catch_unwind(|| {
-            check_integrate_pdf_is_cdf(dist, x_min, x_max, (x_max - x_min) / 100000.0);
-        })
-        .or(std::panic::catch_unwind(|| {
-            check_derivative_of_cdf_is_pdf(dist, x_min, x_max, (x_max - x_min) / 100000.0);
-        }))
-        .is_err()
-        {
-            panic!("Integration of pdf doesn't equal cdf and derivative of cdf doesn't equal pdf!");
-        }
-    }
+		if std::panic::catch_unwind(|| {
+			check_integrate_pdf_is_cdf(
+				dist,
+				x_min,
+				x_max,
+				(x_max - x_min) / 100000.0,
+			);
+		})
+		.or(std::panic::catch_unwind(|| {
+			check_derivative_of_cdf_is_pdf(
+				dist,
+				x_min,
+				x_max,
+				(x_max - x_min) / 100000.0,
+			);
+		}))
+		.is_err()
+		{
+			panic!("Integration of pdf doesn't equal cdf and derivative of cdf doesn't equal pdf!");
+		}
+	}
 
-    /// Does a series of checks that all positive discrete distributions must
-    /// obey.
-    /// 99% of the probability mass should be between 0 and x_max (inclusive).
-    pub fn check_discrete_distribution<D: DiscreteCDF<u64, f64> + Discrete<u64, f64>>(
-        dist: &D,
-        x_max: u64,
-    ) {
-        // assert_eq!(dist.cdf(f64::NEG_INFINITY), 0.0);
-        // assert_eq!(dist.cdf(-10.0), 0.0);
-        // assert_eq!(dist.cdf(-1.0), 0.0);
-        // assert_eq!(dist.cdf(-0.01), 0.0);
-        // assert_eq!(dist.cdf(f64::INFINITY), 1.0);
+	/// Does a series of checks that all positive discrete distributions must
+	/// obey.
+	/// 99% of the probability mass should be between 0 and x_max (inclusive).
+	pub fn check_discrete_distribution<
+		D: DiscreteCDF<u64, f64> + Discrete<u64, f64>,
+	>(
+		dist: &D,
+		x_max: u64,
+	) {
+		// assert_eq!(dist.cdf(f64::NEG_INFINITY), 0.0);
+		// assert_eq!(dist.cdf(-10.0), 0.0);
+		// assert_eq!(dist.cdf(-1.0), 0.0);
+		// assert_eq!(dist.cdf(-0.01), 0.0);
+		// assert_eq!(dist.cdf(f64::INFINITY), 1.0);
 
-        check_sum_pmf_is_cdf(dist, x_max);
-    }
+		check_sum_pmf_is_cdf(dist, x_max);
+	}
 
-    #[test]
-    #[cfg(feature = "std")]
-    fn test_integer_bisection() {
-        use super::*;
+	#[test]
+	#[cfg(feature = "std")]
+	fn test_integer_bisection() {
+		use super::*;
 
-        fn search(z: usize, data: &[usize]) -> Option<usize> {
-            integral_bisection_search(|idx: &usize| data[*idx], z, 0, data.len() - 1)
-        }
+		fn search(z: usize, data: &[usize]) -> Option<usize> {
+			integral_bisection_search(
+				|idx: &usize| data[*idx],
+				z,
+				0,
+				data.len() - 1,
+			)
+		}
 
-        let needle = 3;
-        let data = (0..5)
-            .map(|n| if n >= needle { n + 1 } else { n })
-            .collect::<Vec<_>>();
+		let needle = 3;
+		let data = (0..5)
+			.map(|n| if n >= needle { n + 1 } else { n })
+			.collect::<Vec<_>>();
 
-        for i in 0..(data.len()) {
-            assert_eq!(search(data[i], &data), Some(i),)
-        }
-        {
-            let infimum = search(needle, &data);
-            let found_element = search(needle + 1, &data); // 4 > needle && member of range
-            assert_eq!(found_element, Some(needle));
-            assert_eq!(infimum, found_element)
-        }
-    }
+		for i in 0..(data.len()) {
+			assert_eq!(search(data[i], &data), Some(i),)
+		}
+		{
+			let infimum = search(needle, &data);
+			let found_element = search(needle + 1, &data); // 4 > needle && member of range
+			assert_eq!(found_element, Some(needle));
+			assert_eq!(infimum, found_element)
+		}
+	}
 }

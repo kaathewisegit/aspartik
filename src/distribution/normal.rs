@@ -19,351 +19,359 @@ use core::f64;
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Normal {
-    mean: f64,
-    std_dev: f64,
+	mean: f64,
+	std_dev: f64,
 }
 
 /// Represents the errors that can occur when creating a [`Normal`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
 pub enum NormalError {
-    /// The mean is NaN.
-    MeanInvalid,
+	/// The mean is NaN.
+	MeanInvalid,
 
-    /// The standard deviation is NaN, zero or less than zero.
-    StandardDeviationInvalid,
+	/// The standard deviation is NaN, zero or less than zero.
+	StandardDeviationInvalid,
 }
 
 impl core::fmt::Display for NormalError {
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            NormalError::MeanInvalid => write!(f, "Mean is NaN"),
-            NormalError::StandardDeviationInvalid => {
-                write!(f, "Standard deviation is NaN, zero or less than zero")
-            }
-        }
-    }
+	#[cfg_attr(coverage_nightly, coverage(off))]
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		match self {
+			NormalError::MeanInvalid => write!(f, "Mean is NaN"),
+			NormalError::StandardDeviationInvalid => {
+				write!(f, "Standard deviation is NaN, zero or less than zero")
+			}
+		}
+	}
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for NormalError {}
 
 impl Normal {
-    ///  Constructs a new normal distribution with a mean of `mean`
-    /// and a standard deviation of `std_dev`
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if `mean` or `std_dev` are `NaN` or if
-    /// `std_dev <= 0.0`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::Normal;
-    ///
-    /// let mut result = Normal::new(0.0, 1.0);
-    /// assert!(result.is_ok());
-    ///
-    /// result = Normal::new(0.0, 0.0);
-    /// assert!(result.is_err());
-    /// ```
-    pub fn new(mean: f64, std_dev: f64) -> Result<Normal, NormalError> {
-        if mean.is_nan() {
-            return Err(NormalError::MeanInvalid);
-        }
+	///  Constructs a new normal distribution with a mean of `mean`
+	/// and a standard deviation of `std_dev`
+	///
+	/// # Errors
+	///
+	/// Returns an error if `mean` or `std_dev` are `NaN` or if
+	/// `std_dev <= 0.0`
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::Normal;
+	///
+	/// let mut result = Normal::new(0.0, 1.0);
+	/// assert!(result.is_ok());
+	///
+	/// result = Normal::new(0.0, 0.0);
+	/// assert!(result.is_err());
+	/// ```
+	pub fn new(mean: f64, std_dev: f64) -> Result<Normal, NormalError> {
+		if mean.is_nan() {
+			return Err(NormalError::MeanInvalid);
+		}
 
-        if std_dev.is_nan() || std_dev <= 0.0 {
-            return Err(NormalError::StandardDeviationInvalid);
-        }
+		if std_dev.is_nan() || std_dev <= 0.0 {
+			return Err(NormalError::StandardDeviationInvalid);
+		}
 
-        Ok(Normal { mean, std_dev })
-    }
+		Ok(Normal { mean, std_dev })
+	}
 
-    /// Constructs a new standard normal distribution with a mean of 0
-    /// and a standard deviation of 1.
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::Normal;
-    ///
-    /// let mut result = Normal::standard();
-    /// ```
-    pub fn standard() -> Normal {
-        Normal {
-            mean: 0.0,
-            std_dev: 1.0,
-        }
-    }
+	/// Constructs a new standard normal distribution with a mean of 0
+	/// and a standard deviation of 1.
+	///
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::Normal;
+	///
+	/// let mut result = Normal::standard();
+	/// ```
+	pub fn standard() -> Normal {
+		Normal {
+			mean: 0.0,
+			std_dev: 1.0,
+		}
+	}
 }
 
 impl core::fmt::Display for Normal {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "N({},{})", self.mean, self.std_dev)
-    }
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		write!(f, "N({},{})", self.mean, self.std_dev)
+	}
 }
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl ::rand::distr::Distribution<f64> for Normal {
-    fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        sample_unchecked(rng, self.mean, self.std_dev)
-    }
+impl rand::distr::Distribution<f64> for Normal {
+	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+		sample_unchecked(rng, self.mean, self.std_dev)
+	}
 }
 
 impl ContinuousCDF<f64, f64> for Normal {
-    /// Calculates the cumulative distribution function for the
-    /// normal distribution at `x`
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// (1 / 2) * (1 + erf((x - μ) / (σ * sqrt(2))))
-    /// ```
-    ///
-    /// where `μ` is the mean, `σ` is the standard deviation, and
-    /// `erf` is the error function
-    fn cdf(&self, x: f64) -> f64 {
-        cdf_unchecked(x, self.mean, self.std_dev)
-    }
+	/// Calculates the cumulative distribution function for the
+	/// normal distribution at `x`
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (1 / 2) * (1 + erf((x - μ) / (σ * sqrt(2))))
+	/// ```
+	///
+	/// where `μ` is the mean, `σ` is the standard deviation, and
+	/// `erf` is the error function
+	fn cdf(&self, x: f64) -> f64 {
+		cdf_unchecked(x, self.mean, self.std_dev)
+	}
 
-    /// Calculates the survival function for the
-    /// normal distribution at `x`
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// (1 / 2) * (1 + erf(-(x - μ) / (σ * sqrt(2))))
-    /// ```
-    ///
-    /// where `μ` is the mean, `σ` is the standard deviation, and
-    /// `erf` is the error function
-    ///
-    /// note that this calculates the complement due to flipping
-    /// the sign of the argument error function with respect to the cdf.
-    ///
-    /// the normal cdf Φ (and internal error function) as the following property:
-    /// ```text
-    ///  Φ(-x) + Φ(x) = 1
-    ///  Φ(-x)        = 1 - Φ(x)
-    /// ```
-    fn sf(&self, x: f64) -> f64 {
-        sf_unchecked(x, self.mean, self.std_dev)
-    }
+	/// Calculates the survival function for the
+	/// normal distribution at `x`
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (1 / 2) * (1 + erf(-(x - μ) / (σ * sqrt(2))))
+	/// ```
+	///
+	/// where `μ` is the mean, `σ` is the standard deviation, and
+	/// `erf` is the error function
+	///
+	/// note that this calculates the complement due to flipping
+	/// the sign of the argument error function with respect to the cdf.
+	///
+	/// the normal cdf Φ (and internal error function) as the following property:
+	/// ```text
+	///  Φ(-x) + Φ(x) = 1
+	///  Φ(-x)        = 1 - Φ(x)
+	/// ```
+	fn sf(&self, x: f64) -> f64 {
+		sf_unchecked(x, self.mean, self.std_dev)
+	}
 
-    /// Calculates the inverse cumulative distribution function for the
-    /// normal distribution at `x`.
-    /// In other languages, such as R, this is known as the the quantile function.
-    ///
-    /// # Panics
-    ///
-    /// If `x < 0.0` or `x > 1.0`
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// μ - sqrt(2) * σ * erfc_inv(2x)
-    /// ```
-    ///
-    /// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
-    /// the inverse of the complementary error function
-    fn inverse_cdf(&self, x: f64) -> f64 {
-        if !(0.0..=1.0).contains(&x) {
-            panic!("x must be in [0, 1]");
-        } else {
-            self.mean - (self.std_dev * f64::consts::SQRT_2 * erf::erfc_inv(2.0 * x))
-        }
-    }
+	/// Calculates the inverse cumulative distribution function for the
+	/// normal distribution at `x`.
+	/// In other languages, such as R, this is known as the the quantile function.
+	///
+	/// # Panics
+	///
+	/// If `x < 0.0` or `x > 1.0`
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// μ - sqrt(2) * σ * erfc_inv(2x)
+	/// ```
+	///
+	/// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
+	/// the inverse of the complementary error function
+	fn inverse_cdf(&self, x: f64) -> f64 {
+		if !(0.0..=1.0).contains(&x) {
+			panic!("x must be in [0, 1]");
+		} else {
+			self.mean
+				- (self.std_dev
+					* f64::consts::SQRT_2 * erf::erfc_inv(
+					2.0 * x,
+				))
+		}
+	}
 }
 
 impl Min<f64> for Normal {
-    /// Returns the minimum value in the domain of the
-    /// normal distribution representable by a double precision float
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// f64::NEG_INFINITY
-    /// ```
-    fn min(&self) -> f64 {
-        f64::NEG_INFINITY
-    }
+	/// Returns the minimum value in the domain of the
+	/// normal distribution representable by a double precision float
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// f64::NEG_INFINITY
+	/// ```
+	fn min(&self) -> f64 {
+		f64::NEG_INFINITY
+	}
 }
 
 impl Max<f64> for Normal {
-    /// Returns the maximum value in the domain of the
-    /// normal distribution representable by a double precision float
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// f64::INFINITY
-    /// ```
-    fn max(&self) -> f64 {
-        f64::INFINITY
-    }
+	/// Returns the maximum value in the domain of the
+	/// normal distribution representable by a double precision float
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// f64::INFINITY
+	/// ```
+	fn max(&self) -> f64 {
+		f64::INFINITY
+	}
 }
 
 impl Distribution<f64> for Normal {
-    /// Returns the mean of the normal distribution
-    ///
-    /// # Remarks
-    ///
-    /// This is the same mean used to construct the distribution
-    fn mean(&self) -> Option<f64> {
-        Some(self.mean)
-    }
+	/// Returns the mean of the normal distribution
+	///
+	/// # Remarks
+	///
+	/// This is the same mean used to construct the distribution
+	fn mean(&self) -> Option<f64> {
+		Some(self.mean)
+	}
 
-    /// Returns the variance of the normal distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// σ^2
-    /// ```
-    ///
-    /// where `σ` is the standard deviation
-    fn variance(&self) -> Option<f64> {
-        Some(self.std_dev * self.std_dev)
-    }
+	/// Returns the variance of the normal distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// σ^2
+	/// ```
+	///
+	/// where `σ` is the standard deviation
+	fn variance(&self) -> Option<f64> {
+		Some(self.std_dev * self.std_dev)
+	}
 
-    /// Returns the standard deviation of the normal distribution
-    /// # Remarks
-    /// This is the same standard deviation used to construct the distribution
-    fn std_dev(&self) -> Option<f64> {
-        Some(self.std_dev)
-    }
+	/// Returns the standard deviation of the normal distribution
+	/// # Remarks
+	/// This is the same standard deviation used to construct the distribution
+	fn std_dev(&self) -> Option<f64> {
+		Some(self.std_dev)
+	}
 
-    /// Returns the entropy of the normal distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// (1 / 2) * ln(2σ^2 * π * e)
-    /// ```
-    ///
-    /// where `σ` is the standard deviation
-    fn entropy(&self) -> Option<f64> {
-        Some(self.std_dev.ln() + consts::LN_SQRT_2PIE)
-    }
+	/// Returns the entropy of the normal distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (1 / 2) * ln(2σ^2 * π * e)
+	/// ```
+	///
+	/// where `σ` is the standard deviation
+	fn entropy(&self) -> Option<f64> {
+		Some(self.std_dev.ln() + consts::LN_SQRT_2PIE)
+	}
 
-    /// Returns the skewness of the normal distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// 0
-    /// ```
-    fn skewness(&self) -> Option<f64> {
-        Some(0.0)
-    }
+	/// Returns the skewness of the normal distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// 0
+	/// ```
+	fn skewness(&self) -> Option<f64> {
+		Some(0.0)
+	}
 }
 
 impl Median<f64> for Normal {
-    /// Returns the median of the normal distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// μ
-    /// ```
-    ///
-    /// where `μ` is the mean
-    fn median(&self) -> f64 {
-        self.mean
-    }
+	/// Returns the median of the normal distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// μ
+	/// ```
+	///
+	/// where `μ` is the mean
+	fn median(&self) -> f64 {
+		self.mean
+	}
 }
 
 impl Mode<Option<f64>> for Normal {
-    /// Returns the mode of the normal distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// μ
-    /// ```
-    ///
-    /// where `μ` is the mean
-    fn mode(&self) -> Option<f64> {
-        Some(self.mean)
-    }
+	/// Returns the mode of the normal distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// μ
+	/// ```
+	///
+	/// where `μ` is the mean
+	fn mode(&self) -> Option<f64> {
+		Some(self.mean)
+	}
 }
 
 impl Continuous<f64, f64> for Normal {
-    /// Calculates the probability density function for the normal distribution
-    /// at `x`
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// (1 / sqrt(2σ^2 * π)) * e^(-(x - μ)^2 / 2σ^2)
-    /// ```
-    ///
-    /// where `μ` is the mean and `σ` is the standard deviation
-    fn pdf(&self, x: f64) -> f64 {
-        pdf_unchecked(x, self.mean, self.std_dev)
-    }
+	/// Calculates the probability density function for the normal distribution
+	/// at `x`
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (1 / sqrt(2σ^2 * π)) * e^(-(x - μ)^2 / 2σ^2)
+	/// ```
+	///
+	/// where `μ` is the mean and `σ` is the standard deviation
+	fn pdf(&self, x: f64) -> f64 {
+		pdf_unchecked(x, self.mean, self.std_dev)
+	}
 
-    /// Calculates the log probability density function for the normal
-    /// distribution
-    /// at `x`
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ln((1 / sqrt(2σ^2 * π)) * e^(-(x - μ)^2 / 2σ^2))
-    /// ```
-    ///
-    /// where `μ` is the mean and `σ` is the standard deviation
-    fn ln_pdf(&self, x: f64) -> f64 {
-        ln_pdf_unchecked(x, self.mean, self.std_dev)
-    }
+	/// Calculates the log probability density function for the normal
+	/// distribution
+	/// at `x`
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// ln((1 / sqrt(2σ^2 * π)) * e^(-(x - μ)^2 / 2σ^2))
+	/// ```
+	///
+	/// where `μ` is the mean and `σ` is the standard deviation
+	fn ln_pdf(&self, x: f64) -> f64 {
+		ln_pdf_unchecked(x, self.mean, self.std_dev)
+	}
 }
 
 /// performs an unchecked cdf calculation for a normal distribution
 /// with the given mean and standard deviation at x
 pub fn cdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
-    0.5 * erf::erfc((mean - x) / (std_dev * f64::consts::SQRT_2))
+	0.5 * erf::erfc((mean - x) / (std_dev * f64::consts::SQRT_2))
 }
 
 /// performs an unchecked sf calculation for a normal distribution
 /// with the given mean and standard deviation at x
 pub fn sf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
-    0.5 * erf::erfc((x - mean) / (std_dev * f64::consts::SQRT_2))
+	0.5 * erf::erfc((x - mean) / (std_dev * f64::consts::SQRT_2))
 }
 
 /// performs an unchecked pdf calculation for a normal distribution
 /// with the given mean and standard deviation at x
 pub fn pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
-    let d = (x - mean) / std_dev;
-    (-0.5 * d * d).exp() / (consts::SQRT_2PI * std_dev)
+	let d = (x - mean) / std_dev;
+	(-0.5 * d * d).exp() / (consts::SQRT_2PI * std_dev)
 }
 
 /// performs an unchecked log(pdf) calculation for a normal distribution
 /// with the given mean and standard deviation at x
 pub fn ln_pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
-    let d = (x - mean) / std_dev;
-    (-0.5 * d * d) - consts::LN_SQRT_2PI - std_dev.ln()
+	let d = (x - mean) / std_dev;
+	(-0.5 * d * d) - consts::LN_SQRT_2PI - std_dev.ln()
 }
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 /// draws a sample from a normal distribution using the Box-Muller algorithm
-pub fn sample_unchecked<R: ::rand::Rng + ?Sized>(rng: &mut R, mean: f64, std_dev: f64) -> f64 {
-    use crate::distribution::ziggurat;
+pub fn sample_unchecked<R: rand::Rng + ?Sized>(
+	rng: &mut R,
+	mean: f64,
+	std_dev: f64,
+) -> f64 {
+	use crate::distribution::ziggurat;
 
-    mean + std_dev * ziggurat::sample_std_normal(rng)
+	mean + std_dev * ziggurat::sample_std_normal(rng)
 }
 
 impl core::default::Default for Normal {
-    /// Returns the standard normal distribution with a mean of 0
-    /// and a standard deviation of 1.
-    fn default() -> Self {
-        Self::standard()
-    }
+	/// Returns the standard normal distribution with a mean of 0
+	/// and a standard deviation of 1.
+	fn default() -> Self {
+		Self::standard()
+	}
 }
 
 #[rustfmt::skip]

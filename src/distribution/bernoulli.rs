@@ -20,257 +20,257 @@ use crate::statistics::*;
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Bernoulli {
-    b: Binomial,
+	b: Binomial,
 }
 
 impl Bernoulli {
-    /// Constructs a new bernoulli distribution with
-    /// the given `p` probability of success.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if `p` is `NaN`, less than `0.0`
-    /// or greater than `1.0`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::Bernoulli;
-    ///
-    /// let mut result = Bernoulli::new(0.5);
-    /// assert!(result.is_ok());
-    ///
-    /// result = Bernoulli::new(-0.5);
-    /// assert!(result.is_err());
-    /// ```
-    pub fn new(p: f64) -> Result<Bernoulli, BinomialError> {
-        Binomial::new(p, 1).map(|b| Bernoulli { b })
-    }
+	/// Constructs a new bernoulli distribution with
+	/// the given `p` probability of success.
+	///
+	/// # Errors
+	///
+	/// Returns an error if `p` is `NaN`, less than `0.0`
+	/// or greater than `1.0`
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::Bernoulli;
+	///
+	/// let mut result = Bernoulli::new(0.5);
+	/// assert!(result.is_ok());
+	///
+	/// result = Bernoulli::new(-0.5);
+	/// assert!(result.is_err());
+	/// ```
+	pub fn new(p: f64) -> Result<Bernoulli, BinomialError> {
+		Binomial::new(p, 1).map(|b| Bernoulli { b })
+	}
 
-    /// Returns the probability of success `p` of the
-    /// bernoulli distribution.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::Bernoulli;
-    ///
-    /// let n = Bernoulli::new(0.5).unwrap();
-    /// assert_eq!(n.p(), 0.5);
-    /// ```
-    pub fn p(&self) -> f64 {
-        self.b.p()
-    }
+	/// Returns the probability of success `p` of the
+	/// bernoulli distribution.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::Bernoulli;
+	///
+	/// let n = Bernoulli::new(0.5).unwrap();
+	/// assert_eq!(n.p(), 0.5);
+	/// ```
+	pub fn p(&self) -> f64 {
+		self.b.p()
+	}
 
-    /// Returns the number of trials `n` of the
-    /// bernoulli distribution. Will always be `1.0`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::Bernoulli;
-    ///
-    /// let n = Bernoulli::new(0.5).unwrap();
-    /// assert_eq!(n.n(), 1);
-    /// ```
-    pub fn n(&self) -> u64 {
-        1
-    }
+	/// Returns the number of trials `n` of the
+	/// bernoulli distribution. Will always be `1.0`.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::Bernoulli;
+	///
+	/// let n = Bernoulli::new(0.5).unwrap();
+	/// assert_eq!(n.n(), 1);
+	/// ```
+	pub fn n(&self) -> u64 {
+		1
+	}
 }
 
 impl core::fmt::Display for Bernoulli {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Bernoulli({})", self.p())
-    }
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		write!(f, "Bernoulli({})", self.p())
+	}
 }
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl ::rand::distr::Distribution<bool> for Bernoulli {
-    fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> bool {
-        rng.random_bool(self.p())
-    }
+impl rand::distr::Distribution<bool> for Bernoulli {
+	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> bool {
+		rng.random_bool(self.p())
+	}
 }
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl ::rand::distr::Distribution<f64> for Bernoulli {
-    fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        rng.sample::<bool, _>(self) as u8 as f64
-    }
+impl rand::distr::Distribution<f64> for Bernoulli {
+	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+		rng.sample::<bool, _>(self) as u8 as f64
+	}
 }
 
 impl DiscreteCDF<u64, f64> for Bernoulli {
-    /// Calculates the cumulative distribution
-    /// function for the bernoulli distribution at `x`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// if x >= 1 { 1 }
-    /// else { 1 - p }
-    /// ```
-    fn cdf(&self, x: u64) -> f64 {
-        if x >= 1 {
-            1.
-        } else {
-            1. - self.b.p()
-        }
-    }
+	/// Calculates the cumulative distribution
+	/// function for the bernoulli distribution at `x`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// if x >= 1 { 1 }
+	/// else { 1 - p }
+	/// ```
+	fn cdf(&self, x: u64) -> f64 {
+		if x >= 1 {
+			1.
+		} else {
+			1. - self.b.p()
+		}
+	}
 
-    /// Calculates the survival function for the
-    /// bernoulli distribution at `x`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// if x < 0 { 1 }
-    /// else if x >= 1 { 0 }
-    /// else { p }
-    /// ```
-    fn sf(&self, x: u64) -> f64 {
-        self.b.sf(x)
-    }
+	/// Calculates the survival function for the
+	/// bernoulli distribution at `x`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// if x < 0 { 1 }
+	/// else if x >= 1 { 0 }
+	/// else { p }
+	/// ```
+	fn sf(&self, x: u64) -> f64 {
+		self.b.sf(x)
+	}
 }
 
 impl Min<u64> for Bernoulli {
-    /// Returns the minimum value in the domain of the
-    /// bernoulli distribution representable by a 64-
-    /// bit integer
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// 0
-    /// ```
-    fn min(&self) -> u64 {
-        0
-    }
+	/// Returns the minimum value in the domain of the
+	/// bernoulli distribution representable by a 64-
+	/// bit integer
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// 0
+	/// ```
+	fn min(&self) -> u64 {
+		0
+	}
 }
 
 impl Max<u64> for Bernoulli {
-    /// Returns the maximum value in the domain of the
-    /// bernoulli distribution representable by a 64-
-    /// bit integer
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// 1
-    /// ```
-    fn max(&self) -> u64 {
-        1
-    }
+	/// Returns the maximum value in the domain of the
+	/// bernoulli distribution representable by a 64-
+	/// bit integer
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// 1
+	/// ```
+	fn max(&self) -> u64 {
+		1
+	}
 }
 
 impl Distribution<f64> for Bernoulli {
-    /// Returns the mean of the bernoulli
-    /// distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// p
-    /// ```
-    fn mean(&self) -> Option<f64> {
-        self.b.mean()
-    }
+	/// Returns the mean of the bernoulli
+	/// distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// p
+	/// ```
+	fn mean(&self) -> Option<f64> {
+		self.b.mean()
+	}
 
-    /// Returns the variance of the bernoulli
-    /// distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// p * (1 - p)
-    /// ```
-    fn variance(&self) -> Option<f64> {
-        self.b.variance()
-    }
+	/// Returns the variance of the bernoulli
+	/// distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// p * (1 - p)
+	/// ```
+	fn variance(&self) -> Option<f64> {
+		self.b.variance()
+	}
 
-    /// Returns the entropy of the bernoulli
-    /// distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// q = (1 - p)
-    /// -q * ln(q) - p * ln(p)
-    /// ```
-    fn entropy(&self) -> Option<f64> {
-        self.b.entropy()
-    }
+	/// Returns the entropy of the bernoulli
+	/// distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// q = (1 - p)
+	/// -q * ln(q) - p * ln(p)
+	/// ```
+	fn entropy(&self) -> Option<f64> {
+		self.b.entropy()
+	}
 
-    /// Returns the skewness of the bernoulli
-    /// distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// q = (1 - p)
-    /// (1 - 2p) / sqrt(p * q)
-    /// ```
-    fn skewness(&self) -> Option<f64> {
-        self.b.skewness()
-    }
+	/// Returns the skewness of the bernoulli
+	/// distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// q = (1 - p)
+	/// (1 - 2p) / sqrt(p * q)
+	/// ```
+	fn skewness(&self) -> Option<f64> {
+		self.b.skewness()
+	}
 }
 
 impl Median<f64> for Bernoulli {
-    /// Returns the median of the bernoulli
-    /// distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// if p < 0.5 { 0 }
-    /// else if p > 0.5 { 1 }
-    /// else { 0.5 }
-    /// ```
-    fn median(&self) -> f64 {
-        self.b.median()
-    }
+	/// Returns the median of the bernoulli
+	/// distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// if p < 0.5 { 0 }
+	/// else if p > 0.5 { 1 }
+	/// else { 0.5 }
+	/// ```
+	fn median(&self) -> f64 {
+		self.b.median()
+	}
 }
 
 impl Mode<Option<u64>> for Bernoulli {
-    /// Returns the mode of the bernoulli distribution
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// if p < 0.5 { 0 }
-    /// else { 1 }
-    /// ```
-    fn mode(&self) -> Option<u64> {
-        self.b.mode()
-    }
+	/// Returns the mode of the bernoulli distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// if p < 0.5 { 0 }
+	/// else { 1 }
+	/// ```
+	fn mode(&self) -> Option<u64> {
+		self.b.mode()
+	}
 }
 
 impl Discrete<u64, f64> for Bernoulli {
-    /// Calculates the probability mass function for the
-    /// bernoulli distribution at `x`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// if x == 0 { 1 - p }
-    /// else { p }
-    /// ```
-    fn pmf(&self, x: u64) -> f64 {
-        self.b.pmf(x)
-    }
+	/// Calculates the probability mass function for the
+	/// bernoulli distribution at `x`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// if x == 0 { 1 - p }
+	/// else { p }
+	/// ```
+	fn pmf(&self, x: u64) -> f64 {
+		self.b.pmf(x)
+	}
 
-    /// Calculates the log probability mass function for the
-    /// bernoulli distribution at `x`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// else if x == 0 { ln(1 - p) }
-    /// else { ln(p) }
-    /// ```
-    fn ln_pmf(&self, x: u64) -> f64 {
-        self.b.ln_pmf(x)
-    }
+	/// Calculates the log probability mass function for the
+	/// bernoulli distribution at `x`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// else if x == 0 { ln(1 - p) }
+	/// else { ln(p) }
+	/// ```
+	fn ln_pmf(&self, x: u64) -> f64 {
+		self.b.ln_pmf(x)
+	}
 }
 
 #[rustfmt::skip]

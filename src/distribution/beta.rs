@@ -18,370 +18,386 @@ use crate::statistics::*;
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Beta {
-    shape_a: f64,
-    shape_b: f64,
+	shape_a: f64,
+	shape_b: f64,
 }
 
 /// Represents the errors that can occur when creating a [`Beta`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
 pub enum BetaError {
-    /// Shape A is NaN, infinite, zero or negative.
-    ShapeAInvalid,
+	/// Shape A is NaN, infinite, zero or negative.
+	ShapeAInvalid,
 
-    /// Shape B is NaN, infinite, zero or negative.
-    ShapeBInvalid,
+	/// Shape B is NaN, infinite, zero or negative.
+	ShapeBInvalid,
 }
 
 impl core::fmt::Display for BetaError {
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            BetaError::ShapeAInvalid => write!(f, "Shape A is NaN, infinite, zero or negative"),
-            BetaError::ShapeBInvalid => write!(f, "Shape B is NaN, infinite, zero or negative"),
-        }
-    }
+	#[cfg_attr(coverage_nightly, coverage(off))]
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		match self {
+			BetaError::ShapeAInvalid => write!(
+				f,
+				"Shape A is NaN, infinite, zero or negative"
+			),
+			BetaError::ShapeBInvalid => write!(
+				f,
+				"Shape B is NaN, infinite, zero or negative"
+			),
+		}
+	}
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for BetaError {}
 
 impl Beta {
-    /// Constructs a new beta distribution with shapeA (α) of `shape_a`
-    /// and shapeB (β) of `shape_b`
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if `shape_a` or `shape_b` are `NaN` or infinite.
-    /// Also returns an error if `shape_a <= 0.0` or `shape_b <= 0.0`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::Beta;
-    ///
-    /// let mut result = Beta::new(2.0, 2.0);
-    /// assert!(result.is_ok());
-    ///
-    /// result = Beta::new(0.0, 0.0);
-    /// assert!(result.is_err());
-    /// ```
-    pub fn new(shape_a: f64, shape_b: f64) -> Result<Beta, BetaError> {
-        if shape_a.is_nan() || shape_a.is_infinite() || shape_a <= 0.0 {
-            return Err(BetaError::ShapeAInvalid);
-        }
+	/// Constructs a new beta distribution with shapeA (α) of `shape_a`
+	/// and shapeB (β) of `shape_b`
+	///
+	/// # Errors
+	///
+	/// Returns an error if `shape_a` or `shape_b` are `NaN` or infinite.
+	/// Also returns an error if `shape_a <= 0.0` or `shape_b <= 0.0`
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::Beta;
+	///
+	/// let mut result = Beta::new(2.0, 2.0);
+	/// assert!(result.is_ok());
+	///
+	/// result = Beta::new(0.0, 0.0);
+	/// assert!(result.is_err());
+	/// ```
+	pub fn new(shape_a: f64, shape_b: f64) -> Result<Beta, BetaError> {
+		if shape_a.is_nan() || shape_a.is_infinite() || shape_a <= 0.0 {
+			return Err(BetaError::ShapeAInvalid);
+		}
 
-        if shape_b.is_nan() || shape_b.is_infinite() || shape_b <= 0.0 {
-            return Err(BetaError::ShapeBInvalid);
-        }
+		if shape_b.is_nan() || shape_b.is_infinite() || shape_b <= 0.0 {
+			return Err(BetaError::ShapeBInvalid);
+		}
 
-        Ok(Beta { shape_a, shape_b })
-    }
+		Ok(Beta { shape_a, shape_b })
+	}
 
-    /// Returns the shapeA (α) of the beta distribution
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::Beta;
-    ///
-    /// let n = Beta::new(1.0, 2.0).unwrap();
-    /// assert_eq!(n.shape_a(), 1.0);
-    /// ```
-    pub fn shape_a(&self) -> f64 {
-        self.shape_a
-    }
+	/// Returns the shapeA (α) of the beta distribution
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::Beta;
+	///
+	/// let n = Beta::new(1.0, 2.0).unwrap();
+	/// assert_eq!(n.shape_a(), 1.0);
+	/// ```
+	pub fn shape_a(&self) -> f64 {
+		self.shape_a
+	}
 
-    /// Returns the shapeB (β) of the beta distributionβ
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use statrs::distribution::Beta;
-    ///
-    /// let n = Beta::new(1.0, 2.0).unwrap();
-    /// assert_eq!(n.shape_b(), 2.0);
-    /// ```
-    pub fn shape_b(&self) -> f64 {
-        self.shape_b
-    }
+	/// Returns the shapeB (β) of the beta distributionβ
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::Beta;
+	///
+	/// let n = Beta::new(1.0, 2.0).unwrap();
+	/// assert_eq!(n.shape_b(), 2.0);
+	/// ```
+	pub fn shape_b(&self) -> f64 {
+		self.shape_b
+	}
 }
 
 impl core::fmt::Display for Beta {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Beta(a={}, b={})", self.shape_a, self.shape_b)
-    }
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		write!(f, "Beta(a={}, b={})", self.shape_a, self.shape_b)
+	}
 }
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl ::rand::distr::Distribution<f64> for Beta {
-    fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        // Generated by sampling two gamma distributions and normalizing.
-        let x = super::gamma::sample_unchecked(rng, self.shape_a, 1.0);
-        let y = super::gamma::sample_unchecked(rng, self.shape_b, 1.0);
-        x / (x + y)
-    }
+impl rand::distr::Distribution<f64> for Beta {
+	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+		// Generated by sampling two gamma distributions and normalizing.
+		let x = super::gamma::sample_unchecked(rng, self.shape_a, 1.0);
+		let y = super::gamma::sample_unchecked(rng, self.shape_b, 1.0);
+		x / (x + y)
+	}
 }
 
 impl ContinuousCDF<f64, f64> for Beta {
-    /// Calculates the cumulative distribution function for the beta
-    /// distribution at `x`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// I_x(α, β)
-    /// ```
-    ///
-    /// where `α` is shapeA, `β` is shapeB, and `I_x` is the regularized
-    /// lower incomplete beta function.
-    fn cdf(&self, x: f64) -> f64 {
-        if x < 0.0 {
-            0.0
-        } else if x >= 1.0 {
-            1.0
-        } else if ulps_eq!(self.shape_a, 1.0) && ulps_eq!(self.shape_b, 1.0) {
-            x
-        } else {
-            beta::beta_reg(self.shape_a, self.shape_b, x)
-        }
-    }
+	/// Calculates the cumulative distribution function for the beta
+	/// distribution at `x`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// I_x(α, β)
+	/// ```
+	///
+	/// where `α` is shapeA, `β` is shapeB, and `I_x` is the regularized
+	/// lower incomplete beta function.
+	fn cdf(&self, x: f64) -> f64 {
+		if x < 0.0 {
+			0.0
+		} else if x >= 1.0 {
+			1.0
+		} else if ulps_eq!(self.shape_a, 1.0)
+			&& ulps_eq!(self.shape_b, 1.0)
+		{
+			x
+		} else {
+			beta::beta_reg(self.shape_a, self.shape_b, x)
+		}
+	}
 
-    /// Calculates the survival function for the beta distribution at `x`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// I_(1-x)(β, α)
-    /// ```
-    ///
-    /// where `α` is shapeA, `β` is shapeB, and `I_x` is the regularized
-    /// lower incomplete beta function.
-    fn sf(&self, x: f64) -> f64 {
-        if x < 0.0 {
-            1.0
-        } else if x >= 1.0 {
-            0.0
-        } else if ulps_eq!(self.shape_a, 1.0) && ulps_eq!(self.shape_b, 1.0) {
-            1. - x
-        } else {
-            beta::beta_reg(self.shape_b, self.shape_a, 1.0 - x)
-        }
-    }
+	/// Calculates the survival function for the beta distribution at `x`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// I_(1-x)(β, α)
+	/// ```
+	///
+	/// where `α` is shapeA, `β` is shapeB, and `I_x` is the regularized
+	/// lower incomplete beta function.
+	fn sf(&self, x: f64) -> f64 {
+		if x < 0.0 {
+			1.0
+		} else if x >= 1.0 {
+			0.0
+		} else if ulps_eq!(self.shape_a, 1.0)
+			&& ulps_eq!(self.shape_b, 1.0)
+		{
+			1. - x
+		} else {
+			beta::beta_reg(self.shape_b, self.shape_a, 1.0 - x)
+		}
+	}
 
-    /// Calculates the inverse cumulative distribution function for the beta
-    /// distribution at `x`.
-    ///
-    /// # Panics
-    ///
-    /// If x is not in `[0, 1]`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// I^{-1}_x(α, β)
-    /// ```
-    ///
-    /// where `α` is shapeA, `β` is shapeB, and `I_x` is the inverse of the
-    /// regularized lower incomplete beta function.
-    fn inverse_cdf(&self, x: f64) -> f64 {
-        if !(0.0..=1.0).contains(&x) {
-            panic!("x must be in [0, 1]");
-        } else {
-            beta::inv_beta_reg(self.shape_a, self.shape_b, x)
-        }
-    }
+	/// Calculates the inverse cumulative distribution function for the beta
+	/// distribution at `x`.
+	///
+	/// # Panics
+	///
+	/// If x is not in `[0, 1]`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// I^{-1}_x(α, β)
+	/// ```
+	///
+	/// where `α` is shapeA, `β` is shapeB, and `I_x` is the inverse of the
+	/// regularized lower incomplete beta function.
+	fn inverse_cdf(&self, x: f64) -> f64 {
+		if !(0.0..=1.0).contains(&x) {
+			panic!("x must be in [0, 1]");
+		} else {
+			beta::inv_beta_reg(self.shape_a, self.shape_b, x)
+		}
+	}
 }
 
 impl Min<f64> for Beta {
-    /// Returns the minimum value in the domain of the beta distribution
-    /// representable by a double precision float.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// 0
-    /// ```
-    fn min(&self) -> f64 {
-        0.0
-    }
+	/// Returns the minimum value in the domain of the beta distribution
+	/// representable by a double precision float.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// 0
+	/// ```
+	fn min(&self) -> f64 {
+		0.0
+	}
 }
 
 impl Max<f64> for Beta {
-    /// Returns the maximum value in the domain of the beta distribution
-    /// representable by a double precision float.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// 1
-    /// ```
-    fn max(&self) -> f64 {
-        1.0
-    }
+	/// Returns the maximum value in the domain of the beta distribution
+	/// representable by a double precision float.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// 1
+	/// ```
+	fn max(&self) -> f64 {
+		1.0
+	}
 }
 
 impl Distribution<f64> for Beta {
-    /// Returns the mean of the beta distribution.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// α / (α + β)
-    /// ```
-    ///
-    /// where `α` is shapeA and `β` is shapeB.
-    fn mean(&self) -> Option<f64> {
-        Some(self.shape_a / (self.shape_a + self.shape_b))
-    }
+	/// Returns the mean of the beta distribution.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// α / (α + β)
+	/// ```
+	///
+	/// where `α` is shapeA and `β` is shapeB.
+	fn mean(&self) -> Option<f64> {
+		Some(self.shape_a / (self.shape_a + self.shape_b))
+	}
 
-    /// Returns the variance of the beta distribution.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// (α * β) / ((α + β)^2 * (α + β + 1))
-    /// ```
-    ///
-    /// where `α` is shapeA and `β` is shapeB.
-    fn variance(&self) -> Option<f64> {
-        Some(
-            self.shape_a * self.shape_b
-                / ((self.shape_a + self.shape_b)
-                    * (self.shape_a + self.shape_b)
-                    * (self.shape_a + self.shape_b + 1.0)),
-        )
-    }
+	/// Returns the variance of the beta distribution.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (α * β) / ((α + β)^2 * (α + β + 1))
+	/// ```
+	///
+	/// where `α` is shapeA and `β` is shapeB.
+	fn variance(&self) -> Option<f64> {
+		Some(self.shape_a * self.shape_b
+			/ ((self.shape_a + self.shape_b)
+				* (self.shape_a + self.shape_b)
+				* (self.shape_a + self.shape_b + 1.0)))
+	}
 
-    /// Returns the entropy of the beta distribution.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ln(B(α, β)) - (α - 1)ψ(α) - (β - 1)ψ(β) + (α + β - 2)ψ(α + β)
-    /// ```
-    ///
-    /// where `α` is shapeA, `β` is shapeB and `ψ` is the digamma function.
-    fn entropy(&self) -> Option<f64> {
-        Some(
-            beta::ln_beta(self.shape_a, self.shape_b)
-                - (self.shape_a - 1.0) * gamma::digamma(self.shape_a)
-                - (self.shape_b - 1.0) * gamma::digamma(self.shape_b)
-                + (self.shape_a + self.shape_b - 2.0) * gamma::digamma(self.shape_a + self.shape_b),
-        )
-    }
+	/// Returns the entropy of the beta distribution.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// ln(B(α, β)) - (α - 1)ψ(α) - (β - 1)ψ(β) + (α + β - 2)ψ(α + β)
+	/// ```
+	///
+	/// where `α` is shapeA, `β` is shapeB and `ψ` is the digamma function.
+	fn entropy(&self) -> Option<f64> {
+		Some(beta::ln_beta(self.shape_a, self.shape_b)
+			- (self.shape_a - 1.0) * gamma::digamma(self.shape_a)
+			- (self.shape_b - 1.0) * gamma::digamma(self.shape_b)
+			+ (self.shape_a + self.shape_b - 2.0)
+				* gamma::digamma(self.shape_a + self.shape_b))
+	}
 
-    /// Returns the skewness of the Beta distribution.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// 2(β - α) * sqrt(α + β + 1) / ((α + β + 2) * sqrt(αβ))
-    /// ```
-    ///
-    /// where `α` is shapeA and `β` is shapeB.
-    fn skewness(&self) -> Option<f64> {
-        Some(
-            2.0 * (self.shape_b - self.shape_a) * (self.shape_a + self.shape_b + 1.0).sqrt()
-                / ((self.shape_a + self.shape_b + 2.0) * (self.shape_a * self.shape_b).sqrt()),
-        )
-    }
+	/// Returns the skewness of the Beta distribution.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// 2(β - α) * sqrt(α + β + 1) / ((α + β + 2) * sqrt(αβ))
+	/// ```
+	///
+	/// where `α` is shapeA and `β` is shapeB.
+	fn skewness(&self) -> Option<f64> {
+		Some(2.0 * (self.shape_b - self.shape_a)
+			* (self.shape_a + self.shape_b + 1.0).sqrt()
+			/ ((self.shape_a + self.shape_b + 2.0)
+				* (self.shape_a * self.shape_b).sqrt()))
+	}
 }
 
 impl Mode<Option<f64>> for Beta {
-    /// Returns the mode of the Beta distribution. Returns `None` if `α <= 1`
-    /// or `β <= 1`.
-    ///
-    /// # Remarks
-    ///
-    /// Since the mode is technically only calculated for `α > 1, β > 1`, those
-    /// are the only values we allow. We may consider relaxing this constraint
-    /// in the future.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// (α - 1) / (α + β - 2)
-    /// ```
-    ///
-    /// where `α` is shapeA and `β` is shapeB
-    fn mode(&self) -> Option<f64> {
-        // TODO: perhaps relax constraint in order to allow calculation
-        // of 'anti-mode;
-        if self.shape_a <= 1.0 || self.shape_b <= 1.0 {
-            None
-        } else {
-            Some((self.shape_a - 1.0) / (self.shape_a + self.shape_b - 2.0))
-        }
-    }
+	/// Returns the mode of the Beta distribution. Returns `None` if `α <= 1`
+	/// or `β <= 1`.
+	///
+	/// # Remarks
+	///
+	/// Since the mode is technically only calculated for `α > 1, β > 1`, those
+	/// are the only values we allow. We may consider relaxing this constraint
+	/// in the future.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (α - 1) / (α + β - 2)
+	/// ```
+	///
+	/// where `α` is shapeA and `β` is shapeB
+	fn mode(&self) -> Option<f64> {
+		// TODO: perhaps relax constraint in order to allow calculation
+		// of 'anti-mode;
+		if self.shape_a <= 1.0 || self.shape_b <= 1.0 {
+			None
+		} else {
+			Some((self.shape_a - 1.0)
+				/ (self.shape_a + self.shape_b - 2.0))
+		}
+	}
 }
 
 impl Continuous<f64, f64> for Beta {
-    /// Calculates the probability density function for the beta distribution
-    /// at `x`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// let B(α, β) = Γ(α)Γ(β)/Γ(α + β)
-    ///
-    /// x^(α - 1) * (1 - x)^(β - 1) / B(α, β)
-    /// ```
-    ///
-    /// where `α` is shapeA, `β` is shapeB, and `Γ` is the gamma function
-    fn pdf(&self, x: f64) -> f64 {
-        if !(0.0..=1.0).contains(&x) {
-            0.0
-        } else if ulps_eq!(self.shape_a, 1.0) && ulps_eq!(self.shape_b, 1.0) {
-            1.0
-        } else if self.shape_a > 80.0 || self.shape_b > 80.0 {
-            self.ln_pdf(x).exp()
-        } else {
-            let bb = gamma::gamma(self.shape_a + self.shape_b)
-                / (gamma::gamma(self.shape_a) * gamma::gamma(self.shape_b));
-            bb * x.powf(self.shape_a - 1.0) * (1.0 - x).powf(self.shape_b - 1.0)
-        }
-    }
+	/// Calculates the probability density function for the beta distribution
+	/// at `x`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// let B(α, β) = Γ(α)Γ(β)/Γ(α + β)
+	///
+	/// x^(α - 1) * (1 - x)^(β - 1) / B(α, β)
+	/// ```
+	///
+	/// where `α` is shapeA, `β` is shapeB, and `Γ` is the gamma function
+	fn pdf(&self, x: f64) -> f64 {
+		if !(0.0..=1.0).contains(&x) {
+			0.0
+		} else if ulps_eq!(self.shape_a, 1.0)
+			&& ulps_eq!(self.shape_b, 1.0)
+		{
+			1.0
+		} else if self.shape_a > 80.0 || self.shape_b > 80.0 {
+			self.ln_pdf(x).exp()
+		} else {
+			let bb = gamma::gamma(self.shape_a + self.shape_b)
+				/ (gamma::gamma(self.shape_a)
+					* gamma::gamma(self.shape_b));
+			bb * x.powf(self.shape_a - 1.0)
+				* (1.0 - x).powf(self.shape_b - 1.0)
+		}
+	}
 
-    /// Calculates the log probability density function for the beta
-    /// distribution at `x`.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// let B(α, β) = Γ(α)Γ(β)/Γ(α + β)
-    ///
-    /// ln(x^(α - 1) * (1 - x)^(β - 1) / B(α, β))
-    /// ```
-    ///
-    /// where `α` is shapeA, `β` is shapeB, and `Γ` is the gamma function.
-    fn ln_pdf(&self, x: f64) -> f64 {
-        if !(0.0..=1.0).contains(&x) {
-            f64::NEG_INFINITY
-        } else if ulps_eq!(self.shape_a, 1.0) && ulps_eq!(self.shape_b, 1.0) {
-            0.0
-        } else {
-            let aa = gamma::ln_gamma(self.shape_a + self.shape_b)
-                - gamma::ln_gamma(self.shape_a)
-                - gamma::ln_gamma(self.shape_b);
-            let bb = if ulps_eq!(self.shape_a, 1.0) && x == 0.0 {
-                0.0
-            } else if x == 0.0 {
-                f64::NEG_INFINITY
-            } else {
-                (self.shape_a - 1.0) * x.ln()
-            };
-            let cc = if ulps_eq!(self.shape_b, 1.0) && ulps_eq!(x, 1.0) {
-                0.0
-            } else if ulps_eq!(x, 1.0) {
-                f64::NEG_INFINITY
-            } else {
-                (self.shape_b - 1.0) * (1.0 - x).ln()
-            };
-            aa + bb + cc
-        }
-    }
+	/// Calculates the log probability density function for the beta
+	/// distribution at `x`.
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// let B(α, β) = Γ(α)Γ(β)/Γ(α + β)
+	///
+	/// ln(x^(α - 1) * (1 - x)^(β - 1) / B(α, β))
+	/// ```
+	///
+	/// where `α` is shapeA, `β` is shapeB, and `Γ` is the gamma function.
+	fn ln_pdf(&self, x: f64) -> f64 {
+		if !(0.0..=1.0).contains(&x) {
+			f64::NEG_INFINITY
+		} else if ulps_eq!(self.shape_a, 1.0)
+			&& ulps_eq!(self.shape_b, 1.0)
+		{
+			0.0
+		} else {
+			let aa = gamma::ln_gamma(self.shape_a + self.shape_b)
+				- gamma::ln_gamma(self.shape_a)
+				- gamma::ln_gamma(self.shape_b);
+			let bb = if ulps_eq!(self.shape_a, 1.0) && x == 0.0 {
+				0.0
+			} else if x == 0.0 {
+				f64::NEG_INFINITY
+			} else {
+				(self.shape_a - 1.0) * x.ln()
+			};
+			let cc = if ulps_eq!(self.shape_b, 1.0)
+				&& ulps_eq!(x, 1.0)
+			{
+				0.0
+			} else if ulps_eq!(x, 1.0) {
+				f64::NEG_INFINITY
+			} else {
+				(self.shape_b - 1.0) * (1.0 - x).ln()
+			};
+			aa + bb + cc
+		}
+	}
 }
 
 #[rustfmt::skip]
