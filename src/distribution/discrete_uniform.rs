@@ -8,8 +8,8 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{DiscreteUniform, Discrete};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{DiscreteUniform, Discrete};
+/// use stats::statistics::Distribution;
 ///
 /// let n = DiscreteUniform::new(0, 5).unwrap();
 /// assert_eq!(n.mean().unwrap(), 2.5);
@@ -53,7 +53,7 @@ impl DiscreteUniform {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::DiscreteUniform;
+	/// use stats::distribution::DiscreteUniform;
 	///
 	/// let mut result = DiscreteUniform::new(0, 5);
 	/// assert!(result.is_ok());
@@ -82,7 +82,7 @@ impl DiscreteUniform {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::DiscreteUniform;
+	/// use stats::distribution::DiscreteUniform;
 	///
 	/// let n = DiscreteUniform::new(0, 5).unwrap();
 	/// assert_eq!(n.min(), 0);
@@ -101,7 +101,7 @@ impl DiscreteUniform {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::DiscreteUniform;
+	/// use stats::distribution::DiscreteUniform;
 	///
 	/// let n = DiscreteUniform::new(0, 5).unwrap();
 	/// assert_eq!(n.max(), 5);

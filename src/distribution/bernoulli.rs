@@ -10,8 +10,8 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Bernoulli, Discrete};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Bernoulli, Discrete};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Bernoulli::new(0.5).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.5);
@@ -35,7 +35,7 @@ impl Bernoulli {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Bernoulli;
+	/// use stats::distribution::Bernoulli;
 	///
 	/// let mut result = Bernoulli::new(0.5);
 	/// assert!(result.is_ok());
@@ -53,7 +53,7 @@ impl Bernoulli {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Bernoulli;
+	/// use stats::distribution::Bernoulli;
 	///
 	/// let n = Bernoulli::new(0.5).unwrap();
 	/// assert_eq!(n.p(), 0.5);
@@ -68,7 +68,7 @@ impl Bernoulli {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Bernoulli;
+	/// use stats::distribution::Bernoulli;
 	///
 	/// let n = Bernoulli::new(0.5).unwrap();
 	/// assert_eq!(n.n(), 1);

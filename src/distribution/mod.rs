@@ -87,7 +87,7 @@ pub trait Continuous {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::{Continuous, Uniform};
+	/// use stats::distribution::{Continuous, Uniform};
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(1.0, n.pdf(0.5));
@@ -101,7 +101,7 @@ pub trait Continuous {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::{Continuous, Uniform};
+	/// use stats::distribution::{Continuous, Uniform};
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.0, n.ln_pdf(0.5));
@@ -122,7 +122,7 @@ where
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::{ContinuousCDF, Uniform};
+	/// use stats::distribution::{ContinuousCDF, Uniform};
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.cdf(0.5));
@@ -136,7 +136,7 @@ where
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::{ContinuousCDF, Uniform};
+	/// use stats::distribution::{ContinuousCDF, Uniform};
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.sf(0.5));
@@ -213,8 +213,8 @@ pub trait Discrete {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::{Discrete, Binomial};
-	/// use statrs::assert_almost_eq;
+	/// use stats::distribution::{Discrete, Binomial};
+	/// use stats::assert_almost_eq;
 	///
 	/// let n = Binomial::new(0.5, 10).unwrap();
 	/// assert_almost_eq!(n.pmf(5), 0.24609375, 1e-15);
@@ -228,8 +228,8 @@ pub trait Discrete {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::{Discrete, Binomial};
-	/// use statrs::assert_almost_eq;
+	/// use stats::distribution::{Discrete, Binomial};
+	/// use stats::assert_almost_eq;
 	///
 	/// let n = Binomial::new(0.5, 10).unwrap();
 	/// assert_almost_eq!(n.ln_pmf(5), (0.24609375f64).ln(), 1e-15);
@@ -250,7 +250,7 @@ where
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::{DiscreteCDF, DiscreteUniform};
+	/// use stats::distribution::{DiscreteCDF, DiscreteUniform};
 	///
 	/// let n = DiscreteUniform::new(1, 10).unwrap();
 	/// assert_eq!(0.6, n.cdf(6));
@@ -263,7 +263,7 @@ where
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::{DiscreteCDF, DiscreteUniform};
+	/// use stats::distribution::{DiscreteCDF, DiscreteUniform};
 	///
 	/// let n = DiscreteUniform::new(1, 10).unwrap();
 	/// assert_eq!(0.4, n.sf(6));

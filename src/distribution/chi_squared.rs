@@ -11,9 +11,9 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{ChiSquared, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{ChiSquared, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = ChiSquared::new(3.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
@@ -38,7 +38,7 @@ impl ChiSquared {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::ChiSquared;
+	/// use stats::distribution::ChiSquared;
 	///
 	/// let mut result = ChiSquared::new(3.0);
 	/// assert!(result.is_ok());
@@ -57,7 +57,7 @@ impl ChiSquared {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::ChiSquared;
+	/// use stats::distribution::ChiSquared;
 	///
 	/// let n = ChiSquared::new(3.0).unwrap();
 	/// assert_eq!(n.freedom(), 3.0);
@@ -71,7 +71,7 @@ impl ChiSquared {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::ChiSquared;
+	/// use stats::distribution::ChiSquared;
 	///
 	/// let n = ChiSquared::new(3.0).unwrap();
 	/// assert_eq!(n.shape(), 3.0 / 2.0);
@@ -85,7 +85,7 @@ impl ChiSquared {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::ChiSquared;
+	/// use stats::distribution::ChiSquared;
 	///
 	/// let n = ChiSquared::new(3.0).unwrap();
 	/// assert_eq!(n.rate(), 0.5);

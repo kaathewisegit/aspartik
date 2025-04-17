@@ -11,8 +11,8 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Geometric, Discrete};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Geometric, Discrete};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Geometric::new(0.3).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0 / 0.3);
@@ -56,7 +56,7 @@ impl Geometric {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Geometric;
+	/// use stats::distribution::Geometric;
 	///
 	/// let mut result = Geometric::new(0.5);
 	/// assert!(result.is_ok());
@@ -78,7 +78,7 @@ impl Geometric {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Geometric;
+	/// use stats::distribution::Geometric;
 	///
 	/// let n = Geometric::new(0.5).unwrap();
 	/// assert_eq!(n.p(), 0.5);

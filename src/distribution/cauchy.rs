@@ -8,8 +8,8 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Cauchy, Continuous};
-/// use statrs::statistics::Mode;
+/// use stats::distribution::{Cauchy, Continuous};
+/// use stats::statistics::Mode;
 ///
 /// let n = Cauchy::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.mode().unwrap(), 0.0);
@@ -60,7 +60,7 @@ impl Cauchy {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Cauchy;
+	/// use stats::distribution::Cauchy;
 	///
 	/// let mut result = Cauchy::new(0.0, 1.0);
 	/// assert!(result.is_ok());
@@ -85,7 +85,7 @@ impl Cauchy {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Cauchy;
+	/// use stats::distribution::Cauchy;
 	///
 	/// let n = Cauchy::new(0.0, 1.0).unwrap();
 	/// assert_eq!(n.location(), 0.0);
@@ -99,7 +99,7 @@ impl Cauchy {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Cauchy;
+	/// use stats::distribution::Cauchy;
 	///
 	/// let n = Cauchy::new(0.0, 1.0).unwrap();
 	/// assert_eq!(n.scale(), 1.0);

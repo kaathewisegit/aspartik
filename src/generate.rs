@@ -9,7 +9,7 @@ use core::f64::consts;
 /// # Examples
 ///
 /// ```
-/// use statrs::generate;
+/// use stats::generate;
 ///
 /// let x = generate::log_spaced(5, 0.0, 4.0);
 /// assert_eq!(x, [1.0, 10.0, 100.0, 1000.0, 10000.0]);
@@ -48,7 +48,7 @@ impl InfinitePeriodic {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::generate::InfinitePeriodic;
+	/// use stats::generate::InfinitePeriodic;
 	///
 	/// let x = InfinitePeriodic::new(8.0, 2.0, 10.0, 1.0,
 	/// 2).take(10).collect::<Vec<f64>>();
@@ -75,7 +75,7 @@ impl InfinitePeriodic {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::generate::InfinitePeriodic;
+	/// use stats::generate::InfinitePeriodic;
 	///
 	/// let x = InfinitePeriodic::default(8.0,
 	/// 2.0).take(10).collect::<Vec<f64>>();
@@ -123,7 +123,7 @@ impl InfiniteSinusoidal {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::generate::InfiniteSinusoidal;
+	/// use stats::generate::InfiniteSinusoidal;
 	///
 	/// let x = InfiniteSinusoidal::new(8.0, 2.0, 1.0, 5.0, 2.0,
 	/// 1).take(10).collect::<Vec<f64>>();
@@ -157,7 +157,7 @@ impl InfiniteSinusoidal {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::generate::InfiniteSinusoidal;
+	/// use stats::generate::InfiniteSinusoidal;
 	///
 	/// let x = InfiniteSinusoidal::default(8.0, 2.0,
 	/// 1.0).take(10).collect::<Vec<f64>>();
@@ -217,7 +217,7 @@ impl InfiniteSquare {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::generate::InfiniteSquare;
+	/// use stats::generate::InfiniteSquare;
 	///
 	/// let x = InfiniteSquare::new(3, 7, 1.0, -1.0,
 	/// 1).take(12).collect::<Vec<f64>>();
@@ -286,9 +286,9 @@ impl InfiniteTriangle {
 	///
 	/// ```
 	/// #[macro_use]
-	/// extern crate statrs;
+	/// extern crate stats;
 	///
-	/// use statrs::generate::InfiniteTriangle;
+	/// use stats::generate::InfiniteTriangle;
 	///
 	/// # fn main() {
 	/// let x = InfiniteTriangle::new(4, 7, 1.0, -1.0,
@@ -361,7 +361,7 @@ impl InfiniteSawtooth {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::generate::InfiniteSawtooth;
+	/// use stats::generate::InfiniteSawtooth;
 	///
 	/// let x = InfiniteSawtooth::new(5, 1.0, -1.0,
 	/// 1).take(12).collect::<Vec<f64>>();

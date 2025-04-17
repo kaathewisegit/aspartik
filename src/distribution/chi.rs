@@ -10,9 +10,9 @@ use core::num::NonZeroU64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Chi, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{Chi, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = Chi::new(2).unwrap();
 /// assert_almost_eq!(n.mean().unwrap(), 1.25331413731550025121, 1e-14);
@@ -55,7 +55,7 @@ impl Chi {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Chi;
+	/// use stats::distribution::Chi;
 	///
 	/// let mut result = Chi::new(2);
 	/// assert!(result.is_ok());
@@ -76,7 +76,7 @@ impl Chi {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Chi;
+	/// use stats::distribution::Chi;
 	///
 	/// let n = Chi::new(2).unwrap();
 	/// assert_eq!(n.freedom(), 2);

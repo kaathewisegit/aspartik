@@ -6,8 +6,8 @@ pub trait Distribution {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::statistics::Distribution;
-	/// use statrs::distribution::Uniform;
+	/// use stats::statistics::Distribution;
+	/// use stats::distribution::Uniform;
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.mean().unwrap());
@@ -21,8 +21,8 @@ pub trait Distribution {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::statistics::Distribution;
-	/// use statrs::distribution::Uniform;
+	/// use stats::statistics::Distribution;
+	/// use stats::distribution::Uniform;
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(Some(0.5), n.median());
@@ -36,8 +36,8 @@ pub trait Distribution {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::statistics::Distribution;
-	/// use statrs::distribution::Uniform;
+	/// use stats::statistics::Distribution;
+	/// use stats::distribution::Uniform;
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(1.0 / 12.0, n.variance().unwrap());
@@ -51,8 +51,8 @@ pub trait Distribution {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::statistics::Distribution;
-	/// use statrs::distribution::Uniform;
+	/// use stats::statistics::Distribution;
+	/// use stats::distribution::Uniform;
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!((1f64 / 12f64).sqrt(), n.std_dev().unwrap());
@@ -66,8 +66,8 @@ pub trait Distribution {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::statistics::Distribution;
-	/// use statrs::distribution::Uniform;
+	/// use stats::statistics::Distribution;
+	/// use stats::distribution::Uniform;
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.0, n.entropy().unwrap());
@@ -81,8 +81,8 @@ pub trait Distribution {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::statistics::Distribution;
-	/// use statrs::distribution::Uniform;
+	/// use stats::statistics::Distribution;
+	/// use stats::distribution::Uniform;
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.0, n.skewness().unwrap());
@@ -100,8 +100,8 @@ pub trait Mode<T> {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::statistics::Mode;
-	/// use statrs::distribution::Uniform;
+	/// use stats::statistics::Mode;
+	/// use stats::distribution::Uniform;
 	///
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(Some(0.5), n.mode());

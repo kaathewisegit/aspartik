@@ -16,9 +16,9 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Poisson, Discrete};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{Poisson, Discrete};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = Poisson::new(1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0);
@@ -73,7 +73,7 @@ impl Poisson {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Poisson;
+	/// use stats::distribution::Poisson;
 	///
 	/// let mut result = Poisson::new(1.0);
 	/// assert!(result.is_ok());
@@ -94,7 +94,7 @@ impl Poisson {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Poisson;
+	/// use stats::distribution::Poisson;
 	///
 	/// let n = Poisson::new(1.0).unwrap();
 	/// assert_eq!(n.lambda(), 1.0);

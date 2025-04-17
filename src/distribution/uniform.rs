@@ -8,8 +8,8 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Uniform, Continuous};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Uniform, Continuous};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Uniform::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.5);
@@ -69,7 +69,7 @@ impl Uniform {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Uniform;
+	/// use stats::distribution::Uniform;
 	///
 	/// let mut result = Uniform::new(0.0, 1.0);
 	/// assert!(result.is_ok());
@@ -102,7 +102,7 @@ impl Uniform {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Uniform;
+	/// use stats::distribution::Uniform;
 	///
 	/// let uniform = Uniform::standard();
 	/// ```
@@ -116,7 +116,7 @@ impl Uniform {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Uniform;
+	/// use stats::distribution::Uniform;
 	///
 	/// let uniform = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(uniform.min(), 0.0);
@@ -131,7 +131,7 @@ impl Uniform {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Uniform;
+	/// use stats::distribution::Uniform;
 	///
 	/// let uniform = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(uniform.max(), 1.0);

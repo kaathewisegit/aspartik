@@ -11,9 +11,9 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{InverseGamma, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{InverseGamma, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = InverseGamma::new(1.1, 0.1).unwrap();
 /// assert_almost_eq!(n.mean().unwrap(), 1.0, 1e-14);
@@ -70,7 +70,7 @@ impl InverseGamma {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::InverseGamma;
+	/// use stats::distribution::InverseGamma;
 	///
 	/// let mut result = InverseGamma::new(3.0, 1.0);
 	/// assert!(result.is_ok());
@@ -98,7 +98,7 @@ impl InverseGamma {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::InverseGamma;
+	/// use stats::distribution::InverseGamma;
 	///
 	/// let n = InverseGamma::new(3.0, 1.0).unwrap();
 	/// assert_eq!(n.shape(), 3.0);
@@ -112,7 +112,7 @@ impl InverseGamma {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::InverseGamma;
+	/// use stats::distribution::InverseGamma;
 	///
 	/// let n = InverseGamma::new(3.0, 1.0).unwrap();
 	/// assert_eq!(n.rate(), 1.0);

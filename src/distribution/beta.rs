@@ -9,9 +9,9 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Beta, Continuous};
-/// use statrs::statistics::*;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{Beta, Continuous};
+/// use stats::statistics::*;
+/// use stats::assert_almost_eq;
 ///
 /// let n = Beta::new(2.0, 2.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.5);
@@ -64,7 +64,7 @@ impl Beta {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Beta;
+	/// use stats::distribution::Beta;
 	///
 	/// let mut result = Beta::new(2.0, 2.0);
 	/// assert!(result.is_ok());
@@ -89,7 +89,7 @@ impl Beta {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Beta;
+	/// use stats::distribution::Beta;
 	///
 	/// let n = Beta::new(1.0, 2.0).unwrap();
 	/// assert_eq!(n.shape_a(), 1.0);
@@ -103,7 +103,7 @@ impl Beta {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Beta;
+	/// use stats::distribution::Beta;
 	///
 	/// let n = Beta::new(1.0, 2.0).unwrap();
 	/// assert_eq!(n.shape_b(), 2.0);

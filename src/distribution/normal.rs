@@ -10,8 +10,8 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Normal, Continuous};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Normal, Continuous};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Normal::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.0);
@@ -63,7 +63,7 @@ impl Normal {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Normal;
+	/// use stats::distribution::Normal;
 	///
 	/// let mut result = Normal::new(0.0, 1.0);
 	/// assert!(result.is_ok());
@@ -90,7 +90,7 @@ impl Normal {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Normal;
+	/// use stats::distribution::Normal;
 	///
 	/// let mut result = Normal::standard();
 	/// ```

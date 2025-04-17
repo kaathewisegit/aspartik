@@ -12,9 +12,9 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Weibull, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{Weibull, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = Weibull::new(10.0, 1.0).unwrap();
 /// assert_almost_eq!(
@@ -72,7 +72,7 @@ impl Weibull {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Weibull;
+	/// use stats::distribution::Weibull;
 	///
 	/// let mut result = Weibull::new(10.0, 1.0);
 	/// assert!(result.is_ok());
@@ -101,7 +101,7 @@ impl Weibull {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Weibull;
+	/// use stats::distribution::Weibull;
 	///
 	/// let n = Weibull::new(10.0, 1.0).unwrap();
 	/// assert_eq!(n.shape(), 10.0);
@@ -115,7 +115,7 @@ impl Weibull {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Weibull;
+	/// use stats::distribution::Weibull;
 	///
 	/// let n = Weibull::new(10.0, 1.0).unwrap();
 	/// assert_eq!(n.scale(), 1.0);

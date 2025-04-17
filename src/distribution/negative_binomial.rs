@@ -20,9 +20,9 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{NegativeBinomial, Discrete};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{NegativeBinomial, Discrete};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let r = NegativeBinomial::new(4.0, 0.5).unwrap();
 /// assert_eq!(r.mean().unwrap(), 4.0);
@@ -77,7 +77,7 @@ impl NegativeBinomial {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::NegativeBinomial;
+	/// use stats::distribution::NegativeBinomial;
 	///
 	/// let mut result = NegativeBinomial::new(4.0, 0.5);
 	/// assert!(result.is_ok());
@@ -107,7 +107,7 @@ impl NegativeBinomial {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::NegativeBinomial;
+	/// use stats::distribution::NegativeBinomial;
 	///
 	/// let r = NegativeBinomial::new(5.0, 0.5).unwrap();
 	/// assert_eq!(r.p(), 0.5);
@@ -122,7 +122,7 @@ impl NegativeBinomial {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::NegativeBinomial;
+	/// use stats::distribution::NegativeBinomial;
 	///
 	/// let r = NegativeBinomial::new(5.0, 0.5).unwrap();
 	/// assert_eq!(r.r(), 5.0);

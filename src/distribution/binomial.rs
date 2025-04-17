@@ -11,8 +11,8 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Binomial, Discrete};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Binomial, Discrete};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Binomial::new(0.5, 5).unwrap();
 /// assert_eq!(n.mean().unwrap(), 2.5);
@@ -59,7 +59,7 @@ impl Binomial {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Binomial;
+	/// use stats::distribution::Binomial;
 	///
 	/// let mut result = Binomial::new(0.5, 5);
 	/// assert!(result.is_ok());
@@ -81,7 +81,7 @@ impl Binomial {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Binomial;
+	/// use stats::distribution::Binomial;
 	///
 	/// let n = Binomial::new(0.5, 5).unwrap();
 	/// assert_eq!(n.p(), 0.5);
@@ -96,7 +96,7 @@ impl Binomial {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Binomial;
+	/// use stats::distribution::Binomial;
 	///
 	/// let n = Binomial::new(0.5, 5).unwrap();
 	/// assert_eq!(n.n(), 5);

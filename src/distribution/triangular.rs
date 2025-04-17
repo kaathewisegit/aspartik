@@ -9,8 +9,8 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Triangular, Continuous};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Triangular, Continuous};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Triangular::new(0.0, 5.0, 2.5).unwrap();
 /// assert_eq!(n.mean().unwrap(), 7.5 / 3.0);
@@ -83,7 +83,7 @@ impl Triangular {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Triangular;
+	/// use stats::distribution::Triangular;
 	///
 	/// let mut result = Triangular::new(0.0, 5.0, 2.5);
 	/// assert!(result.is_ok());
@@ -129,7 +129,7 @@ impl Triangular {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Triangular;
+	/// use stats::distribution::Triangular;
 	///
 	/// let n = Triangular::new(0.0, 5.0, 2.5).unwrap();
 	/// assert_eq!(n.min(), 0.0);
@@ -148,7 +148,7 @@ impl Triangular {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Triangular;
+	/// use stats::distribution::Triangular;
 	///
 	/// let n = Triangular::new(0.0, 5.0, 2.5).unwrap();
 	/// assert_eq!(n.max(), 5.0);

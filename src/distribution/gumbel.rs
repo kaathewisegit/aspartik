@@ -10,8 +10,8 @@ use core::f64::consts::PI;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Gumbel, Continuous};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Gumbel, Continuous};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Gumbel::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.location(), 0.0);
@@ -63,7 +63,7 @@ impl Gumbel {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Gumbel;
+	/// use stats::distribution::Gumbel;
 	///
 	/// let mut result = Gumbel::new(0.0, 1.0);
 	/// assert!(result.is_ok());
@@ -88,7 +88,7 @@ impl Gumbel {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Gumbel;
+	/// use stats::distribution::Gumbel;
 	///
 	/// let n = Gumbel::new(0.0, 1.0).unwrap();
 	/// assert_eq!(n.location(), 0.0);
@@ -102,7 +102,7 @@ impl Gumbel {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Gumbel;
+	/// use stats::distribution::Gumbel;
 	///
 	/// let n = Gumbel::new(0.0, 1.0).unwrap();
 	/// assert_eq!(n.scale(), 1.0);

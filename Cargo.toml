@@ -1,6 +1,6 @@
 [package]
-name = "statrs"
-version = "0.18.0"
+name = "stats"
+version = "0.1.0"
 authors = ["Michael Ma"]
 description = "Statistical computing library for Rust"
 license = "MIT"

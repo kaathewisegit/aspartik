@@ -12,7 +12,7 @@
 //!
 #![cfg_attr(feature = "rand", doc = "```")]
 #![cfg_attr(not(feature = "rand"), doc = "```ignore")]
-//! use statrs::distribution::Exp;
+//! use stats::distribution::Exp;
 //! use rand::distr::Distribution;
 //!
 //! let mut r = rand::rng();
@@ -26,12 +26,12 @@
 //! introspection of distributions.
 //!
 //! ```
-//! use statrs::distribution::{
+//! use stats::distribution::{
 //!     Exp,
 //!     // `cdf` and `pdf` methods
 //!     Continuous, ContinuousCDF,
 //! };
-//! use statrs::statistics::Distribution; // statistical moments and entropy
+//! use stats::statistics::Distribution; // statistical moments and entropy
 //!
 //! let n = Exp::new(1.0).unwrap();
 //! assert_eq!(n.mean(), Some(1.0));
@@ -48,8 +48,8 @@
 //! etc.
 //!
 //! ```
-//! use statrs::distribution::FisherSnedecor;
-//! use statrs::statistics::Distribution;
+//! use stats::distribution::FisherSnedecor;
+//! use stats::statistics::Distribution;
 //!
 //! let n = FisherSnedecor::new(1.0, 1.0).unwrap();
 //! assert!(n.variance().is_none());

@@ -10,9 +10,9 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Erlang, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{Erlang, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = Erlang::new(3, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
@@ -35,7 +35,7 @@ impl Erlang {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Erlang;
+	/// use stats::distribution::Erlang;
 	///
 	/// let mut result = Erlang::new(3, 1.0);
 	/// assert!(result.is_ok());
@@ -52,7 +52,7 @@ impl Erlang {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Erlang;
+	/// use stats::distribution::Erlang;
 	///
 	/// let n = Erlang::new(3, 1.0).unwrap();
 	/// assert_eq!(n.shape(), 3);
@@ -66,7 +66,7 @@ impl Erlang {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Erlang;
+	/// use stats::distribution::Erlang;
 	///
 	/// let n = Erlang::new(3, 1.0).unwrap();
 	/// assert_eq!(n.rate(), 1.0);

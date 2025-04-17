@@ -9,9 +9,9 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Categorical, Discrete};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{Categorical, Discrete};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = Categorical::new(&[0.0, 1.0, 2.0]).unwrap();
 /// assert_almost_eq!(n.mean().unwrap(), 5.0 / 3.0, 1e-15);
@@ -75,7 +75,7 @@ impl Categorical {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Categorical;
+	/// use stats::distribution::Categorical;
 	///
 	/// let mut result = Categorical::new(&[0.0, 1.0, 2.0]);
 	/// assert!(result.is_ok());

@@ -11,9 +11,9 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{LogNormal, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{LogNormal, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = LogNormal::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), (0.5f64).exp());
@@ -65,7 +65,7 @@ impl LogNormal {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::LogNormal;
+	/// use stats::distribution::LogNormal;
 	///
 	/// let mut result = LogNormal::new(0.0, 1.0);
 	/// assert!(result.is_ok());
@@ -93,7 +93,7 @@ impl LogNormal {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::LogNormal;
+	/// use stats::distribution::LogNormal;
 	///
 	/// let n = LogNormal::new(0.0, 1.0).unwrap();
 	/// assert_eq!(n.location(), 0.0);
@@ -107,7 +107,7 @@ impl LogNormal {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::LogNormal;
+	/// use stats::distribution::LogNormal;
 	///
 	/// let n = LogNormal::new(0.0, 1.0).unwrap();
 	/// assert_eq!(n.scale(), 1.0);

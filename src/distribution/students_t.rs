@@ -9,9 +9,9 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{StudentsT, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{StudentsT, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.0);
@@ -73,7 +73,7 @@ impl StudentsT {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::StudentsT;
+	/// use stats::distribution::StudentsT;
 	///
 	/// let mut result = StudentsT::new(0.0, 1.0, 2.0);
 	/// assert!(result.is_ok());
@@ -110,7 +110,7 @@ impl StudentsT {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::StudentsT;
+	/// use stats::distribution::StudentsT;
 	///
 	/// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
 	/// assert_eq!(n.location(), 0.0);
@@ -124,7 +124,7 @@ impl StudentsT {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::StudentsT;
+	/// use stats::distribution::StudentsT;
 	///
 	/// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
 	/// assert_eq!(n.scale(), 1.0);
@@ -138,7 +138,7 @@ impl StudentsT {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::StudentsT;
+	/// use stats::distribution::StudentsT;
 	///
 	/// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
 	/// assert_eq!(n.freedom(), 2.0);

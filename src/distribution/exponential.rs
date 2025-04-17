@@ -11,8 +11,8 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Exp, Continuous};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Exp, Continuous};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Exp::new(1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0);
@@ -55,7 +55,7 @@ impl Exp {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Exp;
+	/// use stats::distribution::Exp;
 	///
 	/// let mut result = Exp::new(1.0);
 	/// assert!(result.is_ok());
@@ -76,7 +76,7 @@ impl Exp {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Exp;
+	/// use stats::distribution::Exp;
 	///
 	/// let n = Exp::new(1.0).unwrap();
 	/// assert_eq!(n.rate(), 1.0);

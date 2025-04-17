@@ -10,9 +10,9 @@ use core::cmp;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Hypergeometric, Discrete};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{Hypergeometric, Discrete};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = Hypergeometric::new(500, 50, 100).unwrap();
 /// assert_eq!(n.mean().unwrap(), 10.0);
@@ -66,7 +66,7 @@ impl Hypergeometric {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Hypergeometric;
+	/// use stats::distribution::Hypergeometric;
 	///
 	/// let mut result = Hypergeometric::new(2, 2, 2);
 	/// assert!(result.is_ok());
@@ -100,7 +100,7 @@ impl Hypergeometric {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Hypergeometric;
+	/// use stats::distribution::Hypergeometric;
 	///
 	/// let n = Hypergeometric::new(10, 5, 3).unwrap();
 	/// assert_eq!(n.population(), 10);
@@ -115,7 +115,7 @@ impl Hypergeometric {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Hypergeometric;
+	/// use stats::distribution::Hypergeometric;
 	///
 	/// let n = Hypergeometric::new(10, 5, 3).unwrap();
 	/// assert_eq!(n.successes(), 5);
@@ -130,7 +130,7 @@ impl Hypergeometric {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Hypergeometric;
+	/// use stats::distribution::Hypergeometric;
 	///
 	/// let n = Hypergeometric::new(10, 5, 3).unwrap();
 	/// assert_eq!(n.draws(), 3);

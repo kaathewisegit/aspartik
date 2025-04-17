@@ -9,9 +9,9 @@ use crate::statistics::*;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{FisherSnedecor, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{FisherSnedecor, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let n = FisherSnedecor::new(3.0, 3.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
@@ -68,7 +68,7 @@ impl FisherSnedecor {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::FisherSnedecor;
+	/// use stats::distribution::FisherSnedecor;
 	///
 	/// let mut result = FisherSnedecor::new(1.0, 1.0);
 	/// assert!(result.is_ok());
@@ -100,7 +100,7 @@ impl FisherSnedecor {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::FisherSnedecor;
+	/// use stats::distribution::FisherSnedecor;
 	///
 	/// let n = FisherSnedecor::new(2.0, 3.0).unwrap();
 	/// assert_eq!(n.freedom_1(), 2.0);
@@ -115,7 +115,7 @@ impl FisherSnedecor {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::FisherSnedecor;
+	/// use stats::distribution::FisherSnedecor;
 	///
 	/// let n = FisherSnedecor::new(2.0, 3.0).unwrap();
 	/// assert_eq!(n.freedom_2(), 3.0);

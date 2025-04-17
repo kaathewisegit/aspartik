@@ -8,9 +8,9 @@ use core::f64;
 /// # Examples
 ///
 /// ```
-/// use statrs::distribution::{Pareto, Continuous};
-/// use statrs::statistics::Distribution;
-/// use statrs::assert_almost_eq;
+/// use stats::distribution::{Pareto, Continuous};
+/// use stats::statistics::Distribution;
+/// use stats::assert_almost_eq;
 ///
 /// let p = Pareto::new(1.0, 2.0).unwrap();
 /// assert_eq!(p.mean().unwrap(), 2.0);
@@ -63,7 +63,7 @@ impl Pareto {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Pareto;
+	/// use stats::distribution::Pareto;
 	///
 	/// let mut result = Pareto::new(1.0, 2.0);
 	/// assert!(result.is_ok());
@@ -88,7 +88,7 @@ impl Pareto {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Pareto;
+	/// use stats::distribution::Pareto;
 	///
 	/// let n = Pareto::new(1.0, 2.0).unwrap();
 	/// assert_eq!(n.scale(), 1.0);
@@ -102,7 +102,7 @@ impl Pareto {
 	/// # Examples
 	///
 	/// ```
-	/// use statrs::distribution::Pareto;
+	/// use stats::distribution::Pareto;
 	///
 	/// let n = Pareto::new(1.0, 2.0).unwrap();
 	/// assert_eq!(n.shape(), 2.0);

@@ -9,8 +9,8 @@ use core::f64;
 /// # Example
 ///
 /// ```
-/// use statrs::distribution::{Levy, Continuous};
-/// use statrs::statistics::Distribution;
+/// use stats::distribution::{Levy, Continuous};
+/// use stats::statistics::Distribution;
 ///
 /// let n = Levy::new(1.0, 1.0).unwrap();
 /// assert_eq!(n.pdf(0.0), 0.0);
@@ -57,7 +57,7 @@ impl Levy {
 	/// # Example
 	///
 	/// ```
-	/// use statrs::distribution::Levy;
+	/// use stats::distribution::Levy;
 	///
 	/// let mut result = Levy::new(0.0, 1.0);
 	/// assert!(result.is_ok());
@@ -80,7 +80,7 @@ impl Levy {
 	/// # Example
 	///
 	/// ```
-	/// use statrs::distribution::Levy;
+	/// use stats::distribution::Levy;
 	///
 	/// let n = Levy::new(1.0, 1.0).unwrap();
 	/// assert_eq!(n.mu(), 1.0);
@@ -94,7 +94,7 @@ impl Levy {
 	/// # Example
 	///
 	/// ```
-	/// use statrs::distribution::Levy;
+	/// use stats::distribution::Levy;
 	///
 	/// let n = Levy::new(1.0, 1.0).unwrap();
 	/// assert_eq!(n.c(), 1.0);
