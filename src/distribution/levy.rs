@@ -122,7 +122,7 @@ impl rand::distr::Distribution<f64> for Levy {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Levy {
+impl ContinuousCDF<f64> for Levy {
 	/// Calculates the cumulative distribution function for the Levy distribution at `x`
 	///
 	/// # Formula
@@ -297,7 +297,7 @@ impl Mode<Option<f64>> for Levy {
 	}
 }
 
-impl Continuous<f64, f64> for Levy {
+impl Continuous<f64> for Levy {
 	/// Calculates the probability density function for the Levy distribution at `x`
 	///
 	/// # Formula

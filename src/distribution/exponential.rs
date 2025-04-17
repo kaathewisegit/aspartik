@@ -102,7 +102,7 @@ impl rand::distr::Distribution<f64> for Exp {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Exp {
+impl ContinuousCDF<f64> for Exp {
 	/// Calculates the cumulative distribution function for the
 	/// exponential distribution at `x`
 	///
@@ -257,7 +257,7 @@ impl Mode<Option<f64>> for Exp {
 	}
 }
 
-impl Continuous<f64, f64> for Exp {
+impl Continuous<f64> for Exp {
 	/// Calculates the probability density function for the exponential
 	/// distribution at `x`
 	///

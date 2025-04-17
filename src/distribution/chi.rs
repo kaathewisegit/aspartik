@@ -107,7 +107,7 @@ impl rand::distr::Distribution<f64> for Chi {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Chi {
+impl ContinuousCDF<f64> for Chi {
 	/// Calculates the cumulative distribution function for the chi
 	/// distribution at `x`.
 	///
@@ -304,7 +304,7 @@ impl Mode<Option<f64>> for Chi {
 	}
 }
 
-impl Continuous<f64, f64> for Chi {
+impl Continuous<f64> for Chi {
 	/// Calculates the probability density function for the chi
 	/// distribution at `x`
 	///

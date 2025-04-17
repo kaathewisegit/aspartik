@@ -145,7 +145,7 @@ impl rand::distr::Distribution<f64> for FisherSnedecor {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for FisherSnedecor {
+impl ContinuousCDF<f64> for FisherSnedecor {
 	/// Calculates the cumulative distribution function for the fisher-snedecor
 	/// distribution
 	/// at `x`
@@ -382,7 +382,7 @@ impl Mode<Option<f64>> for FisherSnedecor {
 	}
 }
 
-impl Continuous<f64, f64> for FisherSnedecor {
+impl Continuous<f64> for FisherSnedecor {
 	/// Calculates the probability density function for the fisher-snedecor
 	/// distribution
 	/// at `x`

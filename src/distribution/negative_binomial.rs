@@ -154,7 +154,7 @@ impl rand::distr::Distribution<u64> for NegativeBinomial {
 	}
 }
 
-impl DiscreteCDF<u64, f64> for NegativeBinomial {
+impl DiscreteCDF<u64> for NegativeBinomial {
 	/// Calculates the cumulative distribution function for the
 	/// negative binomial distribution at `x`.
 	///
@@ -276,7 +276,7 @@ impl Mode<Option<f64>> for NegativeBinomial {
 	}
 }
 
-impl Discrete<u64, f64> for NegativeBinomial {
+impl Discrete<u64> for NegativeBinomial {
 	/// Calculates the probability mass function for the negative binomial
 	/// distribution at `x`.
 	///

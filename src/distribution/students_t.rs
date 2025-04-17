@@ -177,7 +177,7 @@ impl rand::distr::Distribution<f64> for StudentsT {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for StudentsT {
+impl ContinuousCDF<f64> for StudentsT {
 	/// Calculates the cumulative distribution function for the student's
 	/// t-distribution
 	/// at `x`
@@ -422,7 +422,7 @@ impl Mode<Option<f64>> for StudentsT {
 	}
 }
 
-impl Continuous<f64, f64> for StudentsT {
+impl Continuous<f64> for StudentsT {
 	/// Calculates the probability density function for the student's
 	/// t-distribution
 	/// at `x`

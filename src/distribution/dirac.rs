@@ -90,7 +90,7 @@ impl rand::distr::Distribution<f64> for Dirac {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Dirac {
+impl ContinuousCDF<f64> for Dirac {
 	/// Calculates the cumulative distribution function for the
 	/// dirac distribution at `x`
 	///

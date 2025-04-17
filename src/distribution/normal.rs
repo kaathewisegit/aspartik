@@ -116,7 +116,7 @@ impl rand::distr::Distribution<f64> for Normal {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Normal {
+impl ContinuousCDF<f64> for Normal {
 	/// Calculates the cumulative distribution function for the
 	/// normal distribution at `x`
 	///
@@ -298,7 +298,7 @@ impl Mode<Option<f64>> for Normal {
 	}
 }
 
-impl Continuous<f64, f64> for Normal {
+impl Continuous<f64> for Normal {
 	/// Calculates the probability density function for the normal distribution
 	/// at `x`
 	///

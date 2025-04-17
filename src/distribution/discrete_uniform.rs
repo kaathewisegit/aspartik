@@ -133,7 +133,7 @@ impl rand::distr::Distribution<f64> for DiscreteUniform {
 	}
 }
 
-impl DiscreteCDF<i64, f64> for DiscreteUniform {
+impl DiscreteCDF<i64> for DiscreteUniform {
 	/// Calculates the cumulative distribution function for the
 	/// discrete uniform distribution at `x`
 	///
@@ -274,7 +274,7 @@ impl Mode<Option<i64>> for DiscreteUniform {
 	}
 }
 
-impl Discrete<i64, f64> for DiscreteUniform {
+impl Discrete<i64> for DiscreteUniform {
 	/// Calculates the probability mass function for the discrete uniform
 	/// distribution at `x`
 	///

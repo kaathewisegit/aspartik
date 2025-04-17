@@ -374,7 +374,7 @@ pub mod test {
 
 	/// cdf should be the integral of the pdf
 	fn check_integrate_pdf_is_cdf<
-		D: ContinuousCDF<f64, f64> + Continuous<f64, f64>,
+		D: ContinuousCDF<f64> + Continuous<f64>,
 	>(
 		dist: &D,
 		x_min: f64,
@@ -419,7 +419,7 @@ pub mod test {
 
 	/// cdf should be the sum of the pmf
 	fn check_sum_pmf_is_cdf<
-		D: DiscreteCDF<u64, f64> + Discrete<u64, f64>,
+		D: DiscreteCDF<u64> + Discrete<u64>,
 	>(
 		dist: &D,
 		x_max: u64,
@@ -452,7 +452,7 @@ pub mod test {
 
 	/// pdf should be derivative of cdf
 	fn check_derivative_of_cdf_is_pdf<
-		D: ContinuousCDF<f64, f64> + Continuous<f64, f64>,
+		D: ContinuousCDF<f64> + Continuous<f64>,
 	>(
 		dist: &D,
 		x_min: f64,
@@ -485,8 +485,8 @@ pub mod test {
 	/// 99% of the probability mass should be between x_min and x_max or the finite
 	/// difference of cdf should be near to the pdf for much of the support.
 	pub fn check_continuous_distribution<
-		D: ContinuousCDF<f64, f64>
-			+ Continuous<f64, f64>
+		D: ContinuousCDF<f64>
+			+ Continuous<f64>
 			+ std::panic::RefUnwindSafe,
 	>(
 		dist: &D,
@@ -528,7 +528,7 @@ pub mod test {
 	/// obey.
 	/// 99% of the probability mass should be between 0 and x_max (inclusive).
 	pub fn check_discrete_distribution<
-		D: DiscreteCDF<u64, f64> + Discrete<u64, f64>,
+		D: DiscreteCDF<u64> + Discrete<u64>,
 	>(
 		dist: &D,
 		x_max: u64,

@@ -100,7 +100,7 @@ impl rand::distr::Distribution<f64> for Bernoulli {
 	}
 }
 
-impl DiscreteCDF<u64, f64> for Bernoulli {
+impl DiscreteCDF<u64> for Bernoulli {
 	/// Calculates the cumulative distribution
 	/// function for the bernoulli distribution at `x`.
 	///
@@ -241,7 +241,7 @@ impl Mode<Option<u64>> for Bernoulli {
 	}
 }
 
-impl Discrete<u64, f64> for Bernoulli {
+impl Discrete<u64> for Bernoulli {
 	/// Calculates the probability mass function for the
 	/// bernoulli distribution at `x`.
 	///

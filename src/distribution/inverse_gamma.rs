@@ -137,7 +137,7 @@ impl rand::distr::Distribution<f64> for InverseGamma {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for InverseGamma {
+impl ContinuousCDF<f64> for InverseGamma {
 	/// Calculates the cumulative distribution function for the inverse gamma
 	/// distribution at `x`
 	///
@@ -314,7 +314,7 @@ impl Mode<Option<f64>> for InverseGamma {
 	}
 }
 
-impl Continuous<f64, f64> for InverseGamma {
+impl Continuous<f64> for InverseGamma {
 	/// Calculates the probability density function for the
 	/// inverse gamma distribution at `x`
 	///

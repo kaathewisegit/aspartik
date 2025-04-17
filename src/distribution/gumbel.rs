@@ -125,7 +125,7 @@ impl rand::distr::Distribution<f64> for Gumbel {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Gumbel {
+impl ContinuousCDF<f64> for Gumbel {
 	/// Calculates the cumulative distribution function for the
 	/// Gumbel distribution at `x`
 	///
@@ -306,7 +306,7 @@ impl Mode<f64> for Gumbel {
 	}
 }
 
-impl Continuous<f64, f64> for Gumbel {
+impl Continuous<f64> for Gumbel {
 	/// Calculates the probability density function for the Gumbel
 	/// distribution at `x`
 	///

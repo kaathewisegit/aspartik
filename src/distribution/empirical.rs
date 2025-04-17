@@ -258,7 +258,7 @@ impl Distribution for Empirical {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Empirical {
+impl ContinuousCDF<f64> for Empirical {
 	fn cdf(&self, x: f64) -> f64 {
 		let start = Bound::Unbounded;
 		let end = Bound::Included(

@@ -125,7 +125,7 @@ impl rand::distr::Distribution<f64> for Laplace {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Laplace {
+impl ContinuousCDF<f64> for Laplace {
 	/// Calculates the cumulative distribution function for the
 	/// laplace distribution at `x`
 	///
@@ -293,7 +293,7 @@ impl Mode<Option<f64>> for Laplace {
 	}
 }
 
-impl Continuous<f64, f64> for Laplace {
+impl Continuous<f64> for Laplace {
 	/// Calculates the probability density function for the laplace
 	/// distribution at `x`
 	///

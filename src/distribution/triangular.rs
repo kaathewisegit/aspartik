@@ -176,7 +176,7 @@ impl rand::distr::Distribution<f64> for Triangular {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for Triangular {
+impl ContinuousCDF<f64> for Triangular {
 	/// Calculates the cumulative distribution function for the triangular
 	/// distribution
 	/// at `x`
@@ -391,7 +391,7 @@ impl Mode<Option<f64>> for Triangular {
 	}
 }
 
-impl Continuous<f64, f64> for Triangular {
+impl Continuous<f64> for Triangular {
 	/// Calculates the probability density function for the triangular
 	/// distribution
 	/// at `x`

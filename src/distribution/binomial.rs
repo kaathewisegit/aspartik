@@ -132,7 +132,7 @@ impl rand::distr::Distribution<f64> for Binomial {
 	}
 }
 
-impl DiscreteCDF<u64, f64> for Binomial {
+impl DiscreteCDF<u64> for Binomial {
 	/// Calculates the cumulative distribution function for the
 	/// binomial distribution at `x`
 	///
@@ -298,7 +298,7 @@ impl Mode<Option<u64>> for Binomial {
 	}
 }
 
-impl Discrete<u64, f64> for Binomial {
+impl Discrete<u64> for Binomial {
 	/// Calculates the probability mass function for the binomial
 	/// distribution at `x`
 	///

@@ -150,7 +150,7 @@ impl rand::distr::Distribution<f64> for Categorical {
 	}
 }
 
-impl DiscreteCDF<u64, f64> for Categorical {
+impl DiscreteCDF<u64> for Categorical {
 	/// Calculates the cumulative distribution function for the categorical
 	/// distribution at `x`
 	///
@@ -318,7 +318,7 @@ impl Median for Categorical {
 	}
 }
 
-impl Discrete<u64, f64> for Categorical {
+impl Discrete<u64> for Categorical {
 	/// Calculates the probability mass function for the categorical
 	/// distribution at `x`
 	///

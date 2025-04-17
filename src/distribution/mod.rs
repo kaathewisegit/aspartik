@@ -78,7 +78,7 @@ pub use weibull::{Weibull, WeibullError};
 
 /// The `ContinuousCDF` trait is used to specify an interface for univariate
 /// distributions for which cdf float arguments are sensible.
-pub trait ContinuousCDF<K: Float, T: Float>: Min<K> + Max<K> {
+pub trait ContinuousCDF<K: Float>: Min<K> + Max<K> {
 	/// Returns the cumulative distribution function calculated
 	/// at `x` for a given distribution. May panic depending
 	/// on the implementor.
@@ -91,7 +91,7 @@ pub trait ContinuousCDF<K: Float, T: Float>: Min<K> + Max<K> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.cdf(0.5));
 	/// ```
-	fn cdf(&self, x: K) -> T;
+	fn cdf(&self, x: K) -> f64;
 
 	/// Returns the survival function calculated
 	/// at `x` for a given distribution. May panic depending
@@ -105,8 +105,8 @@ pub trait ContinuousCDF<K: Float, T: Float>: Min<K> + Max<K> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.sf(0.5));
 	/// ```
-	fn sf(&self, x: K) -> T {
-		T::one() - self.cdf(x)
+	fn sf(&self, x: K) -> f64 {
+		1.0 - self.cdf(x)
 	}
 
 	/// Due to issues with rounding and floating-point accuracy the default
@@ -117,11 +117,11 @@ pub trait ContinuousCDF<K: Float, T: Float>: Min<K> + Max<K> {
 	/// may be lacking.
 	#[doc(alias = "quantile function")]
 	#[doc(alias = "quantile")]
-	fn inverse_cdf(&self, p: T) -> K {
-		if p == T::zero() {
+	fn inverse_cdf(&self, p: f64) -> K {
+		if p == 0.0 {
 			return self.min();
 		};
-		if p == T::one() {
+		if p == 1.0 {
 			return self.max();
 		};
 		let two = K::one() + K::one();
@@ -149,7 +149,7 @@ pub trait ContinuousCDF<K: Float, T: Float>: Min<K> + Max<K> {
 
 /// The `DiscreteCDF` trait is used to specify an interface for univariate
 /// discrete distributions.
-pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps, T: Float>:
+pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps>:
 	Min<K> + Max<K>
 {
 	/// Returns the cumulative distribution function calculated
@@ -164,7 +164,7 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps, T: Float>:
 	/// let n = DiscreteUniform::new(1, 10).unwrap();
 	/// assert_eq!(0.6, n.cdf(6));
 	/// ```
-	fn cdf(&self, x: K) -> T;
+	fn cdf(&self, x: K) -> f64;
 
 	/// Returns the survival function calculated at `x` for
 	/// a given distribution. May panic depending on the implementor.
@@ -177,8 +177,8 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps, T: Float>:
 	/// let n = DiscreteUniform::new(1, 10).unwrap();
 	/// assert_eq!(0.4, n.sf(6));
 	/// ```
-	fn sf(&self, x: K) -> T {
-		T::one() - self.cdf(x)
+	fn sf(&self, x: K) -> f64 {
+		1.0 - self.cdf(x)
 	}
 
 	/// Due to issues with rounding and floating-point accuracy the default implementation may be ill-behaved
@@ -186,12 +186,12 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps, T: Float>:
 	///
 	/// # Panics
 	/// this default impl panics if provided `p` not on interval [0.0, 1.0]
-	fn inverse_cdf(&self, p: T) -> K {
+	fn inverse_cdf(&self, p: f64) -> K {
 		if p <= self.cdf(self.min()) {
 			return self.min();
-		} else if p == T::one() {
+		} else if p == 1.0 {
 			return self.max();
-		} else if !(T::zero()..=T::one()).contains(&p) {
+		} else if !(0.0..=1.0).contains(&p) {
 			panic!("p must be on [0, 1]")
 		}
 
@@ -220,7 +220,7 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps, T: Float>:
 /// All methods provided by the `Continuous` trait are unchecked, meaning
 /// they can panic if in an invalid state or encountering invalid input
 /// depending on the implementing distribution.
-pub trait Continuous<K, T> {
+pub trait Continuous<K> {
 	/// Returns the probability density function calculated at `x` for a given
 	/// distribution.
 	/// May panic depending on the implementor.
@@ -233,7 +233,7 @@ pub trait Continuous<K, T> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(1.0, n.pdf(0.5));
 	/// ```
-	fn pdf(&self, x: K) -> T;
+	fn pdf(&self, x: K) -> f64;
 
 	/// Returns the log of the probability density function calculated at `x`
 	/// for a given distribution.
@@ -247,7 +247,7 @@ pub trait Continuous<K, T> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.0, n.ln_pdf(0.5));
 	/// ```
-	fn ln_pdf(&self, x: K) -> T;
+	fn ln_pdf(&self, x: K) -> f64;
 }
 
 /// The `Discrete` trait provides an interface for interacting with discrete
@@ -258,7 +258,7 @@ pub trait Continuous<K, T> {
 /// All methods provided by the `Discrete` trait are unchecked, meaning
 /// they can panic if in an invalid state or encountering invalid input
 /// depending on the implementing distribution.
-pub trait Discrete<K, T> {
+pub trait Discrete<K> {
 	/// Returns the probability mass function calculated at `x` for a given
 	/// distribution.
 	/// May panic depending on the implementor.
@@ -272,7 +272,7 @@ pub trait Discrete<K, T> {
 	/// let n = Binomial::new(0.5, 10).unwrap();
 	/// assert!(prec::almost_eq(n.pmf(5), 0.24609375, 1e-15));
 	/// ```
-	fn pmf(&self, x: K) -> T;
+	fn pmf(&self, x: K) -> f64;
 
 	/// Returns the log of the probability mass function calculated at `x` for
 	/// a given distribution.
@@ -287,5 +287,5 @@ pub trait Discrete<K, T> {
 	/// let n = Binomial::new(0.5, 10).unwrap();
 	/// assert!(prec::almost_eq(n.ln_pmf(5), (0.24609375f64).ln(), 1e-15));
 	/// ```
-	fn ln_pmf(&self, x: K) -> T;
+	fn ln_pmf(&self, x: K) -> f64;
 }

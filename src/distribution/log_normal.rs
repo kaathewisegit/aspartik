@@ -132,7 +132,7 @@ impl rand::distr::Distribution<f64> for LogNormal {
 	}
 }
 
-impl ContinuousCDF<f64, f64> for LogNormal {
+impl ContinuousCDF<f64> for LogNormal {
 	/// Calculates the cumulative distribution function for the log-normal
 	/// distribution
 	/// at `x`
@@ -340,7 +340,7 @@ impl Mode<Option<f64>> for LogNormal {
 	}
 }
 
-impl Continuous<f64, f64> for LogNormal {
+impl Continuous<f64> for LogNormal {
 	/// Calculates the probability density function for the log-normal
 	/// distribution at `x`
 	///
