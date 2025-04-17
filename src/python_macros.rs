@@ -39,6 +39,18 @@ macro_rules! impl_pymethods {
 
 		impl_pymethods!(for $class; $($rest)*);
 	};
+	(for $class:ty; get(as $m:ident) $field:ident: $type:ty; $($rest:tt)*) => {
+		#[cfg(feature = "python")]
+		#[pymethods]
+		impl $class {
+			#[getter]
+			fn $m(&self) -> $type {
+				self.$field
+			}
+		}
+
+		impl_pymethods!(for $class; $($rest)*);
+	};
 	(
 		for $class:ty;
 		repr($fmt:literal, $($args:tt),* $(,)?);

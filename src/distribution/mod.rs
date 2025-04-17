@@ -323,7 +323,10 @@ pub fn pymodule(py: Python) -> PyResult<Bound<'_, PyModule>> {
 	let m = PyModule::new(py, "distributions")?;
 
 	m.add_class::<Gamma>()?;
+	m.add_class::<Poisson>()?;
+
 	m.add_class::<GammaError>()?;
+	m.add_class::<PoissonError>()?;
 
 	Ok(m)
 }
