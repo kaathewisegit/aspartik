@@ -90,7 +90,7 @@ impl rand::distr::Distribution<f64> for Erlang {
 	}
 }
 
-impl ContinuousCDF<f64> for Erlang {
+impl ContinuousCDF for Erlang {
 	/// Calculates the cumulative distribution function for the erlang
 	/// distribution
 	/// at `x`

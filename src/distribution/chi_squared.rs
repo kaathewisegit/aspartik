@@ -109,7 +109,7 @@ impl rand::distr::Distribution<f64> for ChiSquared {
 	}
 }
 
-impl ContinuousCDF<f64> for ChiSquared {
+impl ContinuousCDF for ChiSquared {
 	/// Calculates the cumulative distribution function for the
 	/// chi-squared distribution at `x`
 	///

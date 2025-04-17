@@ -107,7 +107,7 @@ impl rand::distr::Distribution<f64> for Chi {
 	}
 }
 
-impl ContinuousCDF<f64> for Chi {
+impl ContinuousCDF for Chi {
 	/// Calculates the cumulative distribution function for the chi
 	/// distribution at `x`.
 	///

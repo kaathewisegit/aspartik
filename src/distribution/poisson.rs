@@ -118,7 +118,7 @@ impl rand::distr::Distribution<f64> for Poisson {
 	}
 }
 
-impl DiscreteCDF<u64> for Poisson {
+impl DiscreteCDF for Poisson {
 	/// Calculates the cumulative distribution function for the poisson
 	/// distribution at `x`
 	///

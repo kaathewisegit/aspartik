@@ -379,7 +379,7 @@ pub mod test {
 		x_max: f64,
 		step: f64,
 	) where
-		D: ContinuousCDF<f64> + Continuous<T = f64>,
+		D: ContinuousCDF + Continuous<T = f64>,
 	{
 		let mut prev_x = x_min;
 		let mut prev_density = dist.pdf(x_min);
@@ -420,7 +420,7 @@ pub mod test {
 	/// cdf should be the sum of the pmf
 	fn check_sum_pmf_is_cdf<D>(dist: &D, x_max: u64)
 	where
-		D: DiscreteCDF<u64> + Discrete<T = u64>,
+		D: DiscreteCDF + Discrete<T = u64>,
 	{
 		let mut sum = 0.0;
 
@@ -455,7 +455,7 @@ pub mod test {
 		x_max: f64,
 		step: f64,
 	) where
-		D: ContinuousCDF<f64> + Continuous<T = f64>,
+		D: ContinuousCDF + Continuous<T = f64>,
 	{
 		const DELTA: f64 = 1e-12;
 		const DX: f64 = 2.0 * DELTA;
@@ -487,7 +487,7 @@ pub mod test {
 		x_min: f64,
 		x_max: f64,
 	) where
-		D: ContinuousCDF<f64>
+		D: ContinuousCDF
 			+ Continuous<T = f64>
 			+ std::panic::RefUnwindSafe,
 	{
@@ -527,7 +527,7 @@ pub mod test {
 	/// 99% of the probability mass should be between 0 and x_max (inclusive).
 	pub fn check_discrete_distribution<D>(dist: &D, x_max: u64)
 	where
-		D: DiscreteCDF<u64> + Discrete<T = u64>,
+		D: DiscreteCDF + Discrete<T = u64>,
 	{
 		// assert_eq!(dist.cdf(f64::NEG_INFINITY), 0.0);
 		// assert_eq!(dist.cdf(-10.0), 0.0);

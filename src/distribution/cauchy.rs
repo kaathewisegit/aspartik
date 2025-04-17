@@ -126,7 +126,7 @@ impl rand::distr::Distribution<f64> for Cauchy {
 	}
 }
 
-impl ContinuousCDF<f64> for Cauchy {
+impl ContinuousCDF for Cauchy {
 	/// Calculates the cumulative distribution function for the
 	/// cauchy distribution at `x`
 	///

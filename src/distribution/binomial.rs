@@ -132,7 +132,7 @@ impl rand::distr::Distribution<f64> for Binomial {
 	}
 }
 
-impl DiscreteCDF<u64> for Binomial {
+impl DiscreteCDF for Binomial {
 	/// Calculates the cumulative distribution function for the
 	/// binomial distribution at `x`
 	///

@@ -165,7 +165,7 @@ impl rand::distr::Distribution<f64> for Uniform {
 	}
 }
 
-impl ContinuousCDF<f64> for Uniform {
+impl ContinuousCDF for Uniform {
 	/// Calculates the cumulative distribution function for the uniform
 	/// distribution
 	/// at `x`

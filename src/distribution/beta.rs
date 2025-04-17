@@ -130,7 +130,7 @@ impl rand::distr::Distribution<f64> for Beta {
 	}
 }
 
-impl ContinuousCDF<f64> for Beta {
+impl ContinuousCDF for Beta {
 	/// The formula is `I_x(α, β)`, where `I_x` is the regularized
 	/// lower incomplete beta function.
 	fn cdf(&self, x: f64) -> f64 {

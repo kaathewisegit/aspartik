@@ -133,7 +133,7 @@ impl rand::distr::Distribution<f64> for DiscreteUniform {
 	}
 }
 
-impl DiscreteCDF<i64> for DiscreteUniform {
+impl DiscreteCDF for DiscreteUniform {
 	/// Calculates the cumulative distribution function for the
 	/// discrete uniform distribution at `x`
 	///

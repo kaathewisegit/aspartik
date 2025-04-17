@@ -2,7 +2,7 @@
 //! and provides
 //! concrete implementations for a variety of distributions.
 use super::statistics::{Max, Min};
-use num_traits::{Float, Num, NumAssignOps};
+use num_traits::{Float, Num, NumAssignOps, One};
 
 mod bernoulli;
 mod beta;
@@ -12,10 +12,7 @@ mod categorical;
 mod cauchy;
 mod chi;
 mod chi_squared;
-mod dirac;
 mod discrete_uniform;
-#[cfg(feature = "std")]
-mod empirical;
 mod erlang;
 mod exponential;
 mod fisher_snedecor;
@@ -52,10 +49,7 @@ pub use categorical::{Categorical, CategoricalError};
 pub use cauchy::{Cauchy, CauchyError};
 pub use chi::{Chi, ChiError};
 pub use chi_squared::ChiSquared;
-pub use dirac::{Dirac, DiracError};
 pub use discrete_uniform::{DiscreteUniform, DiscreteUniformError};
-#[cfg(feature = "std")]
-pub use empirical::Empirical;
 pub use erlang::Erlang;
 pub use exponential::{Exp, ExpError};
 pub use fisher_snedecor::{FisherSnedecor, FisherSnedecorError};
@@ -78,7 +72,11 @@ pub use weibull::{Weibull, WeibullError};
 
 /// The `ContinuousCDF` trait is used to specify an interface for univariate
 /// distributions for which cdf float arguments are sensible.
-pub trait ContinuousCDF<K: Float>: Min<K> + Max<K> {
+pub trait ContinuousCDF: Continuous
+where
+	Self::T: Float,
+	Self: Min<Self::T> + Max<Self::T>,
+{
 	/// Returns the cumulative distribution function calculated
 	/// at `x` for a given distribution. May panic depending
 	/// on the implementor.
@@ -91,7 +89,7 @@ pub trait ContinuousCDF<K: Float>: Min<K> + Max<K> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.cdf(0.5));
 	/// ```
-	fn cdf(&self, x: K) -> f64;
+	fn cdf(&self, x: Self::T) -> f64;
 
 	/// Returns the survival function calculated
 	/// at `x` for a given distribution. May panic depending
@@ -105,7 +103,7 @@ pub trait ContinuousCDF<K: Float>: Min<K> + Max<K> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.sf(0.5));
 	/// ```
-	fn sf(&self, x: K) -> f64 {
+	fn sf(&self, x: Self::T) -> f64 {
 		1.0 - self.cdf(x)
 	}
 
@@ -117,14 +115,14 @@ pub trait ContinuousCDF<K: Float>: Min<K> + Max<K> {
 	/// may be lacking.
 	#[doc(alias = "quantile function")]
 	#[doc(alias = "quantile")]
-	fn inverse_cdf(&self, p: f64) -> K {
+	fn inverse_cdf(&self, p: f64) -> Self::T {
 		if p == 0.0 {
 			return self.min();
 		};
 		if p == 1.0 {
 			return self.max();
 		};
-		let two = K::one() + K::one();
+		let two = Self::T::one() + Self::T::one();
 		let mut high = two;
 		let mut low = -high;
 		while self.cdf(low) > p {
@@ -149,8 +147,10 @@ pub trait ContinuousCDF<K: Float>: Min<K> + Max<K> {
 
 /// The `DiscreteCDF` trait is used to specify an interface for univariate
 /// discrete distributions.
-pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps>:
-	Min<K> + Max<K>
+pub trait DiscreteCDF: Discrete
+where
+	Self::T: Sized + Num + One + Ord + Clone + NumAssignOps,
+	Self: Min<Self::T> + Max<Self::T>,
 {
 	/// Returns the cumulative distribution function calculated
 	/// at `x` for a given distribution. May panic depending
@@ -164,7 +164,7 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps>:
 	/// let n = DiscreteUniform::new(1, 10).unwrap();
 	/// assert_eq!(0.6, n.cdf(6));
 	/// ```
-	fn cdf(&self, x: K) -> f64;
+	fn cdf(&self, x: Self::T) -> f64;
 
 	/// Returns the survival function calculated at `x` for
 	/// a given distribution. May panic depending on the implementor.
@@ -177,7 +177,7 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps>:
 	/// let n = DiscreteUniform::new(1, 10).unwrap();
 	/// assert_eq!(0.4, n.sf(6));
 	/// ```
-	fn sf(&self, x: K) -> f64 {
+	fn sf(&self, x: Self::T) -> f64 {
 		1.0 - self.cdf(x)
 	}
 
@@ -186,7 +186,7 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps>:
 	///
 	/// # Panics
 	/// this default impl panics if provided `p` not on interval [0.0, 1.0]
-	fn inverse_cdf(&self, p: f64) -> K {
+	fn inverse_cdf(&self, p: f64) -> Self::T {
 		if p <= self.cdf(self.min()) {
 			return self.min();
 		} else if p == 1.0 {
@@ -195,7 +195,7 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps>:
 			panic!("p must be on [0, 1]")
 		}
 
-		let two = K::one() + K::one();
+		let two = Self::T::one() + Self::T::one();
 		let mut ub = two.clone();
 		let lb = self.min();
 		while self.cdf(ub.clone()) < p {

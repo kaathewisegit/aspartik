@@ -118,7 +118,7 @@ impl rand::distr::Distribution<f64> for Geometric {
 	}
 }
 
-impl DiscreteCDF<u64> for Geometric {
+impl DiscreteCDF for Geometric {
 	/// Calculates the cumulative distribution function for the geometric
 	/// distribution at `x`
 	///

@@ -130,7 +130,7 @@ impl rand::distr::Distribution<f64> for Pareto {
 	}
 }
 
-impl ContinuousCDF<f64> for Pareto {
+impl ContinuousCDF for Pareto {
 	/// Calculates the cumulative distribution function for the Pareto
 	/// distribution at `x`
 	///

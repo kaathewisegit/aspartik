@@ -139,7 +139,7 @@ impl rand::distr::Distribution<f64> for Gamma {
 	}
 }
 
-impl ContinuousCDF<f64> for Gamma {
+impl ContinuousCDF for Gamma {
 	/// Calculates the cumulative distribution function for the gamma
 	/// distribution
 	/// at `x`

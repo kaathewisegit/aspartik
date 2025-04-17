@@ -150,7 +150,7 @@ impl rand::distr::Distribution<f64> for Categorical {
 	}
 }
 
-impl DiscreteCDF<u64> for Categorical {
+impl DiscreteCDF for Categorical {
 	/// Calculates the cumulative distribution function for the categorical
 	/// distribution at `x`
 	///

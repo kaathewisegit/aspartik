@@ -137,7 +137,7 @@ impl rand::distr::Distribution<f64> for Weibull {
 	}
 }
 
-impl ContinuousCDF<f64> for Weibull {
+impl ContinuousCDF for Weibull {
 	/// Calculates the cumulative distribution function for the weibull
 	/// distribution at `x`
 	///
