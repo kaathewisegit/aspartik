@@ -3,7 +3,6 @@ use approx::ulps_eq;
 use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::gamma;
 use crate::statistics::*;
-use core::f64;
 
 /// Implements the [Inverse
 /// Gamma](https://en.wikipedia.org/wiki/Inverse-gamma_distribution)

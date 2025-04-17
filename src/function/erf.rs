@@ -2,7 +2,6 @@
 //! related functions
 
 use crate::function::evaluate;
-use core::f64;
 
 /// `erf` calculates the error function at `x`.
 pub fn erf(x: f64) -> f64 {

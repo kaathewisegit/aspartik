@@ -1,7 +1,6 @@
 use crate::distribution::{Discrete, DiscreteCDF};
 use crate::function::{beta, gamma};
 use crate::statistics::*;
-use core::f64;
 
 /// [Negative binomial
 /// distribution](http://en.wikipedia.org/wiki/Negative_binomial_distribution)

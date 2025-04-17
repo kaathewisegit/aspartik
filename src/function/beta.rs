@@ -5,7 +5,6 @@ use approx::ulps_eq;
 
 use crate::function::gamma;
 use crate::prec;
-use core::f64;
 
 /// Represents the errors that can occur when computing the natural logarithm
 /// of the beta function or the regularized lower incomplete beta function.
