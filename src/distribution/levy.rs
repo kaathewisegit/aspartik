@@ -209,18 +209,11 @@ impl Distribution for Levy {
 		Some(f64::INFINITY)
 	}
 
-	/// Returns the median of the Levy distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ + c/(2 * erfc_inv(0.5)^2)
-	/// ```
-	///
-	/// where `μ` is the mean, `c` is the dispersion and `erfc_inv` is
-	/// the inverse of the complementary error function.
+	/// `μ + c / (2 * erfc_inv(0.5)^2)`, where `μ` is the mean, `c` is the
+	/// dispersion and `erfc_inv` is the inverse of the complementary error
+	/// function.
 	fn median(&self) -> Option<f64> {
-		Some(self.mu + self.c * 0.5 * erfc_inv(0.5).powf(-2.0))
+		Some(self.mu + self.c / (2.0 * erfc_inv(0.5).powi(2)))
 	}
 
 	/// Returns the variance of the Levy distribution
