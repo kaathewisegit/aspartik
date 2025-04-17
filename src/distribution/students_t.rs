@@ -495,7 +495,7 @@ impl Continuous<f64> for StudentsT {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::consts::ACCURACY;
+	use crate::prec::ACCURACY;
 	use crate::distribution::internal::*;
 	use crate::testing_boiler;
 

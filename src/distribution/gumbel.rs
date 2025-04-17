@@ -11,7 +11,7 @@ use core::f64::consts::PI;
 ///
 /// ```
 /// use statrs::distribution::{Gumbel, Continuous};
-/// use statrs::{consts::EULER_MASCHERONI, statistics::Distribution};
+/// use statrs::statistics::Distribution;
 ///
 /// let n = Gumbel::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.location(), 0.0);

@@ -79,7 +79,7 @@ macro_rules! assert_almost_eq {
     };
 }
 
-pub mod consts;
+pub(crate) mod consts;
 #[macro_use]
 pub mod distribution;
 pub mod euclid;
