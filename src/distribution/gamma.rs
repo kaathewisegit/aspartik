@@ -13,11 +13,11 @@ use crate::statistics::*;
 /// ```
 /// use statrs::distribution::{Gamma, Continuous};
 /// use statrs::statistics::Distribution;
-/// use statrs::prec;
+/// use statrs::assert_almost_eq;
 ///
 /// let n = Gamma::new(3.0, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
-/// assert!(prec::almost_eq(n.pdf(2.0), 0.270670566473225383788, 1e-15));
+/// assert_almost_eq!(n.pdf(2.0), 0.270670566473225383788, 1e-15);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Gamma {

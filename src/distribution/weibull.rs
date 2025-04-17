@@ -14,11 +14,14 @@ use core::f64;
 /// ```
 /// use statrs::distribution::{Weibull, Continuous};
 /// use statrs::statistics::Distribution;
-/// use statrs::prec;
+/// use statrs::assert_almost_eq;
 ///
 /// let n = Weibull::new(10.0, 1.0).unwrap();
-/// assert!(prec::almost_eq(n.mean().unwrap(),
-/// 0.95135076986687318362924871772654021925505786260884, 1e-15));
+/// assert_almost_eq!(
+///     n.mean().unwrap(),
+///     0.95135076986687318362924871772654021925505786260884,
+///     1e-15
+/// );
 /// assert_eq!(n.pdf(1.0), 3.6787944117144232159552377016146086744581113103177);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]

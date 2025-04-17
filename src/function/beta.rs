@@ -436,6 +436,7 @@ pub fn inv_beta_reg(mut a: f64, mut b: f64, mut x: f64) -> f64 {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::assert_almost_eq;
 
 	#[test]
 	fn test_ln_beta() {

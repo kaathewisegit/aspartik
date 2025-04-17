@@ -11,11 +11,11 @@ use crate::statistics::*;
 /// ```
 /// use statrs::distribution::{Beta, Continuous};
 /// use statrs::statistics::*;
-/// use statrs::prec;
+/// use statrs::assert_almost_eq;
 ///
 /// let n = Beta::new(2.0, 2.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.5);
-/// assert!(prec::almost_eq(n.pdf(0.5), 1.5, 1e-14));
+/// assert_almost_eq!(n.pdf(0.5), 1.5, 1e-14);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Beta {

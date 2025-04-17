@@ -456,6 +456,7 @@ fn signum(x: f64) -> f64 {
 mod tests {
 	use super::*;
 
+	use crate::assert_almost_eq;
 	use core::f64::consts;
 
 	#[test]

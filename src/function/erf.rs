@@ -779,7 +779,7 @@ fn erf_inv_impl(p: f64, q: f64, s: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-	use core::f64;
+	use crate::assert_almost_eq;
 
 	#[test]
 	fn test_erf() {

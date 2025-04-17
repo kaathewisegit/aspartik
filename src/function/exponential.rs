@@ -84,6 +84,8 @@ pub fn integral(x: f64, n: u64) -> Option<f64> {
 
 #[cfg(test)]
 mod tests {
+	use crate::assert_almost_eq;
+
 	#[test]
 	fn test_integral() {
 		assert_eq!(

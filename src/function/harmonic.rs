@@ -32,7 +32,7 @@ pub fn gen_harmonic(n: u64, m: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-	use core::f64;
+	use crate::assert_almost_eq;
 
 	#[test]
 	fn test_harmonic() {

@@ -107,6 +107,7 @@ const FCACHE: [f64; MAX_FACTORIAL + 1] = {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::assert_almost_eq;
 
 	#[test]
 	fn test_fcache() {

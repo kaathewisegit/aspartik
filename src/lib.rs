@@ -67,23 +67,16 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[macro_export]
-macro_rules! assert_almost_eq {
-    ($a:expr, $b:expr, $prec:expr $(,)?) => {
-        if !$crate::prec::almost_eq($a, $b, $prec) {
-            panic!(
-                "assertion failed: `abs(left - right) < {:e}`, (left: `{}`, right: `{}`)",
-                $prec, $a, $b
-            );
-        }
-    };
-}
-
 pub(crate) mod consts;
 #[macro_use]
 pub mod distribution;
 pub mod euclid;
 pub mod function;
 pub mod generate;
-pub mod prec;
+#[macro_use]
+mod prec;
 pub mod statistics;
+
+// used in the `assert_almost_eq` macro
+#[doc(hidden)]
+pub use prec::almost_eq;

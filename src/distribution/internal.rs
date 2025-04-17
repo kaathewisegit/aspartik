@@ -40,6 +40,7 @@ pub fn integral_bisection_search<K: Num + Clone, T: Num + PartialOrd>(
 #[macro_use]
 #[cfg(test)]
 pub mod test {
+	use crate::assert_almost_eq;
 	use crate::distribution::{
 		Continuous, ContinuousCDF, Discrete, DiscreteCDF,
 	};

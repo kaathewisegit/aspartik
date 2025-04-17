@@ -26,7 +26,7 @@ pub fn checked_logit(p: f64) -> Option<f64> {
 
 #[cfg(test)]
 mod tests {
-	use core::f64;
+	use crate::assert_almost_eq;
 
 	#[test]
 	fn test_logistic() {

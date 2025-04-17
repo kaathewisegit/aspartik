@@ -23,12 +23,12 @@ use core::f64;
 /// ```
 /// use statrs::distribution::{NegativeBinomial, Discrete};
 /// use statrs::statistics::Distribution;
-/// use statrs::prec::almost_eq;
+/// use statrs::assert_almost_eq;
 ///
 /// let r = NegativeBinomial::new(4.0, 0.5).unwrap();
 /// assert_eq!(r.mean().unwrap(), 4.0);
-/// assert!(almost_eq(r.pmf(0), 0.0625, 1e-8));
-/// assert!(almost_eq(r.pmf(3), 0.15625, 1e-8));
+/// assert_almost_eq!(r.pmf(0), 0.0625, 1e-8);
+/// assert_almost_eq!(r.pmf(3), 0.15625, 1e-8);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct NegativeBinomial {
@@ -311,7 +311,7 @@ impl Discrete for NegativeBinomial {
 mod tests {
 	use super::*;
 	use crate::distribution::internal::test;
-	use crate::testing_boiler;
+	use crate::{assert_almost_eq, testing_boiler};
 
 	testing_boiler!(r: f64, p: f64; NegativeBinomial; NegativeBinomialError);
 
@@ -501,7 +501,7 @@ mod tests {
 		let theoretical_mean = dist.mean().unwrap();
 		let theoretical_variance = dist.variance().unwrap();
 
-		assert!(prec::almost_eq(sample_mean, theoretical_mean, tol));
+		assert_almost_eq!(sample_mean, theoretical_mean, tol);
 		assert!(prec::almost_eq(
 			sample_variance,
 			theoretical_variance,

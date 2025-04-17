@@ -11,11 +11,11 @@ use core::f64;
 /// ```
 /// use statrs::distribution::{Poisson, Discrete};
 /// use statrs::statistics::Distribution;
-/// use statrs::prec;
+/// use statrs::assert_almost_eq;
 ///
 /// let n = Poisson::new(1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0);
-/// assert!(prec::almost_eq(n.pmf(1), 0.367879441171442, 1e-15));
+/// assert_almost_eq!(n.pmf(1), 0.367879441171442, 1e-15);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Poisson {

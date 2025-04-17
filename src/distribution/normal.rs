@@ -360,7 +360,7 @@ impl core::default::Default for Normal {
 mod tests {
 	use super::*;
 	use crate::distribution::internal::*;
-	use crate::testing_boiler;
+	use crate::{assert_almost_eq, testing_boiler};
 
 	testing_boiler!(mean: f64, std_dev: f64; Normal; NormalError);
 
