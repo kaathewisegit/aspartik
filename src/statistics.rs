@@ -1,36 +1,4 @@
-/// The `Min` trait specifies than an object has a minimum value
-pub trait Min<T> {
-	/// Returns the minimum value in the domain of a given distribution
-	/// if it exists, otherwise `None`.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use statrs::statistics::Min;
-	/// use statrs::distribution::Uniform;
-	///
-	/// let n = Uniform::new(0.0, 1.0).unwrap();
-	/// assert_eq!(0.0, n.min());
-	/// ```
-	fn min(&self) -> T;
-}
-
-/// The `Max` trait specifies that an object has a maximum value
-pub trait Max<T> {
-	/// Returns the maximum value in the domain of a given distribution
-	/// if it exists, otherwise `None`.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use statrs::statistics::Max;
-	/// use statrs::distribution::Uniform;
-	///
-	/// let n = Uniform::new(0.0, 1.0).unwrap();
-	/// assert_eq!(1.0, n.max());
-	/// ```
-	fn max(&self) -> T;
-}
+//! Statistical computation traits
 
 pub trait Distribution {
 	/// Mean, or `None` if it doesn't exist
@@ -107,17 +75,6 @@ pub trait Distribution {
 	fn skewness(&self) -> Option<f64> {
 		None
 	}
-}
-
-/// The `Mean` trait implements the calculation of a mean.
-// TODO: Clarify the traits of multidimensional distributions
-pub trait MeanN<T> {
-	fn mean(&self) -> Option<T>;
-}
-
-// TODO: Clarify the traits of multidimensional distributions
-pub trait VarianceN<T> {
-	fn variance(&self) -> Option<T>;
 }
 
 /// The `Median` trait returns the median of the distribution.
