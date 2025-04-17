@@ -176,18 +176,12 @@ impl ContinuousCDF for Beta {
 			beta::inv_beta_reg(self.shape_a, self.shape_b, x)
 		}
 	}
-}
 
-impl Min<f64> for Beta {
-	/// Always `0`.
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		0.0
 	}
-}
 
-impl Max<f64> for Beta {
-	/// Always `1`.
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		1.0
 	}
 }
@@ -439,8 +433,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Beta| x.min();
-		let max = |x: Beta| x.max();
+		let min = |x: Beta| x.lower();
+		let max = |x: Beta| x.upper();
 		test_relative(1.0, 1.0, 0.0, min);
 		test_relative(1.0, 1.0, 1.0, max);
 	}

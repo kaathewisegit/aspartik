@@ -1,5 +1,5 @@
 use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::{Distribution, Max, Median, Min, Mode};
+use crate::statistics::{Distribution, Median, Mode};
 use core::f64;
 
 /// Implements the [Laplace](https://en.wikipedia.org/wiki/Laplace_distribution)
@@ -181,32 +181,12 @@ impl ContinuousCDF for Laplace {
 			self.location - self.scale * (2.0 - 2.0 * p).ln()
 		}
 	}
-}
 
-impl Min<f64> for Laplace {
-	/// Returns the minimum value in the domain of the laplace
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// NEG_INF
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		f64::NEG_INFINITY
 	}
-}
 
-impl Max<f64> for Laplace {
-	/// Returns the maximum value in the domain of the laplace
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -475,13 +455,9 @@ mod tests {
 	}
 
 	#[test]
-	fn test_min() {
-		test_exact(0.0, 1.0, f64::NEG_INFINITY, |l| l.min());
-	}
-
-	#[test]
-	fn test_max() {
-		test_exact(0.0, 1.0, f64::INFINITY, |l| l.max());
+	fn test_min_max() {
+		test_exact(0.0, 1.0, f64::NEG_INFINITY, |l| l.lower());
+		test_exact(0.0, 1.0, f64::INFINITY, |l| l.upper());
 	}
 
 	#[test]

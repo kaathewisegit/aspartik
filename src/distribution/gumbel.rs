@@ -175,32 +175,12 @@ impl ContinuousCDF for Gumbel {
 	fn sf(&self, x: f64) -> f64 {
 		-(-(-(x - self.location) / self.scale).exp()).exp_m1()
 	}
-}
 
-impl Min<f64> for Gumbel {
-	/// Returns the minimum value in the domain of the Gumbel
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// NEG_INF
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		f64::NEG_INFINITY
 	}
-}
 
-impl Max<f64> for Gumbel {
-	/// Returns the maximum value in the domain of the Gumbel
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -377,8 +357,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Gumbel| x.min();
-		let max = |x: Gumbel| x.max();
+		let min = |x: Gumbel| x.lower();
+		let max = |x: Gumbel| x.upper();
 
 		test_exact(0.0, 1.0, f64::NEG_INFINITY, min);
 		test_exact(0.0, 1.0, f64::INFINITY, max);

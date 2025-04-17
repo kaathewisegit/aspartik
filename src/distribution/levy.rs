@@ -187,32 +187,12 @@ impl ContinuousCDF for Levy {
 			self.mu + 0.5 * self.c / (erfc_inv(x).powf(2.0))
 		}
 	}
-}
 
-impl Min<f64> for Levy {
-	/// Returns the minimum value in the domain of the
-	/// Levy distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		self.mu
 	}
-}
 
-impl Max<f64> for Levy {
-	/// Returns the maximum value in the domain of the
-	/// Levy distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -468,17 +448,14 @@ mod tests {
 	}
 
 	#[test]
-	fn test_min() {
-		let min = |x: Levy| x.min();
+	fn test_min_max() {
+		let min = |x: Levy| x.lower();
 		test_exact(1.0, 1.0, 1.0, min);
 		test_exact(1.0, 3.0, 1.0, min);
 		test_exact(3.0, 1.0, 3.0, min);
 		test_exact(3.0, 3.0, 3.0, min);
-	}
 
-	#[test]
-	fn test_max() {
-		let max = |x: Levy| x.max();
+		let max = |x: Levy| x.upper();
 		test_relative(1.0, 1.0, f64::INFINITY, max);
 	}
 

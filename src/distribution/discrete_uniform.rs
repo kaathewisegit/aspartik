@@ -169,28 +169,12 @@ impl DiscreteCDF for DiscreteUniform {
 			if ans > 1.0 { 1.0 } else { ans }
 		}
 	}
-}
 
-impl Min<i64> for DiscreteUniform {
-	/// Returns the minimum value in the domain of the discrete uniform
-	/// distribution
-	///
-	/// # Remarks
-	///
-	/// This is the same value as the minimum passed into the constructor
-	fn min(&self) -> i64 {
+	fn lower(&self) -> i64 {
 		self.min
 	}
-}
 
-impl Max<i64> for DiscreteUniform {
-	/// Returns the maximum value in the domain of the discrete uniform
-	/// distribution
-	///
-	/// # Remarks
-	///
-	/// This is the same value as the maximum passed into the constructor
-	fn max(&self) -> i64 {
+	fn upper(&self) -> i64 {
 		self.max
 	}
 }

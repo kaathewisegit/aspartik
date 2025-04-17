@@ -137,35 +137,13 @@ impl ContinuousCDF for Erlang {
 	fn inverse_cdf(&self, p: f64) -> f64 {
 		self.g.inverse_cdf(p)
 	}
-}
 
-impl Min<f64> for Erlang {
-	/// Returns the minimum value in the domain of the
-	/// erlang distribution representable by a double precision
-	/// float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> f64 {
-		self.g.min()
+	fn lower(&self) -> f64 {
+		self.g.lower()
 	}
-}
 
-impl Max<f64> for Erlang {
-	/// Returns the maximum value in the domain of the
-	/// erlang distribution representable by a double precision
-	/// float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
-		self.g.max()
+	fn upper(&self) -> f64 {
+		self.g.upper()
 	}
 }
 

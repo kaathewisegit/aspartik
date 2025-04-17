@@ -269,32 +269,12 @@ impl ContinuousCDF for StudentsT {
 		// = μ + σ inf { t | F_X(t) >= p } = μ + σ F_X^{-1}(p)
 		self.location + self.scale * y
 	}
-}
 
-impl Min<f64> for StudentsT {
-	/// Returns the minimum value in the domain of the student's t-distribution
-	/// representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::NEG_INFINITY
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		f64::NEG_INFINITY
 	}
-}
 
-impl Max<f64> for StudentsT {
-	/// Returns the maximum value in the domain of the student's t-distribution
-	/// representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -613,8 +593,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: StudentsT| x.min();
-		let max = |x: StudentsT| x.max();
+		let min = |x: StudentsT| x.lower();
+		let max = |x: StudentsT| x.upper();
 		test_relative(0.0, 1.0, 1.0, f64::NEG_INFINITY, min);
 		test_relative(2.5, 100.0, 1.5, f64::NEG_INFINITY, min);
 		test_relative(10.0, f64::INFINITY, 3.5, f64::NEG_INFINITY, min);

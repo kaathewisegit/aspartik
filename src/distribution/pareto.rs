@@ -192,34 +192,12 @@ impl ContinuousCDF for Pareto {
 			self.scale * (1.0 - p).powf(-1.0 / self.shape)
 		}
 	}
-}
 
-impl Min<f64> for Pareto {
-	/// Returns the minimum value in the domain of the Pareto distribution
-	/// representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// x_m
-	/// ```
-	///
-	/// where `x_m` is the scale
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		self.scale
 	}
-}
 
-impl Max<f64> for Pareto {
-	/// Returns the maximum value in the domain of the Pareto distribution
-	/// representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -472,8 +450,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Pareto| x.min();
-		let max = |x: Pareto| x.max();
+		let min = |x: Pareto| x.lower();
+		let max = |x: Pareto| x.upper();
 		test_exact(0.2, f64::INFINITY, 0.2, min);
 		test_exact(10.0, f64::INFINITY, 10.0, min);
 		test_exact(f64::INFINITY, 1.0, f64::INFINITY, min);

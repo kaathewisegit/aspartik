@@ -188,34 +188,12 @@ impl DiscreteCDF for NegativeBinomial {
 	fn sf(&self, x: u64) -> f64 {
 		beta::beta_reg(x as f64 + 1.0, self.r, 1.0 - self.p)
 	}
-}
 
-impl Min<u64> for NegativeBinomial {
-	/// Returns the minimum value in the domain of the
-	/// negative binomial distribution representable by a 64-bit
-	/// integer.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> u64 {
+	fn lower(&self) -> u64 {
 		0
 	}
-}
 
-impl Max<u64> for NegativeBinomial {
-	/// Returns the maximum value in the domain of the
-	/// negative binomial distribution representable by a 64-bit
-	/// integer.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// u64::MAX
-	/// ```
-	fn max(&self) -> u64 {
+	fn upper(&self) -> u64 {
 		u64::MAX
 	}
 }
@@ -276,8 +254,8 @@ impl Mode<Option<f64>> for NegativeBinomial {
 	}
 }
 
-impl Discrete for NegativeBinomial { type T = u64;
-
+impl Discrete for NegativeBinomial {
+	type T = u64;
 
 	/// Calculates the probability mass function for the negative binomial
 	/// distribution at `x`.
@@ -387,8 +365,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: NegativeBinomial| x.min();
-		let max = |x: NegativeBinomial| x.max();
+		let min = |x: NegativeBinomial| x.lower();
+		let max = |x: NegativeBinomial| x.upper();
 		test_exact(1.0, 0.5, 0, min);
 		test_exact(1.0, 0.3, u64::MAX, max);
 	}

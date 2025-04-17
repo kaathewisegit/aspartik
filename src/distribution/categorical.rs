@@ -209,34 +209,12 @@ impl DiscreteCDF for Categorical {
 		let denorm_prob = x * self.cdf_max();
 		binary_index(&self.cdf, denorm_prob) as u64
 	}
-}
 
-impl Min<u64> for Categorical {
-	/// Returns the minimum value in the domain of the
-	/// categorical distribution representable by a 64-bit
-	/// integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> u64 {
+	fn lower(&self) -> u64 {
 		0
 	}
-}
 
-impl Max<u64> for Categorical {
-	/// Returns the maximum value in the domain of the
-	/// categorical distribution representable by a 64-bit
-	/// integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// n
-	/// ```
-	fn max(&self) -> u64 {
+	fn upper(&self) -> u64 {
 		self.cdf.len() as u64 - 1
 	}
 }
@@ -318,8 +296,8 @@ impl Median for Categorical {
 	}
 }
 
-impl Discrete for Categorical { type T = u64;
-
+impl Discrete for Categorical {
+	type T = u64;
 
 	/// Calculates the probability mass function for the categorical
 	/// distribution at `x`
@@ -491,8 +469,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Categorical| x.min();
-		let max = |x: Categorical| x.max();
+		let min = |x: Categorical| x.lower();
+		let max = |x: Categorical| x.upper();
 		test_exact(&[4.0, 2.5, 2.5, 1.0], 0, min);
 		test_exact(&[4.0, 2.5, 2.5, 1.0], 3, max);
 	}

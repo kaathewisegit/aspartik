@@ -127,34 +127,12 @@ impl DiscreteCDF for Bernoulli {
 	fn sf(&self, x: u64) -> f64 {
 		self.b.sf(x)
 	}
-}
 
-impl Min<u64> for Bernoulli {
-	/// Returns the minimum value in the domain of the
-	/// bernoulli distribution representable by a 64-
-	/// bit integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> u64 {
+	fn lower(&self) -> u64 {
 		0
 	}
-}
 
-impl Max<u64> for Bernoulli {
-	/// Returns the maximum value in the domain of the
-	/// bernoulli distribution representable by a 64-
-	/// bit integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 1
-	/// ```
-	fn max(&self) -> u64 {
+	fn upper(&self) -> u64 {
 		1
 	}
 }
@@ -241,8 +219,8 @@ impl Mode<Option<u64>> for Bernoulli {
 	}
 }
 
-impl Discrete for Bernoulli { type T = u64;
-
+impl Discrete for Bernoulli {
+	type T = u64;
 
 	/// Calculates the probability mass function for the
 	/// bernoulli distribution at `x`.

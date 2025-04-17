@@ -212,9 +212,9 @@ impl DiscreteCDF for Hypergeometric {
 	/// Calculated as a discrete integral over the probability mass
 	/// function evaluated from 0..x+1
 	fn cdf(&self, x: u64) -> f64 {
-		if x < self.min() {
+		if x < self.lower() {
 			0.0
-		} else if x >= self.max() {
+		} else if x >= self.upper() {
 			1.0
 		} else {
 			let k = x;
@@ -252,9 +252,9 @@ impl DiscreteCDF for Hypergeometric {
 	/// Calculated as a discrete integral over the probability mass
 	/// function evaluated from (x+1)..max
 	fn sf(&self, x: u64) -> f64 {
-		if x < self.min() {
+		if x < self.lower() {
 			1.0
-		} else if x >= self.max() {
+		} else if x >= self.upper() {
 			0.0
 		} else {
 			let k = x;
@@ -262,7 +262,7 @@ impl DiscreteCDF for Hypergeometric {
 				self.population,
 				self.draws,
 			);
-			(k + 1..=self.max()).fold(0.0, |acc, i| {
+			(k + 1..=self.upper()).fold(0.0, |acc, i| {
 				acc + (factorial::ln_binomial(
 					self.successes,
 					i,
@@ -274,38 +274,12 @@ impl DiscreteCDF for Hypergeometric {
 			})
 		}
 	}
-}
 
-impl Min<u64> for Hypergeometric {
-	/// Returns the minimum value in the domain of the
-	/// hypergeometric distribution representable by a 64-bit
-	/// integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// max(0, n + K - N)
-	/// ```
-	///
-	/// where `N` is population, `K` is successes, and `n` is draws
-	fn min(&self) -> u64 {
+	fn lower(&self) -> u64 {
 		(self.draws + self.successes).saturating_sub(self.population)
 	}
-}
 
-impl Max<u64> for Hypergeometric {
-	/// Returns the maximum value in the domain of the
-	/// hypergeometric distribution representable by a 64-bit
-	/// integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// min(K, n)
-	/// ```
-	///
-	/// where `K` is successes and `n` is draws
-	fn max(&self) -> u64 {
+	fn upper(&self) -> u64 {
 		cmp::min(self.successes, self.draws)
 	}
 }
@@ -408,8 +382,8 @@ impl Mode<Option<u64>> for Hypergeometric {
 	}
 }
 
-impl Discrete for Hypergeometric { type T = u64;
-
+impl Discrete for Hypergeometric {
+	type T = u64;
 
 	/// Calculates the probability mass function for the hypergeometric
 	/// distribution at `x`
@@ -530,19 +504,16 @@ mod tests {
 	}
 
 	#[test]
-	fn test_min() {
-		let min = |x: Hypergeometric| x.min();
+	fn test_min_max() {
+		let min = |x: Hypergeometric| x.lower();
 		test_exact(0, 0, 0, 0, min);
 		test_exact(1, 1, 1, 1, min);
 		test_exact(2, 1, 1, 0, min);
 		test_exact(2, 2, 2, 2, min);
 		test_exact(10, 1, 1, 0, min);
 		test_exact(10, 5, 3, 0, min);
-	}
 
-	#[test]
-	fn test_max() {
-		let max = |x: Hypergeometric| x.max();
+		let max = |x: Hypergeometric| x.upper();
 		test_exact(0, 0, 0, 0, max);
 		test_exact(1, 1, 1, 1, max);
 		test_exact(2, 1, 1, 1, max);

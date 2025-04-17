@@ -222,32 +222,12 @@ impl ContinuousCDF for LogNormal {
 			panic!("p must be within [0.0, 1.0]");
 		}
 	}
-}
 
-impl Min<f64> for LogNormal {
-	/// Returns the minimum value in the domain of the log-normal
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		0.0
 	}
-}
 
-impl Max<f64> for LogNormal {
-	/// Returns the maximum value in the domain of the log-normal
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -1138,8 +1118,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: LogNormal| x.min();
-		let max = |x: LogNormal| x.max();
+		let min = |x: LogNormal| x.lower();
+		let max = |x: LogNormal| x.upper();
 		test_exact(0.0, 0.1, 0.0, min);
 		test_exact(-3.0, 10.0, 0.0, min);
 		test_exact(0.0, 0.1, f64::INFINITY, max);

@@ -193,32 +193,12 @@ impl ContinuousCDF for Weibull {
 		(-((-p).ln_1p() / self.scale_pow_shape_inv))
 			.powf(1.0 / self.shape)
 	}
-}
 
-impl Min<f64> for Weibull {
-	/// Returns the minimum value in the domain of the weibull
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		0.0
 	}
-}
 
-impl Max<f64> for Weibull {
-	/// Returns the maximum value in the domain of the weibull
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -556,8 +536,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Weibull| x.min();
-		let max = |x: Weibull| x.max();
+		let min = |x: Weibull| x.lower();
+		let max = |x: Weibull| x.upper();
 		test_exact(1.0, 1.0, 0.0, min);
 		test_exact(1.0, 1.0, f64::INFINITY, max);
 	}

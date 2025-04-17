@@ -146,32 +146,12 @@ impl DiscreteCDF for Poisson {
 	fn sf(&self, x: u64) -> f64 {
 		gamma::gamma_lr(x as f64 + 1.0, self.lambda)
 	}
-}
 
-impl Min<u64> for Poisson {
-	/// Returns the minimum value in the domain of the poisson distribution
-	/// representable by a 64-bit integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> u64 {
+	fn lower(&self) -> u64 {
 		0
 	}
-}
 
-impl Max<u64> for Poisson {
-	/// Returns the maximum value in the domain of the poisson distribution
-	/// representable by a 64-bit integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 2^63 - 1
-	/// ```
-	fn max(&self) -> u64 {
+	fn upper(&self) -> u64 {
 		u64::MAX
 	}
 }
@@ -266,8 +246,8 @@ impl Mode<Option<u64>> for Poisson {
 	}
 }
 
-impl Discrete for Poisson { type T = u64;
-
+impl Discrete for Poisson {
+	type T = u64;
 
 	/// Calculates the probability mass function for the poisson distribution at
 	/// `x`
@@ -421,8 +401,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Poisson| x.min();
-		let max = |x: Poisson| x.max();
+		let min = |x: Poisson| x.lower();
+		let max = |x: Poisson| x.upper();
 		test_exact(1.5, 0, min);
 		test_exact(5.4, 0, min);
 		test_exact(10.8, 0, min);

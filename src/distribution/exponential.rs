@@ -147,32 +147,12 @@ impl ContinuousCDF for Exp {
 	fn inverse_cdf(&self, p: f64) -> f64 {
 		-(-p).ln_1p() / self.rate
 	}
-}
 
-impl Min<f64> for Exp {
-	/// Returns the minimum value in the domain of the exponential
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		0.0
 	}
-}
 
-impl Max<f64> for Exp {
-	/// Returns the maximum value in the domain of the exponential
-	/// distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -370,8 +350,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Exp| x.min();
-		let max = |x: Exp| x.max();
+		let min = |x: Exp| x.lower();
+		let max = |x: Exp| x.upper();
 		test_exact(0.1, 0.0, min);
 		test_exact(1.0, 0.0, min);
 		test_exact(10.0, 0.0, min);

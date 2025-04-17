@@ -215,16 +215,12 @@ impl ContinuousCDF for Uniform {
 			(self.max - self.min) * p + self.min
 		}
 	}
-}
 
-impl Min<f64> for Uniform {
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		self.min
 	}
-}
 
-impl Max<f64> for Uniform {
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		self.max
 	}
 }

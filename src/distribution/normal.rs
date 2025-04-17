@@ -183,32 +183,12 @@ impl ContinuousCDF for Normal {
 				))
 		}
 	}
-}
 
-impl Min<f64> for Normal {
-	/// Returns the minimum value in the domain of the
-	/// normal distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::NEG_INFINITY
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		f64::NEG_INFINITY
 	}
-}
 
-impl Max<f64> for Normal {
-	/// Returns the maximum value in the domain of the
-	/// normal distribution representable by a double precision float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -465,8 +445,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Normal| x.min();
-		let max = |x: Normal| x.max();
+		let min = |x: Normal| x.lower();
+		let max = |x: Normal| x.upper();
 		test_exact(0.0, 0.1, f64::NEG_INFINITY, min);
 		test_exact(-3.0, 10.0, f64::NEG_INFINITY, min);
 		test_exact(0.0, 0.1, f64::INFINITY, max);

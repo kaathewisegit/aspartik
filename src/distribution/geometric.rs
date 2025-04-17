@@ -155,34 +155,12 @@ impl DiscreteCDF for Geometric {
 			((-self.p).ln_1p() * (x as f64)).exp()
 		}
 	}
-}
 
-impl Min<u64> for Geometric {
-	/// Returns the minimum value in the domain of the
-	/// geometric distribution representable by a 64-bit
-	/// integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 1
-	/// ```
-	fn min(&self) -> u64 {
+	fn lower(&self) -> u64 {
 		1
 	}
-}
 
-impl Max<u64> for Geometric {
-	/// Returns the maximum value in the domain of the
-	/// geometric distribution representable by a 64-bit
-	/// integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 2^63 - 1
-	/// ```
-	fn max(&self) -> u64 {
+	fn upper(&self) -> u64 {
 		u64::MAX
 	}
 }
@@ -265,8 +243,8 @@ impl Median for Geometric {
 	}
 }
 
-impl Discrete for Geometric { type T = u64;
-
+impl Discrete for Geometric {
+	type T = u64;
 
 	/// Calculates the probability mass function for the geometric
 	/// distribution at `x`
@@ -376,8 +354,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Geometric| x.min();
-		let max = |x: Geometric| x.max();
+		let min = |x: Geometric| x.lower();
+		let max = |x: Geometric| x.upper();
 		test_exact(0.3, 1, min);
 		test_exact(0.3, u64::MAX, max);
 	}

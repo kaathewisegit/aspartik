@@ -178,34 +178,12 @@ impl DiscreteCDF for Binomial {
 			)
 		}
 	}
-}
 
-impl Min<u64> for Binomial {
-	/// Returns the minimum value in the domain of the
-	/// binomial distribution representable by a 64-bit
-	/// integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> u64 {
+	fn lower(&self) -> u64 {
 		0
 	}
-}
 
-impl Max<u64> for Binomial {
-	/// Returns the maximum value in the domain of the
-	/// binomial distribution representable by a 64-bit
-	/// integer
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// n
-	/// ```
-	fn max(&self) -> u64 {
+	fn upper(&self) -> u64 {
 		self.n
 	}
 }
@@ -298,8 +276,8 @@ impl Mode<Option<u64>> for Binomial {
 	}
 }
 
-impl Discrete for Binomial { type T = u64;
-
+impl Discrete for Binomial {
+	type T = u64;
 
 	/// Calculates the probability mass function for the binomial
 	/// distribution at `x`
@@ -425,8 +403,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: Binomial| x.min();
-		let max = |x: Binomial| x.max();
+		let min = |x: Binomial| x.lower();
+		let max = |x: Binomial| x.upper();
 		test_exact(0.3, 10, 0, min);
 		test_exact(0.3, 10, 10, max);
 	}

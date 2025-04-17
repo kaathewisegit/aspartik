@@ -267,28 +267,12 @@ impl ContinuousCDF for Triangular {
 			b - ((b - a) * (b - c) * (1.0 - p)).sqrt()
 		}
 	}
-}
 
-impl Min<f64> for Triangular {
-	/// Returns the minimum value in the domain of the
-	/// triangular distribution representable by a double precision float
-	///
-	/// # Remarks
-	///
-	/// The return value is the same min used to construct the distribution
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		self.min
 	}
-}
 
-impl Max<f64> for Triangular {
-	/// Returns the maximum value in the domain of the
-	/// triangular distribution representable by a double precision float
-	///
-	/// # Remarks
-	///
-	/// The return value is the same max used to construct the distribution
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		self.max
 	}
 }

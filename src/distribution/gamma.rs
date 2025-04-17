@@ -198,10 +198,10 @@ impl ContinuousCDF for Gamma {
 			)
 		}
 		if p == 0.0 {
-			return self.min();
+			return self.lower();
 		};
 		if p == 1.0 {
-			return self.max();
+			return self.upper();
 		};
 
 		// Bisection search for MAX_ITERS.0 iterations
@@ -236,34 +236,12 @@ impl ContinuousCDF for Gamma {
 
 		x_0
 	}
-}
 
-impl Min<f64> for Gamma {
-	/// Returns the minimum value in the domain of the
-	/// gamma distribution representable by a double precision
-	/// float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		0.0
 	}
-}
 
-impl Max<f64> for Gamma {
-	/// Returns the maximum value in the domain of the
-	/// gamma distribution representable by a double precision
-	/// float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -576,7 +554,7 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let f = |x: Gamma| x.min();
+		let min = |x: Gamma| x.lower();
 		let test = [
 			((1.0, 0.1), 0.0),
 			((1.0, 1.0), 0.0),
@@ -585,9 +563,9 @@ mod tests {
 			((10.0, f64::INFINITY), 0.0),
 		];
 		for ((s, r), res) in test {
-			test_relative(s, r, res, f);
+			test_relative(s, r, res, min);
 		}
-		let f = |x: Gamma| x.max();
+		let max = |x: Gamma| x.upper();
 		let test = [
 			((1.0, 0.1), f64::INFINITY),
 			((1.0, 1.0), f64::INFINITY),
@@ -596,7 +574,7 @@ mod tests {
 			((10.0, f64::INFINITY), f64::INFINITY),
 		];
 		for ((s, r), res) in test {
-			test_relative(s, r, res, f);
+			test_relative(s, r, res, max);
 		}
 	}
 

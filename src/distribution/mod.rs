@@ -1,7 +1,6 @@
 //! Defines common interfaces for interacting with statistical distributions
 //! and provides
 //! concrete implementations for a variety of distributions.
-use super::statistics::{Max, Min};
 use num_traits::{Float, Num, NumAssignOps, One};
 
 mod bernoulli;
@@ -70,12 +69,51 @@ pub use triangular::{Triangular, TriangularError};
 pub use uniform::{Uniform, UniformError};
 pub use weibull::{Weibull, WeibullError};
 
+/// The `Continuous` trait  provides an interface for interacting with
+/// continuous statistical distributions
+///
+/// # Remarks
+///
+/// All methods provided by the `Continuous` trait are unchecked, meaning
+/// they can panic if in an invalid state or encountering invalid input
+/// depending on the implementing distribution.
+pub trait Continuous {
+	type T;
+
+	/// Returns the probability density function calculated at `x` for a given
+	/// distribution.
+	/// May panic depending on the implementor.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::{Continuous, Uniform};
+	///
+	/// let n = Uniform::new(0.0, 1.0).unwrap();
+	/// assert_eq!(1.0, n.pdf(0.5));
+	/// ```
+	fn pdf(&self, x: Self::T) -> f64;
+
+	/// Returns the log of the probability density function calculated at `x`
+	/// for a given distribution.
+	/// May panic depending on the implementor.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::{Continuous, Uniform};
+	///
+	/// let n = Uniform::new(0.0, 1.0).unwrap();
+	/// assert_eq!(0.0, n.ln_pdf(0.5));
+	/// ```
+	fn ln_pdf(&self, x: Self::T) -> f64;
+}
+
 /// The `ContinuousCDF` trait is used to specify an interface for univariate
 /// distributions for which cdf float arguments are sensible.
 pub trait ContinuousCDF: Continuous
 where
 	Self::T: Float,
-	Self: Min<Self::T> + Max<Self::T>,
 {
 	/// Returns the cumulative distribution function calculated
 	/// at `x` for a given distribution. May panic depending
@@ -117,10 +155,10 @@ where
 	#[doc(alias = "quantile")]
 	fn inverse_cdf(&self, p: f64) -> Self::T {
 		if p == 0.0 {
-			return self.min();
+			return self.lower();
 		};
 		if p == 1.0 {
-			return self.max();
+			return self.upper();
 		};
 		let two = Self::T::one() + Self::T::one();
 		let mut high = two;
@@ -143,113 +181,18 @@ where
 		}
 		(high + low) / two
 	}
-}
 
-/// The `DiscreteCDF` trait is used to specify an interface for univariate
-/// discrete distributions.
-pub trait DiscreteCDF: Discrete
-where
-	Self::T: Sized + Num + One + Ord + Clone + NumAssignOps,
-	Self: Min<Self::T> + Max<Self::T>,
-{
-	/// Returns the cumulative distribution function calculated
-	/// at `x` for a given distribution. May panic depending
-	/// on the implementor.
+	/// The lower bound on the values returned by the distribution
 	///
-	/// # Examples
-	///
-	/// ```
-	/// use statrs::distribution::{DiscreteCDF, DiscreteUniform};
-	///
-	/// let n = DiscreteUniform::new(1, 10).unwrap();
-	/// assert_eq!(0.6, n.cdf(6));
-	/// ```
-	fn cdf(&self, x: Self::T) -> f64;
+	/// Represents the start of the support.
+	fn lower(&self) -> Self::T;
 
-	/// Returns the survival function calculated at `x` for
-	/// a given distribution. May panic depending on the implementor.
+	/// The upper bound on the values returned by the distribution
 	///
-	/// # Examples
-	///
-	/// ```
-	/// use statrs::distribution::{DiscreteCDF, DiscreteUniform};
-	///
-	/// let n = DiscreteUniform::new(1, 10).unwrap();
-	/// assert_eq!(0.4, n.sf(6));
-	/// ```
-	fn sf(&self, x: Self::T) -> f64 {
-		1.0 - self.cdf(x)
-	}
-
-	/// Due to issues with rounding and floating-point accuracy the default implementation may be ill-behaved
-	/// Specialized inverse cdfs should be used whenever possible.
-	///
-	/// # Panics
-	/// this default impl panics if provided `p` not on interval [0.0, 1.0]
-	fn inverse_cdf(&self, p: f64) -> Self::T {
-		if p <= self.cdf(self.min()) {
-			return self.min();
-		} else if p == 1.0 {
-			return self.max();
-		} else if !(0.0..=1.0).contains(&p) {
-			panic!("p must be on [0, 1]")
-		}
-
-		let two = Self::T::one() + Self::T::one();
-		let mut ub = two.clone();
-		let lb = self.min();
-		while self.cdf(ub.clone()) < p {
-			ub *= two.clone();
-		}
-
-		internal::integral_bisection_search(
-			|p| self.cdf(p.clone()),
-			p,
-			lb,
-			ub,
-		)
-		.unwrap()
-	}
-}
-
-/// The `Continuous` trait  provides an interface for interacting with
-/// continuous statistical distributions
-///
-/// # Remarks
-///
-/// All methods provided by the `Continuous` trait are unchecked, meaning
-/// they can panic if in an invalid state or encountering invalid input
-/// depending on the implementing distribution.
-pub trait Continuous {
-	type T;
-
-	/// Returns the probability density function calculated at `x` for a given
-	/// distribution.
-	/// May panic depending on the implementor.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use statrs::distribution::{Continuous, Uniform};
-	///
-	/// let n = Uniform::new(0.0, 1.0).unwrap();
-	/// assert_eq!(1.0, n.pdf(0.5));
-	/// ```
-	fn pdf(&self, x: Self::T) -> f64;
-
-	/// Returns the log of the probability density function calculated at `x`
-	/// for a given distribution.
-	/// May panic depending on the implementor.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use statrs::distribution::{Continuous, Uniform};
-	///
-	/// let n = Uniform::new(0.0, 1.0).unwrap();
-	/// assert_eq!(0.0, n.ln_pdf(0.5));
-	/// ```
-	fn ln_pdf(&self, x: Self::T) -> f64;
+	/// Represents the end of the support.  Rays are represented via the
+	/// maximum value of the `T` type (infinity for floats and the maximum
+	/// possible value for integers).
+	fn upper(&self) -> Self::T;
 }
 
 /// The `Discrete` trait provides an interface for interacting with discrete
@@ -292,4 +235,82 @@ pub trait Discrete {
 	/// assert!(prec::almost_eq(n.ln_pmf(5), (0.24609375f64).ln(), 1e-15));
 	/// ```
 	fn ln_pmf(&self, x: Self::T) -> f64;
+}
+
+/// The `DiscreteCDF` trait is used to specify an interface for univariate
+/// discrete distributions.
+pub trait DiscreteCDF: Discrete
+where
+	Self::T: Sized + Num + One + Ord + Clone + NumAssignOps,
+{
+	/// Returns the cumulative distribution function calculated
+	/// at `x` for a given distribution. May panic depending
+	/// on the implementor.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::{DiscreteCDF, DiscreteUniform};
+	///
+	/// let n = DiscreteUniform::new(1, 10).unwrap();
+	/// assert_eq!(0.6, n.cdf(6));
+	/// ```
+	fn cdf(&self, x: Self::T) -> f64;
+
+	/// Returns the survival function calculated at `x` for
+	/// a given distribution. May panic depending on the implementor.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::distribution::{DiscreteCDF, DiscreteUniform};
+	///
+	/// let n = DiscreteUniform::new(1, 10).unwrap();
+	/// assert_eq!(0.4, n.sf(6));
+	/// ```
+	fn sf(&self, x: Self::T) -> f64 {
+		1.0 - self.cdf(x)
+	}
+
+	/// Due to issues with rounding and floating-point accuracy the default implementation may be ill-behaved
+	/// Specialized inverse cdfs should be used whenever possible.
+	///
+	/// # Panics
+	/// this default impl panics if provided `p` not on interval [0.0, 1.0]
+	fn inverse_cdf(&self, p: f64) -> Self::T {
+		if p <= self.cdf(self.lower()) {
+			return self.lower();
+		} else if p == 1.0 {
+			return self.upper();
+		} else if !(0.0..=1.0).contains(&p) {
+			panic!("p must be on [0, 1]")
+		}
+
+		let two = Self::T::one() + Self::T::one();
+		let mut ub = two.clone();
+		let lb = self.lower();
+		while self.cdf(ub.clone()) < p {
+			ub *= two.clone();
+		}
+
+		internal::integral_bisection_search(
+			|p| self.cdf(p.clone()),
+			p,
+			lb,
+			ub,
+		)
+		.unwrap()
+	}
+
+	/// The lower bound on the values returned by the distribution
+	///
+	/// Represents the start of the support.
+	fn lower(&self) -> Self::T;
+
+	/// The upper bound on the values returned by the distribution
+	///
+	/// Represents the end of the support.  Rays are represented via the
+	/// maximum value of the `T` type (infinity for floats and the maximum
+	/// possible value for integers).
+	fn upper(&self) -> Self::T;
 }

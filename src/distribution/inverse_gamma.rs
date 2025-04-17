@@ -181,34 +181,12 @@ impl ContinuousCDF for InverseGamma {
 			gamma::gamma_lr(self.shape, self.rate / x)
 		}
 	}
-}
 
-impl Min<f64> for InverseGamma {
-	/// Returns the minimum value in the domain of the
-	/// inverse gamma distribution representable by a double precision
-	/// float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0
-	/// ```
-	fn min(&self) -> f64 {
+	fn lower(&self) -> f64 {
 		0.0
 	}
-}
 
-impl Max<f64> for InverseGamma {
-	/// Returns the maximum value in the domain of the
-	/// inverse gamma distribution representable by a double precision
-	/// float
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
-	fn max(&self) -> f64 {
+	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
@@ -474,8 +452,8 @@ mod tests {
 
 	#[test]
 	fn test_min_max() {
-		let min = |x: InverseGamma| x.min();
-		let max = |x: InverseGamma| x.max();
+		let min = |x: InverseGamma| x.lower();
+		let max = |x: InverseGamma| x.upper();
 		test_exact(1.0, 1.0, 0.0, min);
 		test_exact(1.0, 1.0, f64::INFINITY, max);
 	}
