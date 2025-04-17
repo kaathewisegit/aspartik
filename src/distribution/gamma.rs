@@ -1,9 +1,9 @@
-#[cfg(feature = "python")]
-use crate::utils::impl_pyerr;
 use approx::ulps_eq;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	function::gamma,
@@ -451,38 +451,14 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 }
 
 #[cfg(feature = "python")]
-#[cfg_attr(feature = "python", pymethods)]
-impl Gamma {
-	#[new]
-	fn py_new(shape: f64, rate: f64) -> Result<Gamma, GammaError> {
-		Gamma::new(shape, rate)
-	}
-
-	fn __repr__(&self) -> String {
-		format!("Gamma({}, {})", self.shape, self.rate)
-	}
-
-	#[getter]
-	#[pyo3(name = "shape")]
-	fn py_shape(&self) -> f64 {
-		self.shape
-	}
-
-	#[getter]
-	#[pyo3(name = "rate")]
-	fn py_rate(&self) -> f64 {
-		self.rate
-	}
-
-	#[pyo3(name = "pdf")]
-	fn py_pdf(&self, x: f64) -> f64 {
-		self.pdf(x)
-	}
-
-	#[pyo3(name = "ln_pdf")]
-	fn py_ln_pdf(&self, x: f64) -> f64 {
-		self.ln_pdf(x)
-	}
+impl_pymethods! {for Gamma;
+	new(shape: f64, rate: f64) throws GammaError;
+	get(py_shape) shape: f64;
+	get(py_rate) rate: f64;
+	repr("Gamma({}, {})", shape, rate);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
 }
 
 #[cfg(test)]

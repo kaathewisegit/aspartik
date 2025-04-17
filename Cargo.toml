@@ -17,7 +17,7 @@ python = ["std", "dep:pyo3"]
 [dependencies]
 approx = "0.5"
 num-traits = "0.2"
-pyo3 = { version = "0.24", optional = true }
+pyo3 = { version = "0.24", features = ["multiple-pymethods"], optional = true }
 rand = { version = "0.9", default-features = false, optional = true }
 
 [dev-dependencies]

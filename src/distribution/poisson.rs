@@ -1,7 +1,14 @@
-use crate::distribution::{Discrete, DiscreteCDF};
-use crate::function::{factorial, gamma};
-use crate::statistics::*;
 use core::f64;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
+use crate::{
+	distribution::{Discrete, DiscreteCDF},
+	function::{factorial, gamma},
+	statistics::*,
+};
 
 /// Implements the [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
 /// distribution
@@ -17,7 +24,11 @@ use core::f64;
 /// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert_almost_eq!(n.pmf(1), 0.367879441171442, 1e-15);
 /// ```
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, str, module = "stats.distributions")
+)]
 pub struct Poisson {
 	lambda: f64,
 }
@@ -25,10 +36,17 @@ pub struct Poisson {
 /// Represents the errors that can occur when creating a [`Poisson`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+)]
 pub enum PoissonError {
 	/// The lambda is NaN, zero or less than zero.
 	LambdaInvalid,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(PoissonError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for PoissonError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -325,6 +343,16 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 			}
 		}
 	}
+}
+
+#[cfg(feature = "python")]
+impl_pymethods! {for Poisson;
+	new(lambda: f64) throws PoissonError;
+	get(py_lambda) lambda: f64;
+	repr("Poisson({})", lambda);
+	Discrete;
+	DiscreteCDF;
+	Distribution;
 }
 
 #[cfg(test)]
