@@ -1,5 +1,5 @@
 use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::{Distribution, Median, Mode};
+use crate::statistics::{Distribution, Mode};
 use core::f64;
 
 /// Implements the [Laplace](https://en.wikipedia.org/wiki/Laplace_distribution)
@@ -205,6 +205,19 @@ impl Distribution for Laplace {
 		Some(self.location)
 	}
 
+	/// Returns the median of the laplace distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// μ
+	/// ```
+	///
+	/// where `μ` is the location
+	fn median(&self) -> Option<f64> {
+		Some(self.location)
+	}
+
 	/// Returns the variance of the laplace distribution
 	///
 	/// # Formula
@@ -240,21 +253,6 @@ impl Distribution for Laplace {
 	/// ```
 	fn skewness(&self) -> Option<f64> {
 		Some(0.0)
-	}
-}
-
-impl Median for Laplace {
-	/// Returns the median of the laplace distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ
-	/// ```
-	///
-	/// where `μ` is the location
-	fn median(&self) -> f64 {
-		self.location
 	}
 }
 
@@ -446,7 +444,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Laplace| x.median();
+		let median = |x: Laplace| x.median().unwrap();
 		test_exact(f64::NEG_INFINITY, 0.1, f64::NEG_INFINITY, median);
 		test_exact(-6.0, 1.0, -6.0, median);
 		test_exact(1.0, 7.0, 1.0, median);

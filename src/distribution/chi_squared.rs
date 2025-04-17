@@ -178,6 +178,25 @@ impl Distribution for ChiSquared {
 		self.g.mean()
 	}
 
+	/// Returns the median  of the chi-squared distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// k * (1 - (2 / 9k))^3
+	/// ```
+	fn median(&self) -> Option<f64> {
+		let median = if self.freedom < 1.0 {
+			// if k is small, calculate using expansion of formula
+			self.freedom - 2.0 / 3.0 + 12.0 / (81.0 * self.freedom)
+				- 8.0 / (729.0 * self.freedom * self.freedom)
+		} else {
+			// if k is large enough, median heads toward k - 2/3
+			self.freedom - 2.0 / 3.0
+		};
+		Some(median)
+	}
+
 	/// Returns the variance of the chi-squared distribution
 	///
 	/// # Formula
@@ -216,26 +235,6 @@ impl Distribution for ChiSquared {
 	/// where `k` is the degrees of freedom
 	fn skewness(&self) -> Option<f64> {
 		self.g.skewness()
-	}
-}
-
-impl Median for ChiSquared {
-	/// Returns the median  of the chi-squared distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// k * (1 - (2 / 9k))^3
-	/// ```
-	fn median(&self) -> f64 {
-		if self.freedom < 1.0 {
-			// if k is small, calculate using expansion of formula
-			self.freedom - 2.0 / 3.0 + 12.0 / (81.0 * self.freedom)
-				- 8.0 / (729.0 * self.freedom * self.freedom)
-		} else {
-			// if k is large enough, median heads toward k - 2/3
-			self.freedom - 2.0 / 3.0
-		}
 	}
 }
 
@@ -294,7 +293,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: ChiSquared| x.median();
+		let median = |x: ChiSquared| x.median().unwrap();
 		test_absolute(0.5, 0.0857338820301783264746, 1e-16, median);
 		test_exact(1.0, 1.0 - 2.0 / 3.0, median);
 		test_exact(2.0, 2.0 - 2.0 / 3.0, median);

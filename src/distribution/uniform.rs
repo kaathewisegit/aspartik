@@ -237,6 +237,17 @@ impl Distribution for Uniform {
 		Some((self.min + self.max) / 2.0)
 	}
 
+	/// Returns the median for the continuous uniform distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (min + max) / 2
+	/// ```
+	fn median(&self) -> Option<f64> {
+		Some((self.min + self.max) / 2.0)
+	}
+
 	/// Returns the variance for the continuous uniform distribution
 	///
 	/// # Formula
@@ -268,19 +279,6 @@ impl Distribution for Uniform {
 	/// ```
 	fn skewness(&self) -> Option<f64> {
 		Some(0.0)
-	}
-}
-
-impl Median for Uniform {
-	/// Returns the median for the continuous uniform distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (min + max) / 2
-	/// ```
-	fn median(&self) -> f64 {
-		(self.min + self.max) / 2.0
 	}
 }
 
@@ -426,7 +424,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Uniform| x.median();
+		let median = |x: Uniform| x.median().unwrap();
 		test_exact(-0.0, 2.0, 1.0, median);
 		test_exact(0.0, 2.0, 1.0, median);
 		test_exact(0.1, 4.0, 2.05, median);

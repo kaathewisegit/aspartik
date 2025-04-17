@@ -186,20 +186,6 @@ impl ContinuousCDF for Gumbel {
 }
 
 impl Distribution for Gumbel {
-	/// Returns the entropy of the Gumbel distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// ln(β) + γ + 1
-	/// ```
-	///
-	/// where `β` is the scale
-	/// and `γ` is the Euler-Mascheroni constant (approx 0.57721)
-	fn entropy(&self) -> Option<f64> {
-		Some(1.0 + EULER_MASCHERONI + (self.scale).ln())
-	}
-
 	/// Returns the mean of the Gumbel distribution
 	///
 	/// # Formula
@@ -214,19 +200,17 @@ impl Distribution for Gumbel {
 		Some(self.location + (EULER_MASCHERONI * self.scale))
 	}
 
-	/// Returns the skewness of the Gumbel distribution
+	/// Returns the median of the Gumbel distribution
 	///
 	/// # Formula
 	///
 	/// ```text
-	/// 12 * sqrt(6) * ζ(3) / π^3 ≈ 1.13955
+	/// μ - β ln(ln(2))
 	/// ```
-	/// ζ(3) is the Riemann zeta function evaluated at 3 (approx 1.20206)
-	/// and π is the constant PI (approx 3.14159)
 	///
-	/// This approximately evaluates to 1.13955
-	fn skewness(&self) -> Option<f64> {
-		Some(1.13955)
+	/// where `μ` is the location and `β` is the scale parameter
+	fn median(&self) -> Option<f64> {
+		Some(self.location - self.scale * (((2.0_f64).ln()).ln()))
 	}
 
 	/// Returns the variance of the Gumbel distribution
@@ -254,20 +238,34 @@ impl Distribution for Gumbel {
 	fn std_dev(&self) -> Option<f64> {
 		Some(self.scale * PI / 6.0_f64.sqrt())
 	}
-}
 
-impl Median for Gumbel {
-	/// Returns the median of the Gumbel distribution
+	/// Returns the entropy of the Gumbel distribution
 	///
 	/// # Formula
 	///
 	/// ```text
-	/// μ - β ln(ln(2))
+	/// ln(β) + γ + 1
 	/// ```
 	///
-	/// where `μ` is the location and `β` is the scale parameter
-	fn median(&self) -> f64 {
-		self.location - self.scale * (((2.0_f64).ln()).ln())
+	/// where `β` is the scale
+	/// and `γ` is the Euler-Mascheroni constant (approx 0.57721)
+	fn entropy(&self) -> Option<f64> {
+		Some(1.0 + EULER_MASCHERONI + (self.scale).ln())
+	}
+
+	/// Returns the skewness of the Gumbel distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// 12 * sqrt(6) * ζ(3) / π^3 ≈ 1.13955
+	/// ```
+	/// ζ(3) is the Riemann zeta function evaluated at 3 (approx 1.20206)
+	/// and π is the constant PI (approx 3.14159)
+	///
+	/// This approximately evaluates to 1.13955
+	fn skewness(&self) -> Option<f64> {
+		Some(1.13955)
 	}
 }
 
@@ -413,7 +411,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Gumbel| x.median();
+		let median = |x: Gumbel| x.median().unwrap();
 		test_exact(0.0, 2.0, 0.7330258411633287, median);
 		test_exact(0.1, 4.0, 1.5660516823266574, median);
 		test_exact(1.0, 10.0, 4.665129205816644, median);

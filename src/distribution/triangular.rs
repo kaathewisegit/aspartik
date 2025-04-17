@@ -289,6 +289,29 @@ impl Distribution for Triangular {
 		Some((self.min + self.max + self.mode) / 3.0)
 	}
 
+	/// Returns the median of the triangular distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// if mode >= (min + max) / 2 {
+	///     min + sqrt((max - min) * (mode - min) / 2)
+	/// } else {
+	///     max - sqrt((max - min) * (max - mode) / 2)
+	/// }
+	/// ```
+	fn median(&self) -> Option<f64> {
+		let a = self.min;
+		let b = self.max;
+		let c = self.mode;
+		let median = if c >= (a + b) / 2.0 {
+			a + ((b - a) * (c - a) / 2.0).sqrt()
+		} else {
+			b - ((b - a) * (b - c) / 2.0).sqrt()
+		};
+		Some(median)
+	}
+
 	/// Returns the variance of the triangular distribution
 	///
 	/// # Formula
@@ -335,30 +358,6 @@ impl Distribution for Triangular {
 			* (a * a + b * b + c * c - a * b - a * c - b * c)
 				.powf(3.0 / 2.0);
 		Some(q / d)
-	}
-}
-
-impl Median for Triangular {
-	/// Returns the median of the triangular distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// if mode >= (min + max) / 2 {
-	///     min + sqrt((max - min) * (mode - min) / 2)
-	/// } else {
-	///     max - sqrt((max - min) * (max - mode) / 2)
-	/// }
-	/// ```
-	fn median(&self) -> f64 {
-		let a = self.min;
-		let b = self.max;
-		let c = self.mode;
-		if c >= (a + b) / 2.0 {
-			a + ((b - a) * (c - a) / 2.0).sqrt()
-		} else {
-			b - ((b - a) * (b - c) / 2.0).sqrt()
-		}
 	}
 }
 
@@ -562,7 +561,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Triangular| x.median();
+		let median = |x: Triangular| x.median().unwrap();
 		test_exact(0.0, 1.0, 0.5, 0.5, median);
 		test_exact(0.0, 1.0, 0.75, 0.6123724356957945245493, median);
 		test_absolute(

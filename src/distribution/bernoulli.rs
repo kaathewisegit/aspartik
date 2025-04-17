@@ -150,6 +150,20 @@ impl Distribution for Bernoulli {
 		self.b.mean()
 	}
 
+	/// Returns the median of the bernoulli
+	/// distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// if p < 0.5 { 0 }
+	/// else if p > 0.5 { 1 }
+	/// else { 0.5 }
+	/// ```
+	fn median(&self) -> Option<f64> {
+		self.b.median()
+	}
+
 	/// Returns the variance of the bernoulli
 	/// distribution
 	///
@@ -186,22 +200,6 @@ impl Distribution for Bernoulli {
 	/// ```
 	fn skewness(&self) -> Option<f64> {
 		self.b.skewness()
-	}
-}
-
-impl Median for Bernoulli {
-	/// Returns the median of the bernoulli
-	/// distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// if p < 0.5 { 0 }
-	/// else if p > 0.5 { 1 }
-	/// else { 0.5 }
-	/// ```
-	fn median(&self) -> f64 {
-		self.b.median()
 	}
 }
 

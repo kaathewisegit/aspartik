@@ -246,6 +246,19 @@ impl Distribution for LogNormal {
 		Some((self.location + self.scale * self.scale / 2.0).exp())
 	}
 
+	/// Returns the median of the log-normal distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// e^μ
+	/// ```
+	///
+	/// where `μ` is the location
+	fn median(&self) -> Option<f64> {
+		Some(self.location.exp())
+	}
+
 	/// Returns the variance of the log-normal distribution
 	///
 	/// # Formula
@@ -287,21 +300,6 @@ impl Distribution for LogNormal {
 	fn skewness(&self) -> Option<f64> {
 		let expsigma2 = (self.scale * self.scale).exp();
 		Some((expsigma2 + 2.0) * (expsigma2 - 1.0).sqrt())
-	}
-}
-
-impl Median for LogNormal {
-	/// Returns the median of the log-normal distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// e^μ
-	/// ```
-	///
-	/// where `μ` is the location
-	fn median(&self) -> f64 {
-		self.location.exp()
 	}
 }
 
@@ -969,7 +967,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: LogNormal| x.median();
+		let median = |x: LogNormal| x.median().unwrap();
 		test_exact(
 			-1.0,
 			0.1,

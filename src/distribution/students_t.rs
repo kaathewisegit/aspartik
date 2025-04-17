@@ -301,6 +301,19 @@ impl Distribution for StudentsT {
 		}
 	}
 
+	/// Returns the median of the student's t-distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// μ
+	/// ```
+	///
+	/// where `μ` is the location
+	fn median(&self) -> Option<f64> {
+		Some(self.location)
+	}
+
 	/// Returns the variance of the student's t-distribution
 	///
 	/// # None
@@ -369,21 +382,6 @@ impl Distribution for StudentsT {
 	/// ```
 	fn skewness(&self) -> Option<f64> {
 		if self.freedom <= 3.0 { None } else { Some(0.0) }
-	}
-}
-
-impl Median for StudentsT {
-	/// Returns the median of the student's t-distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ
-	/// ```
-	///
-	/// where `μ` is the location
-	fn median(&self) -> f64 {
-		self.location
 	}
 }
 
@@ -577,7 +575,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: StudentsT| x.median();
+		let median = |x: StudentsT| x.median().unwrap();
 		test_relative(0.0, 1.0, 1.0, 0.0, median);
 		test_relative(0.0, 0.1, 1.0, 0.0, median);
 		test_relative(0.0, 1.0, 3.0, 0.0, median);

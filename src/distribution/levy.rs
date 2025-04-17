@@ -209,6 +209,20 @@ impl Distribution for Levy {
 		Some(f64::INFINITY)
 	}
 
+	/// Returns the median of the Levy distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// μ + c/(2 * erfc_inv(0.5)^2)
+	/// ```
+	///
+	/// where `μ` is the mean, `c` is the dispersion and `erfc_inv` is
+	/// the inverse of the complementary error function.
+	fn median(&self) -> Option<f64> {
+		Some(self.mu + self.c * 0.5 * erfc_inv(0.5).powf(-2.0))
+	}
+
 	/// Returns the variance of the Levy distribution
 	///
 	/// # Formula
@@ -243,22 +257,6 @@ impl Distribution for Levy {
 		const CONSTANT_PART: f64 =
 			3.32448280139688989720525569282472133636474609375;
 		Some(CONSTANT_PART + self.c.ln())
-	}
-}
-
-impl Median for Levy {
-	/// Returns the median of the Levy distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ + c/(2 * erfc_inv(0.5)^2)
-	/// ```
-	///
-	/// where `μ` is the mean, `c` is the dispersion and `erfc_inv` is
-	/// the inverse of the complementary error function.
-	fn median(&self) -> f64 {
-		self.mu + self.c * 0.5 * erfc_inv(0.5).powf(-2.0)
 	}
 }
 
@@ -411,7 +409,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Levy| x.median();
+		let median = |x: Levy| x.median().unwrap();
 		test_exact(
 			1.0,
 			1.0,

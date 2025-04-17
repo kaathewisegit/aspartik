@@ -239,6 +239,17 @@ impl Distribution for Categorical {
 			.fold(0.0, |acc, (idx, &val)| acc + idx as f64 * val))
 	}
 
+	/// Returns the median of the categorical distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// CDF^-1(0.5)
+	/// ```
+	fn median(&self) -> Option<f64> {
+		Some(self.inverse_cdf(0.5) as f64)
+	}
+
 	/// Returns the variance of the categorical distribution
 	///
 	/// # Formula
@@ -281,18 +292,6 @@ impl Distribution for Categorical {
 			.map(|p| p * p.ln())
 			.sum::<f64>();
 		Some(entr)
-	}
-}
-impl Median for Categorical {
-	/// Returns the median of the categorical distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// CDF^-1(0.5)
-	/// ```
-	fn median(&self) -> f64 {
-		self.inverse_cdf(0.5) as f64
 	}
 }
 
@@ -462,7 +461,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Categorical| x.median();
+		let median = |x: Categorical| x.median().unwrap();
 		test_exact(&[0.0, 3.0, 1.0, 1.0], 1.0, median);
 		test_exact(&[4.0, 2.5, 2.5, 1.0], 1.0, median);
 	}

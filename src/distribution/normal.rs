@@ -203,6 +203,19 @@ impl Distribution for Normal {
 		Some(self.mean)
 	}
 
+	/// Returns the median of the normal distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// μ
+	/// ```
+	///
+	/// where `μ` is the mean
+	fn median(&self) -> Option<f64> {
+		Some(self.mean)
+	}
+
 	/// Returns the variance of the normal distribution
 	///
 	/// # Formula
@@ -245,21 +258,6 @@ impl Distribution for Normal {
 	/// ```
 	fn skewness(&self) -> Option<f64> {
 		Some(0.0)
-	}
-}
-
-impl Median for Normal {
-	/// Returns the median of the normal distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ
-	/// ```
-	///
-	/// where `μ` is the mean
-	fn median(&self) -> f64 {
-		self.mean
 	}
 }
 
@@ -434,7 +432,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Normal| x.median();
+		let median = |x: Normal| x.median().unwrap();
 		test_exact(-0.0, 1.0, 0.0, median);
 		test_exact(0.0, 1.0, 0.0, median);
 		test_exact(0.1, 1.0, 0.1, median);

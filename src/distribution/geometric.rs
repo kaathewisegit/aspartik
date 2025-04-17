@@ -177,6 +177,19 @@ impl Distribution for Geometric {
 		Some(1.0 / self.p)
 	}
 
+	/// Returns the median of the geometric distribution
+	///
+	/// # Remarks
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// ceil(-1 / log_2(1 - p))
+	/// ```
+	fn median(&self) -> Option<f64> {
+		Some((-f64::consts::LN_2 / (1.0 - self.p).ln()).ceil())
+	}
+
 	/// Returns the standard deviation of the geometric distribution
 	///
 	/// # Formula
@@ -225,21 +238,6 @@ impl Mode<Option<u64>> for Geometric {
 	/// ```
 	fn mode(&self) -> Option<u64> {
 		Some(1)
-	}
-}
-
-impl Median for Geometric {
-	/// Returns the median of the geometric distribution
-	///
-	/// # Remarks
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// ceil(-1 / log_2(1 - p))
-	/// ```
-	fn median(&self) -> f64 {
-		(-f64::consts::LN_2 / (1.0 - self.p).ln()).ceil()
 	}
 }
 
@@ -336,7 +334,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Geometric| x.median();
+		let median = |x: Geometric| x.median().unwrap();
 		test_exact(0.0001, 6932.0, median);
 		test_exact(0.1, 7.0, median);
 		test_exact(0.3, 2.0, median);

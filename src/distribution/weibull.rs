@@ -218,6 +218,19 @@ impl Distribution for Weibull {
 		Some(self.scale * gamma::gamma(1.0 + 1.0 / self.shape))
 	}
 
+	/// Returns the median of the weibull distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// λ(ln(2))^(1 / k)
+	/// ```
+	///
+	/// where `k` is the shape and `λ` is the scale
+	fn median(&self) -> Option<f64> {
+		Some(self.scale * f64::consts::LN_2.powf(1.0 / self.shape))
+	}
+
 	/// Returns the variance of the weibull distribution
 	///
 	/// # Formula
@@ -274,21 +287,6 @@ impl Distribution for Weibull {
 			- 3.0 * sigma2 * mu - (mu * mu * mu))
 			/ sigma3;
 		Some(skew)
-	}
-}
-
-impl Median for Weibull {
-	/// Returns the median of the weibull distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// λ(ln(2))^(1 / k)
-	/// ```
-	///
-	/// where `k` is the shape and `λ` is the scale
-	fn median(&self) -> f64 {
-		self.scale * f64::consts::LN_2.powf(1.0 / self.shape)
 	}
 }
 
@@ -488,7 +486,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Weibull| x.median();
+		let median = |x: Weibull| x.median().unwrap();
 		test_exact(
 			1.0,
 			0.1,

@@ -200,6 +200,17 @@ impl Distribution for Binomial {
 		Some(self.p * self.n as f64)
 	}
 
+	/// Returns the median of the binomial distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// floor(n * p)
+	/// ```
+	fn median(&self) -> Option<f64> {
+		Some((self.p * self.n as f64).floor())
+	}
+
 	/// Returns the variance of the binomial distribution
 	///
 	/// # Formula
@@ -240,19 +251,6 @@ impl Distribution for Binomial {
 	fn skewness(&self) -> Option<f64> {
 		Some((1.0 - 2.0 * self.p)
 			/ (self.n as f64 * self.p * (1.0 - self.p)).sqrt())
-	}
-}
-
-impl Median for Binomial {
-	/// Returns the median of the binomial distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// floor(n * p)
-	/// ```
-	fn median(&self) -> f64 {
-		(self.p * self.n as f64).floor()
 	}
 }
 
@@ -387,7 +385,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Binomial| x.median();
+		let median = |x: Binomial| x.median().unwrap();
 		test_exact(0.0, 4, 0.0, median);
 		test_exact(0.3, 3, 0.0, median);
 		test_exact(1.0, 2, 2.0, median);

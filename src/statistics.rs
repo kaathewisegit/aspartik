@@ -16,6 +16,21 @@ pub trait Distribution {
 		None
 	}
 
+	/// Median
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use statrs::statistics::Distribution;
+	/// use statrs::distribution::Uniform;
+	///
+	/// let n = Uniform::new(0.0, 1.0).unwrap();
+	/// assert_eq!(Some(0.5), n.median());
+	/// ```
+	fn median(&self) -> Option<f64> {
+		None
+	}
+
 	/// Variance, or `None` if it doesn't exist
 	///
 	/// # Examples
@@ -75,22 +90,6 @@ pub trait Distribution {
 	fn skewness(&self) -> Option<f64> {
 		None
 	}
-}
-
-/// The `Median` trait returns the median of the distribution.
-pub trait Median {
-	/// Returns the median.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use statrs::statistics::Median;
-	/// use statrs::distribution::Uniform;
-	///
-	/// let n = Uniform::new(0.0, 1.0).unwrap();
-	/// assert_eq!(0.5, n.median());
-	/// ```
-	fn median(&self) -> f64;
 }
 
 /// The `Mode` trait specifies that an object has a closed form solution

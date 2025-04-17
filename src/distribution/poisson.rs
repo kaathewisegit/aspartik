@@ -170,6 +170,19 @@ impl Distribution for Poisson {
 		Some(self.lambda)
 	}
 
+	/// Returns the median of the poisson distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// floor(λ + 1 / 3 - 0.02 / λ)
+	/// ```
+	///
+	/// where `λ` is the rate
+	fn median(&self) -> Option<f64> {
+		Some((self.lambda + 1.0 / 3.0 - 0.02 / self.lambda).floor())
+	}
+
 	/// Returns the variance of the poisson distribution
 	///
 	/// # Formula
@@ -213,21 +226,6 @@ impl Distribution for Poisson {
 	/// where `λ` is the rate
 	fn skewness(&self) -> Option<f64> {
 		Some(1.0 / self.lambda.sqrt())
-	}
-}
-
-impl Median for Poisson {
-	/// Returns the median of the poisson distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// floor(λ + 1 / 3 - 0.02 / λ)
-	/// ```
-	///
-	/// where `λ` is the rate
-	fn median(&self) -> f64 {
-		(self.lambda + 1.0 / 3.0 - 0.02 / self.lambda).floor()
 	}
 }
 
@@ -385,7 +383,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Poisson| x.median();
+		let median = |x: Poisson| x.median().unwrap();
 		test_exact(1.5, 1.0, median);
 		test_exact(5.4, 5.0, median);
 		test_exact(10.8, 11.0, median);

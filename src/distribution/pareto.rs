@@ -224,6 +224,19 @@ impl Distribution for Pareto {
 		}
 	}
 
+	/// Returns the median of the Pareto distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// x_m*2^(1/α)
+	/// ```
+	///
+	/// where `x_m` is the scale and `α` is the shape
+	fn median(&self) -> Option<f64> {
+		Some(self.scale * (2f64.powf(1.0 / self.shape)))
+	}
+
 	/// Returns the variance of the Pareto distribution
 	///
 	/// # Formula
@@ -283,21 +296,6 @@ impl Distribution for Pareto {
 			Some((2.0 * (self.shape + 1.0) / (self.shape - 3.0))
 				* ((self.shape - 2.0) / self.shape).sqrt())
 		}
-	}
-}
-
-impl Median for Pareto {
-	/// Returns the median of the Pareto distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// x_m*2^(1/α)
-	/// ```
-	///
-	/// where `x_m` is the scale and `α` is the shape
-	fn median(&self) -> f64 {
-		self.scale * (2f64.powf(1.0 / self.shape))
 	}
 }
 
@@ -440,7 +438,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Pareto| x.median();
+		let median = |x: Pareto| x.median().unwrap();
 		test_exact(0.1, 0.1, 102.4, median);
 		test_exact(1.0, 1.0, 2.0, median);
 		test_exact(10.0, 10.0, 10.0 * 2f64.powf(0.1), median);

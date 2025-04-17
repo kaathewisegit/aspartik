@@ -171,6 +171,19 @@ impl Distribution for Exp {
 		Some(1.0 / self.rate)
 	}
 
+	/// Returns the median of the exponential distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (1 / λ) * ln2
+	/// ```
+	///
+	/// where `λ` is the rate
+	fn median(&self) -> Option<f64> {
+		Some(f64::consts::LN_2 / self.rate)
+	}
+
 	/// Returns the variance of the exponential distribution
 	///
 	/// # Formula
@@ -206,21 +219,6 @@ impl Distribution for Exp {
 	/// ```
 	fn skewness(&self) -> Option<f64> {
 		Some(2.0)
-	}
-}
-
-impl Median for Exp {
-	/// Returns the median of the exponential distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (1 / λ) * ln2
-	/// ```
-	///
-	/// where `λ` is the rate
-	fn median(&self) -> f64 {
-		f64::consts::LN_2 / self.rate
 	}
 }
 
@@ -334,7 +332,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Exp| x.median();
+		let median = |x: Exp| x.median().unwrap();
 		test_absolute(0.1, 6.931471805599453094172, 1e-15, median);
 		test_exact(1.0, f64::consts::LN_2, median);
 		test_exact(10.0, 0.06931471805599453094172, median);
@@ -459,37 +457,37 @@ mod tests {
 	fn test_inverse_cdf() {
 		let distribution = Exp::new(0.42).unwrap();
 		assert_eq!(
-			distribution.median(),
+			distribution.median().unwrap(),
 			distribution.inverse_cdf(0.5)
 		);
 
 		let distribution = Exp::new(0.042).unwrap();
 		assert_eq!(
-			distribution.median(),
+			distribution.median().unwrap(),
 			distribution.inverse_cdf(0.5)
 		);
 
 		let distribution = Exp::new(0.0042).unwrap();
 		assert_eq!(
-			distribution.median(),
+			distribution.median().unwrap(),
 			distribution.inverse_cdf(0.5)
 		);
 
 		let distribution = Exp::new(0.33).unwrap();
 		assert_eq!(
-			distribution.median(),
+			distribution.median().unwrap(),
 			distribution.inverse_cdf(0.5)
 		);
 
 		let distribution = Exp::new(0.033).unwrap();
 		assert_eq!(
-			distribution.median(),
+			distribution.median().unwrap(),
 			distribution.inverse_cdf(0.5)
 		);
 
 		let distribution = Exp::new(0.0033).unwrap();
 		assert_eq!(
-			distribution.median(),
+			distribution.median().unwrap(),
 			distribution.inverse_cdf(0.5)
 		);
 	}

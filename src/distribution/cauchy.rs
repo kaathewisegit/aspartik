@@ -191,6 +191,19 @@ impl ContinuousCDF for Cauchy {
 }
 
 impl Distribution for Cauchy {
+	/// Returns the median of the cauchy distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// x_0
+	/// ```
+	///
+	/// where `x_0` is the location
+	fn median(&self) -> Option<f64> {
+		Some(self.location)
+	}
+
 	/// Returns the entropy of the cauchy distribution
 	///
 	/// # Formula
@@ -202,21 +215,6 @@ impl Distribution for Cauchy {
 	/// where `γ` is the scale
 	fn entropy(&self) -> Option<f64> {
 		Some((4.0 * f64::consts::PI * self.scale).ln())
-	}
-}
-
-impl Median for Cauchy {
-	/// Returns the median of the cauchy distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// x_0
-	/// ```
-	///
-	/// where `x_0` is the location
-	fn median(&self) -> f64 {
-		self.location
 	}
 }
 
@@ -327,7 +325,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: Cauchy| x.median();
+		let median = |x: Cauchy| x.median().unwrap();
 		test_exact(0.0, 2.0, 0.0, median);
 		test_exact(0.1, 4.0, 0.1, median);
 		test_exact(1.0, 10.0, 1.0, median);

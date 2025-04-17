@@ -191,6 +191,17 @@ impl Distribution for DiscreteUniform {
 		Some((self.min + self.max) as f64 / 2.0)
 	}
 
+	/// Returns the median of the discrete uniform distribution
+	///
+	/// # Formula
+	///
+	/// ```text
+	/// (max + min) / 2
+	/// ```
+	fn median(&self) -> Option<f64> {
+		Some((self.min + self.max) as f64 / 2.0)
+	}
+
 	/// Returns the variance of the discrete uniform distribution
 	///
 	/// # Formula
@@ -224,19 +235,6 @@ impl Distribution for DiscreteUniform {
 	/// ```
 	fn skewness(&self) -> Option<f64> {
 		Some(0.0)
-	}
-}
-
-impl Median for DiscreteUniform {
-	/// Returns the median of the discrete uniform distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (max + min) / 2
-	/// ```
-	fn median(&self) -> f64 {
-		(self.min + self.max) as f64 / 2.0
 	}
 }
 
@@ -376,7 +374,7 @@ mod tests {
 
 	#[test]
 	fn test_median() {
-		let median = |x: DiscreteUniform| x.median();
+		let median = |x: DiscreteUniform| x.median().unwrap();
 		test_exact(-10, 10, 0.0, median);
 		test_exact(0, 4, 2.0, median);
 		test_exact(10, 20, 15.0, median);
