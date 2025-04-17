@@ -274,7 +274,9 @@ impl Mode<Option<i64>> for DiscreteUniform {
 	}
 }
 
-impl Discrete<i64> for DiscreteUniform {
+impl Discrete for DiscreteUniform {
+	type T = i64;
+
 	/// Calculates the probability mass function for the discrete uniform
 	/// distribution at `x`
 	///

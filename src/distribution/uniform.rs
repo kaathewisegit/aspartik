@@ -306,7 +306,9 @@ impl Mode<Option<f64>> for Uniform {
 	}
 }
 
-impl Continuous<f64> for Uniform {
+impl Continuous for Uniform {
+	type T = f64;
+
 	/// Calculates the probability density function for the continuous uniform
 	/// distribution at `x`
 	///

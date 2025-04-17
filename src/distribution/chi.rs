@@ -304,7 +304,9 @@ impl Mode<Option<f64>> for Chi {
 	}
 }
 
-impl Continuous<f64> for Chi {
+impl Continuous for Chi {
+	type T = f64;
+
 	/// Calculates the probability density function for the chi
 	/// distribution at `x`
 	///

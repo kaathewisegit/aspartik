@@ -249,7 +249,9 @@ impl Mode<Option<f64>> for Erlang {
 	}
 }
 
-impl Continuous<f64> for Erlang {
+impl Continuous for Erlang {
+	type T = f64;
+
 	/// Calculates the probability density function for the erlang distribution
 	/// at `x`
 	///

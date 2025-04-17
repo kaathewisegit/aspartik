@@ -373,14 +373,14 @@ pub mod test {
 	}
 
 	/// cdf should be the integral of the pdf
-	fn check_integrate_pdf_is_cdf<
-		D: ContinuousCDF<f64> + Continuous<f64>,
-	>(
+	fn check_integrate_pdf_is_cdf<D>(
 		dist: &D,
 		x_min: f64,
 		x_max: f64,
 		step: f64,
-	) {
+	) where
+		D: ContinuousCDF<f64> + Continuous<T = f64>,
+	{
 		let mut prev_x = x_min;
 		let mut prev_density = dist.pdf(x_min);
 		let mut sum = 0.0;
@@ -418,12 +418,10 @@ pub mod test {
 	}
 
 	/// cdf should be the sum of the pmf
-	fn check_sum_pmf_is_cdf<
-		D: DiscreteCDF<u64> + Discrete<u64>,
-	>(
-		dist: &D,
-		x_max: u64,
-	) {
+	fn check_sum_pmf_is_cdf<D>(dist: &D, x_max: u64)
+	where
+		D: DiscreteCDF<u64> + Discrete<T = u64>,
+	{
 		let mut sum = 0.0;
 
 		// go slightly beyond x_max to test for off-by-one errors
@@ -451,14 +449,14 @@ pub mod test {
 	}
 
 	/// pdf should be derivative of cdf
-	fn check_derivative_of_cdf_is_pdf<
-		D: ContinuousCDF<f64> + Continuous<f64>,
-	>(
+	fn check_derivative_of_cdf_is_pdf<D>(
 		dist: &D,
 		x_min: f64,
 		x_max: f64,
 		step: f64,
-	) {
+	) where
+		D: ContinuousCDF<f64> + Continuous<T = f64>,
+	{
 		const DELTA: f64 = 1e-12;
 		const DX: f64 = 2.0 * DELTA;
 		let mut prev_x = x_min;
@@ -484,15 +482,15 @@ pub mod test {
 	/// Does a series of checks that all continuous distributions must obey.
 	/// 99% of the probability mass should be between x_min and x_max or the finite
 	/// difference of cdf should be near to the pdf for much of the support.
-	pub fn check_continuous_distribution<
-		D: ContinuousCDF<f64>
-			+ Continuous<f64>
-			+ std::panic::RefUnwindSafe,
-	>(
+	pub fn check_continuous_distribution<D>(
 		dist: &D,
 		x_min: f64,
 		x_max: f64,
-	) {
+	) where
+		D: ContinuousCDF<f64>
+			+ Continuous<T = f64>
+			+ std::panic::RefUnwindSafe,
+	{
 		assert_eq!(dist.pdf(f64::NEG_INFINITY), 0.0);
 		assert_eq!(dist.pdf(f64::INFINITY), 0.0);
 		assert_eq!(dist.ln_pdf(f64::NEG_INFINITY), f64::NEG_INFINITY);
@@ -527,12 +525,10 @@ pub mod test {
 	/// Does a series of checks that all positive discrete distributions must
 	/// obey.
 	/// 99% of the probability mass should be between 0 and x_max (inclusive).
-	pub fn check_discrete_distribution<
-		D: DiscreteCDF<u64> + Discrete<u64>,
-	>(
-		dist: &D,
-		x_max: u64,
-	) {
+	pub fn check_discrete_distribution<D>(dist: &D, x_max: u64)
+	where
+		D: DiscreteCDF<u64> + Discrete<T = u64>,
+	{
 		// assert_eq!(dist.cdf(f64::NEG_INFINITY), 0.0);
 		// assert_eq!(dist.cdf(-10.0), 0.0);
 		// assert_eq!(dist.cdf(-1.0), 0.0);

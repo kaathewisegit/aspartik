@@ -340,7 +340,9 @@ impl Mode<Option<f64>> for LogNormal {
 	}
 }
 
-impl Continuous<f64> for LogNormal {
+impl Continuous for LogNormal {
+	type T = f64;
+
 	/// Calculates the probability density function for the log-normal
 	/// distribution at `x`
 	///

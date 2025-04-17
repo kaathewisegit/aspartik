@@ -276,7 +276,9 @@ impl Mode<Option<f64>> for ChiSquared {
 	}
 }
 
-impl Continuous<f64> for ChiSquared {
+impl Continuous for ChiSquared {
+	type T = f64;
+
 	/// Calculates the probability density function for the chi-squared
 	/// distribution at `x`
 	///

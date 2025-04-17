@@ -220,7 +220,9 @@ pub trait DiscreteCDF<K: Sized + Num + Ord + Clone + NumAssignOps>:
 /// All methods provided by the `Continuous` trait are unchecked, meaning
 /// they can panic if in an invalid state or encountering invalid input
 /// depending on the implementing distribution.
-pub trait Continuous<K> {
+pub trait Continuous {
+	type T;
+
 	/// Returns the probability density function calculated at `x` for a given
 	/// distribution.
 	/// May panic depending on the implementor.
@@ -233,7 +235,7 @@ pub trait Continuous<K> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(1.0, n.pdf(0.5));
 	/// ```
-	fn pdf(&self, x: K) -> f64;
+	fn pdf(&self, x: Self::T) -> f64;
 
 	/// Returns the log of the probability density function calculated at `x`
 	/// for a given distribution.
@@ -247,7 +249,7 @@ pub trait Continuous<K> {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.0, n.ln_pdf(0.5));
 	/// ```
-	fn ln_pdf(&self, x: K) -> f64;
+	fn ln_pdf(&self, x: Self::T) -> f64;
 }
 
 /// The `Discrete` trait provides an interface for interacting with discrete
@@ -258,7 +260,9 @@ pub trait Continuous<K> {
 /// All methods provided by the `Discrete` trait are unchecked, meaning
 /// they can panic if in an invalid state or encountering invalid input
 /// depending on the implementing distribution.
-pub trait Discrete<K> {
+pub trait Discrete {
+	type T;
+
 	/// Returns the probability mass function calculated at `x` for a given
 	/// distribution.
 	/// May panic depending on the implementor.
@@ -272,7 +276,7 @@ pub trait Discrete<K> {
 	/// let n = Binomial::new(0.5, 10).unwrap();
 	/// assert!(prec::almost_eq(n.pmf(5), 0.24609375, 1e-15));
 	/// ```
-	fn pmf(&self, x: K) -> f64;
+	fn pmf(&self, x: Self::T) -> f64;
 
 	/// Returns the log of the probability mass function calculated at `x` for
 	/// a given distribution.
@@ -287,5 +291,5 @@ pub trait Discrete<K> {
 	/// let n = Binomial::new(0.5, 10).unwrap();
 	/// assert!(prec::almost_eq(n.ln_pmf(5), (0.24609375f64).ln(), 1e-15));
 	/// ```
-	fn ln_pmf(&self, x: K) -> f64;
+	fn ln_pmf(&self, x: Self::T) -> f64;
 }

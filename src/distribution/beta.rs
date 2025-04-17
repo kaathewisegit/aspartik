@@ -256,7 +256,9 @@ impl Mode<Option<f64>> for Beta {
 	}
 }
 
-impl Continuous<f64> for Beta {
+impl Continuous for Beta {
+	type T = f64;
+
 	/// The formula is:
 	///
 	/// ```text

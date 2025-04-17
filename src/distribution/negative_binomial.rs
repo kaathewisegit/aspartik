@@ -276,7 +276,9 @@ impl Mode<Option<f64>> for NegativeBinomial {
 	}
 }
 
-impl Discrete<u64> for NegativeBinomial {
+impl Discrete for NegativeBinomial { type T = u64;
+
+
 	/// Calculates the probability mass function for the negative binomial
 	/// distribution at `x`.
 	///

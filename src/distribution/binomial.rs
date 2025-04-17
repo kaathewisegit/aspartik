@@ -298,7 +298,9 @@ impl Mode<Option<u64>> for Binomial {
 	}
 }
 
-impl Discrete<u64> for Binomial {
+impl Discrete for Binomial { type T = u64;
+
+
 	/// Calculates the probability mass function for the binomial
 	/// distribution at `x`
 	///

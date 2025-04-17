@@ -25,11 +25,7 @@ pub fn almost_eq(a: f64, b: f64, acc: f64) -> bool {
 /// and `crate::consts::ACC` relative precision.
 /// Updates first argument to value of second argument
 pub fn convergence(x: &mut f64, x_new: f64) -> bool {
-	let res = approx::relative_eq!(
-		*x,
-		x_new,
-		max_relative = ACCURACY
-	);
+	let res = approx::relative_eq!(*x, x_new, max_relative = ACCURACY);
 	*x = x_new;
 	res
 }

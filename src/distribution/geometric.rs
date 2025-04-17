@@ -265,7 +265,9 @@ impl Median for Geometric {
 	}
 }
 
-impl Discrete<u64> for Geometric {
+impl Discrete for Geometric { type T = u64;
+
+
 	/// Calculates the probability mass function for the geometric
 	/// distribution at `x`
 	///

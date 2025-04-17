@@ -318,7 +318,9 @@ impl Median for Categorical {
 	}
 }
 
-impl Discrete<u64> for Categorical {
+impl Discrete for Categorical { type T = u64;
+
+
 	/// Calculates the probability mass function for the categorical
 	/// distribution at `x`
 	///

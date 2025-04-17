@@ -422,7 +422,9 @@ impl Mode<Option<f64>> for StudentsT {
 	}
 }
 
-impl Continuous<f64> for StudentsT {
+impl Continuous for StudentsT {
+	type T = f64;
+
 	/// Calculates the probability density function for the student's
 	/// t-distribution
 	/// at `x`
@@ -495,8 +497,8 @@ impl Continuous<f64> for StudentsT {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::prec::ACCURACY;
 	use crate::distribution::internal::*;
+	use crate::prec::ACCURACY;
 	use crate::testing_boiler;
 
 	testing_boiler!(location: f64, scale: f64, freedom: f64; StudentsT; StudentsTError);

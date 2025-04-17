@@ -266,7 +266,9 @@ impl Mode<Option<u64>> for Poisson {
 	}
 }
 
-impl Discrete<u64> for Poisson {
+impl Discrete for Poisson { type T = u64;
+
+
 	/// Calculates the probability mass function for the poisson distribution at
 	/// `x`
 	///

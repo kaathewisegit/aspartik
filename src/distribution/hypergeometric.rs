@@ -408,7 +408,9 @@ impl Mode<Option<u64>> for Hypergeometric {
 	}
 }
 
-impl Discrete<u64> for Hypergeometric {
+impl Discrete for Hypergeometric { type T = u64;
+
+
 	/// Calculates the probability mass function for the hypergeometric
 	/// distribution at `x`
 	///

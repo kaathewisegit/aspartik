@@ -391,7 +391,9 @@ impl Mode<Option<f64>> for Triangular {
 	}
 }
 
-impl Continuous<f64> for Triangular {
+impl Continuous for Triangular {
+	type T = f64;
+
 	/// Calculates the probability density function for the triangular
 	/// distribution
 	/// at `x`

@@ -241,7 +241,9 @@ impl Mode<Option<u64>> for Bernoulli {
 	}
 }
 
-impl Discrete<u64> for Bernoulli {
+impl Discrete for Bernoulli { type T = u64;
+
+
 	/// Calculates the probability mass function for the
 	/// bernoulli distribution at `x`.
 	///

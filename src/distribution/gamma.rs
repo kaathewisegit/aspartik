@@ -345,7 +345,9 @@ impl Mode<Option<f64>> for Gamma {
 	}
 }
 
-impl Continuous<f64> for Gamma {
+impl Continuous for Gamma {
+	type T = f64;
+
 	/// Calculates the probability density function for the gamma distribution
 	/// at `x`
 	///
