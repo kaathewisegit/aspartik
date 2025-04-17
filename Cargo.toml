@@ -12,8 +12,13 @@ edition = "2024"
 default = ["std", "rand"]
 std = ["rand?/std", "rand?/std_rng", "rand?/thread_rng"]
 rand = ["dep:rand"]
+python = ["std", "dep:pyo3"]
 
 [dependencies]
 approx = "0.5"
 num-traits = "0.2"
+pyo3 = { version = "0.24", optional = true }
 rand = { version = "0.9", default-features = false, optional = true }
+
+[dev-dependencies]
+pyo3 = { version = "0.24", features = ["auto-initialize"] }

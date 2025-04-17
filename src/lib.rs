@@ -76,7 +76,26 @@ pub mod generate;
 #[macro_use]
 mod prec;
 pub mod statistics;
+pub(crate) mod utils;
 
 // used in the `assert_almost_eq` macro
 #[doc(hidden)]
 pub use prec::almost_eq;
+
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
+/// Short title.
+///
+/// Description.
+#[cfg(feature = "python")]
+#[pymodule(name = "_stats_rust_impl")]
+fn md(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
+	let distributions = distribution::pymodule(py)?;
+	m.add_submodule(&distributions)?;
+	py.import("sys")?
+		.getattr("modules")?
+		.set_item("stats.distributions", distributions)?;
+
+	Ok(())
+}

@@ -1,9 +1,15 @@
+#[cfg(feature = "python")]
+use crate::utils::impl_pyerr;
 use approx::ulps_eq;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::gamma;
-use crate::prec;
-use crate::statistics::*;
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	function::gamma,
+	prec,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
 /// distribution
@@ -19,15 +25,23 @@ use crate::statistics::*;
 /// assert_eq!(n.mean().unwrap(), 3.0);
 /// assert_almost_eq!(n.pdf(2.0), 0.270670566473225383788, 1e-15);
 /// ```
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, str, module = "stats.distributions")
+)]
 pub struct Gamma {
 	shape: f64,
 	rate: f64,
 }
 
 /// Represents the errors that can occur when creating a [`Gamma`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+)]
 pub enum GammaError {
 	/// The shape is NaN, zero or less than zero.
 	ShapeInvalid,
@@ -38,6 +52,9 @@ pub enum GammaError {
 	/// The shape and rate are both infinite.
 	ShapeAndRateInfinite,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(GammaError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for GammaError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -387,6 +404,7 @@ impl Continuous for Gamma {
 		}
 	}
 }
+
 /// Samples from a gamma distribution with a shape of `shape` and a
 /// rate of `rate` using `rng` as the source of randomness. Implementation from:
 ///
@@ -429,6 +447,41 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 		{
 			return afix * d * v / rate;
 		}
+	}
+}
+
+#[cfg(feature = "python")]
+#[cfg_attr(feature = "python", pymethods)]
+impl Gamma {
+	#[new]
+	fn py_new(shape: f64, rate: f64) -> Result<Gamma, GammaError> {
+		Gamma::new(shape, rate)
+	}
+
+	fn __repr__(&self) -> String {
+		format!("Gamma({}, {})", self.shape, self.rate)
+	}
+
+	#[getter]
+	#[pyo3(name = "shape")]
+	fn py_shape(&self) -> f64 {
+		self.shape
+	}
+
+	#[getter]
+	#[pyo3(name = "rate")]
+	fn py_rate(&self) -> f64 {
+		self.rate
+	}
+
+	#[pyo3(name = "pdf")]
+	fn py_pdf(&self, x: f64) -> f64 {
+		self.pdf(x)
+	}
+
+	#[pyo3(name = "ln_pdf")]
+	fn py_ln_pdf(&self, x: f64) -> f64 {
+		self.ln_pdf(x)
 	}
 }
 

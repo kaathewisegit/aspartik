@@ -314,3 +314,16 @@ where
 	/// possible value for integers).
 	fn upper(&self) -> Self::T;
 }
+
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
+#[cfg(feature = "python")]
+pub fn pymodule(py: Python) -> PyResult<Bound<'_, PyModule>> {
+	let m = PyModule::new(py, "distributions")?;
+
+	m.add_class::<Gamma>()?;
+	m.add_class::<GammaError>()?;
+
+	Ok(m)
+}
