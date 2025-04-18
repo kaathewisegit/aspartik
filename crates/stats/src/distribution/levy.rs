@@ -31,8 +31,8 @@ pub enum LevyError {
 	ScaleInvalid,
 }
 
-impl std::fmt::Display for LevyError {
-	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl core::fmt::Display for LevyError {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		match self {
 			LevyError::LocationInvalid => {
 				write!(f, "location is NaN or infinite")
@@ -45,6 +45,7 @@ impl std::fmt::Display for LevyError {
 	}
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for LevyError {}
 
 impl Levy {
@@ -104,8 +105,8 @@ impl Levy {
 	}
 }
 
-impl std::fmt::Display for Levy {
-	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl core::fmt::Display for Levy {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		write!(f, "Levy(mu = {}, c = {})", self.mu, self.c)
 	}
 }
