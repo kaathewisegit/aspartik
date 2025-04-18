@@ -14,7 +14,6 @@ rng = { path = "../rng" }
 shchurvec = { path = "../shchurvec" }
 
 anyhow = { workspace = true }
-crossbeam-channel = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }
 rand_distr = { workspace = true }

@@ -26,7 +26,6 @@ authors = ["Andrej Kolčin <self@kaathewise.net>"]
 anyhow = "1.0"
 approx = "0.5"
 bytemuck = "1.22"
-crossbeam-channel = "0.5"
 divan = "0.1"
 lapack-sys = "0.15"
 nom = "8.0"
