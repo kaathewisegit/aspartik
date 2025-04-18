@@ -102,11 +102,13 @@ macro_rules! impl_pymethods {
 				self.inverse_cdf(p)
 			}
 
+			#[getter]
 			#[pyo3(name = "lower")]
 			fn py_lower(&self) -> <Self as Continuous>::T {
 				self.lower()
 			}
 
+			#[getter]
 			#[pyo3(name = "upper")]
 			fn py_upper(&self) -> <Self as Continuous>::T {
 				self.upper()
