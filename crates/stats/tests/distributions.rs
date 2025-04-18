@@ -7,9 +7,11 @@ macro_rules! make_test {
 	($name:ident) => {
 		#[test]
 		fn $name() -> PyResult<()> {
-			const TEST: &CStr = c_str!(include_str!(
-				concat!("distributions/", stringify!($name), ".py")
-			));
+			const TEST: &CStr = c_str!(include_str!(concat!(
+				"distributions/",
+				stringify!($name),
+				".py"
+			)));
 
 			Python::with_gil(|py| {
 				let locals = PyDict::new(py);

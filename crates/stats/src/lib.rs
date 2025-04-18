@@ -73,9 +73,9 @@ pub mod distribution;
 pub mod function;
 #[macro_use]
 mod prec;
-pub mod statistics;
 #[cfg(feature = "python")]
 pub(crate) mod python_macros;
+pub mod statistics;
 
 // used in the `assert_almost_eq` macro
 #[doc(hidden)]

@@ -111,7 +111,11 @@ impl DiscreteCDF for Bernoulli {
 	/// else { 1 - p }
 	/// ```
 	fn cdf(&self, x: u64) -> f64 {
-		if x >= 1 { 1.0 } else { 1.0 - self.b.p() }
+		if x >= 1 {
+			1.0
+		} else {
+			1.0 - self.b.p()
+		}
 	}
 
 	/// Calculates the survival function for the
