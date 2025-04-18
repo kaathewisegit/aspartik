@@ -1,4 +1,3 @@
-from scipy.stats import rv_continuous
 from math import log
 from typing import Literal
 
@@ -12,7 +11,7 @@ class ParamScale:
         self,
         param: Parameter,
         factor: float,
-        distribution: rv_continuous,
+        distribution,
         dimensions: Literal["one", "all", "independent"],
         wegith=1,
     ):
@@ -23,14 +22,14 @@ class ParamScale:
         self.dimensions = dimensions
 
     def propose(self, state: State) -> Proposal:
-        generator = state.rng.generator()
+        rng = state.rng
 
         low, high = self.factor, 1 / self.factor
-        scale = sample_range(low, high, self.distribution, generator)
+        scale = sample_range(low, high, self.distribution, rng)
 
         match self.dimensions:
             case "one":
-                index = generator.choice(len(self.param))
+                index = rng.random_int(0, len(self.param))
                 if self.param[index] == 0:
                     return Proposal.Reject()
                 self.param[index] *= scale
@@ -56,7 +55,7 @@ class ParamScale:
                 ratio = 0
 
                 for i in range(len(self.param)):
-                    scale = sample_range(low, high, self.distribution, generator)
+                    scale = sample_range(low, high, self.distribution, rng)
                     self.param[i] *= scale
                     ratio -= log(scale)
 

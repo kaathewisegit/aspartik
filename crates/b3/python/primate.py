@@ -3,14 +3,14 @@ import os
 # TODO: find a proper fix
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
-from scipy.stats import uniform, gamma, expon, lognorm
 
 import b3
 from b3 import Tree, State, Parameter, Likelihood
 from b3.loggers import TreeLogger
 from b3.operators import TreeScale, NarrowExchange, WideExchange, TreeSlide
-from b3.priors import Bound, Distribution
+from b3.priors import Distribution
 from b3.substitutions import JC
+from stats.distributions import Gamma, Uniform, Exp, LogNormal
 from rng import Rng
 
 rng = Rng(4)
@@ -55,15 +55,15 @@ state = State(tree, params, rng)
 # TODO: limit priors
 priors = [
     # TODO: Yule model
-    Distribution(birth_rate_y, gamma(0.001, 1 / 1000.0)),
-    Distribution(gamma_shape_noncoding, expon(1.0)),
-    Distribution(gamma_shape_1stpos, expon(1.0)),
-    Distribution(gamma_shape_2ndpos, expon(1.0)),
-    Distribution(gamma_shape_3rdpos, expon(1.0)),
-    Distribution(kappa_noncoding, lognorm(1.0, 1.25)),
-    Distribution(kappa_1stpos, lognorm(1.0, 1.25)),
-    Distribution(kappa_2ndpos, lognorm(1.0, 1.25)),
-    Distribution(kappa_3rdpos, lognorm(1.0, 1.25)),
+    Distribution(birth_rate_y, Gamma(0.001, 1 / 1000.0)),
+    Distribution(gamma_shape_noncoding, Exp(1.0)),
+    Distribution(gamma_shape_1stpos, Exp(1.0)),
+    Distribution(gamma_shape_2ndpos, Exp(1.0)),
+    Distribution(gamma_shape_3rdpos, Exp(1.0)),
+    Distribution(kappa_noncoding, LogNormal(1.0, 1.25)),
+    Distribution(kappa_1stpos, LogNormal(1.0, 1.25)),
+    Distribution(kappa_2ndpos, LogNormal(1.0, 1.25)),
+    Distribution(kappa_3rdpos, LogNormal(1.0, 1.25)),
     # TODO: MRCA
 ]
 
@@ -71,8 +71,8 @@ priors = [
 operators = [
     NarrowExchange(weight=25.0),
     WideExchange(weight=25.0),
-    TreeSlide(uniform, weight=48.0),
-    TreeScale(0.1, uniform, weight=2.0),
+    TreeSlide(Uniform(0, 1), weight=48.0),
+    TreeScale(0.1, Uniform(0, 1), weight=2.0),
 ]
 
 # TODO: HKY substitution

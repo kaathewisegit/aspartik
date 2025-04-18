@@ -1,20 +1,18 @@
-from scipy.stats import rv_continuous, rv_discrete
 from math import log
 
 from b3 import State, Parameter
 
 
 class Distribution:
-    def __init__(self, param: Parameter, distribution: rv_continuous | rv_discrete):
+    def __init__(self, param: Parameter, distribution):
         self.param = param
 
-        # `distribution is rv_continuous` doesn't work
         if hasattr(distribution, "pdf"):
             self.distr_prob = distribution.pdf
         elif hasattr(distribution, "pmf"):
             self.distr_prob = distribution.pmf
         else:
-            print("here", distribution)
+            raise Exception("not a distribution")
 
     def probability(self, state: State) -> float:
         out = 0

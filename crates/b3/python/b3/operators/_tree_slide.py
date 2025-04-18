@@ -1,5 +1,3 @@
-from scipy.stats import rv_continuous
-
 from ._util import sample_range
 from b3 import State, Proposal
 
@@ -7,7 +5,7 @@ from b3 import State, Proposal
 class TreeSlide:
     def __init__(
         self,
-        distribution: rv_continuous,
+        distribution,
         weight=1,
     ):
         self.distribution = distribution
@@ -27,7 +25,7 @@ class TreeSlide:
         low = tree.weight_of(parent)
         high = min(tree.weight_of(left), tree.weight_of(right))
 
-        new_weight = sample_range(low, high, self.distribution, rng.generator())
+        new_weight = sample_range(low, high, self.distribution, rng)
 
         tree.update_weight(node, new_weight)
 

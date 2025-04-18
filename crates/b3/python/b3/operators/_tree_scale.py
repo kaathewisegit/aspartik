@@ -1,4 +1,3 @@
-from scipy.stats import rv_continuous
 from math import log
 
 from ._util import sample_range
@@ -6,7 +5,7 @@ from b3 import State, Proposal
 
 
 class TreeScale:
-    def __init__(self, factor: float, distribution: rv_continuous, weight=1):
+    def __init__(self, factor: float, distribution, weight=1):
         if not 0 < factor < 1:
             raise ValueError(f"factor must be between 0 and 1, got {factor}")
         self.factor = factor
@@ -15,10 +14,10 @@ class TreeScale:
 
     def propose(self, state: State) -> Proposal:
         tree = state.tree
-        generator = state.rng.generator()
+        rng = state.rng
 
         low, high = self.factor, 1 / self.factor
-        scale = sample_range(low, high, self.distribution, generator)
+        scale = sample_range(low, high, self.distribution, rng)
 
         for node in tree.nodes():
             new_weight = tree.weight_of(node) * scale
