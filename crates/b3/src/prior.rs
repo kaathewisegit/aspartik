@@ -2,7 +2,10 @@ use anyhow::Result;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
 
-use crate::{py_bail, py_call_method, state::PyState};
+use crate::{
+	state::PyState,
+	util::{py_bail, py_call_method},
+};
 
 pub struct PyPrior {
 	/// INVARIANT: the type has a `probability` method

@@ -3,7 +3,10 @@ use linalg::RowMatrix;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
 
-use crate::{py_call_method, state::PyState};
+use crate::{
+	state::PyState,
+	util::{py_bail, py_call_method},
+};
 
 pub struct PyClock {
 	inner: PyObject,
@@ -14,7 +17,7 @@ pub type Substitution = RowMatrix<f64, 4, 4>;
 impl<'py> FromPyObject<'py> for PyClock {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
 		if !obj.getattr("update")?.is_callable() {
-			return Err(PyTypeError::new_err("Substitution model objects must have an `update` method, which takes state, a list of edges and returns clock rates on these edges"));
+			py_bail!(PyTypeError, "Substitution model objects must have an `update` method, which takes state, a list of edges and returns clock rates on these edges");
 		}
 
 		Ok(Self {

@@ -11,7 +11,7 @@ use std::{
 	sync::{Arc, Mutex, MutexGuard},
 };
 
-use crate::py_bail;
+use crate::util::py_bail;
 use io::newick::{
 	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
 };
