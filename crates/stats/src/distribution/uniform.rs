@@ -1,4 +1,9 @@
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 use crate::distribution::{Continuous, ContinuousCDF};
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::statistics::*;
 
 /// Implements the [Continuous
@@ -16,14 +21,34 @@ use crate::statistics::*;
 /// assert_eq!(n.pdf(0.5), 1.0);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, str, module = "stats.distributions")
+)]
 pub struct Uniform {
 	min: f64,
 	max: f64,
 }
 
+#[cfg(feature = "python")]
+impl_pymethods! {for Uniform;
+	new(shape: f64, rate: f64) throws UniformError;
+	get(py_min) min: f64;
+	get(py_max) max: f64;
+	repr("Uniform(min={}, max={})", min, max);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
+	sample;
+}
+
 /// Represents the errors that can occur when creating a [`Uniform`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+)]
 pub enum UniformError {
 	/// The minimum is NaN or infinite.
 	MinInvalid,
@@ -34,6 +59,9 @@ pub enum UniformError {
 	/// The maximum is not greater than the minimum.
 	MaxNotGreaterThanMin,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(UniformError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for UniformError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -549,9 +577,9 @@ mod tests {
 	#[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 	#[test]
 	fn test_samples_in_range() {
-		use rand::SeedableRng;
 		use rand::distr::Distribution;
 		use rand::rngs::StdRng;
+		use rand::SeedableRng;
 
 		let seed = [
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,

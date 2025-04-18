@@ -1,4 +1,9 @@
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 use crate::distribution::{Continuous, ContinuousCDF};
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::statistics::*;
 use core::f64;
 
@@ -19,17 +24,39 @@ use core::f64;
 /// assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, str, module = "stats.distributions")
+)]
 pub struct Exp {
 	rate: f64,
+}
+
+#[cfg(feature = "python")]
+impl_pymethods! {for Exp;
+	new(rate: f64) throws ExpError;
+	get(py_rate) rate: f64;
+	repr("Exp(rate={})", rate);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
+	sample;
 }
 
 /// Represents the errors that can occur when creating a [`Exp`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+)]
 pub enum ExpError {
 	/// The rate is NaN, zero or less than zero.
 	RateInvalid,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(ExpError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for ExpError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
@@ -132,7 +159,11 @@ impl ContinuousCDF for Exp {
 	///
 	/// where `λ` is the rate
 	fn sf(&self, x: f64) -> f64 {
-		if x < 0.0 { 1.0 } else { (-self.rate * x).exp() }
+		if x < 0.0 {
+			1.0
+		} else {
+			(-self.rate * x).exp()
+		}
 	}
 
 	/// Calculates the inverse cumulative distribution function.

@@ -1,6 +1,11 @@
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 use crate::consts;
 use crate::distribution::{Continuous, ContinuousCDF};
 use crate::function::erf;
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::statistics::*;
 use core::f64;
 
@@ -20,14 +25,34 @@ use core::f64;
 /// assert_almost_eq!(n.pdf(1.0), 0.3989422804014326779399, 1e-16);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, str, module = "stats.distributions")
+)]
 pub struct LogNormal {
 	location: f64,
 	scale: f64,
 }
 
+#[cfg(feature = "python")]
+impl_pymethods! {for LogNormal;
+	new(location: f64, scale: f64) throws LogNormalError;
+	get(py_location) location: f64;
+	get(py_scale) scale: f64;
+	repr("LogNormal(location={}, scale={})", location, scale);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
+	sample;
+}
+
 /// Represents the errors that can occur when creating a [`LogNormal`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+)]
 pub enum LogNormalError {
 	/// The location is NaN.
 	LocationInvalid,
@@ -35,6 +60,9 @@ pub enum LogNormalError {
 	/// The scale is NaN, zero or less than zero.
 	ScaleInvalid,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(LogNormalError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for LogNormalError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {

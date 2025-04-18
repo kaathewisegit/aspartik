@@ -324,9 +324,15 @@ pub fn pymodule(py: Python) -> PyResult<Bound<'_, PyModule>> {
 
 	m.add_class::<Gamma>()?;
 	m.add_class::<Poisson>()?;
+	m.add_class::<Uniform>()?;
+	m.add_class::<Exp>()?;
+	m.add_class::<LogNormal>()?;
 
 	m.add_class::<GammaError>()?;
 	m.add_class::<PoissonError>()?;
+	m.add_class::<UniformError>()?;
+	m.add_class::<ExpError>()?;
+	m.add_class::<LogNormalError>()?;
 
 	Ok(m)
 }

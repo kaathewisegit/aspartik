@@ -40,7 +40,7 @@ impl_pymethods! {for Gamma;
 	new(shape: f64, rate: f64) throws GammaError;
 	get(py_shape) shape: f64;
 	get(py_rate) rate: f64;
-	repr("Gamma({}, {})", shape, rate);
+	repr("Gamma(shape={}, rate={})", shape, rate);
 	Continuous;
 	ContinuousCDF;
 	Distribution;
