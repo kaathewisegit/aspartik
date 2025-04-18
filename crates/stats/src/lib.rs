@@ -70,9 +70,7 @@
 pub(crate) mod consts;
 #[macro_use]
 pub mod distribution;
-pub(crate) mod euclid;
 pub mod function;
-pub mod generate;
 #[macro_use]
 mod prec;
 pub mod statistics;
