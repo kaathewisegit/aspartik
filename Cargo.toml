@@ -6,6 +6,7 @@ members = [
 	"crates/linalg",
 	"crates/rng",
 	"crates/shchurvec",
+	"crates/stats",
 ]
 
 [package]
