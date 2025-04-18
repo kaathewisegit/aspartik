@@ -206,14 +206,14 @@ macro_rules! impl_pymethods {
 		#[pymethods]
 		impl $class {
 			#[pyo3(name = "sample")]
-			fn py_sample(&self, rng: Bound<'_, PyAny>) -> f64 {
+			fn py_sample(&self, rng: Bound<'_, PyAny>) -> PyResult<f64> {
 				use rng::PyRng;
 				use rand::distr::Distribution;
 
-				let rng = PyRng::downcast(rng);
+				let rng = PyRng::downcast(rng)?;
 
 				let x = self.sample(&mut rng.get().inner());
-				x
+				Ok(x)
 			}
 		}
 

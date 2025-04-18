@@ -639,14 +639,15 @@ impl PyTree {
 #[pymethods]
 impl PyTree {
 	#[new]
-	fn new(num_leaves: usize, rng: Bound<PyAny>) -> Self {
-		let rng = PyRng::downcast(rng);
+	fn new(num_leaves: usize, rng: Bound<PyAny>) -> Result<Self> {
+		let rng = PyRng::downcast(rng)?;
 		let rng = rng.get();
 
 		let tree = Tree::new(num_leaves, &mut rng.inner());
-		Self {
+		let tree = Self {
 			inner: Arc::new(Mutex::new(tree)),
-		}
+		};
+		Ok(tree)
 	}
 
 	fn __repr__(&self) -> String {
