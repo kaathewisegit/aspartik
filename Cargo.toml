@@ -34,7 +34,7 @@ num-traits = "0.2"
 petgraph = { version = "0.8", default-features = false }
 proptest = "1.6"
 pyo3 = "0.24"
-rand = "0.9"
+rand = { version = "0.9", default-features = false }
 rand_distr = "0.5"
 rand_pcg = "0.9"
 rayon = "1.10"

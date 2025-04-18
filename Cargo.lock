@@ -1047,6 +1047,7 @@ dependencies = [
  "num-traits",
  "pyo3",
  "rand 0.9.0",
+ "rng",
 ]
 
 [[package]]

@@ -11,12 +11,14 @@ keywords = ["probability", "statistics", "stats", "distribution", "math"]
 categories = ["science"]
 
 [features]
-default = ["std", "rand"]
+default = ["std", "rand", "python"]
 std = ["rand?/std", "rand?/std_rng", "rand?/thread_rng"]
 rand = ["dep:rand"]
 python = ["std", "dep:pyo3"]
 
 [dependencies]
+rng = { path = "../rng" }
+
 approx = { workspace = true }
 num-traits = { workspace = true }
 pyo3 = { workspace = true, features = ["multiple-pymethods"], optional = true }

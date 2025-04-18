@@ -35,6 +35,18 @@ pub struct Gamma {
 	rate: f64,
 }
 
+#[cfg(feature = "python")]
+impl_pymethods! {for Gamma;
+	new(shape: f64, rate: f64) throws GammaError;
+	get(py_shape) shape: f64;
+	get(py_rate) rate: f64;
+	repr("Gamma({}, {})", shape, rate);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
+	sample;
+}
+
 /// Represents the errors that can occur when creating a [`Gamma`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
@@ -448,17 +460,6 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 			return afix * d * v / rate;
 		}
 	}
-}
-
-#[cfg(feature = "python")]
-impl_pymethods! {for Gamma;
-	new(shape: f64, rate: f64) throws GammaError;
-	get(py_shape) shape: f64;
-	get(py_rate) rate: f64;
-	repr("Gamma({}, {})", shape, rate);
-	Continuous;
-	ContinuousCDF;
-	Distribution;
 }
 
 #[cfg(test)]
