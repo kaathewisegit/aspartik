@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
 	"crates/b3",
 	"crates/data",
@@ -8,13 +9,6 @@ members = [
 	"crates/shchurvec",
 	"crates/stats",
 ]
-
-[package]
-name = "bio"
-version = "0.1.0"
-edition = "2024"
-license = "AGPL-3.0-only"
-authors = ["Andrej Kolčin <self@kaathewise.net>"]
 
 [workspace.package]
 version = "0.1.0"
