@@ -28,8 +28,7 @@ impl PyRng {
 	}
 
 	pub fn downcast(any: Bound<'_, PyAny>) -> PyResult<Bound<'_, Self>> {
-		let name = any.get_type().fully_qualified_name()?;
-		if name == "rng.Rng" {
+		if any.get_type().name()? == "Rng" {
 			let py = any.py();
 			let abi = any.getattr(intern!(py, "__abi"))?;
 			let abi = abi.downcast::<PyString>()?;
@@ -48,6 +47,7 @@ impl PyRng {
 			// layout is the same.
 			Ok(unsafe { any.downcast_into_unchecked::<PyRng>() })
 		} else {
+			let name = any.get_type().fully_qualified_name()?;
 			Err(PyTypeError::new_err(format!(
 				"Expected `PyRng`, got {name}",
 			)))
