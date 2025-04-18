@@ -1,11 +1,10 @@
 from stats.distributions import Gamma, GammaError  # noqa: F401
 from math import inf
 
-# catching classes that do not inherit from BaseException is not allowed
-# try:
-#     Gamma(1, -2)
-# except GammaError as e:
-#     print(e)
+try:
+    Gamma(1, -2)
+except ValueError as e:
+    assert e.args[0] == GammaError.RateInvalid
 
 g = Gamma(1, 2)
 assert g.shape == 1
