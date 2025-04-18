@@ -70,7 +70,7 @@ class WideExchange:
 
         i = tree.random_node(rng)
         j = None
-        while j != i:
+        while j is None or j != i:
             j = tree.random_node(rng)
 
         i_parent = tree.parent_of(i)

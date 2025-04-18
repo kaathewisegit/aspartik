@@ -1,7 +1,6 @@
 use anyhow::{ensure, Result};
-use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
-use pyo3::types::PyAny;
+use pyo3::{exceptions::PyTypeError, types::PyAny};
 use rand::distr::{Distribution, Uniform};
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
@@ -12,6 +11,7 @@ use std::{
 	sync::{Arc, Mutex, MutexGuard},
 };
 
+use crate::py_bail;
 use io::newick::{
 	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
 };
@@ -40,16 +40,16 @@ impl Node {
 		format!("Node({})", self.0)
 	}
 
-	fn __eq__(&self, other: Bound<PyAny>) -> bool {
-		if let Ok(node) = other.extract::<Node>() {
-			self.0 == node.0
-		} else if let Ok(internal) = other.extract::<Internal>() {
-			self.0 == internal.0
-		} else if let Ok(leaf) = other.extract::<Leaf>() {
-			self.0 == leaf.0
+	fn __eq__(&self, other: Bound<PyAny>) -> Result<bool> {
+		if let Ok(node) = other.downcast::<Node>() {
+			Ok(self.0 == node.get().0)
+		} else if let Ok(internal) = other.downcast::<Internal>() {
+			Ok(self.0 == internal.get().0)
+		} else if let Ok(leaf) = other.downcast::<Leaf>() {
+			Ok(self.0 == leaf.get().0)
 		} else {
-			// XXX: should this throw an error?
-			false
+			let name = other.get_type().fully_qualified_name()?;
+			py_bail!(PyTypeError, "Expected a node type (`Node`, `Leaf`, `Internal`), got {name}");
 		}
 	}
 }
