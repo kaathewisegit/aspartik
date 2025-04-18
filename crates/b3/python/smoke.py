@@ -1,9 +1,3 @@
-import os
-
-# TODO: find a proper fix
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-
-
 import b3
 from b3 import Tree, State, Parameter, Likelihood
 from b3.loggers import TreeLogger

@@ -1,22 +1,23 @@
-import numpy as np
+from typing import List
+
 from b3 import Parameter
+
+
+def normalize(matrix: List[List[float]], coef: float) -> List[List[float]]:
+    return [[element / coef for element in row] for row in matrix]
 
 
 class JC:
     def __init__(self):
         self.dimensions = 4
 
-        self.matrix = np.array(
-            [
-                [-3, 1, 1, 1],
-                [1, -3, 1, 1],
-                [1, 1, -3, 1],
-                [1, 1, 1, -3],
-            ],
-            dtype=float,
-        )
-
-        self.matrix /= 3
+        s = [
+            [-3, 1, 1, 1],
+            [1, -3, 1, 1],
+            [1, 1, -3, 1],
+            [1, 1, 1, -3],
+        ]
+        self.matrix = normalize(s, 3)
 
     def get_matrix(self):
         return self.matrix
@@ -29,15 +30,13 @@ class K80:
 
     def get_matrix(self):
         k = self.kappa
-        s = np.array(
-            [
-                [-2 - k, 1, k, 1],
-                [1, -2 - k, 1, k],
-                [k, 1, -2 - k, 1],
-                [1, k, 1, -2 - k],
-            ]
-        )
-        s /= 2 + k
+        s = [
+            [-2 - k, 1, k, 1],
+            [1, -2 - k, 1, k],
+            [k, 1, -2 - k, 1],
+            [1, k, 1, -2 - k],
+        ]
+        s = normalize(s, 2 + k)
 
         return s
 
@@ -46,15 +45,13 @@ class F81:
     def __init__(self, frequencies):
         self.dimensions = 4
         a, c, g, t = frequencies
-        self.matrix = np.array(
-            [
-                [a - 1, c, g, t],
-                [a, c - 1, g, t],
-                [a, c, g - 1, t],
-                [a, c, g, t - 1],
-            ]
-        )
-        self.matrix /= 1 - a**2 - c**2 - g**2 - t**2
+        s = [
+            [a - 1, c, g, t],
+            [a, c - 1, g, t],
+            [a, c, g - 1, t],
+            [a, c, g, t - 1],
+        ]
+        self.matrix = normalize(s, 1 - a**2 - c**2 - g**2 - t**2)
 
     def get_matrix(self):
         return self.matrix
@@ -80,17 +77,17 @@ class HKY:
     def get_matrix(self):
         k = self.kappa[0]
         a, c, g, t = self.frequencies
-        s = np.array(
-            [
-                [0, c, k * g, t],
-                [a, 0, g, k * t],
-                [k * a, c, 0, t],
-                [a, k * c, g, 0],
-            ]
-        )
+        s = [
+            [0, c, k * g, t],
+            [a, 0, g, k * t],
+            [k * a, c, 0, t],
+            [a, k * c, g, 0],
+        ]
 
         for i in range(4):
             s[i, i] = -s[i].sum()
+
+        # TODO: normalize?
 
         return s
 
