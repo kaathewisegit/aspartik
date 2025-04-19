@@ -347,7 +347,7 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Poisson;
-	new(lambda: f64) throws PoissonError;
+	new(lambda_: f64) throws PoissonError;
 	get(as lambda_) lambda: f64;
 	repr("Poisson({})", lambda);
 	Discrete;

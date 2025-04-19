@@ -16,3 +16,7 @@ build-backend = "maturin"
 python-source = "python"
 module-name = "stats._stats_rust_impl"
 features = ["pyo3/extension-module"]
+
+[tool.pyright]
+venvPath = "../../"
+venv = ".venv"
