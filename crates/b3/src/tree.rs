@@ -1,6 +1,9 @@
 use anyhow::{ensure, Result};
 use pyo3::prelude::*;
-use pyo3::{exceptions::PyTypeError, types::PyAny};
+use pyo3::{
+	exceptions::PyTypeError,
+	types::{PyAny, PyDict},
+};
 use rand::distr::{Distribution, Uniform};
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
@@ -31,25 +34,40 @@ pub struct Tree {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[pyclass(frozen)]
 pub struct Node(usize);
 
-#[pymethods]
 impl Node {
-	fn __repr__(&self) -> String {
-		format!("Node({})", self.0)
-	}
-
-	fn __eq__(&self, other: Bound<PyAny>) -> Result<bool> {
-		if let Ok(node) = other.downcast::<Node>() {
-			Ok(self.0 == node.get().0)
-		} else if let Ok(internal) = other.downcast::<Internal>() {
-			Ok(self.0 == internal.get().0)
-		} else if let Ok(leaf) = other.downcast::<Leaf>() {
-			Ok(self.0 == leaf.get().0)
+	fn into_pyobject(
+		self,
+		py: Python,
+		num_leaves: usize,
+	) -> Result<Bound<PyAny>> {
+		let num_nodes = num_leaves * 2 - 1;
+		let any = if self.0 < num_leaves {
+			Leaf(self.0).into_pyobject(py)?.into_any()
+		} else if self.0 < num_nodes {
+			Internal(self.0).into_pyobject(py)?.into_any()
 		} else {
-			let name = other.get_type().fully_qualified_name()?;
-			py_bail!(PyTypeError, "Expected a node type (`Node`, `Leaf`, `Internal`), got {name}");
+			unreachable!()
+		};
+		Ok(any)
+	}
+}
+
+impl<'py> FromPyObject<'py> for Node {
+	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Node> {
+		if let Ok(internal) = obj.downcast::<Internal>() {
+			let node = *internal.get();
+			Ok(node.into())
+		} else if let Ok(leaf) = obj.downcast::<Leaf>() {
+			let node = *leaf.get();
+			Ok(node.into())
+		} else {
+			py_bail!(
+				PyTypeError,
+				"Expected `Leaf` or `Internal`, got {}",
+				obj.get_type().name()?
+			);
 		}
 	}
 }
@@ -67,7 +85,7 @@ impl From<Leaf> for Node {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[pyclass(frozen)]
+#[pyclass(frozen, module = "b3.tree")]
 pub struct Internal(usize);
 
 #[pymethods]
@@ -76,19 +94,23 @@ impl Internal {
 		format!("Internal({})", self.0)
 	}
 
-	fn __eq__(&self, other: Bound<PyAny>) -> bool {
-		if let Ok(node) = other.extract::<Node>() {
-			self.0 == node.0
-		} else if let Ok(leaf) = other.extract::<Leaf>() {
-			self.0 == leaf.0
+	fn __eq__(&self, other: Bound<PyAny>) -> Result<bool> {
+		if let Ok(node) = other.downcast::<Internal>() {
+			Ok(self.0 == node.get().0)
+		} else if other.downcast::<Leaf>().is_ok() {
+			Ok(false)
 		} else {
-			false
+			py_bail!(
+				PyTypeError,
+				"Expected `Leaf` or `Internal`, got {}",
+				other.get_type().name()?
+			);
 		}
 	}
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[pyclass(frozen)]
+#[pyclass(frozen, module = "b3.tree")]
 pub struct Leaf(usize);
 
 #[pymethods]
@@ -97,13 +119,17 @@ impl Leaf {
 		format!("Leaf({})", self.0)
 	}
 
-	fn __eq__(&self, other: Bound<PyAny>) -> bool {
-		if let Ok(node) = other.extract::<Node>() {
-			self.0 == node.0
-		} else if let Ok(internal) = other.extract::<Internal>() {
-			self.0 == internal.0
+	fn __eq__(&self, other: Bound<PyAny>) -> Result<bool> {
+		if let Ok(node) = other.downcast::<Leaf>() {
+			Ok(self.0 == node.get().0)
+		} else if other.downcast::<Internal>().is_ok() {
+			Ok(false)
 		} else {
-			false
+			py_bail!(
+				PyTypeError,
+				"Expected `Leaf` or `Internal`, got {}",
+				other.get_type().name()?
+			);
 		}
 	}
 }
@@ -570,7 +596,7 @@ impl<'de> Deserialize<'de> for Tree {
 
 macro_rules! make_iterator {
 	($name: ident, $t: tt) => {
-		#[pyclass]
+		#[pyclass(module = "b3.tree")]
 		struct $name {
 			current: usize,
 			end: usize,
@@ -604,9 +630,37 @@ macro_rules! make_iterator {
 	};
 }
 
-make_iterator!(NodesIter, Node);
 make_iterator!(InternalsIter, Internal);
 make_iterator!(LeavesIter, Leaf);
+
+#[pyclass(module = "b3.tree")]
+struct NodesIter {
+	current: usize,
+	end: usize,
+	num_leaves: usize,
+}
+
+#[pymethods]
+impl NodesIter {
+	fn __iter__(this: PyRef<Self>) -> PyRef<Self> {
+		this
+	}
+
+	fn __next__<'py>(
+		&mut self,
+		py: Python<'py>,
+	) -> Result<Option<Bound<'py, PyAny>>> {
+		if self.current == self.end {
+			return Ok(None);
+		}
+
+		let out = Node(self.current);
+
+		self.current += 1;
+
+		Ok(Some(out.into_pyobject(py, self.num_leaves)?))
+	}
+}
 
 #[derive(Debug, Clone)]
 #[pyclass(name = "Tree", frozen)]
@@ -756,8 +810,19 @@ impl PyTree {
 	/// This function takes the `Internal` type as its input, so it is
 	/// guaranteed to always return the children.  See `as_internal` for
 	/// converting general nodes to internal ones.
-	fn children_of(&self, node: Internal) -> (Node, Node) {
-		self.inner().children_of(node)
+	fn children_of<'py>(
+		&self,
+		py: Python<'py>,
+		node: Internal,
+	) -> Result<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
+		let (left, right) = self.inner().children_of(node);
+
+		let (left, right) = (
+			left.into_pyobject(py, self.num_leaves())?,
+			right.into_pyobject(py, self.num_leaves())?,
+		);
+
+		Ok((left, right))
 	}
 
 	/// Returns the index of an edge from `child` to its parent.
@@ -782,8 +847,11 @@ impl PyTree {
 
 	/// Returns an iterator over all of the nodes.
 	fn nodes(&self) -> NodesIter {
-		let inner = self.inner();
-		NodesIter::new(0, inner.num_nodes())
+		NodesIter {
+			current: 0,
+			end: self.num_nodes(),
+			num_leaves: self.num_leaves(),
+		}
 	}
 
 	/// Returns an iterator over internal nodes.
@@ -799,8 +867,13 @@ impl PyTree {
 	}
 
 	/// Samples a random node from the tree.
-	fn random_node(&self, rng: &PyRng) -> Node {
-		self.inner().random_node(&mut rng.inner())
+	fn random_node<'py>(
+		&self,
+		py: Python<'py>,
+		rng: &PyRng,
+	) -> Result<Bound<'py, PyAny>> {
+		let node = self.inner().random_node(&mut rng.inner());
+		node.into_pyobject(py, self.num_leaves())
 	}
 
 	/// Samples a random internal node from a tree.
@@ -825,9 +898,12 @@ impl PyTree {
 pub fn submodule(py: Python<'_>) -> PyResult<Bound<'_, PyModule>> {
 	let m = PyModule::new(py, "tree")?;
 
-	m.add_class::<Node>()?;
 	m.add_class::<Leaf>()?;
 	m.add_class::<Internal>()?;
+
+	let locals = PyDict::new(py);
+	locals.set_item("m", &m)?;
+	py.run(c"m.Node = m.Leaf | m.Internal", None, Some(&locals))?;
 
 	Ok(m)
 }
