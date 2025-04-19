@@ -1,7 +1,7 @@
 from typing import List, Any, Optional, Sequence, Tuple
 from collections.abc import Iterator
 
-from tree import Node, Leaf, Internal
+from .tree import Node, Leaf, Internal
 
 __all__: List[str]
 
