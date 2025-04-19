@@ -11,7 +11,7 @@ class JC:
     def __init__(self):
         self.dimensions = 4
 
-        s = [
+        s: List[List[float]] = [
             [-3, 1, 1, 1],
             [1, -3, 1, 1],
             [1, 1, -3, 1],
@@ -29,7 +29,7 @@ class K80:
         self.kappa = kappa
 
     def get_matrix(self):
-        k = self.kappa
+        k = self.kappa[0]
         s = [
             [-2 - k, 1, k, 1],
             [1, -2 - k, 1, k],
@@ -85,7 +85,7 @@ class HKY:
         ]
 
         for i in range(4):
-            s[i, i] = -s[i].sum()
+            s[i][i] = -sum(s[i])
 
         # TODO: normalize?
 

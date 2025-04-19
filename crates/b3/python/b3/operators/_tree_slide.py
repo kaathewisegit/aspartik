@@ -6,7 +6,7 @@ class TreeSlide:
     def __init__(
         self,
         distribution,
-        weight=1,
+        weight: float = 1,
     ):
         self.distribution = distribution
         self.weight = weight

@@ -1,5 +1,4 @@
 from math import inf
-from numbers import Number
 
 from b3 import State
 
@@ -17,7 +16,7 @@ class Bound:
     the bounds aren't satisfied.
     """
 
-    def __init__(self, param, lower: Number = 0, upper: Number = inf):
+    def __init__[T: int | float](self, param, lower: T = 0, upper: T = inf):
         """Creates a bound prior
 
         Args:

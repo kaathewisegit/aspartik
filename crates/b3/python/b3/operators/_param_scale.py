@@ -17,6 +17,7 @@ class ParamScale:
     ):
         if not 0 < factor < 1:
             raise ValueError(f"factor must be between 0 and 1, got {factor}")
+        self.param = param
         self.factor = factor
         self.distribution = distribution
         self.dimensions = dimensions
@@ -60,3 +61,7 @@ class ParamScale:
                     ratio -= log(scale)
 
                 return Proposal.Hastings(ratio)
+
+        raise ValueError(
+            f"Invalid dimensions argument.  Expected 'one', 'all', or 'literal', got {self.dimensions}"
+        )

@@ -1,11 +1,11 @@
 import math
 
 from b3 import State, Tree, Proposal
-from b3.tree import Internal
+from b3.tree import Internal, Node
 
 
 class NarrowExchange:
-    def __init__(self, weight=1):
+    def __init__(self, weight: float = 1):
         self.weight = weight
 
     def propose(self, state: State) -> Proposal:
@@ -33,6 +33,8 @@ class NarrowExchange:
         # If the lower child isn't internal, abort.
         if parent is None:
             return Proposal.Reject()
+        assert isinstance(parent, Internal)
+        assert isinstance(uncle, Internal)
 
         num_grandparents_before = 0
         for node in tree.internals():
@@ -61,7 +63,7 @@ def is_grandparent(tree: Tree, node: Internal) -> bool:
 
 
 class WideExchange:
-    def __init__(self, weight=1):
+    def __init__(self, weight: float = 1):
         self.weight = weight
 
     def propose(self, state: State) -> Proposal:
@@ -72,6 +74,7 @@ class WideExchange:
         j = None
         while j is None or j != i:
             j = tree.random_node(rng)
+        assert isinstance(j, Node)
 
         i_parent = tree.parent_of(i)
         if i_parent is None:
