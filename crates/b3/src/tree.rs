@@ -7,6 +7,7 @@ use pyo3::{
 use rand::distr::{Distribution, Uniform};
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
+use rand::Rng as _;
 
 use std::{
 	cmp::Reverse,
@@ -189,10 +190,11 @@ impl Tree {
 		let mut weights = vec![0.0; num_nodes];
 		let mut walk = VecDeque::from([root]);
 		while let Some(node) = walk.pop_front() {
-			let new_weight = weights[node] + DIFF;
+			let left_diff = DIFF * (1.0 + rng.random::<f64>());
+			let right_diff = DIFF * (1.0 + rng.random::<f64>());
 			let idx = 2 * (node - num_leaves);
-			weights[children[idx]] = new_weight;
-			weights[children[idx + 1]] = new_weight;
+			weights[children[idx]] = weights[node] + left_diff;
+			weights[children[idx + 1]] = weights[node] + right_diff;
 
 			// Add left and right to the queue if they are also
 			// internals
