@@ -1,5 +1,7 @@
-from typing import List, Any, Optional, Sequence, Tuple
+from typing import List, Any, Optional, Sequence, Tuple, Protocol
 from collections.abc import Iterator
+
+from rng import Rng
 
 from .tree import Node, Leaf, Internal
 
@@ -9,12 +11,8 @@ class State:
     def __init__(self, tree: Tree, params: Sequence[Parameter], rng: Rng): ...
     @property
     def tree(self) -> Tree: ...
-
-    # TODO: proper type
     @property
-    def rng(self) -> Any: ...
-
-type Rng = Any
+    def rng(self) -> Rng: ...
 
 class Tree:
     def __init__(self, num_leaves: int, rng: Rng): ...
@@ -68,12 +66,20 @@ class Parameter:
 class Likelihood:
     def __init__(self, data: str, substitution: Any): ...
 
-# TODO: protocols for operators, priors, and loggers
+class Prior(Protocol):
+    def probability(self, state: State) -> float: ...
+
+class Operator(Protocol):
+    def propose(self, state: State) -> Proposal: ...
+    @property
+    def weigth(self) -> float: ...
+
 def run(
     length: int,
     state: State,
-    priors: Sequence[Any],
-    operators: Sequence[Any],
+    priors: Sequence[Prior],
+    operators: Sequence[Operator],
     likelihood: Likelihood,
+    # TODO: moving loggers to Python
     loggers: Sequence[Any],
 ): ...
