@@ -13,7 +13,7 @@ class ParamScale:
         factor: float,
         distribution,
         dimensions: Literal["one", "all", "independent"],
-        wegith=1,
+        weight: float = 1,
     ):
         if not 0 < factor < 1:
             raise ValueError(f"factor must be between 0 and 1, got {factor}")
@@ -21,6 +21,7 @@ class ParamScale:
         self.factor = factor
         self.distribution = distribution
         self.dimensions = dimensions
+        self.weight = weight
 
     def propose(self, state: State) -> Proposal:
         rng = state.rng
