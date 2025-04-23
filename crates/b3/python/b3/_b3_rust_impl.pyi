@@ -1,4 +1,4 @@
-from typing import List, Any, Optional, Sequence, Tuple, Protocol
+from typing import List, Any, Optional, Sequence, Tuple
 from collections.abc import Iterator
 
 from .tree import Node, Leaf, Internal
@@ -68,17 +68,12 @@ class Parameter:
 class Likelihood:
     def __init__(self, data: str, substitution: Any): ...
 
-class Prior(Protocol):
-    def probability(self, state: State) -> float: ...
-
-class Operator(Protocol):
-    def propose(self, state: State) -> Proposal: ...
-
+# TODO: protocols for operators, priors, and loggers
 def run(
     length: int,
     state: State,
-    priors: Sequence[Prior],
-    operators: Sequence[Operator],
+    priors: Sequence[Any],
+    operators: Sequence[Any],
     likelihood: Likelihood,
     loggers: Sequence[Any],
 ): ...
