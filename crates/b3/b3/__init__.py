@@ -12,7 +12,6 @@ __all__ = [
     "operators",
     "priors",
     "substitutions",
-
     # Rust
     "tree",
     "Parameter",

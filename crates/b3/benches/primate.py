@@ -1,7 +1,13 @@
 import b3
 from b3 import Tree, State, Parameter, Likelihood
 from b3.loggers import TreeLogger
-from b3.operators import TreeScale, NarrowExchange, WideExchange, TreeSlide
+from b3.operators import (
+    TreeScale,
+    NarrowExchange,
+    WideExchange,
+    TreeSlide,
+    DeltaExchange,
+)
 from b3.priors import Distribution
 from b3.substitutions import JC
 from stats.distributions import Gamma, Uniform, Exp, LogNormal
@@ -67,6 +73,18 @@ operators = [
     WideExchange(weight=25.0),
     TreeSlide(Uniform(0, 1), weight=48.0),
     TreeScale(0.1, Uniform(0, 1), weight=2.0),
+    DeltaExchange(
+        params=[
+            mutation_rate_noncoding,
+            mutation_rate_1stpos,
+            mutation_rate_2ndpos,
+            mutation_rate_3rdpos,
+        ],
+        weights=[205, 231, 231, 231],
+        delta=0.75,
+        distribution=Uniform(0, 1),
+        weight=2.0,
+    ),
 ]
 
 # TODO: HKY substitution
