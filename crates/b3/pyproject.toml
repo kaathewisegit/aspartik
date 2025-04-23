@@ -13,6 +13,5 @@ requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-python-source = "python"
 module-name = "b3._b3_rust_impl"
 features = ["pyo3/extension-module"]
