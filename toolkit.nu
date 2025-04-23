@@ -45,3 +45,15 @@ export def check [] {
 		error make --unspanned {msg: "Rust tests failed"}
 	}
 }
+
+# Remove temporary files
+export def clean [] {
+	ruff clean
+	(
+		rm --permanent --force --recursive
+			**/flamegraph.svg
+			**/perf.data **/perf.data.old
+			crates/**/__pycache__
+			crates/b3/b3.trees
+	)
+}
