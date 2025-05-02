@@ -85,11 +85,8 @@ impl PyState {
 	fn new(
 		tree: PyTree,
 		params: Vec<PyParameter>,
-		rng: Bound<PyAny>,
+		rng: PyRng,
 	) -> Result<Self> {
-		let rng = PyRng::downcast(rng)?;
-		let rng = rng.get().clone();
-
 		let state = State::new(tree, params, rng)?;
 
 		Ok(Self {

@@ -13,4 +13,4 @@ rand_pcg = { workspace = true, features = ["serde"] }
 
 [lib]
 name = "rng"
-crate-type = ["cdylib", "lib"]
+crate-type = ["dylib"]

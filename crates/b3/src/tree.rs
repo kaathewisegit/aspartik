@@ -695,10 +695,7 @@ impl PyTree {
 #[pymethods]
 impl PyTree {
 	#[new]
-	fn new(num_leaves: usize, rng: Bound<PyAny>) -> Result<Self> {
-		let rng = PyRng::downcast(rng)?;
-		let rng = rng.get();
-
+	fn new(num_leaves: usize, rng: PyRng) -> Result<Self> {
 		let tree = Tree::new(num_leaves, &mut rng.inner());
 		let tree = Self {
 			inner: Arc::new(Mutex::new(tree)),

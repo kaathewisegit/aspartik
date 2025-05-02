@@ -7,6 +7,10 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
+dependencies = [
+    "rng==0.1.0",
+    "stats==0.1.0",
+]
 
 [build-system]
 requires = ["maturin>=1.8,<2.0"]

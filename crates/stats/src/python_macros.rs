@@ -204,17 +204,16 @@ macro_rules! impl_pymethods {
 		impl_pymethods!(for $class; $($rest)*);
 	};
 	(for $class:ty; sample; $($rest:tt)*) => {
+		use rng::PyRng;
+
 		#[cfg(feature = "python")]
 		#[pymethods]
 		impl $class {
 			#[pyo3(name = "sample")]
-			fn py_sample(&self, rng: Bound<'_, PyAny>) -> PyResult<f64> {
-				use rng::PyRng;
+			fn py_sample(&self, rng: PyRng) -> PyResult<f64> {
 				use rand::distr::Distribution;
 
-				let rng = PyRng::downcast(rng)?;
-
-				let x = self.sample(&mut rng.get().inner());
+				let x = self.sample(&mut rng.inner());
 				Ok(x)
 			}
 		}

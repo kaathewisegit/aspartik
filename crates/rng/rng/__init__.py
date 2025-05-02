@@ -1,7 +1,14 @@
-# ruff: noqa: F405
+import os
+import sys
 
-from ._rng_rust_impl import *  # noqa: F403
+# TODO: a temporary ugly hack
+dir = os.path.abspath(__file__ + "/../../../../target/release/")
+sys.path.append(dir)
 
+from librng import Rng  # noqa: E402
 
-__doc__ = _rng_rust_impl.__doc__
 __all__ = ["Rng"]
+
+
+def __dir__():
+    return __all__

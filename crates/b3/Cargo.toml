@@ -31,7 +31,7 @@ rand = { workspace = true, features = ["small_rng"] }
 
 [lib]
 name = "b3"
-crate-type = ["cdylib", "lib"]
+crate-type = ["cdylib"]
 
 [[bench]]
 name = "likelihood"

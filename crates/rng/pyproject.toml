@@ -13,5 +13,5 @@ requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-module-name = "rng._rng_rust_impl"
+module-name = "rng.librng"
 features = ["pyo3/extension-module"]
