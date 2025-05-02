@@ -3,11 +3,9 @@ use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use rand::distr::{weighted::WeightedIndex, Distribution};
 
-use crate::{
-	state::PyState,
-	util::{py_bail, py_call_method},
-};
+use crate::state::PyState;
 use rng::Rng;
+use util::{py_bail, py_call_method};
 
 #[derive(Debug, Clone)]
 #[pyclass(frozen)]

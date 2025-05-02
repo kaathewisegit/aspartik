@@ -8,6 +8,7 @@ members = [
 	"crates/rng",
 	"crates/shchurvec",
 	"crates/stats",
+	"crates/util",
 ]
 
 [workspace.package]

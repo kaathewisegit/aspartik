@@ -62,6 +62,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shchurvec",
+ "util",
  "vulkano",
  "vulkano-shaders",
 ]
@@ -1140,6 +1141,14 @@ name = "unindent"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7264e107f553ccae879d21fbea1d6724ac785e8c3bfc762137959b5802826ef3"
+
+[[package]]
+name = "util"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "pyo3",
+]
 
 [[package]]
 name = "vk-parse"

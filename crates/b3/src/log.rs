@@ -2,10 +2,8 @@ use anyhow::Result;
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 
-use crate::{
-	state::PyState,
-	util::{py_bail, py_call_method},
-};
+use crate::state::PyState;
+use util::{py_bail, py_call_method};
 
 pub struct PyLogger {
 	inner: PyObject,

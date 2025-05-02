@@ -12,6 +12,7 @@ io = { path = "../io" }
 linalg = { path = "../linalg", features = ["bytemuck"] }
 rng = { path = "../rng" }
 shchurvec = { path = "../shchurvec" }
+util = { path = "../util" }
 
 anyhow = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }

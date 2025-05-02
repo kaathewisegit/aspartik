@@ -6,8 +6,8 @@ use pyo3::{
 };
 use rand::distr::{Distribution, Uniform};
 use rand::seq::SliceRandom;
-use serde::{Deserialize, Serialize};
 use rand::Rng as _;
+use serde::{Deserialize, Serialize};
 
 use std::{
 	cmp::Reverse,
@@ -15,12 +15,12 @@ use std::{
 	sync::{Arc, Mutex, MutexGuard},
 };
 
-use crate::util::py_bail;
 use io::newick::{
 	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
 };
 use rng::{PyRng, Rng};
 use shchurvec::ShchurVec;
+use util::py_bail;
 
 const ROOT: usize = usize::MAX;
 

@@ -3,7 +3,7 @@ use linalg::RowMatrix;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
 
-use crate::util::{py_bail, py_call_method};
+use util::{py_bail, py_call_method};
 
 pub struct PySubstitution<const N: usize> {
 	inner: PyObject,
