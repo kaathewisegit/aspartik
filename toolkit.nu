@@ -57,3 +57,30 @@ export def clean [] {
 			crates/b3/b3.trees
 	)
 }
+
+export def develop [] {
+	let root = cargo metadata --format-version 1
+		| from json
+		| get workspace_root
+
+	cd $root
+	cargo build --release --workspace
+
+	cp target/release/libstats.so crates/stats/stats/_stats_rust_impl.so
+	cp target/release/libb3.so crates/b3/b3/_b3_rust_impl.so
+
+	{
+		cd crates/rng/
+		uv pip install rng/
+	}
+	{
+		cd crates/stats/
+		uv pip install stats/
+	}
+	{
+		cd crates/b3/
+		uv pip install b3/
+	}
+
+	return
+}
