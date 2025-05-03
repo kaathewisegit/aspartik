@@ -1,7 +1,7 @@
 import b3
 from b3 import Tree, State, Parameter, Likelihood
 from b3.loggers import TreeLogger
-from b3.operators import TreeScale, NarrowExchange, WideExchange, TreeSlide
+from b3.operators import TreeScale, NarrowExchange, WideExchange, InternalNodeSlide
 from b3.priors import Bound, Distribution
 from b3.substitutions import JC
 from rng import Rng
@@ -28,7 +28,7 @@ priors = [
 operators = [
     NarrowExchange(weight=25.0),
     WideExchange(weight=25.0),
-    TreeSlide(Uniform(0, 1), weight=48.0),
+    InternalNodeSlide(tree, Uniform(0, 1), weight=48.0),
     TreeScale(0.1, Uniform(0, 1), weight=2.0),
 ]
 

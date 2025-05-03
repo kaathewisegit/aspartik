@@ -5,7 +5,7 @@ from b3.operators import (
     TreeScale,
     NarrowExchange,
     WideExchange,
-    TreeSlide,
+    InternalNodeSlide,
     DeltaExchange,
 )
 from b3.priors import Distribution
@@ -71,7 +71,7 @@ priors = [
 operators = [
     NarrowExchange(weight=25.0),
     WideExchange(weight=25.0),
-    TreeSlide(Uniform(0, 1), weight=48.0),
+    InternalNodeSlide(tree, Uniform(0, 1), weight=48.0),
     TreeScale(0.1, Uniform(0, 1), weight=2.0),
     DeltaExchange(
         params=[
@@ -94,4 +94,4 @@ loggers = [
     TreeLogger(path="b3.trees", every=1_000),
 ]
 
-b3.run(10_000, state, priors, operators, likelihood, loggers)
+b3.run(100_000, state, priors, operators, likelihood, loggers)

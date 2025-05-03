@@ -3,5 +3,5 @@ from ._tree_exchange import (
     WideExchange as WideExchange,
 )
 from ._tree_scale import TreeScale as TreeScale
-from ._tree_slide import TreeSlide as TreeSlide
+from ._node_slide import InternalNodeSlide as InternalNodeSlide
 from ._delta_exchange import DeltaExchange as DeltaExchange
