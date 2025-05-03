@@ -2,8 +2,9 @@ from typing import List, Any, Optional, Sequence, Tuple, Protocol
 from collections.abc import Iterator
 
 from rng import Rng
-
 from .tree import Node, Leaf, Internal
+
+class tree: ...
 
 __all__: List[str]
 
