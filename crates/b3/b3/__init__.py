@@ -1,10 +1,6 @@
-# ruff: noqa: F405
-
-from ._b3_rust_impl import *  # noqa: F403
+from ._b3_rust_impl import tree, Parameter, State, Tree, Proposal, Likelihood, run
 from . import loggers, operators, priors, substitutions
 
-
-__doc__ = _b3_rust_impl.__doc__
 
 __all__ = [
     # Python
@@ -21,3 +17,7 @@ __all__ = [
     "Likelihood",
     "run",
 ]
+
+
+def __dir__():
+    return __all__

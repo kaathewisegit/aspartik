@@ -58,7 +58,7 @@ export def clean [] {
 	)
 }
 
-export def develop [] {
+export def --env develop [] {
 	let root = cargo metadata --format-version 1
 		| from json
 		| get workspace_root
@@ -66,21 +66,20 @@ export def develop [] {
 	cd $root
 	cargo build --release --workspace
 
-	cp target/release/libstats.so crates/stats/stats/_stats_rust_impl.so
-	cp target/release/libb3.so crates/b3/b3/_b3_rust_impl.so
+	for crate in [rng stats b3] {
+		let src = $"target/release/lib($crate).so"
+		let dst = if $crate == rng {
+			$"crates/rng/rng/librng.so"
+		} else {
+			$"crates/($crate)/($crate)/_($crate)_rust_impl.so"
+		}
+		cp $src $dst
 
-	{
-		cd crates/rng/
-		uv pip install rng/
-	}
-	{
-		cd crates/stats/
-		uv pip install stats/
-	}
-	{
-		cd crates/b3/
-		uv pip install b3/
+		cd $"crates/($crate)"
+		uv pip install $crate
+		cd $root
 	}
 
-	return
+	let rng_path = python3 -c "import rng; print(rng.__file__)" | path dirname
+	$env.LD_LIBRARY_PATH = $rng_path
 }
