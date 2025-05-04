@@ -24,11 +24,3 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 vulkano = { workspace = true, features = ["macros"] }
 vulkano-shaders = { workspace = true }
-
-[dev-dependencies]
-divan = { workspace = true }
-rand = { workspace = true, features = ["small_rng"] }
-
-[[bench]]
-name = "likelihood"
-harness = false
