@@ -75,12 +75,16 @@ class Operator(Protocol):
     @property
     def weigth(self) -> float: ...
 
+class Logger(Protocol):
+    def log(self, state: State, index: int) -> None: ...
+    @property
+    def every(self) -> int | None: ...
+
 def run(
     length: int,
     state: State,
     priors: Sequence[Prior],
     operators: Sequence[Operator],
     likelihood: Likelihood,
-    # TODO: moving loggers to Python
-    loggers: Sequence[Any],
+    loggers: Sequence[Logger],
 ): ...

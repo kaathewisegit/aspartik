@@ -6,7 +6,7 @@ class TreeLogger:
         self.file = open(path, "w")
         self.every = every
 
-    def log(self, state: State, _index: int):
+    def log(self, state: State, index: int):
         line = state.tree.newick()
         self.file.write(line)
         self.file.write("\n")
