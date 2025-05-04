@@ -5,16 +5,16 @@ use std::fmt;
 
 #[derive(Debug, Clone, Error, PartialEq)]
 #[non_exhaustive]
-pub enum NucleoBaseError {
-	#[error("'{0}' not a valid IUPAC nucleobase character")]
+pub enum DnaNucleotideError {
+	#[error("'{0}' not a valid IUPAC nucleotide code character")]
 	InvalidChar(char),
-	#[error("{0:X} is not a valid nucleo base binary code")]
+	#[error("{0:X} is not a valid Aspartik nucleotide binary representation")]
 	InvalidByte(u8),
 }
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum DnaNucleoBase {
+pub enum DnaNucleotide {
 	Adenine = 0b0001,
 	Cytosine = 0b0010,
 	Guanine = 0b0100,
@@ -37,9 +37,9 @@ pub enum DnaNucleoBase {
 	Gap = 0b1_0000,
 }
 
-impl fmt::Display for DnaNucleoBase {
+impl fmt::Display for DnaNucleotide {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		use DnaNucleoBase::*;
+		use DnaNucleotide::*;
 		let name = match self {
 			Adenine => "Adenine",
 			Cytosine => "Cytosine",
@@ -66,13 +66,13 @@ impl fmt::Display for DnaNucleoBase {
 	}
 }
 
-impl From<DnaNucleoBase> for u8 {
-	fn from(value: DnaNucleoBase) -> Self {
+impl From<DnaNucleotide> for u8 {
+	fn from(value: DnaNucleotide) -> Self {
 		value as u8
 	}
 }
 
-impl TryFrom<u8> for DnaNucleoBase {
+impl TryFrom<u8> for DnaNucleotide {
 	type Error = Error;
 
 	fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -98,17 +98,17 @@ impl TryFrom<u8> for DnaNucleoBase {
 
 			0b1_0000 => Self::Gap,
 
-			_ => Err(NucleoBaseError::InvalidByte(value))?,
+			_ => Err(DnaNucleotideError::InvalidByte(value))?,
 		})
 	}
 }
 
-impl TryFrom<char> for DnaNucleoBase {
+impl TryFrom<char> for DnaNucleotide {
 	type Error = Error;
 
 	// https://genome.ucsc.edu/goldenPath/help/iupac.html
 	fn try_from(value: char) -> Result<Self, Self::Error> {
-		use DnaNucleoBase::*;
+		use DnaNucleotide::*;
 		Ok(match value {
 			'A' => Adenine,
 			'C' => Cytosine,
@@ -130,14 +130,14 @@ impl TryFrom<char> for DnaNucleoBase {
 			'N' => Any,
 			'-' => Gap,
 
-			_ => Err(NucleoBaseError::InvalidChar(value))?,
+			_ => Err(DnaNucleotideError::InvalidChar(value))?,
 		})
 	}
 }
 
-impl From<DnaNucleoBase> for char {
-	fn from(value: DnaNucleoBase) -> char {
-		use DnaNucleoBase::*;
+impl From<DnaNucleotide> for char {
+	fn from(value: DnaNucleotide) -> char {
+		use DnaNucleotide::*;
 		match value {
 			Adenine => 'A',
 			Cytosine => 'C',
@@ -162,13 +162,13 @@ impl From<DnaNucleoBase> for char {
 	}
 }
 
-impl DnaNucleoBase {
+impl DnaNucleotide {
 	fn as_u8(&self) -> u8 {
 		*self as u8
 	}
 
 	pub fn complement(&self) -> Self {
-		use DnaNucleoBase::*;
+		use DnaNucleotide::*;
 		match self {
 			Adenine => Thymine,
 			Cytosine => Guanine,

@@ -5,7 +5,7 @@ use std::{
 	ops::{Deref, DerefMut, Index, IndexMut},
 };
 
-use crate::bases::DnaNucleoBase;
+use crate::bases::DnaNucleotide;
 
 /// A character in a sequence alphabet.
 ///
@@ -25,8 +25,8 @@ pub trait Character:
 {
 }
 
-impl Character for DnaNucleoBase {}
-pub type DnaSeq = Seq<DnaNucleoBase>;
+impl Character for DnaNucleotide {}
+pub type DnaSeq = Seq<DnaNucleotide>;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct Seq<C: Character> {
@@ -213,7 +213,7 @@ mod test {
 	#[test]
 	fn decode() {
 		let s = "ACTGxACTG";
-		let seq: Result<Seq<DnaNucleoBase>> = s.try_into();
+		let seq: Result<Seq<DnaNucleotide>> = s.try_into();
 		assert!(seq.is_err());
 	}
 
@@ -221,10 +221,10 @@ mod test {
 	fn count() {
 		let s: DnaSeq = "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC".try_into().unwrap();
 
-		assert_eq!(s.count(DnaNucleoBase::Adenine), 20);
-		assert_eq!(s.count(DnaNucleoBase::Cytosine), 12);
-		assert_eq!(s.count(DnaNucleoBase::Guanine), 17);
-		assert_eq!(s.count(DnaNucleoBase::Thymine), 21);
+		assert_eq!(s.count(DnaNucleotide::Adenine), 20);
+		assert_eq!(s.count(DnaNucleotide::Cytosine), 12);
+		assert_eq!(s.count(DnaNucleotide::Guanine), 17);
+		assert_eq!(s.count(DnaNucleotide::Thymine), 21);
 	}
 
 	#[test]

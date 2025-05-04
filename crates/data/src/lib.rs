@@ -1,4 +1,4 @@
 mod bases;
 pub mod seq;
 
-pub use bases::DnaNucleoBase;
+pub use bases::DnaNucleotide;

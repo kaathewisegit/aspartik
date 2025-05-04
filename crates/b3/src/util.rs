@@ -6,7 +6,7 @@ use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 use std::fs::File;
 
 use crate::likelihood::Row;
-use data::{seq::DnaSeq, DnaNucleoBase};
+use data::{seq::DnaSeq, DnaNucleotide};
 use io::fasta::FastaReader;
 use linalg::Vector;
 
@@ -17,12 +17,12 @@ pub fn dna_to_rows(seqs: &[DnaSeq]) -> Vec<Vec<Row<4>>> {
 	let mut out = vec![vec![Vector::default(); height]; width];
 
 	// TODO: find a place for this
-	fn to_row(base: &DnaNucleoBase) -> Vector<f64, 4> {
+	fn to_row(base: &DnaNucleotide) -> Vector<f64, 4> {
 		match base {
-			DnaNucleoBase::Adenine => [1.0, 0.0, 0.0, 0.0],
-			DnaNucleoBase::Cytosine => [0.0, 1.0, 0.0, 0.0],
-			DnaNucleoBase::Guanine => [0.0, 0.0, 1.0, 0.0],
-			DnaNucleoBase::Thymine => [0.0, 0.0, 0.0, 1.0],
+			DnaNucleotide::Adenine => [1.0, 0.0, 0.0, 0.0],
+			DnaNucleotide::Cytosine => [0.0, 1.0, 0.0, 0.0],
+			DnaNucleotide::Guanine => [0.0, 0.0, 1.0, 0.0],
+			DnaNucleotide::Thymine => [0.0, 0.0, 0.0, 1.0],
 
 			_ => [0.25, 0.25, 0.25, 0.25],
 		}
@@ -113,7 +113,7 @@ pub fn slices_iter(key: Bound<PyAny>, length: usize) -> Result<SlicesIter> {
 
 pub fn read_fasta(path: &str) -> Result<Vec<Vec<Row<4>>>> {
 	let file = File::open(path)?;
-	let fasta = FastaReader::<DnaNucleoBase, _>::new(file);
+	let fasta = FastaReader::<DnaNucleotide, _>::new(file);
 	let mut seqs = Vec::new();
 	let mut names = Vec::new();
 
