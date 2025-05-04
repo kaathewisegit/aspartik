@@ -1,7 +1,10 @@
 use anyhow::Error;
 use thiserror::Error;
 
-#[derive(Debug, Clone, Error)]
+use std::fmt;
+
+#[derive(Debug, Clone, Error, PartialEq)]
+#[non_exhaustive]
 pub enum NucleoBaseError {
 	#[error("'{0}' not a valid IUPAC nucleobase character")]
 	InvalidChar(char),
@@ -32,6 +35,35 @@ pub enum DnaNucleoBase {
 	Any = 0b1111,
 
 	Gap = 0b1_0000,
+}
+
+impl fmt::Display for DnaNucleoBase {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		use DnaNucleoBase::*;
+		let name = match self {
+			Adenine => "Adenine",
+			Cytosine => "Cytosine",
+			Guanine => "Guanine",
+			Thymine => "Thymine",
+
+			Weak => "Weak",
+			Strong => "Strong",
+			Amino => "Amino",
+			Ketone => "Ketone",
+			Purine => "Purine",
+			Pyrimidine => "Pyrimidine",
+
+			NotAdenine => "Not adenine",
+			NotCytosine => "Not cytosine",
+			NotGuanine => "Not guanine",
+			NotThymine => "Not thymine",
+
+			Any => "Any",
+
+			Gap => "Gap",
+		};
+		f.write_str(name)
+	}
 }
 
 impl From<DnaNucleoBase> for u8 {
@@ -76,26 +108,27 @@ impl TryFrom<char> for DnaNucleoBase {
 
 	// https://genome.ucsc.edu/goldenPath/help/iupac.html
 	fn try_from(value: char) -> Result<Self, Self::Error> {
+		use DnaNucleoBase::*;
 		Ok(match value {
-			'A' => Self::Adenine,
-			'C' => Self::Cytosine,
-			'G' => Self::Guanine,
-			'T' => Self::Thymine,
+			'A' => Adenine,
+			'C' => Cytosine,
+			'G' => Guanine,
+			'T' => Thymine,
 
-			'W' => Self::Weak,
-			'S' => Self::Strong,
-			'M' => Self::Amino,
-			'K' => Self::Ketone,
-			'R' => Self::Purine,
-			'Y' => Self::Pyrimidine,
+			'W' => Weak,
+			'S' => Strong,
+			'M' => Amino,
+			'K' => Ketone,
+			'R' => Purine,
+			'Y' => Pyrimidine,
 
-			'B' => Self::NotAdenine,
-			'D' => Self::NotCytosine,
-			'H' => Self::NotGuanine,
-			'V' => Self::NotThymine,
+			'B' => NotAdenine,
+			'D' => NotCytosine,
+			'H' => NotGuanine,
+			'V' => NotThymine,
 
-			'N' => Self::Any,
-			'-' => Self::Gap,
+			'N' => Any,
+			'-' => Gap,
 
 			_ => Err(NucleoBaseError::InvalidChar(value))?,
 		})
@@ -104,26 +137,27 @@ impl TryFrom<char> for DnaNucleoBase {
 
 impl From<DnaNucleoBase> for char {
 	fn from(value: DnaNucleoBase) -> char {
+		use DnaNucleoBase::*;
 		match value {
-			DnaNucleoBase::Adenine => 'A',
-			DnaNucleoBase::Cytosine => 'C',
-			DnaNucleoBase::Guanine => 'G',
-			DnaNucleoBase::Thymine => 'T',
+			Adenine => 'A',
+			Cytosine => 'C',
+			Guanine => 'G',
+			Thymine => 'T',
 
-			DnaNucleoBase::Weak => 'W',
-			DnaNucleoBase::Strong => 'S',
-			DnaNucleoBase::Amino => 'M',
-			DnaNucleoBase::Ketone => 'K',
-			DnaNucleoBase::Purine => 'R',
-			DnaNucleoBase::Pyrimidine => 'Y',
+			Weak => 'W',
+			Strong => 'S',
+			Amino => 'M',
+			Ketone => 'K',
+			Purine => 'R',
+			Pyrimidine => 'Y',
 
-			DnaNucleoBase::NotAdenine => 'B',
-			DnaNucleoBase::NotCytosine => 'D',
-			DnaNucleoBase::NotGuanine => 'H',
-			DnaNucleoBase::NotThymine => 'V',
+			NotAdenine => 'B',
+			NotCytosine => 'D',
+			NotGuanine => 'H',
+			NotThymine => 'V',
 
-			DnaNucleoBase::Any => 'N',
-			DnaNucleoBase::Gap => '-',
+			Any => 'N',
+			Gap => '-',
 		}
 	}
 }
@@ -134,26 +168,27 @@ impl DnaNucleoBase {
 	}
 
 	pub fn complement(&self) -> Self {
+		use DnaNucleoBase::*;
 		match self {
-			Self::Adenine => Self::Thymine,
-			Self::Cytosine => Self::Guanine,
-			Self::Guanine => Self::Cytosine,
-			Self::Thymine => Self::Adenine,
+			Adenine => Thymine,
+			Cytosine => Guanine,
+			Guanine => Cytosine,
+			Thymine => Adenine,
 
-			Self::Weak => Self::Strong,
-			Self::Strong => Self::Weak,
-			Self::Amino => Self::Ketone,
-			Self::Ketone => Self::Amino,
-			Self::Purine => Self::Pyrimidine,
-			Self::Pyrimidine => Self::Purine,
+			Weak => Strong,
+			Strong => Weak,
+			Amino => Ketone,
+			Ketone => Amino,
+			Purine => Pyrimidine,
+			Pyrimidine => Purine,
 
-			Self::NotAdenine => Self::NotThymine,
-			Self::NotCytosine => Self::NotGuanine,
-			Self::NotGuanine => Self::NotCytosine,
-			Self::NotThymine => Self::NotAdenine,
+			NotAdenine => NotThymine,
+			NotCytosine => NotGuanine,
+			NotGuanine => NotCytosine,
+			NotThymine => NotAdenine,
 
-			Self::Any => Self::Any,
-			Self::Gap => Self::Gap,
+			Any => Any,
+			Gap => Gap,
 		}
 	}
 
