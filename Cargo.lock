@@ -43,6 +43,7 @@ name = "aspartik"
 version = "0.1.0"
 dependencies = [
  "b3",
+ "data",
  "pyo3",
  "rng",
  "stats",
@@ -218,7 +219,7 @@ name = "data"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "petgraph",
+ "pyo3",
  "thiserror",
 ]
 

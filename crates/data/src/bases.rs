@@ -1,10 +1,22 @@
-use anyhow::Error;
+use anyhow::{Error, Result};
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 use thiserror::Error;
 
 use std::fmt;
 
 #[derive(Debug, Clone, Error, PartialEq)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(
+		frozen,
+		eq,
+		str,
+		name = "DNANucleotideError",
+		module = "aspartik.data"
+	)
+)]
 pub enum DnaNucleotideError {
 	#[error("'{0}' not a valid IUPAC nucleotide code character")]
 	InvalidChar(char),
@@ -14,6 +26,16 @@ pub enum DnaNucleotideError {
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(
+		frozen,
+		eq,
+		str,
+		name = "DNANucleotide",
+		module = "aspartik.data"
+	)
+)]
 pub enum DnaNucleotide {
 	Adenine = 0b0001,
 	Cytosine = 0b0010,
@@ -135,6 +157,7 @@ impl TryFrom<char> for DnaNucleotide {
 	}
 }
 
+// TODO: either switch the implementation to a ref or add a second one
 impl From<DnaNucleotide> for char {
 	fn from(value: DnaNucleotide) -> char {
 		use DnaNucleotide::*;
@@ -194,5 +217,50 @@ impl DnaNucleotide {
 
 	pub fn includes(&self, other: &Self) -> bool {
 		(self.as_u8() & other.as_u8()) == other.as_u8()
+	}
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl DnaNucleotide {
+	#[new]
+	fn new(ch: char) -> Result<Self> {
+		Self::try_from(ch)
+	}
+
+	fn __repr__(&self) -> String {
+		use DnaNucleotide::*;
+		let name = match self {
+			Thymine => "Thymine",
+			Guanine => "Guanine",
+			Cytosine => "Cytosine",
+			Adenine => "Adenine",
+
+			Strong => "Strong",
+			Weak => "Weak",
+			Ketone => "Ketone",
+			Amino => "Amino",
+			Pyrimidine => "Pyrimidine",
+			Purine => "Purine",
+
+			NotThymine => "NotThymine",
+			NotGuanine => "NotGuanine",
+			NotCytosine => "NotCytosine",
+			NotAdenine => "NotAdenine",
+
+			Any => "Any",
+			Gap => "Gap",
+		};
+
+		format!("DNANucleotide.{name}")
+	}
+
+	fn __contains__(&self, other: &Self) -> bool {
+		self.includes(other)
+	}
+
+	#[pyo3(name = "complement")]
+	fn py_complement(&self) -> Self {
+		self.complement()
 	}
 }

@@ -53,5 +53,6 @@ authors.workspace = true
 pyo3 = { workspace = true, features = ["anyhow"] }
 
 b3 = { path = "crates/b3" }
+data = { path = "crates/data" }
 rng = { path = "crates/rng" }
 stats = { path = "crates/stats" }

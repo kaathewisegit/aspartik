@@ -8,5 +8,9 @@ authors.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-petgraph = { workspace = true }
+pyo3 = { workspace = true, optional = true, features = ["anyhow"] }
 thiserror = { workspace = true }
+
+[features]
+default = ["python"]
+python = ["dep:pyo3"]

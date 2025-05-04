@@ -14,5 +14,7 @@ fn aspartik(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
 	stats::pymodule(py, &stats)?;
 	m.add_submodule(&stats)?;
 
+	m.add_submodule(&data::pymodule(py)?)?;
+
 	Ok(())
 }
