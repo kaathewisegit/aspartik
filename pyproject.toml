@@ -1,5 +1,5 @@
 [project]
-name = "rng"
+name = "aspartik"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
@@ -13,5 +13,6 @@ requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-module-name = "rng.librng"
+python-source = "python"
+module-name = "aspartik._aspartik_rust_impl"
 features = ["pyo3/extension-module"]

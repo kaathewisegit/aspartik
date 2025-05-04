@@ -1,4 +1,4 @@
-from rng import Rng
+from ...rng import Rng
 from math import inf, exp
 
 

@@ -29,10 +29,6 @@ vulkano-shaders = { workspace = true }
 divan = { workspace = true }
 rand = { workspace = true, features = ["small_rng"] }
 
-[lib]
-name = "b3"
-crate-type = ["cdylib"]
-
 [[bench]]
 name = "likelihood"
 harness = false

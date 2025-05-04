@@ -53,8 +53,7 @@ impl PyRng {
 	}
 }
 
-#[pymodule(name = "librng")]
-fn pymodule(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
+pub fn pymodule(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
 	m.add_class::<PyRng>()?;
 
 	Ok(())

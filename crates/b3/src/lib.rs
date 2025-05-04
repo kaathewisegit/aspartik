@@ -18,16 +18,21 @@ pub use tree::Tree;
 
 use pyo3::prelude::*;
 
+use rng::PyRng;
+
+#[pyfunction]
+fn test(_rng: PyRng) {}
+
 /// Short title.
 ///
 /// Description.
 #[pymodule(name = "_b3_rust_impl")]
-fn b3(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
+pub fn pymodule(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
 	let tree = tree::submodule(py)?;
 	m.add_submodule(&tree)?;
-	py.import("sys")?
-		.getattr("modules")?
-		.set_item("b3.tree", tree)?;
+	// py.import("sys")?
+	// 	.getattr("modules")?
+	// 	.set_item("b3.tree", tree)?;
 
 	m.add_class::<parameter::PyParameter>()?;
 	m.add_class::<state::PyState>()?;
@@ -36,6 +41,7 @@ fn b3(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
 	m.add_class::<likelihood::PyLikelihood>()?;
 
 	m.add_function(wrap_pyfunction!(mcmc::run, m)?)?;
+	m.add_function(wrap_pyfunction!(test, m)?)?;
 
 	Ok(())
 }

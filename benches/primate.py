@@ -1,17 +1,17 @@
-import b3
-from b3 import Tree, State, Parameter, Likelihood
-from b3.loggers import TreeLogger
-from b3.operators import (
+from aspartik import b3
+from aspartik.b3 import Tree, State, Parameter, Likelihood
+from aspartik.b3.loggers import TreeLogger
+from aspartik.b3.operators import (
     TreeScale,
     NarrowExchange,
     WideExchange,
     InternalNodeSlide,
     DeltaExchange,
 )
-from b3.priors import Distribution
-from b3.substitutions import JC
-from stats.distributions import Gamma, Uniform, Exp, LogNormal
-from rng import Rng
+from aspartik.b3.priors import Distribution
+from aspartik.b3.substitutions import JC
+from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
+from aspartik.rng import Rng
 
 rng = Rng(4)
 tree = Tree(12, rng)
@@ -88,7 +88,7 @@ operators = [
 ]
 
 # TODO: HKY substitution
-likelihood = Likelihood(data="data/primate-mdna.fasta", substitution=JC())
+likelihood = Likelihood(data="crates/b3/data/primate-mdna.fasta", substitution=JC())
 
 loggers = [
     TreeLogger(path="b3.trees", every=1_000),

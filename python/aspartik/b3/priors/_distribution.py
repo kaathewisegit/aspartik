@@ -1,6 +1,6 @@
 from math import log
 
-from b3 import State, Parameter
+from .. import State, Parameter
 
 
 class Distribution:

@@ -1,4 +1,4 @@
-from stats.distributions import Gamma, GammaError  # noqa: F401
+from aspartik.stats.distributions import Gamma, GammaError  # noqa: F401
 from math import inf
 
 try:

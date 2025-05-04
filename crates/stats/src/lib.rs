@@ -89,7 +89,7 @@ use pyo3::prelude::*;
 /// Description.
 #[cfg(feature = "python")]
 #[pymodule(name = "_stats_rust_impl")]
-fn md(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
+pub fn pymodule(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
 	let distributions = distribution::pymodule(py)?;
 	m.add_submodule(&distributions)?;
 	py.import("sys")?

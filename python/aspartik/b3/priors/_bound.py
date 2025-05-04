@@ -1,6 +1,6 @@
 from math import inf
 
-from b3 import State
+from .. import State
 
 
 class Bound:

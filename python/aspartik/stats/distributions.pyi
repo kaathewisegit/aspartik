@@ -1,6 +1,6 @@
 from typing import Protocol, Optional
 
-from rng import Rng
+from ..rng import Rng
 
 class Continuous[Type](Protocol):
     type T = Type

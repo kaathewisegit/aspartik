@@ -26,6 +26,3 @@ rand = { workspace = true, default-features = false, optional = true }
 
 [dev-dependencies]
 pyo3 = { workspace = true, features = ["auto-initialize"] }
-
-[lib]
-crate-type = ["cdylib"]

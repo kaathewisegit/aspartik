@@ -1,7 +1,7 @@
 from typing import List
 
 from ._util import sample_range
-from b3 import State, Proposal, Parameter
+from .. import State, Proposal, Parameter
 
 
 class DeltaExchange:

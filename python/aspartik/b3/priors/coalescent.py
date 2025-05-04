@@ -1,4 +1,4 @@
-from b3 import State, Tree
+from .. import State, Tree
 
 
 class ConstantPopulation:

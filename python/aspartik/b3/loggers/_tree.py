@@ -1,4 +1,4 @@
-from b3 import State
+from .. import State
 
 
 class TreeLogger:

@@ -1,4 +1,4 @@
-from rng import Rng
+from aspartik.rng import Rng
 
 os = Rng()
 from_seed = Rng(4)

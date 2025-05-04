@@ -57,29 +57,3 @@ export def clean [] {
 			crates/b3/b3.trees
 	)
 }
-
-export def --env develop [] {
-	let root = cargo metadata --format-version 1
-		| from json
-		| get workspace_root
-
-	cd $root
-	cargo build --release --workspace
-
-	for crate in [rng stats b3] {
-		let src = $"target/release/lib($crate).so"
-		let dst = if $crate == rng {
-			$"crates/rng/rng/librng.so"
-		} else {
-			$"crates/($crate)/($crate)/_($crate)_rust_impl.so"
-		}
-		cp $src $dst
-
-		cd $"crates/($crate)"
-		uv pip install $crate
-		cd $root
-	}
-
-	let rng_path = python3 -c "import rng; print(rng.__file__)" | path dirname
-	$env.LD_LIBRARY_PATH = $rng_path
-}

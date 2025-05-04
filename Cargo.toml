@@ -40,3 +40,18 @@ vulkano-shaders = "0.35"
 
 [profile.bench]
 debug = true
+
+[package]
+name = "aspartik"
+
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+pyo3 = { workspace = true, features = ["anyhow"] }
+
+b3 = { path = "crates/b3" }
+rng = { path = "crates/rng" }
+stats = { path = "crates/stats" }

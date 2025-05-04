@@ -1,11 +1,16 @@
-import b3
-from b3 import Tree, State, Parameter, Likelihood
-from b3.loggers import TreeLogger
-from b3.operators import TreeScale, NarrowExchange, WideExchange, InternalNodeSlide
-from b3.priors import Bound, Distribution
-from b3.substitutions import JC
-from rng import Rng
-from stats.distributions import Uniform, Gamma, Poisson
+from aspartik import b3
+from aspartik.b3 import Tree, State, Parameter, Likelihood
+from aspartik.b3.loggers import TreeLogger
+from aspartik.b3.operators import (
+    TreeScale,
+    NarrowExchange,
+    WideExchange,
+    InternalNodeSlide,
+)
+from aspartik.b3.priors import Bound, Distribution
+from aspartik.b3.substitutions import JC
+from aspartik.rng import Rng
+from aspartik.stats.distributions import Uniform, Gamma, Poisson
 
 rng = Rng(4)
 tree = Tree(100, rng)
@@ -32,7 +37,7 @@ operators = [
     TreeScale(0.1, Uniform(0, 1), weight=2.0),
 ]
 
-likelihood = Likelihood(data="data/100.fasta", substitution=JC())
+likelihood = Likelihood(data="crates/b3/data/100.fasta", substitution=JC())
 
 loggers = [
     TreeLogger(path="b3.trees", every=1_000),

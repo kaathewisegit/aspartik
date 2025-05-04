@@ -1,6 +1,6 @@
 from typing import List
 
-from b3 import Parameter
+from .. import Parameter
 
 
 def normalize(matrix: List[List[float]], coef: float) -> List[List[float]]:

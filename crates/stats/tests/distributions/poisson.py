@@ -1,6 +1,6 @@
 from math import isclose
 
-from stats.distributions import Poisson
+from aspartik.stats.distributions import Poisson
 
 d = Poisson(1)
 assert d.lambda_ == 1

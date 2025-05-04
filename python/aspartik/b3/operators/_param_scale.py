@@ -2,7 +2,7 @@ from math import log
 from typing import Literal
 
 from ._util import sample_range
-from b3 import State, Proposal, Parameter
+from .. import State, Proposal, Parameter
 
 
 class ParamScale:

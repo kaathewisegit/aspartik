@@ -1,7 +1,7 @@
 from math import log
 
 from ._util import sample_range
-from b3 import State, Proposal
+from .. import State, Proposal
 
 
 class TreeScale:

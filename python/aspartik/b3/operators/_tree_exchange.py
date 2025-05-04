@@ -1,7 +1,7 @@
 import math
 
-from b3 import State, Tree, Proposal
-from b3.tree import Internal, Node
+from .. import State, Tree, Proposal
+from ..tree import Internal, Node
 
 
 class NarrowExchange:
