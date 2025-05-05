@@ -13,8 +13,12 @@ export def check [] {
 
 	pyright
 
+	cargo fmt --check
 	cargo clippy --workspace -- -D warnings
 	cargo test --workspace --features approx,proptest
+
+	maturin develop --release
+	python3 benches/primate.py
 }
 
 # Remove temporary files and `b3` output
