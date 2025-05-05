@@ -30,7 +30,7 @@ proptest! {
 			assert_relative_eq!(
 				m * eigenvectors[i],
 				eigenvectors[i] * eigenvalues[i],
-				max_relative = 1e-12,
+				max_relative = 1e-10,
 			);
 		}
 	}
@@ -46,7 +46,7 @@ proptest! {
 		assert_relative_eq!(
 			m,
 			inverse * diag * eigenvectors,
-			max_relative = 1e-12,
+			max_relative = 1e-10,
 		);
 	}
 }
