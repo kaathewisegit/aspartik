@@ -1,14 +1,8 @@
 from .._aspartik_rust_impl import _stats_rust_impl
 
+
 # ruff: noqa: F822
 __all__ = [
-    # Interfaces
-    "Continuous",
-    "ContinuousCDF",
-    "Discrete",
-    "DiscreteCDF",
-    "Distribution",
-    "Sample",
     # Classes
     "Gamma",
     "GammaError",
@@ -22,7 +16,7 @@ __all__ = [
     "LogNormalError",
 ]
 
-for item in __all__[6:]:
+for item in __all__:
     locals()[item] = getattr(_stats_rust_impl.distributions, item)  # type: ignore
 
 
