@@ -39,6 +39,7 @@ trait LikelihoodTrait<const N: usize> {
 pub struct GenericLikelihood<const N: usize> {
 	substitution: PySubstitution<N>,
 	calculator: Box<dyn LikelihoodTrait<N> + Send + Sync>,
+	cache: Option<f64>,
 }
 
 impl<const N: usize> GenericLikelihood<N> {
@@ -52,16 +53,15 @@ impl<const N: usize> GenericLikelihood<N> {
 		let inner_state = state.inner();
 		let tree = &*inner_state.tree.inner();
 		let full_update = transitions.update(substitution_matrix, tree);
-		let mut nodes = if full_update {
+		let nodes = if full_update {
 			tree.full_update()
 		} else {
 			tree.nodes_to_update()
 		};
 
-		// If there are no nodes to update, give us the root likelihood
-		// XXX: can be optimized with caching
+		// No update, we can return the last calculated value
 		if nodes.is_empty() {
-			nodes.push(tree.root());
+			return Ok(self.cache.unwrap());
 		}
 
 		let (nodes, edges, children) = tree.to_lists(&nodes);
@@ -140,6 +140,7 @@ impl PyLikelihood {
 		let likelihood = Likelihood::Nucleotide4(GenericLikelihood {
 			substitution,
 			calculator: Box::new(CpuLikelihood::new(sites)),
+			cache: None,
 		});
 
 		Ok(PyLikelihood {
