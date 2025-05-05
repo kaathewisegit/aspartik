@@ -68,7 +68,7 @@ fn step(
 		)
 	})? {
 		Proposal::Accept() => {
-			accept(state)?;
+			accept(state, likelihood)?;
 			return Ok(());
 		}
 		Proposal::Reject() => {
@@ -83,15 +83,15 @@ fn step(
 
 		// short-circuit on a rejection by any prior
 		if prior == f64::NEG_INFINITY {
-			reject(state)?;
+			reject(state, likelihood)?;
 			return Ok(());
 		}
 	}
 
 	// calculate tree likelihood
-	let likelihood = likelihood.propose(py, state, transitions)?;
+	let new_likelihood = likelihood.propose(py, state, transitions)?;
 
-	let posterior = likelihood + prior;
+	let posterior = new_likelihood + prior;
 
 	let ratio = posterior - state.inner().likelihood + hastings;
 
@@ -99,22 +99,24 @@ fn step(
 	if ratio > random_0_1.ln() {
 		state.inner().likelihood = posterior;
 
-		accept(state)?;
+		accept(state, likelihood)?;
 	} else {
-		reject(state)?;
+		reject(state, likelihood)?;
 	}
 
 	Ok(())
 }
 
-fn accept(state: &PyState) -> Result<()> {
+fn accept(state: &PyState, likelihood: &mut Likelihood) -> Result<()> {
 	state.inner().accept()?;
+	likelihood.accept();
 
 	Ok(())
 }
 
-fn reject(state: &PyState) -> Result<()> {
+fn reject(state: &PyState, likelihood: &mut Likelihood) -> Result<()> {
 	state.inner().reject()?;
+	likelihood.reject();
 
 	Ok(())
 }
