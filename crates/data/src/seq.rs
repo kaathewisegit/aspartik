@@ -5,7 +5,7 @@ use std::{
 	ops::{Deref, DerefMut, Index, IndexMut},
 };
 
-use crate::bases::DnaNucleotide;
+use crate::nucleotides::DnaNucleotide;
 
 /// A character in a sequence alphabet.
 ///

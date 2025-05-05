@@ -1,7 +1,7 @@
-mod bases;
+mod nucleotides;
 pub mod seq;
 
-pub use bases::{DnaNucleotide, DnaNucleotideError};
+pub use nucleotides::{DnaNucleotide, DnaNucleotideError};
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
