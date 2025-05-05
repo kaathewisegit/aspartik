@@ -36,18 +36,17 @@ trait LikelihoodTrait<const N: usize> {
 	fn reject(&mut self);
 }
 
-// TODO: should be generic over dimensions without any generics, somehow
-pub struct Likelihood {
-	substitution: PySubstitution<4>,
-	calculator: Box<dyn LikelihoodTrait<4> + Send + Sync>,
+pub struct GenericLikelihood<const N: usize> {
+	substitution: PySubstitution<N>,
+	calculator: Box<dyn LikelihoodTrait<N> + Send + Sync>,
 }
 
-impl Likelihood {
+impl<const N: usize> GenericLikelihood<N> {
 	pub fn propose(
 		&mut self,
 		py: Python,
 		state: &PyState,
-		transitions: &mut Transitions<4>,
+		transitions: &mut Transitions<N>,
 	) -> Result<f64> {
 		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let inner_state = state.inner();
@@ -81,6 +80,46 @@ impl Likelihood {
 	}
 }
 
+pub enum Likelihood {
+	Nucleotide4(GenericLikelihood<4>),
+	Nucleotide5(GenericLikelihood<5>),
+	// TODO: amino: 20 standard, 2 special, stop codon
+	Codon(GenericLikelihood<64>),
+}
+
+impl Likelihood {
+	pub fn propose(
+		&mut self,
+		py: Python,
+		state: &PyState,
+		// TODO: non-generic transitions wrapper
+		transitions: &mut Transitions<4>,
+	) -> Result<f64> {
+		match self {
+			Likelihood::Nucleotide4(inner) => {
+				inner.propose(py, state, transitions)
+			}
+			_ => todo!(),
+		}
+	}
+
+	pub fn accept(&mut self) {
+		match self {
+			Likelihood::Nucleotide4(inner) => inner.accept(),
+			Likelihood::Nucleotide5(inner) => inner.accept(),
+			Likelihood::Codon(inner) => inner.accept(),
+		}
+	}
+
+	pub fn reject(&mut self) {
+		match self {
+			Likelihood::Nucleotide4(inner) => inner.accept(),
+			Likelihood::Nucleotide5(inner) => inner.accept(),
+			Likelihood::Codon(inner) => inner.accept(),
+		}
+	}
+}
+
 #[derive(Clone)]
 #[pyclass(name = "Likelihood", module = "aspartik.b3", frozen)]
 pub struct PyLikelihood {
@@ -96,12 +135,12 @@ impl PyLikelihood {
 #[pymethods]
 impl PyLikelihood {
 	#[new]
-	fn new(data: &str, substitution: PySubstitution<4>) -> Result<Self> {
+	fn new4(data: &str, substitution: PySubstitution<4>) -> Result<Self> {
 		let sites = read_fasta(data)?;
-		let likelihood = Likelihood {
+		let likelihood = Likelihood::Nucleotide4(GenericLikelihood {
 			substitution,
 			calculator: Box::new(CpuLikelihood::new(sites)),
-		};
+		});
 
 		Ok(PyLikelihood {
 			inner: Arc::new(Mutex::new(likelihood)),
