@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 use pyo3::prelude::*;
 use rand::Rng as _;
 
@@ -37,10 +37,13 @@ pub fn run(
 			&mut transitions,
 			likelihood,
 			&mut scheduler,
-		)?;
+		)
+		.with_context(|| anyhow!("Failed on step {index}"))?;
 
 		for logger in &mut loggers {
-			logger.log(py, state.clone(), index)?;
+			logger.log(py, state.clone(), index).with_context(
+				|| anyhow!("Failed to log on step {index}"),
+			)?;
 		}
 	}
 
@@ -58,7 +61,12 @@ fn step(
 	let operator =
 		scheduler.select_operator(&mut state.inner().rng.inner());
 
-	let hastings = match operator.propose(py, state)? {
+	let hastings = match operator.propose(py, state).with_context(|| {
+		anyhow!(
+			"Operator {} failed while generating a proposal",
+			operator.repr(py).unwrap()
+		)
+	})? {
 		Proposal::Accept() => {
 			accept(state)?;
 			return Ok(());

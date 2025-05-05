@@ -25,12 +25,20 @@ pub struct PyOperator {
 
 impl<'py> FromPyObject<'py> for PyOperator {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
-		if !obj.getattr("propose")?.is_callable() {
-			return Err(PyTypeError::new_err("Operator objects must have a `propose` method, which takes `State` and returns a `Proposal`"));
+		if !obj.getattr("propose").is_ok_and(|a| a.is_callable()) {
+			py_bail!(
+				PyTypeError,
+				"Operator objects must have a `propose` method, which takes `State` and returns a `Proposal`.  Got type {}",
+				obj.repr()?,
+			);
 		}
 
 		if obj.getattr("weight")?.extract::<f64>().is_err() {
-			return Err(PyTypeError::new_err("Operator must have a `weight` attribute which returns a real number"));
+			py_bail!(
+				PyTypeError,
+				"Operator must have a `weight` attribute which returns a real number.  Got type {}",
+				obj.repr()?,
+			);
 		}
 
 		Ok(Self {
@@ -67,6 +75,8 @@ impl WeightedScheduler {
 	pub fn new(py: Python, operators: Vec<PyOperator>) -> Result<Self> {
 		let mut weights = vec![];
 		for operator in &operators {
+			// tries don't need context because they are already
+			// checked by PyOperator's `extract_bound`
 			let weight = operator
 				.inner
 				.getattr(py, "weight")?
