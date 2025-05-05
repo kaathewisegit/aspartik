@@ -23,7 +23,7 @@ use crate::statistics::*;
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, str, module = "stats.distributions")
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub struct Uniform {
 	min: f64,
@@ -47,7 +47,13 @@ impl_pymethods! {for Uniform;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+	pyclass(
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		hash,
+		str
+	)
 )]
 pub enum UniformError {
 	/// The minimum is NaN or infinite.

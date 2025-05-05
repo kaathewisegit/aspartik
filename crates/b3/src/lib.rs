@@ -26,13 +26,10 @@ fn test(_rng: PyRng) {}
 /// Short title.
 ///
 /// Description.
-#[pymodule(name = "_b3_rust_impl")]
-pub fn pymodule(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
-	let tree = tree::submodule(py)?;
-	m.add_submodule(&tree)?;
-	// py.import("sys")?
-	// 	.getattr("modules")?
-	// 	.set_item("b3.tree", tree)?;
+pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
+	let m = PyModule::new(py, "_b3_rust_impl")?;
+
+	m.add_submodule(&tree::submodule(py)?)?;
 
 	m.add_class::<parameter::PyParameter>()?;
 	m.add_class::<state::PyState>()?;
@@ -40,8 +37,8 @@ pub fn pymodule(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
 	m.add_class::<operator::Proposal>()?;
 	m.add_class::<likelihood::PyLikelihood>()?;
 
-	m.add_function(wrap_pyfunction!(mcmc::run, m)?)?;
-	m.add_function(wrap_pyfunction!(test, m)?)?;
+	m.add_function(wrap_pyfunction!(mcmc::run, &m)?)?;
+	m.add_function(wrap_pyfunction!(test, &m)?)?;
 
-	Ok(())
+	Ok(m)
 }

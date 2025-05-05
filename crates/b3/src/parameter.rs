@@ -93,7 +93,7 @@ impl Display for Parameter {
 }
 
 #[derive(Debug, Clone)]
-#[pyclass(name = "Parameter", sequence, frozen)]
+#[pyclass(name = "Parameter", module = "aspartik.b3", sequence, frozen)]
 /// Represents dimensional parameters which can hold arbitrary numbers.
 ///
 /// This class has no constructor.  Instead, it's static methods `Real`,

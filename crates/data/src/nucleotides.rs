@@ -10,11 +10,11 @@ use std::fmt;
 #[cfg_attr(
 	feature = "python",
 	pyclass(
+		name = "DNANucleotideError",
+		module = "aspartik.data",
 		frozen,
 		eq,
 		str,
-		name = "DNANucleotideError",
-		module = "aspartik.data"
 	)
 )]
 pub enum DnaNucleotideError {
@@ -29,11 +29,11 @@ pub enum DnaNucleotideError {
 #[cfg_attr(
 	feature = "python",
 	pyclass(
+		name = "DNANucleotide",
+		module = "aspartik.data",
 		frozen,
 		eq,
 		str,
-		name = "DNANucleotide",
-		module = "aspartik.data"
 	)
 )]
 pub enum DnaNucleotide {

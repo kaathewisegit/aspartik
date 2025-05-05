@@ -27,7 +27,7 @@ use core::f64;
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, str, module = "stats.distributions")
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub struct LogNormal {
 	location: f64,
@@ -51,7 +51,13 @@ impl_pymethods! {for LogNormal;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+	pyclass(
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		hash,
+		str
+	)
 )]
 pub enum LogNormalError {
 	/// The location is NaN.

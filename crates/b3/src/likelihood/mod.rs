@@ -82,7 +82,7 @@ impl Likelihood {
 }
 
 #[derive(Clone)]
-#[pyclass(name = "Likelihood", frozen)]
+#[pyclass(name = "Likelihood", module = "aspartik.b3", frozen)]
 pub struct PyLikelihood {
 	inner: Arc<Mutex<Likelihood>>,
 }

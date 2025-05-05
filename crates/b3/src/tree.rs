@@ -86,7 +86,7 @@ impl From<Leaf> for Node {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[pyclass(frozen, module = "b3.tree")]
+#[pyclass(frozen, module = "aspartik.b3.tree")]
 pub struct Internal(usize);
 
 #[pymethods]
@@ -111,7 +111,7 @@ impl Internal {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[pyclass(frozen, module = "b3.tree")]
+#[pyclass(frozen, module = "aspartik.b3.tree")]
 pub struct Leaf(usize);
 
 #[pymethods]
@@ -598,7 +598,7 @@ impl<'de> Deserialize<'de> for Tree {
 
 macro_rules! make_iterator {
 	($name: ident, $t: tt) => {
-		#[pyclass(module = "b3.tree")]
+		#[pyclass(module = "aspartik.b3.tree")]
 		struct $name {
 			current: usize,
 			end: usize,
@@ -635,7 +635,7 @@ macro_rules! make_iterator {
 make_iterator!(InternalsIter, Internal);
 make_iterator!(LeavesIter, Leaf);
 
-#[pyclass(module = "b3.tree")]
+#[pyclass(module = "aspartik.b3.tree")]
 struct NodesIter {
 	current: usize,
 	end: usize,
@@ -665,7 +665,7 @@ impl NodesIter {
 }
 
 #[derive(Debug, Clone)]
-#[pyclass(name = "Tree", frozen)]
+#[pyclass(name = "Tree", module = "aspartik.b3", frozen)]
 /// A phylogenetic bifurcating tree.
 ///
 /// The leaf nodes are derived from the data samples.  Anonymous internal nodes

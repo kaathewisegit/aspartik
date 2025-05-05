@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 pub type Rng = Pcg64;
 
 #[derive(Debug, Clone)]
-#[pyclass(name = "Rng", module = "rng", frozen)]
+#[pyclass(name = "Rng", module = "aspartik.rng", frozen)]
 #[repr(transparent)]
 pub struct PyRng {
 	inner: Arc<Mutex<Rng>>,
@@ -53,8 +53,10 @@ impl PyRng {
 	}
 }
 
-pub fn pymodule(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
+pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
+	let m = PyModule::new(py, "_rng_rust_impl")?;
+
 	m.add_class::<PyRng>()?;
 
-	Ok(())
+	Ok(m)
 }

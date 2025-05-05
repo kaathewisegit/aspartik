@@ -88,13 +88,9 @@ use pyo3::prelude::*;
 ///
 /// Description.
 #[cfg(feature = "python")]
-#[pymodule(name = "_stats_rust_impl")]
-pub fn pymodule(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
-	let distributions = distribution::pymodule(py)?;
-	m.add_submodule(&distributions)?;
-	py.import("sys")?
-		.getattr("modules")?
-		.set_item("stats.distributions", distributions)?;
+pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
+	let m = PyModule::new(py, "_stats_rust_impl")?;
+	m.add_submodule(&distribution::pymodule(py)?)?;
 
-	Ok(())
+	Ok(m)
 }

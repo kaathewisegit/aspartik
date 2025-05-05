@@ -68,7 +68,7 @@ impl State {
 }
 
 #[derive(Debug, Clone)]
-#[pyclass(name = "State", frozen)]
+#[pyclass(name = "State", module = "aspartik.b3", frozen)]
 pub struct PyState {
 	inner: Arc<Mutex<State>>,
 }
@@ -92,10 +92,6 @@ impl PyState {
 		Ok(Self {
 			inner: Arc::new(Mutex::new(state)),
 		})
-	}
-
-	fn __repr__(&self) -> String {
-		"<b3.State>".to_string()
 	}
 
 	#[getter]

@@ -1,6 +1,9 @@
 use anyhow::Result;
-use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
+use pyo3::{
+	exceptions::{PyTypeError, PyValueError},
+	types::PyString,
+};
 use rand::distr::{weighted::WeightedIndex, Distribution};
 
 use crate::state::PyState;
@@ -8,7 +11,7 @@ use rng::Rng;
 use util::{py_bail, py_call_method};
 
 #[derive(Debug, Clone)]
-#[pyclass(frozen)]
+#[pyclass(module = "aspartik.b3", frozen)]
 pub enum Proposal {
 	Accept(),
 	Reject(),
@@ -44,6 +47,13 @@ impl PyOperator {
 		let proposal = proposal.extract::<Proposal>(py)?;
 
 		Ok(proposal)
+	}
+
+	pub fn repr<'py>(
+		&self,
+		py: Python<'py>,
+	) -> Result<Bound<'py, PyString>> {
+		Ok(self.inner.bind(py).repr()?)
 	}
 }
 

@@ -28,7 +28,7 @@ use crate::{
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, str, module = "stats.distributions")
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub struct Gamma {
 	shape: f64,

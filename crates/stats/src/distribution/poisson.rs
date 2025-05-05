@@ -27,7 +27,7 @@ use crate::{
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, str, module = "stats.distributions")
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub struct Poisson {
 	lambda: f64,
@@ -38,7 +38,13 @@ pub struct Poisson {
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+	pyclass(
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		hash,
+		str
+	)
 )]
 pub enum PoissonError {
 	/// The lambda is NaN, zero or less than zero.

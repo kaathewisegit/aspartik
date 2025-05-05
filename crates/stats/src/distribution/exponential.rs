@@ -26,7 +26,7 @@ use core::f64;
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, str, module = "stats.distributions")
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub struct Exp {
 	rate: f64,
@@ -48,7 +48,13 @@ impl_pymethods! {for Exp;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+	pyclass(
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		hash,
+		str
+	)
 )]
 pub enum ExpError {
 	/// The rate is NaN, zero or less than zero.
