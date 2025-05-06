@@ -552,10 +552,18 @@ impl Tree {
 		let mut map: HashMap<Node, NewickNodeIndex> = HashMap::new();
 
 		for node in self.nodes() {
+			let distance;
+			if let Some(parent) = self.parent_of(node) {
+				distance = self.weight_of(node)
+					- self.weight_of(parent.into());
+			} else {
+				distance = 0.0;
+			}
+
 			let newick_node = tree.add_node(NewickNode::new(
 				node.0.to_string(),
 				"".to_owned(),
-				self.weight_of(node),
+				distance,
 			));
 
 			map.insert(node, newick_node);
