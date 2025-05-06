@@ -17,14 +17,14 @@ class NarrowExchange:
 
         grandparent = None
         while grandparent is None:
-            internal = state.tree.random_internal(state.rng)
+            internal = tree.random_internal(state.rng)
             if is_grandparent(tree, internal):
                 grandparent = internal
 
         left, right = tree.children_of(grandparent)
-        if tree.weight_of(left) > tree.weight_of(right):
+        if tree.weight_of(left) < tree.weight_of(right):
             parent, uncle = left, right
-        elif tree.weight_of(right) > tree.weight_of(left):
+        elif tree.weight_of(right) < tree.weight_of(left):
             parent, uncle = right, left
         else:
             return Proposal.Reject()

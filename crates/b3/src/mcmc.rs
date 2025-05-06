@@ -65,6 +65,8 @@ fn step(
 		Proposal::Hastings(ratio) => ratio,
 	};
 
+	state.inner().tree.inner().verify()?;
+
 	let mut prior: f64 = 0.0;
 	for py_prior in priors {
 		prior += py_prior.probability(py, state)?;
