@@ -38,22 +38,34 @@ trait LikelihoodTrait<const N: usize> {
 
 pub struct GenericLikelihood<const N: usize> {
 	substitution: PySubstitution<N>,
+	transitions: Transitions<N>,
 	calculator: Box<dyn LikelihoodTrait<N> + Send + Sync>,
 	cache: Option<f64>,
 }
 
 impl<const N: usize> GenericLikelihood<N> {
-	pub fn propose(
-		&mut self,
-		py: Python,
-		state: &PyState,
-		transitions: &mut Transitions<N>,
-	) -> Result<f64> {
+	pub fn new(
+		substitution: PySubstitution<N>,
+		sites: Vec<Vec<Vector<f64, N>>>,
+	) -> Self {
+		let num_internals = sites[0].len() - 1;
+		let transitions = Transitions::<N>::new(num_internals * 2);
+
+		Self {
+			substitution,
+			transitions,
+			calculator: Box::new(CpuLikelihood::new(sites)),
+			cache: None,
+		}
+	}
+
+	pub fn propose(&mut self, py: Python, state: &PyState) -> Result<f64> {
 		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let inner_state = state.inner();
 		let tree = &*inner_state.tree.inner();
-		let full_update = transitions.update(substitution_matrix, tree);
-		let nodes = if full_update {
+		let full_update =
+			self.transitions.update(substitution_matrix, tree);
+		let nodes = if full_update || self.cache.is_none() {
 			tree.full_update()
 		} else {
 			tree.nodes_to_update()
@@ -61,12 +73,14 @@ impl<const N: usize> GenericLikelihood<N> {
 
 		// No update, we can return the last calculated value
 		if nodes.is_empty() {
+			// we can unwrap here because on the first calculation
+			// (no likelihood yet) we'll do a full update
 			return Ok(self.cache.unwrap());
 		}
 
 		let (nodes, edges, children) = tree.to_lists(&nodes);
 
-		let transitions = transitions.matrices(&edges);
+		let transitions = self.transitions.matrices(&edges);
 
 		Ok(self.calculator.propose(&nodes, &transitions, &children))
 	}
@@ -88,16 +102,10 @@ pub enum Likelihood {
 }
 
 impl Likelihood {
-	pub fn propose(
-		&mut self,
-		py: Python,
-		state: &PyState,
-		// TODO: non-generic transitions wrapper
-		transitions: &mut Transitions<4>,
-	) -> Result<f64> {
+	pub fn propose(&mut self, py: Python, state: &PyState) -> Result<f64> {
 		match self {
 			Likelihood::Nucleotide4(inner) => {
-				inner.propose(py, state, transitions)
+				inner.propose(py, state)
 			}
 			_ => todo!(),
 		}
@@ -137,11 +145,9 @@ impl PyLikelihood {
 	#[new]
 	fn new4(data: &str, substitution: PySubstitution<4>) -> Result<Self> {
 		let sites = read_fasta(data)?;
-		let likelihood = Likelihood::Nucleotide4(GenericLikelihood {
-			substitution,
-			calculator: Box::new(CpuLikelihood::new(sites)),
-			cache: None,
-		});
+		let likelihood = Likelihood::Nucleotide4(
+			GenericLikelihood::new(substitution, sites),
+		);
 
 		Ok(PyLikelihood {
 			inner: Arc::new(Mutex::new(likelihood)),

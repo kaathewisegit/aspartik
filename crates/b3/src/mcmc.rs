@@ -6,7 +6,6 @@ use crate::{
 	likelihood::{Likelihood, PyLikelihood},
 	operator::{Proposal, PyOperator, WeightedScheduler},
 	state::PyState,
-	transitions::Transitions,
 	PyLogger, PyPrior,
 };
 
@@ -20,9 +19,6 @@ pub fn run(
 	likelihood: PyLikelihood,
 	mut loggers: Vec<PyLogger>,
 ) -> Result<()> {
-	let num_edges = state.inner().tree.inner().num_internals() * 2;
-	let mut transitions = Transitions::<4>::new(num_edges);
-
 	let likelihood = &mut *likelihood.inner();
 
 	// We acquire the lock for the full duration of the program so that we
@@ -30,15 +26,8 @@ pub fn run(
 	let mut scheduler = WeightedScheduler::new(py, operators)?;
 
 	for index in 0..length {
-		step(
-			py,
-			&state,
-			&priors,
-			&mut transitions,
-			likelihood,
-			&mut scheduler,
-		)
-		.with_context(|| anyhow!("Failed on step {index}"))?;
+		step(py, &state, &priors, likelihood, &mut scheduler)
+			.with_context(|| anyhow!("Failed on step {index}"))?;
 
 		for logger in &mut loggers {
 			logger.log(py, state.clone(), index).with_context(
@@ -54,7 +43,6 @@ fn step(
 	py: Python,
 	state: &PyState,
 	priors: &[PyPrior],
-	transitions: &mut Transitions<4>,
 	likelihood: &mut Likelihood,
 	scheduler: &mut WeightedScheduler,
 ) -> Result<()> {
@@ -89,7 +77,7 @@ fn step(
 	}
 
 	// calculate tree likelihood
-	let new_likelihood = likelihood.propose(py, state, transitions)?;
+	let new_likelihood = likelihood.propose(py, state)?;
 
 	let posterior = new_likelihood + prior;
 
