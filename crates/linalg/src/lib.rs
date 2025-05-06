@@ -2,6 +2,7 @@
 mod approx;
 #[cfg(feature = "bytemuck")]
 mod bytemuck;
+mod float;
 mod lapack;
 mod math;
 #[cfg(feature = "proptest")]
