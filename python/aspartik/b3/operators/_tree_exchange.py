@@ -22,9 +22,9 @@ class NarrowExchange:
                 grandparent = internal
 
         left, right = tree.children_of(grandparent)
-        if tree.weight_of(left) < tree.weight_of(right):
+        if tree.weight_of(left) > tree.weight_of(right):
             parent, uncle = left, right
-        elif tree.weight_of(right) < tree.weight_of(left):
+        elif tree.weight_of(right) > tree.weight_of(left):
             parent, uncle = right, left
         else:
             return Proposal.Reject()

@@ -44,10 +44,10 @@ class InternalNodeSlide:
 
         left, right = tree.children_of(node)
 
-        low = tree.weight_of(parent)
-        high = min(tree.weight_of(left), tree.weight_of(right))
+        oldest = tree.weight_of(parent)
+        youngest = max(tree.weight_of(left), tree.weight_of(right))
 
-        new_weight = sample_range(low, high, self.distribution, rng)
+        new_weight = sample_range(youngest, oldest, self.distribution, rng)
 
         tree.update_weight(node, new_weight)
 

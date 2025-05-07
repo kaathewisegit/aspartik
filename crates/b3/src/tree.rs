@@ -184,25 +184,28 @@ impl Tree {
 		parents[child] = root;
 		children[(root - num_leaves) * 2 + 1] = child;
 
-		// Sets the weights by walking the tree starting from the root.
-		// Each next layer has a weight which is bigger by DIFF.
+		// Sets the weights by walking upwards breadth-first starting
+		// with all of the leaves
 		const DIFF: f64 = 0.1;
+		// The children are all at the position 0
 		let mut weights = vec![0.0; num_nodes];
-		let mut walk = VecDeque::from([root]);
+		let mut walk = VecDeque::new();
+		for node in parents.iter().take(num_leaves).copied() {
+			// the root isn't here because all leaves have a parent
+			walk.push_back(node);
+		}
 		while let Some(node) = walk.pop_front() {
-			let left_diff = DIFF * (1.0 + rng.random::<f64>());
-			let right_diff = DIFF * (1.0 + rng.random::<f64>());
 			let idx = 2 * (node - num_leaves);
-			weights[children[idx]] = weights[node] + left_diff;
-			weights[children[idx + 1]] = weights[node] + right_diff;
 
-			// Add left and right to the queue if they are also
-			// internals
-			if children[idx] >= num_leaves {
-				walk.push_front(children[idx]);
-			}
-			if children[idx + 1] >= num_leaves {
-				walk.push_front(children[idx + 1]);
+			let left = weights[children[idx]];
+			let right = weights[children[idx + 1]];
+			let max = f64::max(left, right);
+			let diff = DIFF * (2.0 + rng.random::<f64>());
+			weights[node] = max + diff;
+
+			let parent = parents[node];
+			if parent != ROOT {
+				walk.push_front(parent);
 			}
 		}
 
@@ -381,16 +384,16 @@ impl Tree {
 			let (left, right) = self.children_of(node);
 
 			ensure!(
-				self.weight_of(node.into()) < self.weight_of(left),
-				"Node {} ({}) is lower than it's left child {} ({})",
+				self.weight_of(node.into()) > self.weight_of(left),
+				"Node {} ({}) is younger than it's left child {} ({})",
 				node.0,
 				self.weight_of(node.into()),
 				left.0,
 				self.weight_of(left),
 			);
 			ensure!(
-				self.weight_of(node.into()) < self.weight_of(right),
-				"Node {} ({}) is lower than it's right child {} ({})",
+				self.weight_of(node.into()) > self.weight_of(right),
+				"Node {} ({}) is younger than it's right child {} ({})",
 				node.0,
 				self.weight_of(node.into()),
 				left.0,
@@ -498,7 +501,7 @@ impl Tree {
 	pub fn edge_distance(&self, edge: usize) -> f64 {
 		let (child, parent) = self.edge_nodes(edge);
 
-		self.weight_of(child) - self.weight_of(parent.into())
+		self.weight_of(parent.into()) - self.weight_of(child)
 	}
 
 	fn edge_nodes(&self, edge: usize) -> (Node, Internal) {
@@ -554,8 +557,8 @@ impl Tree {
 		for node in self.nodes() {
 			let distance;
 			if let Some(parent) = self.parent_of(node) {
-				distance = self.weight_of(node)
-					- self.weight_of(parent.into());
+				distance = self.weight_of(parent.into())
+					- self.weight_of(node);
 			} else {
 				distance = 0.0;
 			}
