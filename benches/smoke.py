@@ -5,7 +5,7 @@ from aspartik.b3.operators import (
     TreeScale,
     NarrowExchange,
     WideExchange,
-    InternalNodeSlide,
+    NodeSlide,
 )
 from aspartik.b3.priors import Bound, Distribution
 from aspartik.b3.substitutions import JC
@@ -33,7 +33,7 @@ priors = [
 operators = [
     NarrowExchange(weight=25.0),
     WideExchange(weight=25.0),
-    InternalNodeSlide(tree, Uniform(0, 1), weight=48.0),
+    NodeSlide(tree, Uniform(0, 1), weight=48.0),
     TreeScale(0.1, Uniform(0, 1), weight=2.0),
 ]
 
