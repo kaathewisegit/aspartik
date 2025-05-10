@@ -1,4 +1,4 @@
-from ._util import sample_range
+from ._util import scale_on_range
 from .. import State, Proposal
 
 
@@ -51,9 +51,8 @@ class NodeSlide:
         oldest = tree.weight_of(parent)
         youngest = max(tree.weight_of(left), tree.weight_of(right))
 
-        new_weight = sample_range(youngest, oldest, self.distribution, rng)
+        (new_weight, ratio) = scale_on_range(youngest, oldest, self.distribution, rng)
 
         tree.update_weight(node, new_weight)
 
-        # TODO: scale from `sample_range`
-        return Proposal.Hastings(0)
+        return Proposal.Hastings(ratio)

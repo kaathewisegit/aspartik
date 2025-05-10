@@ -58,4 +58,5 @@ class DeltaExchange:
             self.weights[param_1] / self.weights[param_2]
         )
 
+        # The move is symmetrical, so the Hastings ratio is 0
         return Proposal.Hastings(0)
