@@ -1,8 +1,8 @@
-use shchurvec::ShchurVec;
+use skvec::SkVec;
 
 #[test]
 fn basic() {
-	let mut v = ShchurVec::<i32>::new();
+	let mut v = SkVec::<i32>::new();
 
 	v.push(1);
 	v.push(2);

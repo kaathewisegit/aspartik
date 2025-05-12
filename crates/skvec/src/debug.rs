@@ -1,8 +1,8 @@
 use std::fmt::{Debug, Formatter, Result};
 
-use crate::ShchurVec;
+use crate::SkVec;
 
-impl<T> Debug for ShchurVec<T>
+impl<T> Debug for SkVec<T>
 where
 	T: Debug,
 {

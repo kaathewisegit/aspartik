@@ -1,6 +1,6 @@
 use crate::substitution::Substitution;
 use linalg::RowMatrix;
-use shchurvec::ShchurVec;
+use skvec::SkVec;
 
 use crate::tree::Tree;
 
@@ -11,13 +11,12 @@ pub struct Transitions<const N: usize> {
 	diag: RowMatrix<f64, N, N>,
 	inv_p: RowMatrix<f64, N, N>,
 
-	transitions: ShchurVec<RowMatrix<f64, N, N>>,
+	transitions: SkVec<RowMatrix<f64, N, N>>,
 }
 
 impl<const N: usize> Transitions<N> {
 	pub fn new(length: usize) -> Self {
-		let transitions =
-			ShchurVec::repeat(RowMatrix::default(), length);
+		let transitions = SkVec::repeat(RowMatrix::default(), length);
 
 		Self {
 			current: Default::default(),

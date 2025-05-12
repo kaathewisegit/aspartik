@@ -1,8 +1,8 @@
 use super::{LikelihoodTrait, Row, Transition};
-use shchurvec::ShchurVec;
+use skvec::SkVec;
 
 pub struct CpuLikelihood<const N: usize> {
-	probabilities: Vec<ShchurVec<Row<N>>>,
+	probabilities: Vec<SkVec<Row<N>>>,
 
 	updated_nodes: Vec<usize>,
 }
@@ -55,7 +55,7 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 impl<const N: usize> CpuLikelihood<N> {
 	pub fn new(sites: Vec<Vec<Row<N>>>) -> Self {
 		let mut probabilities = vec![
-			ShchurVec::repeat(
+			SkVec::repeat(
 				Row::<N>::default(),
 				sites[0].len() * 2 - 1
 			);

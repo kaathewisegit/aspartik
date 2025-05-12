@@ -1,6 +1,6 @@
 use std::cmp::PartialEq;
 
-use crate::ShchurVec;
+use crate::SkVec;
 
 macro_rules! impl_inside {
 	($self:ident, $other:ident) => {{
@@ -18,44 +18,44 @@ macro_rules! impl_inside {
 	}};
 }
 
-impl<T: PartialEq> PartialEq for ShchurVec<T> {
+impl<T: PartialEq> PartialEq for SkVec<T> {
 	fn eq(&self, other: &Self) -> bool {
 		impl_inside!(self, other)
 	}
 }
 
-impl<T: PartialEq> PartialEq<[T]> for ShchurVec<T> {
+impl<T: PartialEq> PartialEq<[T]> for SkVec<T> {
 	fn eq(&self, other: &[T]) -> bool {
 		impl_inside!(self, other)
 	}
 }
 
-impl<T: PartialEq, const N: usize> PartialEq<[T; N]> for ShchurVec<T> {
+impl<T: PartialEq, const N: usize> PartialEq<[T; N]> for SkVec<T> {
 	fn eq(&self, other: &[T; N]) -> bool {
 		impl_inside!(self, other)
 	}
 }
 
-impl<T: PartialEq> PartialEq<Vec<T>> for ShchurVec<T> {
+impl<T: PartialEq> PartialEq<Vec<T>> for SkVec<T> {
 	fn eq(&self, other: &Vec<T>) -> bool {
 		impl_inside!(self, other)
 	}
 }
 
-impl<T: PartialEq> PartialEq<ShchurVec<T>> for [T] {
-	fn eq(&self, other: &ShchurVec<T>) -> bool {
+impl<T: PartialEq> PartialEq<SkVec<T>> for [T] {
+	fn eq(&self, other: &SkVec<T>) -> bool {
 		impl_inside!(self, other)
 	}
 }
 
-impl<T: PartialEq, const N: usize> PartialEq<ShchurVec<T>> for [T; N] {
-	fn eq(&self, other: &ShchurVec<T>) -> bool {
+impl<T: PartialEq, const N: usize> PartialEq<SkVec<T>> for [T; N] {
+	fn eq(&self, other: &SkVec<T>) -> bool {
 		impl_inside!(self, other)
 	}
 }
 
-impl<T: PartialEq> PartialEq<ShchurVec<T>> for Vec<T> {
-	fn eq(&self, other: &ShchurVec<T>) -> bool {
+impl<T: PartialEq> PartialEq<SkVec<T>> for Vec<T> {
+	fn eq(&self, other: &SkVec<T>) -> bool {
 		impl_inside!(self, other)
 	}
 }

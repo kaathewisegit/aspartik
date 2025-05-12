@@ -11,7 +11,7 @@ data = { path = "../data" }
 io = { path = "../io" }
 linalg = { path = "../linalg", features = ["bytemuck"] }
 rng = { path = "../rng" }
-shchurvec = { path = "../shchurvec" }
+skvec = { path = "../skvec" }
 util = { path = "../util" }
 
 anyhow = { workspace = true }

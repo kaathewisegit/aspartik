@@ -50,7 +50,7 @@ pub struct GpuLikelihood {
 
 	/// Unlike in the CPU likelihood, this field is essential.  It tracks
 	/// which nodes were updated in the on-GPU buffer.  As such, it acts as
-	/// the `edited` field in `ShchurVec`.
+	/// the `edited` field in `SkVec`.
 	updated_nodes: Vec<usize>,
 
 	num_sites: usize,
@@ -294,7 +294,7 @@ impl GpuLikelihood {
 		let num_leaves = sites[0].len();
 
 		let num_internals = num_leaves - 1;
-		// A ShchurVec-like structure
+		// A SkVec-like structure
 		let mut probabilities = vec![];
 		// The mask for probabilities.  32-bit integer in the smallest
 		// int type on the GPU.

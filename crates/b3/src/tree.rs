@@ -19,16 +19,16 @@ use io::newick::{
 	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
 };
 use rng::{PyRng, Rng};
-use shchurvec::ShchurVec;
+use skvec::SkVec;
 use util::py_bail;
 
 const ROOT: usize = usize::MAX;
 
 #[derive(Debug)]
 pub struct Tree {
-	children: ShchurVec<usize>,
-	parents: ShchurVec<usize>,
-	weights: ShchurVec<f64>,
+	children: SkVec<usize>,
+	parents: SkVec<usize>,
+	weights: SkVec<f64>,
 
 	updated_edges: Vec<usize>,
 	updated_nodes: Vec<Node>,

@@ -1,34 +1,34 @@
-//! # ShchurVec
+//! # SkVec
 //!
-//! ShchurVec is an epoch-versioned [`Vec`]-like structure with epoch
-//! versioning.  It's designed for branchless value access and memory locality
-//! between the data versions.
+//! SkVec is an epoch-versioned [`Vec`]-like structure with epoch versioning.
+//! It's designed for branchless value access and memory locality between the
+//! data versions.
 //!
 //! The API mostly mirrors that of [`Vec`].  New vectors can be created using
-//! the [`shchurvec!`] macro, which has the same syntax as [`vec!`].  Value
-//! access can be done via indexing.  Due to implementation details `ShchurVec`
-//! doesn't implement [`IndexMut`][std::ops::IndexMut], so value updates have to
-//! be done with [`set`][ShchurVec::set].
+//! the [`skvec!`] macro, which has the same syntax as [`vec!`].  Value access
+//! can be done via indexing.  Due to implementation details `SkVec` doesn't
+//! implement [`IndexMut`][std::ops::IndexMut], so value updates have to be done
+//! with [`set`][SkVec::set].
 //!
 //! The core feature, versioning, can be used via two methods.
 //!
-//! - [`accept`][ShchurVec::accept] confirms all of the edits done since the
-//!   last epoch and drops the overwritten items.
+//! - [`accept`][SkVec::accept] confirms all of the edits done since the last
+//!   epoch and drops the overwritten items.
 //!
-//! - [`reject`][ShchurVec::reject] rolls back all of the elements to the values
+//! - [`reject`][SkVec::reject] rolls back all of the elements to the values
 //!   they had at the start of the last epoch.
 //!
 //! Where an epoch is the time of creation of the vector or the last call to
 //! `accept` or `reject`.  For the precise terminology (i.e. the difference
-//! between elements and items) see the [`ShchurVec`] type documentation.
+//! between elements and items) see the [`SkVec`] type documentation.
 //!
 //!
 //! ## Example
 //!
 //! ```
-//! use shchurvec::{shchurvec, ShchurVec};
+//! use skvec::{skvec, SkVec};
 //!
-//! let mut v = shchurvec![1, 2, 3];
+//! let mut v = skvec![1, 2, 3];
 //! assert_eq!(v, [1, 2, 3]);
 //!
 //! v.set(0, 10);
@@ -54,17 +54,17 @@ use std::{mem::MaybeUninit, ops::Index};
 
 /// Epoch-versioned `Vec`-like storage.
 ///
-/// `ShchurVec` is made up of *elements*.  Each element is addressable by its
-/// index and is made out of two *items*.  The first item is the original value
-/// of the element in a single epoch.  The second one is the new, edited value,
-/// created with [`set`][ShchurVec::set].  On [`accept`][ShchurVec::accept] the
-/// second item will become the primary one and the old one will be erased.  And
-/// on [`reject`][ShchurVec::reject] the second item will be erased, with the
-/// element falling back to the original one.
-pub struct ShchurVec<T> {
+/// `SkVec` is made up of *elements*.  Each element is addressable by its index
+/// and is made out of two *items*.  The first item is the original value of the
+/// element in a single epoch.  The second one is the new, edited value, created
+/// with [`set`][SkVec::set].  On [`accept`][SkVec::accept] the second item will
+/// become the primary one and the old one will be erased.  And on
+/// [`reject`][SkVec::reject] the second item will be erased, with the element
+/// falling back to the original one.
+pub struct SkVec<T> {
 	/// The underlying storage.  It's twice as long as the number of items
-	/// `ShchurVec` can hold at a time.  Each element consist of two items
-	/// in `inner`, only one of which is active, determined by the `mask` at
+	/// `SkVec` can hold at a time.  Each element consist of two items in
+	/// `inner`, only one of which is active, determined by the `mask` at
 	/// the index.
 	inner: Vec<MaybeUninit<T>>,
 	/// True if an element had been edited.  It uses the `bool` type, which
@@ -86,13 +86,13 @@ pub struct ShchurVec<T> {
 }
 
 // Memoization-related methods
-impl<T> ShchurVec<T> {
+impl<T> SkVec<T> {
 	/// Returns the currently active item at index `i`.
 	fn active_inner(&self, i: usize) -> &MaybeUninit<T> {
 		&self.inner[i * 2 + self.mask[i] as usize]
 	}
 
-	/// Mutable version of [`active_inner`][ShchurVec::active_inner].
+	/// Mutable version of [`active_inner`][SkVec::active_inner].
 	fn active_inner_mut(&mut self, i: usize) -> &mut MaybeUninit<T> {
 		&mut self.inner[i * 2 + self.mask[i] as usize]
 	}
@@ -114,7 +114,7 @@ impl<T> ShchurVec<T> {
 		}
 	}
 
-	/// [`ShchurVec::active_inner_drop`] for the inactive item.
+	/// [`SkVec::active_inner_drop`] for the inactive item.
 	unsafe fn inactive_inner_drop(&mut self, i: usize) {
 		if std::mem::needs_drop::<T>() {
 			unsafe {
@@ -172,7 +172,7 @@ impl<T> ShchurVec<T> {
 	}
 
 	/// Accept all of the changes made since the creation of the vector or
-	/// the last call to `accept` or [`reject`][ShchurVec::reject].
+	/// the last call to `accept` or [`reject`][SkVec::reject].
 	///
 	/// If `T` is [`Drop`], all of the overwritten elements will be dropped,
 	/// which will take awhile for long arrays.  If `T` is not [`Drop`],
@@ -229,8 +229,8 @@ impl<T> ShchurVec<T> {
 	}
 
 	/// Sets the item at `index` to `value`.  All of the subsequent index
-	/// operations (via [`ShchurVec::index`] or the `[]` operator) will
-	/// return the updated item which equals value.
+	/// operations (via [`SkVec::index`] or the `[]` operator) will return
+	/// the updated item which equals value.
 	pub fn set(&mut self, index: usize, value: T) {
 		// If we are overwriting an older item, drop it.
 		if self.edited[index] {
@@ -253,8 +253,8 @@ impl<T> ShchurVec<T> {
 	///
 	/// - If the item was edited, this will drop the edited item if needed
 	///   and roll back to the old one.  It will not be affected by
-	///   subsequent calls to [`accept`][`ShchurVec::accept`] or
-	///   [`reject`][`ShchurVec::reject`].
+	///   subsequent calls to [`accept`][`SkVec::accept`] or
+	///   [`reject`][`SkVec::reject`].
 	///
 	/// - If the item hasn't been edited, this is a no-op.
 	///
@@ -292,7 +292,7 @@ impl<T> ShchurVec<T> {
 
 // Trait implementations
 
-impl<T> Drop for ShchurVec<T> {
+impl<T> Drop for SkVec<T> {
 	/// Necessary because `MaybeUninit` doesn't drop on deinitialization.
 	fn drop(&mut self) {
 		// Make sure that we only have one initialized value per index.
@@ -303,7 +303,7 @@ impl<T> Drop for ShchurVec<T> {
 	}
 }
 
-impl<T> Index<usize> for ShchurVec<T> {
+impl<T> Index<usize> for SkVec<T> {
 	type Output = T;
 
 	fn index(&self, index: usize) -> &T {
@@ -326,7 +326,7 @@ impl<T> Index<usize> for ShchurVec<T> {
 	}
 }
 
-impl<T> Clone for ShchurVec<T>
+impl<T> Clone for SkVec<T>
 where
 	MaybeUninit<T>: Clone,
 {
@@ -339,7 +339,7 @@ where
 	}
 }
 
-impl<T> Default for ShchurVec<T> {
+impl<T> Default for SkVec<T> {
 	fn default() -> Self {
 		Self::new()
 	}
@@ -347,11 +347,11 @@ impl<T> Default for ShchurVec<T> {
 
 // Iterator implementations
 
-/// Immutable iterator over a [`ShchurVec`].
+/// Immutable iterator over a [`SkVec`].
 ///
-/// See [`ShchurVec::iter`].
+/// See [`SkVec::iter`].
 pub struct Iter<'a, T> {
-	vec: &'a ShchurVec<T>,
+	vec: &'a SkVec<T>,
 	index: usize,
 }
 
@@ -369,7 +369,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
 	}
 }
 
-impl<T> ShchurVec<T> {
+impl<T> SkVec<T> {
 	/// Returns an iterator over the vector, which yields currently active
 	/// item values.
 	pub fn iter(&self) -> Iter<'_, T> {
@@ -380,7 +380,7 @@ impl<T> ShchurVec<T> {
 	}
 }
 
-impl<'a, T> IntoIterator for &'a ShchurVec<T> {
+impl<'a, T> IntoIterator for &'a SkVec<T> {
 	type Item = &'a T;
 	type IntoIter = Iter<'a, T>;
 
@@ -390,8 +390,8 @@ impl<'a, T> IntoIterator for &'a ShchurVec<T> {
 }
 
 // Methods from `Vec`.
-impl<T> ShchurVec<T> {
-	/// Constructs a new, empty `ShchurVec`.
+impl<T> SkVec<T> {
+	/// Constructs a new, empty `SkVec`.
 	pub fn new() -> Self {
 		Self {
 			inner: Vec::new(),
@@ -400,8 +400,8 @@ impl<T> ShchurVec<T> {
 		}
 	}
 
-	/// Constructs a new, empty `ShchurVec` which can hold at least
-	/// `capacity` elements without additional allocations.
+	/// Constructs a new, empty `SkVec` which can hold at least `capacity`
+	/// elements without additional allocations.
 	pub fn with_capacity(capacity: usize) -> Self {
 		Self {
 			inner: Vec::with_capacity(capacity * 2),
@@ -413,11 +413,11 @@ impl<T> ShchurVec<T> {
 	/// Returns the total number of elements the vector can hold without
 	/// reallocating.
 	///
-	/// Note that `ShchurVec` is made up of several vectors internally,
-	/// which are not guaranteed to reserve memory in the same way.  As
-	/// such, their capacities might diverge.  This method conservatively
-	/// returns the lowest capacity.  Adding more items than that will
-	/// trigger allocations, but their exact size might vary in different
+	/// Note that `SkVec` is made up of several vectors internally, which
+	/// are not guaranteed to reserve memory in the same way.  As such,
+	/// their capacities might diverge.  This method conservatively returns
+	/// the lowest capacity.  Adding more items than that will trigger
+	/// allocations, but their exact size might vary in different
 	/// situations.
 	pub fn capacity(&self) -> usize {
 		(self.inner.capacity() / 2)
@@ -427,8 +427,8 @@ impl<T> ShchurVec<T> {
 
 	/// Reserve the space for at least `additional` more items.
 	///
-	/// See [`ShchurVec::capacity`] for the nuances with handling
-	/// `ShchurVec`'s allocations.
+	/// See [`SkVec::capacity`] for the nuances with handling `SkVec`'s
+	/// allocations.
 	pub fn reserve(&mut self, additional: usize) {
 		self.inner.reserve(additional * 2);
 		self.edited.reserve(additional);
@@ -463,10 +463,10 @@ impl<T> ShchurVec<T> {
 		self.mask.clear();
 	}
 
-	/// Number of items in the `ShchurVec`.
+	/// Number of items in the `SkVec`.
 	///
-	/// See [`ShchurVec` documentation][ShchurVec] for the distinction
-	/// between items and values.
+	/// See [`SkVec` documentation][SkVec] for the distinction between items
+	/// and values.
 	pub fn len(&self) -> usize {
 		self.mask.len()
 	}
@@ -487,13 +487,13 @@ impl<T> ShchurVec<T> {
 }
 
 // Custom
-impl<T> ShchurVec<T> {
+impl<T> SkVec<T> {
 	/// Constructs a vector made out of `value` repeated `length` times.
 	pub fn repeat(value: T, length: usize) -> Self
 	where
 		T: Clone,
 	{
-		let mut out = ShchurVec::with_capacity(length);
+		let mut out = SkVec::with_capacity(length);
 
 		for _ in 0..length {
 			out.push(value.clone());
@@ -505,7 +505,7 @@ impl<T> ShchurVec<T> {
 
 // From implementations
 
-impl<T: Clone> From<&[T]> for ShchurVec<T> {
+impl<T: Clone> From<&[T]> for SkVec<T> {
 	fn from(values: &[T]) -> Self {
 		let mut out = Self::with_capacity(values.len());
 
@@ -517,13 +517,13 @@ impl<T: Clone> From<&[T]> for ShchurVec<T> {
 	}
 }
 
-impl<T: Clone> From<Vec<T>> for ShchurVec<T> {
+impl<T: Clone> From<Vec<T>> for SkVec<T> {
 	fn from(value: Vec<T>) -> Self {
 		value.as_slice().into()
 	}
 }
 
-impl<T: Clone, const N: usize> From<[T; N]> for ShchurVec<T> {
+impl<T: Clone, const N: usize> From<[T; N]> for SkVec<T> {
 	fn from(values: [T; N]) -> Self {
 		let mut out = Self::with_capacity(values.len());
 
@@ -537,14 +537,14 @@ impl<T: Clone, const N: usize> From<[T; N]> for ShchurVec<T> {
 
 /// Works identically to [`vec!`].
 #[macro_export]
-macro_rules! shchurvec {
+macro_rules! skvec {
 	() => {
-		$crate::ShchurVec::new()
+		$crate::SkVec::new()
 	};
 	($elem:expr; $n:expr) => {
-		$crate::ShchurVec::repeat($elem, $n)
+		$crate::SkVec::repeat($elem, $n)
 	};
 	($($x:expr),+ $(,)?) => {
-		$crate::ShchurVec::from([$($x),+])
+		$crate::SkVec::from([$($x),+])
 	}
 }

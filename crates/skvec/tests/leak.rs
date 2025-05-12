@@ -1,6 +1,6 @@
 use std::{cell::RefCell, mem::drop};
 
-use shchurvec::{shchurvec, ShchurVec};
+use skvec::{skvec, SkVec};
 
 thread_local! {
 	static COUNT: RefCell<usize> = RefCell::new(0);
@@ -49,14 +49,14 @@ macro_rules! assert_no_leak {
 
 #[test]
 fn basic() {
-	let mut v = ShchurVec::new();
+	let mut v = SkVec::new();
 	v.push(Leak::new());
 	assert_no_leak!(v);
 }
 
 #[test]
 fn push() {
-	let mut v = ShchurVec::new();
+	let mut v = SkVec::new();
 	v.push(Leak::new());
 	v.push(Leak::new());
 	v.push(Leak::new());
@@ -65,16 +65,16 @@ fn push() {
 
 #[test]
 fn r#macro() {
-	let v = shchurvec![Leak::new()];
+	let v = skvec![Leak::new()];
 	assert_no_leak!(v);
 
-	let v = shchurvec![Leak::new(); 10];
+	let v = skvec![Leak::new(); 10];
 	assert_no_leak!(v);
 }
 
 #[test]
 fn set() {
-	let mut v = shchurvec![Leak::new(); 10];
+	let mut v = skvec![Leak::new(); 10];
 	v.set(0, Leak::new());
 	v.set(9, Leak::new());
 	assert_no_leak!(v);
@@ -82,7 +82,7 @@ fn set() {
 
 #[test]
 fn double_set() {
-	let mut v = shchurvec![Leak::new()];
+	let mut v = skvec![Leak::new()];
 	v.set(0, Leak::new());
 	v.set(0, Leak::new());
 	assert_no_leak!(v);
@@ -90,7 +90,7 @@ fn double_set() {
 
 #[test]
 fn clear() {
-	let mut v = shchurvec![Leak::new()];
+	let mut v = skvec![Leak::new()];
 	v.clear();
 	assert_no_leak!(v);
 }

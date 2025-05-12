@@ -1,13 +1,13 @@
 use serde::ser::{Serialize, SerializeSeq, SerializeStruct};
 
-use crate::ShchurVec;
+use crate::SkVec;
 
-impl<T: Serialize> Serialize for ShchurVec<T> {
+impl<T: Serialize> Serialize for SkVec<T> {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: serde::Serializer,
 	{
-		let mut state = serializer.serialize_struct("ShchurVec", 3)?;
+		let mut state = serializer.serialize_struct("SkVec", 3)?;
 		state.serialize_field("edited", &self.edited)?;
 		state.serialize_field("mask", &self.mask)?;
 		state.serialize_field("inner", &Inner(&self))?;
@@ -16,7 +16,7 @@ impl<T: Serialize> Serialize for ShchurVec<T> {
 }
 
 #[repr(transparent)]
-struct Inner<'a, T>(&'a ShchurVec<T>);
+struct Inner<'a, T>(&'a SkVec<T>);
 
 impl<'a, T: Serialize> Serialize for Inner<'a, T> {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -43,7 +43,7 @@ mod test {
 
 	#[test]
 	fn serialize() {
-		let mut vec = ShchurVec::new();
+		let mut vec = SkVec::new();
 		vec.push(1);
 		vec.push(2);
 		vec.push(3);

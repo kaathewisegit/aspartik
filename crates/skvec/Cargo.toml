@@ -1,5 +1,6 @@
 [package]
-name = "shchurvec"
+name = "skvec"
+description = "Epoch-versioned dynamic array"
 
 version.workspace = true
 edition.workspace = true
