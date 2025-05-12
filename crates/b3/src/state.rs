@@ -95,11 +95,6 @@ impl PyState {
 	}
 
 	#[getter]
-	fn tree(&self) -> PyTree {
-		self.inner().tree.clone()
-	}
-
-	#[getter]
 	fn rng(&self) -> PyRng {
 		self.inner().rng.clone()
 	}

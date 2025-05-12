@@ -31,16 +31,16 @@ priors = [
 ]
 
 operators = [
-    NarrowExchange(weight=25.0),
-    WideExchange(weight=25.0),
+    NarrowExchange(tree, weight=25.0),
+    WideExchange(tree, weight=25.0),
     NodeSlide(tree, Uniform(0, 1), weight=48.0),
-    TreeScale(0.1, Uniform(0, 1), weight=2.0),
+    TreeScale(tree, 0.1, Uniform(0, 1), weight=2.0),
 ]
 
 likelihood = Likelihood(data="crates/b3/data/100.fasta", substitution=JC())
 
 loggers = [
-    TreeLogger(path="b3.trees", every=1_000),
+    TreeLogger(tree=tree, path="b3.trees", every=1_000),
 ]
 
 b3.run(10_000, state, priors, operators, likelihood, loggers)

@@ -5,11 +5,12 @@ from ..tree import Internal, Node
 
 
 class NarrowExchange:
-    def __init__(self, weight: float = 1):
+    def __init__(self, tree: Tree, weight: float = 1):
+        self.tree = tree
         self.weight = weight
 
     def propose(self, state: State) -> Proposal:
-        tree = state.tree
+        tree = self.tree
         rng = state.rng
 
         if tree.num_internals < 2:
@@ -63,11 +64,12 @@ def is_grandparent(tree: Tree, node: Internal) -> bool:
 
 
 class WideExchange:
-    def __init__(self, weight: float = 1):
+    def __init__(self, tree: Tree, weight: float = 1):
+        self.tree = tree
         self.weight = weight
 
     def propose(self, state: State) -> Proposal:
-        tree = state.tree
+        tree = self.tree
         rng = state.rng
 
         i = tree.random_node(rng)

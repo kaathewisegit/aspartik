@@ -1,5 +1,5 @@
 from ._util import scale_on_range
-from .. import State, Proposal
+from .. import State, Proposal, Tree
 
 
 class NodeSlide:
@@ -11,7 +11,7 @@ class NodeSlide:
 
     def __init__(
         self,
-        tree,
+        tree: Tree,
         distribution,
         weight: float = 1,
     ):
