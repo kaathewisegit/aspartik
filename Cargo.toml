@@ -20,14 +20,14 @@ authors = ["Andrej Kolčin <self@kaathewise.net>"]
 [workspace.dependencies]
 anyhow = "1.0"
 approx = "0.5"
-bytemuck = "1.22"
+bytemuck = "1.23"
 divan = "0.1"
 lapack-sys = "0.15"
 nom = "8.0"
 num-traits = "0.2"
 petgraph = { version = "0.8", default-features = false }
 proptest = "1.6"
-pyo3 = "0.24"
+pyo3 = "0.25"
 rand = { version = "0.9", default-features = false }
 rand_distr = "0.5"
 rand_pcg = "0.9"
@@ -37,6 +37,15 @@ serde_json = "1.0"
 thiserror = "2.0"
 vulkano = { version = "0.35", default-features = false }
 vulkano-shaders = "0.35"
+
+b3 = { version = "0.1.0", path = "crates/b3" }
+data = { version = "0.1.0", path = "crates/data" }
+io = { version = "0.1.0", path = "crates/io" }
+linalg = { version = "0.1.0", path = "crates/linalg" }
+rng = { version = "0.1.0", path = "crates/rng" }
+skvec = { version = "0.1.0", path = "crates/skvec" }
+stats = { version = "0.1.0", path = "crates/stats" }
+util = { version = "0.1.0", path = "crates/util" }
 
 [profile.bench]
 debug = true
@@ -52,7 +61,7 @@ authors.workspace = true
 [dependencies]
 pyo3 = { workspace = true, features = ["anyhow"] }
 
-b3 = { path = "crates/b3" }
-data = { path = "crates/data" }
-rng = { path = "crates/rng" }
-stats = { path = "crates/stats" }
+b3 = { workspace = true }
+data = { workspace = true }
+rng = { workspace = true }
+stats = { workspace = true }

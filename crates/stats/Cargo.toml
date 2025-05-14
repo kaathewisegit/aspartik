@@ -17,7 +17,7 @@ rand = ["dep:rand"]
 python = ["std", "dep:pyo3"]
 
 [dependencies]
-rng = { path = "../rng" }
+rng = { workspace = true }
 
 approx = { workspace = true }
 num-traits = { workspace = true }

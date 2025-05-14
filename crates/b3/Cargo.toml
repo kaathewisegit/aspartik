@@ -7,12 +7,12 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-data = { path = "../data" }
-io = { path = "../io" }
-linalg = { path = "../linalg", features = ["bytemuck"] }
-rng = { path = "../rng" }
-skvec = { path = "../skvec" }
-util = { path = "../util" }
+data = { workspace = true }
+io = { workspace = true }
+linalg = { workspace = true, features = ["bytemuck"] }
+rng = { workspace = true }
+skvec = { workspace = true }
+util = { workspace = true }
 
 anyhow = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
