@@ -5,6 +5,15 @@ from ..tree import Internal, Node
 
 
 class NarrowExchange:
+    """Operator which exchanges the parents of two neighbouring nodes.
+
+    This operator is analogous to BEAST2's `Exchange` operator with `isNarrow`
+    set to true.  It finds a grandparent (internal node both of whose children
+    are also internal) with two kids: *parent* and *uncle* (uncle is younger
+    than the parent).  And one of the children of *parent* is swapped with
+    *uncle*.
+    """
+
     def __init__(self, tree: Tree, weight: float = 1):
         self.tree = tree
         self.weight = weight
@@ -64,6 +73,16 @@ def is_grandparent(tree: Tree, node: Internal) -> bool:
 
 
 class WideExchange:
+    """Operator which exchanges the parent of two random nodes.
+
+    This operator is analogous to BEAST2's `Exchange` operator with `isNarrow`
+    set to false.  It picks two random nodes in the tree (they could be either
+    leaves or internals) and swaps their parents.
+
+    If a randomly selected move is impossible (a parent would be younger than
+    its child) the operator aborts with `Proposal.Reject`.
+    """
+
     def __init__(self, tree: Tree, weight: float = 1):
         self.tree = tree
         self.weight = weight
@@ -85,9 +104,11 @@ class WideExchange:
         if j_parent is None:
             return Proposal.Reject()
 
-        # TODO: custom `eq` implementation for node types
+        # Abort if j and i are parent-child or if one of the parents would be
+        # younger than its new child or if the two selected nodes.
         if (
             j != i_parent
+            and i != j_parent
             and tree.weight_of(j) < tree.weight_of(i_parent)
             and tree.weight_of(i) < tree.weight_of(j_parent)
         ):

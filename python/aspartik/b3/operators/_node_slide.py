@@ -3,10 +3,11 @@ from .. import State, Proposal, Tree
 
 
 class NodeSlide:
-    """Slides a random internal node between its parent and children.
+    """Operator which slides a random node between its parent and children.
 
-    This operator is similar to BEAST2's `EpochFlexOperator`: it will only the
-    age of the selected node without altering the tree topology.
+    This operator is similar to BEAST2's `EpochFlexOperator`: it will only
+    affect the age of the selected node without altering the tree topology (a
+    node cannot slide past its parent).
     """
 
     def __init__(

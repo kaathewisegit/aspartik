@@ -6,15 +6,41 @@ from .. import State, Proposal, Parameter
 
 
 class ParamScale:
+    """An operator which scales one parameter.
+
+    This operator is analogous to BEAST2's `ScaleOperator`, except it only
+    works for parameters.
+    """
+
     # TODO: upper/lower?
     def __init__(
         self,
         param: Parameter,
         factor: float,
         distribution,
-        dimensions: Literal["one", "all", "independent"],
+        dimensions: Literal["one", "all", "independent"] = "all",
         weight: float = 1,
     ):
+        """
+        Args:
+            param: The parameter to scale.
+            factor:
+                The scale ratio will be sampled from `(factor, 1 / factor)`.
+                So, the smaller the factor, the larger the moves proposed by
+                this operator are.  Also, this means that `factor` must be
+                within `(0, 1)`.
+            distribution:
+                The distribution from which to sample the scaling factor.
+            dimensions:
+                Defines how multidimensional parameters will be scaled:
+
+                - `one`: Only one dimension is scaled.
+                - `all` *(default)*: All dimension are changed with the same
+                    scale.
+                - `independent`: All dimensions are scaled, but a new factor is
+                    sampled for each of them.
+        """
+
         if not 0 < factor < 1:
             raise ValueError(f"factor must be between 0 and 1, got {factor}")
         self.param = param

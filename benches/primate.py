@@ -81,8 +81,7 @@ operators = [
             mutation_rate_3rdpos,
         ],
         weights=[205, 231, 231, 231],
-        delta=0.75,
-        distribution=Uniform(0, 1),
+        factor=0.75,
         weight=2.0,
     ),
 ]
