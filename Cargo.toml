@@ -12,10 +12,11 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.0-alpha.0"
 edition = "2021"
 license = "AGPL-3.0-only"
 authors = ["Andrej Kolčin <self@kaathewise.net>"]
+repository = "https://github.com/kaathewisegit/aspartik"
 
 [workspace.dependencies]
 anyhow = "1.0"
@@ -38,25 +39,27 @@ thiserror = "2.0"
 vulkano = { version = "0.35", default-features = false }
 vulkano-shaders = "0.35"
 
-b3 = { version = "0.1.0", path = "crates/b3" }
-data = { version = "0.1.0", path = "crates/data" }
-io = { version = "0.1.0", path = "crates/io" }
-linalg = { version = "0.1.0", path = "crates/linalg" }
-rng = { version = "0.1.0", path = "crates/rng" }
-skvec = { version = "0.1.0", path = "crates/skvec" }
-stats = { version = "0.1.0", path = "crates/stats" }
-util = { version = "0.1.0", path = "crates/util" }
+b3 = { version = "0.1.0-alpha.0", path = "crates/b3" }
+data = { version = "0.1.0-alpha.0", path = "crates/data" }
+io = { version = "0.1.0-alpha.0", path = "crates/io" }
+linalg = { version = "0.1.0-alpha.0", path = "crates/linalg" }
+rng = { version = "0.1.0-alpha.0", path = "crates/rng" }
+skvec = { version = "0.1.0-alpha.0", path = "crates/skvec" }
+stats = { version = "0.1.0-alpha.0", path = "crates/stats" }
+util = { version = "0.1.0-alpha.0", path = "crates/util" }
 
 [profile.bench]
 debug = true
 
 [package]
 name = "aspartik"
+description = "Computational biology toolkit"
 
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
+repository.workspace = true
 
 [dependencies]
 pyo3 = { workspace = true, features = ["anyhow"] }

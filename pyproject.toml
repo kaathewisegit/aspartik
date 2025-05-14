@@ -1,12 +1,12 @@
 [project]
 name = "aspartik"
-requires-python = ">=3.8"
+# Uses square bracket generics (PEP 695)
+requires-python = ">=3.12"
 classifiers = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
+	"Programming Language :: Rust",
+	"Programming Language :: Python :: Implementation :: CPython",
 ]
-dynamic = ["version"]
+dynamic = ["version", "author", "license"]
 
 [build-system]
 requires = ["maturin>=1.8,<2.0"]
