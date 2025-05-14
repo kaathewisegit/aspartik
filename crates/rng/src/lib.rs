@@ -51,6 +51,10 @@ impl PyRng {
 	fn random_int(&self, lower: i64, upper: i64) -> i64 {
 		self.inner().random_range(lower..upper)
 	}
+
+	fn random_float(&self) -> f64 {
+		self.inner().random()
+	}
 }
 
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
