@@ -315,8 +315,7 @@ mod tests {
 
 	#[test]
 	fn test_continuous() {
-		// TODO: figure out why this test fails:
-		//test::check_continuous_distribution(&create_ok(1.0), 0.0, 10.0);
+		test::check_continuous_distribution(&create_ok(1.0), 0.0, 10.0);
 		test::check_continuous_distribution(&create_ok(2.0), 0.0, 10.0);
 		test::check_continuous_distribution(&create_ok(5.0), 0.0, 50.0);
 	}
