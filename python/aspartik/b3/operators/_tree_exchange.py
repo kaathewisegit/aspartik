@@ -28,7 +28,7 @@ class NarrowExchange:
         grandparent = None
         while grandparent is None:
             internal = tree.random_internal(state.rng)
-            if is_grandparent(tree, internal):
+            if tree.is_grandparent(internal):
                 grandparent = internal
 
         left, right = tree.children_of(grandparent)
@@ -48,10 +48,10 @@ class NarrowExchange:
 
         num_grandparents_before = 0
         for node in tree.internals():
-            if is_grandparent(tree, node):
+            if tree.is_grandparent(node):
                 num_grandparents_before += 1
 
-        before = int(is_grandparent(tree, parent)) + int(is_grandparent(tree, uncle))
+        before = int(tree.is_grandparent(parent)) + int(tree.is_grandparent(uncle))
 
         if rng.random_bool(0.5):
             child = tree.children_of(parent)[0]
@@ -60,16 +60,11 @@ class NarrowExchange:
 
         tree.swap_parents(uncle, child)
 
-        after = int(is_grandparent(tree, parent)) + int(is_grandparent(tree, uncle))
+        after = int(tree.is_grandparent(parent)) + int(tree.is_grandparent(uncle))
         num_grandparents_after = num_grandparents_before - before + after
         ratio = math.log(num_grandparents_before / num_grandparents_after)
 
         return Proposal.Hastings(ratio)
-
-
-def is_grandparent(tree: Tree, node: Internal) -> bool:
-    left, right = tree.children_of(node)
-    return tree.is_internal(left) and tree.is_internal(right)
 
 
 class WideExchange:

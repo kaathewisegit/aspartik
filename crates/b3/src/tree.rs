@@ -517,6 +517,11 @@ impl Tree {
 			.map(Internal)
 	}
 
+	pub fn is_grandparent(&self, node: Internal) -> bool {
+		let (left, right) = self.children_of(node);
+		self.is_internal(left) && self.is_internal(right)
+	}
+
 	pub fn random_node(&self, rng: &mut Rng) -> Node {
 		let range = Uniform::new(0, self.num_nodes()).unwrap();
 		let i = range.sample(rng);
@@ -853,6 +858,11 @@ impl PyTree {
 		let node = to_node(node)?;
 
 		Ok(self.inner().parent_of(node))
+	}
+
+	/// Returns `True` if both children of `node` are also internal.
+	fn is_grandparent(&self, node: Internal) -> bool {
+		self.inner().is_grandparent(node)
 	}
 
 	/// Returns an iterator over all of the nodes.
