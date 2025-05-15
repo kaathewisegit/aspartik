@@ -50,7 +50,10 @@ mod eq;
 #[cfg(feature = "serde")]
 mod serde;
 
-use std::{mem::MaybeUninit, ops::Index};
+use std::{
+	mem::{needs_drop, MaybeUninit},
+	ops::Index,
+};
 
 /// Epoch-versioned `Vec`-like storage.
 ///
@@ -107,7 +110,7 @@ impl<T> SkVec<T> {
 	/// `Drop`, which hopefully means the compiler will optimize this
 	/// function out in such cases.
 	unsafe fn active_inner_drop(&mut self, i: usize) {
-		if std::mem::needs_drop::<T>() {
+		if needs_drop::<T>() {
 			unsafe {
 				self.active_inner_mut(i).assume_init_drop();
 			}
@@ -116,7 +119,7 @@ impl<T> SkVec<T> {
 
 	/// [`SkVec::active_inner_drop`] for the inactive item.
 	unsafe fn inactive_inner_drop(&mut self, i: usize) {
-		if std::mem::needs_drop::<T>() {
+		if needs_drop::<T>() {
 			unsafe {
 				self.inactive_inner_mut(i).assume_init_drop();
 			}
@@ -125,11 +128,14 @@ impl<T> SkVec<T> {
 
 	/// Drops all of the active items.
 	unsafe fn drop_active(&mut self) {
-		for i in 0..self.len() {
-			// SAFETY: masks must always point to initialized
-			// values.
-			unsafe {
-				self.active_inner_mut(i).assume_init_drop();
+		if needs_drop::<T>() {
+			for i in 0..self.len() {
+				// SAFETY: masks must always point to initialized
+				// values.
+				unsafe {
+					self.active_inner_mut(i)
+						.assume_init_drop();
+				}
 			}
 		}
 	}
@@ -179,7 +185,7 @@ impl<T> SkVec<T> {
 	/// this method much faster.
 	pub fn accept(&mut self) {
 		// Don't waste time dropping values which don't need it.
-		if std::mem::needs_drop::<T>() {
+		if needs_drop::<T>() {
 			for i in 0..self.len() {
 				if self.edited[i] {
 					// SAFETY: Only initialized elements can
@@ -204,7 +210,7 @@ impl<T> SkVec<T> {
 	pub fn reject(&mut self) {
 		// Additional check on top to ensure that `reject` doesn't even
 		// contain the loop when `T` isn't `Drop`.
-		if std::mem::needs_drop::<T>() {
+		if needs_drop::<T>() {
 			for i in 0..self.len() {
 				if self.edited[i] {
 					// SAFETY: only initialized elements can
@@ -232,16 +238,17 @@ impl<T> SkVec<T> {
 	/// operations (via [`SkVec::index`] or the `[]` operator) will return
 	/// the updated item which equals value.
 	pub fn set(&mut self, index: usize, value: T) {
-		// If we are overwriting an older item, drop it.
 		if self.edited[index] {
+			// We are overwriting an older edited item, so drop it.
+			//
 			// SAFETY: if the item has been edited, it must have a
 			// valid value.
 			unsafe {
 				self.active_inner_mut(index).assume_init_drop();
 			}
-		}
-
-		if !self.edited[index] {
+		} else {
+			// The element was unedited, so the item is being
+			// written for the first time during this epoch.
 			self.mask[index] ^= 1;
 			self.edited[index] = true;
 		}
