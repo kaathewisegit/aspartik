@@ -151,11 +151,11 @@ fn accept_item() {
 	check_leak(|| {
 		let mut v = skvec![Leak::new()];
 		v.set(0, Leak::new());
-		v.accept_item(0);
+		v.accept_element(0);
 
 		v.set(0, Leak::new());
 		v.set(0, Leak::new());
-		v.accept_item(0);
+		v.accept_element(0);
 	})
 }
 

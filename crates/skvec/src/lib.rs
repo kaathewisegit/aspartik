@@ -258,7 +258,7 @@ impl<T> SkVec<T> {
 	/// - If the item hasn't been edited, this is a no-op.
 	///
 	/// Essentially, this is an item-local version of `reject`.
-	pub fn unset(&mut self, index: usize) {
+	pub fn reject_element(&mut self, index: usize) {
 		if self.edited[index] {
 			if needs_drop::<T>() {
 				// SAFETY: because `edited[index]` is true, it
@@ -281,7 +281,7 @@ impl<T> SkVec<T> {
 	/// element or status of the accepted item.
 	///
 	/// Essentially, this is an item-local version of `accept`.
-	pub fn accept_item(&mut self, index: usize) {
+	pub fn accept_element(&mut self, index: usize) {
 		if self.edited[index] {
 			if needs_drop::<T>() {
 				// SAFETY: the item has been edited, so the

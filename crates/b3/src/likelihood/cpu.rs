@@ -44,7 +44,7 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 
 		for probability in &mut self.probabilities {
 			for node in &nodes {
-				probability.unset(*node);
+				probability.reject_element(*node);
 			}
 			// All of the edited items have been manually unset, so
 			// there's no need for `accept` or `reject`.
