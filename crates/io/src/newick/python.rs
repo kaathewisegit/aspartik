@@ -28,8 +28,8 @@ impl PyNode {
 	) -> Self {
 		let node = Node::new(
 			name,
+			distance,
 			attributes.unwrap_or_default(),
-			distance.expect("TODO take Option in constructor"),
 		);
 		PyNode {
 			inner: Arc::new(Mutex::new(node)),

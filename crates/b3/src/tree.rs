@@ -565,8 +565,8 @@ impl Tree {
 
 			let newick_node = tree.add_node(NewickNode::new(
 				node.0.to_string(),
-				"".to_owned(),
-				distance,
+				Some(distance),
+				String::new(),
 			));
 
 			map.insert(node, newick_node);

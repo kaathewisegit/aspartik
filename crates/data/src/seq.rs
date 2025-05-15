@@ -11,9 +11,11 @@ use crate::nucleotides::DnaNucleotide;
 ///
 /// # Safety
 ///
-/// Must be identical to a `u8`.  `Into<u8>` must be a simple type cast, with no
-/// layout changes.
-pub trait Character:
+/// The type must have the same size an alignment as `u8`, so that `[T]` can be
+/// casted to `[u8]`.  In practice this means that the size of the type must be
+/// one byte and there are no alignment requirements (all types are 1-byte
+/// aligned).
+pub unsafe trait Character:
 	TryFrom<u8, Error = Error>
 	+ TryFrom<char, Error = Error>
 	+ Into<u8>
@@ -25,7 +27,7 @@ pub trait Character:
 {
 }
 
-impl Character for DnaNucleotide {}
+unsafe impl Character for DnaNucleotide {}
 pub type DnaSeq = Seq<DnaNucleotide>;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
@@ -113,6 +115,11 @@ impl<'a, C: Character> IntoIterator for &'a Seq<C> {
 impl<C: Character> Seq<C> {
 	pub fn new() -> Self {
 		Seq { inner: Vec::new() }
+	}
+
+	pub fn as_bytes(&self) -> &[u8] {
+		let slice = self.inner.as_slice();
+		unsafe { std::mem::transmute::<&[C], &[u8]>(slice) }
 	}
 
 	/// Reverses the characters in-place.

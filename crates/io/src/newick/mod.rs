@@ -16,11 +16,15 @@ pub struct Node {
 }
 
 impl Node {
-	pub fn new(name: String, attributes: String, distance: f64) -> Node {
+	pub fn new(
+		name: String,
+		distance: Option<f64>,
+		attributes: String,
+	) -> Node {
 		Node {
 			name,
 			attributes,
-			distance: Some(distance),
+			distance,
 		}
 	}
 

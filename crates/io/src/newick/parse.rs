@@ -64,7 +64,7 @@ fn body(input: &str) -> IResult<&str, Node> {
 	let (rest, attributes) = ws!(comment)(rest)?;
 	let (rest, distance) = ws!(distance)(rest)?;
 
-	Ok((rest, Node::new(name, attributes, distance)))
+	Ok((rest, Node::new(name, Some(distance), attributes)))
 }
 
 #[cfg(test)]
