@@ -12,3 +12,8 @@ data = { workspace = true }
 anyhow = { workspace = true }
 nom = { workspace = true }
 petgraph = { workspace = true, default-features = false, features = ["stable_graph"] }
+pyo3 = { workspace = true, optional = true }
+
+[features]
+default = ["python"]
+python = ["dep:pyo3"]

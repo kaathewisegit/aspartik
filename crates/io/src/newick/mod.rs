@@ -1,8 +1,8 @@
-#![allow(dead_code)]
-
 use petgraph::stable_graph::StableDiGraph;
 
 mod parse;
+#[cfg(feature = "python")]
+pub(crate) mod python;
 mod serialize;
 
 pub use petgraph::stable_graph::NodeIndex;
@@ -10,6 +10,7 @@ pub use petgraph::stable_graph::NodeIndex;
 #[derive(Debug, Clone, Default)]
 pub struct Node {
 	name: String,
+	#[allow(dead_code)]
 	attributes: String,
 	distance: Option<f64>,
 }

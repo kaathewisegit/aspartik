@@ -44,6 +44,7 @@ version = "0.1.0-alpha.0"
 dependencies = [
  "b3",
  "data",
+ "io",
  "pyo3",
  "rng",
  "stats",
@@ -394,6 +395,7 @@ dependencies = [
  "data",
  "nom 8.0.0",
  "petgraph",
+ "pyo3",
 ]
 
 [[package]]

@@ -66,5 +66,6 @@ pyo3 = { workspace = true, features = ["anyhow"] }
 
 b3 = { workspace = true }
 data = { workspace = true }
+io = { workspace = true }
 rng = { workspace = true }
 stats = { workspace = true }

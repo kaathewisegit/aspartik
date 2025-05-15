@@ -4,6 +4,9 @@ use std::io::{BufRead, BufReader, Lines, Read};
 
 use data::seq::{Character, Seq};
 
+#[cfg(feature = "python")]
+mod python;
+
 #[derive(Debug, Clone)]
 pub struct Sequence<C: Character> {
 	/// The sequence description.  Must start with a '>' character and have
