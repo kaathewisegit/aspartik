@@ -279,7 +279,7 @@ impl<T: Copy + NumAssign, const N: usize> Vector<T, N> {
 		out
 	}
 
-	pub fn dot(&self, other: &Vector<T, N>) -> T {
+	pub fn dot_product(&self, other: &Vector<T, N>) -> T {
 		let mut out = self[0] * other[0];
 
 		for i in 1..N {
@@ -287,6 +287,16 @@ impl<T: Copy + NumAssign, const N: usize> Vector<T, N> {
 		}
 
 		out
+	}
+}
+
+impl<T: Float + NumAssign, const N: usize> Vector<T, N> {
+	pub fn magnitude(&self) -> T {
+		self.dot_product(self).sqrt()
+	}
+
+	pub fn consine_similarity(&self, other: &Vector<T, N>) -> T {
+		self.dot_product(other) / (self.magnitude() * other.magnitude())
 	}
 }
 
@@ -303,5 +313,23 @@ impl<T: Copy + Float + NumAssign, const N: usize> Vector<T, N> {
 
 	pub fn normalize(&self) -> Self {
 		*self / self.norm()
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn magnitude() {
+		let v = Vector::from([3.0, 4.0, 12.0]);
+		assert_eq!(v.magnitude(), 13.0);
+	}
+
+	#[test]
+	fn cosine_similarity() {
+		let a = Vector::from([9.0, 3.0, 1.0]);
+		let b = Vector::from([0.0, 1.0, 2.0]);
+		assert_eq!(a.consine_similarity(&b), 0.2344036154692477);
 	}
 }

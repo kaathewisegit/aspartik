@@ -1,5 +1,9 @@
 use anyhow::{Context, Error, Result};
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 
+#[cfg(feature = "python")]
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::{
 	fmt::Display,
 	ops::{Deref, DerefMut, Index, IndexMut},
@@ -27,6 +31,7 @@ pub unsafe trait Character:
 {
 }
 
+// DnaNucleotide is `repr(u8)`.
 unsafe impl Character for DnaNucleotide {}
 pub type DnaSeq = Seq<DnaNucleotide>;
 
@@ -80,7 +85,7 @@ impl<C: Character> TryFrom<&str> for Seq<C> {
 		for char in value.chars() {
 			out.inner.push(char.try_into().with_context(|| {
 				let width = out.len();
-				format!("\n\tAn illegal character encountered in the sequence:\n> {}\n> {:width$}^", value, "")
+				format!("An illegal character encountered in the sequence:\n> {}\n  {:width$}^", value, "")
 			})?);
 		}
 
@@ -211,6 +216,56 @@ impl DnaSeq {
 
 		out
 	}
+}
+
+#[cfg(feature = "python")]
+#[cfg_attr(
+	feature = "python",
+	pyclass(name = "DNASeq", module = "aspartik.data", frozen,)
+)]
+pub struct PyDnaSeq {
+	inner: Arc<Mutex<DnaSeq>>,
+}
+
+#[cfg(feature = "python")]
+impl PyDnaSeq {
+	pub fn inner(&self) -> MutexGuard<DnaSeq> {
+		self.inner.lock().unwrap()
+	}
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl PyDnaSeq {
+	#[new]
+	#[pyo3(signature = (sequence = None))]
+	fn new(sequence: Option<&str>) -> Result<Self> {
+		let seq = sequence
+			.map(DnaSeq::try_from)
+			.unwrap_or_else(|| Ok(DnaSeq::new()))?;
+
+		Ok(Self {
+			inner: Arc::new(Mutex::new(seq)),
+		})
+	}
+
+	fn __str__(&self) -> String {
+		self.inner().to_string()
+	}
+
+	fn __repr__(&self) -> String {
+		format!(r#"DNASeq("{}")"#, self.inner())
+	}
+
+	fn __getitem__(&self, index: usize) -> DnaNucleotide {
+		self.inner()[index]
+	}
+
+	fn __setitem__(&self, index: usize, item: DnaNucleotide) {
+		self.inner()[index] = item;
+	}
+
+	// TODO: character-generic methods, probably as a a macro
 }
 
 #[cfg(test)]

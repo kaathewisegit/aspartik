@@ -13,5 +13,8 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<DnaNucleotide>()?;
 	m.add_class::<DnaNucleotideError>()?;
 
+	use seq::PyDnaSeq;
+	m.add_class::<PyDnaSeq>()?;
+
 	Ok(m)
 }

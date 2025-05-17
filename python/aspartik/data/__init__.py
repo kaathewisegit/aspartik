@@ -1,6 +1,6 @@
 from .._aspartik_rust_impl import _data_rust_impl
 
-__all__ = ["DNANucleotide", "DNANucleotideError"]
+__all__ = ["DNANucleotide", "DNANucleotideError", "DNASeq"]
 
 for item in __all__:
     locals()[item] = getattr(_data_rust_impl, item)
