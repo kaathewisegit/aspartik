@@ -8,20 +8,20 @@ use data::seq::{Character, Seq};
 mod python;
 
 #[derive(Debug, Clone)]
-pub struct Sequence<C: Character> {
+pub struct Record<C: Character> {
 	/// The sequence description.  Must start with a '>' character and have
 	/// an ID follow right after without a space.
 	description: String,
 	seq: Seq<C>,
 }
 
-impl<C: Character> Sequence<C> {
+impl<C: Character> Record<C> {
 	/// The sequence header line, exactly as it appeared in the source.
 	pub fn raw_description(&self) -> &str {
 		&self.description
 	}
 
-	/// Sequence description, excludes the starting '>'.
+	/// Description, excludes the starting '>'.
 	pub fn description(&self) -> &str {
 		// SAFETY: this won't panic because `description` must start
 		// with an ASCII character '>'.
@@ -37,14 +37,14 @@ impl<C: Character> Sequence<C> {
 	}
 }
 
-impl<C: Character> From<Sequence<C>> for Seq<C> {
-	fn from(value: Sequence<C>) -> Self {
+impl<C: Character> From<Record<C>> for Seq<C> {
+	fn from(value: Record<C>) -> Self {
 		value.seq
 	}
 }
 
 pub struct FastaReader<C: Character, R: Read> {
-	current: Option<Sequence<C>>,
+	current: Option<Record<C>>,
 	reader: Lines<BufReader<R>>,
 	line: usize,
 }
@@ -63,9 +63,9 @@ impl<C: Character, R: Read> FastaReader<C, R> {
 }
 
 impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
-	type Item = Result<Sequence<C>>;
+	type Item = Result<Record<C>>;
 
-	fn next(&mut self) -> Option<Result<Sequence<C>>> {
+	fn next(&mut self) -> Option<Result<Record<C>>> {
 		loop {
 			let Some(line) = self.reader.next() else {
 				return self.current.take().map(Ok);
@@ -86,7 +86,7 @@ impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
 			if line.starts_with(">") {
 				let out = self.current.take();
 
-				self.current = Some(Sequence {
+				self.current = Some(Record {
 					description: line.to_owned(),
 					seq: Seq::new(),
 				});
@@ -116,7 +116,7 @@ impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
 fn sequence_error<C: Character, R: Read>(fasta: &FastaReader<C, R>) -> Error {
 	if let Some(record) = &fasta.current {
 		anyhow!(
-			"Failed to parse sequence for the record: '{}' at line {}",
+			"Failed to parse sequence for the record '{}' at line {}",
 			record.description(), fasta.line,
 		)
 	} else {
