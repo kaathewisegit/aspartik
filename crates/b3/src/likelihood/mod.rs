@@ -4,7 +4,9 @@ use pyo3::prelude::*;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::{
-	state::PyState, substitution::PySubstitution, util::read_fasta,
+	state::PyState,
+	substitution::PySubstitution,
+	util::{dna_to_rows, read_fasta},
 	Transitions,
 };
 use linalg::{RowMatrix, Vector};
@@ -14,7 +16,6 @@ mod gpu;
 // mod thread;
 
 use cpu::CpuLikelihood;
-#[expect(unused)]
 use gpu::GpuLikelihood;
 
 // pub use thread::ThreadedLikelihood;
@@ -35,30 +36,43 @@ trait LikelihoodTrait<const N: usize> {
 	fn reject(&mut self);
 }
 
+type DynCalculator<const N: usize> =
+	Box<dyn LikelihoodTrait<N> + Send + Sync + 'static>;
+
 pub struct GenericLikelihood<const N: usize> {
 	substitution: PySubstitution<N>,
 	transitions: Transitions<N>,
-	calculator: Box<dyn LikelihoodTrait<N> + Send + Sync>,
+	calculator: DynCalculator<N>,
 	cache: Option<f64>,
 }
 
-impl<const N: usize> GenericLikelihood<N> {
-	pub fn new(
-		substitution: PySubstitution<N>,
-		sites: Vec<Vec<Vector<f64, N>>>,
+impl GenericLikelihood<4> {
+	fn new(
+		substitution: PySubstitution<4>,
+		sites: Vec<Vec<Vector<f64, 4>>>,
 	) -> Self {
 		let num_internals = sites[0].len() - 1;
-		let transitions = Transitions::<N>::new(num_internals * 2);
+		let transitions = Transitions::<4>::new(num_internals * 2);
+
+		let size = sites[0].len() * sites.len();
+		// XXX: establish a heuristic
+		let calculator: DynCalculator<4> = if size > 100_000 {
+			Box::new(GpuLikelihood::new(sites))
+		} else {
+			Box::new(CpuLikelihood::new(sites))
+		};
 
 		Self {
 			substitution,
 			transitions,
-			calculator: Box::new(CpuLikelihood::new(sites)),
+			calculator,
 			cache: None,
 		}
 	}
+}
 
-	pub fn propose(&mut self, py: Python, state: &PyState) -> Result<f64> {
+impl<const N: usize> GenericLikelihood<N> {
+	fn propose(&mut self, py: Python, state: &PyState) -> Result<f64> {
 		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let inner_state = state.inner();
 		let tree = &*inner_state.tree.inner();
@@ -84,11 +98,11 @@ impl<const N: usize> GenericLikelihood<N> {
 		Ok(self.calculator.propose(&nodes, &transitions, &children))
 	}
 
-	pub fn accept(&mut self) {
+	fn accept(&mut self) {
 		self.calculator.accept();
 	}
 
-	pub fn reject(&mut self) {
+	fn reject(&mut self) {
 		self.calculator.reject();
 	}
 }
@@ -120,9 +134,9 @@ impl Likelihood {
 
 	pub fn reject(&mut self) {
 		match self {
-			Likelihood::Nucleotide4(inner) => inner.accept(),
-			Likelihood::Nucleotide5(inner) => inner.accept(),
-			Likelihood::Codon(inner) => inner.accept(),
+			Likelihood::Nucleotide4(inner) => inner.reject(),
+			Likelihood::Nucleotide5(inner) => inner.reject(),
+			Likelihood::Codon(inner) => inner.reject(),
 		}
 	}
 }
@@ -143,7 +157,9 @@ impl PyLikelihood {
 impl PyLikelihood {
 	#[new]
 	fn new4(data: &str, substitution: PySubstitution<4>) -> Result<Self> {
-		let sites = read_fasta(data)?;
+		let seqs = read_fasta(data)?;
+		let sites = dna_to_rows(&seqs);
+
 		let likelihood = Likelihood::Nucleotide4(
 			GenericLikelihood::new(substitution, sites),
 		);

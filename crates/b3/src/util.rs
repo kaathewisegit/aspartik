@@ -111,7 +111,7 @@ pub fn slices_iter(key: Bound<PyAny>, length: usize) -> Result<SlicesIter> {
 	})
 }
 
-pub fn read_fasta(path: &str) -> Result<Vec<Vec<Row<4>>>> {
+pub fn read_fasta(path: &str) -> Result<Vec<DnaSeq>> {
 	let file = File::open(path)?;
 	let fasta = FastaReader::<DnaNucleotide, _>::new(file);
 	let mut seqs = Vec::new();
@@ -123,5 +123,5 @@ pub fn read_fasta(path: &str) -> Result<Vec<Vec<Row<4>>>> {
 		seqs.push(record.into_sequence());
 	}
 
-	Ok(dna_to_rows(&seqs))
+	Ok(seqs)
 }

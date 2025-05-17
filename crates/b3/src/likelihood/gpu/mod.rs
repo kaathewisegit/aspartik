@@ -288,7 +288,6 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 }
 
 impl GpuLikelihood {
-	#[expect(dead_code)]
 	pub fn new(sites: Vec<Vec<Row<4>>>) -> Self {
 		let num_sites = sites.len();
 		let num_leaves = sites[0].len();
