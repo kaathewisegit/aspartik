@@ -18,14 +18,6 @@ pub use tree::Tree;
 
 use pyo3::prelude::*;
 
-use rng::PyRng;
-
-#[pyfunction]
-fn test(_rng: PyRng) {}
-
-/// Short title.
-///
-/// Description.
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	let m = PyModule::new(py, "_b3_rust_impl")?;
 
@@ -38,7 +30,6 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<likelihood::PyLikelihood>()?;
 
 	m.add_function(wrap_pyfunction!(mcmc::run, &m)?)?;
-	m.add_function(wrap_pyfunction!(test, &m)?)?;
 
 	Ok(m)
 }

@@ -17,7 +17,6 @@ use cpu::CpuLikelihood;
 #[expect(unused)]
 use gpu::GpuLikelihood;
 
-// #[allow(unused)] // TODO: use dynamically in `State`
 // pub use thread::ThreadedLikelihood;
 
 pub type Row<const N: usize> = Vector<f64, N>;
