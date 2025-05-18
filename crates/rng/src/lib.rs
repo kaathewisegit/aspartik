@@ -2,15 +2,15 @@ use pyo3::prelude::*;
 use rand::{rngs::OsRng, Rng as _, SeedableRng, TryRngCore};
 use rand_pcg::Pcg64;
 
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Mutex, MutexGuard};
 
 pub type Rng = Pcg64;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[pyclass(name = "Rng", module = "aspartik.rng", frozen)]
 #[repr(transparent)]
 pub struct PyRng {
-	inner: Arc<Mutex<Rng>>,
+	inner: Mutex<Rng>,
 }
 
 impl PyRng {
@@ -35,7 +35,7 @@ impl PyRng {
 		let inner = Pcg64::seed_from_u64(seed);
 
 		Ok(PyRng {
-			inner: Arc::new(Mutex::new(inner)),
+			inner: Mutex::new(inner),
 		})
 	}
 

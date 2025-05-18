@@ -212,10 +212,10 @@ macro_rules! impl_pymethods {
 		#[pymethods]
 		impl $class {
 			#[pyo3(name = "sample")]
-			fn py_sample(&self, rng: PyRng) -> PyResult<f64> {
+			fn py_sample(&self, rng: Py<PyRng>) -> PyResult<f64> {
 				use rand::distr::Distribution;
 
-				let x = self.sample(&mut rng.inner());
+				let x = self.sample(&mut rng.get().inner());
 				Ok(x)
 			}
 		}

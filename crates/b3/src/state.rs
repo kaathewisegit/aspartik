@@ -21,14 +21,14 @@ pub struct State {
 	/// Current likelihood, for caching purposes.
 	pub(crate) likelihood: f64,
 
-	pub(crate) rng: PyRng,
+	pub(crate) rng: Py<PyRng>,
 }
 
 impl State {
 	pub fn new(
 		tree: PyTree,
 		params: Vec<PyParameter>,
-		rng: PyRng,
+		rng: Py<PyRng>,
 	) -> Result<Self> {
 		let mut backup_params = Vec::with_capacity(params.len());
 		for param in &params {
@@ -85,7 +85,7 @@ impl PyState {
 	fn new(
 		tree: PyTree,
 		params: Vec<PyParameter>,
-		rng: PyRng,
+		rng: Py<PyRng>,
 	) -> Result<Self> {
 		let state = State::new(tree, params, rng)?;
 
@@ -95,7 +95,7 @@ impl PyState {
 	}
 
 	#[getter]
-	fn rng(&self) -> PyRng {
-		self.inner().rng.clone()
+	fn rng(&self, py: Python) -> Py<PyRng> {
+		self.inner().rng.clone_ref(py)
 	}
 }

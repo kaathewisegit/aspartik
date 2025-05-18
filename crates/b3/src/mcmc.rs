@@ -47,7 +47,7 @@ fn step(
 	scheduler: &mut WeightedScheduler,
 ) -> Result<()> {
 	let operator =
-		scheduler.select_operator(&mut state.inner().rng.inner());
+		scheduler.select_operator(&mut state.inner().rng.get().inner());
 
 	let hastings = match operator.propose(py, state).with_context(|| {
 		anyhow!(
@@ -85,7 +85,7 @@ fn step(
 
 	let ratio = posterior - state.inner().likelihood + hastings;
 
-	let random_0_1 = state.inner().rng.inner().random::<f64>();
+	let random_0_1 = state.inner().rng.get().inner().random::<f64>();
 	if ratio > random_0_1.ln() {
 		state.inner().likelihood = posterior;
 
