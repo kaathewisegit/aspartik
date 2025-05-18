@@ -1,4 +1,4 @@
-from .. import State, Tree
+from .. import Tree
 
 
 class TreeLogger:
@@ -22,7 +22,7 @@ class TreeLogger:
         self._file = open(path, "w")
         self.every = every
 
-    def log(self, state: State, index: int):
+    def log(self, index: int):
         line = self._tree.newick()
         self._file.write(line)
         self._file.write("\n")

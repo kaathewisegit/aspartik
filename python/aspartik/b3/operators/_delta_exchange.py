@@ -1,6 +1,6 @@
 from typing import List
 
-from .. import State, Proposal, Parameter
+from .. import Proposal, Parameter
 from ...rng import Rng
 
 
@@ -55,7 +55,7 @@ class DeltaExchange:
         for param in self.params:
             self.num_dimensions += len(param)
 
-    def propose(self, state: State) -> Proposal:
+    def propose(self) -> Proposal:
         # TODO: zero weights
 
         delta = self.rng.random_float() * self.factor

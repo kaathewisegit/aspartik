@@ -2,7 +2,6 @@ use anyhow::Result;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
 
-use crate::state::PyState;
 use util::{py_bail, py_call_method};
 
 pub struct PyPrior {
@@ -11,9 +10,8 @@ pub struct PyPrior {
 }
 
 impl PyPrior {
-	pub fn probability(&self, py: Python, state: &PyState) -> Result<f64> {
-		let args = (state.clone(),);
-		let out = py_call_method!(py, self.inner, "probability", args)?;
+	pub fn probability(&self, py: Python) -> Result<f64> {
+		let out = py_call_method!(py, self.inner, "probability")?;
 		Ok(out.extract::<f64>(py)?)
 	}
 }
@@ -23,8 +21,9 @@ impl<'py> FromPyObject<'py> for PyPrior {
 		if !obj.getattr("probability")?.is_callable() {
 			py_bail!(
 				PyTypeError,
-				"Prior objects must have a `probability` method, \
-				which takes `State` and returns a real number",
+				"Prior objects must have a `probability` method,
+				which takes no arguments and returns a real
+				number",
 			);
 		}
 

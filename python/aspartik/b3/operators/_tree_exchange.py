@@ -1,6 +1,6 @@
 import math
 
-from .. import State, Tree, Proposal
+from .. import Tree, Proposal
 from ..tree import Internal, Node
 from ...rng import Rng
 
@@ -20,7 +20,7 @@ class NarrowExchange:
         self.weight = weight
         self.rng = rng
 
-    def propose(self, state: State) -> Proposal:
+    def propose(self) -> Proposal:
         tree = self.tree
 
         if tree.num_internals < 2:
@@ -84,7 +84,7 @@ class WideExchange:
         self.weight = weight
         self.rng = rng
 
-    def propose(self, state: State) -> Proposal:
+    def propose(self) -> Proposal:
         tree = self.tree
 
         i = tree.random_node(self.rng)

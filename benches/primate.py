@@ -1,5 +1,4 @@
-from aspartik import b3
-from aspartik.b3 import Tree, State, Parameter, Likelihood
+from aspartik.b3 import MCMC, Tree, Parameter, Likelihood
 from aspartik.b3.loggers import TreeLogger
 from aspartik.b3.operators import (
     TreeScale,
@@ -50,8 +49,6 @@ params = [
 ]
 
 
-state = State(params)
-
 # TODO: limit priors
 priors = [
     # TODO: Yule model
@@ -96,4 +93,16 @@ loggers = [
     TreeLogger(tree=tree, path="b3.trees", every=1_000),
 ]
 
-b3.run(100_000, state, [tree], priors, operators, likelihood, loggers, rng)
+mcmc = MCMC(
+    burnin=0,
+    length=50_000,
+    trees=[tree],
+    params=params,
+    priors=priors,
+    operators=operators,
+    likelihoods=likelihood,
+    loggers=loggers,
+    rng=rng,
+)
+
+mcmc.run()

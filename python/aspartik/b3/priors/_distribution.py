@@ -1,6 +1,6 @@
 from math import log
 
-from .. import State, Parameter
+from .. import Parameter
 
 
 class Distribution:
@@ -25,7 +25,7 @@ class Distribution:
         else:
             raise Exception("not a distribution")
 
-    def probability(self, state: State) -> float:
+    def probability(self) -> float:
         """
         For multi-dimensional parameters the sum of log probabilities of all
         dimensions is returned.

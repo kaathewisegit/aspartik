@@ -1,7 +1,7 @@
 from math import log
 
 from ._util import sample_range
-from .. import State, Proposal, Tree
+from .. import Proposal, Tree
 from ...rng import Rng
 
 
@@ -34,7 +34,7 @@ class TreeScale:
         self.rng = rng
         self.weight = weight
 
-    def propose(self, state: State) -> Proposal:
+    def propose(self) -> Proposal:
         tree = self.tree
 
         low, high = self.factor, 1 / self.factor

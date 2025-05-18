@@ -1,7 +1,5 @@
 from math import inf
 
-from .. import State
-
 
 class Bound:
     """A prior which puts limits on the value of a parameter
@@ -28,7 +26,7 @@ class Bound:
         self.lower = lower
         self.upper = upper
 
-    def probability(self, state: State) -> float:
+    def probability(self) -> float:
         if self.lower <= self.param < self.upper:
             return 1
         else:

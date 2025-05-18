@@ -1,145 +1,185 @@
+#![allow(dead_code)]
+
 use anyhow::{anyhow, Context, Result};
 use pyo3::prelude::*;
 use rand::Rng as _;
 
+use std::sync::Mutex;
+
 use crate::{
-	likelihood::{Likelihood, PyLikelihood},
+	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
-	state::PyState,
+	parameter::{Parameter, PyParameter},
 	tree::PyTree,
 	PyLogger, PyPrior,
 };
 use rng::PyRng;
 
-#[pyfunction]
-// XXX: yes, this is a problem, even without the burnin and the trees.  It
-// should be probably rolled into an MCMC class which will handle backups and
-// running.
-#[expect(clippy::too_many_arguments)]
-pub fn run(
-	py: Python,
+#[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
+pub struct Mcmc {
+	likelihood: Mutex<f64>,
+
+	burnin: usize,
 	length: usize,
-	state: PyState,
+
 	trees: Vec<PyTree>,
+
+	/// TODO: parameter serialization
+	backup_params: Mutex<Vec<Parameter>>,
+	/// Current set of parameters by name.
+	params: Vec<PyParameter>,
+
 	priors: Vec<PyPrior>,
-	operators: Vec<PyOperator>,
-	likelihood: PyLikelihood,
-	mut loggers: Vec<PyLogger>,
+	scheduler: WeightedScheduler,
+	likelihoods: PyLikelihood,
+	loggers: Vec<PyLogger>,
 	rng: Py<PyRng>,
-) -> Result<()> {
-	let likelihood = &mut *likelihood.inner();
-
-	// We acquire the lock for the full duration of the program so that we
-	// don't spend time locking and unlocking
-	let mut scheduler = WeightedScheduler::new(py, operators)?;
-
-	for index in 0..length {
-		step(
-			py,
-			&state,
-			&trees,
-			&priors,
-			likelihood,
-			&mut scheduler,
-			&rng,
-		)
-		.with_context(|| anyhow!("Failed on step {index}"))?;
-
-		for logger in &mut loggers {
-			logger.log(py, state.clone(), index).with_context(
-				|| anyhow!("Failed to log on step {index}"),
-			)?;
-		}
-	}
-
-	Ok(())
 }
 
-fn step(
-	py: Python,
-	state: &PyState,
-	trees: &[PyTree],
-	priors: &[PyPrior],
-	likelihood: &mut Likelihood,
-	scheduler: &mut WeightedScheduler,
-	rng: &Py<PyRng>,
-) -> Result<()> {
-	let operator = scheduler.select_operator(&mut rng.get().inner());
+#[pymethods]
+impl Mcmc {
+	// This is a big constructor, so all of the arguments have to be here.
+	// In theory it might make sense to join trees and parameters together,
+	// but I'll have to benchmark that.
+	#[expect(clippy::too_many_arguments)]
+	#[new]
+	fn new(
+		py: Python,
 
-	let hastings = match operator.propose(py, state).with_context(|| {
-		anyhow!(
+		burnin: usize,
+		length: usize,
+
+		trees: Vec<PyTree>,
+		params: Vec<PyParameter>,
+		priors: Vec<PyPrior>,
+		operators: Vec<PyOperator>,
+		likelihoods: PyLikelihood,
+		loggers: Vec<PyLogger>,
+		rng: Py<PyRng>,
+	) -> Result<Mcmc> {
+		let mut backup_params = Vec::with_capacity(params.len());
+		for param in &params {
+			backup_params.push(param.inner()?.clone());
+		}
+		let backup_params = Mutex::new(backup_params);
+		let scheduler = WeightedScheduler::new(py, operators)?;
+
+		Ok(Mcmc {
+			likelihood: Mutex::new(f64::NEG_INFINITY),
+			burnin,
+			length,
+			trees,
+			params,
+			backup_params,
+			priors,
+			scheduler,
+			likelihoods,
+			loggers,
+			rng,
+		})
+	}
+
+	fn run(&self, py: Python) -> Result<()> {
+		for index in 0..self.length {
+			self.step(py).with_context(|| {
+				anyhow!("Failed on step {index}")
+			})?;
+
+			for logger in &self.loggers {
+				logger.log(py, index).with_context(|| {
+					anyhow!("Failed to log on step {index}")
+				})?;
+			}
+		}
+
+		Ok(())
+	}
+}
+
+impl Mcmc {
+	fn step(&self, py: Python) -> Result<()> {
+		let rng = self.rng.get();
+		let operator = self.scheduler.select_operator(&mut rng.inner());
+
+		let hastings =
+			match operator.propose(py).with_context(|| {
+				anyhow!(
 			"Operator {} failed while generating a proposal",
 			operator.repr(py).unwrap()
 		)
-	})? {
-		Proposal::Accept() => {
-			accept(state, trees, likelihood)?;
-			return Ok(());
+			})? {
+				Proposal::Accept() => {
+					self.accept()?;
+					return Ok(());
+				}
+				Proposal::Reject() => {
+					return Ok(());
+				}
+				Proposal::Hastings(ratio) => ratio,
+			};
+
+		for tree in &self.trees {
+			tree.inner().verify()?;
 		}
-		Proposal::Reject() => {
-			return Ok(());
+
+		let mut prior: f64 = 0.0;
+		for py_prior in &self.priors {
+			prior += py_prior.probability(py)?;
+
+			// short-circuit on a rejection by any prior
+			if prior == f64::NEG_INFINITY {
+				self.reject()?;
+				return Ok(());
+			}
 		}
-		Proposal::Hastings(ratio) => ratio,
-	};
 
-	for tree in trees {
-		tree.inner().verify()?;
-	}
+		// calculate tree likelihood
+		let new_likelihood = self.likelihoods.inner().propose(py)?;
 
-	let mut prior: f64 = 0.0;
-	for py_prior in priors {
-		prior += py_prior.probability(py, state)?;
+		let posterior = new_likelihood + prior;
 
-		// short-circuit on a rejection by any prior
-		if prior == f64::NEG_INFINITY {
-			reject(state, trees, likelihood)?;
-			return Ok(());
+		let ratio =
+			posterior - *self.likelihood.lock().unwrap() + hastings;
+
+		let random_0_1 = self.rng.get().inner().random::<f64>();
+		if ratio > random_0_1.ln() {
+			*self.likelihood.lock().unwrap() = posterior;
+
+			self.accept()?;
+		} else {
+			self.reject()?;
 		}
+
+		Ok(())
 	}
 
-	// calculate tree likelihood
-	let new_likelihood = likelihood.propose(py)?;
+	fn accept(&self) -> Result<()> {
+		for tree in &self.trees {
+			tree.inner().accept();
+		}
 
-	let posterior = new_likelihood + prior;
+		self.likelihoods.inner().accept();
 
-	let ratio = posterior - state.inner().likelihood + hastings;
+		let mut backup_params = self.backup_params.lock().unwrap();
+		for i in 0..self.params.len() {
+			backup_params[i] = self.params[i].inner()?.clone();
+		}
 
-	let random_0_1 = rng.get().inner().random::<f64>();
-	if ratio > random_0_1.ln() {
-		state.inner().likelihood = posterior;
-
-		accept(state, trees, likelihood)?;
-	} else {
-		reject(state, trees, likelihood)?;
+		Ok(())
 	}
 
-	Ok(())
-}
+	fn reject(&self) -> Result<()> {
+		for tree in &self.trees {
+			tree.inner().reject();
+		}
 
-fn accept(
-	state: &PyState,
-	trees: &[PyTree],
-	likelihood: &mut Likelihood,
-) -> Result<()> {
-	state.inner().accept()?;
-	for tree in trees {
-		tree.inner().accept();
+		self.likelihoods.inner().reject();
+
+		let backup_params = self.backup_params.lock().unwrap();
+		for i in 0..self.params.len() {
+			*self.params[i].inner()? = backup_params[i].clone();
+		}
+
+		Ok(())
 	}
-	likelihood.accept();
-
-	Ok(())
-}
-
-fn reject(
-	state: &PyState,
-	trees: &[PyTree],
-	likelihood: &mut Likelihood,
-) -> Result<()> {
-	state.inner().reject()?;
-	for tree in trees {
-		tree.inner().reject();
-	}
-	likelihood.reject();
-
-	Ok(())
 }

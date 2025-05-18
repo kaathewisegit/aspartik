@@ -5,7 +5,6 @@ pub mod mcmc;
 pub mod operator;
 pub mod parameter;
 pub mod prior;
-mod state;
 pub mod substitution;
 mod transitions;
 mod tree;
@@ -24,12 +23,10 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_submodule(&tree::submodule(py)?)?;
 
 	m.add_class::<parameter::PyParameter>()?;
-	m.add_class::<state::PyState>()?;
 	m.add_class::<tree::PyTree>()?;
 	m.add_class::<operator::Proposal>()?;
 	m.add_class::<likelihood::PyLikelihood>()?;
-
-	m.add_function(wrap_pyfunction!(mcmc::run, &m)?)?;
+	m.add_class::<mcmc::Mcmc>()?;
 
 	Ok(m)
 }

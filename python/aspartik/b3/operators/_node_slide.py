@@ -1,5 +1,5 @@
 from ._util import scale_on_range
-from .. import State, Proposal, Tree
+from .. import Proposal, Tree
 from ...rng import Rng
 
 
@@ -30,7 +30,7 @@ class NodeSlide:
         self.rng = rng
         self.weight = weight
 
-    def propose(self, state: State) -> Proposal:
+    def propose(self) -> Proposal:
         """
         If there are no non-root internal nodes, the operator will bail with
         `Proposal.Reject`.

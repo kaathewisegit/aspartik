@@ -6,7 +6,6 @@ use pyo3::{
 };
 use rand::distr::{weighted::WeightedIndex, Distribution};
 
-use crate::state::PyState;
 use rng::Rng;
 use util::{py_bail, py_call_method};
 
@@ -28,7 +27,7 @@ impl<'py> FromPyObject<'py> for PyOperator {
 		if !obj.getattr("propose").is_ok_and(|a| a.is_callable()) {
 			py_bail!(
 				PyTypeError,
-				"Operator objects must have a `propose` method, which takes `State` and returns a `Proposal`.  Got type {}",
+				"Operator objects must have a `propose` method, which takes no arguments and returns a `Proposal`.  Got type {}",
 				obj.repr()?,
 			);
 		}
@@ -48,10 +47,8 @@ impl<'py> FromPyObject<'py> for PyOperator {
 }
 
 impl PyOperator {
-	pub fn propose(&self, py: Python, state: &PyState) -> Result<Proposal> {
-		let args = (state.clone(),);
-		let proposal =
-			py_call_method!(py, self.inner, "propose", args)?;
+	pub fn propose(&self, py: Python) -> Result<Proposal> {
+		let proposal = py_call_method!(py, self.inner, "propose")?;
 		let proposal = proposal.extract::<Proposal>(py)?;
 
 		Ok(proposal)
@@ -94,7 +91,7 @@ impl WeightedScheduler {
 		Ok(Self { operators, weights })
 	}
 
-	pub fn select_operator(&mut self, rng: &mut Rng) -> &PyOperator {
+	pub fn select_operator(&self, rng: &mut Rng) -> &PyOperator {
 		// error handling or validation in `new`
 		let dist = WeightedIndex::new(&self.weights).unwrap();
 

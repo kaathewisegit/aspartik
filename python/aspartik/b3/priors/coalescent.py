@@ -1,4 +1,4 @@
-from .. import State, Tree
+from .. import Tree
 
 
 class ConstantPopulation:
@@ -6,7 +6,7 @@ class ConstantPopulation:
         self.tree = tree
 
     # TODO
-    def probability(self, state: State) -> float: ...
+    def probability(self) -> float: ...
 
 
 # TODO: Skyline

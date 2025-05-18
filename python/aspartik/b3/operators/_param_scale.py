@@ -2,7 +2,7 @@ from math import log
 from typing import Literal
 
 from ._util import sample_range
-from .. import State, Proposal, Parameter
+from .. import Proposal, Parameter
 from ...rng import Rng
 
 
@@ -52,7 +52,7 @@ class ParamScale:
         self.dimensions = dimensions
         self.weight = weight
 
-    def propose(self, state: State) -> Proposal:
+    def propose(self) -> Proposal:
         low, high = self.factor, 1 / self.factor
         scale = sample_range(low, high, self.distribution, self.rng)
 

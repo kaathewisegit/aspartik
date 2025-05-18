@@ -2,7 +2,7 @@
 
 from .._aspartik_rust_impl import _b3_rust_impl
 
-for item in ["Likelihood", "Parameter", "Proposal", "State", "Tree", "run"]:
+for item in ["Likelihood", "Parameter", "Proposal", "MCMC", "Tree"]:
     locals()[item] = getattr(_b3_rust_impl, item)
 
 from . import loggers, operators, priors, substitutions
@@ -14,9 +14,8 @@ __all__ = [
     "Likelihood",
     "Parameter",
     "Proposal",
-    "State",
+    "MCMC",
     "Tree",
-    "run",
     # Rust submodules
     "tree",
     # Python

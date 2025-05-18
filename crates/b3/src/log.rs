@@ -2,7 +2,6 @@ use anyhow::Result;
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 
-use crate::state::PyState;
 use util::{py_bail, py_call_method};
 
 pub struct PyLogger {
@@ -29,17 +28,12 @@ impl<'py> FromPyObject<'py> for PyLogger {
 }
 
 impl PyLogger {
-	pub fn log(
-		&mut self,
-		py: Python,
-		state: PyState,
-		index: usize,
-	) -> Result<()> {
+	pub fn log(&self, py: Python, index: usize) -> Result<()> {
 		if self.every.is_some_and(|every| index % every != 0) {
 			return Ok(());
 		}
 
-		let args = (state.clone(), index);
+		let args = (index,);
 		py_call_method!(py, self.inner, "log", args)?;
 
 		Ok(())
