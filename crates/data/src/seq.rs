@@ -218,7 +218,14 @@ impl DnaSeq {
 
 #[cfg(feature = "python")]
 #[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
-pub struct PyDnaSeq(DnaSeq);
+pub struct PyDnaSeq(pub DnaSeq);
+
+#[cfg(feature = "python")]
+impl From<DnaSeq> for PyDnaSeq {
+	fn from(value: DnaSeq) -> Self {
+		PyDnaSeq(value)
+	}
+}
 
 #[cfg(feature = "python")]
 #[pymethods]

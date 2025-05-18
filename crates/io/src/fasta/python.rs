@@ -1,33 +1,27 @@
 use pyo3::prelude::*;
 
-use std::sync::{Arc, Mutex, MutexGuard};
-
 use super::*;
-use data::DnaNucleotide;
+use data::{seq::PyDnaSeq, DnaNucleotide};
 
-#[cfg_attr(
-	feature = "python",
-	pyclass(name = "FASTADNARecord", module = "aspartik.io.fasta", frozen)
-)]
-pub struct PyFastaDnaRecord {
-	inner: Arc<Mutex<Record<DnaNucleotide>>>,
-}
-
-impl PyFastaDnaRecord {
-	pub fn inner(&self) -> MutexGuard<Record<DnaNucleotide>> {
-		self.inner.lock().unwrap()
-	}
-}
+#[pyclass(name = "FASTADNARecord", module = "aspartik.io.fasta", frozen)]
+pub struct PyFastaDnaRecord(Record<DnaNucleotide>);
 
 #[pymethods]
 impl PyFastaDnaRecord {
 	#[getter]
+	fn sequence(&self) -> PyDnaSeq {
+		// TODO: perhaps there's a way to avoid cloning.  Probably by
+		// reimplementing `Seq`'s methods.
+		self.0.sequence().to_owned().into()
+	}
+
+	#[getter]
 	fn raw_description(&self) -> String {
-		self.inner().raw_description().to_owned()
+		self.0.raw_description().to_owned()
 	}
 
 	#[getter]
 	fn description(&self) -> String {
-		self.inner().description().to_owned()
+		self.0.description().to_owned()
 	}
 }
