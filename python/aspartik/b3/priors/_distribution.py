@@ -1,5 +1,3 @@
-from math import log
-
 from .. import Parameter
 
 
@@ -19,9 +17,9 @@ class Distribution:
         self._param = param
 
         if hasattr(distribution, "pdf"):
-            self.distr_prob = distribution.pdf
+            self.distr_prob = distribution.ln_pdf
         elif hasattr(distribution, "pmf"):
-            self.distr_prob = distribution.pmf
+            self.distr_prob = distribution.ln_pmf
         else:
             raise Exception("not a distribution")
 
@@ -34,6 +32,6 @@ class Distribution:
         out = 0
 
         for i in range(len(self._param)):
-            out += log(self.distr_prob(self._param[i]))
+            out += self.distr_prob(self._param[i])
 
         return out
