@@ -26,11 +26,9 @@ class NarrowExchange:
         if tree.num_internals < 2:
             return Proposal.Reject()
 
-        grandparent = None
-        while grandparent is None:
-            internal = tree.random_internal(self.rng)
-            if tree.is_grandparent(internal):
-                grandparent = internal
+        grandparent = tree.random_internal(self.rng)
+        while not tree.is_grandparent(grandparent):
+            grandparent = tree.random_internal(self.rng)
 
         left, right = tree.children_of(grandparent)
         if tree.weight_of(left) > tree.weight_of(right):
@@ -87,9 +85,14 @@ class WideExchange:
     def propose(self) -> Proposal:
         tree = self.tree
 
+        root = tree.root()
+
         i = tree.random_node(self.rng)
+        while i == root:
+            i = tree.random_node(self.rng)
+
         j = None
-        while j is None or j != i:
+        while j is None or j == i or j == root:
             j = tree.random_node(self.rng)
         assert isinstance(j, Node)
 
