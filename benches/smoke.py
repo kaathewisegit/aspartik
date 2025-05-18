@@ -37,7 +37,7 @@ operators = [
     TreeScale(tree, 0.1, Uniform(0, 1), rng, weight=2.0),
 ]
 
-likelihood = Likelihood(data="crates/b3/data/100.fasta", substitution=JC())
+likelihood = Likelihood(data="crates/b3/data/100.fasta", substitution=JC(), tree=tree)
 
 loggers = [
     TreeLogger(tree=tree, path="b3.trees", every=1_000),

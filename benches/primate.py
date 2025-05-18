@@ -88,7 +88,9 @@ operators = [
 ]
 
 # TODO: HKY substitution
-likelihood = Likelihood(data="crates/b3/data/primate-mdna.fasta", substitution=JC())
+likelihood = Likelihood(
+    data="crates/b3/data/primate-mdna.fasta", substitution=JC(), tree=tree
+)
 
 loggers = [
     TreeLogger(tree=tree, path="b3.trees", every=1_000),

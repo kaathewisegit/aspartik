@@ -85,7 +85,7 @@ fn step(
 	}
 
 	// calculate tree likelihood
-	let new_likelihood = likelihood.propose(py, state)?;
+	let new_likelihood = likelihood.propose(py)?;
 
 	let posterior = new_likelihood + prior;
 

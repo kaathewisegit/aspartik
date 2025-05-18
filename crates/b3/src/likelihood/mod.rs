@@ -4,8 +4,8 @@ use pyo3::prelude::*;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::{
-	state::PyState,
 	substitution::PySubstitution,
+	tree::{PyTree, Tree},
 	util::{dna_to_rows, read_fasta},
 	Transitions,
 };
@@ -72,10 +72,8 @@ impl GenericLikelihood<4> {
 }
 
 impl<const N: usize> GenericLikelihood<N> {
-	fn propose(&mut self, py: Python, state: &PyState) -> Result<f64> {
+	fn propose(&mut self, py: Python, tree: &Tree) -> Result<f64> {
 		let substitution_matrix = self.substitution.get_matrix(py)?;
-		let inner_state = state.inner();
-		let tree = &*inner_state.tree.inner();
 		let full_update =
 			self.transitions.update(substitution_matrix, tree);
 		let nodes = if full_update || self.cache.is_none() {
@@ -107,18 +105,18 @@ impl<const N: usize> GenericLikelihood<N> {
 	}
 }
 
-pub enum Likelihood {
+pub enum ErasedLikelihood {
 	Nucleotide4(GenericLikelihood<4>),
 	Nucleotide5(GenericLikelihood<5>),
 	// TODO: amino: 20 standard, 2 special, stop codon
 	Codon(GenericLikelihood<64>),
 }
 
-impl Likelihood {
-	pub fn propose(&mut self, py: Python, state: &PyState) -> Result<f64> {
+impl ErasedLikelihood {
+	pub fn propose(&mut self, py: Python, tree: &Tree) -> Result<f64> {
 		match self {
-			Likelihood::Nucleotide4(inner) => {
-				inner.propose(py, state)
+			ErasedLikelihood::Nucleotide4(inner) => {
+				inner.propose(py, tree)
 			}
 			_ => todo!(),
 		}
@@ -126,18 +124,37 @@ impl Likelihood {
 
 	pub fn accept(&mut self) {
 		match self {
-			Likelihood::Nucleotide4(inner) => inner.accept(),
-			Likelihood::Nucleotide5(inner) => inner.accept(),
-			Likelihood::Codon(inner) => inner.accept(),
+			ErasedLikelihood::Nucleotide4(inner) => inner.accept(),
+			ErasedLikelihood::Nucleotide5(inner) => inner.accept(),
+			ErasedLikelihood::Codon(inner) => inner.accept(),
 		}
 	}
 
 	pub fn reject(&mut self) {
 		match self {
-			Likelihood::Nucleotide4(inner) => inner.reject(),
-			Likelihood::Nucleotide5(inner) => inner.reject(),
-			Likelihood::Codon(inner) => inner.reject(),
+			ErasedLikelihood::Nucleotide4(inner) => inner.reject(),
+			ErasedLikelihood::Nucleotide5(inner) => inner.reject(),
+			ErasedLikelihood::Codon(inner) => inner.reject(),
 		}
+	}
+}
+
+pub struct Likelihood {
+	erased: ErasedLikelihood,
+	tree: PyTree,
+}
+
+impl Likelihood {
+	pub fn propose(&mut self, py: Python) -> Result<f64> {
+		self.erased.propose(py, &self.tree.inner())
+	}
+
+	pub fn accept(&mut self) {
+		self.erased.accept();
+	}
+
+	pub fn reject(&mut self) {
+		self.erased.reject();
 	}
 }
 
@@ -156,13 +173,22 @@ impl PyLikelihood {
 #[pymethods]
 impl PyLikelihood {
 	#[new]
-	fn new4(data: &str, substitution: PySubstitution<4>) -> Result<Self> {
+	fn new4(
+		data: &str,
+		substitution: PySubstitution<4>,
+		tree: PyTree,
+	) -> Result<Self> {
 		let seqs = read_fasta(data)?;
 		let sites = dna_to_rows(&seqs);
 
-		let likelihood = Likelihood::Nucleotide4(
+		let erased_likelihood = ErasedLikelihood::Nucleotide4(
 			GenericLikelihood::new(substitution, sites),
 		);
+
+		let likelihood = Likelihood {
+			erased: erased_likelihood,
+			tree,
+		};
 
 		Ok(PyLikelihood {
 			inner: Arc::new(Mutex::new(likelihood)),
