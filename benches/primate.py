@@ -50,7 +50,7 @@ params = [
 ]
 
 
-state = State(tree, params, rng)
+state = State(tree, params)
 
 # TODO: limit priors
 priors = [
@@ -69,10 +69,10 @@ priors = [
 
 # TODO
 operators = [
-    NarrowExchange(tree, weight=25.0),
-    WideExchange(tree, weight=25.0),
-    NodeSlide(tree, Uniform(0, 1), weight=48.0),
-    TreeScale(tree, 0.1, Uniform(0, 1), weight=2.0),
+    NarrowExchange(tree, rng, weight=25.0),
+    WideExchange(tree, rng, weight=25.0),
+    NodeSlide(tree, Uniform(0, 1), rng, weight=48.0),
+    TreeScale(tree, 0.1, Uniform(0, 1), rng, weight=2.0),
     DeltaExchange(
         params=[
             mutation_rate_noncoding,
@@ -82,6 +82,7 @@ operators = [
         ],
         weights=[205, 231, 231, 231],
         factor=0.75,
+        rng=rng,
         weight=2.0,
     ),
 ]
@@ -93,4 +94,4 @@ loggers = [
     TreeLogger(tree=tree, path="b3.trees", every=1_000),
 ]
 
-b3.run(100_000, state, priors, operators, likelihood, loggers)
+b3.run(100_000, state, priors, operators, likelihood, loggers, rng)

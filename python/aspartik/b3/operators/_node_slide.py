@@ -1,5 +1,6 @@
 from ._util import scale_on_range
 from .. import State, Proposal, Tree
+from ...rng import Rng
 
 
 class NodeSlide:
@@ -14,6 +15,7 @@ class NodeSlide:
         self,
         tree: Tree,
         distribution,
+        rng: Rng,
         weight: float = 1,
     ):
         """
@@ -25,6 +27,7 @@ class NodeSlide:
         """
         self.tree = tree
         self.distribution = distribution
+        self.rng = rng
         self.weight = weight
 
     def propose(self, state: State) -> Proposal:
@@ -34,17 +37,16 @@ class NodeSlide:
         """
 
         tree = self.tree
-        rng = state.rng
 
         # automatically fail on trees without non-root internal nodes
         if tree.num_internals == 1:
             return Proposal.Reject()
 
         # Pick a non-root internal node
-        node = tree.random_internal(rng)
+        node = tree.random_internal(self.rng)
         parent = tree.parent_of(node)
         while parent is None:
-            node = tree.random_internal(rng)
+            node = tree.random_internal(self.rng)
             parent = tree.parent_of(node)
 
         left, right = tree.children_of(node)
@@ -52,7 +54,9 @@ class NodeSlide:
         oldest = tree.weight_of(parent)
         youngest = max(tree.weight_of(left), tree.weight_of(right))
 
-        (new_weight, ratio) = scale_on_range(youngest, oldest, self.distribution, rng)
+        (new_weight, ratio) = scale_on_range(
+            youngest, oldest, self.distribution, self.rng
+        )
 
         tree.update_weight(node, new_weight)
 

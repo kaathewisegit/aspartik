@@ -3,6 +3,7 @@ from typing import Literal
 
 from ._util import sample_range
 from .. import State, Proposal, Parameter
+from ...rng import Rng
 
 
 class ParamScale:
@@ -18,6 +19,7 @@ class ParamScale:
         param: Parameter,
         factor: float,
         distribution,
+        rng: Rng,
         dimensions: Literal["one", "all", "independent"] = "all",
         weight: float = 1,
     ):
@@ -46,18 +48,17 @@ class ParamScale:
         self.param = param
         self.factor = factor
         self.distribution = distribution
+        self.rng = rng
         self.dimensions = dimensions
         self.weight = weight
 
     def propose(self, state: State) -> Proposal:
-        rng = state.rng
-
         low, high = self.factor, 1 / self.factor
-        scale = sample_range(low, high, self.distribution, rng)
+        scale = sample_range(low, high, self.distribution, self.rng)
 
         match self.dimensions:
             case "one":
-                index = rng.random_int(0, len(self.param))
+                index = self.rng.random_int(0, len(self.param))
                 if self.param[index] == 0:
                     return Proposal.Reject()
                 self.param[index] *= scale
@@ -83,7 +84,7 @@ class ParamScale:
                 ratio = 0
 
                 for i in range(len(self.param)):
-                    scale = sample_range(low, high, self.distribution, rng)
+                    scale = sample_range(low, high, self.distribution, self.rng)
                     self.param[i] *= scale
                     ratio -= log(scale)
 

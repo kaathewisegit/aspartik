@@ -1,6 +1,7 @@
 from typing import List
 
 from .. import State, Proposal, Parameter
+from ...rng import Rng
 
 
 class DeltaExchange:
@@ -18,6 +19,7 @@ class DeltaExchange:
         params: List[Parameter],
         weights: List[float],
         factor: float,
+        rng: Rng,
         weight: float = 1,
     ):
         """
@@ -42,6 +44,7 @@ class DeltaExchange:
         self.weights = weights
         self.factor = factor
         self.weight = weight
+        self.rng = rng
 
         self.dimensions = []
         for param_i, param in enumerate(self.params):
@@ -55,12 +58,10 @@ class DeltaExchange:
     def propose(self, state: State) -> Proposal:
         # TODO: zero weights
 
-        rng = state.rng
+        delta = self.rng.random_float() * self.factor
 
-        delta = rng.random_float() * self.factor
-
-        dim_1 = rng.random_int(0, len(self.dimensions))
-        dim_2 = rng.random_int(0, len(self.dimensions) - 1)
+        dim_1 = self.rng.random_int(0, len(self.dimensions))
+        dim_2 = self.rng.random_int(0, len(self.dimensions) - 1)
         # dim_1 and dim_2 must be different.
         if dim_1 == dim_2:
             # If we hit the same dimension, we increment the first one.  We can

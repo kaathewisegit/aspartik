@@ -2,6 +2,7 @@ from math import log
 
 from ._util import sample_range
 from .. import State, Proposal, Tree
+from ...rng import Rng
 
 
 class TreeScale:
@@ -12,7 +13,9 @@ class TreeScale:
     since leaves all have the weight of 0).
     """
 
-    def __init__(self, tree: Tree, factor: float, distribution, weight: float = 1):
+    def __init__(
+        self, tree: Tree, factor: float, distribution, rng: Rng, weight: float = 1
+    ):
         """
         Args:
             tree: The tree to scale.
@@ -28,14 +31,14 @@ class TreeScale:
             raise ValueError(f"factor must be between 0 and 1, got {factor}")
         self.factor = factor
         self.distribution = distribution
-        self.weight = 1
+        self.rng = rng
+        self.weight = weight
 
     def propose(self, state: State) -> Proposal:
         tree = self.tree
-        rng = state.rng
 
         low, high = self.factor, 1 / self.factor
-        scale = sample_range(low, high, self.distribution, rng)
+        scale = sample_range(low, high, self.distribution, self.rng)
 
         for node in tree.nodes():
             new_weight = tree.weight_of(node) * scale

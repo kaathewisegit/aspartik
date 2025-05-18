@@ -2,6 +2,7 @@ import math
 
 from .. import State, Tree, Proposal
 from ..tree import Internal, Node
+from ...rng import Rng
 
 
 class NarrowExchange:
@@ -14,20 +15,20 @@ class NarrowExchange:
     *uncle*.
     """
 
-    def __init__(self, tree: Tree, weight: float = 1):
+    def __init__(self, tree: Tree, rng: Rng, weight: float = 1):
         self.tree = tree
         self.weight = weight
+        self.rng = rng
 
     def propose(self, state: State) -> Proposal:
         tree = self.tree
-        rng = state.rng
 
         if tree.num_internals < 2:
             return Proposal.Reject()
 
         grandparent = None
         while grandparent is None:
-            internal = tree.random_internal(state.rng)
+            internal = tree.random_internal(self.rng)
             if tree.is_grandparent(internal):
                 grandparent = internal
 
@@ -53,7 +54,7 @@ class NarrowExchange:
 
         before = int(tree.is_grandparent(parent)) + int(tree.is_grandparent(uncle))
 
-        if rng.random_bool(0.5):
+        if self.rng.random_bool(0.5):
             child = tree.children_of(parent)[0]
         else:
             child = tree.children_of(parent)[1]
@@ -78,18 +79,18 @@ class WideExchange:
     its child) the operator aborts with `Proposal.Reject`.
     """
 
-    def __init__(self, tree: Tree, weight: float = 1):
+    def __init__(self, tree: Tree, rng: Rng, weight: float = 1):
         self.tree = tree
         self.weight = weight
+        self.rng = rng
 
     def propose(self, state: State) -> Proposal:
         tree = self.tree
-        rng = state.rng
 
-        i = tree.random_node(rng)
+        i = tree.random_node(self.rng)
         j = None
         while j is None or j != i:
-            j = tree.random_node(rng)
+            j = tree.random_node(self.rng)
         assert isinstance(j, Node)
 
         i_parent = tree.parent_of(i)

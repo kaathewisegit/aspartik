@@ -8,8 +8,13 @@ use crate::{
 	state::PyState,
 	PyLogger, PyPrior,
 };
+use rng::PyRng;
 
 #[pyfunction]
+// XXX: yes, this is a problem, even without the burnin and the trees.  It
+// should be probably rolled into an MCMC class which will handle backups and
+// running.
+#[expect(clippy::too_many_arguments)]
 pub fn run(
 	py: Python,
 	length: usize,
@@ -18,6 +23,7 @@ pub fn run(
 	operators: Vec<PyOperator>,
 	likelihood: PyLikelihood,
 	mut loggers: Vec<PyLogger>,
+	rng: Py<PyRng>,
 ) -> Result<()> {
 	let likelihood = &mut *likelihood.inner();
 
@@ -26,7 +32,7 @@ pub fn run(
 	let mut scheduler = WeightedScheduler::new(py, operators)?;
 
 	for index in 0..length {
-		step(py, &state, &priors, likelihood, &mut scheduler)
+		step(py, &state, &priors, likelihood, &mut scheduler, &rng)
 			.with_context(|| anyhow!("Failed on step {index}"))?;
 
 		for logger in &mut loggers {
@@ -45,9 +51,9 @@ fn step(
 	priors: &[PyPrior],
 	likelihood: &mut Likelihood,
 	scheduler: &mut WeightedScheduler,
+	rng: &Py<PyRng>,
 ) -> Result<()> {
-	let operator =
-		scheduler.select_operator(&mut state.inner().rng.get().inner());
+	let operator = scheduler.select_operator(&mut rng.get().inner());
 
 	let hastings = match operator.propose(py, state).with_context(|| {
 		anyhow!(
@@ -85,7 +91,7 @@ fn step(
 
 	let ratio = posterior - state.inner().likelihood + hastings;
 
-	let random_0_1 = state.inner().rng.get().inner().random::<f64>();
+	let random_0_1 = rng.get().inner().random::<f64>();
 	if ratio > random_0_1.ln() {
 		state.inner().likelihood = posterior;
 

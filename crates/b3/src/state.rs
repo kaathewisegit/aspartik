@@ -7,7 +7,6 @@ use crate::{
 	parameter::{Parameter, PyParameter},
 	tree::PyTree,
 };
-use rng::PyRng;
 
 #[derive(Debug)]
 pub struct State {
@@ -20,16 +19,10 @@ pub struct State {
 
 	/// Current likelihood, for caching purposes.
 	pub(crate) likelihood: f64,
-
-	pub(crate) rng: Py<PyRng>,
 }
 
 impl State {
-	pub fn new(
-		tree: PyTree,
-		params: Vec<PyParameter>,
-		rng: Py<PyRng>,
-	) -> Result<Self> {
+	pub fn new(tree: PyTree, params: Vec<PyParameter>) -> Result<Self> {
 		let mut backup_params = Vec::with_capacity(params.len());
 		for param in &params {
 			backup_params.push(param.inner()?.clone());
@@ -40,7 +33,6 @@ impl State {
 			params,
 			tree,
 			likelihood: f64::NEG_INFINITY,
-			rng,
 		})
 	}
 
@@ -82,20 +74,11 @@ impl PyState {
 #[pymethods]
 impl PyState {
 	#[new]
-	fn new(
-		tree: PyTree,
-		params: Vec<PyParameter>,
-		rng: Py<PyRng>,
-	) -> Result<Self> {
-		let state = State::new(tree, params, rng)?;
+	fn new(tree: PyTree, params: Vec<PyParameter>) -> Result<Self> {
+		let state = State::new(tree, params)?;
 
 		Ok(Self {
 			inner: Arc::new(Mutex::new(state)),
 		})
-	}
-
-	#[getter]
-	fn rng(&self, py: Python) -> Py<PyRng> {
-		self.inner().rng.clone_ref(py)
 	}
 }
