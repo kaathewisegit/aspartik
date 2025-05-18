@@ -2,8 +2,6 @@ use anyhow::{Context, Error, Result};
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-#[cfg(feature = "python")]
-use std::sync::{Arc, Mutex, MutexGuard};
 use std::{
 	fmt::Display,
 	ops::{Deref, DerefMut, Index, IndexMut},
@@ -219,20 +217,8 @@ impl DnaSeq {
 }
 
 #[cfg(feature = "python")]
-#[cfg_attr(
-	feature = "python",
-	pyclass(name = "DNASeq", module = "aspartik.data", frozen,)
-)]
-pub struct PyDnaSeq {
-	inner: Arc<Mutex<DnaSeq>>,
-}
-
-#[cfg(feature = "python")]
-impl PyDnaSeq {
-	pub fn inner(&self) -> MutexGuard<DnaSeq> {
-		self.inner.lock().unwrap()
-	}
-}
+#[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
+pub struct PyDnaSeq(DnaSeq);
 
 #[cfg(feature = "python")]
 #[pymethods]
@@ -244,28 +230,22 @@ impl PyDnaSeq {
 			.map(DnaSeq::try_from)
 			.unwrap_or_else(|| Ok(DnaSeq::new()))?;
 
-		Ok(Self {
-			inner: Arc::new(Mutex::new(seq)),
-		})
+		Ok(Self(seq))
 	}
 
 	fn __str__(&self) -> String {
-		self.inner().to_string()
+		self.0.to_string()
 	}
 
 	fn __repr__(&self) -> String {
-		format!(r#"DNASeq("{}")"#, self.inner())
+		format!("DNASeq('{}')", self.0)
 	}
 
 	fn __getitem__(&self, index: usize) -> DnaNucleotide {
-		self.inner()[index]
+		self.0[index]
 	}
 
-	fn __setitem__(&self, index: usize, item: DnaNucleotide) {
-		self.inner()[index] = item;
-	}
-
-	// TODO: character-generic methods, probably as a a macro
+	// TODO: character-generic methods, probably as a macro
 }
 
 #[cfg(test)]
