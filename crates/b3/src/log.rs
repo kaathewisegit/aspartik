@@ -33,8 +33,7 @@ impl PyLogger {
 			return Ok(());
 		}
 
-		let args = (index,);
-		py_call_method!(py, self.inner, "log", args)?;
+		py_call_method!(py, self.inner, "log", index)?;
 
 		Ok(())
 	}
