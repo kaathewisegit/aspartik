@@ -64,6 +64,7 @@ dependencies = [
  "data",
  "io",
  "linalg",
+ "parking_lot",
  "pyo3",
  "rand 0.9.1",
  "rand_distr",

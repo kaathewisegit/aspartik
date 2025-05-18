@@ -1,10 +1,9 @@
 #![allow(dead_code)]
 
 use anyhow::{anyhow, Context, Result};
+use parking_lot::Mutex;
 use pyo3::prelude::*;
 use rand::Rng as _;
-
-use std::sync::Mutex;
 
 use crate::{
 	likelihood::PyLikelihood,
@@ -59,7 +58,7 @@ impl Mcmc {
 	) -> Result<Mcmc> {
 		let mut backup_params = Vec::with_capacity(params.len());
 		for param in &params {
-			backup_params.push(param.inner()?.clone());
+			backup_params.push(param.inner().clone());
 		}
 		let backup_params = Mutex::new(backup_params);
 		let scheduler = WeightedScheduler::new(py, operators)?;
@@ -139,12 +138,11 @@ impl Mcmc {
 
 		let posterior = new_likelihood + prior;
 
-		let ratio =
-			posterior - *self.likelihood.lock().unwrap() + hastings;
+		let ratio = posterior - *self.likelihood.lock() + hastings;
 
 		let random_0_1 = self.rng.get().inner().random::<f64>();
 		if ratio > random_0_1.ln() {
-			*self.likelihood.lock().unwrap() = posterior;
+			*self.likelihood.lock() = posterior;
 
 			self.accept()?;
 		} else {
@@ -161,9 +159,9 @@ impl Mcmc {
 
 		self.likelihoods.get().inner().accept();
 
-		let mut backup_params = self.backup_params.lock().unwrap();
+		let mut backup_params = self.backup_params.lock();
 		for i in 0..self.params.len() {
-			backup_params[i] = self.params[i].inner()?.clone();
+			backup_params[i] = self.params[i].inner().clone();
 		}
 
 		Ok(())
@@ -176,9 +174,9 @@ impl Mcmc {
 
 		self.likelihoods.get().inner().reject();
 
-		let backup_params = self.backup_params.lock().unwrap();
+		let backup_params = self.backup_params.lock();
 		for i in 0..self.params.len() {
-			*self.params[i].inner()? = backup_params[i].clone();
+			*self.params[i].inner() = backup_params[i].clone();
 		}
 
 		Ok(())

@@ -15,6 +15,7 @@ skvec = { workspace = true }
 util = { workspace = true }
 
 anyhow = { workspace = true }
+parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }
 rand_distr = { workspace = true }

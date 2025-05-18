@@ -1,4 +1,5 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
+use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::{
 	class::basic::CompareOp,
@@ -9,7 +10,7 @@ use pyo3::{
 
 use std::{
 	fmt::{self, Display},
-	sync::{Arc, Mutex, MutexGuard},
+	sync::Arc,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -110,14 +111,12 @@ pub struct PyParameter {
 }
 
 impl PyParameter {
-	pub fn inner(&self) -> Result<MutexGuard<Parameter>> {
-		self.inner.lock().map_err(|_| {
-			anyhow!("Fatal error, parameter mutex got poisoned")
-		})
+	pub fn inner(&self) -> MutexGuard<Parameter> {
+		self.inner.lock()
 	}
 
 	pub fn deep_copy(&self) -> PyParameter {
-		let inner = &*self.inner().unwrap();
+		let inner = &*self.inner();
 
 		Self {
 			inner: Arc::new(Mutex::new(inner.clone())),
@@ -189,11 +188,11 @@ impl PyParameter {
 	}
 
 	fn __len__(&self) -> Result<usize> {
-		Ok(self.inner()?.len())
+		Ok(self.inner().len())
 	}
 
 	fn __getitem__(&self, py: Python, i: usize) -> Result<PyObject> {
-		let inner = &*self.inner()?;
+		let inner = &*self.inner();
 		inner.check_index(i)?;
 
 		Ok(match inner {
@@ -206,7 +205,7 @@ impl PyParameter {
 	}
 
 	fn __setitem__(&self, i: usize, value: Bound<PyAny>) -> Result<()> {
-		let inner = &mut *self.inner()?;
+		let inner = &mut *self.inner();
 		inner.check_index(i)?;
 
 		match inner {
@@ -228,7 +227,7 @@ impl PyParameter {
 	}
 
 	fn __repr__(&self) -> Result<String> {
-		let inner = &*self.inner()?;
+		let inner = &*self.inner();
 
 		let subtype = match inner {
 			Parameter::Real(..) => "Real",
@@ -240,7 +239,7 @@ impl PyParameter {
 	}
 
 	fn __str__(&self) -> Result<String> {
-		Ok(format!("[{}]", self.inner()?))
+		Ok(format!("[{}]", self.inner()))
 	}
 
 	fn __richcmp__(
@@ -248,7 +247,7 @@ impl PyParameter {
 		other: Bound<PyAny>,
 		op: CompareOp,
 	) -> Result<bool> {
-		let inner = &*self.inner()?;
+		let inner = &*self.inner();
 
 		match inner {
 			Parameter::Real(p) => {
@@ -267,15 +266,15 @@ impl PyParameter {
 	}
 
 	fn is_real(&self) -> Result<bool> {
-		Ok(matches!(&*self.inner()?, Parameter::Real(_)))
+		Ok(matches!(&*self.inner(), Parameter::Real(_)))
 	}
 
 	fn is_integer(&self) -> Result<bool> {
-		Ok(matches!(&*self.inner()?, Parameter::Integer(_)))
+		Ok(matches!(&*self.inner(), Parameter::Integer(_)))
 	}
 
 	fn is_boolean(&self) -> Result<bool> {
-		Ok(matches!(&*self.inner()?, Parameter::Boolean(_)))
+		Ok(matches!(&*self.inner(), Parameter::Boolean(_)))
 	}
 }
 

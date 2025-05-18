@@ -26,6 +26,7 @@ divan = "0.1"
 lapack-sys = "0.15"
 nom = "8.0"
 num-traits = "0.2"
+parking_lot = "0.12"
 petgraph = { version = "0.8", default-features = false }
 proptest = "1.6"
 pyo3 = "0.25"

@@ -1,7 +1,6 @@
 use anyhow::Result;
+use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
-
-use std::sync::{Mutex, MutexGuard};
 
 use crate::{
 	substitution::PySubstitution,
@@ -165,7 +164,7 @@ pub struct PyLikelihood {
 
 impl PyLikelihood {
 	pub fn inner(&self) -> MutexGuard<Likelihood> {
-		self.inner.lock().unwrap()
+		self.inner.lock()
 	}
 }
 

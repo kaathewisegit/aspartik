@@ -1,4 +1,5 @@
 use anyhow::{ensure, Result};
+use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::{
 	exceptions::PyTypeError,
@@ -12,7 +13,6 @@ use serde::{Deserialize, Serialize};
 use std::{
 	cmp::Reverse,
 	collections::{BinaryHeap, HashSet, VecDeque},
-	sync::{Mutex, MutexGuard},
 };
 
 use io::newick::{
@@ -704,7 +704,7 @@ fn to_node(obj: Bound<PyAny>) -> Result<Node> {
 
 impl PyTree {
 	pub fn inner(&self) -> MutexGuard<Tree> {
-		self.inner.lock().unwrap()
+		self.inner.lock()
 	}
 }
 
