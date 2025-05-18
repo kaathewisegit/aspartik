@@ -50,7 +50,7 @@ params = [
 ]
 
 
-state = State(tree, params)
+state = State(params)
 
 # TODO: limit priors
 priors = [
@@ -96,4 +96,4 @@ loggers = [
     TreeLogger(tree=tree, path="b3.trees", every=1_000),
 ]
 
-b3.run(100_000, state, priors, operators, likelihood, loggers, rng)
+b3.run(100_000, state, [tree], priors, operators, likelihood, loggers, rng)

@@ -6,6 +6,7 @@ use crate::{
 	likelihood::{Likelihood, PyLikelihood},
 	operator::{Proposal, PyOperator, WeightedScheduler},
 	state::PyState,
+	tree::PyTree,
 	PyLogger, PyPrior,
 };
 use rng::PyRng;
@@ -19,6 +20,7 @@ pub fn run(
 	py: Python,
 	length: usize,
 	state: PyState,
+	trees: Vec<PyTree>,
 	priors: Vec<PyPrior>,
 	operators: Vec<PyOperator>,
 	likelihood: PyLikelihood,
@@ -32,8 +34,16 @@ pub fn run(
 	let mut scheduler = WeightedScheduler::new(py, operators)?;
 
 	for index in 0..length {
-		step(py, &state, &priors, likelihood, &mut scheduler, &rng)
-			.with_context(|| anyhow!("Failed on step {index}"))?;
+		step(
+			py,
+			&state,
+			&trees,
+			&priors,
+			likelihood,
+			&mut scheduler,
+			&rng,
+		)
+		.with_context(|| anyhow!("Failed on step {index}"))?;
 
 		for logger in &mut loggers {
 			logger.log(py, state.clone(), index).with_context(
@@ -48,6 +58,7 @@ pub fn run(
 fn step(
 	py: Python,
 	state: &PyState,
+	trees: &[PyTree],
 	priors: &[PyPrior],
 	likelihood: &mut Likelihood,
 	scheduler: &mut WeightedScheduler,
@@ -62,7 +73,7 @@ fn step(
 		)
 	})? {
 		Proposal::Accept() => {
-			accept(state, likelihood)?;
+			accept(state, trees, likelihood)?;
 			return Ok(());
 		}
 		Proposal::Reject() => {
@@ -71,7 +82,9 @@ fn step(
 		Proposal::Hastings(ratio) => ratio,
 	};
 
-	state.inner().tree.inner().verify()?;
+	for tree in trees {
+		tree.inner().verify()?;
+	}
 
 	let mut prior: f64 = 0.0;
 	for py_prior in priors {
@@ -79,7 +92,7 @@ fn step(
 
 		// short-circuit on a rejection by any prior
 		if prior == f64::NEG_INFINITY {
-			reject(state, likelihood)?;
+			reject(state, trees, likelihood)?;
 			return Ok(());
 		}
 	}
@@ -95,23 +108,37 @@ fn step(
 	if ratio > random_0_1.ln() {
 		state.inner().likelihood = posterior;
 
-		accept(state, likelihood)?;
+		accept(state, trees, likelihood)?;
 	} else {
-		reject(state, likelihood)?;
+		reject(state, trees, likelihood)?;
 	}
 
 	Ok(())
 }
 
-fn accept(state: &PyState, likelihood: &mut Likelihood) -> Result<()> {
+fn accept(
+	state: &PyState,
+	trees: &[PyTree],
+	likelihood: &mut Likelihood,
+) -> Result<()> {
 	state.inner().accept()?;
+	for tree in trees {
+		tree.inner().accept();
+	}
 	likelihood.accept();
 
 	Ok(())
 }
 
-fn reject(state: &PyState, likelihood: &mut Likelihood) -> Result<()> {
+fn reject(
+	state: &PyState,
+	trees: &[PyTree],
+	likelihood: &mut Likelihood,
+) -> Result<()> {
 	state.inner().reject()?;
+	for tree in trees {
+		tree.inner().reject();
+	}
 	likelihood.reject();
 
 	Ok(())

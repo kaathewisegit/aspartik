@@ -22,7 +22,7 @@ params = [
     Parameter.Boolean(True, False),
 ]
 
-state = State(tree, params)
+state = State(params)
 
 priors = [
     Bound(params[0], lower=0, upper=1),
@@ -43,4 +43,4 @@ loggers = [
     TreeLogger(tree=tree, path="b3.trees", every=1_000),
 ]
 
-b3.run(10_000, state, priors, operators, likelihood, loggers, rng)
+b3.run(10_000, state, [tree], priors, operators, likelihood, loggers, rng)

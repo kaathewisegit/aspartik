@@ -10,7 +10,7 @@ class tree: ...
 __all__: List[str]
 
 class State:
-    def __init__(self, tree: Tree, params: Sequence[Parameter]): ...
+    def __init__(self, params: Sequence[Parameter]): ...
     @property
     def tree(self) -> Tree: ...
 
@@ -83,6 +83,7 @@ class Logger(Protocol):
 def run(
     length: int,
     state: State,
+    trees: Sequence[Tree],
     priors: Sequence[Prior],
     operators: Sequence[Operator],
     likelihood: Likelihood,
