@@ -1,7 +1,7 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Mutex, MutexGuard};
 
 use crate::{
 	substitution::PySubstitution,
@@ -141,12 +141,12 @@ impl ErasedLikelihood {
 
 pub struct Likelihood {
 	erased: ErasedLikelihood,
-	tree: PyTree,
+	tree: Py<PyTree>,
 }
 
 impl Likelihood {
 	pub fn propose(&mut self, py: Python) -> Result<f64> {
-		self.erased.propose(py, &self.tree.inner())
+		self.erased.propose(py, &self.tree.get().inner())
 	}
 
 	pub fn accept(&mut self) {
@@ -158,10 +158,9 @@ impl Likelihood {
 	}
 }
 
-#[derive(Clone)]
 #[pyclass(name = "Likelihood", module = "aspartik.b3", frozen)]
 pub struct PyLikelihood {
-	inner: Arc<Mutex<Likelihood>>,
+	inner: Mutex<Likelihood>,
 }
 
 impl PyLikelihood {
@@ -176,7 +175,7 @@ impl PyLikelihood {
 	fn new4(
 		data: &str,
 		substitution: PySubstitution<4>,
-		tree: PyTree,
+		tree: Py<PyTree>,
 	) -> Result<Self> {
 		let seqs = read_fasta(data)?;
 		let sites = dna_to_rows(&seqs);
@@ -191,7 +190,7 @@ impl PyLikelihood {
 		};
 
 		Ok(PyLikelihood {
-			inner: Arc::new(Mutex::new(likelihood)),
+			inner: Mutex::new(likelihood),
 		})
 	}
 }

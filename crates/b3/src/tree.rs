@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::{
 	cmp::Reverse,
 	collections::{BinaryHeap, HashSet, VecDeque},
-	sync::{Arc, Mutex, MutexGuard},
+	sync::{Mutex, MutexGuard},
 };
 
 use io::newick::{
@@ -680,14 +680,14 @@ impl NodesIter {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[pyclass(name = "Tree", module = "aspartik.b3", frozen)]
 /// A phylogenetic bifurcating tree.
 ///
 /// The leaf nodes are derived from the data samples.  Anonymous internal nodes
 /// are created automatically.
 pub struct PyTree {
-	inner: Arc<Mutex<Tree>>,
+	inner: Mutex<Tree>,
 }
 
 fn to_node(obj: Bound<PyAny>) -> Result<Node> {
@@ -714,7 +714,7 @@ impl PyTree {
 	fn new(num_leaves: usize, rng: Py<PyRng>) -> Result<Self> {
 		let tree = Tree::new(num_leaves, &mut rng.get().inner());
 		let tree = Self {
-			inner: Arc::new(Mutex::new(tree)),
+			inner: Mutex::new(tree),
 		};
 		Ok(tree)
 	}

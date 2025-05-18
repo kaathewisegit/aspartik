@@ -22,7 +22,7 @@ pub struct Mcmc {
 	burnin: usize,
 	length: usize,
 
-	trees: Vec<PyTree>,
+	trees: Vec<Py<PyTree>>,
 
 	/// TODO: parameter serialization
 	backup_params: Mutex<Vec<Parameter>>,
@@ -31,7 +31,7 @@ pub struct Mcmc {
 
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
-	likelihoods: PyLikelihood,
+	likelihoods: Py<PyLikelihood>,
 	loggers: Vec<PyLogger>,
 	rng: Py<PyRng>,
 }
@@ -49,11 +49,11 @@ impl Mcmc {
 		burnin: usize,
 		length: usize,
 
-		trees: Vec<PyTree>,
+		trees: Vec<Py<PyTree>>,
 		params: Vec<PyParameter>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
-		likelihoods: PyLikelihood,
+		likelihoods: Py<PyLikelihood>,
 		loggers: Vec<PyLogger>,
 		rng: Py<PyRng>,
 	) -> Result<Mcmc> {
@@ -119,7 +119,7 @@ impl Mcmc {
 			};
 
 		for tree in &self.trees {
-			tree.inner().verify()?;
+			tree.get().inner().verify()?;
 		}
 
 		let mut prior: f64 = 0.0;
@@ -134,7 +134,8 @@ impl Mcmc {
 		}
 
 		// calculate tree likelihood
-		let new_likelihood = self.likelihoods.inner().propose(py)?;
+		let new_likelihood =
+			self.likelihoods.get().inner().propose(py)?;
 
 		let posterior = new_likelihood + prior;
 
@@ -155,10 +156,10 @@ impl Mcmc {
 
 	fn accept(&self) -> Result<()> {
 		for tree in &self.trees {
-			tree.inner().accept();
+			tree.get().inner().accept();
 		}
 
-		self.likelihoods.inner().accept();
+		self.likelihoods.get().inner().accept();
 
 		let mut backup_params = self.backup_params.lock().unwrap();
 		for i in 0..self.params.len() {
@@ -170,10 +171,10 @@ impl Mcmc {
 
 	fn reject(&self) -> Result<()> {
 		for tree in &self.trees {
-			tree.inner().reject();
+			tree.get().inner().reject();
 		}
 
-		self.likelihoods.inner().reject();
+		self.likelihoods.get().inner().reject();
 
 		let backup_params = self.backup_params.lock().unwrap();
 		for i in 0..self.params.len() {
