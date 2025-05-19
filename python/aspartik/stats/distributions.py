@@ -15,19 +15,34 @@ class Sample[T](Protocol): ...
 # ruff: noqa: F822
 __all__ = [
     # Classes
+    "Beta",
+    "BetaError",
+    "Exp",
+    "ExpError",
     "Gamma",
     "GammaError",
+    "InverseGamma",
+    "InverseGammaError",
+    "Laplace",
+    "LaplaceError",
+    "LogNormal",
+    "LogNormalError",
+    "Normal",
+    "NormalError",
     "Poisson",
     "PoissonError",
     "Uniform",
     "UniformError",
-    "Exp",
-    "ExpError",
-    "LogNormal",
-    "LogNormalError",
+    # protocols
+    "Continuous",
+    "ContinuousCDF",
+    "Discrete",
+    "DiscreteCDF",
+    "Distribution",
+    "Sample",
 ]
 
-for item in __all__:
+for item in __all__[:18]:
     locals()[item] = getattr(_stats_rust_impl.distributions, item)  # type: ignore
 
 
