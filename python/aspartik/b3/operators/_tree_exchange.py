@@ -27,10 +27,16 @@ class NarrowExchange:
         if tree.num_internals < 2:
             return Proposal.Reject()
 
+        count = 0
         while True:
             grandparent = tree.random_internal(self.rng)
             if tree.is_grandparent(grandparent):
                 break
+
+            count += 1
+            if count == tree.num_internals:
+                # failed to find a grandparent
+                return Proposal.Reject()
 
         left, right = tree.children_of(grandparent)
         if tree.weight_of(left) > tree.weight_of(right):
