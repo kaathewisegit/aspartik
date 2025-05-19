@@ -27,9 +27,10 @@ class NarrowExchange:
         if tree.num_internals < 2:
             return Proposal.Reject()
 
-        grandparent = tree.random_internal(self.rng)
-        while not tree.is_grandparent(grandparent):
+        while True:
             grandparent = tree.random_internal(self.rng)
+            if tree.is_grandparent(grandparent):
+                break
 
         left, right = tree.children_of(grandparent)
         if tree.weight_of(left) > tree.weight_of(right):
@@ -39,10 +40,7 @@ class NarrowExchange:
         else:
             return Proposal.Reject()
 
-        parent, uncle = tree.as_internal(parent), tree.as_internal(uncle)
-        # If the lower child isn't internal, abort.
-        if parent is None:
-            return Proposal.Reject()
+        # guaranteed because `grandparent` is a grandparent
         assert isinstance(parent, Internal)
         assert isinstance(uncle, Internal)
 
