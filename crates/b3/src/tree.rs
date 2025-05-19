@@ -246,8 +246,24 @@ impl Tree {
 		self.walk_nodes(&self.updated_nodes)
 	}
 
+	/// A breadth-first order of internals starting from the root.
 	pub(crate) fn full_update(&self) -> Vec<Internal> {
-		self.internals().collect()
+		let mut queue = VecDeque::from([self.root()]);
+		let mut out = Vec::new();
+		while let Some(node) = queue.pop_front() {
+			let (left, right) = self.children_of(node);
+
+			if let Some(left) = self.as_internal(left) {
+				queue.push_back(left);
+				out.push(left);
+			}
+			if let Some(right) = self.as_internal(right) {
+				queue.push_back(right);
+				out.push(right);
+			}
+		}
+
+		out
 	}
 
 	pub(crate) fn to_lists(
