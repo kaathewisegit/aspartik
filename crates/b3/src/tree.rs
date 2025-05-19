@@ -415,6 +415,17 @@ impl Tree {
 				left.0,
 				self.weight_of(right),
 			);
+
+			let left_parent = self.parent_of(left);
+			let right_parent = self.parent_of(right);
+			ensure!(
+				left_parent.is_some_and(|p| p == node),
+				"Expected {left:?} to have the parent {node:?}, got {left_parent:?}"
+			);
+			ensure!(
+				right_parent.is_some_and(|p| p == node),
+				"Expected {right:?} to have the parent {node:?}, got {right_parent:?}"
+			);
 		}
 
 		let roots: Vec<usize> = self
