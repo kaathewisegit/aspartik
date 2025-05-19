@@ -6,6 +6,7 @@ from aspartik.b3.operators import (
     WideExchange,
     NodeSlide,
     DeltaExchange,
+    WilsonBalding,
 )
 from aspartik.b3.priors import Distribution
 from aspartik.b3.substitutions import JC
@@ -68,6 +69,7 @@ priors = [
 operators = [
     NarrowExchange(tree, rng, weight=25.0),
     WideExchange(tree, rng, weight=25.0),
+    WilsonBalding(tree, rng, weight=3.0),
     NodeSlide(tree, Uniform(0, 1), rng, weight=48.0),
     TreeScale(tree, 0.1, Uniform(0, 1), rng, weight=2.0),
     DeltaExchange(
