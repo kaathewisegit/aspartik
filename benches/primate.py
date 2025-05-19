@@ -1,6 +1,7 @@
 from aspartik.b3 import MCMC, Tree, Parameter, Likelihood
 from aspartik.b3.loggers import TreeLogger
 from aspartik.b3.operators import (
+    ParamScale,
     TreeScale,
     RootScale,
     NarrowExchange,
@@ -68,10 +69,15 @@ priors = [
 
 # TODO
 operators = [
-    NarrowExchange(tree, rng, weight=25.0),
-    WideExchange(tree, rng, weight=25.0),
+    ParamScale(gamma_shape_noncoding, 0.5, Uniform(0, 1), rng, weight=1.0),
+    ParamScale(kappa_noncoding, 0.1, Uniform(0, 1), rng, weight=0.1),
+    ParamScale(kappa_1stpos, 0.1, Uniform(0, 1), rng, weight=0.1),
+    ParamScale(kappa_2ndpos, 0.1, Uniform(0, 1), rng, weight=0.1),
+    ParamScale(kappa_3rdpos, 0.1, Uniform(0, 1), rng, weight=0.1),
+    NarrowExchange(tree, rng, weight=15.0),
+    WideExchange(tree, rng, weight=3.0),
     WilsonBalding(tree, rng, weight=3.0),
-    NodeSlide(tree, Uniform(0, 1), rng, weight=48.0),
+    NodeSlide(tree, Uniform(0, 1), rng, weight=15.0),
     RootScale(tree, 0.1, Uniform(0, 1), rng, weight=3.0),
     TreeScale(tree, 0.1, Uniform(0, 1), rng, weight=2.0),
     DeltaExchange(
@@ -86,6 +92,7 @@ operators = [
         rng=rng,
         weight=2.0,
     ),
+    ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
 ]
 
 # TODO: HKY substitution
