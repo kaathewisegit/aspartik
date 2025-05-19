@@ -38,13 +38,7 @@ pub struct Poisson {
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(
-		module = "aspartik.stats.distributions",
-		frozen,
-		eq,
-		hash,
-		str
-	)
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum PoissonError {
 	/// The lambda is NaN, zero or less than zero.

@@ -1,11 +1,14 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-use crate::distribution::{Continuous, ContinuousCDF};
+use core::f64;
+
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
-use crate::statistics::*;
-use core::f64;
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the
 /// [Exp](https://en.wikipedia.org/wiki/Exp_distribution)
@@ -48,13 +51,7 @@ impl_pymethods! {for Exp;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(
-		module = "aspartik.stats.distributions",
-		frozen,
-		eq,
-		hash,
-		str
-	)
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum ExpError {
 	/// The rate is NaN, zero or less than zero.

@@ -1,6 +1,14 @@
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::{Distribution, Mode};
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 use core::f64;
+
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Laplace](https://en.wikipedia.org/wiki/Laplace_distribution)
 /// distribution.
@@ -16,14 +24,34 @@ use core::f64;
 /// assert_eq!(n.pdf(1.0), 0.18393972058572117);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+)]
 pub struct Laplace {
 	location: f64,
 	scale: f64,
 }
 
+#[cfg(feature = "python")]
+impl_pymethods! {for Laplace;
+	new(location: f64, scale: f64) throws LaplaceError;
+	get(py_location) location: f64;
+	get(py_scale) scale: f64;
+	repr("Laplace(location={}, scale={})", location, scale);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
+	sample;
+}
+
 /// Represents the errors that can occur when creating a [`Laplace`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+)]
 pub enum LaplaceError {
 	/// The location is NaN.
 	LocationInvalid,
@@ -31,6 +59,9 @@ pub enum LaplaceError {
 	/// The scale is NaN, zero or less than zero.
 	ScaleInvalid,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(LaplaceError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for LaplaceError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {

@@ -1,10 +1,12 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-use crate::distribution::{Continuous, ContinuousCDF};
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
-use crate::statistics::*;
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Continuous
 /// Uniform](https://en.wikipedia.org/wiki/Uniform_distribution_(continuous))
@@ -47,13 +49,7 @@ impl_pymethods! {for Uniform;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(
-		module = "aspartik.stats.distributions",
-		frozen,
-		eq,
-		hash,
-		str
-	)
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum UniformError {
 	/// The minimum is NaN or infinite.

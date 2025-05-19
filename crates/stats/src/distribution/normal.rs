@@ -1,8 +1,16 @@
-use crate::consts;
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::erf;
-use crate::statistics::*;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 use core::f64;
+
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
+use crate::{
+	consts,
+	distribution::{Continuous, ContinuousCDF},
+	function::erf,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
 /// distribution
@@ -18,14 +26,32 @@ use core::f64;
 /// assert_eq!(n.pdf(1.0), 0.2419707245191433497978);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+)]
 pub struct Normal {
 	mean: f64,
 	std_dev: f64,
 }
 
+#[cfg(feature = "python")]
+impl_pymethods! {for Normal;
+	new(mean: f64, std_dev: f64) throws NormalError;
+	repr("Normal(mean={}, std_dev={})", mean, std_dev);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
+	sample;
+}
+
 /// Represents the errors that can occur when creating a [`Normal`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+)]
 pub enum NormalError {
 	/// The mean is NaN.
 	MeanInvalid,
@@ -33,6 +59,9 @@ pub enum NormalError {
 	/// The standard deviation is NaN, zero or less than zero.
 	StandardDeviationInvalid,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(NormalError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for NormalError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {

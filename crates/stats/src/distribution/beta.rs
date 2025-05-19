@@ -1,8 +1,14 @@
 use approx::ulps_eq;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::{beta, gamma};
-use crate::statistics::*;
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	function::{beta, gamma},
+	statistics::{Distribution, Mode},
+};
 
 /// [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution)
 ///
@@ -18,14 +24,34 @@ use crate::statistics::*;
 /// assert_almost_eq!(n.pdf(0.5), 1.5, 1e-14);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+)]
 pub struct Beta {
 	shape_a: f64,
 	shape_b: f64,
 }
 
+#[cfg(feature = "python")]
+impl_pymethods! {for Beta;
+	new(shape_a: f64, shape_b: f64) throws BetaError;
+	get(py_shape_a) shape_a: f64;
+	get(py_shape_b) shape_b: f64;
+	repr("Beta(shape_a={}, shape_b={})", shape_a, shape_b);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
+	sample;
+}
+
 /// Represents the errors that can occur when creating a [`Beta`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+)]
 pub enum BetaError {
 	/// The alpha parameter (α) is NaN, infinite, zero or negative.
 	InvalidAlpha,
@@ -33,6 +59,9 @@ pub enum BetaError {
 	/// The beta parameter (β) is NaN, infinite, zero or negative.
 	InvalidBeta,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(BetaError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for BetaError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {

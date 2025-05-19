@@ -322,17 +322,25 @@ use pyo3::prelude::*;
 pub fn pymodule(py: Python) -> PyResult<Bound<'_, PyModule>> {
 	let m = PyModule::new(py, "distributions")?;
 
+	m.add_class::<Beta>()?;
+	m.add_class::<Exp>()?;
 	m.add_class::<Gamma>()?;
+	m.add_class::<InverseGamma>()?;
+	m.add_class::<Laplace>()?;
+	m.add_class::<LogNormal>()?;
+	m.add_class::<Normal>()?;
 	m.add_class::<Poisson>()?;
 	m.add_class::<Uniform>()?;
-	m.add_class::<Exp>()?;
-	m.add_class::<LogNormal>()?;
 
+	m.add_class::<BetaError>()?;
+	m.add_class::<ExpError>()?;
 	m.add_class::<GammaError>()?;
+	m.add_class::<InverseGammaError>()?;
+	m.add_class::<LaplaceError>()?;
+	m.add_class::<LogNormalError>()?;
+	m.add_class::<NormalError>()?;
 	m.add_class::<PoissonError>()?;
 	m.add_class::<UniformError>()?;
-	m.add_class::<ExpError>()?;
-	m.add_class::<LogNormalError>()?;
 
 	Ok(m)
 }

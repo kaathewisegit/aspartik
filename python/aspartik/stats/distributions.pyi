@@ -39,6 +39,27 @@ class Distribution(Protocol):
 class Sample[T](Protocol):
     def sample(self, rng: Rng) -> T: ...
 
+# Concrete distributions
+
+class Beta(ContinuousCDF, Continuous, Distribution, Sample):
+    def __init__(self, shape_a: float, shape_b: float): ...
+    @property
+    def shape_a(self) -> float: ...
+    @property
+    def shape_b(self) -> float: ...
+
+class BetaError:
+    InvalidAlpha: BetaError
+    InvalidBeta: BetaError
+
+class Exp(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
+    def __init__(self, rate: float): ...
+    @property
+    def rate(self) -> float: ...
+
+class ExpError:
+    RateInvalid: ExpError
+
 class Gamma(ContinuousCDF, Continuous, Distribution, Sample):
     def __init__(self, shape: float, rate: float): ...
     @property
@@ -50,6 +71,46 @@ class GammaError:
     ShapeInvalid: GammaError
     RateInvalid: GammaError
     ShapeAndRateInfinite: GammaError
+
+class InverseGamma(ContinuousCDF, Continuous, Distribution, Sample):
+    def __init__(self, shape: float, rate: float): ...
+    @property
+    def shape(self) -> float: ...
+    @property
+    def rate(self) -> float: ...
+
+class InverseGammaError:
+    ShapeInvalid: InverseGammaError
+    RateInvalid: InverseGammaError
+
+class Laplace(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
+    def __init__(self, location: float, scale: float): ...
+    @property
+    def location(self) -> float: ...
+    @property
+    def scale(self) -> float: ...
+
+class LaplaceError:
+    LocationInvalid: LaplaceError
+    ScaleInvalid: LaplaceError
+
+class LogNormal(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
+    def __init__(self, location: float, scale: float): ...
+    @property
+    def location(self) -> float: ...
+    @property
+    def scale(self) -> float: ...
+
+class LogNormalError:
+    LocationInvalid: LogNormalError
+    ScaleInvalid: LogNormalError
+
+class Normal(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
+    def __init__(self, mean: float, std_dev: float): ...
+
+class NormalError:
+    MeanInvalid: NormalError
+    StandardDeviationInvalid: NormalError
 
 class Poisson(DiscreteCDF, Discrete[float], Distribution, Sample[int]):
     def __init__(self, lambda_: float): ...
@@ -70,22 +131,3 @@ class UniformError:
     MinInvalid: UniformError
     MaxInvalid: UniformError
     MaxNotGreaterThanMin: UniformError
-
-class Exp(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
-    def __init__(self, rate: float): ...
-    @property
-    def rate(self) -> float: ...
-
-class ExpError:
-    RateInvalid: ExpError
-
-class LogNormal(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
-    def __init__(self, location: float, scale: float): ...
-    @property
-    def location(self) -> float: ...
-    @property
-    def scale(self) -> float: ...
-
-class LogNormalError:
-    LocationInvalid: LogNormalError
-    ScaleInvalid: LogNormalError

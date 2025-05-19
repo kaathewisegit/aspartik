@@ -1,8 +1,14 @@
 use approx::ulps_eq;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::gamma;
-use crate::statistics::*;
+#[cfg(feature = "python")]
+use crate::python_macros::{impl_pyerr, impl_pymethods};
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	function::gamma,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Inverse
 /// Gamma](https://en.wikipedia.org/wiki/Inverse-gamma_distribution)
@@ -20,14 +26,34 @@ use crate::statistics::*;
 /// assert_eq!(n.pdf(1.0), 0.07554920138253064);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+)]
 pub struct InverseGamma {
 	shape: f64,
 	rate: f64,
 }
 
+#[cfg(feature = "python")]
+impl_pymethods! {for InverseGamma;
+	new(shape: f64, rate: f64) throws InverseGammaError;
+	get(py_shape) shape: f64;
+	get(py_rate) rate: f64;
+	repr("Gamma(shape={}, rate={})", shape, rate);
+	Continuous;
+	ContinuousCDF;
+	Distribution;
+	sample;
+}
+
 /// Represents the errors that can occur when creating an [`InverseGamma`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+)]
 pub enum InverseGammaError {
 	/// The shape is NaN, infinite, zero or less than zero.
 	ShapeInvalid,
@@ -35,6 +61,9 @@ pub enum InverseGammaError {
 	/// The rate is NaN, infinite, zero or less than zero.
 	RateInvalid,
 }
+
+#[cfg(feature = "python")]
+impl_pyerr!(InverseGammaError, pyo3::exceptions::PyValueError);
 
 impl core::fmt::Display for InverseGammaError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {

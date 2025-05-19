@@ -1,13 +1,16 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-use crate::consts;
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::erf;
+use core::f64;
+
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
-use crate::statistics::*;
-use core::f64;
+use crate::{
+	consts,
+	distribution::{Continuous, ContinuousCDF},
+	function::erf,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the
 /// [Log-normal](https://en.wikipedia.org/wiki/Log-normal_distribution)
@@ -51,13 +54,7 @@ impl_pymethods! {for LogNormal;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(
-		module = "aspartik.stats.distributions",
-		frozen,
-		eq,
-		hash,
-		str
-	)
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum LogNormalError {
 	/// The location is NaN.

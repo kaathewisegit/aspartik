@@ -52,7 +52,7 @@ impl_pymethods! {for Gamma;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(frozen, eq, hash, str, module = "stats.distributions")
+	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum GammaError {
 	/// The shape is NaN, zero or less than zero.
