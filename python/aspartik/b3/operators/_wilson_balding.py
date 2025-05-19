@@ -1,16 +1,17 @@
 from math import log
+from dataclasses import dataclass
 
 from .. import Proposal, Tree
 from ...rng import Rng
 
 
+@dataclass
 class WilsonBalding:
     """TODO."""
 
-    def __init__(self, tree: Tree, rng: Rng, weight: float = 1):
-        self.tree = tree
-        self.rng = rng
-        self.weight = weight
+    tree: Tree
+    rng: Rng
+    weight: float = 1
 
     def propose(self) -> Proposal:
         tree = self.tree

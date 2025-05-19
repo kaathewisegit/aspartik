@@ -1,9 +1,12 @@
+from dataclasses import dataclass
+
 from ._util import scale_on_range
 from .. import Proposal, Tree
 from ...rng import Rng
 from ...stats.distributions import Distribution
 
 
+@dataclass
 class NodeSlide:
     """Operator which slides a random node between its parent and children.
 
@@ -12,24 +15,15 @@ class NodeSlide:
     node cannot slide past its parent).
     """
 
-    def __init__(
-        self,
-        tree: Tree,
-        distribution: Distribution,
-        rng: Rng,
-        weight: float = 1,
-    ):
-        """
-        Args:
-            tree: The tree to edit.
-            distribution:
-                The distribution which will sample the new node height on the
-                interval between its parent and the closest child.
-        """
-        self.tree = tree
-        self.distribution = distribution
-        self.rng = rng
-        self.weight = weight
+    tree: Tree
+    """The tree to edit."""
+    distribution: Distribution
+    """
+    The distribution which will sample the new node height on the interval
+    between its parent and the closest child.
+    """
+    rng: Rng
+    weight: float = 1
 
     def propose(self) -> Proposal:
         """

@@ -1,9 +1,11 @@
+from dataclasses import dataclass
+
 from .. import Tree
 
 
+@dataclass
 class ConstantPopulation:
-    def __init__(self, tree: Tree):
-        self.tree = tree
+    tree: Tree
 
     # TODO
     def probability(self) -> float: ...

@@ -1,9 +1,11 @@
 from typing import List
+from dataclasses import dataclass
 
 from .. import Proposal, Parameter
 from ...rng import Rng
 
 
+@dataclass
 class DeltaExchange:
     """Operator which tweaks a multidimensional parameter without changing its sum.
 
@@ -14,37 +16,28 @@ class DeltaExchange:
     decrement is `delta * weights[inc_param] / weights[dec_param]`.
     """
 
-    def __init__(
-        self,
-        params: List[Parameter],
-        weights: List[float],
-        factor: float,
-        rng: Rng,
-        weight: float = 1,
-    ):
-        """
-        Args:
-            params:
-                A list of parameters to edit.  Two random ones will be sampled
-                for each proposal.
-            weights:
-                The weights which define the sum relations between parameters.
-                Must have the same length as the `params` list.
-            factor:
-                The move size is a random value between 0 and 1 multiplied by
-                `factor`.
-        """
+    params: List[Parameter]
+    """
+    A list of parameters to edit.  Two random ones will be sampled for each
+    proposal.
+    """
+    weights: List[float]
+    """
+    The weights which define the sum relations between parameters.  Must have
+    the same length as the `params` list.
+    """
+    factor: float
+    """
+    The move size is a random value between 0 and 1 multiplied by `factor`.
+    """
+    rng: Rng
+    weight: float = 1
 
-        if len(params) != len(weights):
+    def __post_init__(self):
+        if len(self.params) != len(self.weights):
             raise ValueError(
-                f"Length of `params` and `weight` must be the same.  Got {len(params)} and {len(weights)}"
+                f"Length of `params` and `weight` must be the same.  Got {len(self.params)} and {len(self.weights)}"
             )
-
-        self.params = params
-        self.weights = weights
-        self.factor = factor
-        self.weight = weight
-        self.rng = rng
 
         self.dimensions = []
         for param_i, param in enumerate(self.params):

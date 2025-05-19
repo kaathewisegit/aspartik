@@ -1,25 +1,26 @@
+from dataclasses import dataclass
+
 from .. import Parameter
+from ... import stats
 
 
+@dataclass
 class Distribution:
     """Calculates prior probability of a parameter according to a distribution."""
 
-    def __init__(self, param: Parameter, distribution):
-        """
-        Args:
-            param:
-                Parameter to estimate.  Can be either `Real` or `Integer` for
-                discrete distributions.
-            distribution:
-                Distribution against which the parameter prior is calculated.
-        """
+    param: Parameter
+    """
+    Parameter to estimate.  Can be either `Real` or `Integer` for discrete
+    distributions.
+    """
+    distribution: stats.distributions.Distribution
+    """Distribution against which the parameter prior is calculated."""
 
-        self._param = param
-
-        if hasattr(distribution, "pdf"):
-            self.distr_prob = distribution.ln_pdf
-        elif hasattr(distribution, "pmf"):
-            self.distr_prob = distribution.ln_pmf
+    def __post_init__(self):
+        if hasattr(self.distribution, "pdf"):
+            self.distr_prob = self.distribution.ln_pdf  # type: ignore
+        elif hasattr(self.distribution, "pmf"):
+            self.distr_prob = self.distribution.ln_pmf  # type: ignore
         else:
             raise Exception("not a distribution")
 
@@ -31,7 +32,7 @@ class Distribution:
 
         out = 0
 
-        for i in range(len(self._param)):
-            out += self.distr_prob(self._param[i])
+        for i in range(len(self.param)):
+            out += self.distr_prob(self.param[i])
 
         return out

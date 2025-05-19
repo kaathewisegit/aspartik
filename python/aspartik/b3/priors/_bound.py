@@ -1,6 +1,10 @@
 from math import inf
+from dataclasses import dataclass
+
+from .. import Parameter
 
 
+@dataclass
 class Bound:
     """A prior which puts limits on the value of a parameter
 
@@ -14,20 +18,15 @@ class Bound:
     the bounds aren't satisfied.
     """
 
-    def __init__[T: int | float](self, param, lower: T = 0, upper: T = inf):
-        """Creates a bound prior
-
-        Args:
-            param: The parameter to be constrained.
-            lower: Minimum value of the parameter.
-            upper: Maximum value of the parameter, strictly compared.
-        """
-        self.param = param
-        self.lower = lower
-        self.upper = upper
+    param: Parameter
+    """The parameter to be constrained."""
+    lower: int | float = 0
+    """Minimum possible value of the parameter, inclusive."""
+    upper: int | float = inf
+    """Maximum value of the parameter, exclusive (strictly compared)."""
 
     def probability(self) -> float:
-        if self.lower <= self.param < self.upper:
-            return 1
-        else:
-            return -inf
+        for i in range(len(self.param)):
+            if not (self.lower <= self.param[i] < self.upper):
+                return -inf
+        return 1

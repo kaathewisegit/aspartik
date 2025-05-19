@@ -1,10 +1,12 @@
-import math
+from math import log
+from dataclasses import dataclass
 
 from .. import Tree, Proposal
 from ..tree import Internal, Node
 from ...rng import Rng
 
 
+@dataclass
 class NarrowExchange:
     """Operator which exchanges the parents of two neighbouring nodes.
 
@@ -15,10 +17,9 @@ class NarrowExchange:
     *uncle*.
     """
 
-    def __init__(self, tree: Tree, rng: Rng, weight: float = 1):
-        self.tree = tree
-        self.weight = weight
-        self.rng = rng
+    tree: Tree
+    rng: Rng
+    weight: float = 1
 
     def propose(self) -> Proposal:
         tree = self.tree
@@ -61,11 +62,12 @@ class NarrowExchange:
 
         after = int(tree.is_grandparent(parent)) + int(tree.is_grandparent(uncle))
         num_grandparents_after = num_grandparents_before - before + after
-        ratio = math.log(num_grandparents_before / num_grandparents_after)
+        ratio = log(num_grandparents_before / num_grandparents_after)
 
         return Proposal.Hastings(ratio)
 
 
+@dataclass
 class WideExchange:
     """Operator which exchanges the parent of two random nodes.
 
@@ -77,10 +79,9 @@ class WideExchange:
     its child) the operator aborts with `Proposal.Reject`.
     """
 
-    def __init__(self, tree: Tree, rng: Rng, weight: float = 1):
-        self.tree = tree
-        self.weight = weight
-        self.rng = rng
+    tree: Tree
+    rng: Rng
+    weight: float = 1
 
     def propose(self) -> Proposal:
         tree = self.tree

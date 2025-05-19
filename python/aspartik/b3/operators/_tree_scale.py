@@ -1,4 +1,5 @@
 from math import log
+from dataclasses import dataclass
 
 from ._util import sample_range
 from .. import Proposal, Tree
@@ -6,6 +7,7 @@ from ...rng import Rng
 from ...stats.distributions import Distribution
 
 
+@dataclass
 class TreeScale:
     """Full tree scale operator.
 
@@ -14,31 +16,22 @@ class TreeScale:
     since leaves all have the weight of 0).
     """
 
-    def __init__(
-        self,
-        tree: Tree,
-        factor: float,
-        distribution: Distribution,
-        rng: Rng,
-        weight: float = 1,
-    ):
-        """
-        Args:
-            tree: The tree to scale.
-            factor:
-                The scaling ratio will be sampled from `(factor, 1 / factor)`.
-                So, the factor must be between 0 and 1 and the smaller it is
-                the larger the steps will be.
-            distribution: Distribution from which the scale is sampled.
-        """
+    tree: Tree
+    """The tree to scale."""
+    factor: float
+    """
+    The scaling ratio will be sampled from `(factor, 1 / factor)`.  So, the
+    factor must be between 0 and 1 and the smaller it is the larger the steps
+    will be.
+    """
+    distribution: Distribution
+    """Distribution from which the scale is sampled."""
+    rng: Rng
+    weight: float = 1
 
-        self.tree = tree
-        if not 0 < factor < 1:
-            raise ValueError(f"factor must be between 0 and 1, got {factor}")
-        self.factor = factor
-        self.distribution = distribution
-        self.rng = rng
-        self.weight = weight
+    def __post_init__(self):
+        if not 0 < self.factor < 1:
+            raise ValueError(f"factor must be between 0 and 1, got {self.factor}")
 
     def propose(self) -> Proposal:
         tree = self.tree
