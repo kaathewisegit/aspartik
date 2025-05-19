@@ -11,9 +11,12 @@ class ParamScale:
 
     This operator is analogous to BEAST2's `ScaleOperator`, except it only
     works for parameters.
+
+    Note that this operator doesn't have the upper/lower bounds BEAST2's analog
+    has.  Instead the `Bound` prior should be used to put limits on the
+    parameter values.
     """
 
-    # TODO: upper/lower?
     def __init__(
         self,
         param: Parameter,
