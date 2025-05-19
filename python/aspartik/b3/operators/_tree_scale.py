@@ -3,6 +3,7 @@ from math import log
 from ._util import sample_range
 from .. import Proposal, Tree
 from ...rng import Rng
+from ...stats.distributions import Distribution
 
 
 class TreeScale:
@@ -14,7 +15,12 @@ class TreeScale:
     """
 
     def __init__(
-        self, tree: Tree, factor: float, distribution, rng: Rng, weight: float = 1
+        self,
+        tree: Tree,
+        factor: float,
+        distribution: Distribution,
+        rng: Rng,
+        weight: float = 1,
     ):
         """
         Args:

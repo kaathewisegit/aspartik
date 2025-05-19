@@ -4,6 +4,7 @@ from typing import Literal
 from ._util import sample_range
 from .. import Proposal, Parameter
 from ...rng import Rng
+from ...stats.distributions import Distribution
 
 
 class ParamScale:
@@ -21,7 +22,7 @@ class ParamScale:
         self,
         param: Parameter,
         factor: float,
-        distribution,
+        distribution: Distribution,
         rng: Rng,
         dimensions: Literal["one", "all", "independent"] = "all",
         weight: float = 1,

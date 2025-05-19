@@ -1,6 +1,5 @@
 from math import inf, exp, log, isfinite
 from typing import Tuple
-
 from ...rng import Rng
 
 
@@ -13,7 +12,7 @@ def _is_on_range(distribution) -> bool:
     return isfinite(distribution.lower) and isfinite(distribution.upper)
 
 
-def _sample_rescale(low, high, distribution, rng):
+def _sample_rescale(low, high, distribution, rng: Rng):
     x = distribution.sample(rng)
     ratio = (x - distribution.lower) / (distribution.upper - distribution.lower)
     return interval_to_range(ratio, low, high)
