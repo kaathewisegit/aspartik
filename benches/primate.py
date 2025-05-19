@@ -2,6 +2,7 @@ from aspartik.b3 import MCMC, Tree, Parameter, Likelihood
 from aspartik.b3.loggers import TreeLogger
 from aspartik.b3.operators import (
     TreeScale,
+    RootScale,
     NarrowExchange,
     WideExchange,
     NodeSlide,
@@ -71,6 +72,7 @@ operators = [
     WideExchange(tree, rng, weight=25.0),
     WilsonBalding(tree, rng, weight=3.0),
     NodeSlide(tree, Uniform(0, 1), rng, weight=48.0),
+    RootScale(tree, 0.1, Uniform(0, 1), rng, weight=3.0),
     TreeScale(tree, 0.1, Uniform(0, 1), rng, weight=2.0),
     DeltaExchange(
         params=[
