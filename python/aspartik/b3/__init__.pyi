@@ -87,7 +87,7 @@ class MCMC:
         params: Sequence[Parameter],
         priors: Sequence[Prior],
         operators: Sequence[Operator],
-        likelihoods: Likelihood,
+        likelihoods: Sequence[Likelihood],
         loggers: Sequence[Logger],
         rng: Rng,
     ): ...

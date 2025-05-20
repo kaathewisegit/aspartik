@@ -16,7 +16,7 @@ use rng::PyRng;
 
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
 pub struct Mcmc {
-	likelihood: Mutex<f64>,
+	posterior: Mutex<f64>,
 
 	burnin: usize,
 	length: usize,
@@ -30,7 +30,7 @@ pub struct Mcmc {
 
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
-	likelihoods: Py<PyLikelihood>,
+	likelihoods: Vec<Py<PyLikelihood>>,
 	loggers: Vec<PyLogger>,
 	rng: Py<PyRng>,
 }
@@ -52,7 +52,7 @@ impl Mcmc {
 		params: Vec<PyParameter>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
-		likelihoods: Py<PyLikelihood>,
+		likelihoods: Vec<Py<PyLikelihood>>,
 		loggers: Vec<PyLogger>,
 		rng: Py<PyRng>,
 	) -> Result<Mcmc> {
@@ -64,7 +64,7 @@ impl Mcmc {
 		let scheduler = WeightedScheduler::new(py, operators)?;
 
 		Ok(Mcmc {
-			likelihood: Mutex::new(f64::NEG_INFINITY),
+			posterior: Mutex::new(f64::NEG_INFINITY),
 			burnin,
 			length,
 			trees,
@@ -132,17 +132,20 @@ impl Mcmc {
 			}
 		}
 
-		// calculate tree likelihood
-		let new_likelihood =
-			self.likelihoods.get().inner().propose(py)?;
+		let mut likelihood = 0.0;
+		for py_likelihood in &self.likelihoods {
+			likelihood +=
+				py_likelihood.get().inner().propose(py)?;
+		}
+		let new_posterior = likelihood + prior;
 
-		let posterior = new_likelihood + prior;
+		let old_posterior = *self.posterior.lock();
 
-		let ratio = posterior - *self.likelihood.lock() + hastings;
+		let ratio = new_posterior - old_posterior + hastings;
 
 		let random_0_1 = self.rng.get().inner().random::<f64>();
 		if ratio > random_0_1.ln() {
-			*self.likelihood.lock() = posterior;
+			*self.posterior.lock() = new_posterior;
 
 			self.accept()?;
 		} else {
@@ -157,7 +160,9 @@ impl Mcmc {
 			tree.get().inner().accept();
 		}
 
-		self.likelihoods.get().inner().accept();
+		for likelihood in &self.likelihoods {
+			likelihood.get().inner().accept();
+		}
 
 		let mut backup_params = self.backup_params.lock();
 		for i in 0..self.params.len() {
@@ -172,7 +177,9 @@ impl Mcmc {
 			tree.get().inner().reject();
 		}
 
-		self.likelihoods.get().inner().reject();
+		for likelihood in &self.likelihoods {
+			likelihood.get().inner().reject();
+		}
 
 		let backup_params = self.backup_params.lock();
 		for i in 0..self.params.len() {
