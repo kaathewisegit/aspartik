@@ -249,7 +249,7 @@ impl Tree {
 	/// A breadth-first order of internals starting from the root.
 	pub(crate) fn full_update(&self) -> Vec<Internal> {
 		let mut queue = VecDeque::from([self.root()]);
-		let mut out = Vec::new();
+		let mut out = Vec::from([self.root()]);
 		while let Some(node) = queue.pop_front() {
 			let (left, right) = self.children_of(node);
 
@@ -263,6 +263,7 @@ impl Tree {
 			}
 		}
 
+		out.reverse();
 		out
 	}
 
