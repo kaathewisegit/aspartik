@@ -5,8 +5,10 @@ function.
 """
 
 from dataclasses import dataclass
+from collections.abc import Mapping
+import json
 
-from . import Tree, MCMC
+from . import MCMC, Tree, Parameter, Prior
 
 
 @dataclass
@@ -42,3 +44,34 @@ class PrintLogger:
         print(
             f"{index:>16}{mcmc.posterior:>16.2f}{mcmc.likelihood:>16.2f}{mcmc.prior:>16.2f}"
         )
+
+
+@dataclass
+class ValueLogger:
+    map: Mapping[str, Parameter | Prior]
+    path: str
+    every: int
+
+    def __post_init__(self):
+        self._file = open(self.path, "w")
+        self._params = {}
+        self._priors = {}
+
+        for key, item in self.map.items():
+            if isinstance(item, Parameter):
+                self._params[key] = item
+            if isinstance(item, Prior):
+                self._priors[key] = item
+
+    def log(self, mcmc: MCMC, index: int):
+        entry = {}
+
+        for key, item in self._params.items():
+            entry[key] = item[0]
+
+        for key, item in self._priors.items():
+            entry[key] = item.probability()
+
+        entry_json = json.dumps(entry)
+        self._file.write(entry_json)
+        self._file.write("\n")

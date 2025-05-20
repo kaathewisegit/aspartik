@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Any, Optional, Sequence, Tuple, Protocol
+from typing import List, Any, Optional, Sequence, Tuple, Protocol, runtime_checkable
 from collections.abc import Iterator
 
 from ..rng import Rng
@@ -65,6 +65,7 @@ class Parameter:
 class Likelihood:
     def __init__(self, data: str, substitution: Any, tree: Tree): ...
 
+@runtime_checkable
 class Prior(Protocol):
     def probability(self) -> float: ...
 

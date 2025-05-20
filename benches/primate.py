@@ -1,5 +1,5 @@
 from aspartik.b3 import MCMC, Tree, Parameter, Likelihood
-from aspartik.b3.loggers import TreeLogger, PrintLogger
+from aspartik.b3.loggers import TreeLogger, PrintLogger, ValueLogger
 from aspartik.b3.operators import (
     ParamScale,
     EpochScale,
@@ -107,6 +107,26 @@ likelihood = Likelihood(
 loggers = [
     TreeLogger(tree=tree, path="b3.trees", every=1_000),
     PrintLogger(every=1_000),
+    ValueLogger(
+        {
+            "mutation_rate_noncoding": mutation_rate_noncoding,
+            "gamma_shape_noncoding": gamma_shape_noncoding,
+            "kappa_noncoding": kappa_noncoding,
+            "mutation_rate_1stpos": mutation_rate_1stpos,
+            "gamma_shape_1stpos": gamma_shape_1stpos,
+            "kappa_1stpos": kappa_1stpos,
+            "mutation_rate_2ndpos": mutation_rate_2ndpos,
+            "gamma_shape_2ndpos": gamma_shape_2ndpos,
+            "kappa_2ndpos": kappa_2ndpos,
+            "mutation_rate_3rdpos": mutation_rate_3rdpos,
+            "gamma_shape_3rdpos": gamma_shape_3rdpos,
+            "kappa_3rdpos": kappa_3rdpos,
+            "birth_rate_y": birth_rate_y,
+            "clock_rate": clock_rate,
+        },
+        path="b3.log",
+        every=1_000,
+    ),
 ]
 
 mcmc = MCMC(

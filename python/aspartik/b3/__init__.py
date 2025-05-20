@@ -1,5 +1,13 @@
 # ruff: noqa: E402
 
+from typing import Protocol, runtime_checkable
+
+
+@runtime_checkable
+class Prior(Protocol):
+    def probability(self) -> float: ...
+
+
 from .._aspartik_rust_impl import _b3_rust_impl
 
 for item in ["Likelihood", "Parameter", "Proposal", "MCMC", "Tree"]:

@@ -1,8 +1,10 @@
 /target
 
-# test data
+# source data
 *.fasta
+# runtime output
 *.trees
+*.log
 
 # Python artifacts
 __pycache__/
