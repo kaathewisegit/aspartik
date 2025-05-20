@@ -4,14 +4,14 @@ from aspartik.b3.operators import (
     ParamScale,
     EpochScale,
     TreeScale,
-    # RootScale,
+    RootScale,
     NarrowExchange,
     WideExchange,
     NodeSlide,
     DeltaExchange,
     WilsonBalding,
 )
-from aspartik.b3.priors import Distribution
+from aspartik.b3.priors import Distribution, Yule
 from aspartik.b3.substitutions import JC
 from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import Rng
@@ -55,7 +55,7 @@ params = [
 
 # TODO: limit priors
 priors = [
-    # TODO: Yule model
+    Yule(tree, birth_rate_y),
     Distribution(birth_rate_y, Gamma(0.001, 1 / 1000.0)),
     Distribution(gamma_shape_noncoding, Exp(1.0)),
     Distribution(gamma_shape_1stpos, Exp(1.0)),
@@ -75,13 +75,13 @@ operators = [
     ParamScale(kappa_1stpos, 0.1, Uniform(0, 1), rng, weight=0.1),
     ParamScale(kappa_2ndpos, 0.1, Uniform(0, 1), rng, weight=0.1),
     ParamScale(kappa_3rdpos, 0.1, Uniform(0, 1), rng, weight=0.1),
-    EpochScale(tree, 0.1, Uniform(0, 1), rng, weight=4.0),
+    EpochScale(tree, 0.9, Uniform(0, 1), rng, weight=4.0),
     NarrowExchange(tree, rng, weight=15.0),
     WideExchange(tree, rng, weight=3.0),
     WilsonBalding(tree, rng, weight=3.0),
     NodeSlide(tree, Uniform(0, 1), rng, weight=15.0),
-    # RootScale(tree, 0.1, Uniform(0, 1), rng, weight=3.0),
-    TreeScale(tree, 0.1, Uniform(0, 1), rng, weight=2.0),
+    RootScale(tree, 0.9, Uniform(0, 1), rng, weight=3.0),
+    TreeScale(tree, 0.9, Uniform(0, 1), rng, weight=2.0),
     DeltaExchange(
         params=[
             mutation_rate_noncoding,
@@ -94,6 +94,7 @@ operators = [
         rng=rng,
         weight=2.0,
     ),
+    ParamScale(birth_rate_y, 0.1, Uniform(0, 1), rng, weight=3),
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
 ]
 
