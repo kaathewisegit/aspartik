@@ -12,7 +12,7 @@ from aspartik.b3.operators import (
     WilsonBalding,
 )
 from aspartik.b3.priors import Distribution, Yule
-from aspartik.b3.substitutions import JC
+from aspartik.b3.substitutions import HKY
 from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import Rng
 
@@ -98,9 +98,10 @@ operators = [
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
 ]
 
-# TODO: HKY substitution
+# TODO: frequencies from alignment
+model = HKY((0.25, 0.25, 0.25, 0.25), kappa_noncoding)
 likelihood = Likelihood(
-    data="crates/b3/data/primate-mdna.fasta", substitution=JC(), tree=tree
+    data="crates/b3/data/primate-mdna.fasta", substitution=model, tree=tree
 )
 
 loggers = [
@@ -109,7 +110,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=50_000,
+    length=5_000_000,
     trees=[tree],
     params=params,
     priors=priors,

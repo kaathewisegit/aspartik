@@ -75,7 +75,6 @@ class HKY:
     kappa: Parameter
 
     def __post_init__(self):
-        self.dimensions = 4
         # XXX: what delta should this use?
         if abs(sum(self.frequencies)) < 0.01:
             s = sum(self.frequencies)
