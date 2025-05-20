@@ -1,4 +1,6 @@
-from typing import List
+from typing import List, Tuple, ClassVar
+from dataclasses import dataclass
+from math import prod
 
 from .. import Parameter
 
@@ -7,26 +9,31 @@ def normalize(matrix: List[List[float]], coef: float) -> List[List[float]]:
     return [[element / coef for element in row] for row in matrix]
 
 
+@dataclass
 class JC:
-    def __init__(self):
-        self.dimensions = 4
-
-        s: List[List[float]] = [
+    dimensions: ClassVar[int] = 4
+    matrix: ClassVar[List[List[float]]] = normalize(
+        [
             [-3, 1, 1, 1],
             [1, -3, 1, 1],
             [1, 1, -3, 1],
             [1, 1, 1, -3],
-        ]
-        self.matrix = normalize(s, 3)
+        ],
+        3,
+    )
 
     def get_matrix(self):
         return self.matrix
 
 
+@dataclass
 class K80:
-    def __init__(self, kappa: Parameter):
-        self.dimensions = 4
-        self.kappa = kappa
+    dimensions: ClassVar[int] = 4
+    kappa: Parameter
+
+    def __post_init__(self):
+        # TODO: check that kappa is a single-dimensional real
+        pass
 
     def get_matrix(self):
         k = self.kappa[0]
@@ -41,10 +48,14 @@ class K80:
         return s
 
 
+@dataclass
 class F81:
-    def __init__(self, frequencies):
-        self.dimensions = 4
-        a, c, g, t = frequencies
+    dimensions: ClassVar[int] = 4
+    frequencies: Tuple[float, float, float, float]
+
+    def __post_init__(self):
+        # XXX: perhaps the frequencies should be made dynamic
+        a, c, g, t = self.frequencies
         s = [
             [a - 1, c, g, t],
             [a, c - 1, g, t],
@@ -57,22 +68,24 @@ class F81:
         return self.matrix
 
 
+@dataclass
 class HKY:
-    def __init__(self, frequencies, kappa: Parameter):
+    dimensions: ClassVar[int] = 4
+    frequencies: Tuple[float, float, float, float]
+    kappa: Parameter
+
+    def __post_init__(self):
         self.dimensions = 4
         # XXX: what delta should this use?
-        if abs(sum(frequencies)) < 0.01:
-            s = sum(frequencies)
+        if abs(sum(self.frequencies)) < 0.01:
+            s = sum(self.frequencies)
             raise ValueError(f"Sum of frequencies must be 1, got {s}")
 
-        if len(kappa) == 0:
+        if len(self.kappa) != 1:
             raise ValueError("Expected single-dimensional parameter")
 
-        if not kappa.is_real():
+        if not self.kappa.is_real():
             raise ValueError("Expected a real parameter")
-
-        self.frequencies = frequencies
-        self.kappa = kappa
 
     def get_matrix(self):
         k = self.kappa[0]
@@ -87,7 +100,10 @@ class HKY:
         for i in range(4):
             s[i][i] = -sum(s[i])
 
-        # TODO: normalize?
+        purine = a + g
+        pyrimidine = c + t
+        scale = 1.0 / (2.0 * (purine * pyrimidine + k * prod(self.frequencies)))
+        s = normalize(s, scale)
 
         return s
 
