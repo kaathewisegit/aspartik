@@ -15,6 +15,7 @@ use rng::PyRng;
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
 pub struct Mcmc {
 	posterior: Mutex<f64>,
+	likelihood: Mutex<f64>,
 
 	#[allow(unused)]
 	burnin: usize,
@@ -64,6 +65,7 @@ impl Mcmc {
 
 		Ok(Mcmc {
 			posterior: Mutex::new(f64::NEG_INFINITY),
+			likelihood: Mutex::new(f64::NEG_INFINITY),
 			burnin,
 			length,
 			trees,
@@ -102,11 +104,7 @@ impl Mcmc {
 
 	#[getter]
 	fn likelihood(&self) -> f64 {
-		let mut out = 0.0;
-		for likelihood in &self.likelihoods {
-			out += likelihood.get().inner().cached_likelihood();
-		}
-		out
+		*self.likelihood.lock()
 	}
 
 	#[getter]
@@ -170,6 +168,7 @@ impl Mcmc {
 
 		let random_0_1 = self.rng.get().inner().random::<f64>();
 		if ratio > random_0_1.ln() {
+			*self.likelihood.lock() = likelihood;
 			*self.posterior.lock() = new_posterior;
 
 			self.accept()?;

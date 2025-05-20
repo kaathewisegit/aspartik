@@ -43,7 +43,6 @@ pub struct GenericLikelihood<const N: usize> {
 	transitions: Transitions<N>,
 	calculator: DynCalculator<N>,
 	tree: Py<PyTree>,
-	cache: f64,
 }
 
 impl GenericLikelihood<4> {
@@ -68,7 +67,6 @@ impl GenericLikelihood<4> {
 			transitions,
 			calculator,
 			tree,
-			cache: f64::NEG_INFINITY,
 		};
 		Python::with_gil(|py| out.propose(py))?;
 		Ok(out)
@@ -81,17 +79,14 @@ impl<const N: usize> GenericLikelihood<N> {
 		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let full_update =
 			self.transitions.update(substitution_matrix, tree);
-		let nodes = if full_update {
+		let mut nodes = if full_update {
 			tree.full_update()
 		} else {
 			tree.nodes_to_update()
 		};
 
-		// No update, we can return the last calculated value
 		if nodes.is_empty() {
-			// we can unwrap here because on the first calculation
-			// (no likelihood yet) we'll do a full update
-			return Ok(self.cache);
+			nodes.push(tree.root());
 		}
 
 		let (nodes, edges, children) = tree.to_lists(&nodes);
@@ -103,7 +98,6 @@ impl<const N: usize> GenericLikelihood<N> {
 			&transitions,
 			&children,
 		);
-		self.cache = likelihood;
 		Ok(likelihood)
 	}
 
@@ -148,14 +142,6 @@ impl ErasedLikelihood {
 			ErasedLikelihood::Codon(inner) => inner.reject(),
 		}
 	}
-
-	pub fn cached_likelihood(&self) -> f64 {
-		match self {
-			ErasedLikelihood::Nucleotide4(inner) => inner.cache,
-			ErasedLikelihood::Nucleotide5(inner) => inner.cache,
-			ErasedLikelihood::Codon(inner) => inner.cache,
-		}
-	}
 }
 
 pub struct Likelihood {
@@ -173,10 +159,6 @@ impl Likelihood {
 
 	pub fn reject(&mut self) {
 		self.erased.reject();
-	}
-
-	pub fn cached_likelihood(&self) -> f64 {
-		self.erased.cached_likelihood()
 	}
 }
 
