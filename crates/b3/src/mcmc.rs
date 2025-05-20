@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use anyhow::{anyhow, Context, Result};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
@@ -18,6 +16,7 @@ use rng::PyRng;
 pub struct Mcmc {
 	posterior: Mutex<f64>,
 
+	#[allow(unused)]
 	burnin: usize,
 	length: usize,
 
@@ -78,20 +77,36 @@ impl Mcmc {
 		})
 	}
 
-	fn run(&self, py: Python) -> Result<()> {
-		for index in 0..self.length {
-			self.step(py).with_context(|| {
+	fn run(this: Py<Self>, py: Python) -> Result<()> {
+		let self_ = this.get();
+		for index in 0..self_.length {
+			self_.step(py).with_context(|| {
 				anyhow!("Failed on step {index}")
 			})?;
 
-			for logger in &self.loggers {
-				logger.log(py, index).with_context(|| {
-					anyhow!("Failed to log on step {index}")
-				})?;
+			for logger in &self_.loggers {
+				logger.log(py, this.clone_ref(py), index)
+					.with_context(|| {
+						anyhow!("Failed to log on step {index}")
+					})?;
 			}
 		}
 
 		Ok(())
+	}
+
+	#[getter]
+	fn posterior(&self) -> f64 {
+		*self.posterior.lock()
+	}
+
+	#[getter]
+	fn likelihood(&self) -> f64 {
+		let mut out = 0.0;
+		for likelihood in &self.likelihoods {
+			out += likelihood.get().inner().cached_likelihood();
+		}
+		out
 	}
 }
 

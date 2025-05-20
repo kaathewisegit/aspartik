@@ -1,5 +1,5 @@
 from aspartik.b3 import MCMC, Tree, Parameter, Likelihood
-from aspartik.b3.loggers import TreeLogger
+from aspartik.b3.loggers import TreeLogger, PrintLogger
 from aspartik.b3.operators import (
     ParamScale,
     EpochScale,
@@ -106,6 +106,7 @@ likelihood = Likelihood(
 
 loggers = [
     TreeLogger(tree=tree, path="b3.trees", every=1_000),
+    PrintLogger(every=1_000),
 ]
 
 mcmc = MCMC(

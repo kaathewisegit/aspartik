@@ -6,7 +6,7 @@ function.
 
 from dataclasses import dataclass
 
-from . import Tree
+from . import Tree, MCMC
 
 
 @dataclass
@@ -25,7 +25,18 @@ class TreeLogger:
     def __post_init__(self):
         self._file = open(self.path, "w")
 
-    def log(self, index: int):
+    def log(self, mcmc: MCMC, index: int):
         line = self.tree.newick()
         self._file.write(line)
         self._file.write("\n")
+
+
+@dataclass
+class PrintLogger:
+    every: int
+
+    def __post_init__(self):
+        print(f"{'step':>16}{'posterior':>16}{'likelihood':>16}{'prior':>16}")
+
+    def log(self, mcmc: MCMC, index: int):
+        print(f"{index:>16}{mcmc.posterior:>16.2f}{mcmc.likelihood:>16.2f}")

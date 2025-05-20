@@ -2,6 +2,7 @@ use anyhow::Result;
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 
+use crate::mcmc::Mcmc;
 use util::{py_bail, py_call_method};
 
 pub struct PyLogger {
@@ -28,12 +29,17 @@ impl<'py> FromPyObject<'py> for PyLogger {
 }
 
 impl PyLogger {
-	pub fn log(&self, py: Python, index: usize) -> Result<()> {
+	pub fn log(
+		&self,
+		py: Python,
+		mcmc: Py<Mcmc>,
+		index: usize,
+	) -> Result<()> {
 		if self.every.is_some_and(|every| index % every != 0) {
 			return Ok(());
 		}
 
-		py_call_method!(py, self.inner, "log", index)?;
+		py_call_method!(py, self.inner, "log", mcmc, index)?;
 
 		Ok(())
 	}
