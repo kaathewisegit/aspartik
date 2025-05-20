@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 
 use crate::{
 	substitution::PySubstitution,
-	tree::{PyTree, Tree},
+	tree::PyTree,
 	util::{dna_to_rows, read_fasta},
 	Transitions,
 };
@@ -42,14 +42,16 @@ pub struct GenericLikelihood<const N: usize> {
 	substitution: PySubstitution<N>,
 	transitions: Transitions<N>,
 	calculator: DynCalculator<N>,
-	cache: Option<f64>,
+	tree: Py<PyTree>,
+	cache: f64,
 }
 
 impl GenericLikelihood<4> {
 	fn new(
 		substitution: PySubstitution<4>,
 		sites: Vec<Vec<Vector<f64, 4>>>,
-	) -> Self {
+		tree: Py<PyTree>,
+	) -> Result<Self> {
 		let num_internals = sites[0].len() - 1;
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
@@ -61,21 +63,25 @@ impl GenericLikelihood<4> {
 			Box::new(CpuLikelihood::new(sites))
 		};
 
-		Self {
+		let mut out = Self {
 			substitution,
 			transitions,
 			calculator,
-			cache: None,
-		}
+			tree,
+			cache: f64::NEG_INFINITY,
+		};
+		Python::with_gil(|py| out.propose(py))?;
+		Ok(out)
 	}
 }
 
 impl<const N: usize> GenericLikelihood<N> {
-	fn propose(&mut self, py: Python, tree: &Tree) -> Result<f64> {
+	fn propose(&mut self, py: Python) -> Result<f64> {
+		let tree = &self.tree.get().inner();
 		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let full_update =
 			self.transitions.update(substitution_matrix, tree);
-		let nodes = if full_update || self.cache.is_none() {
+		let nodes = if full_update {
 			tree.full_update()
 		} else {
 			tree.nodes_to_update()
@@ -85,7 +91,7 @@ impl<const N: usize> GenericLikelihood<N> {
 		if nodes.is_empty() {
 			// we can unwrap here because on the first calculation
 			// (no likelihood yet) we'll do a full update
-			return Ok(self.cache.unwrap());
+			return Ok(self.cache);
 		}
 
 		let (nodes, edges, children) = tree.to_lists(&nodes);
@@ -97,7 +103,7 @@ impl<const N: usize> GenericLikelihood<N> {
 			&transitions,
 			&children,
 		);
-		self.cache = Some(likelihood);
+		self.cache = likelihood;
 		Ok(likelihood)
 	}
 
@@ -118,10 +124,10 @@ pub enum ErasedLikelihood {
 }
 
 impl ErasedLikelihood {
-	pub fn propose(&mut self, py: Python, tree: &Tree) -> Result<f64> {
+	pub fn propose(&mut self, py: Python) -> Result<f64> {
 		match self {
 			ErasedLikelihood::Nucleotide4(inner) => {
-				inner.propose(py, tree)
+				inner.propose(py)
 			}
 			_ => todo!(),
 		}
@@ -143,7 +149,7 @@ impl ErasedLikelihood {
 		}
 	}
 
-	pub fn cached_likelihood(&self) -> Option<f64> {
+	pub fn cached_likelihood(&self) -> f64 {
 		match self {
 			ErasedLikelihood::Nucleotide4(inner) => inner.cache,
 			ErasedLikelihood::Nucleotide5(inner) => inner.cache,
@@ -154,12 +160,11 @@ impl ErasedLikelihood {
 
 pub struct Likelihood {
 	erased: ErasedLikelihood,
-	tree: Py<PyTree>,
 }
 
 impl Likelihood {
 	pub fn propose(&mut self, py: Python) -> Result<f64> {
-		self.erased.propose(py, &self.tree.get().inner())
+		self.erased.propose(py)
 	}
 
 	pub fn accept(&mut self) {
@@ -170,7 +175,7 @@ impl Likelihood {
 		self.erased.reject();
 	}
 
-	pub fn cached_likelihood(&self) -> Option<f64> {
+	pub fn cached_likelihood(&self) -> f64 {
 		self.erased.cached_likelihood()
 	}
 }
@@ -197,13 +202,14 @@ impl PyLikelihood {
 		let seqs = read_fasta(data)?;
 		let sites = dna_to_rows(&seqs);
 
-		let erased_likelihood = ErasedLikelihood::Nucleotide4(
-			GenericLikelihood::new(substitution, sites),
-		);
+		let generic_likelihood =
+			GenericLikelihood::new(substitution, sites, tree)?;
+
+		let erased_likelihood =
+			ErasedLikelihood::Nucleotide4(generic_likelihood);
 
 		let likelihood = Likelihood {
 			erased: erased_likelihood,
-			tree,
 		};
 
 		Ok(PyLikelihood {
