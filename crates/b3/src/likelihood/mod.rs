@@ -92,7 +92,13 @@ impl<const N: usize> GenericLikelihood<N> {
 
 		let transitions = self.transitions.matrices(&edges);
 
-		Ok(self.calculator.propose(&nodes, &transitions, &children))
+		let likelihood = self.calculator.propose(
+			&nodes,
+			&transitions,
+			&children,
+		);
+		self.cache = Some(likelihood);
+		Ok(likelihood)
 	}
 
 	fn accept(&mut self) {
@@ -136,6 +142,14 @@ impl ErasedLikelihood {
 			ErasedLikelihood::Codon(inner) => inner.reject(),
 		}
 	}
+
+	pub fn cached_likelihood(&self) -> Option<f64> {
+		match self {
+			ErasedLikelihood::Nucleotide4(inner) => inner.cache,
+			ErasedLikelihood::Nucleotide5(inner) => inner.cache,
+			ErasedLikelihood::Codon(inner) => inner.cache,
+		}
+	}
 }
 
 pub struct Likelihood {
@@ -154,6 +168,10 @@ impl Likelihood {
 
 	pub fn reject(&mut self) {
 		self.erased.reject();
+	}
+
+	pub fn cached_likelihood(&self) -> Option<f64> {
+		self.erased.cached_likelihood()
 	}
 }
 
