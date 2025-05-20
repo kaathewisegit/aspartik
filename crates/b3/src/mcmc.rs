@@ -108,6 +108,20 @@ impl Mcmc {
 		}
 		out
 	}
+
+	#[getter]
+	fn prior(&self, py: Python) -> Result<f64> {
+		let mut out = 0.0;
+		for py_prior in &self.priors {
+			out += py_prior.probability(py)?;
+
+			// short-circuit on a rejection by any prior
+			if out == f64::NEG_INFINITY {
+				return Ok(out);
+			}
+		}
+		Ok(out)
+	}
 }
 
 impl Mcmc {
@@ -136,15 +150,11 @@ impl Mcmc {
 			tree.get().inner().verify()?;
 		}
 
-		let mut prior: f64 = 0.0;
-		for py_prior in &self.priors {
-			prior += py_prior.probability(py)?;
-
-			// short-circuit on a rejection by any prior
-			if prior == f64::NEG_INFINITY {
-				self.reject()?;
-				return Ok(());
-			}
+		let prior = self.prior(py)?;
+		// The proposal will be rejected regardless of likelihood
+		if prior == f64::NEG_INFINITY {
+			self.reject()?;
+			return Ok(());
 		}
 
 		let mut likelihood = 0.0;

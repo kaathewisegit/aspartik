@@ -39,4 +39,6 @@ class PrintLogger:
         print(f"{'step':>16}{'posterior':>16}{'likelihood':>16}{'prior':>16}")
 
     def log(self, mcmc: MCMC, index: int):
-        print(f"{index:>16}{mcmc.posterior:>16.2f}{mcmc.likelihood:>16.2f}")
+        print(
+            f"{index:>16}{mcmc.posterior:>16.2f}{mcmc.likelihood:>16.2f}{mcmc.prior:>16.2f}"
+        )
