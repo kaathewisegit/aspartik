@@ -17,7 +17,7 @@ from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import Rng
 
 rng = Rng(4)
-tree = Tree(12, rng)
+tree = Tree(9, rng)
 
 mutation_rate_noncoding = Parameter.Real(1.0)
 gamma_shape_noncoding = Parameter.Real(1.0)
@@ -101,7 +101,10 @@ operators = [
 # TODO: frequencies from alignment
 model = HKY((0.25, 0.25, 0.25, 0.25), kappa_noncoding)
 likelihood = Likelihood(
-    data="crates/b3/data/primate-mdna.fasta", substitution=model, tree=tree
+    data="crates/b3/data/primate-mdna-full-aligned.fasta",
+    substitution=model,
+    tree=tree,
+    use_gpu=False,
 )
 
 loggers = [
@@ -131,7 +134,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=5_000_000,
+    length=100_000,
     trees=[tree],
     params=params,
     priors=priors,

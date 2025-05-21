@@ -63,7 +63,9 @@ class Parameter:
     def is_boolean(self) -> bool: ...
 
 class Likelihood:
-    def __init__(self, data: str, substitution: Any, tree: Tree): ...
+    def __init__(
+        self, data: str, substitution: Any, tree: Tree, use_gpu: bool = False
+    ): ...
 
 @runtime_checkable
 class Prior(Protocol):

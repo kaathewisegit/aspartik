@@ -55,13 +55,12 @@ impl GenericLikelihood<4> {
 		substitution: PySubstitution<4>,
 		sites: Vec<Vec<Vector<f64, 4>>>,
 		tree: Py<PyTree>,
+		use_gpu: bool,
 	) -> Result<Self> {
 		let num_internals = sites[0].len() - 1;
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
-		let size = sites[0].len() * sites.len();
-		// XXX: establish a heuristic
-		let calculator: DynCalculator<4> = if size > 100_000 {
+		let calculator: DynCalculator<4> = if use_gpu {
 			Box::new(GpuLikelihood::new(sites))
 		} else {
 			Box::new(CpuLikelihood::new(sites))
@@ -204,16 +203,22 @@ impl PyLikelihood {
 #[pymethods]
 impl PyLikelihood {
 	#[new]
+	#[pyo3(signature = (data, substitution, tree, use_gpu = false))]
 	fn new4(
 		data: &str,
 		substitution: PySubstitution<4>,
 		tree: Py<PyTree>,
+		use_gpu: bool,
 	) -> Result<Self> {
 		let seqs = read_fasta(data)?;
 		let sites = dna_to_rows(&seqs);
 
-		let generic_likelihood =
-			GenericLikelihood::new(substitution, sites, tree)?;
+		let generic_likelihood = GenericLikelihood::new(
+			substitution,
+			sites,
+			tree,
+			use_gpu,
+		)?;
 
 		let erased_likelihood =
 			ErasedLikelihood::Nucleotide4(generic_likelihood);
