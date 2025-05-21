@@ -42,6 +42,11 @@ pub struct GenericLikelihood<const N: usize> {
 	substitution: PySubstitution<N>,
 	transitions: Transitions<N>,
 	calculator: DynCalculator<N>,
+	/// Last accepted likelihood
+	cache: f64,
+	/// Last calculated likelihood.  It's different from the cache, because
+	/// it might get rejected.
+	last: f64,
 	tree: Py<PyTree>,
 }
 
@@ -67,8 +72,13 @@ impl GenericLikelihood<4> {
 			transitions,
 			calculator,
 			tree,
+			cache: f64::NAN,
+			last: f64::NAN,
 		};
 		Python::with_gil(|py| out.propose(py))?;
+		// propose sets `last` and accept updates the cache, so neither
+		// cache nor last will be NaN.
+		out.accept();
 		Ok(out)
 	}
 }
@@ -79,14 +89,15 @@ impl<const N: usize> GenericLikelihood<N> {
 		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let full_update =
 			self.transitions.update(substitution_matrix, tree);
-		let mut nodes = if full_update {
+		let nodes = if full_update {
 			tree.full_update()
 		} else {
 			tree.nodes_to_update()
 		};
 
+		// no tree update, return the cache
 		if nodes.is_empty() {
-			nodes.push(tree.root());
+			return Ok(self.cache);
 		}
 
 		let (nodes, edges, children) = tree.to_lists(&nodes);
@@ -98,10 +109,12 @@ impl<const N: usize> GenericLikelihood<N> {
 			&transitions,
 			&children,
 		);
+		self.last = likelihood;
 		Ok(likelihood)
 	}
 
 	fn accept(&mut self) {
+		self.cache = self.last;
 		self.calculator.accept();
 	}
 
@@ -142,6 +155,14 @@ impl ErasedLikelihood {
 			ErasedLikelihood::Codon(inner) => inner.reject(),
 		}
 	}
+
+	pub fn cached_likelihood(&self) -> f64 {
+		match self {
+			ErasedLikelihood::Nucleotide4(inner) => inner.cache,
+			ErasedLikelihood::Nucleotide5(inner) => inner.cache,
+			ErasedLikelihood::Codon(inner) => inner.cache,
+		}
+	}
 }
 
 pub struct Likelihood {
@@ -159,6 +180,10 @@ impl Likelihood {
 
 	pub fn reject(&mut self) {
 		self.erased.reject();
+	}
+
+	pub fn cached_likelihood(&self) -> f64 {
+		self.erased.cached_likelihood()
 	}
 }
 
