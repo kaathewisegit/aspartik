@@ -44,10 +44,6 @@ impl PyRng {
 		self.inner().random_bool(ratio)
 	}
 
-	fn random_ratio(&self, numerator: u32, denominator: u32) -> bool {
-		self.inner().random_ratio(numerator, denominator)
-	}
-
 	fn random_int(&self, lower: i64, upper: i64) -> i64 {
 		self.inner().random_range(lower..upper)
 	}

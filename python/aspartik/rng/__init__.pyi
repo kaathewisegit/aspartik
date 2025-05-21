@@ -28,13 +28,6 @@ class Rng:
                 The probability of returning `True`.  Must be between in the
                 range $[0, 1]$.
         """
-    def random_ratio(self, numerator: int, denominator: int) -> bool:
-        """Returns `True` with the chance of $\\frac{numerator}{denominator}$.
-
-        Due to the FFI overhead it probably won't be faster than using
-        `random_bool(numerator / denominator)`, but it might express the intent
-        more clearly.
-        """
     def random_int(self, lower: int, upper: int) -> int:
         """Returns a random int in $[lower, upper)$."""
     def random_float(self) -> float:
