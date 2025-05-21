@@ -97,6 +97,7 @@ impl<const N: usize> GenericLikelihood<N> {
 
 		// no tree update, return the cache
 		if nodes.is_empty() {
+			self.last = self.cache;
 			return Ok(self.cache);
 		}
 
