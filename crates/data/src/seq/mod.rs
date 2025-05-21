@@ -1,6 +1,4 @@
 use anyhow::{Context, Error, Result};
-#[cfg(feature = "python")]
-use pyo3::prelude::*;
 
 use std::{
 	fmt::Display,
@@ -8,6 +6,9 @@ use std::{
 };
 
 use crate::nucleotides::DnaNucleotide;
+
+#[cfg(feature = "python")]
+pub mod python;
 
 /// A character in a sequence alphabet.
 ///
@@ -214,45 +215,6 @@ impl DnaSeq {
 
 		out
 	}
-}
-
-#[cfg(feature = "python")]
-#[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
-pub struct PyDnaSeq(pub DnaSeq);
-
-#[cfg(feature = "python")]
-impl From<DnaSeq> for PyDnaSeq {
-	fn from(value: DnaSeq) -> Self {
-		PyDnaSeq(value)
-	}
-}
-
-#[cfg(feature = "python")]
-#[pymethods]
-impl PyDnaSeq {
-	#[new]
-	#[pyo3(signature = (sequence = None))]
-	fn new(sequence: Option<&str>) -> Result<Self> {
-		let seq = sequence
-			.map(DnaSeq::try_from)
-			.unwrap_or_else(|| Ok(DnaSeq::new()))?;
-
-		Ok(Self(seq))
-	}
-
-	fn __str__(&self) -> String {
-		self.0.to_string()
-	}
-
-	fn __repr__(&self) -> String {
-		format!("DNASeq('{}')", self.0)
-	}
-
-	fn __getitem__(&self, index: usize) -> DnaNucleotide {
-		self.0[index]
-	}
-
-	// TODO: character-generic methods, probably as a macro
 }
 
 #[cfg(test)]

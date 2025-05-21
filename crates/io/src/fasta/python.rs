@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 
 use super::*;
-use data::{seq::PyDnaSeq, DnaNucleotide};
+use data::{seq::python::PyDnaSeq, DnaNucleotide};
 
 #[pyclass(name = "FASTADNARecord", module = "aspartik.io.fasta", frozen)]
 pub struct PyFastaDnaRecord(Record<DnaNucleotide>);
