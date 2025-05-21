@@ -5,7 +5,7 @@ use std::io::{BufRead, BufReader, Lines, Read};
 use data::seq::{Character, Seq};
 
 #[cfg(feature = "python")]
-mod python;
+pub mod python;
 
 #[derive(Debug, Clone)]
 pub struct Record<C: Character> {

@@ -395,6 +395,7 @@ dependencies = [
  "anyhow",
  "data",
  "nom 8.0.0",
+ "parking_lot",
  "petgraph",
  "pyo3",
 ]

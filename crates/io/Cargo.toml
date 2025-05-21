@@ -11,6 +11,7 @@ data = { workspace = true }
 
 anyhow = { workspace = true }
 nom = { workspace = true }
+parking_lot = { workspace = true }
 petgraph = { workspace = true, default-features = false, features = ["stable_graph"] }
 pyo3 = { workspace = true, optional = true }
 

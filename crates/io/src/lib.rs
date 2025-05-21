@@ -10,6 +10,8 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 
 	m.add_class::<newick::python::PyNode>()?;
 	m.add_class::<newick::python::PyTree>()?;
+	m.add_class::<fasta::python::PyFastaDnaRecord>()?;
+	m.add_class::<fasta::python::PyFastaDnaReader>()?;
 
 	Ok(m)
 }
