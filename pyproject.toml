@@ -1,12 +1,18 @@
 [project]
 name = "aspartik"
+dynamic = ["version", "author", "license"]
 # Uses square bracket generics (PEP 695)
 requires-python = ">=3.12"
 classifiers = [
 	"Programming Language :: Rust",
 	"Programming Language :: Python :: Implementation :: CPython",
+	"Typing :: Typed",
+	"Topic :: Scientific/Engineering",
+	"Topic :: Scientific/Engineering :: Bio-Informatics",
+	"Intended Audience :: Developers",
+	"Intended Audience :: Science/Research",
 ]
-dynamic = ["version", "author", "license"]
+keywords = ["bioinformatics"]
 
 [build-system]
 requires = ["maturin>=1.8,<2.0"]
