@@ -2,6 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use rand::Rng as _;
+use tracing::{instrument, trace};
 
 use crate::{
 	likelihood::PyLikelihood,
@@ -77,9 +78,11 @@ impl Mcmc {
 		})
 	}
 
+	#[instrument(skip_all)]
 	fn run(this: Py<Self>, py: Python) -> Result<()> {
 		let self_ = this.get();
 		for index in 0..self_.length {
+			trace!(index);
 			self_.step(py).with_context(|| {
 				anyhow!("Failed on step {index}")
 			})?;
@@ -125,6 +128,7 @@ impl Mcmc {
 }
 
 impl Mcmc {
+	#[instrument(skip_all)]
 	fn step(&self, py: Python) -> Result<()> {
 		let rng = self.rng.get();
 		let operator = self.scheduler.select_operator(&mut rng.inner());
@@ -137,10 +141,13 @@ impl Mcmc {
 		)
 			})? {
 				Proposal::Accept() => {
+					trace!("accept proposal");
 					self.accept()?;
 					return Ok(());
 				}
 				Proposal::Reject() => {
+					trace!("reject proposal");
+					self.reject()?;
 					return Ok(());
 				}
 				Proposal::Hastings(ratio) => ratio,
@@ -153,6 +160,7 @@ impl Mcmc {
 		let prior = self.prior(py)?;
 		// The proposal will be rejected regardless of likelihood
 		if prior == f64::NEG_INFINITY {
+			trace!("reject proposal");
 			self.reject()?;
 			return Ok(());
 		}
@@ -168,12 +176,23 @@ impl Mcmc {
 
 		let ratio = new_posterior - old_posterior + hastings;
 
+		trace!(
+			likelihood,
+			prior,
+			new_posterior,
+			old_posterior,
+			hastings,
+			ratio
+		);
+
 		let random_0_1 = self.rng.get().inner().random::<f64>();
 		if ratio > random_0_1.ln() {
 			*self.posterior.lock() = new_posterior;
 
+			trace!("accept proposal");
 			self.accept()?;
 		} else {
+			trace!("reject proposal");
 			self.reject()?;
 		}
 

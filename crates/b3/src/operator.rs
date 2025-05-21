@@ -5,6 +5,7 @@ use pyo3::{
 	types::PyString,
 };
 use rand::distr::{weighted::WeightedIndex, Distribution};
+use tracing::{instrument, trace};
 
 use rng::Rng;
 use util::{py_bail, py_call_method};
@@ -24,32 +25,39 @@ pub struct PyOperator {
 
 impl<'py> FromPyObject<'py> for PyOperator {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+		let repr = obj.repr()?;
 		if !obj.getattr("propose").is_ok_and(|a| a.is_callable()) {
 			py_bail!(
 				PyTypeError,
-				"Operator objects must have a `propose` method, which takes no arguments and returns a `Proposal`.  Got type {}",
-				obj.repr()?,
+				"Operator objects must have a `propose` method, which takes no arguments and returns a `Proposal`.  Got {repr}",
 			);
 		}
 
 		if obj.getattr("weight")?.extract::<f64>().is_err() {
 			py_bail!(
 				PyTypeError,
-				"Operator must have a `weight` attribute which returns a real number.  Got type {}",
-				obj.repr()?,
+				"Operator must have a `weight` attribute which returns a real number.  Got {repr}",
 			);
 		}
 
-		Ok(Self {
+		let out = Self {
 			inner: obj.clone().unbind(),
-		})
+		};
+		trace!(%repr, id = out.id(), "new PyOperator");
+		Ok(out)
 	}
 }
 
 impl PyOperator {
+	fn id(&self) -> usize {
+		self.inner.as_ptr() as usize
+	}
+
+	#[instrument(level = "trace", skip_all, fields(id = self.id()))]
 	pub fn propose(&self, py: Python) -> Result<Proposal> {
 		let proposal = py_call_method!(py, self.inner, "propose")?;
 		let proposal = proposal.extract::<Proposal>(py)?;
+		trace!(?proposal);
 
 		Ok(proposal)
 	}
@@ -91,11 +99,13 @@ impl WeightedScheduler {
 		Ok(Self { operators, weights })
 	}
 
+	#[instrument(level = "trace", skip_all)]
 	pub fn select_operator(&self, rng: &mut Rng) -> &PyOperator {
 		// error handling or validation in `new`
 		let dist = WeightedIndex::new(&self.weights).unwrap();
 
 		let index = dist.sample(rng);
+		trace!(index);
 
 		&self.operators[index]
 	}

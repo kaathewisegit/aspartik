@@ -1,6 +1,7 @@
 use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
+use tracing::{info, instrument, trace};
 
 use crate::{
 	substitution::PySubstitution, tree::PyTree, util::dna_to_rows,
@@ -50,6 +51,7 @@ pub struct GenericLikelihood<const N: usize> {
 }
 
 impl GenericLikelihood<4> {
+	#[instrument(skip_all, fields(use_gpu))]
 	fn new(
 		substitution: PySubstitution<4>,
 		sites: Vec<Vec<Vector<f64, 4>>>,
@@ -60,8 +62,10 @@ impl GenericLikelihood<4> {
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
 		let calculator: DynCalculator<4> = if use_gpu {
+			info!("using GpuLikelihood");
 			Box::new(GpuLikelihood::new(sites))
 		} else {
+			info!("using CpuLikelihood");
 			Box::new(CpuLikelihood::new(sites))
 		};
 
@@ -82,6 +86,7 @@ impl GenericLikelihood<4> {
 }
 
 impl<const N: usize> GenericLikelihood<N> {
+	#[instrument(skip_all)]
 	fn propose(&mut self, py: Python) -> Result<f64> {
 		let tree = &self.tree.get().inner();
 		let substitution_matrix = self.substitution.get_matrix(py)?;
@@ -92,6 +97,7 @@ impl<const N: usize> GenericLikelihood<N> {
 		} else {
 			tree.nodes_to_update()
 		};
+		trace!(num_nodes_to_update = nodes.len());
 
 		// no tree update, return the cache
 		if nodes.is_empty() {
@@ -108,6 +114,7 @@ impl<const N: usize> GenericLikelihood<N> {
 			&transitions,
 			&children,
 		);
+		trace!(likelihood);
 		self.last = likelihood;
 		Ok(likelihood)
 	}

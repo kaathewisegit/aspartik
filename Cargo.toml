@@ -37,6 +37,8 @@ rayon = "1.10"
 serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
 vulkano = { version = "0.35", default-features = false }
 vulkano-shaders = "0.35"
 
@@ -64,6 +66,8 @@ repository.workspace = true
 
 [dependencies]
 pyo3 = { workspace = true, features = ["anyhow"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 b3 = { workspace = true }
 data = { workspace = true }
