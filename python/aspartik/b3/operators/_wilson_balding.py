@@ -2,7 +2,7 @@ from math import log
 from dataclasses import dataclass
 
 from .. import Proposal, Tree
-from ...rng import Rng
+from ...rng import RNG
 
 
 @dataclass
@@ -10,7 +10,7 @@ class WilsonBalding:
     """TODO."""
 
     tree: Tree
-    rng: Rng
+    rng: RNG
     weight: float = 1
 
     def propose(self) -> Proposal:

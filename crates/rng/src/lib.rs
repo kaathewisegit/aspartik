@@ -7,7 +7,7 @@ use std::sync::{Mutex, MutexGuard};
 pub type Rng = Pcg64;
 
 #[derive(Debug)]
-#[pyclass(name = "Rng", module = "aspartik.rng", frozen)]
+#[pyclass(name = "RNG", module = "aspartik.rng", frozen)]
 #[repr(transparent)]
 pub struct PyRng {
 	inner: Mutex<Rng>,

@@ -1,6 +1,6 @@
 from math import inf, exp, log, isfinite
 from typing import Tuple
-from ...rng import Rng
+from ...rng import RNG
 
 
 # x must be in [0, inf)
@@ -12,13 +12,13 @@ def _is_on_range(distribution) -> bool:
     return isfinite(distribution.lower) and isfinite(distribution.upper)
 
 
-def _sample_rescale(low, high, distribution, rng: Rng):
+def _sample_rescale(low, high, distribution, rng: RNG):
     x = distribution.sample(rng)
     ratio = (x - distribution.lower) / (distribution.upper - distribution.lower)
     return interval_to_range(ratio, low, high)
 
 
-def sample_range(low: float, high: float, distribution, rng: Rng) -> int | float:
+def sample_range(low: float, high: float, distribution, rng: RNG) -> int | float:
     if _is_on_range(distribution):
         return _sample_rescale(low, high, distribution, rng)
 
@@ -34,7 +34,7 @@ def sample_range(low: float, high: float, distribution, rng: Rng) -> int | float
 
 
 def scale_on_range(
-    low: float, high: float, distribution, rng: Rng
+    low: float, high: float, distribution, rng: RNG
 ) -> Tuple[int | float, float]:
     """Pick a point on a range.
 

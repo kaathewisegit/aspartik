@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from ._util import sample_range
 from .. import Proposal, Parameter
-from ...rng import Rng
+from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
@@ -30,7 +30,7 @@ class ParamScale:
     """
     distribution: Distribution
     """The distribution from which to sample the scaling factor."""
-    rng: Rng
+    rng: RNG
     dimensions: Literal["one", "all", "independent"] = "all"
     """
     Defines how multidimensional parameters will be scaled:

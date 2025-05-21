@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from .. import Tree, Proposal
 from ..tree import Internal, Node
-from ...rng import Rng
+from ...rng import RNG
 
 
 @dataclass
@@ -18,7 +18,7 @@ class NarrowExchange:
     """
 
     tree: Tree
-    rng: Rng
+    rng: RNG
     weight: float = 1
 
     def propose(self) -> Proposal:
@@ -81,7 +81,7 @@ class WideExchange:
     """
 
     tree: Tree
-    rng: Rng
+    rng: RNG
     weight: float = 1
 
     def propose(self) -> Proposal:

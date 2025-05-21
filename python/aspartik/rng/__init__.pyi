@@ -2,7 +2,7 @@ from typing import Optional, List
 
 __all__: List[str]
 
-class Rng:
+class RNG:
     """Random numbers generator.
 
     It's backed by a 64-bit output PCG, see the [Rust documentation][pcg] for

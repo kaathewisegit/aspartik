@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Protocol, Optional
-from ..rng import Rng
+from ..rng import RNG
 
 class Continuous[T](Protocol):
     def pdf(self, x: T) -> float: ...
@@ -37,7 +37,7 @@ class Distribution(Protocol):
     def skewness(self) -> Optional[float]: ...
 
 class Sample[T](Protocol):
-    def sample(self, rng: Rng) -> T: ...
+    def sample(self, rng: RNG) -> T: ...
 
 # Concrete distributions
 

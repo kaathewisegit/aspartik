@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from ._util import scale_on_range
 from .. import Proposal, Tree
-from ...rng import Rng
+from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
@@ -22,7 +22,7 @@ class NodeSlide:
     The distribution which will sample the new node height on the interval
     between its parent and the closest child.
     """
-    rng: Rng
+    rng: RNG
     weight: float = 1
 
     def propose(self) -> Proposal:

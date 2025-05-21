@@ -2,7 +2,7 @@ from typing import List
 from dataclasses import dataclass
 
 from .. import Proposal, Parameter
-from ...rng import Rng
+from ...rng import RNG
 
 
 @dataclass
@@ -30,7 +30,7 @@ class DeltaExchange:
     """
     The move size is a random value between 0 and 1 multiplied by `factor`.
     """
-    rng: Rng
+    rng: RNG
     weight: float = 1
 
     def __post_init__(self):

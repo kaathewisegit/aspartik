@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from ._util import sample_range
 from .. import Proposal, Tree
-from ...rng import Rng
+from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
@@ -26,7 +26,7 @@ class TreeScale:
     """
     distribution: Distribution
     """Distribution from which the scale is sampled."""
-    rng: Rng
+    rng: RNG
     weight: float = 1
 
     def __post_init__(self):

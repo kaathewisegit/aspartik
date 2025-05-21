@@ -1,7 +1,7 @@
-from aspartik.rng import Rng
+from aspartik.rng import RNG
 
-os = Rng()
-from_seed = Rng(4)
+os = RNG()
+from_seed = RNG(4)
 rng = from_seed
 
 rng.random_bool()

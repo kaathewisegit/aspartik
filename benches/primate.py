@@ -14,9 +14,9 @@ from aspartik.b3.operators import (
 from aspartik.b3.priors import Distribution, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
-from aspartik.rng import Rng
+from aspartik.rng import RNG
 
-rng = Rng(4)
+rng = RNG(4)
 tree = Tree(9, rng)
 
 mutation_rate_noncoding = Parameter.Real(1.0)

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from ._util import scale_on_range
 from .. import Proposal, Tree
-from ...rng import Rng
+from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
@@ -24,7 +24,7 @@ class EpochScale:
     """
     distribution: Distribution
     """Distribution from which the scale is sampled."""
-    rng: Rng
+    rng: RNG
     weight: float = 1
 
     def __post_init__(self):

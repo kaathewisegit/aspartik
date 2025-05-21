@@ -8,10 +8,10 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.priors import Bound, Distribution
 from aspartik.b3.substitutions import JC
-from aspartik.rng import Rng
+from aspartik.rng import RNG
 from aspartik.stats.distributions import Uniform, Gamma, Poisson
 
-rng = Rng(4)
+rng = RNG(4)
 tree = Tree(100, rng)
 tree.verify()
 
