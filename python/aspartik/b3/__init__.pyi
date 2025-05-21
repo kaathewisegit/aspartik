@@ -4,6 +4,7 @@ from collections.abc import Iterator
 
 from ..rng import RNG
 from .tree import Node, Leaf, Internal
+from ..data import DNASeq
 
 class tree: ...
 
@@ -64,7 +65,11 @@ class Parameter:
 
 class Likelihood:
     def __init__(
-        self, data: str, substitution: Any, tree: Tree, use_gpu: bool = False
+        self,
+        sequences: Sequence[DNASeq],
+        substitution: Any,
+        tree: Tree,
+        use_gpu: bool = False,
     ): ...
 
 @runtime_checkable

@@ -4,12 +4,19 @@ use pyo3::prelude::*;
 use super::DnaSeq;
 use crate::DnaNucleotide;
 
+#[derive(Debug, Clone)]
 #[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
 pub struct PyDnaSeq(pub DnaSeq);
 
 impl From<DnaSeq> for PyDnaSeq {
 	fn from(value: DnaSeq) -> Self {
 		PyDnaSeq(value)
+	}
+}
+
+impl From<PyDnaSeq> for DnaSeq {
+	fn from(value: PyDnaSeq) -> Self {
+		value.0
 	}
 }
 

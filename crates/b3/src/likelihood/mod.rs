@@ -3,11 +3,10 @@ use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
 use crate::{
-	substitution::PySubstitution,
-	tree::PyTree,
-	util::{dna_to_rows, read_fasta},
+	substitution::PySubstitution, tree::PyTree, util::dna_to_rows,
 	Transitions,
 };
+use data::seq::{python::PyDnaSeq, DnaSeq};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
@@ -181,15 +180,18 @@ impl PyLikelihood {
 #[pymethods]
 impl PyLikelihood {
 	#[new]
-	#[pyo3(signature = (data, substitution, tree, use_gpu = false))]
+	#[pyo3(signature = (sequences, substitution, tree, use_gpu = false))]
 	fn new4(
-		data: &str,
+		sequences: Vec<PyDnaSeq>,
 		substitution: PySubstitution<4>,
 		tree: Py<PyTree>,
 		use_gpu: bool,
 	) -> Result<Self> {
-		let seqs = read_fasta(data)?;
-		let sites = dna_to_rows(&seqs);
+		let sequences: Vec<DnaSeq> = sequences
+			.iter()
+			.map(|seq| seq.clone().into())
+			.collect();
+		let sites = dna_to_rows(&sequences);
 
 		let generic_likelihood = GenericLikelihood::new(
 			substitution,

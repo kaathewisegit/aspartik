@@ -15,9 +15,17 @@ from aspartik.b3.priors import Distribution, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import RNG
+from aspartik.io.fasta import FASTADNAReader
+
+path = "crates/b3/data/primate-mdna.fasta"
+sequences = []
+names = []
+for record in FASTADNAReader(path):
+    sequences.append(record.sequence)
+    names.append(record.description)
 
 rng = RNG(4)
-tree = Tree(9, rng)
+tree = Tree(len(names), rng)
 
 mutation_rate_noncoding = Parameter.Real(1.0)
 gamma_shape_noncoding = Parameter.Real(1.0)
@@ -101,7 +109,7 @@ operators = [
 # TODO: frequencies from alignment
 model = HKY((0.25, 0.25, 0.25, 0.25), kappa_noncoding)
 likelihood = Likelihood(
-    data="crates/b3/data/primate-mdna-full-aligned.fasta",
+    sequences=sequences,
     substitution=model,
     tree=tree,
     use_gpu=False,

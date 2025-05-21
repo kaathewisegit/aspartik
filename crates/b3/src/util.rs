@@ -3,11 +3,8 @@ use anyhow::{bail, Result};
 use pyo3::prelude::*;
 use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 
-use std::fs::File;
-
 use crate::likelihood::Row;
 use data::{seq::DnaSeq, DnaNucleotide};
-use io::fasta::FastaReader;
 use linalg::Vector;
 
 pub fn dna_to_rows(seqs: &[DnaSeq]) -> Vec<Vec<Row<4>>> {
@@ -109,19 +106,4 @@ pub fn slices_iter(key: Bound<PyAny>, length: usize) -> Result<SlicesIter> {
 		slice_index: 0,
 		curr_index: start,
 	})
-}
-
-pub fn read_fasta(path: &str) -> Result<Vec<DnaSeq>> {
-	let file = File::open(path)?;
-	let fasta = FastaReader::<DnaNucleotide, _>::new(file);
-	let mut seqs = Vec::new();
-	let mut names = Vec::new();
-
-	for record in fasta {
-		let record = record?;
-		names.push(record.description().to_owned());
-		seqs.push(record.into_sequence());
-	}
-
-	Ok(seqs)
 }
