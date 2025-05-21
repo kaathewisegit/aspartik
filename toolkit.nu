@@ -6,8 +6,7 @@ def "metadata root" [] {
 	cargo metadata  --format-version 1 | from json | get workspace_root
 }
 
-# Run all checks on the repository
-export def check [] {
+export def lint [] {
 	ruff format --check
 	ruff check
 
@@ -15,10 +14,15 @@ export def check [] {
 
 	cargo fmt --check
 	cargo clippy --workspace -- -D warnings
-	cargo test --workspace --features approx,proptest
+}
 
+export def test [] {
+	cargo test --workspace --features approx,proptest
+}
+
+export def run [] {
 	maturin develop --release
-	python3 benches/primate.py
+	timeit { python3 benches/primate.py }
 }
 
 # Remove temporary files and `b3` output
