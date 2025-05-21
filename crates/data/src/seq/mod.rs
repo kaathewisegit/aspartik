@@ -1,8 +1,8 @@
 use anyhow::{Context, Error, Result};
 
 use std::{
-	fmt::Display,
-	ops::{Deref, DerefMut, Index, IndexMut},
+	fmt,
+	ops::{Deref, DerefMut},
 };
 
 use crate::nucleotides::DnaNucleotide;
@@ -53,15 +53,13 @@ impl<C: Character> DerefMut for Seq<C> {
 	}
 }
 
-impl<C: Character> Display for Seq<C> {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		let mut s = String::new();
-
-		for item in &self.inner {
-			s.push((*item).into());
+impl<C: Character> fmt::Display for Seq<C> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		for item in self.iter().copied() {
+			let ch: char = item.into();
+			write!(f, "{ch}")?;
 		}
-
-		f.write_str(&s)
+		Ok(())
 	}
 }
 
@@ -73,6 +71,43 @@ impl<C: Character> From<&[C]> for Seq<C> {
 	}
 }
 
+fn highlight_error(src: &str, index: usize) -> String {
+	const MAX_WIDTH: usize = 60;
+	if src.len() > MAX_WIDTH {
+		let mut out = String::from(
+			"Illegal character encountered in the sequence:\n> ",
+		);
+		let mut padding = 2;
+
+		let start = if index > 40 {
+			out.push_str("...");
+			padding += 3;
+			index - 40
+		} else {
+			0
+		};
+
+		let end = std::cmp::min(start + MAX_WIDTH, src.len());
+		out.push_str(&src[start..end]);
+		if end < src.len() {
+			out.push_str("...");
+		}
+		out.push('\n');
+		for _ in 0..(padding + index - start) {
+			out.push(' ');
+		}
+		out.push('^');
+
+		out
+	} else {
+		format!(
+			"Illegal character encountered in the sequence:\n> {}\n  {:index$}^",
+			src,
+			"",
+		)
+	}
+}
+
 impl<C: Character> TryFrom<&str> for Seq<C> {
 	type Error = Error;
 
@@ -81,37 +116,14 @@ impl<C: Character> TryFrom<&str> for Seq<C> {
 			inner: Vec::with_capacity(value.len()),
 		};
 
-		for char in value.chars() {
-			out.inner.push(char.try_into().with_context(|| {
-				let width = out.len();
-				format!("An illegal character encountered in the sequence:\n> {}\n  {:width$}^", value, "")
-			})?);
+		for ch in value.chars() {
+			let character = ch.try_into().with_context(|| {
+				highlight_error(value, out.len())
+			})?;
+			out.inner.push(character);
 		}
 
 		Ok(out)
-	}
-}
-
-impl<C: Character> Index<usize> for Seq<C> {
-	type Output = C;
-
-	fn index(&self, index: usize) -> &Self::Output {
-		&self.inner[index]
-	}
-}
-
-impl<C: Character> IndexMut<usize> for Seq<C> {
-	fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-		&mut self.inner[index]
-	}
-}
-
-impl<'a, C: Character> IntoIterator for &'a Seq<C> {
-	type Item = &'a C;
-	type IntoIter = std::slice::Iter<'a, C>;
-
-	fn into_iter(self) -> Self::IntoIter {
-		self.iter()
 	}
 }
 
@@ -220,6 +232,7 @@ impl DnaSeq {
 #[cfg(test)]
 mod test {
 	use super::*;
+	use DnaNucleotide::*;
 
 	#[test]
 	fn decode() {
@@ -251,5 +264,35 @@ mod test {
 		let s2: DnaSeq = "CATCGTAATGACGGCCT".try_into().unwrap();
 
 		assert_eq!(s1.hamming_distance(&s2), 7);
+	}
+
+	#[test]
+	fn index() {
+		let mut s = DnaSeq::try_from("ACGT").unwrap();
+		assert_eq!(s[0], Adenine);
+		assert_eq!(s[1], Cytosine);
+		assert_eq!(s[2], Guanine);
+		assert_eq!(s[3], Thymine);
+
+		s[0] = Thymine;
+		s[1] = Cytosine;
+		s[2] = Guanine;
+		s[3] = Adenine;
+		assert_eq!(s[0], Thymine);
+		assert_eq!(s[1], Cytosine);
+		assert_eq!(s[2], Guanine);
+		assert_eq!(s[3], Adenine);
+	}
+
+	#[test]
+	fn iter() {
+		let s = DnaSeq::try_from("GAGCCT").unwrap();
+		let mut iter = s.iter().copied();
+		assert_eq!(iter.next(), Some(Guanine));
+		assert_eq!(iter.next(), Some(Adenine));
+		assert_eq!(iter.next(), Some(Guanine));
+		assert_eq!(iter.next(), Some(Cytosine));
+		assert_eq!(iter.next(), Some(Cytosine));
+		assert_eq!(iter.next(), Some(Thymine));
 	}
 }
