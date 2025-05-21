@@ -116,10 +116,12 @@ impl<const N: usize> GenericLikelihood<N> {
 	fn accept(&mut self) {
 		self.cache = self.last;
 		self.calculator.accept();
+		self.transitions.accept();
 	}
 
 	fn reject(&mut self) {
 		self.calculator.reject();
+		self.transitions.accept();
 	}
 }
 
