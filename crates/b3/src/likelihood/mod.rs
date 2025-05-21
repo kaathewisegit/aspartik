@@ -167,35 +167,13 @@ impl ErasedLikelihood {
 	}
 }
 
-pub struct Likelihood {
-	erased: ErasedLikelihood,
-}
-
-impl Likelihood {
-	pub fn propose(&mut self, py: Python) -> Result<f64> {
-		self.erased.propose(py)
-	}
-
-	pub fn accept(&mut self) {
-		self.erased.accept();
-	}
-
-	pub fn reject(&mut self) {
-		self.erased.reject();
-	}
-
-	pub fn cached_likelihood(&self) -> f64 {
-		self.erased.cached_likelihood()
-	}
-}
-
 #[pyclass(name = "Likelihood", module = "aspartik.b3", frozen)]
 pub struct PyLikelihood {
-	inner: Mutex<Likelihood>,
+	inner: Mutex<ErasedLikelihood>,
 }
 
 impl PyLikelihood {
-	pub fn inner(&self) -> MutexGuard<Likelihood> {
+	pub fn inner(&self) -> MutexGuard<ErasedLikelihood> {
 		self.inner.lock()
 	}
 }
@@ -223,12 +201,8 @@ impl PyLikelihood {
 		let erased_likelihood =
 			ErasedLikelihood::Nucleotide4(generic_likelihood);
 
-		let likelihood = Likelihood {
-			erased: erased_likelihood,
-		};
-
 		Ok(PyLikelihood {
-			inner: Mutex::new(likelihood),
+			inner: Mutex::new(erased_likelihood),
 		})
 	}
 }
