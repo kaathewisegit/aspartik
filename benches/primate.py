@@ -25,7 +25,7 @@ for record in FASTADNAReader(path):
     names.append(record.description)
 
 rng = RNG(4)
-tree = Tree(len(names), rng)
+tree = Tree(names, rng)
 
 mutation_rate_noncoding = Parameter.Real(1.0)
 gamma_shape_noncoding = Parameter.Real(1.0)

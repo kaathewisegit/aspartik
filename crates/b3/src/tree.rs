@@ -26,6 +26,8 @@ const ROOT: usize = usize::MAX;
 
 #[derive(Debug)]
 pub struct Tree {
+	names: Vec<String>,
+
 	children: SkVec<usize>,
 	parents: SkVec<usize>,
 	weights: SkVec<f64>,
@@ -136,7 +138,8 @@ impl Leaf {
 }
 
 impl Tree {
-	pub fn new(num_leaves: usize, rng: &mut Rng) -> Self {
+	pub fn new(names: Vec<String>, rng: &mut Rng) -> Self {
+		let num_leaves = names.len();
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
 		// Here we create a Prüfer sequence, which encodes a binary tree
@@ -210,6 +213,8 @@ impl Tree {
 		}
 
 		Self {
+			names,
+
 			children: children.into(),
 			parents: parents.into(),
 			weights: weights.into(),
@@ -596,8 +601,14 @@ impl Tree {
 				distance = 0.0;
 			}
 
+			let name = if self.is_leaf(node) {
+				self.names[node.0].clone()
+			} else {
+				String::new()
+			};
+
 			let newick_node = tree.add_node(NewickNode::new(
-				node.0.to_string(),
+				name,
 				Some(distance),
 				String::new(),
 			));
@@ -739,8 +750,8 @@ impl PyTree {
 #[pymethods]
 impl PyTree {
 	#[new]
-	fn new(num_leaves: usize, rng: Py<PyRng>) -> Result<Self> {
-		let tree = Tree::new(num_leaves, &mut rng.get().inner());
+	fn new(names: Vec<String>, rng: Py<PyRng>) -> Result<Self> {
+		let tree = Tree::new(names, &mut rng.get().inner());
 		let tree = Self {
 			inner: Mutex::new(tree),
 		};
