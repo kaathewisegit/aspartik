@@ -5,6 +5,7 @@
 # runtime output
 *.trees
 *.log
+tracing.log.*
 
 # Python artifacts
 __pycache__/

@@ -30,9 +30,10 @@ export def clean [] {
 	ruff clean
 	(
 		rm --permanent --force --recursive
-			**/flamegraph.svg
-			**/perf.data **/perf.data.old
+			flamegraph.svg
+			perf.data perf.data.old
+			b3.trees
+			tracing.log.*
 			crates/**/__pycache__/
-			**/b3.trees
 	)
 }
