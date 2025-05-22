@@ -53,6 +53,7 @@ pub struct GpuLikelihood {
 	/// the `edited` field in `SkVec`.
 	updated_nodes: Vec<usize>,
 
+	/// The length of each sequence
 	num_sites: usize,
 }
 
@@ -104,8 +105,7 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
 				..Default::default()
 			},
-			// Shader matrices are column-major
-			transitions.iter().map(|v| v.transpose()),
+			transitions.iter().copied(),
 		).unwrap();
 		let children_buffer = Buffer::from_iter(
 			self.memory_allocator.clone(),

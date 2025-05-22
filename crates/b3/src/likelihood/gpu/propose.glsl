@@ -16,7 +16,7 @@ layout(set = 1, binding = 0) restrict readonly buffer Nodes {
 	uint nodes[];
 };
 layout(set = 1, binding = 1) restrict readonly buffer Transitions {
-	dmat4x4 transitions[];
+	layout(row_major) dmat4x4 transitions[];
 };
 layout(set = 1, binding = 2) restrict readonly buffer Children {
 	uint children[];
