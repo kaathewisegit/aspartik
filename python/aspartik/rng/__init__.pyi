@@ -16,17 +16,13 @@ class RNG:
 
     def __init__(self, seed: Optional[int] = None):
         """
-        Args:
-            seed:
-                A positive integer less than $2^{64}$.  If no seed is passed the
-                RNG will be seeded from the operating system data source.
+        The seed is a positive integer less than $2^{64}$.  If no seed is
+        passed the RNG will be seeded from the operating system data source.
         """
     def random_bool(self, ratio: float = 0.5) -> bool:
         """
-        Args:
-            ratio:
-                The probability of returning `True`.  Must be between in the
-                range $[0, 1]$.
+        Rerturns `True` with the probability of `ratio`, which must be in the
+        range $[0, 1]$.
         """
     def random_int(self, lower: int, upper: int) -> int:
         """Returns a random int in $[lower, upper)$."""

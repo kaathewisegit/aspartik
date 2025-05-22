@@ -53,13 +53,7 @@ def scale_on_range(
     Since the target distribution is the same and we're just stretching it, I
     believe the Hastings ratio should always be 0.
 
-    Args:
-        low: The lowest possible point (TODO: inclusive?).
-        high: The highest possible point (TODO: above).
-        distribution: The distribution to sample the new point from.
-
-    Returns:
-        The tuple of new point and the Hastings ratio of the move.
+    Returns tuple of the new point and the Hastings ratio of the move.
     """
 
     if _is_on_range(distribution):
