@@ -15,8 +15,8 @@ layout(set = 0, binding = 2) restrict buffer Masks {
 layout(set = 1, binding = 0) restrict readonly buffer Nodes {
 	uint nodes[];
 };
-layout(set = 1, binding = 1) restrict readonly buffer Substitutions {
-	dmat4x4 substitutions[];
+layout(set = 1, binding = 1) restrict readonly buffer Transitions {
+	dmat4x4 transitions[];
 };
 layout(set = 1, binding = 2) restrict readonly buffer Children {
 	uint children[];
@@ -40,27 +40,24 @@ void main() {
 		uint left_child = children[i * 2];
 		uint right_child = children[i * 2 + 1];
 
-		uint left_index = offset * 2 + left_child * 2 +
+		uint left_idx = (offset + left_child) * 2 +
 			masks[offset + left_child];
-		uint right_index = offset * 2 + right_child * 2 +
+		uint right_idx = (offset + right_child) * 2 +
 			masks[offset + right_child];
 
-		dvec4 left = substitutions[i * 2] *
-			probabilities[left_index];
-		dvec4 right = substitutions[i * 2 + 1] *
-			probabilities[right_index];
+		dvec4 left = transitions[i * 2] * probabilities[left_idx];
+		dvec4 right = transitions[i * 2 + 1] * probabilities[right_idx];
 
+		uint node_idx = nodes[i] + offset;
 		// flip the mask
-		masks[offset + nodes[i]] = 1 - masks[offset + nodes[i]];
+		masks[node_idx] ^= 1;
 		// write the new value
-		uint parent_index = offset * 2 + nodes[i] * 2 +
-			masks[offset + nodes[i]];
-		probabilities[parent_index] = left * right;
+		probabilities[node_idx * 2 + masks[node_idx]] = left * right;
 	}
 
 	uint root = nodes[nodes.length() - 1];
 	uint mask = masks[offset + root];
-	dvec4 probability = probabilities[offset * 2 + root * 2 + mask];
+	dvec4 probability = probabilities[(offset + root) * 2 + mask];
 	double sum = probability.x + probability.y + probability.z + probability.w;
 	likelihoods[idx] = sum;
 }
