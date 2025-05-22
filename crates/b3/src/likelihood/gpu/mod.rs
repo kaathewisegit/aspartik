@@ -78,6 +78,8 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 		transitions: &[Transition<4>],
 		children: &[usize],
 	) -> f64 {
+		self.updated_nodes = nodes.to_vec();
+
 		let pipeline_layout = self.propose_pipeline.layout();
 		let descriptor_set_layouts = pipeline_layout.set_layouts();
 
