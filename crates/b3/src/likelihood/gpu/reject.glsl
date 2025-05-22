@@ -29,7 +29,6 @@ void main() {
 		// the probabilities start at offset * 2
 
 		// flip the mask
-		uint index = offset + nodes[i];
-		masks[index] = 1 - masks[index];
+		masks[offset + nodes[i]] ^= 1;
 	}
 }
