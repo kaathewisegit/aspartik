@@ -24,7 +24,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 
 	m.add_class::<parameter::PyParameter>()?;
 	m.add_class::<tree::PyTree>()?;
-	m.add_class::<operator::Proposal>()?;
+	m.add_class::<operator::PyProposal>()?;
 	m.add_class::<likelihood::PyLikelihood>()?;
 	m.add_class::<mcmc::Mcmc>()?;
 

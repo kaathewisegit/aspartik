@@ -10,12 +10,36 @@ use tracing::{instrument, trace};
 use rng::Rng;
 use util::{py_bail, py_call_method};
 
-#[derive(Debug, Clone)]
-#[pyclass(module = "aspartik.b3", frozen)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Proposal {
-	Accept(),
 	Reject(),
 	Hastings(f64),
+	Accept(),
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[pyclass(module = "aspartik.b3", name = "Proposal", frozen)]
+pub struct PyProposal(Proposal);
+
+#[pymethods]
+impl PyProposal {
+	#[staticmethod]
+	#[pyo3(name = "Reject")]
+	fn reject() -> PyProposal {
+		PyProposal(Proposal::Reject())
+	}
+
+	#[staticmethod]
+	#[pyo3(name = "Hastings")]
+	fn hastings(ratio: f64) -> PyProposal {
+		PyProposal(Proposal::Hastings(ratio))
+	}
+
+	#[staticmethod]
+	#[pyo3(name = "Accept")]
+	fn accept() -> PyProposal {
+		PyProposal(Proposal::Accept())
+	}
 }
 
 #[derive(Debug)]
@@ -56,7 +80,8 @@ impl PyOperator {
 	#[instrument(level = "trace", skip_all, fields(id = self.id()))]
 	pub fn propose(&self, py: Python) -> Result<Proposal> {
 		let proposal = py_call_method!(py, self.inner, "propose")?;
-		let proposal = proposal.extract::<Proposal>(py)?;
+		let proposal = proposal.extract::<PyProposal>(py)?;
+		let proposal = proposal.0;
 		trace!(?proposal);
 
 		Ok(proposal)
