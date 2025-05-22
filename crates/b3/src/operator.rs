@@ -40,6 +40,16 @@ impl PyProposal {
 	fn accept(_cls: Py<PyType>) -> PyProposal {
 		PyProposal(Proposal::Accept())
 	}
+
+	fn __repr__(&self) -> String {
+		match self.0 {
+			Proposal::Reject() => "Proposal.Reject()".to_owned(),
+			Proposal::Hastings(r) => {
+				format!("Proposal.Hastings({r})")
+			}
+			Proposal::Accept() => "Proposal.Accept()".to_owned(),
+		}
+	}
 }
 
 #[derive(Debug)]

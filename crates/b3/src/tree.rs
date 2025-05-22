@@ -758,10 +758,6 @@ impl PyTree {
 		Ok(tree)
 	}
 
-	fn __repr__(&self) -> String {
-		"<b3.Tree>".to_string()
-	}
-
 	/// Points `edge` to `node`.
 	///
 	/// This will only change the child, so the parent (internal node from
