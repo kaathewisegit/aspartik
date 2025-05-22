@@ -82,7 +82,7 @@ impl Mcmc {
 	fn run(this: Py<Self>, py: Python) -> Result<()> {
 		let self_ = this.get();
 		for index in 0..self_.length {
-			trace!(index);
+			trace!(step = index);
 			self_.step(py).with_context(|| {
 				anyhow!("Failed on step {index}")
 			})?;
@@ -141,12 +141,10 @@ impl Mcmc {
 		)
 			})? {
 				Proposal::Accept() => {
-					trace!("accept proposal");
 					self.accept()?;
 					return Ok(());
 				}
 				Proposal::Reject() => {
-					trace!("reject proposal");
 					self.reject()?;
 					return Ok(());
 				}
@@ -160,7 +158,6 @@ impl Mcmc {
 		let prior = self.prior(py)?;
 		// The proposal will be rejected regardless of likelihood
 		if prior == f64::NEG_INFINITY {
-			trace!("reject proposal");
 			self.reject()?;
 			return Ok(());
 		}
@@ -189,10 +186,8 @@ impl Mcmc {
 		if ratio > random_0_1.ln() {
 			*self.posterior.lock() = new_posterior;
 
-			trace!("accept proposal");
 			self.accept()?;
 		} else {
-			trace!("reject proposal");
 			self.reject()?;
 		}
 
@@ -200,6 +195,8 @@ impl Mcmc {
 	}
 
 	fn accept(&self) -> Result<()> {
+		trace!("accept proposal");
+
 		for tree in &self.trees {
 			tree.get().inner().accept();
 		}
@@ -217,6 +214,8 @@ impl Mcmc {
 	}
 
 	fn reject(&self) -> Result<()> {
+		trace!("reject proposal");
+
 		for tree in &self.trees {
 			tree.get().inner().reject();
 		}
