@@ -2,7 +2,7 @@ use anyhow::Result;
 use pyo3::prelude::*;
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
-	types::PyString,
+	types::{PyString, PyType},
 };
 use rand::distr::{weighted::WeightedIndex, Distribution};
 use tracing::{instrument, trace};
@@ -23,21 +23,21 @@ pub struct PyProposal(Proposal);
 
 #[pymethods]
 impl PyProposal {
-	#[staticmethod]
+	#[classmethod]
 	#[pyo3(name = "Reject")]
-	fn reject() -> PyProposal {
+	fn reject(_cls: Py<PyType>) -> PyProposal {
 		PyProposal(Proposal::Reject())
 	}
 
-	#[staticmethod]
+	#[classmethod]
 	#[pyo3(name = "Hastings")]
-	fn hastings(ratio: f64) -> PyProposal {
+	fn hastings(_cls: Py<PyType>, ratio: f64) -> PyProposal {
 		PyProposal(Proposal::Hastings(ratio))
 	}
 
-	#[staticmethod]
+	#[classmethod]
 	#[pyo3(name = "Accept")]
-	fn accept() -> PyProposal {
+	fn accept(_cls: Py<PyType>) -> PyProposal {
 		PyProposal(Proposal::Accept())
 	}
 }

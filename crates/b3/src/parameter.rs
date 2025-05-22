@@ -5,7 +5,7 @@ use pyo3::{
 	class::basic::CompareOp,
 	conversion::FromPyObjectBound,
 	exceptions::{PyIndexError, PyTypeError},
-	types::PyTuple,
+	types::{PyTuple, PyType},
 };
 
 use std::{
@@ -136,7 +136,6 @@ fn check_empty(values: &Bound<PyTuple>) -> Result<()> {
 }
 
 #[pymethods]
-#[expect(non_snake_case)]
 impl PyParameter {
 	/// Create a new real parameter.
 	///
@@ -145,9 +144,9 @@ impl PyParameter {
 	/// Note that Python will coerce `True` and `False` to 0 and 1, so
 	/// `Parameter.Real(True, False)` will succeed a and return a parameter
 	/// with values `[0.0, 1.0]`.
-	#[staticmethod]
-	#[pyo3(signature = (*values))]
-	fn Real(values: &Bound<PyTuple>) -> Result<Self> {
+	#[classmethod]
+	#[pyo3(name = "Real", signature = (*values))]
+	fn real(_cls: Py<PyType>, values: &Bound<PyTuple>) -> Result<Self> {
 		check_empty(values)?;
 
 		let values: Vec<f64> = extract(values)?;
@@ -162,9 +161,9 @@ impl PyParameter {
 	/// Note that Python will coerce `True` and `False` to 0 and 1, so
 	/// `Parameter.Integer(True, False)` will succeed a and return a
 	/// parameter with values `[0, 1]`.
-	#[staticmethod]
-	#[pyo3(signature = (*values))]
-	fn Integer(values: &Bound<PyTuple>) -> Result<Self> {
+	#[classmethod]
+	#[pyo3(name = "Integer", signature = (*values))]
+	fn integer(_cls: Py<PyType>, values: &Bound<PyTuple>) -> Result<Self> {
 		check_empty(values)?;
 
 		let values: Vec<i64> = extract(values)?;
@@ -175,9 +174,9 @@ impl PyParameter {
 	}
 
 	/// Create a new boolean parameter.
-	#[staticmethod]
-	#[pyo3(signature = (*values))]
-	fn Boolean(values: &Bound<PyTuple>) -> Result<Self> {
+	#[classmethod]
+	#[pyo3(name = "Boolean", signature = (*values))]
+	fn boolean(_cls: Py<PyType>, values: &Bound<PyTuple>) -> Result<Self> {
 		check_empty(values)?;
 
 		let values: Vec<bool> = extract(values)?;
