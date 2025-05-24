@@ -10,8 +10,12 @@ use vulkano::{
 		PrimaryAutoCommandBuffer,
 	},
 	descriptor_set::{
-		allocator::StandardDescriptorSetAllocator, DescriptorSet,
-		WriteDescriptorSet,
+		allocator::StandardDescriptorSetAllocator,
+		layout::{
+			DescriptorSetLayout, DescriptorSetLayoutBinding,
+			DescriptorSetLayoutCreateInfo, DescriptorType,
+		},
+		DescriptorSet, WriteDescriptorSet,
 	},
 	device::{
 		Device, DeviceCreateInfo, DeviceFeatures, Queue,
@@ -23,15 +27,19 @@ use vulkano::{
 	},
 	pipeline::{
 		compute::ComputePipelineCreateInfo,
-		layout::PipelineDescriptorSetLayoutCreateInfo, ComputePipeline,
-		Pipeline, PipelineBindPoint, PipelineLayout,
+		layout::{
+			PipelineDescriptorSetLayoutCreateInfo,
+			PipelineLayoutCreateFlags,
+		},
+		ComputePipeline, Pipeline, PipelineBindPoint, PipelineLayout,
 		PipelineShaderStageCreateInfo,
 	},
+	shader::ShaderStages,
 	sync::{self, GpuFuture},
 	VulkanLibrary,
 };
 
-use std::sync::Arc;
+use std::{collections::BTreeMap, sync::Arc};
 
 use super::{LikelihoodTrait, Row, Transition};
 
@@ -261,7 +269,7 @@ impl GpuLikelihood {
 			masks.len() as u64,
 		)?;
 
-		let descriptor_set_allocator =
+		let ds_allocator =
 			Arc::new(StandardDescriptorSetAllocator::new(
 				device.clone(),
 				Default::default(),
@@ -272,26 +280,37 @@ impl GpuLikelihood {
 			StandardCommandBufferAllocatorCreateInfo::default(),
 		));
 
+		let layout_info = PipelineDescriptorSetLayoutCreateInfo {
+			flags: PipelineLayoutCreateFlags::empty(),
+			set_layouts: vec![
+				dsl_common(),
+				dsl_update_nodes(),
+				dsl_propose(),
+				dsl_stage(),
+			],
+			push_constant_ranges: vec![],
+		}
+		.into_pipeline_layout_create_info(device.clone())?;
+		let layout = PipelineLayout::new(device.clone(), layout_info)?;
+
 		#[rustfmt::skip]
 		macro_rules! make_pipeline {
 			($mod:ident) => {{
 
-		let shader = $mod::load(device.clone())?
+		let entry_point = $mod::load(device.clone())?
 			.entry_point("main")
 			.ok_or(anyhow!("Entrypoint not fonud"))?;
+
 		let stage = PipelineShaderStageCreateInfo::new(
-			shader.clone(),
+			entry_point.clone(),
 		);
-		let layout = PipelineLayout::new(
-			device.clone(),
-			PipelineDescriptorSetLayoutCreateInfo::from_stages([&stage])
-			.into_pipeline_layout_create_info(device.clone())?,
-		)?;
 
 		ComputePipeline::new(
 			device.clone(),
 			None,
-			ComputePipelineCreateInfo::stage_layout(stage, layout),
+			ComputePipelineCreateInfo::stage_layout(
+				stage, layout.clone()
+			),
 		)?
 
 			}};
@@ -301,11 +320,11 @@ impl GpuLikelihood {
 		let propose_pipeline = make_pipeline!(propose);
 		let stage_pipeline = make_pipeline!(stage);
 
-		let descriptor_set_layout_common =
-			propose_pipeline.layout().set_layouts()[0].clone();
-		let descriptor_set_common = DescriptorSet::new(
-			descriptor_set_allocator.clone(),
-			descriptor_set_layout_common.clone(),
+		let dsl_common =
+			DescriptorSetLayout::new(device.clone(), dsl_common())?;
+		let ds_common = DescriptorSet::new(
+			ds_allocator.clone(),
+			dsl_common.clone(),
 			[
 				WriteDescriptorSet::buffer(0, common_num_rows),
 				WriteDescriptorSet::buffer(
@@ -344,11 +363,13 @@ impl GpuLikelihood {
 			},
 		)?;
 
-		let descriptor_set_layout_update_nodes =
-			reject_pipeline.layout().set_layouts()[1].clone();
-		let descriptor_set_update_nodes = DescriptorSet::new(
-			descriptor_set_allocator.clone(),
-			descriptor_set_layout_update_nodes.clone(),
+		let dsl_update_nodes = DescriptorSetLayout::new(
+			device.clone(),
+			dsl_update_nodes(),
+		)?;
+		let ds_update_nodes = DescriptorSet::new(
+			ds_allocator.clone(),
+			dsl_update_nodes.clone(),
 			[
 				WriteDescriptorSet::buffer(
 					0,
@@ -378,13 +399,13 @@ impl GpuLikelihood {
 				PipelineBindPoint::Compute,
 				reject_pipeline.layout().clone(),
 				0u32,
-				descriptor_set_common.clone(),
+				ds_common.clone(),
 			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				reject_pipeline.layout().clone(),
 				1u32,
-				descriptor_set_update_nodes.clone(),
+				ds_update_nodes.clone(),
 			)?;
 
 		// TODO: safety
@@ -432,11 +453,13 @@ impl GpuLikelihood {
 			num_sites as u64,
 		)?;
 
-		let descriptor_set_layout_propose =
-			propose_pipeline.layout().set_layouts()[2].clone();
-		let descriptor_set_propose = DescriptorSet::new(
-			descriptor_set_allocator.clone(),
-			descriptor_set_layout_propose.clone(),
+		let dsl_propose = DescriptorSetLayout::new(
+			device.clone(),
+			dsl_propose(),
+		)?;
+		let ds_propose = DescriptorSet::new(
+			ds_allocator.clone(),
+			dsl_propose.clone(),
 			[
 				WriteDescriptorSet::buffer(
 					0,
@@ -467,19 +490,19 @@ impl GpuLikelihood {
 				PipelineBindPoint::Compute,
 				propose_pipeline.layout().clone(),
 				0u32,
-				descriptor_set_common.clone(),
+				ds_common.clone(),
 			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				propose_pipeline.layout().clone(),
 				1u32,
-				descriptor_set_update_nodes.clone(),
+				ds_update_nodes.clone(),
 			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				propose_pipeline.layout().clone(),
 				2u32,
-				descriptor_set_propose,
+				ds_propose,
 			)?;
 
 		// TODO: safety
@@ -529,11 +552,11 @@ impl GpuLikelihood {
 			masks,
 		)?;
 
-		let descriptor_set_layout_stage =
-			stage_pipeline.layout().set_layouts()[1].clone();
-		let descriptor_set_stage = DescriptorSet::new(
-			descriptor_set_allocator.clone(),
-			descriptor_set_layout_stage.clone(),
+		let dsl_stage =
+			DescriptorSetLayout::new(device.clone(), dsl_stage())?;
+		let ds_stage = DescriptorSet::new(
+			ds_allocator.clone(),
+			dsl_stage.clone(),
 			[
 				WriteDescriptorSet::buffer(0, stage_num_rows),
 				WriteDescriptorSet::buffer(
@@ -561,13 +584,13 @@ impl GpuLikelihood {
 				PipelineBindPoint::Compute,
 				stage_pipeline.layout().clone(),
 				0u32,
-				descriptor_set_common.clone(),
+				ds_common.clone(),
 			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				stage_pipeline.layout().clone(),
-				1u32,
-				descriptor_set_stage,
+				3u32,
+				ds_stage,
 			)?;
 
 		// TODO: safety
@@ -597,5 +620,155 @@ impl GpuLikelihood {
 
 			updated_nodes_cache: Vec::new(),
 		})
+	}
+}
+
+fn dsl_common() -> DescriptorSetLayoutCreateInfo {
+	let bindings = BTreeMap::from([
+		(
+			0,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+		(
+			1,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+		(
+			2,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+	]);
+
+	DescriptorSetLayoutCreateInfo {
+		bindings,
+		..Default::default()
+	}
+}
+
+fn dsl_update_nodes() -> DescriptorSetLayoutCreateInfo {
+	let bindings = BTreeMap::from([
+		(
+			0,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+		(
+			1,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+	]);
+
+	DescriptorSetLayoutCreateInfo {
+		bindings,
+		..Default::default()
+	}
+}
+
+fn dsl_stage() -> DescriptorSetLayoutCreateInfo {
+	let bindings = BTreeMap::from([
+		(
+			0,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+		(
+			1,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+		(
+			2,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+	]);
+
+	DescriptorSetLayoutCreateInfo {
+		bindings,
+		..Default::default()
+	}
+}
+
+fn dsl_propose() -> DescriptorSetLayoutCreateInfo {
+	let bindings = BTreeMap::from([
+		(
+			0,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+		(
+			1,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+		(
+			2,
+			DescriptorSetLayoutBinding {
+				descriptor_count: 1,
+				stages: ShaderStages::COMPUTE,
+				..DescriptorSetLayoutBinding::descriptor_type(
+					DescriptorType::StorageBuffer,
+				)
+			},
+		),
+	]);
+
+	DescriptorSetLayoutCreateInfo {
+		bindings,
+		..Default::default()
 	}
 }

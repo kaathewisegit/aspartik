@@ -12,13 +12,13 @@ layout(set = 0, binding = 2) restrict writeonly buffer Masks {
 	uint masks[];
 };
 
-layout(set = 1, binding = 0) restrict buffer StagingLength {
+layout(set = 3, binding = 0) restrict buffer StagingLength {
 	uint stage_num_rows;
 };
-layout(set = 1, binding = 1) restrict buffer StagingProbabilities {
+layout(set = 3, binding = 1) restrict buffer StagingProbabilities {
 	dvec4 stage_probabilities[];
 };
-layout(set = 1, binding = 2) restrict buffer StagingMasks {
+layout(set = 3, binding = 2) restrict buffer StagingMasks {
 	uint stage_masks[];
 };
 
