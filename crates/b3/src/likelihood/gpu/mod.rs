@@ -44,20 +44,18 @@ pub struct GpuLikelihood {
 	queue: Arc<Queue>,
 
 	reject_command: Arc<PrimaryAutoCommandBuffer>,
-	reject_nodes: Subbuffer<[u32]>,
-	reject_nodes_length: Subbuffer<u32>,
+	update_nodes: Subbuffer<[u32]>,
+	update_nodes_length: Subbuffer<u32>,
 
 	propose_command: Arc<PrimaryAutoCommandBuffer>,
-	propose_nodes: Subbuffer<[u32]>,
 	propose_transitions: Subbuffer<[Transition<4>]>,
 	propose_children: Subbuffer<[u32]>,
 	propose_likelihoods: Subbuffer<[f64]>,
-	propose_nodes_length: Subbuffer<u32>,
 
 	/// Unlike in the CPU likelihood, this field is essential.  It tracks
 	/// which nodes were updated in the on-GPU buffer.  As such, it acts as
 	/// the `edited` field in `SkVec`.
-	updated_nodes: Vec<usize>,
+	updated_nodes_cache: Vec<usize>,
 }
 
 mod propose {
@@ -88,16 +86,16 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 		transitions: &[Transition<4>],
 		children: &[usize],
 	) -> Result<f64> {
-		self.updated_nodes = nodes.to_vec();
+		self.updated_nodes_cache = nodes.to_vec();
 
-		let mut accept_nodes = self.propose_nodes.write()?;
+		let mut update_nodes = self.update_nodes.write()?;
 		for (i, node) in nodes.iter().enumerate() {
-			accept_nodes[i] = *node as u32;
+			update_nodes[i] = *node as u32;
 		}
-		drop(accept_nodes);
+		drop(update_nodes);
 
 		let mut accept_nodes_length =
-			self.propose_nodes_length.write()?;
+			self.update_nodes_length.write()?;
 		*accept_nodes_length = nodes.len() as u32;
 		drop(accept_nodes_length);
 
@@ -130,7 +128,7 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 	fn accept(&mut self) -> Result<()> {
 		// `propose` changes the state to how it should be after the
 		// update, so this is all what's needed to accept.
-		self.updated_nodes.clear();
+		self.updated_nodes_cache.clear();
 
 		Ok(())
 	}
@@ -138,19 +136,9 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 	fn reject(&mut self) -> Result<()> {
 		// This happens when an operator rejects prematurely without
 		// making a suggestion.
-		if self.updated_nodes.is_empty() {
+		if self.updated_nodes_cache.is_empty() {
 			return Ok(());
 		}
-
-		let mut nodes = self.reject_nodes.write()?;
-		for (i, node) in self.updated_nodes.iter().enumerate() {
-			nodes[i] = (*node) as u32;
-		}
-		drop(nodes);
-
-		let mut length = self.reject_nodes_length.write()?;
-		*length = self.updated_nodes.len() as u32;
-		drop(length);
 
 		let future = sync::now(self.device.clone())
 			.then_execute(
@@ -161,7 +149,7 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 
 		future.wait(None)?;
 
-		self.updated_nodes.clear();
+		self.updated_nodes_cache.clear();
 
 		Ok(())
 	}
@@ -330,7 +318,7 @@ impl GpuLikelihood {
 		)?;
 
 		// Reject command
-		let reject_nodes: Subbuffer<[u32]> = Buffer::new_slice(
+		let update_nodes: Subbuffer<[u32]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -343,7 +331,7 @@ impl GpuLikelihood {
 			},
 			num_internals as u64,
 		)?;
-		let reject_nodes_length: Subbuffer<u32> = Buffer::new_sized(
+		let update_nodes_length: Subbuffer<u32> = Buffer::new_sized(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -356,19 +344,19 @@ impl GpuLikelihood {
 			},
 		)?;
 
-		let descriptor_set_layout_reject =
+		let descriptor_set_layout_update_nodes =
 			reject_pipeline.layout().set_layouts()[1].clone();
-		let descriptor_set_reject = DescriptorSet::new(
+		let descriptor_set_update_nodes = DescriptorSet::new(
 			descriptor_set_allocator.clone(),
-			descriptor_set_layout_reject.clone(),
+			descriptor_set_layout_update_nodes.clone(),
 			[
 				WriteDescriptorSet::buffer(
 					0,
-					reject_nodes.clone(),
+					update_nodes.clone(),
 				),
 				WriteDescriptorSet::buffer(
 					1,
-					reject_nodes_length.clone(),
+					update_nodes_length.clone(),
 				),
 			],
 			[],
@@ -396,25 +384,14 @@ impl GpuLikelihood {
 				PipelineBindPoint::Compute,
 				reject_pipeline.layout().clone(),
 				1u32,
-				descriptor_set_reject,
+				descriptor_set_update_nodes.clone(),
 			)?;
+
+		// TODO: safety
 		unsafe { reject_cmd_buffer.dispatch(work_group_counts)? };
 
 		let reject_command = command_buffer_builder.build()?;
 
-		let propose_nodes: Subbuffer<[u32]> = Buffer::new_slice(
-			memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-			num_internals as u64,
-		)?;
 		let propose_transitions: Subbuffer<[Transition<4>]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
@@ -454,44 +431,24 @@ impl GpuLikelihood {
 			},
 			num_sites as u64,
 		)?;
-		let propose_nodes_length: Subbuffer<u32> = Buffer::new_sized(
-			memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-		)?;
 
 		let descriptor_set_layout_propose =
-			propose_pipeline.layout().set_layouts()[1].clone();
+			propose_pipeline.layout().set_layouts()[2].clone();
 		let descriptor_set_propose = DescriptorSet::new(
 			descriptor_set_allocator.clone(),
 			descriptor_set_layout_propose.clone(),
 			[
 				WriteDescriptorSet::buffer(
 					0,
-					propose_nodes.clone(),
-				),
-				WriteDescriptorSet::buffer(
-					1,
 					propose_transitions.clone(),
 				),
 				WriteDescriptorSet::buffer(
-					2,
+					1,
 					propose_children.clone(),
 				),
 				WriteDescriptorSet::buffer(
-					3,
+					2,
 					propose_likelihoods.clone(),
-				),
-				WriteDescriptorSet::buffer(
-					4,
-					propose_nodes_length.clone(),
 				),
 			],
 			[],
@@ -516,6 +473,12 @@ impl GpuLikelihood {
 				PipelineBindPoint::Compute,
 				propose_pipeline.layout().clone(),
 				1u32,
+				descriptor_set_update_nodes.clone(),
+			)?
+			.bind_descriptor_sets(
+				PipelineBindPoint::Compute,
+				propose_pipeline.layout().clone(),
+				2u32,
 				descriptor_set_propose,
 			)?;
 
@@ -624,17 +587,15 @@ impl GpuLikelihood {
 			queue,
 
 			reject_command,
-			reject_nodes,
-			reject_nodes_length,
+			update_nodes,
+			update_nodes_length,
 
 			propose_command,
-			propose_nodes,
 			propose_transitions,
 			propose_children,
 			propose_likelihoods,
-			propose_nodes_length,
 
-			updated_nodes: Vec::new(),
+			updated_nodes_cache: Vec::new(),
 		})
 	}
 }

@@ -15,17 +15,18 @@ layout(set = 0, binding = 2) restrict buffer Masks {
 layout(set = 1, binding = 0) restrict readonly buffer Nodes {
 	uint nodes[];
 };
-layout(set = 1, binding = 1) restrict readonly buffer Transitions {
+layout(set = 1, binding = 1) restrict readonly buffer NodesLength {
+	uint nodes_length;
+};
+
+layout(set = 2, binding = 0) restrict readonly buffer Transitions {
 	layout(row_major) dmat4x4 transitions[];
 };
-layout(set = 1, binding = 2) restrict readonly buffer Children {
+layout(set = 2, binding = 1) restrict readonly buffer Children {
 	uint children[];
 };
-layout(set = 1, binding = 3) restrict writeonly buffer Likelihoods {
+layout(set = 2, binding = 2) restrict writeonly buffer Likelihoods {
 	double likelihoods[];
-};
-layout(set = 1, binding = 4) restrict readonly buffer NodesLength {
-	uint nodes_length;
 };
 
 void main() {
