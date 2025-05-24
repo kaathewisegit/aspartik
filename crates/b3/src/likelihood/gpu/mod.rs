@@ -74,6 +74,13 @@ mod reject {
 	}
 }
 
+mod stage {
+	vulkano_shaders::shader! {
+		ty: "compute",
+		path: "src/likelihood/gpu/stage.glsl",
+	}
+}
+
 impl LikelihoodTrait<4> for GpuLikelihood {
 	fn propose(
 		&mut self,
@@ -226,46 +233,44 @@ impl GpuLikelihood {
 			StandardMemoryAllocator::new_default(device.clone()),
 		);
 
-		let num_rows_buffer = Buffer::from_data(
+		let common_num_rows: Subbuffer<u32> = Buffer::new_sized(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
 				..Default::default()
 			},
 			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				memory_type_filter:
+					MemoryTypeFilter::PREFER_DEVICE,
 				..Default::default()
 			},
-			(num_leaves * 2 - 1) as u32,
 		)?;
-
-		let probabilities_buffer = Buffer::from_iter(
+		let common_probabilities: Subbuffer<[Row<4>]> =
+			Buffer::new_slice(
+				memory_allocator.clone(),
+				BufferCreateInfo {
+					usage: BufferUsage::STORAGE_BUFFER,
+					..Default::default()
+				},
+				AllocationCreateInfo {
+					memory_type_filter:
+						MemoryTypeFilter::PREFER_DEVICE,
+					..Default::default()
+				},
+				probabilities.len() as u64,
+			)?;
+		let common_masks: Subbuffer<[u32]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
 				..Default::default()
 			},
 			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				memory_type_filter:
+					MemoryTypeFilter::PREFER_DEVICE,
 				..Default::default()
 			},
-			probabilities.clone(),
-		)?;
-
-		let masks_buffer = Buffer::from_iter(
-			memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-			masks.clone(),
+			masks.len() as u64,
 		)?;
 
 		let descriptor_set_allocator =
@@ -306,6 +311,7 @@ impl GpuLikelihood {
 
 		let reject_pipeline = make_pipeline!(reject);
 		let propose_pipeline = make_pipeline!(propose);
+		let stage_pipeline = make_pipeline!(stage);
 
 		let descriptor_set_layout_common =
 			propose_pipeline.layout().set_layouts()[0].clone();
@@ -313,12 +319,12 @@ impl GpuLikelihood {
 			descriptor_set_allocator.clone(),
 			descriptor_set_layout_common.clone(),
 			[
-				WriteDescriptorSet::buffer(0, num_rows_buffer),
+				WriteDescriptorSet::buffer(0, common_num_rows),
 				WriteDescriptorSet::buffer(
 					1,
-					probabilities_buffer,
+					common_probabilities,
 				),
-				WriteDescriptorSet::buffer(2, masks_buffer),
+				WriteDescriptorSet::buffer(2, common_masks),
 			],
 			[],
 		)?;
@@ -518,6 +524,100 @@ impl GpuLikelihood {
 		cmd?;
 
 		let propose_command = command_buffer_builder.build()?;
+
+		let stage_num_rows = Buffer::from_data(
+			memory_allocator.clone(),
+			BufferCreateInfo {
+				usage: BufferUsage::STORAGE_BUFFER,
+				..Default::default()
+			},
+			AllocationCreateInfo {
+				memory_type_filter:
+					MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				..Default::default()
+			},
+			(num_leaves + num_internals) as u32,
+		)?;
+		let stage_probabilities: Subbuffer<[Row<4>]> =
+			Buffer::from_iter(
+				memory_allocator.clone(),
+				BufferCreateInfo {
+					usage: BufferUsage::STORAGE_BUFFER,
+					..Default::default()
+				},
+				AllocationCreateInfo {
+					memory_type_filter:
+						MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+					..Default::default()
+				},
+				probabilities,
+			)?;
+		let stage_masks = Buffer::from_iter(
+			memory_allocator.clone(),
+			BufferCreateInfo {
+				usage: BufferUsage::STORAGE_BUFFER,
+				..Default::default()
+			},
+			AllocationCreateInfo {
+				memory_type_filter:
+					MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				..Default::default()
+			},
+			masks,
+		)?;
+
+		let descriptor_set_layout_stage =
+			stage_pipeline.layout().set_layouts()[1].clone();
+		let descriptor_set_stage = DescriptorSet::new(
+			descriptor_set_allocator.clone(),
+			descriptor_set_layout_stage.clone(),
+			[
+				WriteDescriptorSet::buffer(0, stage_num_rows),
+				WriteDescriptorSet::buffer(
+					1,
+					stage_probabilities,
+				),
+				WriteDescriptorSet::buffer(
+					2,
+					stage_masks.clone(),
+				),
+			],
+			[],
+		)?;
+
+		let mut command_buffer_builder =
+			AutoCommandBufferBuilder::primary(
+				command_buffer_allocator.clone(),
+				queue.queue_family_index(),
+				CommandBufferUsage::MultipleSubmit,
+			)?;
+
+		let cmd = command_buffer_builder
+			.bind_pipeline_compute(stage_pipeline.clone())?
+			.bind_descriptor_sets(
+				PipelineBindPoint::Compute,
+				stage_pipeline.layout().clone(),
+				0u32,
+				descriptor_set_common.clone(),
+			)?
+			.bind_descriptor_sets(
+				PipelineBindPoint::Compute,
+				stage_pipeline.layout().clone(),
+				1u32,
+				descriptor_set_stage,
+			)?;
+
+		// TODO: safety
+		let cmd = unsafe { cmd.dispatch(work_group_counts) };
+		cmd?;
+
+		let stage_command = command_buffer_builder.build()?;
+
+		let future = sync::now(device.clone())
+			.then_execute(queue.clone(), stage_command.clone())?
+			.then_signal_fence_and_flush()?;
+
+		future.wait(None)?;
 
 		Ok(GpuLikelihood {
 			device,
