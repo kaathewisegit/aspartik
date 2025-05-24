@@ -3,15 +3,44 @@ use anyhow::{bail, Result};
 use pyo3::prelude::*;
 use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 
+use std::cmp::Ordering;
+
 use crate::likelihood::Row;
 use data::{seq::DnaSeq, DnaNucleotide};
 use linalg::Vector;
 
-pub fn dna_to_rows(seqs: &[DnaSeq]) -> Vec<Vec<Row<4>>> {
-	let width = seqs[0].len();
-	let height = seqs.len();
+fn compare_seqs(a: &[DnaNucleotide], b: &[DnaNucleotide]) -> Ordering {
+	for (a, b) in a.iter().zip(b.iter()) {
+		if a != b {
+			let a_num: u8 = (*a).into();
+			let b_num: u8 = (*b).into();
+			return a_num.cmp(&b_num);
+		}
+	}
+	Ordering::Equal
+}
 
-	let mut out = vec![vec![Vector::default(); height]; width];
+pub fn dna_to_rows(seqs: &[DnaSeq]) -> Vec<Vec<Row<4>>> {
+	let seq_len = seqs[0].len();
+	let num_seq = seqs.len();
+
+	let mut transposed = vec![vec![]; seq_len];
+
+	#[expect(clippy::needless_range_loop)]
+	for nuc_idx in 0..seq_len {
+		for seq_idx in 0..num_seq {
+			transposed[nuc_idx].push(seqs[seq_idx][nuc_idx]);
+		}
+	}
+
+	// Deduplicate same rows
+	transposed.sort_by(|a, b| compare_seqs(a, b));
+	transposed.dedup_by(|a, b| compare_seqs(a, b) == Ordering::Equal);
+
+	let mut out = vec![
+		vec![Vector::default(); transposed[0].len()];
+		transposed.len()
+	];
 
 	// TODO: find a place for this
 	fn to_row(base: &DnaNucleotide) -> Vector<f64, 4> {
@@ -26,10 +55,9 @@ pub fn dna_to_rows(seqs: &[DnaSeq]) -> Vec<Vec<Row<4>>> {
 		.into()
 	}
 
-	#[expect(clippy::needless_range_loop)]
-	for i in 0..width {
-		for j in 0..height {
-			out[i][j] = to_row(&seqs[j][i])
+	for i in 0..transposed.len() {
+		for j in 0..transposed[0].len() {
+			out[i][j] = to_row(&transposed[i][j])
 		}
 	}
 
