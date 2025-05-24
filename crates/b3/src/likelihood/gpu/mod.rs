@@ -43,16 +43,16 @@ pub struct GpuLikelihood {
 	device: Arc<Device>,
 	queue: Arc<Queue>,
 
-	reject_cmd: Arc<PrimaryAutoCommandBuffer>,
-	reject_nodes_buffer: Subbuffer<[u32]>,
-	reject_nodes_len_buffer: Subbuffer<u32>,
+	reject_command: Arc<PrimaryAutoCommandBuffer>,
+	reject_nodes: Subbuffer<[u32]>,
+	reject_nodes_length: Subbuffer<u32>,
 
-	accept_cmd: Arc<PrimaryAutoCommandBuffer>,
-	accept_nodes: Subbuffer<[u32]>,
-	accept_transitions: Subbuffer<[Transition<4>]>,
-	accept_children: Subbuffer<[u32]>,
-	accept_likelihoods: Subbuffer<[f64]>,
-	accept_nodes_length: Subbuffer<u32>,
+	propose_command: Arc<PrimaryAutoCommandBuffer>,
+	propose_nodes: Subbuffer<[u32]>,
+	propose_transitions: Subbuffer<[Transition<4>]>,
+	propose_children: Subbuffer<[u32]>,
+	propose_likelihoods: Subbuffer<[f64]>,
+	propose_nodes_length: Subbuffer<u32>,
 
 	/// Unlike in the CPU likelihood, this field is essential.  It tracks
 	/// which nodes were updated in the on-GPU buffer.  As such, it acts as
@@ -83,24 +83,25 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 	) -> Result<f64> {
 		self.updated_nodes = nodes.to_vec();
 
-		let mut accept_nodes = self.accept_nodes.write()?;
+		let mut accept_nodes = self.propose_nodes.write()?;
 		for (i, node) in nodes.iter().enumerate() {
 			accept_nodes[i] = *node as u32;
 		}
 		drop(accept_nodes);
 
 		let mut accept_nodes_length =
-			self.accept_nodes_length.write()?;
+			self.propose_nodes_length.write()?;
 		*accept_nodes_length = nodes.len() as u32;
 		drop(accept_nodes_length);
 
-		let mut accept_children = self.accept_children.write()?;
+		let mut accept_children = self.propose_children.write()?;
 		for (i, child) in children.iter().enumerate() {
 			accept_children[i] = *child as u32;
 		}
 		drop(accept_children);
 
-		let mut accept_transitions = self.accept_transitions.write()?;
+		let mut accept_transitions =
+			self.propose_transitions.write()?;
 		for (i, transition) in transitions.iter().enumerate() {
 			accept_transitions[i] = *transition;
 		}
@@ -109,13 +110,13 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 		let future = sync::now(self.device.clone())
 			.then_execute(
 				self.queue.clone(),
-				self.accept_cmd.clone(),
+				self.propose_command.clone(),
 			)?
 			.then_signal_fence_and_flush()?;
 
 		future.wait(None)?;
 
-		let output = self.accept_likelihoods.read()?;
+		let output = self.propose_likelihoods.read()?;
 		Ok(output.iter().map(|v| v.ln()).sum())
 	}
 
@@ -134,20 +135,20 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 			return Ok(());
 		}
 
-		let mut nodes = self.reject_nodes_buffer.write()?;
+		let mut nodes = self.reject_nodes.write()?;
 		for (i, node) in self.updated_nodes.iter().enumerate() {
 			nodes[i] = (*node) as u32;
 		}
 		drop(nodes);
 
-		let mut length = self.reject_nodes_len_buffer.write()?;
+		let mut length = self.reject_nodes_length.write()?;
 		*length = self.updated_nodes.len() as u32;
 		drop(length);
 
 		let future = sync::now(self.device.clone())
 			.then_execute(
 				self.queue.clone(),
-				self.reject_cmd.clone(),
+				self.reject_command.clone(),
 			)?
 			.then_signal_fence_and_flush()?;
 
@@ -306,12 +307,11 @@ impl GpuLikelihood {
 		let reject_pipeline = make_pipeline!(reject);
 		let propose_pipeline = make_pipeline!(propose);
 
-		let pipeline_layout = reject_pipeline.layout();
-		let descriptor_set_layouts = pipeline_layout.set_layouts();
-		let descriptor_set_layout_0 = descriptor_set_layouts[0].clone();
+		let descriptor_set_layout_common =
+			propose_pipeline.layout().set_layouts()[0].clone();
 		let descriptor_set_common = DescriptorSet::new(
 			descriptor_set_allocator.clone(),
-			descriptor_set_layout_0.clone(),
+			descriptor_set_layout_common.clone(),
 			[
 				WriteDescriptorSet::buffer(0, num_rows_buffer),
 				WriteDescriptorSet::buffer(
@@ -324,7 +324,7 @@ impl GpuLikelihood {
 		)?;
 
 		// Reject command
-		let reject_nodes_buffer: Subbuffer<[u32]> = Buffer::new_slice(
+		let reject_nodes: Subbuffer<[u32]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -337,7 +337,7 @@ impl GpuLikelihood {
 			},
 			num_internals as u64,
 		)?;
-		let reject_nodes_len_buffer: Subbuffer<u32> = Buffer::new_sized(
+		let reject_nodes_length: Subbuffer<u32> = Buffer::new_sized(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -350,18 +350,19 @@ impl GpuLikelihood {
 			},
 		)?;
 
-		let descriptor_set_layout_1 = descriptor_set_layouts[1].clone();
-		let descriptor_set_1 = DescriptorSet::new(
+		let descriptor_set_layout_reject =
+			reject_pipeline.layout().set_layouts()[1].clone();
+		let descriptor_set_reject = DescriptorSet::new(
 			descriptor_set_allocator.clone(),
-			descriptor_set_layout_1.clone(),
+			descriptor_set_layout_reject.clone(),
 			[
 				WriteDescriptorSet::buffer(
 					0,
-					reject_nodes_buffer.clone(),
+					reject_nodes.clone(),
 				),
 				WriteDescriptorSet::buffer(
 					1,
-					reject_nodes_len_buffer.clone(),
+					reject_nodes_length.clone(),
 				),
 			],
 			[],
@@ -389,16 +390,13 @@ impl GpuLikelihood {
 				PipelineBindPoint::Compute,
 				reject_pipeline.layout().clone(),
 				1u32,
-				descriptor_set_1,
+				descriptor_set_reject,
 			)?;
 		unsafe { reject_cmd_buffer.dispatch(work_group_counts)? };
 
-		let reject_cmd = command_buffer_builder.build()?;
+		let reject_command = command_buffer_builder.build()?;
 
-		let pipeline_layout = propose_pipeline.layout();
-		let descriptor_set_layouts = pipeline_layout.set_layouts();
-
-		let accept_nodes: Subbuffer<[u32]> = Buffer::new_slice(
+		let propose_nodes: Subbuffer<[u32]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -411,7 +409,7 @@ impl GpuLikelihood {
 			},
 			num_internals as u64,
 		)?;
-		let accept_transitions: Subbuffer<[Transition<4>]> = Buffer::new_slice(
+		let propose_transitions: Subbuffer<[Transition<4>]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -424,7 +422,7 @@ impl GpuLikelihood {
 			},
 			(num_internals * 2) as u64,
 		)?;
-		let accept_children: Subbuffer<[u32]> = Buffer::new_slice(
+		let propose_children: Subbuffer<[u32]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -437,7 +435,7 @@ impl GpuLikelihood {
 			},
 			(num_internals * 2) as u64,
 		)?;
-		let accept_likelihoods: Subbuffer<[f64]> = Buffer::new_slice(
+		let propose_likelihoods: Subbuffer<[f64]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -450,7 +448,7 @@ impl GpuLikelihood {
 			},
 			num_sites as u64,
 		)?;
-		let accept_nodes_length: Subbuffer<u32> = Buffer::new_sized(
+		let propose_nodes_length: Subbuffer<u32> = Buffer::new_sized(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -463,30 +461,31 @@ impl GpuLikelihood {
 			},
 		)?;
 
-		let descriptor_set_layout_1 = descriptor_set_layouts[1].clone();
-		let descriptor_set_1 = DescriptorSet::new(
+		let descriptor_set_layout_propose =
+			propose_pipeline.layout().set_layouts()[1].clone();
+		let descriptor_set_propose = DescriptorSet::new(
 			descriptor_set_allocator.clone(),
-			descriptor_set_layout_1.clone(),
+			descriptor_set_layout_propose.clone(),
 			[
 				WriteDescriptorSet::buffer(
 					0,
-					accept_nodes.clone(),
+					propose_nodes.clone(),
 				),
 				WriteDescriptorSet::buffer(
 					1,
-					accept_transitions.clone(),
+					propose_transitions.clone(),
 				),
 				WriteDescriptorSet::buffer(
 					2,
-					accept_children.clone(),
+					propose_children.clone(),
 				),
 				WriteDescriptorSet::buffer(
 					3,
-					accept_likelihoods.clone(),
+					propose_likelihoods.clone(),
 				),
 				WriteDescriptorSet::buffer(
 					4,
-					accept_nodes_length.clone(),
+					propose_nodes_length.clone(),
 				),
 			],
 			[],
@@ -511,29 +510,29 @@ impl GpuLikelihood {
 				PipelineBindPoint::Compute,
 				propose_pipeline.layout().clone(),
 				1u32,
-				descriptor_set_1,
+				descriptor_set_propose,
 			)?;
 
 		// TODO: safety
 		let cmd = unsafe { cmd.dispatch(work_group_counts) };
 		cmd?;
 
-		let accept_cmd = command_buffer_builder.build()?;
+		let propose_command = command_buffer_builder.build()?;
 
 		Ok(GpuLikelihood {
 			device,
 			queue,
 
-			reject_cmd,
-			reject_nodes_buffer,
-			reject_nodes_len_buffer,
+			reject_command,
+			reject_nodes,
+			reject_nodes_length,
 
-			accept_cmd,
-			accept_nodes,
-			accept_transitions,
-			accept_children,
-			accept_likelihoods,
-			accept_nodes_length,
+			propose_command,
+			propose_nodes,
+			propose_transitions,
+			propose_children,
+			propose_likelihoods,
+			propose_nodes_length,
 
 			updated_nodes: Vec::new(),
 		})
