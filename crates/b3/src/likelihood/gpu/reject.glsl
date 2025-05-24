@@ -30,8 +30,9 @@ void main() {
 	// This is an ugly hack, because if `probabilities` aren't used, then
 	// Vulkano (or Vulkan?) optimizes them out, making the descriptor set
 	// incompatible with the one from `propose`
-	double unused = probabilities[offset * 2].x;
-	unused += 1.0;
+	if (false) {
+		double unused = probabilities[offset * 2].x;
+	}
 
 	for (uint i = 0; i < nodes_length; i++) {
 		// the masks start at offset

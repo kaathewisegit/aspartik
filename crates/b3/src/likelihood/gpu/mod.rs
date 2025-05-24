@@ -324,7 +324,7 @@ impl GpuLikelihood {
 		)?;
 
 		// Reject command
-		let reject_nodes_buffer: Subbuffer<[u32]> = Buffer::new_unsized(
+		let reject_nodes_buffer: Subbuffer<[u32]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -357,7 +357,7 @@ impl GpuLikelihood {
 			[
 				WriteDescriptorSet::buffer(
 					0,
-					reject_nodes_len_buffer.clone(),
+					reject_nodes_buffer.clone(),
 				),
 				WriteDescriptorSet::buffer(
 					1,
