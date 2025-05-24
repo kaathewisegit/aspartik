@@ -202,7 +202,7 @@ impl Mcmc {
 		}
 
 		for likelihood in &self.likelihoods {
-			likelihood.get().inner().accept();
+			likelihood.get().inner().accept()?;
 		}
 
 		let mut backup_params = self.backup_params.lock();
@@ -221,7 +221,7 @@ impl Mcmc {
 		}
 
 		for likelihood in &self.likelihoods {
-			likelihood.get().inner().reject();
+			likelihood.get().inner().reject()?;
 		}
 
 		let backup_params = self.backup_params.lock();

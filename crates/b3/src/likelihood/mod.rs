@@ -28,11 +28,11 @@ trait LikelihoodTrait<const N: usize> {
 		nodes: &[usize],
 		transitions: &[Transition<N>],
 		children: &[usize],
-	) -> f64;
+	) -> Result<f64>;
 
-	fn accept(&mut self);
+	fn accept(&mut self) -> Result<()>;
 
-	fn reject(&mut self);
+	fn reject(&mut self) -> Result<()>;
 }
 
 type DynCalculator<const N: usize> =
@@ -80,7 +80,7 @@ impl GenericLikelihood<4> {
 		Python::with_gil(|py| out.propose(py))?;
 		// propose sets `last` and accept updates the cache, so neither
 		// cache nor last will be NaN.
-		out.accept();
+		out.accept()?;
 		Ok(out)
 	}
 }
@@ -113,21 +113,23 @@ impl<const N: usize> GenericLikelihood<N> {
 			&nodes,
 			&transitions,
 			&children,
-		);
+		)?;
 		trace!(likelihood);
 		self.last = likelihood;
 		Ok(likelihood)
 	}
 
-	fn accept(&mut self) {
+	fn accept(&mut self) -> Result<()> {
 		self.cache = self.last;
-		self.calculator.accept();
+		self.calculator.accept()?;
 		self.transitions.accept();
+		Ok(())
 	}
 
-	fn reject(&mut self) {
-		self.calculator.reject();
+	fn reject(&mut self) -> Result<()> {
+		self.calculator.reject()?;
 		self.transitions.accept();
+		Ok(())
 	}
 }
 
@@ -148,7 +150,7 @@ impl ErasedLikelihood {
 		}
 	}
 
-	pub fn accept(&mut self) {
+	pub fn accept(&mut self) -> Result<()> {
 		match self {
 			ErasedLikelihood::Nucleotide4(inner) => inner.accept(),
 			ErasedLikelihood::Nucleotide5(inner) => inner.accept(),
@@ -156,7 +158,7 @@ impl ErasedLikelihood {
 		}
 	}
 
-	pub fn reject(&mut self) {
+	pub fn reject(&mut self) -> Result<()> {
 		match self {
 			ErasedLikelihood::Nucleotide4(inner) => inner.reject(),
 			ErasedLikelihood::Nucleotide5(inner) => inner.reject(),

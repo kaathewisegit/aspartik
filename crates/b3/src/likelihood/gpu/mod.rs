@@ -82,7 +82,7 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 		nodes: &[usize],
 		transitions: &[Transition<4>],
 		children: &[usize],
-	) -> f64 {
+	) -> Result<f64> {
 		self.updated_nodes = nodes.to_vec();
 
 		let pipeline_layout = self.propose_pipeline.layout();
@@ -100,7 +100,7 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 				..Default::default()
 			},
 			nodes.iter().map(|v| *v as u32),
-		).unwrap();
+		)?;
 		let substitutions_buffer = Buffer::from_iter(
 			self.memory_allocator.clone(),
 			BufferCreateInfo {
@@ -113,7 +113,7 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 				..Default::default()
 			},
 			transitions.iter().copied(),
-		).unwrap();
+		)?;
 		let children_buffer = Buffer::from_iter(
 			self.memory_allocator.clone(),
 			BufferCreateInfo {
@@ -126,7 +126,7 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 				..Default::default()
 			},
 			children.iter().map(|v| *v as u32),
-		).unwrap();
+		)?;
 		let likelihoods_buffer = Buffer::from_iter(
 			self.memory_allocator.clone(),
 			BufferCreateInfo {
@@ -139,10 +139,9 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 				..Default::default()
 			},
 			(0..self.num_sites).map(|_| 0.0f64),
-		).unwrap();
+		)?;
 
-		let descriptor_set_layout_1 =
-			descriptor_set_layouts.get(1).unwrap();
+		let descriptor_set_layout_1 = descriptor_set_layouts[1].clone();
 		let descriptor_set_1 = DescriptorSet::new(
 			self.descriptor_set_allocator.clone(),
 			descriptor_set_layout_1.clone(),
@@ -159,76 +158,71 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 				),
 			],
 			[],
-		)
-		.unwrap();
+		)?;
 
 		let mut command_buffer_builder =
 			AutoCommandBufferBuilder::primary(
 				self.command_buffer_allocator.clone(),
 				self.queue.queue_family_index(),
 				CommandBufferUsage::OneTimeSubmit,
-			)
-			.unwrap();
+			)?;
 
 		let num_groups = (self.num_sites + 63) / 64;
 		let work_group_counts = [num_groups as u32, 1, 1];
 
 		let cmd = command_buffer_builder
-			.bind_pipeline_compute(self.propose_pipeline.clone())
-			.unwrap()
+			.bind_pipeline_compute(self.propose_pipeline.clone())?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				self.propose_pipeline.layout().clone(),
 				0u32,
 				self.descriptor_set_0.clone(),
-			)
-			.unwrap()
+			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				self.propose_pipeline.layout().clone(),
 				1u32,
 				descriptor_set_1,
-			)
-			.unwrap();
+			)?;
 
 		// TODO: safety
 		let cmd = unsafe { cmd.dispatch(work_group_counts) };
-		cmd.unwrap();
+		cmd?;
 
-		let command_buffer = command_buffer_builder.build().unwrap();
+		let command_buffer = command_buffer_builder.build()?;
 
 		let future = sync::now(self.device.clone())
-			.then_execute(self.queue.clone(), command_buffer)
-			.unwrap()
-			.then_signal_fence_and_flush()
-			.unwrap();
+			.then_execute(self.queue.clone(), command_buffer)?
+			.then_signal_fence_and_flush()?;
 
-		future.wait(None).unwrap();
+		future.wait(None)?;
 
-		let output = likelihoods_buffer.read().unwrap();
-		output.iter().map(|v| v.ln()).sum()
+		let output = likelihoods_buffer.read()?;
+		Ok(output.iter().map(|v| v.ln()).sum())
 	}
 
-	fn accept(&mut self) {
+	fn accept(&mut self) -> Result<()> {
 		// `propose` changes the state to how it should be after the
 		// update, so this is all what's needed to accept.
 		self.updated_nodes.clear();
+
+		Ok(())
 	}
 
-	fn reject(&mut self) {
+	fn reject(&mut self) -> Result<()> {
 		// This happens when an operator rejects prematurely without
 		// making a suggestion.
 		if self.updated_nodes.is_empty() {
-			return;
+			return Ok(());
 		}
 
-		let mut nodes = self.reject_nodes_buffer.write().unwrap();
+		let mut nodes = self.reject_nodes_buffer.write()?;
 		for (i, node) in self.updated_nodes.iter().enumerate() {
 			nodes[i] = (*node) as u32;
 		}
 		drop(nodes);
 
-		let mut length = self.reject_nodes_len_buffer.write().unwrap();
+		let mut length = self.reject_nodes_len_buffer.write()?;
 		*length = self.updated_nodes.len() as u32;
 		drop(length);
 
@@ -236,14 +230,14 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 			.then_execute(
 				self.queue.clone(),
 				self.reject_cmd.clone(),
-			)
-			.unwrap()
-			.then_signal_fence_and_flush()
-			.unwrap();
+			)?
+			.then_signal_fence_and_flush()?;
 
-		future.wait(None).unwrap();
+		future.wait(None)?;
 
 		self.updated_nodes.clear();
+
+		Ok(())
 	}
 }
 
@@ -440,8 +434,7 @@ impl GpuLikelihood {
 
 		let pipeline_layout = reject_pipeline.layout();
 		let descriptor_set_layouts = pipeline_layout.set_layouts();
-		let descriptor_set_layout_1 =
-			descriptor_set_layouts.get(1).unwrap();
+		let descriptor_set_layout_1 = descriptor_set_layouts[1].clone();
 		let descriptor_set_1 = DescriptorSet::new(
 			descriptor_set_allocator.clone(),
 			descriptor_set_layout_1.clone(),
@@ -463,8 +456,7 @@ impl GpuLikelihood {
 				command_buffer_allocator.clone(),
 				queue.queue_family_index(),
 				CommandBufferUsage::MultipleSubmit,
-			)
-			.unwrap();
+			)?;
 
 		let num_groups = (num_sites + 63) / 64;
 		let work_group_counts = [num_groups as u32, 1, 1];

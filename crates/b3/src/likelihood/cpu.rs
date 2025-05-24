@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 use super::{LikelihoodTrait, Row, Transition};
 use skvec::SkVec;
 
@@ -13,7 +15,7 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		nodes: &[usize],
 		transitions: &[Transition<N>],
 		children: &[usize],
-	) -> f64 {
+	) -> Result<f64> {
 		assert_eq!(nodes.len() * 2, transitions.len());
 		assert_eq!(nodes.len() * 2, children.len());
 
@@ -30,16 +32,22 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		}
 
 		let root = *nodes.last().unwrap();
-		self.probabilities.iter().map(|p| p[root].sum().ln()).sum()
+		let out = self
+			.probabilities
+			.iter()
+			.map(|p| p[root].sum().ln())
+			.sum();
+		Ok(out)
 	}
 
-	fn accept(&mut self) {
+	fn accept(&mut self) -> Result<()> {
 		for probability in &mut self.probabilities {
 			probability.accept();
 		}
+		Ok(())
 	}
 
-	fn reject(&mut self) {
+	fn reject(&mut self) -> Result<()> {
 		let nodes = std::mem::take(&mut self.updated_nodes);
 
 		for probability in &mut self.probabilities {
@@ -49,6 +57,8 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 			// All of the edited items have been manually unset, so
 			// there's no need for `accept` or `reject`.
 		}
+
+		Ok(())
 	}
 }
 
