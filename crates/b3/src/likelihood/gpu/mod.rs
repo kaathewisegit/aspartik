@@ -3,14 +3,13 @@ use vulkano::{
 	buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer},
 	command_buffer::{
 		allocator::{
-			CommandBufferAllocator, StandardCommandBufferAllocator,
+			StandardCommandBufferAllocator,
 			StandardCommandBufferAllocatorCreateInfo,
 		},
 		AutoCommandBufferBuilder, CommandBufferUsage,
 		PrimaryAutoCommandBuffer,
 	},
 	descriptor_set::{
-		allocator::DescriptorSetAllocator,
 		allocator::StandardDescriptorSetAllocator, DescriptorSet,
 		WriteDescriptorSet,
 	},
@@ -43,23 +42,22 @@ pub struct GpuLikelihood {
 	// - number of nodes
 	device: Arc<Device>,
 	queue: Arc<Queue>,
-	memory_allocator: Arc<StandardMemoryAllocator>,
-	descriptor_set_allocator: Arc<dyn DescriptorSetAllocator>,
-	command_buffer_allocator: Arc<dyn CommandBufferAllocator>,
-	propose_pipeline: Arc<ComputePipeline>,
-	descriptor_set_0: Arc<DescriptorSet>,
 
 	reject_cmd: Arc<PrimaryAutoCommandBuffer>,
 	reject_nodes_buffer: Subbuffer<[u32]>,
 	reject_nodes_len_buffer: Subbuffer<u32>,
 
+	accept_cmd: Arc<PrimaryAutoCommandBuffer>,
+	accept_nodes: Subbuffer<[u32]>,
+	accept_transitions: Subbuffer<[Transition<4>]>,
+	accept_children: Subbuffer<[u32]>,
+	accept_likelihoods: Subbuffer<[f64]>,
+	accept_nodes_length: Subbuffer<u32>,
+
 	/// Unlike in the CPU likelihood, this field is essential.  It tracks
 	/// which nodes were updated in the on-GPU buffer.  As such, it acts as
 	/// the `edited` field in `SkVec`.
 	updated_nodes: Vec<usize>,
-
-	/// The length of each sequence
-	num_sites: usize,
 }
 
 mod propose {
@@ -85,119 +83,39 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 	) -> Result<f64> {
 		self.updated_nodes = nodes.to_vec();
 
-		let pipeline_layout = self.propose_pipeline.layout();
-		let descriptor_set_layouts = pipeline_layout.set_layouts();
+		let mut accept_nodes = self.accept_nodes.write()?;
+		for (i, node) in nodes.iter().enumerate() {
+			accept_nodes[i] = *node as u32;
+		}
+		drop(accept_nodes);
 
-		let nodes_buffer = Buffer::from_iter(
-			self.memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-			nodes.iter().map(|v| *v as u32),
-		)?;
-		let substitutions_buffer = Buffer::from_iter(
-			self.memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-			transitions.iter().copied(),
-		)?;
-		let children_buffer = Buffer::from_iter(
-			self.memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-			children.iter().map(|v| *v as u32),
-		)?;
-		let likelihoods_buffer = Buffer::from_iter(
-			self.memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-			(0..self.num_sites).map(|_| 0.0f64),
-		)?;
+		let mut accept_nodes_length =
+			self.accept_nodes_length.write()?;
+		*accept_nodes_length = nodes.len() as u32;
+		drop(accept_nodes_length);
 
-		let descriptor_set_layout_1 = descriptor_set_layouts[1].clone();
-		let descriptor_set_1 = DescriptorSet::new(
-			self.descriptor_set_allocator.clone(),
-			descriptor_set_layout_1.clone(),
-			[
-				WriteDescriptorSet::buffer(0, nodes_buffer),
-				WriteDescriptorSet::buffer(
-					1,
-					substitutions_buffer,
-				),
-				WriteDescriptorSet::buffer(2, children_buffer),
-				WriteDescriptorSet::buffer(
-					3,
-					likelihoods_buffer.clone(),
-				),
-			],
-			[],
-		)?;
+		let mut accept_children = self.accept_children.write()?;
+		for (i, child) in children.iter().enumerate() {
+			accept_children[i] = *child as u32;
+		}
+		drop(accept_children);
 
-		let mut command_buffer_builder =
-			AutoCommandBufferBuilder::primary(
-				self.command_buffer_allocator.clone(),
-				self.queue.queue_family_index(),
-				CommandBufferUsage::OneTimeSubmit,
-			)?;
-
-		let num_groups = (self.num_sites + 63) / 64;
-		let work_group_counts = [num_groups as u32, 1, 1];
-
-		let cmd = command_buffer_builder
-			.bind_pipeline_compute(self.propose_pipeline.clone())?
-			.bind_descriptor_sets(
-				PipelineBindPoint::Compute,
-				self.propose_pipeline.layout().clone(),
-				0u32,
-				self.descriptor_set_0.clone(),
-			)?
-			.bind_descriptor_sets(
-				PipelineBindPoint::Compute,
-				self.propose_pipeline.layout().clone(),
-				1u32,
-				descriptor_set_1,
-			)?;
-
-		// TODO: safety
-		let cmd = unsafe { cmd.dispatch(work_group_counts) };
-		cmd?;
-
-		let command_buffer = command_buffer_builder.build()?;
+		let mut accept_transitions = self.accept_transitions.write()?;
+		for (i, transition) in transitions.iter().enumerate() {
+			accept_transitions[i] = *transition;
+		}
+		drop(accept_transitions);
 
 		let future = sync::now(self.device.clone())
-			.then_execute(self.queue.clone(), command_buffer)?
+			.then_execute(
+				self.queue.clone(),
+				self.accept_cmd.clone(),
+			)?
 			.then_signal_fence_and_flush()?;
 
 		future.wait(None)?;
 
-		let output = likelihoods_buffer.read()?;
+		let output = self.accept_likelihoods.read()?;
 		Ok(output.iter().map(|v| v.ln()).sum())
 	}
 
@@ -388,10 +306,10 @@ impl GpuLikelihood {
 		let reject_pipeline = make_pipeline!(reject);
 		let propose_pipeline = make_pipeline!(propose);
 
-		let pipeline_layout = propose_pipeline.layout();
+		let pipeline_layout = reject_pipeline.layout();
 		let descriptor_set_layouts = pipeline_layout.set_layouts();
 		let descriptor_set_layout_0 = descriptor_set_layouts[0].clone();
-		let descriptor_set_0 = DescriptorSet::new(
+		let descriptor_set_common = DescriptorSet::new(
 			descriptor_set_allocator.clone(),
 			descriptor_set_layout_0.clone(),
 			[
@@ -432,8 +350,6 @@ impl GpuLikelihood {
 			},
 		)?;
 
-		let pipeline_layout = reject_pipeline.layout();
-		let descriptor_set_layouts = pipeline_layout.set_layouts();
 		let descriptor_set_layout_1 = descriptor_set_layouts[1].clone();
 		let descriptor_set_1 = DescriptorSet::new(
 			descriptor_set_allocator.clone(),
@@ -467,7 +383,7 @@ impl GpuLikelihood {
 				PipelineBindPoint::Compute,
 				reject_pipeline.layout().clone(),
 				0u32,
-				descriptor_set_0.clone(),
+				descriptor_set_common.clone(),
 			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
@@ -479,23 +395,147 @@ impl GpuLikelihood {
 
 		let reject_cmd = command_buffer_builder.build()?;
 
+		let pipeline_layout = propose_pipeline.layout();
+		let descriptor_set_layouts = pipeline_layout.set_layouts();
+
+		let accept_nodes: Subbuffer<[u32]> = Buffer::new_slice(
+			memory_allocator.clone(),
+			BufferCreateInfo {
+				usage: BufferUsage::STORAGE_BUFFER,
+				..Default::default()
+			},
+			AllocationCreateInfo {
+				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				..Default::default()
+			},
+			num_internals as u64,
+		)?;
+		let accept_transitions: Subbuffer<[Transition<4>]> = Buffer::new_slice(
+			memory_allocator.clone(),
+			BufferCreateInfo {
+				usage: BufferUsage::STORAGE_BUFFER,
+				..Default::default()
+			},
+			AllocationCreateInfo {
+				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				..Default::default()
+			},
+			(num_internals * 2) as u64,
+		)?;
+		let accept_children: Subbuffer<[u32]> = Buffer::new_slice(
+			memory_allocator.clone(),
+			BufferCreateInfo {
+				usage: BufferUsage::STORAGE_BUFFER,
+				..Default::default()
+			},
+			AllocationCreateInfo {
+				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				..Default::default()
+			},
+			(num_internals * 2) as u64,
+		)?;
+		let accept_likelihoods: Subbuffer<[f64]> = Buffer::new_slice(
+			memory_allocator.clone(),
+			BufferCreateInfo {
+				usage: BufferUsage::STORAGE_BUFFER,
+				..Default::default()
+			},
+			AllocationCreateInfo {
+				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				..Default::default()
+			},
+			num_sites as u64,
+		)?;
+		let accept_nodes_length: Subbuffer<u32> = Buffer::new_sized(
+			memory_allocator.clone(),
+			BufferCreateInfo {
+				usage: BufferUsage::STORAGE_BUFFER,
+				..Default::default()
+			},
+			AllocationCreateInfo {
+				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				..Default::default()
+			},
+		)?;
+
+		let descriptor_set_layout_1 = descriptor_set_layouts[1].clone();
+		let descriptor_set_1 = DescriptorSet::new(
+			descriptor_set_allocator.clone(),
+			descriptor_set_layout_1.clone(),
+			[
+				WriteDescriptorSet::buffer(
+					0,
+					accept_nodes.clone(),
+				),
+				WriteDescriptorSet::buffer(
+					1,
+					accept_transitions.clone(),
+				),
+				WriteDescriptorSet::buffer(
+					2,
+					accept_children.clone(),
+				),
+				WriteDescriptorSet::buffer(
+					3,
+					accept_likelihoods.clone(),
+				),
+				WriteDescriptorSet::buffer(
+					4,
+					accept_nodes_length.clone(),
+				),
+			],
+			[],
+		)?;
+
+		let mut command_buffer_builder =
+			AutoCommandBufferBuilder::primary(
+				command_buffer_allocator.clone(),
+				queue.queue_family_index(),
+				CommandBufferUsage::MultipleSubmit,
+			)?;
+
+		let cmd = command_buffer_builder
+			.bind_pipeline_compute(propose_pipeline.clone())?
+			.bind_descriptor_sets(
+				PipelineBindPoint::Compute,
+				propose_pipeline.layout().clone(),
+				0u32,
+				descriptor_set_common.clone(),
+			)?
+			.bind_descriptor_sets(
+				PipelineBindPoint::Compute,
+				propose_pipeline.layout().clone(),
+				1u32,
+				descriptor_set_1,
+			)?;
+
+		// TODO: safety
+		let cmd = unsafe { cmd.dispatch(work_group_counts) };
+		cmd?;
+
+		let accept_cmd = command_buffer_builder.build()?;
+
 		Ok(GpuLikelihood {
 			device,
 			queue,
-			memory_allocator,
-			descriptor_set_allocator,
-			command_buffer_allocator,
-			propose_pipeline,
-
-			descriptor_set_0,
 
 			reject_cmd,
 			reject_nodes_buffer,
 			reject_nodes_len_buffer,
 
-			updated_nodes: Vec::new(),
+			accept_cmd,
+			accept_nodes,
+			accept_transitions,
+			accept_children,
+			accept_likelihoods,
+			accept_nodes_length,
 
-			num_sites,
+			updated_nodes: Vec::new(),
 		})
 	}
 }

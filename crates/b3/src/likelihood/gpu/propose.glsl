@@ -24,6 +24,9 @@ layout(set = 1, binding = 2) restrict readonly buffer Children {
 layout(set = 1, binding = 3) restrict writeonly buffer Likelihoods {
 	double likelihoods[];
 };
+layout(set = 1, binding = 4) restrict readonly buffer NodesLength {
+	uint nodes_length;
+};
 
 void main() {
 	uint idx = gl_GlobalInvocationID.x;
@@ -33,7 +36,7 @@ void main() {
 		return;
 	}
 
-	for (uint i = 0; i < nodes.length(); i++) {
+	for (uint i = 0; i < nodes_length; i++) {
 		// the masks start at offset
 		// the probabilities start at offset * 2
 
