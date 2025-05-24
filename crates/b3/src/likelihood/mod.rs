@@ -63,7 +63,7 @@ impl GenericLikelihood<4> {
 
 		let calculator: DynCalculator<4> = if use_gpu {
 			info!("using GpuLikelihood");
-			Box::new(GpuLikelihood::new(sites))
+			Box::new(GpuLikelihood::new(sites)?)
 		} else {
 			info!("using CpuLikelihood");
 			Box::new(CpuLikelihood::new(sites))

@@ -15,6 +15,9 @@ layout(set = 0, binding = 2) restrict buffer Masks {
 layout(set = 1, binding = 0) restrict readonly buffer Nodes {
 	uint nodes[];
 };
+layout(set = 1, binding = 1) restrict readonly buffer NodesLength {
+	uint nodes_length;
+};
 
 void main() {
 	uint idx = gl_GlobalInvocationID.x;
@@ -30,7 +33,7 @@ void main() {
 	probabilities[offset].x += 0.001;
 	probabilities[offset].x -= 0.001;
 
-	for (uint i = 0; i < nodes.length(); i++) {
+	for (uint i = 0; i < nodes_length; i++) {
 		// the masks start at offset
 		// the probabilities start at offset * 2
 
