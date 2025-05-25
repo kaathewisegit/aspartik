@@ -1,11 +1,11 @@
 typedef unsigned char byte;
 typedef unsigned int uint;
 
-__device__ double dot(double4 a, double4 b) {
+__device__ double dot(const double4 a, const double4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
-__device__ double4 hadamard(double4 a, double4 b) {
+__device__ double4 hadamard(const double4 a, const double4 b) {
 	return make_double4(
 		a.x * b.x,
 		a.y * b.y,
@@ -16,7 +16,7 @@ __device__ double4 hadamard(double4 a, double4 b) {
 
 __device__ double4 mul(
 	const uint index,
-	const double4* transitions,
+	const double4* __restrict__ transitions,
 	const double4 vector
 ) {
 	return make_double4(
@@ -30,14 +30,14 @@ __device__ double4 mul(
 extern "C" __global__ void propose(
 	const uint num_nodes,
 	const uint num_sites,
-	byte* masks,
-	double4* probabilities,
+	byte* __restrict__ masks,
+	double4* __restrict__ probabilities,
 
 	const uint num_updated_nodes,
-	const uint* updated_nodes,
-	const uint* children,
-	const double4* transitions,
-	double* likelihoods
+	const uint* __restrict__ updated_nodes,
+	const uint* __restrict__ children,
+	const double4* __restrict__ transitions,
+	double* __restrict__ likelihoods
 ) {
 	uint idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (idx >= num_sites) {
@@ -82,9 +82,9 @@ extern "C" __global__ void propose(
 extern "C"  __global__ void reject(
 	const uint num_nodes,
 	const uint num_sites,
-	byte* masks,
+	byte* __restrict__ masks,
 	const uint num_updated_nodes,
-	const uint* updated_nodes
+	const uint* __restrict__ updated_nodes
 ) {
 	uint idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (idx >= num_sites) {
