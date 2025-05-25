@@ -33,6 +33,9 @@ pub struct Mcmc {
 	likelihoods: Vec<Py<PyLikelihood>>,
 	loggers: Vec<PyLogger>,
 	rng: Py<PyRng>,
+
+	// Config
+	validate: bool,
 }
 
 #[pymethods]
@@ -42,6 +45,11 @@ impl Mcmc {
 	// but I'll have to benchmark that.
 	#[expect(clippy::too_many_arguments)]
 	#[new]
+	#[pyo3(signature = (
+		burnin, length,
+		trees, params, priors, operators, likelihoods, loggers, rng,
+		validate = false,
+	))]
 	fn new(
 		py: Python,
 
@@ -55,6 +63,8 @@ impl Mcmc {
 		likelihoods: Vec<Py<PyLikelihood>>,
 		loggers: Vec<PyLogger>,
 		rng: Py<PyRng>,
+
+		validate: bool,
 	) -> Result<Mcmc> {
 		let mut backup_params = Vec::with_capacity(params.len());
 		for param in &params {
@@ -65,8 +75,10 @@ impl Mcmc {
 
 		Ok(Mcmc {
 			posterior: Mutex::new(f64::NEG_INFINITY),
+
 			burnin,
 			length,
+
 			trees,
 			params,
 			backup_params,
@@ -75,6 +87,8 @@ impl Mcmc {
 			likelihoods,
 			loggers,
 			rng,
+
+			validate,
 		})
 	}
 
@@ -151,8 +165,10 @@ impl Mcmc {
 				Proposal::Hastings(ratio) => ratio,
 			};
 
-		for tree in &self.trees {
-			tree.get().inner().verify()?;
+		if self.validate {
+			for tree in &self.trees {
+				tree.get().inner().validate()?;
+			}
 		}
 
 		let prior = self.prior(py)?;

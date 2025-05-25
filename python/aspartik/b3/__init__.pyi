@@ -157,6 +157,7 @@ class MCMC:
         likelihoods: Sequence[Likelihood],
         loggers: Sequence[Logger],
         rng: RNG,
+        validate: bool = False,
     ): ...
     def run(self) -> None: ...
     @property

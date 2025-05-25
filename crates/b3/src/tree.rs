@@ -392,7 +392,7 @@ impl Tree {
 		self.update_edge(edge_b, a);
 	}
 
-	pub fn verify(&self) -> Result<()> {
+	pub fn validate(&self) -> Result<()> {
 		for (i, parent) in self.parents.iter().enumerate() {
 			ensure!(
 				*parent >= self.num_leaves(),
@@ -953,8 +953,8 @@ impl PyTree {
 		self.inner().random_leaf(&mut rng.inner())
 	}
 
-	fn verify(&self) -> Result<()> {
-		self.inner().verify()
+	fn validate(&self) -> Result<()> {
+		self.inner().validate()
 	}
 
 	fn newick(&self) -> String {
