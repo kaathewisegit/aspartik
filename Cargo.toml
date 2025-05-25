@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
 	"crates/b3",
+	"crates/bitmap",
 	"crates/data",
 	"crates/io",
 	"crates/linalg",
