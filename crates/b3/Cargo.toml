@@ -10,7 +10,7 @@ authors.workspace = true
 bitmap = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
-linalg = { workspace = true, features = ["bytemuck"] }
+linalg = { workspace = true, features = ["bytemuck", "cuda"] }
 rng = { workspace = true }
 skvec = { workspace = true }
 util = { workspace = true }

@@ -462,6 +462,7 @@ version = "0.1.0-alpha.2"
 dependencies = [
  "approx",
  "bytemuck",
+ "cudarc",
  "lapack-sys",
  "num-traits",
  "proptest",

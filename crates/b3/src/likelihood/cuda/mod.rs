@@ -12,8 +12,8 @@ impl CudaLikelihood {
 		let context = CudaContext::new(0)?;
 		let stream = context.default_stream();
 
-		let _probabilities: CudaSlice<f64> =
-			stream.alloc_zeros(num_sites * 4)?;
+		let probabilities: CudaSlice<Row<4>> =
+			stream.alloc_zeros(num_sites)?;
 
 		todo!()
 	}

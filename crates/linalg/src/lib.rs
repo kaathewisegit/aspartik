@@ -2,6 +2,8 @@
 mod approx;
 #[cfg(feature = "bytemuck")]
 mod bytemuck;
+#[cfg(feature = "cuda")]
+mod cuda;
 mod float;
 mod lapack;
 mod math;

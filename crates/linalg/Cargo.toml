@@ -9,13 +9,15 @@ authors.workspace = true
 build = "build.rs"
 
 [dependencies]
+approx = { workspace = true, optional = true }
 bytemuck = { workspace = true, optional = true }
+cudarc = { workspace = true, optional = true }
 lapack-sys = { workspace = true }
 num-traits = { workspace = true }
-approx = { workspace = true, optional = true }
-proptest = { workspace = true, optional= true }
+proptest = { workspace = true, optional = true }
 
 [features]
 bytemuck = ["dep:bytemuck"]
 approx = ["dep:approx"]
 proptest = ["dep:proptest"]
+cuda = ["dep:cudarc"]
