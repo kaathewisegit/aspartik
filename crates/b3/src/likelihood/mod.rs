@@ -11,6 +11,7 @@ use data::seq::{python::PyDnaSeq, DnaSeq};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
+mod cuda;
 mod thread;
 mod vulkan;
 

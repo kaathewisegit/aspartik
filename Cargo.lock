@@ -66,6 +66,7 @@ dependencies = [
  "anyhow",
  "bitmap",
  "crossbeam-channel",
+ "cudarc",
  "data",
  "io",
  "linalg",
@@ -215,6 +216,15 @@ name = "crunchy"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43da5946c66ffcc7745f48db692ffbb10a83bfe0afd96235c5c2a4fb23994929"
+
+[[package]]
+name = "cudarc"
+version = "0.16.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9574894139a982bf26fbb44473a9d416c015e779c51ef0fbc0789f1a1c17b25"
+dependencies = [
+ "libloading",
+]
 
 [[package]]
 name = "data"

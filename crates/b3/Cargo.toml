@@ -17,6 +17,7 @@ util = { workspace = true }
 
 anyhow = { workspace = true }
 crossbeam-channel = { workspace = true }
+cudarc = { workspace = true, features = ["cuda-12000"] }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }
