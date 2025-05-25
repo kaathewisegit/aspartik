@@ -2,8 +2,8 @@
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) restrict buffer Length {
-	uint num_rows;
+layout(set = 0, binding = 0) restrict uniform NumNodes {
+	uint num_nodes;
 };
 layout(set = 0, binding = 1) restrict writeonly buffer Probabilities {
 	dvec4 probabilities[];
@@ -12,29 +12,22 @@ layout(set = 0, binding = 2) restrict writeonly buffer Masks {
 	uint masks[];
 };
 
-layout(set = 3, binding = 0) restrict readonly buffer StagingLength {
-	uint stage_num_rows;
-};
-layout(set = 3, binding = 1) restrict readonly buffer StagingProbabilities {
+layout(set = 3, binding = 0) restrict readonly buffer StagingProbabilities {
 	dvec4 stage_probabilities[];
 };
-layout(set = 3, binding = 2) restrict readonly buffer StagingMasks {
+layout(set = 3, binding = 1) restrict readonly buffer StagingMasks {
 	uint stage_masks[];
 };
 
 void main() {
 	uint idx = gl_GlobalInvocationID.x;
-	uint offset = idx * stage_num_rows;
-
-	if (idx == 0) {
-		num_rows = stage_num_rows;
-	}
+	uint offset = idx * num_nodes;
 
 	if (offset >= masks.length()) {
 		return;
 	}
 
-	for (uint i = 0; i < num_rows; i++) {
+	for (uint i = 0; i < num_nodes; i++) {
 		// the masks start at offset
 		// the probabilities start at offset * 2
 

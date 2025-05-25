@@ -189,6 +189,7 @@ impl GpuLikelihood {
 		let num_leaves = sites[0].len();
 
 		let num_internals = num_leaves - 1;
+		let num_nodes = num_leaves + num_internals;
 		// A SkVec-like structure
 		let mut probabilities = vec![];
 		// The mask for probabilities.  32-bit integer in the smallest
@@ -249,17 +250,18 @@ impl GpuLikelihood {
 			StandardMemoryAllocator::new_default(device.clone()),
 		);
 
-		let common_num_rows: Subbuffer<u32> = Buffer::new_sized(
+		let common_num_nodes: Subbuffer<u32> = Buffer::from_data(
 			memory_allocator.clone(),
 			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
+				usage: BufferUsage::UNIFORM_BUFFER,
 				..Default::default()
 			},
 			AllocationCreateInfo {
 				memory_type_filter:
-					MemoryTypeFilter::PREFER_DEVICE,
+					MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
 				..Default::default()
 			},
+			num_nodes as u32,
 		)?;
 		let common_probabilities: Subbuffer<[Row<4>]> =
 			Buffer::new_slice(
@@ -323,7 +325,7 @@ impl GpuLikelihood {
 			ds_allocator.clone(),
 			dsl_common.clone(),
 			[
-				WriteDescriptorSet::buffer(0, common_num_rows),
+				WriteDescriptorSet::buffer(0, common_num_nodes),
 				WriteDescriptorSet::buffer(
 					1,
 					common_probabilities,
@@ -350,7 +352,7 @@ impl GpuLikelihood {
 		let update_nodes_length: Subbuffer<u32> = Buffer::new_sized(
 			memory_allocator.clone(),
 			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
+				usage: BufferUsage::UNIFORM_BUFFER,
 				..Default::default()
 			},
 			AllocationCreateInfo {
@@ -508,19 +510,6 @@ impl GpuLikelihood {
 
 		let propose_command = command_buffer_builder.build()?;
 
-		let stage_num_rows = Buffer::from_data(
-			memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::STORAGE_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter:
-					MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-			(num_leaves + num_internals) as u32,
-		)?;
 		let stage_probabilities: Subbuffer<[Row<4>]> =
 			Buffer::from_iter(
 				memory_allocator.clone(),
@@ -555,13 +544,12 @@ impl GpuLikelihood {
 			ds_allocator.clone(),
 			dsl_stage.clone(),
 			[
-				WriteDescriptorSet::buffer(0, stage_num_rows),
 				WriteDescriptorSet::buffer(
-					1,
+					0,
 					stage_probabilities,
 				),
 				WriteDescriptorSet::buffer(
-					2,
+					1,
 					stage_masks.clone(),
 				),
 			],
@@ -620,21 +608,19 @@ impl GpuLikelihood {
 	}
 }
 
-fn dsl_compute_binding() -> DescriptorSetLayoutBinding {
+fn dsl_binding(dtype: DescriptorType) -> DescriptorSetLayoutBinding {
 	DescriptorSetLayoutBinding {
 		stages: ShaderStages::COMPUTE,
-		..DescriptorSetLayoutBinding::descriptor_type(
-			DescriptorType::StorageBuffer,
-		)
+		..DescriptorSetLayoutBinding::descriptor_type(dtype)
 	}
 }
 
 fn dsl_common() -> DescriptorSetLayoutCreateInfo {
 	DescriptorSetLayoutCreateInfo {
 		bindings: BTreeMap::from([
-			(0, dsl_compute_binding()),
-			(1, dsl_compute_binding()),
-			(2, dsl_compute_binding()),
+			(0, dsl_binding(DescriptorType::UniformBuffer)),
+			(1, dsl_binding(DescriptorType::StorageBuffer)),
+			(2, dsl_binding(DescriptorType::StorageBuffer)),
 		]),
 		..Default::default()
 	}
@@ -643,8 +629,8 @@ fn dsl_common() -> DescriptorSetLayoutCreateInfo {
 fn dsl_update_nodes() -> DescriptorSetLayoutCreateInfo {
 	DescriptorSetLayoutCreateInfo {
 		bindings: BTreeMap::from([
-			(0, dsl_compute_binding()),
-			(1, dsl_compute_binding()),
+			(0, dsl_binding(DescriptorType::StorageBuffer)),
+			(1, dsl_binding(DescriptorType::UniformBuffer)),
 		]),
 		..Default::default()
 	}
@@ -653,9 +639,8 @@ fn dsl_update_nodes() -> DescriptorSetLayoutCreateInfo {
 fn dsl_stage() -> DescriptorSetLayoutCreateInfo {
 	DescriptorSetLayoutCreateInfo {
 		bindings: BTreeMap::from([
-			(0, dsl_compute_binding()),
-			(1, dsl_compute_binding()),
-			(2, dsl_compute_binding()),
+			(0, dsl_binding(DescriptorType::StorageBuffer)),
+			(1, dsl_binding(DescriptorType::StorageBuffer)),
 		]),
 		..Default::default()
 	}
@@ -664,9 +649,9 @@ fn dsl_stage() -> DescriptorSetLayoutCreateInfo {
 fn dsl_propose() -> DescriptorSetLayoutCreateInfo {
 	DescriptorSetLayoutCreateInfo {
 		bindings: BTreeMap::from([
-			(0, dsl_compute_binding()),
-			(1, dsl_compute_binding()),
-			(2, dsl_compute_binding()),
+			(0, dsl_binding(DescriptorType::StorageBuffer)),
+			(1, dsl_binding(DescriptorType::StorageBuffer)),
+			(2, dsl_binding(DescriptorType::StorageBuffer)),
 		]),
 		..Default::default()
 	}

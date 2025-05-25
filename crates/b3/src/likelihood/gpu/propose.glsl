@@ -2,8 +2,8 @@
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) restrict readonly buffer Length {
-	uint num_rows;
+layout(set = 0, binding = 0) restrict uniform NumNodes {
+	uint num_nodes;
 };
 layout(set = 0, binding = 1) restrict buffer Probabilities {
 	dvec4 probabilities[];
@@ -15,7 +15,7 @@ layout(set = 0, binding = 2) restrict buffer Masks {
 layout(set = 1, binding = 0) restrict readonly buffer Nodes {
 	uint nodes[];
 };
-layout(set = 1, binding = 1) restrict readonly buffer NodesLength {
+layout(set = 1, binding = 1) restrict uniform NodesLength {
 	uint nodes_length;
 };
 
@@ -31,7 +31,7 @@ layout(set = 2, binding = 2) restrict writeonly buffer Likelihoods {
 
 void main() {
 	uint idx = gl_GlobalInvocationID.x;
-	uint offset = idx * num_rows;
+	uint offset = idx * num_nodes;
 
 	if (offset >= masks.length()) {
 		return;
