@@ -1,7 +1,7 @@
 use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
-use tracing::{info, instrument, trace};
+use tracing::{instrument, trace};
 
 use crate::{
 	substitution::PySubstitution, tree::PyTree, util::dna_to_rows,
@@ -12,12 +12,11 @@ use linalg::{RowMatrix, Vector};
 
 mod cpu;
 mod gpu;
-// mod thread;
+mod thread;
 
 use cpu::CpuLikelihood;
 use gpu::GpuLikelihood;
-
-// pub use thread::ThreadedLikelihood;
+use thread::ThreadedLikelihood;
 
 pub type Row<const N: usize> = Vector<f64, N>;
 type Transition<const N: usize> = RowMatrix<f64, N, N>;
@@ -26,8 +25,8 @@ trait LikelihoodTrait<const N: usize> {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		transitions: &[Transition<N>],
 		children: &[usize],
+		transitions: &[Transition<N>],
 	) -> Result<f64>;
 
 	fn accept(&mut self) -> Result<()>;
@@ -56,17 +55,18 @@ impl GenericLikelihood<4> {
 		substitution: PySubstitution<4>,
 		sites: Vec<Vec<Vector<f64, 4>>>,
 		tree: Py<PyTree>,
-		use_gpu: bool,
+		calculator: String,
 	) -> Result<Self> {
 		let num_internals = sites[0].len() - 1;
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
-		let calculator: DynCalculator<4> = if use_gpu {
-			info!("using GpuLikelihood");
-			Box::new(GpuLikelihood::new(sites)?)
-		} else {
-			info!("using CpuLikelihood");
-			Box::new(CpuLikelihood::new(sites))
+		let calculator: DynCalculator<4> = match calculator.as_str() {
+			"gpu" => Box::new(GpuLikelihood::new(sites)?),
+			"cpu" => Box::new(CpuLikelihood::new(sites)),
+			"thread" => Box::new(ThreadedLikelihood::new(sites)),
+			_ => {
+				panic!("Unknown calculator type '{calculator}'");
+			}
 		};
 
 		let mut out = Self {
@@ -111,8 +111,8 @@ impl<const N: usize> GenericLikelihood<N> {
 
 		let likelihood = self.calculator.propose(
 			&nodes,
-			&transitions,
 			&children,
+			&transitions,
 		)?;
 		trace!(likelihood);
 		self.last = likelihood;
@@ -189,12 +189,15 @@ impl PyLikelihood {
 #[pymethods]
 impl PyLikelihood {
 	#[new]
-	#[pyo3(signature = (sequences, substitution, tree, use_gpu = false))]
+	#[pyo3(signature = (
+		sequences, substitution, tree,
+		calculator = String::from("cpu"),
+	))]
 	fn new4(
 		sequences: Vec<PyDnaSeq>,
 		substitution: PySubstitution<4>,
 		tree: Py<PyTree>,
-		use_gpu: bool,
+		calculator: String,
 	) -> Result<Self> {
 		let sequences: Vec<DnaSeq> = sequences
 			.iter()
@@ -206,7 +209,7 @@ impl PyLikelihood {
 			substitution,
 			sites,
 			tree,
-			use_gpu,
+			calculator,
 		)?;
 
 		let erased_likelihood =

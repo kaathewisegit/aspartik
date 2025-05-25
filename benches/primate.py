@@ -17,7 +17,7 @@ from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import RNG
 from aspartik.io.fasta import FASTADNAReader
 
-path = "crates/b3/data/primate-mdna.fasta"
+path = "crates/b3/data/primate-mdna-full.fasta"
 sequences = []
 names = []
 for record in FASTADNAReader(path):
@@ -112,7 +112,7 @@ likelihood = Likelihood(
     sequences=sequences,
     substitution=model,
     tree=tree,
-    use_gpu=False,
+    calculator="thread",
 )
 
 loggers = [

@@ -1,84 +1,144 @@
-use crossbeam_channel::{bounded, select, Receiver, Sender};
+use anyhow::Result;
+use crossbeam_channel::{bounded, Receiver, Sender};
 
-use std::thread;
+use std::{sync::Arc, thread};
 
-use super::{CpuLikelihood, Likelihood};
-use base::substitution::{Row, Substitution};
+use super::{CpuLikelihood, LikelihoodTrait, Row, Transition};
 
-type Update<const N: usize> =
-	(Vec<Substitution<N>>, Vec<usize>, Vec<(usize, usize)>);
+type Update<const N: usize> = (Vec<usize>, Vec<usize>, Vec<Transition<N>>);
 
 pub struct ThreadedLikelihood<const N: usize> {
-	propose: Sender<Update<N>>,
-	likelihood: Receiver<f64>,
-	accept: Sender<()>,
-	reject: Sender<()>,
+	updates: Vec<Sender<Arc<Update<N>>>>,
+	likelihoods: Vec<Receiver<f64>>,
+	accepts: Vec<Sender<bool>>,
+
+	/// The MCMC might call `accept` or `reject` without calling `propose`.
+	/// In these cases sending accept/rejects will mess things up, as the
+	/// threads will be waiting for updates.
+	has_proposed: bool,
 }
 
-impl<const N: usize> Likelihood for ThreadedLikelihood<N> {
-	type Row = Row<N>;
-	type Substitution = Substitution<N>;
-
+impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 	fn propose(
 		&mut self,
-		substitutions: &[Self::Substitution],
 		nodes: &[usize],
-		children: &[(usize, usize)],
-	) {
-		self.propose
-			.send((
-				substitutions.to_vec(),
-				nodes.to_vec(),
-				children.to_vec(),
-			))
-			.unwrap();
+		children: &[usize],
+		transitions: &[Transition<N>],
+	) -> Result<f64> {
+		let update = Arc::new((
+			nodes.to_owned(),
+			children.to_owned(),
+			transitions.to_owned(),
+		));
+		for sender in &self.updates {
+			sender.send(update.clone())?;
+		}
+
+		let mut out = 0.0;
+		for receiver in &self.likelihoods {
+			out += receiver.recv()?;
+		}
+
+		self.has_proposed = true;
+
+		Ok(out)
 	}
 
-	fn likelihood(&self) -> f64 {
-		self.likelihood.recv().unwrap()
+	fn accept(&mut self) -> Result<()> {
+		if !self.has_proposed {
+			return Ok(());
+		}
+		for sender in &self.accepts {
+			sender.send(true)?;
+		}
+		self.has_proposed = false;
+		Ok(())
 	}
 
-	fn accept(&mut self) {
-		self.accept.send(()).unwrap()
-	}
-
-	fn reject(&mut self) {
-		self.reject.send(()).unwrap()
+	fn reject(&mut self) -> Result<()> {
+		if !self.has_proposed {
+			return Ok(());
+		}
+		for sender in &self.accepts {
+			sender.send(false)?;
+		}
+		self.has_proposed = false;
+		Ok(())
 	}
 }
 
 impl<const N: usize> ThreadedLikelihood<N> {
-	#[allow(dead_code)]
-	pub fn new(mut likelihood: CpuLikelihood<N>) -> Self {
-		let (propose_sender, propose_reciever) =
-			bounded::<Update<N>>(1);
-		let (likelihood_sender, likelihood_reciever) = bounded(1);
-		let (accept_sender, accept_reciever) = bounded(1);
-		let (reject_sender, reject_reciever) = bounded(1);
+	pub fn new(sites: Vec<Vec<Row<N>>>) -> Self {
+		let mut update_senders = Vec::new();
+		let mut likelihoods_receivers = Vec::new();
+		let mut accept_senders = Vec::new();
 
-		thread::spawn(move || loop {
-			select! {
-				recv(propose_reciever) -> update => {
-					let Ok(update) = update else {
-						break;
-					};
-					likelihood.propose(&update.0, &update.1, &update.2);
-					let _ = likelihood_sender.send(likelihood.likelihood());
-				}
-				recv(accept_reciever) -> _ => {
-					likelihood.accept();
-				}
-				recv(reject_reciever) -> _ => {
-					likelihood.accept();
-				}
-			}
-		});
+		let num_sites = sites.len();
+		let num_threads = (num_sites + 399) / 400;
+		let segment_len = num_sites / num_threads;
+
+		for i in 0..num_threads {
+			let (update_sender, update_receiver) = bounded(1);
+			update_senders.push(update_sender);
+
+			let (likelihood_sender, likelihood_receiver) =
+				bounded(1);
+			likelihoods_receivers.push(likelihood_receiver);
+
+			let (accept_sender, accept_receiver) = bounded(1);
+			accept_senders.push(accept_sender);
+
+			let start = i * segment_len;
+			let end = if i == num_threads - 1 {
+				num_sites
+			} else {
+				(i + 1) * segment_len
+			};
+			let sites = sites[start..end].to_owned();
+
+			thread::spawn(move || {
+				worker(
+					sites,
+					update_receiver,
+					likelihood_sender,
+					accept_receiver,
+				);
+			});
+		}
 
 		Self {
-			propose: propose_sender,
-			likelihood: likelihood_reciever,
-			accept: accept_sender,
-			reject: reject_sender,
+			updates: update_senders,
+			likelihoods: likelihoods_receivers,
+			accepts: accept_senders,
+
+			has_proposed: false,
+		}
+	}
+}
+
+fn worker<const N: usize>(
+	sites: Vec<Vec<Row<N>>>,
+	update_receiver: Receiver<Arc<Update<N>>>,
+	likelihood_sender: Sender<f64>,
+	accept_receiver: Receiver<bool>,
+) {
+	let mut cpu = CpuLikelihood::new(sites);
+
+	loop {
+		let Ok(update) = update_receiver.recv() else {
+			// Parent process has been dropped, meaning we should
+			// terminate too.
+			break;
+		};
+		let likelihood =
+			cpu.propose(&update.0, &update.1, &update.2).unwrap();
+		likelihood_sender.send(likelihood).unwrap();
+
+		let accept = accept_receiver.recv().unwrap();
+		if accept {
+			cpu.accept().unwrap();
+		} else {
+			cpu.reject().unwrap();
 		}
 	}
 }

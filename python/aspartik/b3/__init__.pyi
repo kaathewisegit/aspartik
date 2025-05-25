@@ -1,5 +1,14 @@
 from __future__ import annotations
-from typing import List, Any, Optional, Sequence, Tuple, Protocol, runtime_checkable
+from typing import (
+    List,
+    Any,
+    Optional,
+    Sequence,
+    Tuple,
+    Protocol,
+    runtime_checkable,
+    Literal,
+)
 from collections.abc import Iterator
 
 from ..rng import RNG
@@ -94,7 +103,7 @@ class Likelihood:
         sequences: Sequence[DNASeq],
         substitution: Any,
         tree: Tree,
-        use_gpu: bool = False,
+        calculator: Literal["cpu", "gpu", "thread"] = "cpu",
     ): ...
 
 @runtime_checkable

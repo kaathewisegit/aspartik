@@ -111,8 +111,8 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		transitions: &[Transition<4>],
 		children: &[usize],
+		transitions: &[Transition<4>],
 	) -> Result<f64> {
 		self.updated_nodes_cache = nodes.to_vec();
 

@@ -13,8 +13,8 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		transitions: &[Transition<N>],
 		children: &[usize],
+		transitions: &[Transition<N>],
 	) -> Result<f64> {
 		assert_eq!(nodes.len() * 2, transitions.len());
 		assert_eq!(nodes.len() * 2, children.len());
