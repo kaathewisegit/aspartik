@@ -6,12 +6,12 @@ __device__ double dot(double4 a, double4 b) {
 }
 
 __device__ double4 hadamard(double4 a, double4 b) {
-	double4 out;
-	out.x = a.x * b.x;
-	out.y = a.y * b.y;
-	out.z = a.z * b.z;
-	out.w = a.w * b.w;
-	return out;
+	return make_double4(
+		a.x * b.x,
+		a.y * b.y,
+		a.z * b.z,
+		a.w * b.w
+	);
 }
 
 __device__ double4 mul(
@@ -19,14 +19,12 @@ __device__ double4 mul(
 	const double4* transitions,
 	const double4 vector
 ) {
-	double4 out;
-
-	out.x = dot(transitions[index + 0], vector);
-	out.y = dot(transitions[index + 1], vector);
-	out.z = dot(transitions[index + 2], vector);
-	out.w = dot(transitions[index + 3], vector);
-
-	return out;
+	return make_double4(
+		dot(transitions[index + 0], vector),
+		dot(transitions[index + 1], vector),
+		dot(transitions[index + 2], vector),
+		dot(transitions[index + 3], vector)
+	);
 }
 
 extern "C" __global__ void propose(
