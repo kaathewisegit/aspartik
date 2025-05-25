@@ -27,10 +27,7 @@ class NarrowExchange:
         if tree.num_internals < 2:
             return Proposal.Reject()
 
-        num_grandparents_before = 0
-        for node in tree.internals():
-            if tree.is_grandparent(node):
-                num_grandparents_before += 1
+        num_grandparents_before = tree.num_grandparents()
         if num_grandparents_before == 0:
             # no grandparents to pick `grandparent` from
             return Proposal.Reject()
