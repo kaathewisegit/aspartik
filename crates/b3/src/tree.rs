@@ -253,9 +253,10 @@ impl Tree {
 	}
 
 	/// A breadth-first order of internals starting from the root.
-	pub(crate) fn full_update(&self) -> Vec<Internal> {
+	pub fn full_update(&self) -> Vec<Internal> {
 		let mut queue = VecDeque::from([self.root()]);
-		let mut out = Vec::from([self.root()]);
+		let mut out = Vec::with_capacity(self.num_internals());
+		out.push(self.root());
 		while let Some(node) = queue.pop_front() {
 			let (left, right) = self.children_of(node);
 
@@ -273,13 +274,14 @@ impl Tree {
 		out
 	}
 
-	pub(crate) fn to_lists(
+	pub fn to_lists(
 		&self,
 		nodes: &[Internal],
 	) -> (Vec<usize>, Vec<usize>, Vec<usize>) {
-		let mut out_nodes = Vec::new();
-		let mut edges = Vec::new();
-		let mut children = Vec::new();
+		let num_nodes = nodes.len();
+		let mut out_nodes = Vec::with_capacity(num_nodes);
+		let mut edges = Vec::with_capacity(num_nodes * 2);
+		let mut children = Vec::with_capacity(num_nodes * 2);
 
 		for node in nodes {
 			out_nodes.push(node.0);
@@ -295,7 +297,7 @@ impl Tree {
 	}
 
 	fn walk_nodes(&self, nodes: &[Node]) -> Vec<Internal> {
-		let mut deq = VecDeque::<Internal>::new();
+		let mut deq = VecDeque::<Internal>::with_capacity(nodes.len());
 		let mut set = Bitmap::new(self.num_nodes());
 
 		for node in nodes {
