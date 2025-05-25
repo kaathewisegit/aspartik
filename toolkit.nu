@@ -33,6 +33,7 @@ export def clean [] {
 			flamegraph.svg
 			perf.data perf.data.old
 			b3.trees
+			b3.log
 			tracing.log.*
 			crates/**/__pycache__/
 	)
