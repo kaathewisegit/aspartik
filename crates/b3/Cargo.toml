@@ -22,7 +22,6 @@ pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }
 rand_distr = { workspace = true }
 rand_pcg = { workspace = true, features = ["serde"] }
-rayon = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tracing = { workspace = true }
