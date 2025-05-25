@@ -48,12 +48,13 @@ class EpochScale:
 
         num_scaled = 0
         for node in tree.internals():
-            if lower < tree.weight_of(node) <= upper:
-                new_weight = lower + scale * (tree.weight_of(node) - lower)
+            weight = tree.weight_of(node)
+            if lower < weight <= upper:
+                new_weight = lower + scale * (weight - lower)
                 tree.update_weight(node, new_weight)
                 num_scaled += 1
-            elif tree.weight_of(node) > upper:
-                new_weight = tree.weight_of(node) + delta
+            elif weight > upper:
+                new_weight = weight + delta
                 tree.update_weight(node, new_weight)
 
         if num_scaled < 2:

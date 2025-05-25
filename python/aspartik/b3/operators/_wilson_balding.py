@@ -23,6 +23,7 @@ class WilsonBalding:
             i_grandparent = tree.parent_of(i_parent)
             if i_grandparent is not None:
                 break
+        i_parent_weight = tree.weight_of(i_parent)
 
         i, i_brother = tree.children_of(i_parent)
         if rng.random_bool():
@@ -36,7 +37,7 @@ class WilsonBalding:
             if rng.random_bool():
                 j = j_brother
 
-            if tree.weight_of(j_parent) > tree.weight_of(i_parent) > tree.weight_of(j):
+            if tree.weight_of(j_parent) > i_parent_weight > tree.weight_of(j):
                 break
 
         before = tree.weight_of(i_grandparent) - max(
