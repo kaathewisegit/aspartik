@@ -2,7 +2,7 @@ from typing import List, Tuple, ClassVar
 from dataclasses import dataclass
 from math import prod
 
-from .. import Parameter
+from . import Parameter
 
 
 def normalize(matrix: List[List[float]], coef: float) -> List[List[float]]:
@@ -86,8 +86,11 @@ class HKY:
         if not self.kappa.is_real():
             raise ValueError("Expected a real parameter")
 
-    def get_matrix(self):
+        self._update_matrix()
+
+    def _update_matrix(self):
         k = self.kappa[0]
+
         a, c, g, t = self.frequencies
         s = [
             [0, c, k * g, t],
@@ -104,7 +107,14 @@ class HKY:
         scale = 1.0 / (2.0 * (purine * pyrimidine + k * prod(self.frequencies)))
         s = normalize(s, scale)
 
-        return s
+        self._cached_matrix = s
+        self._cached_kappa = k
+
+    def get_matrix(self):
+        if self.kappa[0] != self._cached_kappa:
+            self._update_matrix()
+
+        return self._cached_matrix
 
 
 # TODO: GTR
