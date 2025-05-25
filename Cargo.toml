@@ -45,6 +45,7 @@ vulkano = { version = "0.35", default-features = false }
 vulkano-shaders = "0.35"
 
 b3 = { version = "0.1.0-alpha.1", path = "crates/b3" }
+bitmap = { version = "0.1.0-alpha.1", path = "crates/bitmap" }
 data = { version = "0.1.0-alpha.1", path = "crates/data" }
 io = { version = "0.1.0-alpha.1", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.1", path = "crates/linalg" }

@@ -12,9 +12,10 @@ use serde::{Deserialize, Serialize};
 
 use std::{
 	cmp::Reverse,
-	collections::{BinaryHeap, HashSet, VecDeque},
+	collections::{BinaryHeap, VecDeque},
 };
 
+use bitmap::Bitmap;
 use io::newick::{
 	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
 };
@@ -295,7 +296,7 @@ impl Tree {
 
 	fn walk_nodes(&self, nodes: &[Node]) -> Vec<Internal> {
 		let mut deq = VecDeque::<Internal>::new();
-		let mut set = HashSet::<Internal>::new();
+		let mut set = Bitmap::new(self.num_nodes());
 
 		for node in nodes {
 			let mut chain = Vec::new();
@@ -307,11 +308,11 @@ impl Tree {
 			// Walk up from the starting nodes until the root, stop
 			// when we encounter a node we have already walked.
 			loop {
-				if set.contains(&curr) {
+				if set.contains(curr.0) {
 					break;
 				}
 
-				set.insert(curr);
+				set.set(curr.0, true);
 				chain.push(curr);
 
 				if let Some(parent) =

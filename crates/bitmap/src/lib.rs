@@ -22,6 +22,12 @@ impl Bitmap {
 		let bit_value = 1 << (index % 8);
 		(self.inner[byte_index] & bit_value) > 0
 	}
+
+	pub fn clear(&mut self) {
+		for byte in &mut self.inner {
+			*byte = 0;
+		}
+	}
 }
 
 #[cfg(test)]
