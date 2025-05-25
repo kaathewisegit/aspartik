@@ -112,7 +112,7 @@ likelihood = Likelihood(
     sequences=sequences,
     substitution=model,
     tree=tree,
-    calculator="thread",
+    calculator="cuda",
 )
 
 loggers = [
