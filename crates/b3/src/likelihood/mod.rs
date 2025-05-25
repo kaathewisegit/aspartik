@@ -128,7 +128,7 @@ impl<const N: usize> GenericLikelihood<N> {
 
 	fn reject(&mut self) -> Result<()> {
 		self.calculator.reject()?;
-		self.transitions.accept();
+		self.transitions.reject();
 		Ok(())
 	}
 }
