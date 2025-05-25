@@ -2,13 +2,15 @@
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) restrict uniform NumNodes {
+layout(push_constant) restrict uniform PushConstants {
 	uint num_nodes;
+	uint num_sites;
 };
-layout(set = 0, binding = 1) restrict writeonly buffer Probabilities {
+
+layout(set = 0, binding = 0) restrict writeonly buffer Probabilities {
 	dvec4 probabilities[];
 };
-layout(set = 0, binding = 2) restrict writeonly buffer Masks {
+layout(set = 0, binding = 1) restrict writeonly buffer Masks {
 	uint masks[];
 };
 

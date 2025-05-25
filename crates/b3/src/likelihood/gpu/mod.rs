@@ -29,7 +29,7 @@ use vulkano::{
 		compute::ComputePipelineCreateInfo,
 		layout::{
 			PipelineDescriptorSetLayoutCreateInfo,
-			PipelineLayoutCreateFlags,
+			PipelineLayoutCreateFlags, PushConstantRange,
 		},
 		ComputePipeline, Pipeline, PipelineBindPoint, PipelineLayout,
 		PipelineShaderStageCreateInfo,
@@ -250,20 +250,46 @@ impl GpuLikelihood {
 			StandardMemoryAllocator::new_default(device.clone()),
 		);
 
-		let common_num_nodes: Subbuffer<u32> = Buffer::from_data(
-			memory_allocator.clone(),
-			BufferCreateInfo {
-				usage: BufferUsage::UNIFORM_BUFFER,
-				..Default::default()
-			},
-			AllocationCreateInfo {
-				memory_type_filter:
-					MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-				..Default::default()
-			},
-			num_nodes as u32,
-		)?;
-		let common_probabilities: Subbuffer<[Row<4>]> =
+		let ds_allocator =
+			Arc::new(StandardDescriptorSetAllocator::new(
+				device.clone(),
+				Default::default(),
+			));
+
+		let command_buffer_allocator = Arc::new(StandardCommandBufferAllocator::new(
+			device.clone(),
+			StandardCommandBufferAllocatorCreateInfo::default(),
+		));
+
+		let push_constant = propose::PushConstants {
+			num_nodes: num_nodes as u32,
+			num_sites: num_sites as u32,
+		};
+
+		let push_constant_range = PushConstantRange {
+			stages: ShaderStages::COMPUTE,
+			offset: 0,
+			size: size_of_val(&push_constant) as u32,
+		};
+
+		let layout_info = PipelineDescriptorSetLayoutCreateInfo {
+			flags: PipelineLayoutCreateFlags::empty(),
+			set_layouts: vec![
+				dsl_probabilities(),
+				dsl_update_nodes(),
+				dsl_propose(),
+				dsl_stage(),
+			],
+			push_constant_ranges: vec![push_constant_range],
+		}
+		.into_pipeline_layout_create_info(device.clone())?;
+		let layout = PipelineLayout::new(device.clone(), layout_info)?;
+
+		let propose_pipeline = make_pipeline!(propose, device, layout)?;
+		let reject_pipeline = make_pipeline!(reject, device, layout)?;
+		let stage_pipeline = make_pipeline!(stage, device, layout)?;
+
+		let probabilities_buffer: Subbuffer<[Row<4>]> =
 			Buffer::new_slice(
 				memory_allocator.clone(),
 				BufferCreateInfo {
@@ -277,7 +303,7 @@ impl GpuLikelihood {
 				},
 				probabilities.len() as u64,
 			)?;
-		let common_masks: Subbuffer<[u32]> = Buffer::new_slice(
+		let probabilities_masks: Subbuffer<[u32]> = Buffer::new_slice(
 			memory_allocator.clone(),
 			BufferCreateInfo {
 				usage: BufferUsage::STORAGE_BUFFER,
@@ -291,46 +317,22 @@ impl GpuLikelihood {
 			masks.len() as u64,
 		)?;
 
-		let ds_allocator =
-			Arc::new(StandardDescriptorSetAllocator::new(
-				device.clone(),
-				Default::default(),
-			));
-
-		let command_buffer_allocator = Arc::new(StandardCommandBufferAllocator::new(
+		let dsl_probabilities = DescriptorSetLayout::new(
 			device.clone(),
-			StandardCommandBufferAllocatorCreateInfo::default(),
-		));
-
-		let layout_info = PipelineDescriptorSetLayoutCreateInfo {
-			flags: PipelineLayoutCreateFlags::empty(),
-			set_layouts: vec![
-				dsl_common(),
-				dsl_update_nodes(),
-				dsl_propose(),
-				dsl_stage(),
-			],
-			push_constant_ranges: vec![],
-		}
-		.into_pipeline_layout_create_info(device.clone())?;
-		let layout = PipelineLayout::new(device.clone(), layout_info)?;
-
-		let propose_pipeline = make_pipeline!(propose, device, layout)?;
-		let reject_pipeline = make_pipeline!(reject, device, layout)?;
-		let stage_pipeline = make_pipeline!(stage, device, layout)?;
-
-		let dsl_common =
-			DescriptorSetLayout::new(device.clone(), dsl_common())?;
-		let ds_common = DescriptorSet::new(
+			dsl_probabilities(),
+		)?;
+		let ds_probabilities = DescriptorSet::new(
 			ds_allocator.clone(),
-			dsl_common.clone(),
+			dsl_probabilities.clone(),
 			[
-				WriteDescriptorSet::buffer(0, common_num_nodes),
+				WriteDescriptorSet::buffer(
+					0,
+					probabilities_buffer,
+				),
 				WriteDescriptorSet::buffer(
 					1,
-					common_probabilities,
+					probabilities_masks,
 				),
-				WriteDescriptorSet::buffer(2, common_masks),
 			],
 			[],
 		)?;
@@ -394,11 +396,16 @@ impl GpuLikelihood {
 
 		let reject_cmd_buffer = command_buffer_builder
 			.bind_pipeline_compute(reject_pipeline.clone())?
+			.push_constants(
+				propose_pipeline.layout().clone(),
+				0,
+				push_constant,
+			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				reject_pipeline.layout().clone(),
 				0u32,
-				ds_common.clone(),
+				ds_probabilities.clone(),
 			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
@@ -485,11 +492,16 @@ impl GpuLikelihood {
 
 		let cmd = command_buffer_builder
 			.bind_pipeline_compute(propose_pipeline.clone())?
+			.push_constants(
+				propose_pipeline.layout().clone(),
+				0,
+				push_constant,
+			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				propose_pipeline.layout().clone(),
 				0u32,
-				ds_common.clone(),
+				ds_probabilities.clone(),
 			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
@@ -565,11 +577,16 @@ impl GpuLikelihood {
 
 		let cmd = command_buffer_builder
 			.bind_pipeline_compute(stage_pipeline.clone())?
+			.push_constants(
+				propose_pipeline.layout().clone(),
+				0,
+				push_constant,
+			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
 				stage_pipeline.layout().clone(),
 				0u32,
-				ds_common.clone(),
+				ds_probabilities.clone(),
 			)?
 			.bind_descriptor_sets(
 				PipelineBindPoint::Compute,
@@ -615,12 +632,11 @@ fn dsl_binding(dtype: DescriptorType) -> DescriptorSetLayoutBinding {
 	}
 }
 
-fn dsl_common() -> DescriptorSetLayoutCreateInfo {
+fn dsl_probabilities() -> DescriptorSetLayoutCreateInfo {
 	DescriptorSetLayoutCreateInfo {
 		bindings: BTreeMap::from([
-			(0, dsl_binding(DescriptorType::UniformBuffer)),
+			(0, dsl_binding(DescriptorType::StorageBuffer)),
 			(1, dsl_binding(DescriptorType::StorageBuffer)),
-			(2, dsl_binding(DescriptorType::StorageBuffer)),
 		]),
 		..Default::default()
 	}
