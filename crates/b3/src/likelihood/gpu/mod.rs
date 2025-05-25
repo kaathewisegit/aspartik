@@ -87,6 +87,26 @@ mod stage {
 	}
 }
 
+macro_rules! make_pipeline {
+	($mod:ident, $device:ident, $layout:ident) => {{
+		let entry_point = $mod::load($device.clone())?
+			.entry_point("main")
+			.ok_or(anyhow!("Entrypoint not fonud"))?;
+
+		let stage =
+			PipelineShaderStageCreateInfo::new(entry_point.clone());
+
+		ComputePipeline::new(
+			$device.clone(),
+			None,
+			ComputePipelineCreateInfo::stage_layout(
+				stage,
+				$layout.clone(),
+			),
+		)
+	}};
+}
+
 impl LikelihoodTrait<4> for GpuLikelihood {
 	fn propose(
 		&mut self,
@@ -102,23 +122,23 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 		}
 		drop(update_nodes);
 
-		let mut accept_nodes_length =
+		let mut propose_nodes_length =
 			self.update_nodes_length.write()?;
-		*accept_nodes_length = nodes.len() as u32;
-		drop(accept_nodes_length);
+		*propose_nodes_length = nodes.len() as u32;
+		drop(propose_nodes_length);
 
-		let mut accept_children = self.propose_children.write()?;
+		let mut propose_children = self.propose_children.write()?;
 		for (i, child) in children.iter().enumerate() {
-			accept_children[i] = *child as u32;
+			propose_children[i] = *child as u32;
 		}
-		drop(accept_children);
+		drop(propose_children);
 
-		let mut accept_transitions =
+		let mut propose_transitions =
 			self.propose_transitions.write()?;
 		for (i, transition) in transitions.iter().enumerate() {
-			accept_transitions[i] = *transition;
+			propose_transitions[i] = *transition;
 		}
-		drop(accept_transitions);
+		drop(propose_transitions);
 
 		let future = sync::now(self.device.clone())
 			.then_execute(
@@ -293,32 +313,9 @@ impl GpuLikelihood {
 		.into_pipeline_layout_create_info(device.clone())?;
 		let layout = PipelineLayout::new(device.clone(), layout_info)?;
 
-		#[rustfmt::skip]
-		macro_rules! make_pipeline {
-			($mod:ident) => {{
-
-		let entry_point = $mod::load(device.clone())?
-			.entry_point("main")
-			.ok_or(anyhow!("Entrypoint not fonud"))?;
-
-		let stage = PipelineShaderStageCreateInfo::new(
-			entry_point.clone(),
-		);
-
-		ComputePipeline::new(
-			device.clone(),
-			None,
-			ComputePipelineCreateInfo::stage_layout(
-				stage, layout.clone()
-			),
-		)?
-
-			}};
-		}
-
-		let reject_pipeline = make_pipeline!(reject);
-		let propose_pipeline = make_pipeline!(propose);
-		let stage_pipeline = make_pipeline!(stage);
+		let propose_pipeline = make_pipeline!(propose, device, layout)?;
+		let reject_pipeline = make_pipeline!(reject, device, layout)?;
+		let stage_pipeline = make_pipeline!(stage, device, layout)?;
 
 		let dsl_common =
 			DescriptorSetLayout::new(device.clone(), dsl_common())?;
@@ -446,8 +443,8 @@ impl GpuLikelihood {
 				..Default::default()
 			},
 			AllocationCreateInfo {
-				memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-					| MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+				memory_type_filter:
+					MemoryTypeFilter::HOST_RANDOM_ACCESS,
 				..Default::default()
 			},
 			num_sites as u64,
@@ -519,7 +516,7 @@ impl GpuLikelihood {
 			},
 			AllocationCreateInfo {
 				memory_type_filter:
-					MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+					MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
 				..Default::default()
 			},
 			(num_leaves + num_internals) as u32,
@@ -533,7 +530,7 @@ impl GpuLikelihood {
 				},
 				AllocationCreateInfo {
 					memory_type_filter:
-						MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+						MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
 					..Default::default()
 				},
 				probabilities,
@@ -546,7 +543,7 @@ impl GpuLikelihood {
 			},
 			AllocationCreateInfo {
 				memory_type_filter:
-					MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+					MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
 				..Default::default()
 			},
 			masks,
@@ -623,152 +620,54 @@ impl GpuLikelihood {
 	}
 }
 
-fn dsl_common() -> DescriptorSetLayoutCreateInfo {
-	let bindings = BTreeMap::from([
-		(
-			0,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-		(
-			1,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-		(
-			2,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-	]);
+fn dsl_compute_binding() -> DescriptorSetLayoutBinding {
+	DescriptorSetLayoutBinding {
+		stages: ShaderStages::COMPUTE,
+		..DescriptorSetLayoutBinding::descriptor_type(
+			DescriptorType::StorageBuffer,
+		)
+	}
+}
 
+fn dsl_common() -> DescriptorSetLayoutCreateInfo {
 	DescriptorSetLayoutCreateInfo {
-		bindings,
+		bindings: BTreeMap::from([
+			(0, dsl_compute_binding()),
+			(1, dsl_compute_binding()),
+			(2, dsl_compute_binding()),
+		]),
 		..Default::default()
 	}
 }
 
 fn dsl_update_nodes() -> DescriptorSetLayoutCreateInfo {
-	let bindings = BTreeMap::from([
-		(
-			0,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-		(
-			1,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-	]);
-
 	DescriptorSetLayoutCreateInfo {
-		bindings,
+		bindings: BTreeMap::from([
+			(0, dsl_compute_binding()),
+			(1, dsl_compute_binding()),
+		]),
 		..Default::default()
 	}
 }
 
 fn dsl_stage() -> DescriptorSetLayoutCreateInfo {
-	let bindings = BTreeMap::from([
-		(
-			0,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-		(
-			1,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-		(
-			2,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-	]);
-
 	DescriptorSetLayoutCreateInfo {
-		bindings,
+		bindings: BTreeMap::from([
+			(0, dsl_compute_binding()),
+			(1, dsl_compute_binding()),
+			(2, dsl_compute_binding()),
+		]),
 		..Default::default()
 	}
 }
 
 fn dsl_propose() -> DescriptorSetLayoutCreateInfo {
-	let bindings = BTreeMap::from([
-		(
-			0,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-		(
-			1,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-		(
-			2,
-			DescriptorSetLayoutBinding {
-				descriptor_count: 1,
-				stages: ShaderStages::COMPUTE,
-				..DescriptorSetLayoutBinding::descriptor_type(
-					DescriptorType::StorageBuffer,
-				)
-			},
-		),
-	]);
-
 	DescriptorSetLayoutCreateInfo {
-		bindings,
+		bindings: BTreeMap::from([
+			(0, dsl_compute_binding()),
+			(1, dsl_compute_binding()),
+			(2, dsl_compute_binding()),
+		]),
 		..Default::default()
 	}
 }

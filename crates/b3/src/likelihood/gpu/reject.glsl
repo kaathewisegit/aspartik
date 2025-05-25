@@ -35,11 +35,4 @@ void main() {
 		// flip the mask
 		masks[offset + nodes[i]] ^= 1;
 	}
-
-	// This is an ugly hack, because if `probabilities` aren't used, then
-	// Vulkano (or Vulkan?) optimizes them out, making the descriptor set
-	// incompatible with the one from `propose`
-	if (false) {
-		double unused = probabilities[offset * 2].x;
-	}
 }
