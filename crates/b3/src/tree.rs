@@ -741,18 +741,6 @@ pub struct PyTree {
 	inner: Mutex<Tree>,
 }
 
-fn to_node(obj: Bound<PyAny>) -> Result<Node> {
-	if let Ok(internal) = obj.extract::<Internal>() {
-		Ok(internal.into())
-	} else if let Ok(leaf) = obj.extract::<Leaf>() {
-		Ok(leaf.into())
-	} else if let Ok(node) = obj.extract::<Node>() {
-		Ok(node)
-	} else {
-		Err(PyTypeError::new_err("Wrong type").into())
-	}
-}
-
 impl PyTree {
 	pub fn inner(&self) -> MutexGuard<Tree> {
 		self.inner.lock()
@@ -777,19 +765,13 @@ impl PyTree {
 	///
 	/// This function doesn't do any validation, it's up to the operator to
 	/// preserve the validity of the tree.
-	fn update_edge(
-		&self,
-		edge: usize,
-		new_child: Bound<PyAny>,
-	) -> Result<()> {
-		let new_child = to_node(new_child)?;
+	fn update_edge(&self, edge: usize, new_child: Node) -> Result<()> {
 		self.inner().update_edge(edge, new_child);
 		Ok(())
 	}
 
 	/// Sets the weight of `node` to `weight`.
-	fn update_weight(&self, node: Bound<PyAny>, weight: f64) -> Result<()> {
-		let node = to_node(node)?;
+	fn update_weight(&self, node: Node, weight: f64) -> Result<()> {
 		self.inner().update_weight(node, weight);
 		Ok(())
 	}
@@ -797,8 +779,7 @@ impl PyTree {
 	/// Makes `node` the root of the tree.
 	///
 	/// The old root must be regrafted with a separate `update_edge` call.
-	fn update_root(&self, node: Bound<PyAny>) -> Result<()> {
-		let node = to_node(node)?;
+	fn update_root(&self, node: Node) -> Result<()> {
 		self.inner().update_root(node);
 		Ok(())
 	}
@@ -808,8 +789,7 @@ impl PyTree {
 	/// `a` and `b` must not be a child/parent and neither of them can be a
 	/// root node.  If `a` and `b` share the same parent, they switch
 	/// polarity (left child becomes the right child and visa versa).
-	fn swap_parents(&self, a: Bound<PyAny>, b: Bound<PyAny>) -> Result<()> {
-		let (a, b) = (to_node(a)?, to_node(b)?);
+	fn swap_parents(&self, a: Node, b: Node) -> Result<()> {
 		self.inner().swap_parents(a, b);
 		Ok(())
 	}
@@ -833,14 +813,12 @@ impl PyTree {
 	}
 
 	/// Returns `True` if `node` is internal.
-	fn is_internal(&self, node: Bound<PyAny>) -> Result<bool> {
-		let node = to_node(node)?;
+	fn is_internal(&self, node: Node) -> Result<bool> {
 		Ok(self.inner().is_internal(node))
 	}
 
 	/// Returns `True` if `node` is a leaf.
-	fn is_leaf(&self, node: Bound<PyAny>) -> Result<bool> {
-		let node = to_node(node)?;
+	fn is_leaf(&self, node: Node) -> Result<bool> {
 		Ok(self.inner().is_leaf(node))
 	}
 
@@ -862,8 +840,7 @@ impl PyTree {
 	}
 
 	/// Returns the weight of a node.
-	fn weight_of(&self, node: Bound<PyAny>) -> Result<f64> {
-		let node = to_node(node)?;
+	fn weight_of(&self, node: Node) -> Result<f64> {
 		Ok(self.inner().weight_of(node))
 	}
 
@@ -888,8 +865,7 @@ impl PyTree {
 	}
 
 	/// Returns the index of an edge from `child` to its parent.
-	fn edge_index(&self, child: Bound<PyAny>) -> Result<usize> {
-		let child = to_node(child)?;
+	fn edge_index(&self, child: Node) -> Result<usize> {
 		Ok(self.inner().edge_index(child))
 	}
 
@@ -901,9 +877,7 @@ impl PyTree {
 
 	/// Returns the parent of `node`, or `None` if the node is the root of
 	/// the tree.
-	fn parent_of(&self, node: Bound<PyAny>) -> Result<Option<Internal>> {
-		let node = to_node(node)?;
-
+	fn parent_of(&self, node: Node) -> Result<Option<Internal>> {
 		Ok(self.inner().parent_of(node))
 	}
 
