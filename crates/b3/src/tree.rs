@@ -661,16 +661,16 @@ impl<'de> Deserialize<'de> for Tree {
 
 macro_rules! make_iterator {
 	($name: ident, $t: tt) => {
-		#[pyclass(module = "aspartik.b3.tree")]
+		#[pyclass(frozen, module = "aspartik.b3.tree")]
 		struct $name {
-			current: usize,
+			current: Mutex<usize>,
 			end: usize,
 		}
 
 		impl $name {
 			fn new(start: usize, end: usize) -> Self {
 				Self {
-					current: start,
+					current: Mutex::new(start),
 					end,
 				}
 			}
@@ -682,13 +682,14 @@ macro_rules! make_iterator {
 				this
 			}
 
-			fn __next__(&mut self) -> Option<$t> {
-				if self.current == self.end {
+			fn __next__(&self) -> Option<$t> {
+				let mut current = self.current.lock();
+				if *current == self.end {
 					return None;
 				}
 
-				let out = self.current;
-				self.current += 1;
+				let out = *current;
+				*current += 1;
 				Some($t(out))
 			}
 		}
