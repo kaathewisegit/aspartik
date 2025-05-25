@@ -43,7 +43,7 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use super::{LikelihoodTrait, Row, Transition};
 
-pub struct GpuLikelihood {
+pub struct VulkanLikelihood {
 	// TODO: bench and see if allocators and such should be preserved here
 	// buffers:
 	// - one array for final likelihoods
@@ -69,21 +69,21 @@ pub struct GpuLikelihood {
 mod propose {
 	vulkano_shaders::shader! {
 		ty: "compute",
-		path: "src/likelihood/gpu/propose.glsl",
+		path: "src/likelihood/vulkan/propose.glsl",
 	}
 }
 
 mod reject {
 	vulkano_shaders::shader! {
 		ty: "compute",
-		path: "src/likelihood/gpu/reject.glsl",
+		path: "src/likelihood/vulkan/reject.glsl",
 	}
 }
 
 mod stage {
 	vulkano_shaders::shader! {
 		ty: "compute",
-		path: "src/likelihood/gpu/stage.glsl",
+		path: "src/likelihood/vulkan/stage.glsl",
 	}
 }
 
@@ -107,7 +107,7 @@ macro_rules! make_pipeline {
 	}};
 }
 
-impl LikelihoodTrait<4> for GpuLikelihood {
+impl LikelihoodTrait<4> for VulkanLikelihood {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
@@ -183,7 +183,7 @@ impl LikelihoodTrait<4> for GpuLikelihood {
 	}
 }
 
-impl GpuLikelihood {
+impl VulkanLikelihood {
 	pub fn new(sites: Vec<Vec<Row<4>>>) -> Result<Self> {
 		let num_sites = sites.len();
 		let num_leaves = sites[0].len();
@@ -607,7 +607,7 @@ impl GpuLikelihood {
 
 		future.wait(None)?;
 
-		Ok(GpuLikelihood {
+		Ok(VulkanLikelihood {
 			device,
 			queue,
 

@@ -11,12 +11,12 @@ use data::seq::{python::PyDnaSeq, DnaSeq};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
-mod gpu;
 mod thread;
+mod vulkan;
 
 use cpu::CpuLikelihood;
-use gpu::GpuLikelihood;
 use thread::ThreadedLikelihood;
+use vulkan::VulkanLikelihood;
 
 pub type Row<const N: usize> = Vector<f64, N>;
 type Transition<const N: usize> = RowMatrix<f64, N, N>;
@@ -50,7 +50,7 @@ pub struct GenericLikelihood<const N: usize> {
 }
 
 impl GenericLikelihood<4> {
-	#[instrument(skip_all, fields(use_gpu))]
+	#[instrument(skip_all, fields(calculator))]
 	fn new(
 		substitution: PySubstitution<4>,
 		sites: Vec<Vec<Vector<f64, 4>>>,
@@ -61,9 +61,9 @@ impl GenericLikelihood<4> {
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
 		let calculator: DynCalculator<4> = match calculator.as_str() {
-			"gpu" => Box::new(GpuLikelihood::new(sites)?),
 			"cpu" => Box::new(CpuLikelihood::new(sites)),
 			"thread" => Box::new(ThreadedLikelihood::new(sites)),
+			"vulkan" => Box::new(VulkanLikelihood::new(sites)?),
 			_ => {
 				panic!("Unknown calculator type '{calculator}'");
 			}
