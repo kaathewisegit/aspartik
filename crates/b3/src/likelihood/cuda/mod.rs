@@ -13,6 +13,7 @@ use super::{LikelihoodTrait, Row, Transition};
 
 pub struct CudaLikelihood {
 	stream: Arc<CudaStream>,
+	cfg: LaunchConfig,
 
 	propose_fn: CudaFunction,
 	reject_fn: CudaFunction,
@@ -66,10 +67,8 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 
 		builder.arg(&self.likelihoods);
 
-		let cfg = LaunchConfig::for_num_elems(self.num_sites);
-
 		// TODO: safety
-		let events = unsafe { builder.launch(cfg) }?;
+		let events = unsafe { builder.launch(self.cfg) }?;
 		if let Some((left, right)) = events {
 			self.stream.wait(&left)?;
 			self.stream.wait(&right)?;
@@ -100,10 +99,8 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.updated_edges);
 
-		let cfg = LaunchConfig::for_num_elems(self.num_sites);
-
 		// TODO: safety
-		let events = unsafe { builder.launch(cfg) }?;
+		let events = unsafe { builder.launch(self.cfg) }?;
 		if let Some((left, right)) = events {
 			self.stream.wait(&left)?;
 			self.stream.wait(&right)?;
@@ -140,8 +137,15 @@ impl CudaLikelihood {
 		let reject_fn = module.load_function("reject")?;
 		let propose_fn = module.load_function("propose")?;
 
+		let cfg = LaunchConfig {
+			grid_dim: ((num_sites as u32 + 31) / 32, 1, 1),
+			block_dim: (32, 1, 1),
+			shared_mem_bytes: 0,
+		};
+
 		Ok(Self {
 			stream,
+			cfg,
 
 			propose_fn,
 			reject_fn,
