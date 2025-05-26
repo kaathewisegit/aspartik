@@ -93,11 +93,13 @@ pub struct SkVec<T> {
 // Memoization-related methods
 impl<T> SkVec<T> {
 	/// Returns the currently active item at index `i`.
+	#[inline(always)]
 	fn active_inner(&self, i: usize) -> &T {
 		&self.inner[i * 2 + self.mask[i] as usize]
 	}
 
 	/// Mutable version of [`active_inner`][SkVec::active_inner].
+	#[inline(always)]
 	fn active_inner_mut(&mut self, i: usize) -> &mut T {
 		&mut self.inner[i * 2 + self.mask[i] as usize]
 	}
