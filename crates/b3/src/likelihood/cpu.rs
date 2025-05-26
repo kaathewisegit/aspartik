@@ -20,6 +20,8 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		assert_eq!(nodes.len() * 2, children.len());
 
 		self.updated_nodes = nodes.to_vec();
+		let root = *nodes.last().unwrap();
+		let mut out = 0.0;
 
 		for probability in &mut self.probabilities {
 			for i in 0..nodes.len() {
@@ -29,14 +31,10 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 					* probability[children[i * 2 + 1]];
 				probability.set(nodes[i], left * right);
 			}
+
+			out += probability[root].sum().ln();
 		}
 
-		let root = *nodes.last().unwrap();
-		let out = self
-			.probabilities
-			.iter()
-			.map(|p| p[root].sum().ln())
-			.sum();
 		Ok(out)
 	}
 
