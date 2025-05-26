@@ -24,23 +24,14 @@ where
 			}
 
 			if self.edited[i] {
-				// SAFETY: as the element was edited, both items
-				// must be initialized (the old one and the new
-				// one).
-				unsafe {
-					self.inner[i * 2]
-						.assume_init_ref()
-						.fmt(f)?;
-				}
+				self.inner[i * 2].fmt(f)?;
 				if self.mask[i] == 0 {
 					f.write_str(" (active)")?;
 				}
+
 				f.write_str(" / ")?;
-				unsafe {
-					self.inner[i * 2 + 1]
-						.assume_init_ref()
-						.fmt(f)?;
-				}
+
+				self.inner[i * 2 + 1].fmt(f)?;
 				if self.mask[i] == 1 {
 					f.write_str(" (active)")?;
 				}

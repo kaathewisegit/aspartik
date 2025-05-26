@@ -28,8 +28,7 @@ impl<'a, T: Serialize> Serialize for Inner<'a, T> {
 
 		// Uninitialized slots are deserialized as `None`
 		for i in 0..self.0.len() {
-			seq.serialize_element(&self.0.first_item(i))?;
-			seq.serialize_element(&self.0.second_item(i))?;
+			// TODO
 		}
 
 		seq.end()

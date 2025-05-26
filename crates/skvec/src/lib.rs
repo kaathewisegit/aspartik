@@ -45,15 +45,14 @@
 //! assert_eq!(v, [10, 2, 30]);
 //! ```
 
+#![forbid(unsafe_code)]
+
 mod debug;
 mod eq;
 #[cfg(feature = "serde")]
 mod serde;
 
-use std::{
-	mem::{needs_drop, MaybeUninit},
-	ops::Index,
-};
+use std::ops::Index;
 
 /// Epoch-versioned `Vec`-like storage.
 ///
@@ -64,12 +63,13 @@ use std::{
 /// become the primary one and the old one will be erased.  And on
 /// [`reject`][SkVec::reject] the second item will be erased, with the element
 /// falling back to the original one.
+#[derive(Clone)]
 pub struct SkVec<T> {
 	/// The underlying storage.  It's twice as long as the number of items
 	/// `SkVec` can hold at a time.  Each element consist of two items in
 	/// `inner`, only one of which is active, determined by the `mask` at
 	/// the index.
-	inner: Vec<MaybeUninit<T>>,
+	inner: Vec<T>,
 	/// True if an element had been edited.  It uses the `bool` type, which
 	/// is guaranteed to be one byte:
 	///
@@ -91,81 +91,18 @@ pub struct SkVec<T> {
 // Memoization-related methods
 impl<T> SkVec<T> {
 	/// Returns the currently active item at index `i`.
-	fn active_inner(&self, i: usize) -> &MaybeUninit<T> {
+	fn active_inner(&self, i: usize) -> &T {
 		&self.inner[i * 2 + self.mask[i] as usize]
 	}
 
 	/// Mutable version of [`active_inner`][SkVec::active_inner].
-	fn active_inner_mut(&mut self, i: usize) -> &mut MaybeUninit<T> {
+	fn active_inner_mut(&mut self, i: usize) -> &mut T {
 		&mut self.inner[i * 2 + self.mask[i] as usize]
-	}
-
-	/// The other slot at index `i`, which is not being pointed to by the
-	/// mask.
-	fn inactive_inner_mut(&mut self, i: usize) -> &mut MaybeUninit<T> {
-		&mut self.inner[i * 2 + (self.mask[i] ^ 1) as usize]
-	}
-
-	/// Drops all of the active items.
-	///
-	/// # Safety
-	///
-	/// Calling this function breaks the `inner` invariant because it
-	/// deinitializes all active elements.
-	unsafe fn deinit(&mut self) {
-		for i in 0..self.len() {
-			// SAFETY: masks must always point to initialized
-			// values.
-			unsafe {
-				self.active_inner_mut(i).assume_init_drop();
-			}
-			if self.edited[i] {
-				// SAFETY: since the element has been edited,
-				// the inactive element is the original one, so
-				// it must be initialized.
-				unsafe {
-					self.inactive_inner_mut(i)
-						.assume_init_drop()
-				}
-			}
-		}
 	}
 
 	/// Zero-out the edited status array.
 	fn clear_edited(&mut self) {
 		self.edited.iter_mut().for_each(|v| *v = false);
-	}
-
-	#[cfg(feature = "serde")]
-	fn first_item(&self, index: usize) -> Option<&T> {
-		// first item is either active, or the element has been edited
-		// and the second item is active
-		if self.mask[index] == 0
-			|| (self.mask[index] == 1 && self.edited[index])
-		{
-			let item = &self.inner[index * 2];
-			// SAFETY: we know from the condition that this field
-			// is either active or inactive, but edited, meaning it
-			// was initialized when the epoch started.
-			let item = unsafe { item.assume_init_ref() };
-			Some(item)
-		} else {
-			None
-		}
-	}
-
-	#[cfg(feature = "serde")]
-	fn second_item(&self, index: usize) -> Option<&T> {
-		if self.mask[index] == 1
-			|| (self.mask[index] == 0 && self.edited[index])
-		{
-			let item = &self.inner[index * 2 + 1];
-			// SAFETY: same as `first_item`
-			let item = unsafe { item.assume_init_ref() };
-			Some(item)
-		} else {
-			None
-		}
 	}
 
 	/// Accept all of the changes made since the creation of the vector or
@@ -175,22 +112,6 @@ impl<T> SkVec<T> {
 	/// which will take awhile for long arrays.  If `T` is not [`Drop`],
 	/// this method much faster.
 	pub fn accept(&mut self) {
-		// Don't compile the loop for non-drop types.
-		if needs_drop::<T>() {
-			for i in 0..self.len() {
-				if self.edited[i] {
-					// SAFETY: Only initialized elements can
-					// be edited.  Since the element at
-					// index `i` has been updated, it
-					// must've been initialized.
-					unsafe {
-						self.inactive_inner_mut(i)
-							.assume_init_drop();
-					}
-				}
-			}
-		}
-
 		self.clear_edited();
 	}
 
@@ -200,22 +121,6 @@ impl<T> SkVec<T> {
 	/// This method is much slower than `accept` for non-[`Drop`] types, as
 	/// it has to iterate over the vector to search for edited elements.
 	pub fn reject(&mut self) {
-		// Don't compile the loop for non-drop types.
-		if needs_drop::<T>() {
-			for i in 0..self.len() {
-				if self.edited[i] {
-					// SAFETY: only initialized elements can
-					// be edited.  Since the element at
-					// index `i` has been updated, it
-					// must've been initialized.
-					unsafe {
-						self.active_inner_mut(i)
-							.assume_init_drop();
-					}
-				}
-			}
-		}
-
 		for i in 0..self.len() {
 			if self.edited[i] {
 				// Point back to the old item.
@@ -230,22 +135,14 @@ impl<T> SkVec<T> {
 	/// operations (via [`SkVec::index`] or the `[]` operator) will return
 	/// the updated item which equals value.
 	pub fn set(&mut self, index: usize, value: T) {
-		if self.edited[index] {
-			// We are overwriting an older edited item, so drop it.
-			//
-			// SAFETY: if the item has been edited, it must have a
-			// valid value.
-			unsafe {
-				self.active_inner_mut(index).assume_init_drop();
-			}
-		} else {
+		if !self.edited[index] {
 			// The element was unedited, so the item is being
 			// written for the first time during this epoch.
 			self.mask[index] ^= 1;
 			self.edited[index] = true;
 		}
 
-		*self.active_inner_mut(index) = MaybeUninit::new(value);
+		*self.active_inner_mut(index) = value;
 	}
 
 	/// Roll back the item at `index`.
@@ -260,15 +157,6 @@ impl<T> SkVec<T> {
 	/// Essentially, this is an item-local version of `reject`.
 	pub fn reject_element(&mut self, index: usize) {
 		if self.edited[index] {
-			if needs_drop::<T>() {
-				// SAFETY: because `edited[index]` is true, it
-				// must've been set before.
-				unsafe {
-					self.active_inner_mut(index)
-						.assume_init_drop();
-				}
-			}
-
 			self.edited[index] = false;
 			self.mask[index] ^= 1;
 		}
@@ -283,34 +171,12 @@ impl<T> SkVec<T> {
 	/// Essentially, this is an item-local version of `accept`.
 	pub fn accept_element(&mut self, index: usize) {
 		if self.edited[index] {
-			if needs_drop::<T>() {
-				// SAFETY: the item has been edited, so the
-				// inactive slot must've been initialized.
-				unsafe {
-					self.inactive_inner_mut(index)
-						.assume_init_drop();
-				}
-			}
-
 			self.edited[index] = false;
 		}
 	}
 }
 
 // Trait implementations
-
-impl<T> Drop for SkVec<T> {
-	/// Necessary because `MaybeUninit` doesn't drop on deinitialization.
-	fn drop(&mut self) {
-		if needs_drop::<T>() {
-			// SAFETY: all of the items in `inner` are wrapped in
-			// `MaybeUninit`, so it's fine to deinitialize them.  No
-			// other code will touch the items before `inner` is
-			// dropped.
-			unsafe { self.deinit() }
-		}
-	}
-}
 
 impl<T> Index<usize> for SkVec<T> {
 	type Output = T;
@@ -331,20 +197,7 @@ impl<T> Index<usize> for SkVec<T> {
 		// methods, constructors, `accept`, `reject`, `set`, and in
 		// general all of the methods which mutate the vector are sound
 		// and uphold the invariants.
-		unsafe { self.active_inner(index).assume_init_ref() }
-	}
-}
-
-impl<T> Clone for SkVec<T>
-where
-	MaybeUninit<T>: Clone,
-{
-	fn clone(&self) -> Self {
-		Self {
-			inner: self.inner.clone(),
-			edited: self.edited.clone(),
-			mask: self.mask.clone(),
-		}
+		self.active_inner(index)
 	}
 }
 
@@ -389,7 +242,7 @@ impl<T> SkVec<T> {
 	}
 }
 
-impl<'a, T> IntoIterator for &'a SkVec<T> {
+impl<'a, T: Copy> IntoIterator for &'a SkVec<T> {
 	type Item = &'a T;
 	type IntoIter = Iter<'a, T>;
 
@@ -452,9 +305,12 @@ impl<T> SkVec<T> {
 	}
 
 	/// Appends the value as an accepted one.
-	pub fn push(&mut self, value: T) {
-		self.inner.push(MaybeUninit::new(value));
-		self.inner.push(MaybeUninit::uninit());
+	pub fn push(&mut self, value: T)
+	where
+		T: Default,
+	{
+		self.inner.push(value);
+		self.inner.push(T::default());
 
 		self.edited.push(false);
 		self.mask.push(0);
@@ -462,12 +318,6 @@ impl<T> SkVec<T> {
 
 	/// Clears the vector, removing all values.
 	pub fn clear(&mut self) {
-		if needs_drop::<T>() {
-			// SAFETY: no code touches the items before they are
-			// cleared, so it's fine to drop them.
-			unsafe { self.deinit() }
-		}
-
 		self.inner.clear();
 		self.edited.clear();
 		self.mask.clear();
@@ -501,7 +351,7 @@ impl<T> SkVec<T> {
 	/// Constructs a vector made out of `value` repeated `length` times.
 	pub fn repeat(value: T, length: usize) -> Self
 	where
-		T: Clone,
+		T: Clone + Default,
 	{
 		let mut out = SkVec::with_capacity(length);
 
@@ -515,7 +365,7 @@ impl<T> SkVec<T> {
 
 // From implementations
 
-impl<T: Clone> From<&[T]> for SkVec<T> {
+impl<T: Clone + Default> From<&[T]> for SkVec<T> {
 	fn from(values: &[T]) -> Self {
 		let mut out = Self::with_capacity(values.len());
 
@@ -527,13 +377,13 @@ impl<T: Clone> From<&[T]> for SkVec<T> {
 	}
 }
 
-impl<T: Clone> From<Vec<T>> for SkVec<T> {
+impl<T: Clone + Default> From<Vec<T>> for SkVec<T> {
 	fn from(value: Vec<T>) -> Self {
 		value.as_slice().into()
 	}
 }
 
-impl<T: Clone, const N: usize> From<[T; N]> for SkVec<T> {
+impl<T: Clone + Default, const N: usize> From<[T; N]> for SkVec<T> {
 	fn from(values: [T; N]) -> Self {
 		let mut out = Self::with_capacity(values.len());
 
