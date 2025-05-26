@@ -13,11 +13,13 @@ use linalg::{RowMatrix, Vector};
 mod cpu;
 mod cuda;
 mod thread;
+#[cfg(feature = "vulkan")]
 mod vulkan;
 
 use cpu::CpuLikelihood;
 use cuda::CudaLikelihood;
 use thread::ThreadedLikelihood;
+#[cfg(feature = "vulkan")]
 use vulkan::VulkanLikelihood;
 
 pub type Row<const N: usize> = Vector<f64, N>;
@@ -66,6 +68,7 @@ impl GenericLikelihood<4> {
 			"cpu" => Box::new(CpuLikelihood::new(sites)),
 			"thread" => Box::new(ThreadedLikelihood::new(sites)),
 			"cuda" => Box::new(CudaLikelihood::new(sites)?),
+			#[cfg(feature = "vulkan")]
 			"vulkan" => Box::new(VulkanLikelihood::new(sites)?),
 			_ => {
 				panic!("Unknown calculator type '{calculator}'");
