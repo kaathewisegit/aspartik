@@ -49,8 +49,9 @@
 
 mod debug;
 mod eq;
+
 #[cfg(feature = "serde")]
-mod serde;
+use serde::{Deserialize, Serialize};
 
 use std::ops::Index;
 
@@ -64,6 +65,7 @@ use std::ops::Index;
 /// [`reject`][SkVec::reject] the second item will be erased, with the element
 /// falling back to the original one.
 #[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SkVec<T> {
 	/// The underlying storage.  It's twice as long as the number of items
 	/// `SkVec` can hold at a time.  Each element consist of two items in
