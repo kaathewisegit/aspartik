@@ -11,16 +11,16 @@ use data::seq::{python::PyDnaSeq, DnaSeq};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
-mod cuda;
-mod thread;
-#[cfg(feature = "vulkan")]
-mod vulkan;
+//mod cuda;
+//mod thread;
+//#[cfg(feature = "vulkan")]
+//mod vulkan;
 
 use cpu::CpuLikelihood;
-use cuda::CudaLikelihood;
-use thread::ThreadedLikelihood;
-#[cfg(feature = "vulkan")]
-use vulkan::VulkanLikelihood;
+//use cuda::CudaLikelihood;
+//use thread::ThreadedLikelihood;
+//#[cfg(feature = "vulkan")]
+//use vulkan::VulkanLikelihood;
 
 pub type Row<const N: usize> = Vector<f64, N>;
 type Transition<const N: usize> = RowMatrix<f64, N, N>;
@@ -29,8 +29,10 @@ trait LikelihoodTrait<const N: usize> {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		children: &[usize],
+		edges: &[usize],
 		transitions: &[Transition<N>],
+		cutoff: usize,
+		root: usize,
 	) -> Result<f64>;
 
 	fn accept(&mut self) -> Result<()>;
@@ -66,10 +68,10 @@ impl GenericLikelihood<4> {
 
 		let calculator: DynCalculator<4> = match calculator.as_str() {
 			"cpu" => Box::new(CpuLikelihood::new(sites)),
-			"thread" => Box::new(ThreadedLikelihood::new(sites)),
-			"cuda" => Box::new(CudaLikelihood::new(sites)?),
-			#[cfg(feature = "vulkan")]
-			"vulkan" => Box::new(VulkanLikelihood::new(sites)?),
+			//"thread" => Box::new(ThreadedLikelihood::new(sites)),
+			//"cuda" => Box::new(CudaLikelihood::new(sites)?),
+			//#[cfg(feature = "vulkan")]
+			//"vulkan" => Box::new(VulkanLikelihood::new(sites)?),
 			_ => {
 				panic!("Unknown calculator type '{calculator}'");
 			}
@@ -111,14 +113,21 @@ impl<const N: usize> GenericLikelihood<N> {
 			return Ok(self.cache);
 		}
 
-		let (nodes, edges, children) = tree.to_lists(&nodes);
+		let cutoff = nodes
+			.iter()
+			.position(|n| tree.is_internal(*n))
+			.unwrap();
+
+		let (nodes, edges, root) = tree.to_lists(&nodes);
 
 		let transitions = self.transitions.matrices(&edges);
 
 		let likelihood = self.calculator.propose(
 			&nodes,
-			&children,
+			&edges,
 			&transitions,
+			cutoff,
+			root,
 		)?;
 		trace!(likelihood);
 		self.last = likelihood;

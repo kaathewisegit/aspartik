@@ -27,6 +27,7 @@ const ROOT: usize = usize::MAX;
 
 #[derive(Debug)]
 pub struct Tree {
+	#[allow(unused)]
 	names: Vec<String>,
 
 	children: SkVec<usize>,
@@ -244,68 +245,25 @@ impl Tree {
 		self.updated_nodes.clear();
 	}
 
-	pub(crate) fn edges_to_update(&self) -> Vec<usize> {
+	pub fn edges_to_update(&self) -> Vec<usize> {
 		self.updated_edges.clone()
 	}
 
-	pub(crate) fn nodes_to_update(&self) -> Vec<Internal> {
-		self.walk_nodes(&self.updated_nodes)
-	}
-
-	/// A breadth-first order of internals starting from the root.
-	pub fn full_update(&self) -> Vec<Internal> {
-		let mut queue = VecDeque::from([self.root()]);
-		let mut out = Vec::with_capacity(self.num_internals());
-		out.push(self.root());
-		while let Some(node) = queue.pop_front() {
-			let (left, right) = self.children_of(node);
-
-			if let Some(left) = self.as_internal(left) {
-				queue.push_back(left);
-				out.push(left);
-			}
-			if let Some(right) = self.as_internal(right) {
-				queue.push_back(right);
-				out.push(right);
-			}
-		}
-
-		out.reverse();
-		out
-	}
-
-	pub fn to_lists(
-		&self,
-		nodes: &[Internal],
-	) -> (Vec<usize>, Vec<usize>, Vec<usize>) {
-		let num_nodes = nodes.len();
-		let mut out_nodes = Vec::with_capacity(num_nodes);
-		let mut edges = Vec::with_capacity(num_nodes * 2);
-		let mut children = Vec::with_capacity(num_nodes * 2);
-
-		for node in nodes {
-			out_nodes.push(node.0);
-			let (left, right) = self.children_of(*node);
-			children.push(left.0);
-			children.push(right.0);
-
-			edges.push(self.edge_index(left));
-			edges.push(self.edge_index(right));
-		}
-
-		(out_nodes, edges, children)
-	}
-
-	fn walk_nodes(&self, nodes: &[Node]) -> Vec<Internal> {
-		let mut deq = VecDeque::<Internal>::with_capacity(nodes.len());
+	pub fn nodes_to_update(&self) -> Vec<Node> {
+		let mut deq = VecDeque::<Node>::with_capacity(
+			self.updated_nodes.len(),
+		);
+		let mut leaves = Vec::new();
 		let mut set = Bitmap::new(self.num_nodes());
 
-		for node in nodes {
+		for node in &self.updated_nodes {
 			let mut chain = Vec::new();
-			let mut curr =
-				self.as_internal(*node).unwrap_or_else(|| {
-					self.parent_of(*node).unwrap()
-				});
+			let mut curr = *node;
+
+			if self.is_leaf(curr) {
+				leaves.push(curr);
+				curr = self.parent_of(curr).unwrap().into();
+			}
 
 			// Walk up from the starting nodes until the root, stop
 			// when we encounter a node we have already walked.
@@ -317,10 +275,8 @@ impl Tree {
 				set.set(curr.0, true);
 				chain.push(curr);
 
-				if let Some(parent) =
-					self.parent_of(curr.into())
-				{
-					curr = parent;
+				if let Some(parent) = self.parent_of(curr) {
+					curr = parent.into();
 				} else {
 					break;
 				}
@@ -335,7 +291,55 @@ impl Tree {
 			}
 		}
 
-		deq.into()
+		// remove root
+		deq.pop_back();
+		let mut internals: Vec<_> = deq.into();
+
+		leaves.append(&mut internals);
+		leaves
+	}
+
+	/// A breadth-first order of internals starting from the root.
+	pub fn full_update(&self) -> Vec<Node> {
+		let mut queue = VecDeque::<Node>::from([self.root().into()]);
+		let mut internals = Vec::<Node>::new();
+		let mut leaves = Vec::<Node>::new();
+		while let Some(node) = queue.pop_front() {
+			if let Some(internal) = self.as_internal(node) {
+				internals.push(internal.into());
+				let (left, right) = self.children_of(internal);
+
+				queue.push_back(left);
+				queue.push_back(right);
+			} else {
+				leaves.push(node);
+			}
+		}
+
+		internals.reverse();
+		// remove root
+		internals.pop();
+
+		leaves.append(&mut internals);
+		leaves
+	}
+
+	pub fn to_lists(
+		&self,
+		nodes: &[Node],
+	) -> (Vec<usize>, Vec<usize>, usize) {
+		let root = self.root().0;
+
+		let num_nodes = nodes.len();
+		let mut out_nodes = Vec::with_capacity(num_nodes);
+		let mut edges = Vec::with_capacity(num_nodes * 2);
+
+		for node in nodes {
+			out_nodes.push(node.0);
+			edges.push(self.edge_index(*node));
+		}
+
+		(out_nodes, edges, root)
 	}
 
 	/// Overwrites the child of `edge` with `new_child`.  Only `edge` and
@@ -369,6 +373,9 @@ impl Tree {
 			let (left, right) = self.children_of(node);
 			self.updated_edges.push(self.edge_index(left));
 			self.updated_edges.push(self.edge_index(right));
+
+			self.updated_nodes.push(left);
+			self.updated_nodes.push(right);
 		}
 	}
 

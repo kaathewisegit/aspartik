@@ -1,92 +1,127 @@
 use anyhow::Result;
 
 use super::{LikelihoodTrait, Row, Transition};
-use skvec::SkVec;
+use skvec::{skvec, SkVec};
 
 pub struct CpuLikelihood<const N: usize> {
-	probabilities: Vec<SkVec<Row<N>>>,
+	leaves: Vec<Vec<Row<N>>>,
+	projections: SkVec<Row<N>>,
 
-	updated_nodes: Vec<usize>,
+	updated_edges: Vec<usize>,
 }
 
 impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		children: &[usize],
+		edges: &[usize],
 		transitions: &[Transition<N>],
+		cuttoff: usize,
+		root: usize,
 	) -> Result<f64> {
-		assert_eq!(nodes.len() * 2, transitions.len());
-		assert_eq!(nodes.len() * 2, children.len());
+		assert_eq!(nodes.len(), edges.len());
+		assert_eq!(nodes.len(), transitions.len());
 
-		self.updated_nodes = nodes.to_vec();
-		let root = *nodes.last().unwrap();
-		let mut out = 0.0;
+		self.updated_edges = edges.to_vec();
 
-		for probability in &mut self.probabilities {
-			for i in 0..nodes.len() {
-				let left = transitions[i * 2]
-					* probability[children[i * 2]];
-				let right = transitions[i * 2 + 1]
-					* probability[children[i * 2 + 1]];
-				probability.set(nodes[i], left * right);
+		let num_sites = self.num_sites();
+		let num_leaves = self.num_leaves();
+		let num_edges = self.num_edges();
+
+		for site in 0..num_sites {
+			let offset = site * num_edges;
+
+			for i in 0..cuttoff {
+				let projection = transitions[i]
+					* self.leaves[site][nodes[i]];
+
+				self.projections
+					.set(offset + edges[i], projection);
 			}
+		}
 
-			out += probability[root].sum().ln();
+		for site in 0..num_sites {
+			let offset = site * num_edges;
+
+			for i in cuttoff..nodes.len() {
+				let left_idx =
+					offset + (nodes[i] - num_leaves) * 2;
+				let right_idx = left_idx + 1;
+				let left = self.projections[left_idx];
+				let right = self.projections[right_idx];
+
+				let likelihood = left * right;
+				let projection = transitions[i] * likelihood;
+
+				self.projections
+					.set(offset + edges[i], projection);
+			}
+		}
+
+		let mut out = 0.0;
+		let root_left = (root - num_leaves) * 2;
+		let root_right = root_left + 1;
+		for i in 0..num_sites {
+			let offset = i * num_edges;
+
+			let left = self.projections[offset + root_left];
+			let right = self.projections[offset + root_right];
+			let likelihood = left * right;
+			let log_sum = likelihood.sum().ln();
+			out += log_sum;
 		}
 
 		Ok(out)
 	}
 
 	fn accept(&mut self) -> Result<()> {
-		for probability in &mut self.probabilities {
-			probability.accept();
-		}
+		self.projections.accept();
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		let nodes = std::mem::take(&mut self.updated_nodes);
+		let edges = std::mem::take(&mut self.updated_edges);
 
-		for probability in &mut self.probabilities {
-			for node in &nodes {
-				probability.reject_element(*node);
+		let num_edges = self.num_edges();
+		for i in 0..self.num_sites() {
+			let offset = i * num_edges;
+			for edge in &edges {
+				self.projections.reject_element(*edge + offset);
 			}
-			// All of the edited items have been manually unset, so
-			// there's no need for `accept` or `reject`.
 		}
+		// All of the edited items have been manually unset, so
+		// there's no need for `accept` or `reject`.
 
 		Ok(())
 	}
 }
 
 impl<const N: usize> CpuLikelihood<N> {
-	pub fn new(sites: Vec<Vec<Row<N>>>) -> Self {
-		let mut probabilities = vec![
-			SkVec::repeat(
-				Row::<N>::default(),
-				sites[0].len() * 2 - 1
-			);
-			sites.len()
-		];
+	pub fn new(leaves: Vec<Vec<Row<N>>>) -> Self {
+		let num_sites = leaves.len();
+		let num_leaves = leaves[0].len();
+		let num_internals = num_leaves - 1;
+		let num_edges = num_internals * 2;
 
-		for (i, site) in sites.iter().enumerate() {
-			for (j, row) in site.iter().enumerate() {
-				probabilities[i].set(j, *row);
-			}
-		}
-
-		for (rows, probability) in sites.iter().zip(&mut probabilities)
-		{
-			for (i, row) in rows.iter().enumerate() {
-				probability.set(i, *row);
-			}
-			probability.accept();
-		}
+		let projections = skvec![Row::default(); num_edges * num_sites];
 
 		Self {
-			probabilities,
-			updated_nodes: Vec::new(),
+			leaves,
+			projections,
+
+			updated_edges: Vec::new(),
 		}
+	}
+
+	fn num_sites(&self) -> usize {
+		self.leaves.len()
+	}
+
+	fn num_leaves(&self) -> usize {
+		self.leaves[0].len()
+	}
+
+	fn num_edges(&self) -> usize {
+		(self.num_leaves() - 1) * 2
 	}
 }
