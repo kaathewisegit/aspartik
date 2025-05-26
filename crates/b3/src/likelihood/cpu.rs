@@ -4,8 +4,12 @@ use super::{LikelihoodTrait, Row, Transition};
 use skvec::{skvec, SkVec};
 
 pub struct CpuLikelihood<const N: usize> {
-	leaves: Vec<Vec<Row<N>>>,
+	leaves: Vec<Row<N>>,
 	projections: SkVec<Row<N>>,
+
+	num_sites: usize,
+	num_leaves: usize,
+	num_edges: usize,
 
 	updated_edges: Vec<usize>,
 }
@@ -24,16 +28,17 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 
 		self.updated_edges = edges.to_vec();
 
-		let num_sites = self.num_sites();
-		let num_leaves = self.num_leaves();
-		let num_edges = self.num_edges();
+		let num_sites = self.num_sites;
+		let num_leaves = self.num_leaves;
+		let num_edges = self.num_edges;
 
 		for site in 0..num_sites {
 			let offset = site * num_edges;
+			let leaves_offset = site * num_leaves;
 
 			for i in 0..cuttoff {
 				let projection = transitions[i]
-					* self.leaves[site][nodes[i]];
+					* self.leaves[leaves_offset + nodes[i]];
 
 				self.projections
 					.set(offset + edges[i], projection);
@@ -82,9 +87,8 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 	fn reject(&mut self) -> Result<()> {
 		let edges = std::mem::take(&mut self.updated_edges);
 
-		let num_edges = self.num_edges();
-		for i in 0..self.num_sites() {
-			let offset = i * num_edges;
+		for i in 0..self.num_sites {
+			let offset = i * self.num_edges;
 			for edge in &edges {
 				self.projections.reject_element(*edge + offset);
 			}
@@ -103,25 +107,19 @@ impl<const N: usize> CpuLikelihood<N> {
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
 
+		let leaves = leaves.concat();
+
 		let projections = skvec![Row::default(); num_edges * num_sites];
 
 		Self {
 			leaves,
 			projections,
 
+			num_sites,
+			num_leaves,
+			num_edges,
+
 			updated_edges: Vec::new(),
 		}
-	}
-
-	fn num_sites(&self) -> usize {
-		self.leaves.len()
-	}
-
-	fn num_leaves(&self) -> usize {
-		self.leaves[0].len()
-	}
-
-	fn num_edges(&self) -> usize {
-		(self.num_leaves() - 1) * 2
 	}
 }
