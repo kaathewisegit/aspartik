@@ -11,13 +11,13 @@ use data::seq::{python::PyDnaSeq, DnaSeq};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
-//mod cuda;
+mod cuda;
 mod thread;
 //#[cfg(feature = "vulkan")]
 //mod vulkan;
 
 use cpu::CpuLikelihood;
-//use cuda::CudaLikelihood;
+use cuda::CudaLikelihood;
 use thread::ThreadedLikelihood;
 //#[cfg(feature = "vulkan")]
 //use vulkan::VulkanLikelihood;
@@ -69,7 +69,7 @@ impl GenericLikelihood<4> {
 		let calculator: DynCalculator<4> = match calculator.as_str() {
 			"cpu" => Box::new(CpuLikelihood::new(sites)),
 			"thread" => Box::new(ThreadedLikelihood::new(sites)),
-			//"cuda" => Box::new(CudaLikelihood::new(sites)?),
+			"cuda" => Box::new(CudaLikelihood::new(sites)?),
 			//#[cfg(feature = "vulkan")]
 			//"vulkan" => Box::new(VulkanLikelihood::new(sites)?),
 			_ => {

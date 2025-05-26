@@ -17,12 +17,13 @@ pub struct CudaLikelihood {
 	propose_fn: CudaFunction,
 	reject_fn: CudaFunction,
 
-	probabilities: CudaSlice<Row<4>>,
+	leaves: CudaSlice<Row<4>>,
+	projections: CudaSlice<Row<4>>,
 	masks: CudaSlice<u8>,
 	likelihoods: CudaSlice<f64>,
-	updated_nodes: CudaSlice<u32>,
+	updated_edges: CudaSlice<u32>,
 
-	num_nodes: u32,
+	num_edges: u32,
 	num_sites: u32,
 	num_updated_nodes: u32,
 }
@@ -33,29 +34,36 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		children: &[usize],
+		edges: &[usize],
 		transitions: &[Transition<4>],
+		cutoff: usize,
+		root: usize,
 	) -> Result<f64> {
-		let nodes: Vec<_> = nodes.iter().map(|c| *c as u32).collect();
-		let children: Vec<_> =
-			children.iter().map(|c| *c as u32).collect();
+		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
+		let edges: Vec<_> = edges.iter().map(|e| *e as u32).collect();
 
 		self.num_updated_nodes = nodes.len() as u32;
-		self.stream.memcpy_htod(&nodes, &mut self.updated_nodes)?;
-		let children = self.stream.memcpy_stod(&children)?;
+		let nodes = self.stream.memcpy_stod(&nodes)?;
+		self.stream.memcpy_htod(&edges, &mut self.updated_edges)?;
 		let transitions = self.stream.memcpy_stod(transitions)?;
+		let cutoff = cutoff as u32;
+		let root = root as u32;
 
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
 
-		builder.arg(&self.num_nodes);
+		builder.arg(&self.num_edges);
 		builder.arg(&self.num_sites);
+		builder.arg(&self.leaves);
 		builder.arg(&self.masks);
-		builder.arg(&self.probabilities);
+		builder.arg(&self.projections);
 
 		builder.arg(&self.num_updated_nodes);
-		builder.arg(&self.updated_nodes);
-		builder.arg(&children);
+		builder.arg(&nodes);
+		builder.arg(&self.updated_edges);
 		builder.arg(&transitions);
+		builder.arg(&cutoff);
+		builder.arg(&root);
+
 		builder.arg(&self.likelihoods);
 
 		let cfg = LaunchConfig::for_num_elems(self.num_sites);
@@ -84,13 +92,13 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 
 		let mut builder = self.stream.launch_builder(&self.reject_fn);
 
-		builder.arg(&self.num_nodes);
+		builder.arg(&self.num_edges);
 		builder.arg(&self.num_sites);
 
 		builder.arg(&self.masks);
 
 		builder.arg(&self.num_updated_nodes);
-		builder.arg(&self.updated_nodes);
+		builder.arg(&self.updated_edges);
 
 		let cfg = LaunchConfig::for_num_elems(self.num_sites);
 
@@ -108,37 +116,24 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 }
 
 impl CudaLikelihood {
-	pub fn new(sites: Vec<Vec<Row<4>>>) -> Result<Self> {
-		let num_sites = sites.len();
-		let num_leaves = sites[0].len();
+	pub fn new(leaves: Vec<Vec<Row<4>>>) -> Result<Self> {
+		let num_sites = leaves.len();
+		let num_leaves = leaves[0].len();
 		let num_internals = num_leaves - 1;
-		let num_nodes = num_leaves + num_internals;
-
-		let mut probabilities = vec![];
-		let mut masks: Vec<u8> = vec![];
-		for column in sites {
-			for row in column {
-				masks.push(0);
-				probabilities.push(row);
-				probabilities.push(Row::default());
-			}
-			for _ in 0..num_internals {
-				masks.push(0);
-				probabilities.push(Row::default());
-				probabilities.push(Row::default());
-			}
-		}
+		let num_edges = num_internals * 2;
 
 		let context = CudaContext::new(0)?;
 		let stream = context.default_stream();
 
-		let probabilities: CudaSlice<Row<4>> =
-			stream.memcpy_stod(&probabilities)?;
-		let masks: CudaSlice<u8> = stream.memcpy_stod(&masks)?;
+		let leaves = stream.memcpy_stod(&leaves.concat())?;
+		let projections: CudaSlice<Row<4>> =
+			stream.alloc_zeros(num_edges * num_sites * 2)?;
+		let masks: CudaSlice<u8> =
+			stream.alloc_zeros(num_edges * num_sites)?;
 
 		let likelihoods: CudaSlice<f64> =
 			stream.alloc_zeros(num_sites)?;
-		let updated_nodes = stream.alloc_zeros(num_nodes)?;
+		let updated_edges = stream.alloc_zeros(num_edges)?;
 
 		let ptx = compile_ptx(CUDA_MODULE)?;
 		let module = context.load_module(ptx)?;
@@ -151,13 +146,14 @@ impl CudaLikelihood {
 			propose_fn,
 			reject_fn,
 
-			probabilities,
+			leaves,
+			projections,
 			masks,
 			likelihoods,
-			updated_nodes,
+			updated_edges,
 
 			num_updated_nodes: 0,
-			num_nodes: num_nodes as u32,
+			num_edges: num_edges as u32,
 			num_sites: num_sites as u32,
 		})
 	}
