@@ -38,7 +38,7 @@ pub struct Tree {
 	updated_nodes: Vec<Node>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Node(usize);
 
 impl Node {
@@ -294,6 +294,9 @@ impl Tree {
 		// remove root
 		deq.pop_back();
 		let mut internals: Vec<_> = deq.into();
+
+		leaves.sort();
+		leaves.dedup();
 
 		leaves.append(&mut internals);
 		leaves
