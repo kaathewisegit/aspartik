@@ -41,33 +41,31 @@ extern "C" __global__ void propose(
 	const uint root,
 	double* __restrict__ likelihoods
 ) {
-	uint idx = blockIdx.x * blockDim.x + threadIdx.x;
-	if (idx >= num_sites) {
+	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	if (site >= num_sites) {
 		return;
 	}
-	uint offset = idx * num_edges;
 	uint num_leaves = (num_edges / 2) + 1;
-	uint leaves_offset = idx * num_leaves;
 
 	for (uint i = 0; i < cutoff; i++) {
 		double4 projection = mat_aplly(
 			transitions + i * 4,
-			leaves[leaves_offset + nodes[i]]
+			leaves[nodes[i] * num_sites + site]
 		);
 
-		uint proj_idx = edges[i] + offset;
-		masks[proj_idx] ^= 1;
-		projections[proj_idx * 2 + masks[proj_idx]] = projection;
+		uint node_idx = edges[i] * num_sites + site;
+		masks[node_idx] ^= 1;
+		projections[node_idx * 2 + masks[node_idx]] = projection;
 	}
 
 	for (uint i = cutoff; i < num_updated_nodes; i++) {
 		uint left_edge = (nodes[i] - num_leaves) * 2;
 		uint right_edge = left_edge + 1;
 
-		uint left_idx = (offset + left_edge) * 2 +
-			masks[offset + left_edge];
-		uint right_idx = (offset + right_edge) * 2 +
-			masks[offset + right_edge];
+		uint left_idx = (left_edge * num_sites + site) * 2 +
+			masks[left_edge * num_sites + site];
+		uint right_idx = (right_edge * num_sites + site) * 2 +
+			masks[right_edge * num_sites + site];
 
 		double4 likelihood = hadamard(
 			projections[left_idx],
@@ -79,17 +77,17 @@ extern "C" __global__ void propose(
 			likelihood
 		);
 
-		uint proj_idx = edges[i] + offset;
-		masks[proj_idx] ^= 1;
-		projections[proj_idx * 2 + masks[proj_idx]] = projection;
+		uint node_idx = edges[i] * num_sites + site;
+		masks[node_idx] ^= 1;
+		projections[node_idx * 2 + masks[node_idx]] = projection;
 	}
 
-	uint root_left = (root - num_leaves) * 2;
-	uint root_right = root_left + 1;
-	uint left_idx = (offset + root_left) * 2 +
-		masks[offset + root_left];
-	uint right_idx = (offset + root_right) * 2 +
-		masks[offset + root_right];
+	uint left_root_edge = (root - num_leaves) * 2;
+	uint right_root_edge = left_root_edge + 1;
+	uint left_idx = (left_root_edge * num_sites + site) * 2 +
+		masks[left_root_edge * num_sites + site];
+	uint right_idx = (right_root_edge * num_sites + site) * 2 +
+		masks[right_root_edge * num_sites + site];
 
 	double4 likelihood = hadamard(
 		projections[left_idx],
@@ -97,7 +95,7 @@ extern "C" __global__ void propose(
 	);
 
 	double sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
-	likelihoods[idx] = sum;
+	likelihoods[site] = sum;
 }
 
 extern "C"  __global__ void reject(
@@ -107,13 +105,12 @@ extern "C"  __global__ void reject(
 	const uint num_updated_nodes,
 	const uint* __restrict__ edges
 ) {
-	uint idx = blockIdx.x * blockDim.x + threadIdx.x;
-	if (idx >= num_sites) {
+	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	if (site >= num_sites) {
 		return;
 	}
-	uint offset = idx * num_edges;
 
 	for (uint i = 0; i < num_updated_nodes; i++) {
-		masks[offset + edges[i]] ^= 1;
+		masks[edges[i] * num_sites + site] ^= 1;
 	}
 }

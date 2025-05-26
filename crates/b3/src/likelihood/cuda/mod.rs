@@ -125,7 +125,7 @@ impl CudaLikelihood {
 		let context = CudaContext::new(0)?;
 		let stream = context.default_stream();
 
-		let leaves = stream.memcpy_stod(&leaves.concat())?;
+		let leaves = stream.memcpy_stod(&transpose(leaves))?;
 		let projections: CudaSlice<Row<4>> =
 			stream.alloc_zeros(num_edges * num_sites * 2)?;
 		let masks: CudaSlice<u8> =
@@ -157,4 +157,19 @@ impl CudaLikelihood {
 			num_sites: num_sites as u32,
 		})
 	}
+}
+
+fn transpose(leaves: Vec<Vec<Row<4>>>) -> Vec<Row<4>> {
+	let num_sites = leaves.len();
+	let num_edges = leaves[0].len();
+
+	let mut out = Vec::with_capacity(num_sites * num_edges);
+
+	for edge in 0..num_edges {
+		for site in 0..num_sites {
+			out.push(leaves[site][edge]);
+		}
+	}
+
+	out
 }
