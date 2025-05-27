@@ -26,11 +26,14 @@ __device__ double4 mat_aplly(
 	);
 }
 
+#define idx(edge) \
+	(((edge) * num_sites + site) * 2)
+
 extern "C" __global__ void propose(
 	const uint num_edges,
 	const uint num_sites,
+
 	const double4* __restrict__ leaves,
-	byte* __restrict__ masks,
 	double4* __restrict__ projections,
 
 	const uint num_updated_nodes,
@@ -53,23 +56,16 @@ extern "C" __global__ void propose(
 			leaves[nodes[i] * num_sites + site]
 		);
 
-		uint node_idx = edges[i] * num_sites + site;
-		masks[node_idx] ^= 1;
-		projections[node_idx * 2 + masks[node_idx]] = projection;
+		projections[idx(edges[i])] = projection;
 	}
 
 	for (uint i = cutoff; i < num_updated_nodes; i++) {
 		uint left_edge = (nodes[i] - num_leaves) * 2;
 		uint right_edge = left_edge + 1;
 
-		uint left_idx = (left_edge * num_sites + site) * 2 +
-			masks[left_edge * num_sites + site];
-		uint right_idx = (right_edge * num_sites + site) * 2 +
-			masks[right_edge * num_sites + site];
-
 		double4 likelihood = hadamard(
-			projections[left_idx],
-			projections[right_idx]
+			projections[idx(left_edge)],
+			projections[idx(right_edge)]
 		);
 
 		double4 projection = mat_aplly(
@@ -77,21 +73,15 @@ extern "C" __global__ void propose(
 			likelihood
 		);
 
-		uint node_idx = edges[i] * num_sites + site;
-		masks[node_idx] ^= 1;
-		projections[node_idx * 2 + masks[node_idx]] = projection;
+		projections[idx(edges[i])] = projection;
 	}
 
 	uint left_root_edge = (root - num_leaves) * 2;
 	uint right_root_edge = left_root_edge + 1;
-	uint left_idx = (left_root_edge * num_sites + site) * 2 +
-		masks[left_root_edge * num_sites + site];
-	uint right_idx = (right_root_edge * num_sites + site) * 2 +
-		masks[right_root_edge * num_sites + site];
 
 	double4 likelihood = hadamard(
-		projections[left_idx],
-		projections[right_idx]
+		projections[idx(left_root_edge)],
+		projections[idx(right_root_edge)]
 	);
 
 	double sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
@@ -99,9 +89,10 @@ extern "C" __global__ void propose(
 }
 
 extern "C"  __global__ void reject(
-	const uint num_edges,
 	const uint num_sites,
-	byte* __restrict__ masks,
+
+	double4* __restrict__ projections,
+
 	const uint num_updated_nodes,
 	const uint* __restrict__ edges
 ) {
@@ -111,6 +102,26 @@ extern "C"  __global__ void reject(
 	}
 
 	for (uint i = 0; i < num_updated_nodes; i++) {
-		masks[edges[i] * num_sites + site] ^= 1;
+		uint proj_idx = idx(edges[i]);
+		projections[proj_idx] = projections[proj_idx + 1];
+	}
+}
+
+extern "C"  __global__ void accept(
+	const uint num_sites,
+
+	double4* __restrict__ projections,
+
+	const uint num_updated_nodes,
+	const uint* __restrict__ edges
+) {
+	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	if (site >= num_sites) {
+		return;
+	}
+
+	for (uint i = 0; i < num_updated_nodes; i++) {
+		uint proj_idx = idx(edges[i]);
+		projections[proj_idx + 1] = projections[proj_idx];
 	}
 }

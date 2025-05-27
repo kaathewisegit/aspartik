@@ -16,11 +16,11 @@ pub struct CudaLikelihood {
 	cfg: LaunchConfig,
 
 	propose_fn: CudaFunction,
+	accept_fn: CudaFunction,
 	reject_fn: CudaFunction,
 
 	leaves: CudaSlice<Row<4>>,
 	projections: CudaSlice<Row<4>>,
-	masks: CudaSlice<u8>,
 	likelihoods: CudaSlice<f64>,
 	updated_edges: CudaSlice<u32>,
 
@@ -54,8 +54,8 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 
 		builder.arg(&self.num_edges);
 		builder.arg(&self.num_sites);
+
 		builder.arg(&self.leaves);
-		builder.arg(&self.masks);
 		builder.arg(&self.projections);
 
 		builder.arg(&self.num_updated_nodes);
@@ -80,7 +80,28 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 	}
 
 	fn accept(&mut self) -> Result<()> {
+		if self.num_updated_nodes == 0 {
+			return Ok(());
+		}
+
+		let mut builder = self.stream.launch_builder(&self.accept_fn);
+
+		builder.arg(&self.num_sites);
+
+		builder.arg(&self.projections);
+
+		builder.arg(&self.num_updated_nodes);
+		builder.arg(&self.updated_edges);
+
+		// TODO: safety
+		let events = unsafe { builder.launch(self.cfg) }?;
+		if let Some((left, right)) = events {
+			self.stream.wait(&left)?;
+			self.stream.wait(&right)?;
+		}
+
 		self.num_updated_nodes = 0;
+
 		Ok(())
 	}
 
@@ -91,10 +112,9 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 
 		let mut builder = self.stream.launch_builder(&self.reject_fn);
 
-		builder.arg(&self.num_edges);
 		builder.arg(&self.num_sites);
 
-		builder.arg(&self.masks);
+		builder.arg(&self.projections);
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.updated_edges);
@@ -125,8 +145,6 @@ impl CudaLikelihood {
 		let leaves = stream.memcpy_stod(&transpose(leaves))?;
 		let projections: CudaSlice<Row<4>> =
 			stream.alloc_zeros(num_edges * num_sites * 2)?;
-		let masks: CudaSlice<u8> =
-			stream.alloc_zeros(num_edges * num_sites)?;
 
 		let likelihoods: CudaSlice<f64> =
 			stream.alloc_zeros(num_sites)?;
@@ -134,8 +152,9 @@ impl CudaLikelihood {
 
 		let ptx = compile_ptx(CUDA_MODULE)?;
 		let module = context.load_module(ptx)?;
-		let reject_fn = module.load_function("reject")?;
 		let propose_fn = module.load_function("propose")?;
+		let accept_fn = module.load_function("accept")?;
+		let reject_fn = module.load_function("reject")?;
 
 		const SIZE: u32 = 32;
 		let cfg = LaunchConfig {
@@ -149,11 +168,11 @@ impl CudaLikelihood {
 			cfg,
 
 			propose_fn,
+			accept_fn,
 			reject_fn,
 
 			leaves,
 			projections,
-			masks,
 			likelihoods,
 			updated_edges,
 
