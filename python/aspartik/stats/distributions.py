@@ -43,7 +43,7 @@ __all__ = [
 ]
 
 for item in __all__[:18]:
-    locals()[item] = getattr(_stats_rust_impl.distributions, item)  # type: ignore
+    locals()[item] = getattr(_stats_rust_impl.distributions, item)
 
 
 def __dir__():

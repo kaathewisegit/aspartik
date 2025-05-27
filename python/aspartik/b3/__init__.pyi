@@ -103,7 +103,7 @@ class Likelihood:
         sequences: Sequence[DNASeq],
         substitution: Any,
         tree: Tree,
-        calculator: Literal["cpu", "thread", "vulkan"] = "cpu",
+        calculator: Literal["cpu", "thread", "cuda"] = "cpu",
     ): ...
 
 @runtime_checkable
