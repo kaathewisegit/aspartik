@@ -170,6 +170,7 @@ fn transpose(leaves: Vec<Vec<Row<4>>>) -> Vec<Row<4>> {
 	let mut out = Vec::with_capacity(num_sites * num_edges);
 
 	for edge in 0..num_edges {
+		#[expect(clippy::needless_range_loop)]
 		for site in 0..num_sites {
 			out.push(leaves[site][edge]);
 		}
