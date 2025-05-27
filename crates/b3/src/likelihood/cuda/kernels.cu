@@ -27,7 +27,7 @@ __device__ double4 mat_aplly(
 }
 
 #define idx(edge) \
-	(((edge) * num_sites + site) * 2)
+	((edge) * num_sites + site)
 
 extern "C" __global__ void propose(
 	const uint num_edges,
@@ -92,6 +92,7 @@ extern "C"  __global__ void reject(
 	const uint num_sites,
 
 	double4* __restrict__ projections,
+	const double4* __restrict__ projections_backup,
 
 	const uint num_updated_nodes,
 	const uint* __restrict__ edges
@@ -103,14 +104,15 @@ extern "C"  __global__ void reject(
 
 	for (uint i = 0; i < num_updated_nodes; i++) {
 		uint proj_idx = idx(edges[i]);
-		projections[proj_idx] = projections[proj_idx + 1];
+		projections[proj_idx] = projections_backup[proj_idx];
 	}
 }
 
 extern "C"  __global__ void accept(
 	const uint num_sites,
 
-	double4* __restrict__ projections,
+	const double4* __restrict__ projections,
+	double4* __restrict__ projections_backup,
 
 	const uint num_updated_nodes,
 	const uint* __restrict__ edges
@@ -122,6 +124,6 @@ extern "C"  __global__ void accept(
 
 	for (uint i = 0; i < num_updated_nodes; i++) {
 		uint proj_idx = idx(edges[i]);
-		projections[proj_idx + 1] = projections[proj_idx];
+		projections_backup[proj_idx] = projections[proj_idx];
 	}
 }

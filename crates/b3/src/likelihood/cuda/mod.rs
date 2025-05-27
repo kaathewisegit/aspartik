@@ -21,6 +21,7 @@ pub struct CudaLikelihood {
 
 	leaves: CudaSlice<Row<4>>,
 	projections: CudaSlice<Row<4>>,
+	projections_backup: CudaSlice<Row<4>>,
 	likelihoods: CudaSlice<f64>,
 	updated_edges: CudaSlice<u32>,
 
@@ -89,6 +90,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		builder.arg(&self.num_sites);
 
 		builder.arg(&self.projections);
+		builder.arg(&self.projections_backup);
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.updated_edges);
@@ -115,6 +117,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		builder.arg(&self.num_sites);
 
 		builder.arg(&self.projections);
+		builder.arg(&self.projections_backup);
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.updated_edges);
@@ -144,7 +147,9 @@ impl CudaLikelihood {
 
 		let leaves = stream.memcpy_stod(&transpose(leaves))?;
 		let projections: CudaSlice<Row<4>> =
-			stream.alloc_zeros(num_edges * num_sites * 2)?;
+			stream.alloc_zeros(num_edges * num_sites)?;
+		let projections_backup: CudaSlice<Row<4>> =
+			stream.alloc_zeros(num_edges * num_sites)?;
 
 		let likelihoods: CudaSlice<f64> =
 			stream.alloc_zeros(num_sites)?;
@@ -173,6 +178,7 @@ impl CudaLikelihood {
 
 			leaves,
 			projections,
+			projections_backup,
 			likelihoods,
 			updated_edges,
 
