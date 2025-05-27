@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, ensure, Result};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::{
@@ -186,8 +186,8 @@ impl PyParameter {
 		})
 	}
 
-	fn __len__(&self) -> Result<usize> {
-		Ok(self.inner().len())
+	fn __len__(&self) -> usize {
+		self.inner().len()
 	}
 
 	fn __getitem__(&self, py: Python, i: usize) -> Result<PyObject> {
@@ -225,7 +225,7 @@ impl PyParameter {
 		Ok(())
 	}
 
-	fn __repr__(&self) -> Result<String> {
+	fn __repr__(&self) -> String {
 		let inner = &*self.inner();
 
 		let subtype = match inner {
@@ -234,11 +234,11 @@ impl PyParameter {
 			Parameter::Boolean(..) => "Boolean",
 		};
 
-		Ok(format!("Parameter.{}({})", subtype, inner))
+		format!("Parameter.{}({})", subtype, inner)
 	}
 
-	fn __str__(&self) -> Result<String> {
-		Ok(format!("[{}]", self.inner()))
+	fn __str__(&self) -> String {
+		format!("[{}]", self.inner())
 	}
 
 	fn __richcmp__(
@@ -264,16 +264,31 @@ impl PyParameter {
 		}
 	}
 
-	fn is_real(&self) -> Result<bool> {
-		Ok(matches!(&*self.inner(), Parameter::Real(_)))
+	pub fn is_real(&self) -> bool {
+		matches!(&*self.inner(), Parameter::Real(_))
 	}
 
-	fn is_integer(&self) -> Result<bool> {
-		Ok(matches!(&*self.inner(), Parameter::Integer(_)))
+	pub fn is_integer(&self) -> bool {
+		matches!(&*self.inner(), Parameter::Integer(_))
 	}
 
-	fn is_boolean(&self) -> Result<bool> {
-		Ok(matches!(&*self.inner(), Parameter::Boolean(_)))
+	pub fn is_boolean(&self) -> bool {
+		matches!(&*self.inner(), Parameter::Boolean(_))
+	}
+
+	pub fn one_real(&self) -> Result<f64> {
+		let inner = &*self.inner();
+
+		match inner {
+			Parameter::Real(p) => {
+				ensure!(
+					p.len() == 1,
+					"The parameter is not one-dimensional"
+				);
+				Ok(p[0])
+			}
+			_ => bail!("Not a real parameter"),
+		}
 	}
 }
 
