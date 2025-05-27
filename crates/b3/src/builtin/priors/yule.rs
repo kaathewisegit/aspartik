@@ -20,13 +20,12 @@ impl Yule {
 	fn probability(&self) -> Result<f64> {
 		let tree = self.tree.get().inner();
 		let rate = self.birth_rate.get().one_real()?;
-		let log_rate = rate.ln();
 		let root = tree.root();
 
-		let mut out = (tree.num_leaves() - 1) as f64 * log_rate;
+		let mut out = (tree.num_leaves() - 1) as f64 * rate.ln();
 
 		for internal in tree.internals() {
-			let diff = -log_rate * tree.weight_of(internal.into());
+			let diff = -rate * tree.weight_of(internal.into());
 
 			out += diff;
 			if internal == root {
