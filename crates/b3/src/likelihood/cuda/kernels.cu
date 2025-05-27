@@ -29,7 +29,7 @@ __device__ double4 mat_aplly(
 extern "C" __global__ void propose(
 	const uint num_edges,
 	const uint num_sites,
-	double4* __restrict__ leaves,
+	const double4* __restrict__ leaves,
 	byte* __restrict__ masks,
 	double4* __restrict__ projections,
 

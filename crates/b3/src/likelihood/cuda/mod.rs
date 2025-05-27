@@ -137,9 +137,10 @@ impl CudaLikelihood {
 		let reject_fn = module.load_function("reject")?;
 		let propose_fn = module.load_function("propose")?;
 
+		const SIZE: u32 = 32;
 		let cfg = LaunchConfig {
-			grid_dim: ((num_sites as u32 + 31) / 32, 1, 1),
-			block_dim: (32, 1, 1),
+			grid_dim: ((num_sites as u32 + SIZE - 1) / SIZE, 1, 1),
+			block_dim: (SIZE, 1, 1),
 			shared_mem_bytes: 0,
 		};
 
