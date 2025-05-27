@@ -1,5 +1,6 @@
 from ._bound import Bound as Bound
 from ._distribution import Distribution as Distribution
-from ._yule import Yule
+from ..._aspartik_rust_impl import _b3_rust_impl
 
-__all__ = ["Bound", "Distribution", "Yule"]
+
+Yule = _b3_rust_impl.Yule

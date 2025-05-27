@@ -11,7 +11,7 @@ from aspartik.b3.operators import (
     DeltaExchange,
     WilsonBalding,
 )
-from aspartik.b3.priors import Distribution, Yule
+from aspartik.b3.priors import Yule, Distribution
 from aspartik.b3.substitutions import HKY
 from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import RNG
@@ -112,7 +112,7 @@ likelihood = Likelihood(
     sequences=sequences,
     substitution=model,
     tree=tree,
-    calculator="cpu",
+    calculator="thread",
 )
 
 loggers = [

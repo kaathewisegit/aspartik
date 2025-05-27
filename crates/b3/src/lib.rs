@@ -1,3 +1,4 @@
+mod builtin;
 pub mod clock;
 pub mod likelihood;
 pub mod log;
@@ -27,6 +28,8 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<operator::PyProposal>()?;
 	m.add_class::<likelihood::PyLikelihood>()?;
 	m.add_class::<mcmc::Mcmc>()?;
+
+	m.add_class::<builtin::priors::Yule>()?;
 
 	Ok(m)
 }
