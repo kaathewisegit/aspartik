@@ -13,14 +13,10 @@ use linalg::{RowMatrix, Vector};
 mod cpu;
 mod cuda;
 mod thread;
-//#[cfg(feature = "vulkan")]
-//mod vulkan;
 
 use cpu::CpuLikelihood;
 use cuda::CudaLikelihood;
 use thread::ThreadedLikelihood;
-//#[cfg(feature = "vulkan")]
-//use vulkan::VulkanLikelihood;
 
 pub type Row<const N: usize> = Vector<f64, N>;
 type Transition<const N: usize> = RowMatrix<f64, N, N>;

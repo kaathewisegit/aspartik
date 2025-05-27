@@ -84,13 +84,6 @@ it allowed to set the number of iterations to one, which was useful for
 long-running `b3` tests.
 
 
-### [`vulkano`/`vulkano-shaders`][`vulkano`]
-
-Another gem of a library.  I was able to implement the bulk of
-GPU-parallelism Felsenstein's likelihood calculator implementation in
-just two evenings thanks to it.
-
-
 ### [`approx`]
 
 A little floating point comparison library, useful for numerical tests.
