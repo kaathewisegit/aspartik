@@ -107,6 +107,19 @@ pub trait SeqView:
 	}
 }
 
+pub trait SeqMutView: SeqView + AsMut<[Self::Character]> {
+	fn push(&mut self, ch: Self::Character);
+
+	fn extend<S: SeqView>(&mut self, other: &S);
+
+	fn append<S: SeqMutView>(&mut self, other: &mut S);
+
+	/// Reverses the characters in-place.
+	fn reverse(&mut self) {
+		self.as_mut().reverse();
+	}
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Seq<C: Character> {
 	inner: Box<[C]>,
@@ -155,20 +168,6 @@ impl<C: Character> From<Vec<C>> for Seq<C> {
 		Self {
 			inner: value.into_boxed_slice(),
 		}
-	}
-}
-
-// Character-agnostic methods
-impl<C: Character> Seq<C> {
-	/// Reverses the characters in-place.
-	pub fn reverse(&mut self) {
-		self.inner.reverse();
-	}
-
-	/// Returns the character slice which backs the sequence.  Mutating it
-	/// will change the sequence accordingly.
-	pub fn as_mut_slice(&mut self) -> &mut [C] {
-		&mut self.inner
 	}
 }
 
