@@ -24,19 +24,93 @@ pub unsafe trait Character:
 	+ Into<u8>
 	+ Into<char>
 	+ Copy
-	+ std::fmt::Debug
 	+ Eq
-	+ std::hash::Hash
 {
 }
 
 // DnaNucleotide is `repr(u8)`.
 unsafe impl Character for DnaNucleotide {}
-pub type DnaSeq = Seq<DnaNucleotide>;
 
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub trait SeqView:
+	for<'a> From<&'a [Self::Character]>
+	+ From<Vec<Self::Character>>
+	+ AsRef<[Self::Character]>
+{
+	type Character: Character;
+
+	fn fmt_impl(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		use fmt::Write;
+
+		for character in self.as_ref().iter().copied() {
+			f.write_char(character.into())?;
+		}
+		Ok(())
+	}
+
+	fn as_bytes(&self) -> &[u8] {
+		let slice = self.as_ref();
+		// SAFETY: `Character` must be equivalent to a byte
+		unsafe {
+			std::mem::transmute::<&[Self::Character], &[u8]>(slice)
+		}
+	}
+
+	fn iter(&self) -> std::slice::Iter<'_, Self::Character> {
+		self.as_ref().iter()
+	}
+
+	fn len(&self) -> usize {
+		self.as_ref().len()
+	}
+
+	fn is_empty(&self) -> bool {
+		self.as_ref().is_empty()
+	}
+
+	/// Counts how many times the character `c` occurs in the sequence.
+	fn count(&self, c: Self::Character) -> usize {
+		let mut out = 0;
+
+		for current in self.iter().copied() {
+			if current == c {
+				out += 1
+			}
+		}
+
+		out
+	}
+
+	/// Calculates the Hamming distance between two sequences.
+	///
+	///
+	/// # Panics
+	///
+	/// Panics if lengths of the sequences are not equal.
+	fn hamming_distance<S>(&self, other: S) -> usize
+	where
+		S: SeqView<Character = Self::Character>,
+	{
+		assert_eq!(self.len(), other.len());
+
+		let mut out = 0;
+
+		for (a, b) in self.as_ref().iter().zip(other.as_ref()) {
+			if a != b {
+				out += 1;
+			}
+		}
+
+		out
+	}
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Seq<C: Character> {
-	inner: Vec<C>,
+	inner: Box<[C]>,
+}
+
+impl<C: Character> SeqView for Seq<C> {
+	type Character = C;
 }
 
 impl<C: Character> Deref for Seq<C> {
@@ -53,13 +127,15 @@ impl<C: Character> DerefMut for Seq<C> {
 	}
 }
 
+impl<C: Character> AsRef<[C]> for Seq<C> {
+	fn as_ref(&self) -> &[C] {
+		self
+	}
+}
+
 impl<C: Character> fmt::Display for Seq<C> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		for item in self.iter().copied() {
-			let ch: char = item.into();
-			write!(f, "{ch}")?;
-		}
-		Ok(())
+		self.fmt_impl(f)
 	}
 }
 
@@ -71,6 +147,16 @@ impl<C: Character> From<&[C]> for Seq<C> {
 	}
 }
 
+impl<C: Character> From<Vec<C>> for Seq<C> {
+	fn from(value: Vec<C>) -> Self {
+		Self {
+			inner: value.into_boxed_slice(),
+		}
+	}
+}
+
+// XXX: move to a generic sequence-parsing utility function, so that it can be
+// shared between sequence types
 fn highlight_error(src: &str, index: usize) -> String {
 	const MAX_WIDTH: usize = 60;
 	if src.len() > MAX_WIDTH {
@@ -108,64 +194,29 @@ fn highlight_error(src: &str, index: usize) -> String {
 	}
 }
 
+// XXX: see above
 impl<C: Character> TryFrom<&str> for Seq<C> {
 	type Error = Error;
 
 	fn try_from(value: &str) -> Result<Self> {
-		let mut out = Seq {
-			inner: Vec::with_capacity(value.len()),
-		};
+		let mut chars = Vec::with_capacity(value.len());
 
 		for ch in value.chars() {
 			let character = ch.try_into().with_context(|| {
-				highlight_error(value, out.len())
+				highlight_error(value, chars.len())
 			})?;
-			out.inner.push(character);
+			chars.push(character);
 		}
 
-		Ok(out)
+		Ok(chars.into())
 	}
 }
 
 // Character-agnostic methods
 impl<C: Character> Seq<C> {
-	pub fn new() -> Self {
-		Seq { inner: Vec::new() }
-	}
-
-	pub fn as_bytes(&self) -> &[u8] {
-		let slice = self.inner.as_slice();
-		unsafe { std::mem::transmute::<&[C], &[u8]>(slice) }
-	}
-
 	/// Reverses the characters in-place.
 	pub fn reverse(&mut self) {
 		self.inner.reverse();
-	}
-
-	pub fn append(&mut self, mut other: Self) {
-		self.inner.append(&mut other.inner);
-	}
-
-	pub fn push(&mut self, character: C) {
-		self.inner.push(character);
-	}
-
-	pub fn iter(&self) -> std::slice::Iter<'_, C> {
-		self.inner.iter()
-	}
-
-	pub fn len(&self) -> usize {
-		self.inner.len()
-	}
-
-	pub fn is_empty(&self) -> bool {
-		self.inner.is_empty()
-	}
-
-	/// Returns the underlying character slice.
-	pub fn as_slice(&self) -> &[C] {
-		&self.inner
 	}
 
 	/// Returns the character slice which backs the sequence.  Mutating it
@@ -173,40 +224,9 @@ impl<C: Character> Seq<C> {
 	pub fn as_mut_slice(&mut self) -> &mut [C] {
 		&mut self.inner
 	}
-
-	/// Counts how many times the character `c` occurs in the sequence.
-	pub fn count(&self, c: C) -> usize {
-		let mut out = 0;
-
-		for current in self.iter().copied() {
-			if current == c {
-				out += 1
-			}
-		}
-
-		out
-	}
-
-	/// Calculates the Hamming distance between two sequences.
-	///
-	///
-	/// # Panics
-	///
-	/// Panics if lengths of the sequences are not equal.
-	pub fn hamming_distance(&self, other: &Self) -> usize {
-		assert_eq!(self.len(), other.len());
-
-		let mut out = 0;
-
-		for i in 0..self.len() {
-			if self[i] != other[i] {
-				out += 1;
-			}
-		}
-
-		out
-	}
 }
+
+pub type DnaSeq = Seq<DnaNucleotide>;
 
 // DNA-specific methods
 impl DnaSeq {
@@ -263,7 +283,7 @@ mod test {
 		let s1: DnaSeq = "GAGCCTACTAACGGGAT".try_into().unwrap();
 		let s2: DnaSeq = "CATCGTAATGACGGCCT".try_into().unwrap();
 
-		assert_eq!(s1.hamming_distance(&s2), 7);
+		assert_eq!(s1.hamming_distance(s2), 7);
 	}
 
 	#[test]

@@ -23,13 +23,8 @@ impl From<PyDnaSeq> for DnaSeq {
 #[pymethods]
 impl PyDnaSeq {
 	#[new]
-	#[pyo3(signature = (sequence = None))]
-	fn new(sequence: Option<&str>) -> Result<Self> {
-		let seq = sequence
-			.map(DnaSeq::try_from)
-			.unwrap_or_else(|| Ok(DnaSeq::new()))?;
-
-		Ok(PyDnaSeq(seq))
+	fn new(sequence: &str) -> Result<Self> {
+		Ok(PyDnaSeq(DnaSeq::try_from(sequence)?))
 	}
 
 	fn __str__(&self) -> String {

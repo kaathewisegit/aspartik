@@ -44,7 +44,7 @@ impl<C: Character> From<Record<C>> for Seq<C> {
 }
 
 pub struct FastaReader<C: Character, R: Read> {
-	current: Option<Record<C>>,
+	current: Option<(String, Vec<C>)>,
 	reader: Lines<BufReader<R>>,
 	line: usize,
 }
@@ -60,6 +60,14 @@ impl<C: Character, R: Read> FastaReader<C, R> {
 			line: 0,
 		}
 	}
+
+	fn take(&mut self) -> Option<Result<Record<C>>> {
+		let (description, seq) = self.current.take()?;
+
+		let seq = seq.into();
+
+		Some(Ok(Record { description, seq }))
+	}
 }
 
 impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
@@ -68,7 +76,7 @@ impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
 	fn next(&mut self) -> Option<Result<Record<C>>> {
 		loop {
 			let Some(line) = self.reader.next() else {
-				return self.current.take().map(Ok);
+				return self.take();
 			};
 			let line = match line {
 				Ok(line) => line,
@@ -86,18 +94,17 @@ impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
 			if line.starts_with(">") {
 				let out = self.current.take();
 
-				self.current = Some(Record {
-					description: line.to_owned(),
-					seq: Seq::new(),
-				});
+				self.current =
+					Some((line.to_owned(), Vec::new()));
 
 				if out.is_some() {
-					return out.map(Ok);
+					return self.take();
 				} else {
 					continue;
 				}
 			}
 
+			// XXX: allocations
 			let seq: Seq<C> = match Seq::try_from(line.as_str()) {
 				Ok(seq) => seq,
 				Err(err) => {
@@ -106,8 +113,10 @@ impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
 					))
 				}
 			};
-			if let Some(sequence) = self.current.as_mut() {
-				sequence.seq.append(seq)
+			if let Some((_, ref mut sequence)) =
+				self.current.as_mut()
+			{
+				sequence.extend_from_slice(seq.as_ref())
 			}
 		}
 	}
@@ -117,7 +126,7 @@ fn sequence_error<C: Character, R: Read>(fasta: &FastaReader<C, R>) -> Error {
 	if let Some(record) = &fasta.current {
 		anyhow!(
 			"Failed to parse sequence for the record '{}' at line {}",
-			record.description(), fasta.line,
+			record.0, fasta.line,
 		)
 	} else {
 		anyhow!("Failed to parse sequence at line {}", fasta.line)
