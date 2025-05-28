@@ -53,6 +53,12 @@ skvec = { version = "0.1.0-alpha.2", path = "crates/skvec" }
 stats = { version = "0.1.0-alpha.2", path = "crates/stats" }
 util = { version = "0.1.0-alpha.2", path = "crates/util" }
 
+[workspace.lints.clippy]
+branches_sharing_code = "warn"
+cast_lossless = "warn"
+default_trait_access = "warn"
+derive_partial_eq_without_eq = "warn"
+
 [profile.bench]
 debug = true
 

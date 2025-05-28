@@ -19,11 +19,11 @@ impl<const N: usize> Transitions<N> {
 		let transitions = SkVec::repeat(RowMatrix::default(), length);
 
 		Self {
-			current: Default::default(),
+			current: RowMatrix::default(),
 
-			p: Default::default(),
-			diag: Default::default(),
-			inv_p: Default::default(),
+			p: RowMatrix::default(),
+			diag: RowMatrix::default(),
+			inv_p: RowMatrix::default(),
 
 			transitions,
 		}

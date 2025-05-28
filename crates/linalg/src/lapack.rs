@@ -41,13 +41,13 @@ pub fn dgeev<const N: usize>(
 	let mut a = *matrix;
 	let lda = n;
 
-	let mut wr: Vector<f64, N> = Default::default();
-	let mut wi: Vector<f64, N> = Default::default();
+	let mut wr = Vector::<f64, N>::default();
+	let mut wi = Vector::<f64, N>::default();
 
-	let mut vl: RowMatrix<f64, N, N> = Default::default();
+	let mut vl = RowMatrix::<f64, N, N>::default();
 	let ldvl = n;
 
-	let mut vr: RowMatrix<f64, N, N> = Default::default();
+	let mut vr = RowMatrix::<f64, N, N>::default();
 	let ldvr = n;
 
 	let mut work = vec![0f64; 4 * N];
@@ -99,7 +99,7 @@ pub fn dsyev<const N: usize>(
 	let mut a = *matrix;
 	let lda = n;
 
-	let mut w: Vector<f64, N> = Default::default();
+	let mut w = Vector::<f64, N>::default();
 
 	let mut work = vec![0.0; 4 * N];
 	let lwork = 4 * N as c_int;

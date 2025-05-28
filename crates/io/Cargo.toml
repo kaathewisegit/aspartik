@@ -18,3 +18,6 @@ pyo3 = { workspace = true, optional = true }
 [features]
 default = ["python"]
 python = ["dep:pyo3"]
+
+[lints]
+workspace = true

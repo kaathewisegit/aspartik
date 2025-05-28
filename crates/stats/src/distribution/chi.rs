@@ -18,7 +18,7 @@ use core::num::NonZeroU64;
 /// assert_almost_eq!(n.mean().unwrap(), 1.25331413731550025121, 1e-14);
 /// assert_almost_eq!(n.pdf(1.0), 0.60653065971263342360, 1e-15);
 /// ```
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Chi {
 	freedom: NonZeroU64,
 }

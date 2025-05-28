@@ -54,7 +54,6 @@ pub fn integral(x: f64, n: u64) -> Option<f64> {
 				return Some(h * (-x).exp());
 			}
 		}
-		None
 	} else {
 		let mut factorial = 1.0;
 		let mut result = if n - 1 != 0 {
@@ -78,8 +77,9 @@ pub fn integral(x: f64, n: u64) -> Option<f64> {
 				return Some(result);
 			}
 		}
-		None
 	}
+
+	None
 }
 
 #[cfg(test)]

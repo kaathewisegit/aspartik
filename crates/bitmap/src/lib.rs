@@ -13,7 +13,7 @@ impl Bitmap {
 
 	pub fn set(&mut self, index: usize, value: bool) {
 		let byte_index = index / 8;
-		let bit_value = (value as u8) << (index % 8);
+		let bit_value = u8::from(value) << (index % 8);
 		self.inner[byte_index] |= bit_value;
 	}
 

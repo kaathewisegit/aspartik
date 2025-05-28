@@ -9,3 +9,6 @@ authors.workspace = true
 [dependencies]
 anyhow = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
+
+[lints]
+workspace = true

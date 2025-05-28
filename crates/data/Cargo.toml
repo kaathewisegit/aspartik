@@ -14,3 +14,6 @@ thiserror = { workspace = true }
 [features]
 default = ["python"]
 python = ["dep:pyo3"]
+
+[lints]
+workspace = true

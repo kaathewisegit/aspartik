@@ -570,7 +570,7 @@ impl Tree {
 	pub fn num_grandparents(&self) -> usize {
 		let mut out = 0;
 		for internal in self.internals() {
-			out += self.is_grandparent(internal) as usize;
+			out += usize::from(self.is_grandparent(internal));
 		}
 		out
 	}

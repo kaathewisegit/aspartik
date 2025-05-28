@@ -21,3 +21,6 @@ serde = ["dep:serde"]
 [[bench]]
 name = "double"
 harness = false
+
+[lints]
+workspace = true

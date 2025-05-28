@@ -56,7 +56,7 @@ fn comment(input: &str) -> IResult<&str, String> {
 }
 
 fn distance(input: &str) -> IResult<&str, f64> {
-	float(input).map(|(rest, f)| (rest, f as f64))
+	float(input).map(|(rest, f)| (rest, f64::from(f)))
 }
 
 fn body(input: &str) -> IResult<&str, Node> {

@@ -21,3 +21,6 @@ bytemuck = ["dep:bytemuck"]
 approx = ["dep:approx"]
 proptest = ["dep:proptest"]
 cuda = ["dep:cudarc"]
+
+[lints]
+workspace = true
