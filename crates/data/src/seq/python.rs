@@ -1,7 +1,7 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use super::{parse_str, DnaSeq, SeqView};
+use super::{parse_str, DnaSeq, Seq};
 use crate::DnaNucleotide;
 
 #[derive(Debug, Clone)]

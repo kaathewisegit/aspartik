@@ -5,20 +5,20 @@ use std::{
 	mem,
 };
 
-use data::seq::{parse_str, Seq, SeqView};
+use data::seq::{parse_str, SeqBuf, Seq};
 
 #[cfg(feature = "python")]
 pub mod python;
 
 #[derive(Debug, Clone)]
-pub struct Record<S: SeqView> {
+pub struct Record<S: Seq> {
 	/// The sequence description.  Must start with a '>' character and have
 	/// an ID follow right after without a space.
 	description: String,
 	seq: S,
 }
 
-impl<S: SeqView> Record<S> {
+impl<S: Seq> Record<S> {
 	/// The sequence header line, exactly as it appeared in the source.
 	pub fn raw_description(&self) -> &str {
 		&self.description
@@ -40,7 +40,7 @@ impl<S: SeqView> Record<S> {
 	}
 }
 
-pub struct FastaReader<S: SeqView, R: Read> {
+pub struct FastaReader<S: Seq, R: Read> {
 	/// As sequence descriptions must start with a '>' character,
 	/// `description` being empty must mean that we haven't read the first
 	/// record yet.
@@ -50,7 +50,7 @@ pub struct FastaReader<S: SeqView, R: Read> {
 	line: usize,
 }
 
-impl<S: SeqView, R: Read> FastaReader<S, R> {
+impl<S: Seq, R: Read> FastaReader<S, R> {
 	/// Creates a FASTA parser from a byte reader.  The reader is wrapped in
 	/// `BufReader` internally, so there's no need for the caller to buffer
 	/// it manually.
@@ -78,7 +78,7 @@ impl<S: SeqView, R: Read> FastaReader<S, R> {
 	}
 }
 
-impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
+impl<S: Seq, R: Read> Iterator for FastaReader<S, R> {
 	type Item = Result<Record<S>>;
 
 	fn next(&mut self) -> Option<Result<Record<S>>> {
@@ -117,7 +117,7 @@ impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
 
 			// XXX: allocations
 			type CSeq<S> =
-				Seq<<S as data::seq::SeqView>::Character>;
+				SeqBuf<<S as data::seq::Seq>::Character>;
 			let seq: CSeq<S> = match parse_str(line.as_str()) {
 				Ok(seq) => seq,
 				Err(err) => {
@@ -131,7 +131,7 @@ impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
 	}
 }
 
-fn sequence_error<S: SeqView, R: Read>(fasta: &FastaReader<S, R>) -> Error {
+fn sequence_error<S: Seq, R: Read>(fasta: &FastaReader<S, R>) -> Error {
 	if !fasta.description.is_empty() {
 		anyhow!(
 			"Failed to parse sequence for the record '{}' at line {}",

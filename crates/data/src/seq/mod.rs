@@ -34,7 +34,7 @@ pub unsafe trait Character:
 // DnaNucleotide is `repr(u8)`.
 unsafe impl Character for DnaNucleotide {}
 
-pub trait SeqView {
+pub trait Seq {
 	type Character: Character;
 
 	fn from_vec(chars: Vec<Self::Character>) -> Self;
@@ -91,7 +91,7 @@ pub trait SeqView {
 	/// Panics if lengths of the sequences are not equal.
 	fn hamming_distance<S>(&self, other: S) -> usize
 	where
-		S: SeqView<Character = Self::Character>,
+		S: Seq<Character = Self::Character>,
 	{
 		assert_eq!(self.len(), other.len());
 
@@ -107,10 +107,10 @@ pub trait SeqView {
 	}
 }
 
-pub trait SeqMutView: SeqView + AsMut<[Self::Character]> {
+pub trait SeqMutView: Seq + AsMut<[Self::Character]> {
 	fn push(&mut self, ch: Self::Character);
 
-	fn extend<S: SeqView>(&mut self, other: &S);
+	fn extend<S: Seq>(&mut self, other: &S);
 
 	fn append<S: SeqMutView>(&mut self, other: &mut S);
 
@@ -121,11 +121,11 @@ pub trait SeqMutView: SeqView + AsMut<[Self::Character]> {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub struct Seq<C: Character> {
+pub struct SeqBuf<C: Character> {
 	inner: Box<[C]>,
 }
 
-impl<C: Character> SeqView for Seq<C> {
+impl<C: Character> Seq for SeqBuf<C> {
 	type Character = C;
 
 	fn from_vec(chars: Vec<Self::Character>) -> Self {
@@ -139,7 +139,7 @@ impl<C: Character> SeqView for Seq<C> {
 	}
 }
 
-impl<C: Character> Deref for Seq<C> {
+impl<C: Character> Deref for SeqBuf<C> {
 	type Target = [C];
 
 	fn deref(&self) -> &[C] {
@@ -147,19 +147,19 @@ impl<C: Character> Deref for Seq<C> {
 	}
 }
 
-impl<C: Character> DerefMut for Seq<C> {
+impl<C: Character> DerefMut for SeqBuf<C> {
 	fn deref_mut(&mut self) -> &mut [C] {
 		&mut self.inner
 	}
 }
 
-impl<C: Character> fmt::Display for Seq<C> {
+impl<C: Character> fmt::Display for SeqBuf<C> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		self.fmt_impl(f)
 	}
 }
 
-pub type DnaSeq = Seq<DnaNucleotide>;
+pub type DnaSeq = SeqBuf<DnaNucleotide>;
 
 // DNA-specific methods
 impl DnaSeq {
