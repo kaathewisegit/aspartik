@@ -44,6 +44,10 @@ impl PyDnaSeq {
 		self.0[index]
 	}
 
+	fn __len__(&self) -> usize {
+		self.0.len()
+	}
+
 	fn complement(&self) -> Self {
 		PyDnaSeq(self.0.complement())
 	}
