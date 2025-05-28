@@ -1,6 +1,9 @@
 use anyhow::{anyhow, Context, Error, Result};
 
-use std::io::{BufRead, BufReader, Lines, Read};
+use std::{
+	io::{BufRead, BufReader, Lines, Read},
+	mem,
+};
 
 use data::seq::{parse_str, Seq, SeqView};
 
@@ -38,7 +41,11 @@ impl<S: SeqView> Record<S> {
 }
 
 pub struct FastaReader<S: SeqView, R: Read> {
-	current: Option<(String, Vec<S::Character>)>,
+	/// As sequence descriptions must start with a '>' character,
+	/// `description` being empty must mean that we haven't read the first
+	/// record yet.
+	description: String,
+	chars: Vec<S::Character>,
 	reader: Lines<BufReader<R>>,
 	line: usize,
 }
@@ -49,16 +56,23 @@ impl<S: SeqView, R: Read> FastaReader<S, R> {
 	/// it manually.
 	pub fn new(reader: R) -> Self {
 		FastaReader {
-			current: None,
+			description: String::new(),
+			chars: Vec::new(),
 			reader: BufReader::new(reader).lines(),
 			line: 0,
 		}
 	}
 
-	fn take(&mut self) -> Option<Result<Record<S>>> {
-		let (description, seq) = self.current.take()?;
+	fn make_record(&mut self) -> Option<Result<Record<S>>> {
+		let description = mem::take(&mut self.description);
 
-		let seq = S::from_vec(seq);
+		if description.is_empty() {
+			return None;
+		}
+
+		let chars = mem::take(&mut self.chars);
+
+		let seq = S::from_vec(chars);
 
 		Some(Ok(Record { description, seq }))
 	}
@@ -70,7 +84,7 @@ impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
 	fn next(&mut self) -> Option<Result<Record<S>>> {
 		loop {
 			let Some(line) = self.reader.next() else {
-				return self.take();
+				return self.make_record();
 			};
 			let line = match line {
 				Ok(line) => line,
@@ -86,14 +100,19 @@ impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
 			}
 
 			if line.starts_with(">") {
-				let out = self.take();
-				self.current =
-					Some((line.to_owned(), Vec::new()));
+				let out = self.make_record();
+				self.description = line.to_owned();
+				self.chars = Vec::new();
+
 				if out.is_some() {
 					return out;
 				} else {
 					continue;
 				}
+			}
+
+			if self.description.is_empty() {
+				return Some(Err(anyhow!("Encountered a sequence which does not belong to a record:\n{}: {}", self.line, line)));
 			}
 
 			// XXX: allocations
@@ -107,20 +126,16 @@ impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
 					))
 				}
 			};
-			if let Some((_, ref mut sequence)) =
-				self.current.as_mut()
-			{
-				sequence.extend_from_slice(seq.as_slice())
-			}
+			self.chars.extend_from_slice(seq.as_slice());
 		}
 	}
 }
 
 fn sequence_error<S: SeqView, R: Read>(fasta: &FastaReader<S, R>) -> Error {
-	if let Some(record) = &fasta.current {
+	if !fasta.description.is_empty() {
 		anyhow!(
 			"Failed to parse sequence for the record '{}' at line {}",
-			record.0, fasta.line,
+			fasta.description, fasta.line,
 		)
 	} else {
 		anyhow!("Failed to parse sequence at line {}", fasta.line)
