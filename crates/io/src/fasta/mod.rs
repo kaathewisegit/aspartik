@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Error, Result};
 
 use std::io::{BufRead, BufReader, Lines, Read};
 
-use data::seq::{parse_str, SeqView};
+use data::seq::{parse_str, Seq, SeqView};
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -58,7 +58,7 @@ impl<S: SeqView, R: Read> FastaReader<S, R> {
 	fn take(&mut self) -> Option<Result<Record<S>>> {
 		let (description, seq) = self.current.take()?;
 
-		let seq = seq.into();
+		let seq = S::from_vec(seq);
 
 		Some(Ok(Record { description, seq }))
 	}
@@ -86,20 +86,20 @@ impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
 			}
 
 			if line.starts_with(">") {
-				let out = self.current.take();
-
+				let out = self.take();
 				self.current =
 					Some((line.to_owned(), Vec::new()));
-
 				if out.is_some() {
-					return self.take();
+					return out;
 				} else {
 					continue;
 				}
 			}
 
 			// XXX: allocations
-			let seq: S = match parse_str(line.as_str()) {
+			type CSeq<S> =
+				Seq<<S as data::seq::SeqView>::Character>;
+			let seq: CSeq<S> = match parse_str(line.as_str()) {
 				Ok(seq) => seq,
 				Err(err) => {
 					return Some(Err(err).with_context(
@@ -110,7 +110,7 @@ impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
 			if let Some((_, ref mut sequence)) =
 				self.current.as_mut()
 			{
-				sequence.extend_from_slice(seq.as_ref())
+				sequence.extend_from_slice(seq.as_slice())
 			}
 		}
 	}

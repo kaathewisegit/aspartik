@@ -34,24 +34,24 @@ pub unsafe trait Character:
 // DnaNucleotide is `repr(u8)`.
 unsafe impl Character for DnaNucleotide {}
 
-pub trait SeqView:
-	for<'a> From<&'a [Self::Character]>
-	+ From<Vec<Self::Character>>
-	+ AsRef<[Self::Character]>
-{
+pub trait SeqView {
 	type Character: Character;
+
+	fn from_vec(chars: Vec<Self::Character>) -> Self;
+
+	fn as_slice(&self) -> &[Self::Character];
 
 	fn fmt_impl(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		use fmt::Write;
 
-		for character in self.as_ref().iter().copied() {
+		for character in self.as_slice().iter().copied() {
 			f.write_char(character.into())?;
 		}
 		Ok(())
 	}
 
 	fn as_bytes(&self) -> &[u8] {
-		let slice = self.as_ref();
+		let slice = self.as_slice();
 		// SAFETY: `Character` must be equivalent to a byte
 		unsafe {
 			std::mem::transmute::<&[Self::Character], &[u8]>(slice)
@@ -59,15 +59,15 @@ pub trait SeqView:
 	}
 
 	fn iter(&self) -> std::slice::Iter<'_, Self::Character> {
-		self.as_ref().iter()
+		self.as_slice().iter()
 	}
 
 	fn len(&self) -> usize {
-		self.as_ref().len()
+		self.as_slice().len()
 	}
 
 	fn is_empty(&self) -> bool {
-		self.as_ref().is_empty()
+		self.as_slice().is_empty()
 	}
 
 	/// Counts how many times the character `c` occurs in the sequence.
@@ -97,7 +97,7 @@ pub trait SeqView:
 
 		let mut out = 0;
 
-		for (a, b) in self.as_ref().iter().zip(other.as_ref()) {
+		for (a, b) in self.as_slice().iter().zip(other.as_slice()) {
 			if a != b {
 				out += 1;
 			}
@@ -127,6 +127,16 @@ pub struct Seq<C: Character> {
 
 impl<C: Character> SeqView for Seq<C> {
 	type Character = C;
+
+	fn from_vec(chars: Vec<Self::Character>) -> Self {
+		Self {
+			inner: chars.into_boxed_slice(),
+		}
+	}
+
+	fn as_slice(&self) -> &[Self::Character] {
+		&self.inner
+	}
 }
 
 impl<C: Character> Deref for Seq<C> {
@@ -143,31 +153,9 @@ impl<C: Character> DerefMut for Seq<C> {
 	}
 }
 
-impl<C: Character> AsRef<[C]> for Seq<C> {
-	fn as_ref(&self) -> &[C] {
-		self
-	}
-}
-
 impl<C: Character> fmt::Display for Seq<C> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		self.fmt_impl(f)
-	}
-}
-
-impl<C: Character> From<&[C]> for Seq<C> {
-	fn from(value: &[C]) -> Self {
-		Seq {
-			inner: value.into(),
-		}
-	}
-}
-
-impl<C: Character> From<Vec<C>> for Seq<C> {
-	fn from(value: Vec<C>) -> Self {
-		Self {
-			inner: value.into_boxed_slice(),
-		}
 	}
 }
 

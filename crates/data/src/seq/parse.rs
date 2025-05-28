@@ -15,7 +15,7 @@ where
 		chars.push(character);
 	}
 
-	Ok(chars.into())
+	Ok(S::from_vec(chars))
 }
 
 pub fn parse_bytes<S>(seq: &[u8]) -> Result<S>
@@ -31,7 +31,7 @@ where
 		chars.push(character);
 	}
 
-	Ok(chars.into())
+	Ok(S::from_vec(chars))
 }
 
 fn highlight_error(src: &str, index: usize) -> String {
