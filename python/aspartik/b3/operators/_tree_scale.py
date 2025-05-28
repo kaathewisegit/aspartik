@@ -2,13 +2,13 @@ from math import log
 from dataclasses import dataclass
 
 from ._util import sample_range
-from .. import Proposal, Tree
+from .. import Proposal, Tree, Operator
 from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
 @dataclass
-class TreeScale:
+class TreeScale(Operator):
     """Full tree scale operator.
 
     This parameter is analogous to BEAST2's `ScaleOperator` when it's used on a

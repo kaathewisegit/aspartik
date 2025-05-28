@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from .. import Parameter
+from .. import Parameter, Prior
 from ... import stats
 
 
 @dataclass
-class Distribution:
+class Distribution(Prior):
     """Calculates prior probability of a parameter according to a distribution."""
 
     param: Parameter

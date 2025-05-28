@@ -3,13 +3,13 @@ from typing import Literal
 from dataclasses import dataclass
 
 from ._util import sample_range
-from .. import Proposal, Parameter
+from .. import Proposal, Parameter, Operator
 from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
 @dataclass
-class ParamScale:
+class ParamScale(Operator):
     """An operator which scales one parameter.
 
     This operator is analogous to BEAST2's `ScaleOperator`, except it only

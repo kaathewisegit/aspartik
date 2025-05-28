@@ -1,12 +1,12 @@
 from typing import List
 from dataclasses import dataclass
 
-from .. import Proposal, Parameter
+from .. import Proposal, Parameter, Operator
 from ...rng import RNG
 
 
 @dataclass
-class DeltaExchange:
+class DeltaExchange(Operator):
     """Operator which tweaks a multidimensional parameter without changing its sum.
 
     This operator is analogous to BEAST2's `DeltaExchangeOperator`.  It picks

@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
 from ._util import scale_on_range
-from .. import Proposal, Tree
+from .. import Proposal, Tree, Operator
 from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
 @dataclass
-class EpochScale:
+class EpochScale(Operator):
     """Scales a random epoch in a tree.
 
     This parameter is analogous to BEAST2's `ScaleOperator` when it's used on a

@@ -1,12 +1,12 @@
 from math import log
 from dataclasses import dataclass
 
-from .. import Proposal, Tree
+from .. import Proposal, Tree, Operator
 from ...rng import RNG
 
 
 @dataclass
-class WilsonBalding:
+class WilsonBalding(Operator):
     """TODO."""
 
     tree: Tree

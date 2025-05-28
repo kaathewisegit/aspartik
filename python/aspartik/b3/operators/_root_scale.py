@@ -2,10 +2,10 @@ from math import log
 
 from ._util import sample_range
 from . import TreeScale
-from .. import Proposal
+from .. import Proposal, Operator
 
 
-class RootScale(TreeScale):
+class RootScale(TreeScale, Operator):
     """Scales the root node.
 
     This parameter has the same functionality as `TreeScale`, except it only

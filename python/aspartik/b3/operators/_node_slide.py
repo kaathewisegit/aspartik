@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
 from ._util import scale_on_range
-from .. import Proposal, Tree
+from .. import Proposal, Tree, Operator
 from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
 @dataclass
-class NodeSlide:
+class NodeSlide(Operator):
     """Operator which slides a random node between its parent and children.
 
     This operator is similar to BEAST2's `EpochFlexOperator`: it will only

@@ -1,11 +1,11 @@
 from math import inf
 from dataclasses import dataclass
 
-from .. import Parameter
+from .. import Parameter, Prior
 
 
 @dataclass
-class Bound:
+class Bound(Prior):
     """A prior which puts limits on the value of a parameter
 
     This prior serves the same purpose as the `lower` and `upper` attributes on

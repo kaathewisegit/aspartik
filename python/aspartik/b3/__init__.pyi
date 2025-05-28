@@ -52,12 +52,12 @@ class Tree:
     def newick(self) -> str: ...
 
 class Proposal:
-    @staticmethod
-    def Reject() -> Proposal: ...
-    @staticmethod
-    def Hastings(ratio: float) -> Proposal: ...
-    @staticmethod
-    def Accept() -> Proposal: ...
+    @classmethod
+    def Reject(cls) -> Proposal: ...
+    @classmethod
+    def Hastings(cls, ratio: float) -> Proposal: ...
+    @classmethod
+    def Accept(cls) -> Proposal: ...
 
 class Parameter:
     """An arbitrary multi-dimensional parameter
@@ -87,12 +87,12 @@ class Parameter:
         constructor.
         """
 
-    @staticmethod
-    def Real(*args: float) -> Any: ...
-    @staticmethod
-    def Integer(*args: int) -> Any: ...
-    @staticmethod
-    def Boolean(*args: bool) -> Any: ...
+    @classmethod
+    def Real(cls, *args: float) -> Any: ...
+    @classmethod
+    def Integer(cls, *args: int) -> Any: ...
+    @classmethod
+    def Boolean(cls, *args: bool) -> Any: ...
     def is_real(self) -> bool: ...
     def is_integer(self) -> bool: ...
     def is_boolean(self) -> bool: ...
@@ -139,14 +139,13 @@ class Operator(Protocol):
         """
 
 class Logger(Protocol):
-    @property
-    def every(self) -> int:
-        """How often a logger should be called
+    every: int
+    """How often a logger should be called
 
-        The `MCMC` will call each logger when `index % every` is 0.  This value
-        is read once when MCMC is created, so if it's changed during execution,
-        the old `every` value will continue to be used.
-        """
+    The `MCMC` will call each logger when `index % every` is 0.  This value
+    is read once when MCMC is created, so if it's changed during execution,
+    the old `every` value will continue to be used.
+    """
 
     def log(self, mcmc: MCMC, index: int) -> None:
         """Logging step

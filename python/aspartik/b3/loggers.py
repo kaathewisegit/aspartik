@@ -8,11 +8,11 @@ from dataclasses import dataclass
 from collections.abc import Mapping
 import json
 
-from . import MCMC, Tree, Parameter, Prior
+from . import MCMC, Tree, Parameter, Prior, Logger
 
 
 @dataclass
-class TreeLogger:
+class TreeLogger(Logger):
     """Records the topology of the tree into a `.trees` file."""
 
     tree: Tree
@@ -34,7 +34,7 @@ class TreeLogger:
 
 
 @dataclass
-class PrintLogger:
+class PrintLogger(Logger):
     every: int
 
     def __post_init__(self):
@@ -47,7 +47,7 @@ class PrintLogger:
 
 
 @dataclass
-class ValueLogger:
+class ValueLogger(Logger):
     map: Mapping[str, Parameter | Prior]
     path: str
     every: int

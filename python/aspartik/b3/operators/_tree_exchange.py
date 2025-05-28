@@ -1,13 +1,13 @@
 from math import log
 from dataclasses import dataclass
 
-from .. import Tree, Proposal
+from .. import Tree, Proposal, Operator
 from ..tree import Internal, Node
 from ...rng import RNG
 
 
 @dataclass
-class NarrowExchange:
+class NarrowExchange(Operator):
     """Operator which exchanges the parents of two neighbouring nodes.
 
     This operator is analogous to BEAST2's `Exchange` operator with `isNarrow`
@@ -66,7 +66,7 @@ class NarrowExchange:
 
 
 @dataclass
-class WideExchange:
+class WideExchange(Operator):
     """Operator which exchanges the parent of two random nodes.
 
     This operator is analogous to BEAST2's `Exchange` operator with `isNarrow`
