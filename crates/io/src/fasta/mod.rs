@@ -2,20 +2,20 @@ use anyhow::{anyhow, Context, Error, Result};
 
 use std::io::{BufRead, BufReader, Lines, Read};
 
-use data::seq::{parse_str, Character, Seq};
+use data::seq::{parse_str, SeqView};
 
 #[cfg(feature = "python")]
 pub mod python;
 
 #[derive(Debug, Clone)]
-pub struct Record<C: Character> {
+pub struct Record<S: SeqView> {
 	/// The sequence description.  Must start with a '>' character and have
 	/// an ID follow right after without a space.
 	description: String,
-	seq: Seq<C>,
+	seq: S,
 }
 
-impl<C: Character> Record<C> {
+impl<S: SeqView> Record<S> {
 	/// The sequence header line, exactly as it appeared in the source.
 	pub fn raw_description(&self) -> &str {
 		&self.description
@@ -28,28 +28,22 @@ impl<C: Character> Record<C> {
 		&self.description[1..]
 	}
 
-	pub fn sequence(&self) -> &Seq<C> {
+	pub fn sequence(&self) -> &S {
 		&self.seq
 	}
 
-	pub fn into_sequence(self) -> Seq<C> {
+	pub fn into_sequence(self) -> S {
 		self.seq
 	}
 }
 
-impl<C: Character> From<Record<C>> for Seq<C> {
-	fn from(value: Record<C>) -> Self {
-		value.seq
-	}
-}
-
-pub struct FastaReader<C: Character, R: Read> {
-	current: Option<(String, Vec<C>)>,
+pub struct FastaReader<S: SeqView, R: Read> {
+	current: Option<(String, Vec<S::Character>)>,
 	reader: Lines<BufReader<R>>,
 	line: usize,
 }
 
-impl<C: Character, R: Read> FastaReader<C, R> {
+impl<S: SeqView, R: Read> FastaReader<S, R> {
 	/// Creates a FASTA parser from a byte reader.  The reader is wrapped in
 	/// `BufReader` internally, so there's no need for the caller to buffer
 	/// it manually.
@@ -61,7 +55,7 @@ impl<C: Character, R: Read> FastaReader<C, R> {
 		}
 	}
 
-	fn take(&mut self) -> Option<Result<Record<C>>> {
+	fn take(&mut self) -> Option<Result<Record<S>>> {
 		let (description, seq) = self.current.take()?;
 
 		let seq = seq.into();
@@ -70,10 +64,10 @@ impl<C: Character, R: Read> FastaReader<C, R> {
 	}
 }
 
-impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
-	type Item = Result<Record<C>>;
+impl<S: SeqView, R: Read> Iterator for FastaReader<S, R> {
+	type Item = Result<Record<S>>;
 
-	fn next(&mut self) -> Option<Result<Record<C>>> {
+	fn next(&mut self) -> Option<Result<Record<S>>> {
 		loop {
 			let Some(line) = self.reader.next() else {
 				return self.take();
@@ -105,7 +99,7 @@ impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
 			}
 
 			// XXX: allocations
-			let seq: Seq<C> = match parse_str(line.as_str()) {
+			let seq: S = match parse_str(line.as_str()) {
 				Ok(seq) => seq,
 				Err(err) => {
 					return Some(Err(err).with_context(
@@ -122,7 +116,7 @@ impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
 	}
 }
 
-fn sequence_error<C: Character, R: Read>(fasta: &FastaReader<C, R>) -> Error {
+fn sequence_error<S: SeqView, R: Read>(fasta: &FastaReader<S, R>) -> Error {
 	if let Some(record) = &fasta.current {
 		anyhow!(
 			"Failed to parse sequence for the record '{}' at line {}",

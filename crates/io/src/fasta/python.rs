@@ -5,13 +5,13 @@ use pyo3::prelude::*;
 use std::fs::File;
 
 use super::{FastaReader, Record};
-use data::{seq::python::PyDnaSeq, DnaNucleotide};
+use data::{seq::python::PyDnaSeq, seq::DnaSeq};
 
 #[pyclass(name = "FASTADNARecord", module = "aspartik.io.fasta", frozen)]
-pub struct PyFastaDnaRecord(Record<DnaNucleotide>);
+pub struct PyFastaDnaRecord(Record<DnaSeq>);
 
-impl From<Record<DnaNucleotide>> for PyFastaDnaRecord {
-	fn from(value: Record<DnaNucleotide>) -> Self {
+impl From<Record<DnaSeq>> for PyFastaDnaRecord {
+	fn from(value: Record<DnaSeq>) -> Self {
 		Self(value)
 	}
 }
@@ -38,7 +38,7 @@ impl PyFastaDnaRecord {
 
 #[pyclass(name = "FASTADNAReader", module = "aspartik.io.fasta", frozen)]
 pub struct PyFastaDnaReader {
-	inner: Mutex<FastaReader<DnaNucleotide, File>>,
+	inner: Mutex<FastaReader<DnaSeq, File>>,
 }
 
 #[pymethods]
