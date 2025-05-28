@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Error, Result};
 
 use std::io::{BufRead, BufReader, Lines, Read};
 
-use data::seq::{Character, Seq};
+use data::seq::{parse_str, Character, Seq};
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -105,7 +105,7 @@ impl<C: Character, R: Read> Iterator for FastaReader<C, R> {
 			}
 
 			// XXX: allocations
-			let seq: Seq<C> = match Seq::try_from(line.as_str()) {
+			let seq: Seq<C> = match parse_str(line.as_str()) {
 				Ok(seq) => seq,
 				Err(err) => {
 					return Some(Err(err).with_context(

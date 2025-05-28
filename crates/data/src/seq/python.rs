@@ -1,7 +1,7 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use super::DnaSeq;
+use super::{parse_str, DnaSeq};
 use crate::DnaNucleotide;
 
 #[derive(Debug, Clone)]
@@ -24,7 +24,7 @@ impl From<PyDnaSeq> for DnaSeq {
 impl PyDnaSeq {
 	#[new]
 	fn new(sequence: &str) -> Result<Self> {
-		Ok(PyDnaSeq(DnaSeq::try_from(sequence)?))
+		Ok(PyDnaSeq(parse_str(sequence)?))
 	}
 
 	fn __str__(&self) -> String {

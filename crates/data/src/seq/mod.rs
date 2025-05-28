@@ -1,4 +1,4 @@
-use anyhow::{Context, Error, Result};
+use anyhow::Error;
 
 use std::{
 	fmt,
@@ -7,8 +7,11 @@ use std::{
 
 use crate::nucleotides::DnaNucleotide;
 
+mod parse;
 #[cfg(feature = "python")]
 pub mod python;
+
+pub use parse::{parse_bytes, parse_str};
 
 /// A character in a sequence alphabet.
 ///
@@ -155,63 +158,6 @@ impl<C: Character> From<Vec<C>> for Seq<C> {
 	}
 }
 
-// XXX: move to a generic sequence-parsing utility function, so that it can be
-// shared between sequence types
-fn highlight_error(src: &str, index: usize) -> String {
-	const MAX_WIDTH: usize = 60;
-	if src.len() > MAX_WIDTH {
-		let mut out = String::from(
-			"Illegal character encountered in the sequence:\n> ",
-		);
-		let mut padding = 2;
-
-		let start = if index > 40 {
-			out.push_str("...");
-			padding += 3;
-			index - 40
-		} else {
-			0
-		};
-
-		let end = std::cmp::min(start + MAX_WIDTH, src.len());
-		out.push_str(&src[start..end]);
-		if end < src.len() {
-			out.push_str("...");
-		}
-		out.push('\n');
-		for _ in 0..(padding + index - start) {
-			out.push(' ');
-		}
-		out.push('^');
-
-		out
-	} else {
-		format!(
-			"Illegal character encountered in the sequence:\n> {}\n  {:index$}^",
-			src,
-			"",
-		)
-	}
-}
-
-// XXX: see above
-impl<C: Character> TryFrom<&str> for Seq<C> {
-	type Error = Error;
-
-	fn try_from(value: &str) -> Result<Self> {
-		let mut chars = Vec::with_capacity(value.len());
-
-		for ch in value.chars() {
-			let character = ch.try_into().with_context(|| {
-				highlight_error(value, chars.len())
-			})?;
-			chars.push(character);
-		}
-
-		Ok(chars.into())
-	}
-}
-
 // Character-agnostic methods
 impl<C: Character> Seq<C> {
 	/// Reverses the characters in-place.
@@ -256,14 +202,13 @@ mod test {
 
 	#[test]
 	fn decode() {
-		let s = "ACTGxACTG";
-		let seq: Result<Seq<DnaNucleotide>> = s.try_into();
-		assert!(seq.is_err());
+		parse_str::<DnaSeq>("ACTGxACTG").unwrap();
 	}
 
 	#[test]
 	fn count() {
-		let s: DnaSeq = "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC".try_into().unwrap();
+		let s = "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC";
+		let s: DnaSeq = parse_str(s).unwrap();
 
 		assert_eq!(s.count(DnaNucleotide::Adenine), 20);
 		assert_eq!(s.count(DnaNucleotide::Cytosine), 12);
@@ -273,22 +218,22 @@ mod test {
 
 	#[test]
 	fn dna_complement() {
-		let s: DnaSeq = "AAAACCCGGT".try_into().unwrap();
+		let s: DnaSeq = parse_str("AAAACCCGGT").unwrap();
 
 		assert_eq!(s.reverse_complement().to_string(), "ACCGGGTTTT");
 	}
 
 	#[test]
 	fn hamming() {
-		let s1: DnaSeq = "GAGCCTACTAACGGGAT".try_into().unwrap();
-		let s2: DnaSeq = "CATCGTAATGACGGCCT".try_into().unwrap();
+		let s1: DnaSeq = parse_str("GAGCCTACTAACGGGAT").unwrap();
+		let s2: DnaSeq = parse_str("CATCGTAATGACGGCCT").unwrap();
 
 		assert_eq!(s1.hamming_distance(s2), 7);
 	}
 
 	#[test]
 	fn index() {
-		let mut s = DnaSeq::try_from("ACGT").unwrap();
+		let mut s: DnaSeq = parse_str("ACGT").unwrap();
 		assert_eq!(s[0], Adenine);
 		assert_eq!(s[1], Cytosine);
 		assert_eq!(s[2], Guanine);
@@ -306,7 +251,7 @@ mod test {
 
 	#[test]
 	fn iter() {
-		let s = DnaSeq::try_from("GAGCCT").unwrap();
+		let s: DnaSeq = parse_str("GAGCCT").unwrap();
 		let mut iter = s.iter().copied();
 		assert_eq!(iter.next(), Some(Guanine));
 		assert_eq!(iter.next(), Some(Adenine));
