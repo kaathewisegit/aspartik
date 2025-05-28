@@ -10,7 +10,7 @@ pub use petgraph::stable_graph::NodeIndex;
 #[derive(Debug, Clone, Default)]
 pub struct Node {
 	name: String,
-	#[allow(dead_code)]
+	#[expect(dead_code)]
 	attributes: String,
 	distance: Option<f64>,
 }

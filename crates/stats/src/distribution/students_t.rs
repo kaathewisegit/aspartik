@@ -919,7 +919,7 @@ mod tests {
 		test(0.95, 011.0, 1.796);
 		test(0.975, 011.0, 2.201);
 		// 2.718 is roughly equal to E
-		#[allow(clippy::approx_constant)]
+		#[expect(clippy::approx_constant)]
 		test(0.99, 011.0, 2.718);
 		test(0.995, 011.0, 3.106);
 		test(0.9975, 011.0, 3.497);

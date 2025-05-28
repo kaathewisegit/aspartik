@@ -17,7 +17,7 @@ use rng::PyRng;
 pub struct Mcmc {
 	posterior: Mutex<f64>,
 
-	#[allow(unused)]
+	#[expect(unused)]
 	burnin: usize,
 	length: usize,
 

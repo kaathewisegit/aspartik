@@ -27,7 +27,6 @@ const ROOT: usize = usize::MAX;
 
 #[derive(Debug)]
 pub struct Tree {
-	#[allow(unused)]
 	names: Vec<String>,
 
 	children: SkVec<usize>,

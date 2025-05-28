@@ -163,7 +163,7 @@ impl CudaLikelihood {
 
 		const SIZE: u32 = 32;
 		let cfg = LaunchConfig {
-			grid_dim: ((num_sites as u32 + SIZE - 1) / SIZE, 1, 1),
+			grid_dim: ((num_sites as u32).div_ceil(SIZE), 1, 1),
 			block_dim: (SIZE, 1, 1),
 			shared_mem_bytes: 0,
 		};
