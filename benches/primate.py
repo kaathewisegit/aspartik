@@ -11,7 +11,7 @@ from aspartik.b3.operators import (
     DeltaExchange,
     WilsonBalding,
 )
-from aspartik.b3.priors import Yule, Distribution
+from aspartik.b3.priors import Yule, Distribution, ConstantPopulation
 from aspartik.b3.substitutions import HKY
 from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import RNG
@@ -40,6 +40,7 @@ mutation_rate_3rdpos = Parameter.Real(1.0)
 gamma_shape_3rdpos = Parameter.Real(1.0)
 kappa_3rdpos = Parameter.Real(2.0)
 
+population = Parameter.Real(1.0)
 birth_rate_y = Parameter.Real(1.0)
 clock_rate = Parameter.Real(1.0)
 
@@ -73,6 +74,7 @@ priors = [
     Distribution(kappa_1stpos, LogNormal(1.0, 1.25)),
     Distribution(kappa_2ndpos, LogNormal(1.0, 1.25)),
     Distribution(kappa_3rdpos, LogNormal(1.0, 1.25)),
+    ConstantPopulation(tree, population),
     # TODO: MRCA
 ]
 
@@ -134,6 +136,8 @@ loggers = [
             "kappa_3rdpos": kappa_3rdpos,
             "birth_rate_y": birth_rate_y,
             "clock_rate": clock_rate,
+            "population": population,
+            "coalescent": priors[-1],
         },
         path="b3.log",
         every=1_000,

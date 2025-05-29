@@ -31,6 +31,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<mcmc::Mcmc>()?;
 
 	m.add_class::<builtin::priors::Yule>()?;
+	m.add_class::<builtin::priors::ConstantPopulation>()?;
 
 	Ok(m)
 }
