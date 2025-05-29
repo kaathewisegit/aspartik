@@ -6,9 +6,3 @@
 - `rng`: random number generator used by `b3` and `stats`.
 - `stats`: statistical functions.
 """
-
-from . import b3 as b3
-from . import data as data
-from . import io as io
-from . import rng as rng
-from . import stats as stats

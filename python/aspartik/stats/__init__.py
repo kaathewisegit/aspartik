@@ -15,5 +15,3 @@ which performs reasonably well on such workloads.
     distribution classes on each step, but SciPy ones were definitely not
     intended for that.
 """
-
-from . import distributions as distributions

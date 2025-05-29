@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from .. import Parameter, Prior
-from ... import stats
+from ...stats import distributions
 
 
 @dataclass
@@ -13,7 +13,7 @@ class Distribution(Prior):
     Parameter to estimate.  Can be either `Real` or `Integer` for discrete
     distributions.
     """
-    distribution: stats.distributions.Distribution
+    distribution: distributions.Distribution
     """Distribution against which the parameter prior is calculated."""
 
     def __post_init__(self):
