@@ -88,7 +88,7 @@ impl From<Leaf> for Node {
 	}
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[pyclass(frozen, module = "aspartik.b3.tree")]
 pub struct Internal(usize);
 
@@ -113,7 +113,7 @@ impl Internal {
 	}
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[pyclass(frozen, module = "aspartik.b3.tree")]
 pub struct Leaf(usize);
 
