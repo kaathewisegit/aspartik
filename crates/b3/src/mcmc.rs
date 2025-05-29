@@ -109,6 +109,8 @@ impl Mcmc {
 			}
 		}
 
+		self_.scheduler.report(py)?;
+
 		Ok(())
 	}
 
@@ -213,6 +215,8 @@ impl Mcmc {
 	fn accept(&self) -> Result<()> {
 		trace!("accept proposal");
 
+		self.scheduler.accept();
+
 		for tree in &self.trees {
 			tree.get().inner().accept();
 		}
@@ -231,6 +235,8 @@ impl Mcmc {
 
 	fn reject(&self) -> Result<()> {
 		trace!("reject proposal");
+
+		self.scheduler.reject();
 
 		for tree in &self.trees {
 			tree.get().inner().reject();

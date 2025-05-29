@@ -1,4 +1,5 @@
 use anyhow::Result;
+use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
@@ -55,6 +56,8 @@ impl PyProposal {
 #[derive(Debug)]
 pub struct PyOperator {
 	inner: PyObject,
+	accepts: Mutex<usize>,
+	rejects: Mutex<usize>,
 }
 
 impl<'py> FromPyObject<'py> for PyOperator {
@@ -76,8 +79,10 @@ impl<'py> FromPyObject<'py> for PyOperator {
 
 		let out = Self {
 			inner: obj.clone().unbind(),
+			accepts: Mutex::new(0),
+			rejects: Mutex::new(0),
 		};
-		trace!(%repr, id = out.id(), "new PyOperator");
+		trace!(%repr, id = out.id(), %repr, "new PyOperator");
 		Ok(out)
 	}
 }
@@ -103,12 +108,25 @@ impl PyOperator {
 	) -> Result<Bound<'py, PyString>> {
 		Ok(self.inner.bind(py).repr()?)
 	}
+
+	pub fn type_name(&self, py: Python) -> Result<String> {
+		Ok(self.inner.bind(py).get_type().name()?.to_string())
+	}
+
+	pub fn accept(&self) {
+		*self.accepts.lock() += 1;
+	}
+
+	pub fn reject(&self) {
+		*self.rejects.lock() += 1;
+	}
 }
 
 #[derive(Debug)]
 pub struct WeightedScheduler {
 	operators: Vec<PyOperator>,
 	weights: Vec<f64>,
+	current: Mutex<usize>,
 }
 
 impl WeightedScheduler {
@@ -131,7 +149,11 @@ impl WeightedScheduler {
 			);
 		}
 
-		Ok(Self { operators, weights })
+		Ok(Self {
+			operators,
+			weights,
+			current: Mutex::new(0),
+		})
 	}
 
 	#[instrument(level = "trace", skip_all)]
@@ -140,8 +162,34 @@ impl WeightedScheduler {
 		let dist = WeightedIndex::new(&self.weights).unwrap();
 
 		let index = dist.sample(rng);
+		*self.current.lock() = index;
 		trace!(index);
 
 		&self.operators[index]
+	}
+
+	pub fn accept(&self) {
+		self.operators[*self.current.lock()].accept();
+	}
+
+	pub fn reject(&self) {
+		self.operators[*self.current.lock()].reject();
+	}
+
+	pub fn report(&self, py: Python) -> Result<()> {
+		println!(
+			"{: <20}{: <12}{: <12}",
+			"Operator", "#accept", "#reject"
+		);
+		for operator in &self.operators {
+			let name = operator.type_name(py)?;
+			let accepts = *operator.accepts.lock();
+			let rejects = *operator.rejects.lock();
+			println!(
+				"{: <20}{: <12}{: <12}",
+				name, accepts, rejects
+			);
+		}
+		Ok(())
 	}
 }
