@@ -7,7 +7,10 @@ use crate::{
 	substitution::PySubstitution, tree::PyTree, util::dna_to_rows,
 	Transitions,
 };
-use data::seq::{python::PyDnaSeq, DnaSeq};
+use data::{
+	seq::{python::PyDnaSeq, Seq},
+	DnaNucleotide,
+};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
@@ -210,9 +213,9 @@ impl PyLikelihood {
 		tree: Py<PyTree>,
 		calculator: String,
 	) -> Result<Self> {
-		let sequences: Vec<DnaSeq> = sequences
+		let sequences: Vec<Vec<DnaNucleotide>> = sequences
 			.iter()
-			.map(|seq| seq.clone().into())
+			.map(|seq| seq.as_slice().to_vec())
 			.collect();
 		let sites = dna_to_rows(&sequences);
 

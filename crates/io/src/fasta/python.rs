@@ -5,24 +5,18 @@ use pyo3::prelude::*;
 use std::fs::File;
 
 use super::{FastaReader, Record};
-use data::{seq::python::PyDnaSeq, seq::DnaSeq};
+use data::seq::python::PyDnaSeq;
 
 #[pyclass(name = "FASTADNARecord", module = "aspartik.io.fasta", frozen)]
-pub struct PyFastaDnaRecord(Record<DnaSeq>);
-
-impl From<Record<DnaSeq>> for PyFastaDnaRecord {
-	fn from(value: Record<DnaSeq>) -> Self {
-		Self(value)
-	}
-}
+pub struct PyFastaDnaRecord(Record<Py<PyDnaSeq>>);
 
 #[pymethods]
 impl PyFastaDnaRecord {
 	#[getter]
-	fn sequence(&self) -> PyDnaSeq {
+	fn sequence(&self, py: Python) -> Py<PyDnaSeq> {
 		// TODO: perhaps there's a way to avoid cloning.  Probably by
 		// reimplementing `Seq`'s methods.
-		self.0.sequence().to_owned().into()
+		self.0.sequence().clone_ref(py)
 	}
 
 	#[getter]
@@ -38,7 +32,7 @@ impl PyFastaDnaRecord {
 
 #[pyclass(name = "FASTADNAReader", module = "aspartik.io.fasta", frozen)]
 pub struct PyFastaDnaReader {
-	inner: Mutex<FastaReader<DnaSeq, File>>,
+	inner: Mutex<FastaReader<Py<PyDnaSeq>, File>>,
 }
 
 #[pymethods]
@@ -57,6 +51,7 @@ impl PyFastaDnaReader {
 	}
 
 	fn __next__(&self) -> Option<Result<PyFastaDnaRecord>> {
-		self.inner.lock().next().map(|r| r.map(|r| r.into()))
+		let record = self.inner.lock().next()?;
+		Some(record.map(PyFastaDnaRecord))
 	}
 }

@@ -6,7 +6,7 @@ use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 use std::cmp::Ordering;
 
 use crate::likelihood::Row;
-use data::{seq::DnaSeq, DnaNucleotide};
+use data::DnaNucleotide;
 use linalg::Vector;
 
 fn compare_seqs(a: &[DnaNucleotide], b: &[DnaNucleotide]) -> Ordering {
@@ -20,7 +20,7 @@ fn compare_seqs(a: &[DnaNucleotide], b: &[DnaNucleotide]) -> Ordering {
 	Ordering::Equal
 }
 
-pub fn dna_to_rows(seqs: &[DnaSeq]) -> Vec<Vec<Row<4>>> {
+pub fn dna_to_rows(seqs: &[Vec<DnaNucleotide>]) -> Vec<Vec<Row<4>>> {
 	let seq_len = seqs[0].len();
 	let num_seq = seqs.len();
 
@@ -35,7 +35,7 @@ pub fn dna_to_rows(seqs: &[DnaSeq]) -> Vec<Vec<Row<4>>> {
 
 	// Deduplicate same rows
 	transposed.sort_by(|a, b| compare_seqs(a, b));
-	transposed.dedup_by(|a, b| compare_seqs(a, b) == Ordering::Equal);
+	transposed.dedup();
 
 	let mut out = vec![
 		vec![Vector::default(); transposed[0].len()];

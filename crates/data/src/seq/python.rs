@@ -1,22 +1,39 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use super::{parse_str, DnaSeq, Seq};
+use super::{parse_str, DnaSeq, FromChars, Seq};
 use crate::DnaNucleotide;
 
 #[derive(Debug, Clone)]
 #[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
 pub struct PyDnaSeq(pub DnaSeq);
 
-impl From<DnaSeq> for PyDnaSeq {
-	fn from(value: DnaSeq) -> Self {
-		PyDnaSeq(value)
+impl Seq for PyDnaSeq {
+	type Character = DnaNucleotide;
+
+	fn as_slice(&self) -> &[DnaNucleotide] {
+		self.0.as_slice()
 	}
 }
 
-impl From<PyDnaSeq> for DnaSeq {
-	fn from(value: PyDnaSeq) -> Self {
-		value.0
+impl FromChars for PyDnaSeq {
+	fn from_vec(chars: Vec<DnaNucleotide>) -> Self {
+		PyDnaSeq(DnaSeq::from_vec(chars))
+	}
+}
+
+impl Seq for Py<PyDnaSeq> {
+	type Character = DnaNucleotide;
+
+	fn as_slice(&self) -> &[DnaNucleotide] {
+		self.get().as_slice()
+	}
+}
+
+impl FromChars for Py<PyDnaSeq> {
+	fn from_vec(chars: Vec<DnaNucleotide>) -> Self {
+		Python::with_gil(|py| Self::new(py, PyDnaSeq::from_vec(chars)))
+			.expect("Failed to acquire GIL")
 	}
 }
 
