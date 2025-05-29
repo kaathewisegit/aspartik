@@ -7,6 +7,7 @@ use std::{
 
 use crate::nucleotides::DnaNucleotide;
 
+pub mod distance;
 mod parse;
 #[cfg(feature = "python")]
 pub mod python;
@@ -77,29 +78,6 @@ pub trait Seq {
 		for current in self.iter().copied() {
 			if current == c {
 				out += 1
-			}
-		}
-
-		out
-	}
-
-	/// Calculates the Hamming distance between two sequences.
-	///
-	///
-	/// # Panics
-	///
-	/// Panics if lengths of the sequences are not equal.
-	fn hamming_distance<S>(&self, other: S) -> usize
-	where
-		S: Seq<Character = Self::Character>,
-	{
-		assert_eq!(self.len(), other.len());
-
-		let mut out = 0;
-
-		for (a, b) in self.as_slice().iter().zip(other.as_slice()) {
-			if a != b {
-				out += 1;
 			}
 		}
 

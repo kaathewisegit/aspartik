@@ -9,6 +9,12 @@ fact, most the underlying algorithms are the same.  `stats` simply
 prunes most of the non-distribution functionality and adds a Python API.
 
 
+### [`strsim`](./strsim-license)
+
+Generic string similarity searches, which I instantiated instead of
+reusing the library.
+
+
 ## Dependencies
 
 ### [`anyhow`](./anyhow-license)
@@ -87,6 +93,7 @@ long-running `b3` tests.
 ### [`approx`]
 
 A little floating point comparison library, useful for numerical tests.
+
 
 
 [`rand`]: ./rand-license
