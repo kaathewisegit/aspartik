@@ -5,7 +5,7 @@ use std::{
 	mem,
 };
 
-use data::seq::{parse_str, SeqBuf, Seq};
+use data::seq::{parse_str, FromChars, Seq, SeqBuf};
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -50,7 +50,7 @@ pub struct FastaReader<S: Seq, R: Read> {
 	line: usize,
 }
 
-impl<S: Seq, R: Read> FastaReader<S, R> {
+impl<S: FromChars, R: Read> FastaReader<S, R> {
 	/// Creates a FASTA parser from a byte reader.  The reader is wrapped in
 	/// `BufReader` internally, so there's no need for the caller to buffer
 	/// it manually.
@@ -78,7 +78,7 @@ impl<S: Seq, R: Read> FastaReader<S, R> {
 	}
 }
 
-impl<S: Seq, R: Read> Iterator for FastaReader<S, R> {
+impl<S: FromChars, R: Read> Iterator for FastaReader<S, R> {
 	type Item = Result<Record<S>>;
 
 	fn next(&mut self) -> Option<Result<Record<S>>> {
@@ -116,8 +116,7 @@ impl<S: Seq, R: Read> Iterator for FastaReader<S, R> {
 			}
 
 			// XXX: allocations
-			type CSeq<S> =
-				SeqBuf<<S as data::seq::Seq>::Character>;
+			type CSeq<S> = SeqBuf<<S as data::seq::Seq>::Character>;
 			let seq: CSeq<S> = match parse_str(line.as_str()) {
 				Ok(seq) => seq,
 				Err(err) => {

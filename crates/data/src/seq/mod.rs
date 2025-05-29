@@ -38,8 +38,6 @@ unsafe impl Character for DnaNucleotide {}
 pub trait Seq {
 	type Character: Character;
 
-	fn from_vec(chars: Vec<Self::Character>) -> Self;
-
 	fn as_slice(&self) -> &[Self::Character];
 
 	fn fmt_impl(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -85,16 +83,70 @@ pub trait Seq {
 	}
 }
 
-pub trait SeqMutView: Seq + AsMut<[Self::Character]> {
+pub trait FromChars: Seq {
+	fn from_vec(chars: Vec<Self::Character>) -> Self;
+
+	fn from_slice(chars: &[Self::Character]) -> Self
+	where
+		Self: Sized,
+	{
+		Self::from_vec(chars.to_vec())
+	}
+}
+
+pub trait SeqMut: Seq + AsMut<[Self::Character]> {
 	fn push(&mut self, ch: Self::Character);
 
-	fn extend<S: Seq>(&mut self, other: &S);
-
-	fn append<S: SeqMutView>(&mut self, other: &mut S);
+	fn extend<S>(&mut self, other: &S)
+	where
+		S: Seq<Character = Self::Character>;
 
 	/// Reverses the characters in-place.
 	fn reverse(&mut self) {
 		self.as_mut().reverse();
+	}
+}
+
+impl<C: Character> Seq for &[C] {
+	type Character = C;
+
+	fn as_slice(&self) -> &[C] {
+		self
+	}
+}
+
+impl<C: Character, const N: usize> Seq for [C; N] {
+	type Character = C;
+
+	fn as_slice(&self) -> &[C] {
+		self
+	}
+}
+
+impl<C: Character> Seq for Vec<C> {
+	type Character = C;
+
+	fn as_slice(&self) -> &[C] {
+		self.as_slice()
+	}
+}
+
+impl<C: Character> FromChars for Vec<C> {
+	fn from_vec(chars: Vec<C>) -> Self {
+		chars
+	}
+}
+
+impl<C: Character> SeqMut for Vec<C> {
+	fn push(&mut self, ch: C) {
+		self.push(ch)
+	}
+
+	fn extend<S>(&mut self, other: &S)
+	where
+		S: Seq<Character = C>,
+	{
+		self.extend_from_slice(other.as_slice())
 	}
 }
 
@@ -106,14 +158,16 @@ pub struct SeqBuf<C: Character> {
 impl<C: Character> Seq for SeqBuf<C> {
 	type Character = C;
 
-	fn from_vec(chars: Vec<Self::Character>) -> Self {
+	fn as_slice(&self) -> &[C] {
+		&self.inner
+	}
+}
+
+impl<C: Character> FromChars for SeqBuf<C> {
+	fn from_vec(chars: Vec<C>) -> Self {
 		Self {
 			inner: chars.into_boxed_slice(),
 		}
-	}
-
-	fn as_slice(&self) -> &[Self::Character] {
-		&self.inner
 	}
 }
 

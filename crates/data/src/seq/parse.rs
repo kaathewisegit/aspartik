@@ -1,10 +1,10 @@
 use anyhow::{anyhow, Context, Result};
 
-use super::Seq;
+use super::FromChars;
 
 pub fn parse_str<S>(seq: &str) -> Result<S>
 where
-	S: Seq,
+	S: FromChars,
 {
 	let mut chars = Vec::with_capacity(seq.len());
 
@@ -20,7 +20,7 @@ where
 
 pub fn parse_bytes<S>(seq: &[u8]) -> Result<S>
 where
-	S: Seq,
+	S: FromChars,
 {
 	let mut chars = Vec::with_capacity(seq.len());
 
