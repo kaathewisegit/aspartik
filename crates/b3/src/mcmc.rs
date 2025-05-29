@@ -7,7 +7,7 @@ use tracing::{instrument, trace};
 use crate::{
 	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
-	parameter::{Parameter, PyParameter},
+	parameter::PyParameter,
 	tree::PyTree,
 	PyLogger, PyPrior,
 };
@@ -23,10 +23,8 @@ pub struct Mcmc {
 
 	trees: Vec<Py<PyTree>>,
 
-	/// TODO: parameter serialization
-	backup_params: Mutex<Vec<Parameter>>,
 	/// Current set of parameters by name.
-	params: Vec<PyParameter>,
+	params: Vec<Py<PyParameter>>,
 
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
@@ -57,7 +55,7 @@ impl Mcmc {
 		length: usize,
 
 		trees: Vec<Py<PyTree>>,
-		params: Vec<PyParameter>,
+		params: Vec<Py<PyParameter>>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
 		likelihoods: Vec<Py<PyLikelihood>>,
@@ -66,11 +64,6 @@ impl Mcmc {
 
 		validate: bool,
 	) -> Result<Mcmc> {
-		let mut backup_params = Vec::with_capacity(params.len());
-		for param in &params {
-			backup_params.push(param.inner().clone());
-		}
-		let backup_params = Mutex::new(backup_params);
 		let scheduler = WeightedScheduler::new(py, operators)?;
 
 		Ok(Mcmc {
@@ -81,7 +74,6 @@ impl Mcmc {
 
 			trees,
 			params,
-			backup_params,
 			priors,
 			scheduler,
 			likelihoods,
@@ -225,9 +217,8 @@ impl Mcmc {
 			likelihood.get().inner().accept()?;
 		}
 
-		let mut backup_params = self.backup_params.lock();
 		for i in 0..self.params.len() {
-			backup_params[i] = self.params[i].inner().clone();
+			self.params[i].get().accept();
 		}
 
 		Ok(())
@@ -246,9 +237,8 @@ impl Mcmc {
 			likelihood.get().inner().reject()?;
 		}
 
-		let backup_params = self.backup_params.lock();
 		for i in 0..self.params.len() {
-			*self.params[i].inner() = backup_params[i].clone();
+			self.params[i].get().reject();
 		}
 
 		Ok(())

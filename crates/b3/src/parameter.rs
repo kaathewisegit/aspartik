@@ -8,24 +8,21 @@ use pyo3::{
 	types::{PyTuple, PyType},
 };
 
-use std::{
-	fmt::{self, Display},
-	sync::Arc,
-};
+use std::fmt::{self, Display};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Parameter {
-	Real(Vec<f64>),
-	Integer(Vec<i64>),
-	Boolean(Vec<bool>),
+	Real(Vec<f64>, Vec<f64>),
+	Integer(Vec<i64>, Vec<i64>),
+	Boolean(Vec<bool>, Vec<bool>),
 }
 
 impl Parameter {
 	fn len(&self) -> usize {
 		match self {
-			Parameter::Real(p) => p.len(),
-			Parameter::Integer(p) => p.len(),
-			Parameter::Boolean(p) => p.len(),
+			Parameter::Real(p, _) => p.len(),
+			Parameter::Integer(p, _) => p.len(),
+			Parameter::Boolean(p, _) => p.len(),
 		}
 	}
 
@@ -59,7 +56,7 @@ fn compare<T: PartialOrd>(values: &[T], other: T, op: CompareOp) -> bool {
 impl Display for Parameter {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
-			Parameter::Real(p) => {
+			Parameter::Real(p, _) => {
 				for (i, value) in p.iter().enumerate() {
 					value.fmt(f)?;
 					if i < p.len() - 1 {
@@ -67,7 +64,7 @@ impl Display for Parameter {
 					}
 				}
 			}
-			Parameter::Integer(p) => {
+			Parameter::Integer(p, _) => {
 				for (i, value) in p.iter().enumerate() {
 					value.fmt(f)?;
 					if i < p.len() - 1 {
@@ -75,7 +72,7 @@ impl Display for Parameter {
 					}
 				}
 			}
-			Parameter::Boolean(p) => {
+			Parameter::Boolean(p, _) => {
 				for (i, value) in p.iter().enumerate() {
 					if *value {
 						f.write_str("True")?;
@@ -93,7 +90,7 @@ impl Display for Parameter {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[pyclass(name = "Parameter", module = "aspartik.b3", sequence, frozen)]
 /// Represents dimensional parameters which can hold arbitrary numbers.
 ///
@@ -107,7 +104,7 @@ impl Display for Parameter {
 /// zero-indexed, so `param[0]` is the first value, `param[1]` is the second,
 /// and so on.
 pub struct PyParameter {
-	inner: Arc<Mutex<Parameter>>,
+	inner: Mutex<Parameter>,
 }
 
 impl PyParameter {
@@ -115,11 +112,35 @@ impl PyParameter {
 		self.inner.lock()
 	}
 
-	pub fn deep_copy(&self) -> PyParameter {
-		let inner = &*self.inner();
+	pub fn accept(&self) {
+		let inner = &mut *self.inner();
 
-		Self {
-			inner: Arc::new(Mutex::new(inner.clone())),
+		match inner {
+			Parameter::Real(active, ref mut backup) => {
+				backup.clone_from(active);
+			}
+			Parameter::Integer(active, ref mut backup) => {
+				backup.clone_from(active);
+			}
+			Parameter::Boolean(active, ref mut backup) => {
+				backup.clone_from(active);
+			}
+		}
+	}
+
+	pub fn reject(&self) {
+		let inner = &mut *self.inner();
+
+		match inner {
+			Parameter::Real(ref mut active, backup) => {
+				active.clone_from(backup);
+			}
+			Parameter::Integer(ref mut active, backup) => {
+				active.clone_from(backup);
+			}
+			Parameter::Boolean(ref mut active, backup) => {
+				active.clone_from(backup);
+			}
 		}
 	}
 }
@@ -150,9 +171,9 @@ impl PyParameter {
 		check_empty(values)?;
 
 		let values: Vec<f64> = extract(values)?;
-		let parameter = Parameter::Real(values);
+		let parameter = Parameter::Real(values.clone(), values);
 		Ok(Self {
-			inner: Arc::new(Mutex::new(parameter)),
+			inner: Mutex::new(parameter),
 		})
 	}
 
@@ -167,9 +188,9 @@ impl PyParameter {
 		check_empty(values)?;
 
 		let values: Vec<i64> = extract(values)?;
-		let parameter = Parameter::Integer(values);
+		let parameter = Parameter::Integer(values.clone(), values);
 		Ok(Self {
-			inner: Arc::new(Mutex::new(parameter)),
+			inner: Mutex::new(parameter),
 		})
 	}
 
@@ -180,9 +201,9 @@ impl PyParameter {
 		check_empty(values)?;
 
 		let values: Vec<bool> = extract(values)?;
-		let parameter = Parameter::Boolean(values);
+		let parameter = Parameter::Boolean(values.clone(), values);
 		Ok(Self {
-			inner: Arc::new(Mutex::new(parameter)),
+			inner: Mutex::new(parameter),
 		})
 	}
 
@@ -195,9 +216,11 @@ impl PyParameter {
 		inner.check_index(i)?;
 
 		Ok(match inner {
-			Parameter::Real(p) => p[i].into_pyobject(py)?.into(),
-			Parameter::Integer(p) => p[i].into_pyobject(py)?.into(),
-			Parameter::Boolean(p) => {
+			Parameter::Real(p, _) => p[i].into_pyobject(py)?.into(),
+			Parameter::Integer(p, _) => {
+				p[i].into_pyobject(py)?.into()
+			}
+			Parameter::Boolean(p, _) => {
 				p[i].into_pyobject(py)?.to_owned().into()
 			}
 		})
@@ -208,15 +231,15 @@ impl PyParameter {
 		inner.check_index(i)?;
 
 		match inner {
-			Parameter::Real(p) => {
+			Parameter::Real(p, _) => {
 				let value = value.extract::<f64>()?;
 				p[i] = value;
 			}
-			Parameter::Integer(p) => {
+			Parameter::Integer(p, _) => {
 				let value = value.extract::<i64>()?;
 				p[i] = value;
 			}
-			Parameter::Boolean(p) => {
+			Parameter::Boolean(p, _) => {
 				let value = value.extract::<bool>()?;
 				p[i] = value;
 			}
@@ -249,15 +272,15 @@ impl PyParameter {
 		let inner = &*self.inner();
 
 		match inner {
-			Parameter::Real(p) => {
+			Parameter::Real(p, _) => {
 				let other = other.extract::<f64>()?;
 				Ok(compare(p, other, op))
 			}
-			Parameter::Integer(p) => {
+			Parameter::Integer(p, _) => {
 				let other = other.extract::<i64>()?;
 				Ok(compare(p, other, op))
 			}
-			Parameter::Boolean(p) => {
+			Parameter::Boolean(p, _) => {
 				let other = other.extract::<bool>()?;
 				Ok(compare(p, other, op))
 			}
@@ -265,28 +288,26 @@ impl PyParameter {
 	}
 
 	pub fn is_real(&self) -> bool {
-		matches!(&*self.inner(), Parameter::Real(_))
+		matches!(&*self.inner(), Parameter::Real(..))
 	}
 
 	pub fn is_integer(&self) -> bool {
-		matches!(&*self.inner(), Parameter::Integer(_))
+		matches!(&*self.inner(), Parameter::Integer(..))
 	}
 
 	pub fn is_boolean(&self) -> bool {
-		matches!(&*self.inner(), Parameter::Boolean(_))
+		matches!(&*self.inner(), Parameter::Boolean(..))
 	}
 
 	pub fn one_real(&self) -> Result<f64> {
 		let inner = &*self.inner();
+		ensure!(
+			inner.len() == 1,
+			"The parameter is not one-dimensional"
+		);
 
 		match inner {
-			Parameter::Real(p) => {
-				ensure!(
-					p.len() == 1,
-					"The parameter is not one-dimensional"
-				);
-				Ok(p[0])
-			}
+			Parameter::Real(p, _) => Ok(p[0]),
 			_ => bail!("Not a real parameter"),
 		}
 	}

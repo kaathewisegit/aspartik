@@ -4,7 +4,7 @@ pub mod likelihood;
 pub mod log;
 pub mod mcmc;
 pub mod operator;
-pub mod parameter;
+mod parameter;
 pub mod prior;
 pub mod substitution;
 mod transitions;
@@ -12,6 +12,7 @@ mod tree;
 pub mod util;
 
 pub use log::PyLogger;
+pub use parameter::PyParameter;
 pub use prior::PyPrior;
 pub use transitions::Transitions;
 pub use tree::Tree;
