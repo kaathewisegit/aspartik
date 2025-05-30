@@ -29,7 +29,7 @@ fn hamming() {
 	let s1: DnaSeq = parse_str("GAGCCTACTAACGGGAT").unwrap();
 	let s2: DnaSeq = parse_str("CATCGTAATGACGGCCT").unwrap();
 
-	assert_eq!(s1.hamming_distance(s2), 7);
+	assert_eq!(distance::hamming(s1, s2).unwrap(), 7);
 }
 
 #[test]
