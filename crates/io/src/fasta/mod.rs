@@ -22,6 +22,10 @@ pub struct Record<S: Seq> {
 }
 
 impl<S: Seq> Record<S> {
+	pub fn new(description: String, seq: S) -> Self {
+		Self { description, seq }
+	}
+
 	/// The sequence header line, exactly as it appeared in the source.
 	pub fn raw_description(&self) -> &str {
 		&self.description

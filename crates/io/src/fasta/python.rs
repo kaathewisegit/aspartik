@@ -12,6 +12,12 @@ pub struct PyFastaDnaRecord(Record<Py<PyDnaSeq>>);
 
 #[pymethods]
 impl PyFastaDnaRecord {
+	#[new]
+	fn new(description: String, sequence: Py<PyDnaSeq>) -> Self {
+		let record = Record::new(description, sequence);
+		Self(record)
+	}
+
 	#[getter]
 	fn sequence(&self, py: Python) -> Py<PyDnaSeq> {
 		// TODO: perhaps there's a way to avoid cloning.  Probably by
@@ -31,6 +37,14 @@ impl PyFastaDnaRecord {
 
 	fn __str__(&self) -> String {
 		self.0.to_string()
+	}
+
+	fn __repr__(&self) -> String {
+		format!(
+			r#"FASTADNARecord({:?}, DNASeq("{}"))"#,
+			self.0.raw_description(),
+			self.0.sequence(),
+		)
 	}
 }
 
