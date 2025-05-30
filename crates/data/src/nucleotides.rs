@@ -56,7 +56,7 @@ pub enum DnaNucleotide {
 
 	Any = 0b1111,
 
-	Gap = 0b1_0000,
+	Gap = 0b0000,
 }
 
 impl fmt::Display for DnaNucleotide {
@@ -118,7 +118,7 @@ impl TryFrom<u8> for DnaNucleotide {
 
 			0b1111 => Self::Any,
 
-			0b1_0000 => Self::Gap,
+			0b0000 => Self::Gap,
 
 			_ => Err(DnaNucleotideError::InvalidByte(value))?,
 		})
@@ -132,24 +132,24 @@ impl TryFrom<char> for DnaNucleotide {
 	fn try_from(value: char) -> Result<Self, Self::Error> {
 		use DnaNucleotide::*;
 		Ok(match value {
-			'A' => Adenine,
-			'C' => Cytosine,
-			'G' => Guanine,
-			'T' => Thymine,
+			'A' | 'a' => Adenine,
+			'C' | 'c' => Cytosine,
+			'G' | 'g' => Guanine,
+			'T' | 't' => Thymine,
 
-			'W' => Weak,
-			'S' => Strong,
-			'M' => Amino,
-			'K' => Ketone,
-			'R' => Purine,
-			'Y' => Pyrimidine,
+			'W' | 'w' => Weak,
+			'S' | 's' => Strong,
+			'M' | 'm' => Amino,
+			'K' | 'k' => Ketone,
+			'R' | 'r' => Purine,
+			'Y' | 'y' => Pyrimidine,
 
-			'B' => NotAdenine,
-			'D' => NotCytosine,
-			'H' => NotGuanine,
-			'V' => NotThymine,
+			'B' | 'b' => NotAdenine,
+			'D' | 'd' => NotCytosine,
+			'H' | 'h' => NotGuanine,
+			'V' | 'v' => NotThymine,
 
-			'N' => Any,
+			'N' | 'n' => Any,
 			'-' => Gap,
 
 			_ => Err(DnaNucleotideError::InvalidChar(value))?,
