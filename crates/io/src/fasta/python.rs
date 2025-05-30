@@ -2,7 +2,7 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use std::fs::File;
+use std::{fs::File, io::BufReader};
 
 use super::{FastaReader, Record};
 use data::seq::python::PyDnaSeq;
@@ -32,7 +32,7 @@ impl PyFastaDnaRecord {
 
 #[pyclass(name = "FASTADNAReader", module = "aspartik.io.fasta", frozen)]
 pub struct PyFastaDnaReader {
-	inner: Mutex<FastaReader<Py<PyDnaSeq>, File>>,
+	inner: Mutex<FastaReader<Py<PyDnaSeq>, BufReader<File>>>,
 }
 
 #[pymethods]
@@ -40,7 +40,7 @@ impl PyFastaDnaReader {
 	#[new]
 	fn new(path: &str) -> Result<Self> {
 		let file = File::open(path)?;
-		let reader = FastaReader::new(file);
+		let reader = FastaReader::from_file(file);
 		Ok(Self {
 			inner: Mutex::new(reader),
 		})

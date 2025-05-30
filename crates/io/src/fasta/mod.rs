@@ -1,11 +1,12 @@
 use anyhow::{anyhow, Context, Error, Result};
 
 use std::{
-	io::{BufRead, BufReader, Lines, Read},
+	fs::File,
+	io::{BufRead, BufReader},
 	mem,
 };
 
-use data::seq::{parse_str, FromChars, Seq, SeqBuf};
+use data::seq::{parse_str, FromChars, Seq};
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -40,17 +41,24 @@ impl<S: Seq> Record<S> {
 	}
 }
 
-pub struct FastaReader<S: Seq, R: Read> {
+pub struct FastaReader<S: Seq, R> {
 	/// As sequence descriptions must start with a '>' character,
 	/// `description` being empty must mean that we haven't read the first
 	/// record yet.
 	description: String,
 	chars: Vec<S::Character>,
-	reader: Lines<BufReader<R>>,
-	line: usize,
+	reader: R,
+	line_idx: usize,
 }
 
-impl<S: FromChars, R: Read> FastaReader<S, R> {
+impl<S: FromChars> FastaReader<S, BufReader<File>> {
+	fn from_file(file: File) -> Self {
+		let reader = BufReader::new(file);
+		Self::new(reader)
+	}
+}
+
+impl<S: FromChars, R: BufRead> FastaReader<S, R> {
 	/// Creates a FASTA parser from a byte reader.  The reader is wrapped in
 	/// `BufReader` internally, so there's no need for the caller to buffer
 	/// it manually.
@@ -58,8 +66,8 @@ impl<S: FromChars, R: Read> FastaReader<S, R> {
 		FastaReader {
 			description: String::new(),
 			chars: Vec::new(),
-			reader: BufReader::new(reader).lines(),
-			line: 0,
+			reader: reader,
+			line_idx: 0,
 		}
 	}
 
@@ -78,21 +86,27 @@ impl<S: FromChars, R: Read> FastaReader<S, R> {
 	}
 }
 
-impl<S: FromChars, R: Read> Iterator for FastaReader<S, R> {
+macro_rules! bubble {
+	($e:expr) => {
+		match $e {
+			Err(e) => return Some(Err(e.into())),
+			Ok(out) => out,
+		}
+	};
+}
+
+impl<S: FromChars, R: BufRead> Iterator for FastaReader<S, R> {
 	type Item = Result<Record<S>>;
 
 	fn next(&mut self) -> Option<Result<Record<S>>> {
 		loop {
-			let Some(line) = self.reader.next() else {
+			let mut line = String::new();
+			if bubble!(self.reader.read_line(&mut line)) == 0 {
+				// EOF
 				return self.make_record();
-			};
-			let line = match line {
-				Ok(line) => line,
-				Err(err) => {
-					return Some(Err(err.into()));
-				}
-			};
-			self.line += 1;
+			}
+			trim_line_end(&mut line);
+			self.line_idx += 1;
 
 			// skip comments and empty lines
 			if line.starts_with(";") || line.trim().is_empty() {
@@ -112,31 +126,43 @@ impl<S: FromChars, R: Read> Iterator for FastaReader<S, R> {
 			}
 
 			if self.description.is_empty() {
-				return Some(Err(anyhow!("Encountered a sequence which does not belong to a record:\n{}: {}", self.line, line)));
+				return Some(Err(anyhow!("Encountered a sequence which does not belong to a record:\n{}: {}", self.line_idx, line)));
 			}
 
 			// XXX: allocations
-			type CSeq<S> = SeqBuf<<S as data::seq::Seq>::Character>;
-			let seq: CSeq<S> = match parse_str(line.as_str()) {
-				Ok(seq) => seq,
-				Err(err) => {
-					return Some(Err(err).with_context(
-						|| sequence_error(self),
-					))
-				}
-			};
+			let seq: Vec<S::Character> =
+				match parse_str(line.as_str()) {
+					Ok(seq) => seq,
+					Err(err) => {
+						return Some(Err(err)
+							.with_context(|| {
+								sequence_error(
+									self,
+								)
+							}))
+					}
+				};
 			self.chars.extend_from_slice(seq.as_slice());
 		}
 	}
 }
 
-fn sequence_error<S: Seq, R: Read>(fasta: &FastaReader<S, R>) -> Error {
+fn trim_line_end(line: &mut String) {
+	if line.ends_with('\n') {
+		line.pop();
+		if line.ends_with('\r') {
+			line.pop();
+		}
+	}
+}
+
+fn sequence_error<S: Seq, R: BufRead>(fasta: &FastaReader<S, R>) -> Error {
 	if !fasta.description.is_empty() {
 		anyhow!(
 			"Failed to parse sequence for the record '{}' at line {}",
-			fasta.description, fasta.line,
+			fasta.description, fasta.line_idx,
 		)
 	} else {
-		anyhow!("Failed to parse sequence at line {}", fasta.line)
+		anyhow!("Failed to parse sequence at line {}", fasta.line_idx)
 	}
 }
