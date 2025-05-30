@@ -28,6 +28,10 @@ impl PyFastaDnaRecord {
 	fn description(&self) -> String {
 		self.0.description().to_owned()
 	}
+
+	fn __str__(&self) -> String {
+		self.0.to_string()
+	}
 }
 
 #[pyclass(name = "FASTADNAReader", module = "aspartik.io.fasta", frozen)]

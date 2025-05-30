@@ -1,6 +1,8 @@
 use anyhow::{anyhow, Context, Error, Result};
 
 use std::{
+	cmp::min,
+	fmt,
 	fs::File,
 	io::{BufRead, BufReader},
 	mem,
@@ -41,6 +43,24 @@ impl<S: Seq> Record<S> {
 	}
 }
 
+impl<S: Seq> fmt::Display for Record<S> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		f.write_str(self.raw_description())?;
+		f.write_str("\n")?;
+
+		const LINE_LEN: usize = 80;
+		let seq_len = self.seq.len();
+		let num_lines = seq_len.div_ceil(LINE_LEN);
+		for i in 0..num_lines {
+			let end = min(seq_len, (i + 1) * LINE_LEN);
+			let slice = &self.seq.as_slice()[(i * LINE_LEN)..end];
+			slice.fmt_impl(f)?;
+		}
+
+		Ok(())
+	}
+}
+
 pub struct FastaReader<S: Seq, R> {
 	/// As sequence descriptions must start with a '>' character,
 	/// `description` being empty must mean that we haven't read the first
@@ -66,7 +86,7 @@ impl<S: FromChars, R: BufRead> FastaReader<S, R> {
 		FastaReader {
 			description: String::new(),
 			chars: Vec::new(),
-			reader: reader,
+			reader,
 			line_idx: 0,
 		}
 	}
