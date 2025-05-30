@@ -1,35 +1,51 @@
 use anyhow::{anyhow, Context, Result};
 
-use super::FromChars;
+use super::{FromChars, SeqMut};
 
-pub fn parse_str<S>(seq: &str) -> Result<S>
+pub fn parse_append_str<S>(seq: &mut S, string: &str) -> Result<()>
+where
+	S: SeqMut,
+{
+	for ch in string.chars() {
+		let character = ch
+			.try_into()
+			.with_context(|| highlight_error(string, seq.len()))?;
+		seq.push(character);
+	}
+	Ok(())
+}
+
+pub fn parse_append_bytes<S>(seq: &mut S, bytes: &[u8]) -> Result<()>
+where
+	S: SeqMut,
+{
+	for b in bytes.iter().copied() {
+		let character = b.try_into().with_context(|| {
+			anyhow!("Illegal byte encodign encountered: {:#x}", b)
+		})?;
+		seq.push(character);
+	}
+	Ok(())
+}
+
+pub fn parse_str<S>(string: &str) -> Result<S>
 where
 	S: FromChars,
 {
-	let mut chars = Vec::with_capacity(seq.len());
+	let mut chars = Vec::with_capacity(string.len());
 
-	for ch in seq.chars() {
-		let character = ch
-			.try_into()
-			.with_context(|| highlight_error(seq, chars.len()))?;
-		chars.push(character);
-	}
+	parse_append_str(&mut chars, string)?;
 
 	Ok(S::from_vec(chars))
 }
 
-pub fn parse_bytes<S>(seq: &[u8]) -> Result<S>
+pub fn parse_bytes<S>(bytes: &[u8]) -> Result<S>
 where
 	S: FromChars,
 {
-	let mut chars = Vec::with_capacity(seq.len());
+	let mut chars = Vec::with_capacity(bytes.len());
 
-	for b in seq.iter().copied() {
-		let character = b.try_into().with_context(|| {
-			anyhow!("Illegal byte encodign encountered: {:#x}", b)
-		})?;
-		chars.push(character);
-	}
+	parse_append_bytes(&mut chars, bytes)?;
 
 	Ok(S::from_vec(chars))
 }

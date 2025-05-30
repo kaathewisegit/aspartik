@@ -6,7 +6,7 @@ use std::{
 	mem,
 };
 
-use data::seq::{parse_str, FromChars, Seq};
+use data::seq::{parse_append_str, FromChars, Seq};
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -129,20 +129,8 @@ impl<S: FromChars, R: BufRead> Iterator for FastaReader<S, R> {
 				return Some(Err(anyhow!("Encountered a sequence which does not belong to a record:\n{}: {}", self.line_idx, line)));
 			}
 
-			// XXX: allocations
-			let seq: Vec<S::Character> =
-				match parse_str(line.as_str()) {
-					Ok(seq) => seq,
-					Err(err) => {
-						return Some(Err(err)
-							.with_context(|| {
-								sequence_error(
-									self,
-								)
-							}))
-					}
-				};
-			self.chars.extend_from_slice(seq.as_slice());
+			bubble!(parse_append_str(&mut self.chars, &line)
+				.with_context(|| sequence_error(self)));
 		}
 	}
 }

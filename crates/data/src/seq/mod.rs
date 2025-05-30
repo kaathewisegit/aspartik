@@ -12,7 +12,7 @@ mod parse;
 #[cfg(feature = "python")]
 pub mod python;
 
-pub use parse::{parse_bytes, parse_str};
+pub use parse::{parse_append_bytes, parse_append_str, parse_bytes, parse_str};
 
 /// A character in a sequence alphabet.
 ///
