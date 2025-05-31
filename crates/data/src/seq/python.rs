@@ -6,7 +6,7 @@ use crate::DnaNucleotide;
 
 #[derive(Debug, Clone)]
 #[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
-pub struct PyDnaSeq(pub DnaSeq);
+pub struct PyDnaSeq(pub Box<[DnaNucleotide]>);
 
 impl Seq for PyDnaSeq {
 	type Character = DnaNucleotide;
@@ -18,7 +18,7 @@ impl Seq for PyDnaSeq {
 
 impl FromChars for PyDnaSeq {
 	fn from_vec(chars: Vec<DnaNucleotide>) -> Self {
-		PyDnaSeq(DnaSeq::from_vec(chars))
+		PyDnaSeq(Box::<[DnaNucleotide]>::from_vec(chars))
 	}
 }
 
@@ -49,7 +49,7 @@ impl PyDnaSeq {
 	}
 
 	fn __repr__(&self) -> String {
-		format!("DNASeq('{}')", self.0)
+		format!("DNASeq('{}')", self.to_string())
 	}
 
 	fn __getitem__(&self, index: usize) -> DnaNucleotide {
@@ -61,11 +61,11 @@ impl PyDnaSeq {
 	}
 
 	fn complement(&self) -> Self {
-		PyDnaSeq(self.0.complement())
+		PyDnaSeq(self.0.complement().into())
 	}
 
 	fn reverse_complement(&self) -> Self {
-		PyDnaSeq(self.0.reverse_complement())
+		PyDnaSeq(self.0.reverse_complement().into())
 	}
 
 	// TODO: character-generic methods, probably as a macro

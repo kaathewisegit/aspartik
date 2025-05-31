@@ -1,15 +1,15 @@
 use data::seq::*;
-use data::DnaNucleotide::*;
+use data::DnaNucleotide::{self, *};
 
 #[test]
 fn decode() {
-	parse_str::<DnaSeq>("ACTGxACTG").unwrap_err();
+	parse_str::<Vec<DnaNucleotide>>("ACTGxACTG").unwrap_err();
 }
 
 #[test]
 fn count() {
 	let s = "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC";
-	let s: DnaSeq = parse_str(s).unwrap();
+	let s: Vec<DnaNucleotide> = parse_str(s).unwrap();
 
 	assert_eq!(s.count(Adenine), 20);
 	assert_eq!(s.count(Cytosine), 12);
@@ -19,22 +19,22 @@ fn count() {
 
 #[test]
 fn dna_complement() {
-	let s: DnaSeq = parse_str("AAAACCCGGT").unwrap();
+	let s: Vec<DnaNucleotide> = parse_str("AAAACCCGGT").unwrap();
 
 	assert_eq!(s.reverse_complement().to_string(), "ACCGGGTTTT");
 }
 
 #[test]
 fn hamming() {
-	let s1: DnaSeq = parse_str("GAGCCTACTAACGGGAT").unwrap();
-	let s2: DnaSeq = parse_str("CATCGTAATGACGGCCT").unwrap();
+	let s1: Vec<DnaNucleotide> = parse_str("GAGCCTACTAACGGGAT").unwrap();
+	let s2: Vec<DnaNucleotide> = parse_str("CATCGTAATGACGGCCT").unwrap();
 
 	assert_eq!(distance::hamming(s1, s2).unwrap(), 7);
 }
 
 #[test]
 fn index() {
-	let mut s: DnaSeq = parse_str("ACGT").unwrap();
+	let mut s: Vec<DnaNucleotide> = parse_str("ACGT").unwrap();
 	assert_eq!(s[0], Adenine);
 	assert_eq!(s[1], Cytosine);
 	assert_eq!(s[2], Guanine);
@@ -52,7 +52,7 @@ fn index() {
 
 #[test]
 fn iter() {
-	let s: DnaSeq = parse_str("GAGCCT").unwrap();
+	let s: Vec<DnaNucleotide> = parse_str("GAGCCT").unwrap();
 	let mut iter = s.iter().copied();
 	assert_eq!(iter.next(), Some(Guanine));
 	assert_eq!(iter.next(), Some(Adenine));

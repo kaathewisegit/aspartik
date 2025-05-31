@@ -1,9 +1,6 @@
 use anyhow::Error;
 
-use std::{
-	fmt,
-	ops::{Deref, DerefMut},
-};
+use std::fmt;
 
 use crate::nucleotides::DnaNucleotide;
 
@@ -47,6 +44,14 @@ pub trait Seq {
 			f.write_char(character.into())?;
 		}
 		Ok(())
+	}
+
+	fn to_string(&self) -> String {
+		let mut out = String::with_capacity(self.len());
+		for character in self.as_slice().iter().copied() {
+			out.push(character.into());
+		}
+		out
 	}
 
 	fn as_bytes(&self) -> &[u8] {
@@ -150,66 +155,38 @@ impl<C: Character> SeqMut for Vec<C> {
 	}
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub struct SeqBuf<C: Character> {
-	inner: Box<[C]>,
-}
-
-impl<C: Character> Seq for SeqBuf<C> {
+impl<C: Character> Seq for Box<[C]> {
 	type Character = C;
 
 	fn as_slice(&self) -> &[C] {
-		&self.inner
+		self
 	}
 }
 
-impl<C: Character> FromChars for SeqBuf<C> {
+impl<C: Character> FromChars for Box<[C]> {
 	fn from_vec(chars: Vec<C>) -> Self {
-		Self {
-			inner: chars.into_boxed_slice(),
+		chars.into_boxed_slice()
+	}
+}
+
+pub trait DnaSeq: Seq<Character = DnaNucleotide> {
+	fn complement(&self) -> Vec<DnaNucleotide> {
+		let mut out = Vec::with_capacity(self.len());
+
+		for base in self.as_slice() {
+			out.push(base.complement());
 		}
-	}
-}
 
-impl<C: Character> Deref for SeqBuf<C> {
-	type Target = [C];
-
-	fn deref(&self) -> &[C] {
-		&self.inner
-	}
-}
-
-impl<C: Character> DerefMut for SeqBuf<C> {
-	fn deref_mut(&mut self) -> &mut [C] {
-		&mut self.inner
-	}
-}
-
-impl<C: Character> fmt::Display for SeqBuf<C> {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		self.fmt_impl(f)
-	}
-}
-
-pub type DnaSeq = SeqBuf<DnaNucleotide>;
-
-// DNA-specific methods
-impl DnaSeq {
-	/// Returns the sequence complement of `self`.  Note that this function
-	/// doesn't reverse the direction of the sequence, use
-	/// [`reverse_complement`][`DnaSeq::reverse_complement`] for that.
-	pub fn complement(&self) -> Self {
-		let mut out = self.clone();
-		for base in out.inner.iter_mut() {
-			*base = base.complement();
-		}
 		out
 	}
 
-	pub fn reverse_complement(&self) -> Self {
+	fn reverse_complement(&self) -> Vec<DnaNucleotide> {
 		let mut out = self.complement();
 		out.reverse();
-
 		out
 	}
 }
+
+impl DnaSeq for &[DnaNucleotide] {}
+impl DnaSeq for Box<[DnaNucleotide]> {}
+impl DnaSeq for Vec<DnaNucleotide> {}
