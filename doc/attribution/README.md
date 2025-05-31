@@ -102,5 +102,4 @@ A little floating point comparison library, useful for numerical tests.
 [`serde`]: ./serde-license
 [`serde_json`]: ./serde_json-license
 [`divan`]: ./divan-license
-[`vulkano`]: ./vulkano-license
 [`approx`]: ./approx-license

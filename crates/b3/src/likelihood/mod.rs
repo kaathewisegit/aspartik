@@ -69,8 +69,6 @@ impl GenericLikelihood<4> {
 			"cpu" => Box::new(CpuLikelihood::new(sites)),
 			"thread" => Box::new(ThreadedLikelihood::new(sites)),
 			"cuda" => Box::new(CudaLikelihood::new(sites)?),
-			//#[cfg(feature = "vulkan")]
-			//"vulkan" => Box::new(VulkanLikelihood::new(sites)?),
 			_ => {
 				panic!("Unknown calculator type '{calculator}'");
 			}
