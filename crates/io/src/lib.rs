@@ -1,5 +1,6 @@
 pub mod fasta;
 pub mod newick;
+pub mod sam;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
