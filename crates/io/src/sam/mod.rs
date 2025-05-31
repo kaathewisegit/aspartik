@@ -1,5 +1,5 @@
 use anyhow::{bail, Error, Result};
-use data::DnaNucleotide;
+use data::{DnaNucleotide, Phred};
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -103,7 +103,7 @@ pub struct SamSegment {
 	tlen: i32,
 	seq: Box<[DnaNucleotide]>,
 	// XXX: convert to Phred quality
-	qual: u8,
+	qual: Box<[Phred]>,
 }
 
 impl SamSegment {
@@ -155,8 +155,8 @@ impl SamSegment {
 		&self.seq
 	}
 
-	pub fn qual(&self) -> u8 {
-		self.qual
+	pub fn qual(&self) -> &[Phred] {
+		&self.qual
 	}
 
 	pub fn is_mapped(&self) -> bool {
