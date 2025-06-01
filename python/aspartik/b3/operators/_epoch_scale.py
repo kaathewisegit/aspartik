@@ -8,7 +8,7 @@ from ...stats.distributions import Distribution
 
 @dataclass
 class EpochScale(Operator):
-    """Scales a random epoch in a tree.
+    """Scales a random epoch in a tree
 
     This parameter is analogous to BEAST2's `ScaleOperator` when it's used on a
     tree.  It will scale the full tree (so, for now, only its internal nodes,

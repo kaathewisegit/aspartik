@@ -8,11 +8,11 @@ from ...stats.distributions import Distribution
 
 @dataclass
 class NodeSlide(Operator):
-    """Operator which slides a random node between its parent and children.
+    """Slides the age of a random internal node between its parent and children
 
     This operator is similar to BEAST2's `EpochFlexOperator`: it will only
     affect the age of the selected node without altering the tree topology (a
-    node cannot slide past its parent).
+    node cannot slide above its parent).
     """
 
     tree: Tree

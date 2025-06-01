@@ -9,11 +9,11 @@ from ...stats.distributions import Distribution
 
 @dataclass
 class TreeScale(Operator):
-    """Full tree scale operator.
+    """Scales the age of the entire tree
 
     This parameter is analogous to BEAST2's `ScaleOperator` when it's used on a
-    tree.  It will scale the full tree (so, for now, only its internal nodes,
-    since leaves all have the weight of 0).
+    tree.  It will scale all internal nodes by a random scale which is randomly
+    picked depending on `factor` and `distribution`.
     """
 
     tree: Tree
@@ -39,7 +39,7 @@ class TreeScale(Operator):
         low, high = self.factor, 1 / self.factor
         scale = sample_range(low, high, self.distribution, self.rng)
 
-        for node in tree.nodes():
+        for node in tree.internals():
             new_weight = tree.weight_of(node) * scale
             tree.update_weight(node, new_weight)
 

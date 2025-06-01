@@ -7,7 +7,7 @@ from ...rng import RNG
 
 @dataclass
 class DeltaExchange(Operator):
-    """Operator which tweaks a multidimensional parameter without changing its sum.
+    """Scales a multidimensional parameter without changing its sum
 
     This operator is analogous to BEAST2's `DeltaExchangeOperator`.  It picks
     two random dimensions from a set list of parameters, a random delta, and

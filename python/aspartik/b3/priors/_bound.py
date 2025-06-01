@@ -6,11 +6,11 @@ from .. import Parameter, Prior
 
 @dataclass
 class Bound(Prior):
-    """A prior which puts limits on the value of a parameter
+    """Puts limits on the value of a parameter
 
     This prior serves the same purpose as the `lower` and `upper` attributes on
-    BEAST parameters.  It will return `1` if all dimensions of the parameter lie
-    within `[lower, upper)` or cancel the proposal by returning negative
+    BEAST parameters.  It will return `1` if all dimensions of the parameter
+    lie within `[lower, upper)` or cancel the proposal by returning negative
     infinity otherwise.
 
     Due to how the internals of `b3` work, these priors should be first in the

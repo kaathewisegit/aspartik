@@ -20,44 +20,161 @@ class tree: ...
 __all__: List[str]
 
 class Tree:
-    def __init__(self, names: Sequence[str], rng: RNG): ...
-    def update_edge(self, edge: int, new_child: Node) -> None: ...
-    def update_weight(self, node: Node, weigth: float) -> None: ...
-    def update_root(self, node: Node) -> None: ...
-    def swap_parents(self, a: Node, b: Node) -> None: ...
+    """A phylogenetic tree
+
+    Unlike in BEAST2, `Tree` is a self-contained typed which all of the
+    topological data.  What this means is that node types (`Internal` and
+    `Leaf`) are simply indexes into the `Tree`.  So, all operations, like
+    getting parents of node weights have to go through `Tree`'s methods.
+
+    The current implementation of `Tree` only supports bifurcating topologies.
+    """
+
+    def __init__(self, names: Sequence[str], rng: RNG):
+        """
+        - `names` is the list of names of leaf nodes.
+        - `rng` is used to build a random tree.
+        """
+
+    def update_edge(self, edge: int, new_child: Node) -> None:
+        """Sets the **child** of `edge` to `new_child`
+
+        This will only change the child, so the parent (internal node from
+        which `edge` comes out) will now have `node` as a child.
+
+        This function doesn't do any validation, it's up to the operator to
+        preserve the validity of the tree.
+        """
+    def update_weight(self, node: Node, weigth: float) -> None:
+        """Sets the weight of `node` to `weight`"""
+    def update_root(self, node: Node) -> None:
+        """Makes `node` the root of the tree
+
+        As the topology can be temporarily broken while the edges are being
+        swapped, `Tree` can't automatically figure out which node is the root
+        one.  So, operators which change the root of the tree have to update it
+        manually.
+        """
+    def swap_parents(self, a: Node, b: Node) -> None:
+        """Swaps the parents of nodes `a` and `b`
+
+        `a` and `b` must not be a child/parent and neither of them can be a
+        root node.  If `a` and `b` share the same parent, they switch polarity
+        (left child becomes the right child and visa versa).
+        """
     @property
-    def num_nodes(self) -> int: ...
+    def num_nodes(self) -> int:
+        """The total number of nodes in the tree"""
     @property
-    def num_internals(self) -> int: ...
+    def num_internals(self) -> int:
+        """The number of internal nodes (those with children)"""
     @property
-    def num_leaves(self) -> int: ...
-    def is_internal(self, node: Node) -> bool: ...
+    def num_leaves(self) -> int:
+        """The number of leaf nodes"""
+    def is_internal(self, node: Node) -> bool:
+        """Returns `True` if the node is internal"""
     def is_leaf(self, node: Node) -> bool: ...
-    def as_internal(self, node: Node) -> Optional[Internal]: ...
+    def as_internal(self, node: Node) -> Optional[Internal]:
+        """
+        Converts `node` to the type `Internal` if it is internal, or returns
+        `None` otherwise
+        """
     def as_leaf(self, node: Node) -> Optional[Leaf]: ...
-    def root(self) -> Internal: ...
-    def weight_of(self, node: Node) -> float: ...
-    def children_of(self, node: Internal) -> Tuple[Node, Node]: ...
-    def edge_index(self, child: Node) -> int: ...
-    def edge_distance(self, edge: int) -> float: ...
-    def parent_of(self, node: Node) -> Optional[Internal]: ...
-    def is_grandparent(self, node: Internal) -> bool: ...
-    def num_grandparents(self) -> int: ...
-    def random_node(self, rng: RNG) -> Node: ...
-    def random_internal(self, rng: RNG) -> Internal: ...
-    def random_leaf(self, rng: RNG) -> Leaf: ...
-    def nodes(self) -> Iterator[Node]: ...
-    def internals(self) -> Iterator[Internal]: ...
-    def verify(self) -> None: ...
-    def newick(self) -> str: ...
+    def root(self) -> Internal:
+        """Returns the root node of the tree
+
+        Note that the root node might change after tree has been edited, so the
+        returned node is only guaranteed to be root as long as the tree hasn't
+        been edited.
+        """
+    def weight_of(self, node: Node) -> float:
+        """Returns the weight of `node`
+
+        Weight here means node's age in some unlabeled units.
+        """
+    def children_of(self, node: Internal) -> Tuple[Node, Node]:
+        """Returns a tuple of the left and right children of `node`
+
+        This function takes the `Internal` type as its input, so it is
+        guaranteed to always return the children.  See `as_internal` for
+        converting general nodes to internal ones.
+        """
+    def edge_index(self, child: Node) -> int:
+        """Returns the index of an edge from `child` to its parent"""
+    def edge_distance(self, edge: int) -> float:
+        """Returns the length of `edge`
+
+        The length is the distance between the parent and the child nodes of
+        that edge.
+        """
+    def parent_of(self, node: Node) -> Optional[Internal]:
+        """Returns the parent of `node`, or `None` for the root node"""
+    def is_grandparent(self, node: Internal) -> bool:
+        """Returns `True` if both children of this node are also internal"""
+    def num_grandparents(self) -> int:
+        """Number of nodes for whom `is_grandparent` returns `True`"""
+    def random_node(self, rng: RNG) -> Node:
+        """Returns a random node from the tree
+
+        It can be both an internal node or a leaf.  See `random_internal` and
+        `random_leaf` for getting a random node of a specific kind.
+        """
+    def random_internal(self, rng: RNG) -> Internal:
+        """Returns a random internal node"""
+    def random_leaf(self, rng: RNG) -> Leaf:
+        """Returns a random leaf node"""
+    def nodes(self) -> Iterator[Node]:
+        """An iterator over all of trees nodes
+
+        All of the `Leaf` nodes go before `Internal` ones.
+        """
+    def internals(self) -> Iterator[Internal]:
+        """An iterator over all of the trees internal nodes"""
+    def leaves(self) -> Iterator[Leaf]:
+        """An iterator over all of the trees leaf nodes"""
+    def verify(self) -> None:
+        """Throws an exception if a tree is malformed
+
+        This function ensures that:
+
+        - No leaf has become anyone's parent.
+        - All parent nodes are older than their children.
+        - Parents match their children (mismatches can happen when
+          `update_edge` is used incorrectly).
+        - There's only one root (two or more can be set with `update_root`).
+        - The tree is a tree, meaning that topologically it has no cycles and
+          is connected.
+        """
+    def newick(self) -> str:
+        """Returns the tree topology in the Newick format
+
+        Leaf nodes will be labeled with the names passed to the constructor
+        while the internal nodes are unlabeled.
+        """
 
 class Proposal:
+    """A result of the move proposed by an operator
+
+    While the operators edit the tree directly, they need to communicate the
+    status of their move to `MCMC`.  This is the class used for that.
+    """
+
     @classmethod
-    def Reject(cls) -> Proposal: ...
+    def Reject(cls) -> Proposal:
+        """Aborts the move unconditionally
+
+        All of the trees and parameters are rolled back.  This is relatively
+        fast, as it typically skips recalculating the likelihoods.
+        """
     @classmethod
-    def Hastings(cls, ratio: float) -> Proposal: ...
+    def Hastings(cls, ratio: float) -> Proposal:
+        """Proposes the move with the `ratio`
+
+        This is the ratio from the Metropolis–Hastings algorithm.
+        """
     @classmethod
-    def Accept(cls) -> Proposal: ...
+    def Accept(cls) -> Proposal:
+        """Accepts the move unconditionally"""
 
 class Parameter:
     """An arbitrary multi-dimensional parameter

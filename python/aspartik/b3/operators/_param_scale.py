@@ -10,7 +10,7 @@ from ...stats.distributions import Distribution
 
 @dataclass
 class ParamScale(Operator):
-    """An operator which scales one parameter.
+    """Scales one parameter
 
     This operator is analogous to BEAST2's `ScaleOperator`, except it only
     works for parameters.

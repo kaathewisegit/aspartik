@@ -8,13 +8,13 @@ from ...rng import RNG
 
 @dataclass
 class NarrowExchange(Operator):
-    """Operator which exchanges the parents of two neighbouring nodes.
+    """Exchanges the parents of two neighbouring nodes
 
     This operator is analogous to BEAST2's `Exchange` operator with `isNarrow`
     set to true.  It finds a grandparent (internal node both of whose children
-    are also internal) with two kids: *parent* and *uncle* (uncle is younger
-    than the parent).  And one of the children of *parent* is swapped with
-    *uncle*.
+    are also internal) with two kids: `parent` and `uncle` (uncle is younger
+    than the parent).  And one of the children of `parent` is swapped with
+    `uncle`.
     """
 
     tree: Tree
@@ -67,7 +67,7 @@ class NarrowExchange(Operator):
 
 @dataclass
 class WideExchange(Operator):
-    """Operator which exchanges the parent of two random nodes.
+    """Exchanges the parent of two random nodes
 
     This operator is analogous to BEAST2's `Exchange` operator with `isNarrow`
     set to false.  It picks two random nodes in the tree (they could be either

@@ -767,97 +767,65 @@ impl PyTree {
 		Ok(tree)
 	}
 
-	/// Points `edge` to `node`.
-	///
-	/// This will only change the child, so the parent (internal node from
-	/// which `edge` comes out) will now have `node` as a child.
-	///
-	/// This function doesn't do any validation, it's up to the operator to
-	/// preserve the validity of the tree.
 	fn update_edge(&self, edge: usize, new_child: Node) -> Result<()> {
 		self.inner().update_edge(edge, new_child);
 		Ok(())
 	}
 
-	/// Sets the weight of `node` to `weight`.
 	fn update_weight(&self, node: Node, weight: f64) -> Result<()> {
 		self.inner().update_weight(node, weight);
 		Ok(())
 	}
 
-	/// Makes `node` the root of the tree.
-	///
-	/// The old root must be regrafted with a separate `update_edge` call.
 	fn update_root(&self, node: Node) -> Result<()> {
 		self.inner().update_root(node);
 		Ok(())
 	}
 
-	/// Swaps the parents of `a` and `b`.
-	///
-	/// `a` and `b` must not be a child/parent and neither of them can be a
-	/// root node.  If `a` and `b` share the same parent, they switch
-	/// polarity (left child becomes the right child and visa versa).
 	fn swap_parents(&self, a: Node, b: Node) -> Result<()> {
 		self.inner().swap_parents(a, b);
 		Ok(())
 	}
 
-	/// The total number of nodes in the tree.
 	#[getter]
 	fn num_nodes(&self) -> usize {
 		self.inner().num_nodes()
 	}
 
-	/// The number of internal nodes (those with children).
 	#[getter]
 	fn num_internals(&self) -> usize {
 		self.inner().num_internals()
 	}
 
-	/// The number of leaves (leaf nodes, those with data).
 	#[getter]
 	fn num_leaves(&self) -> usize {
 		self.inner().num_leaves()
 	}
 
-	/// Returns `True` if `node` is internal.
 	fn is_internal(&self, node: Node) -> Result<bool> {
 		Ok(self.inner().is_internal(node))
 	}
 
-	/// Returns `True` if `node` is a leaf.
 	fn is_leaf(&self, node: Node) -> Result<bool> {
 		Ok(self.inner().is_leaf(node))
 	}
 
-	/// Converts `node` to the type `Internal` if it is internal, or returns
-	/// `None` otherwise.
 	fn as_internal(&self, node: Node) -> Option<Internal> {
 		self.inner().as_internal(node)
 	}
 
-	/// Converts `node` to the type `Leaf` if it is a leaf, or returns
-	/// `None` otherwise.
 	fn as_leaf(&self, node: Node) -> Option<Leaf> {
 		self.inner().as_leaf(node)
 	}
 
-	/// Returns the root node.
 	fn root(&self) -> Internal {
 		self.inner().root()
 	}
 
-	/// Returns the weight of a node.
 	fn weight_of(&self, node: Node) -> Result<f64> {
 		Ok(self.inner().weight_of(node))
 	}
 
-	/// Returns the `(left, right)` children of a node.
-	///
-	/// This function takes the `Internal` type as its input, so it is
-	/// guaranteed to always return the children.  See `as_internal` for
-	/// converting general nodes to internal ones.
 	fn children_of<'py>(
 		&self,
 		py: Python<'py>,
@@ -873,24 +841,18 @@ impl PyTree {
 		Ok((left, right))
 	}
 
-	/// Returns the index of an edge from `child` to its parent.
 	fn edge_index(&self, child: Node) -> Result<usize> {
 		Ok(self.inner().edge_index(child))
 	}
 
-	/// Returns the length of `edge` (distance between the child and the
-	/// parent on that edge).
 	fn edge_distance(&self, edge: usize) -> f64 {
 		self.inner().edge_distance(edge)
 	}
 
-	/// Returns the parent of `node`, or `None` if the node is the root of
-	/// the tree.
 	fn parent_of(&self, node: Node) -> Result<Option<Internal>> {
 		Ok(self.inner().parent_of(node))
 	}
 
-	/// Returns `True` if both children of `node` are also internal.
 	fn is_grandparent(&self, node: Internal) -> bool {
 		self.inner().is_grandparent(node)
 	}
@@ -899,7 +861,6 @@ impl PyTree {
 		self.inner().num_grandparents()
 	}
 
-	/// Returns an iterator over all of the nodes.
 	fn nodes(&self) -> NodesIter {
 		NodesIter {
 			current: 0,

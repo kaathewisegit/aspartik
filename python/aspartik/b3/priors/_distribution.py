@@ -6,7 +6,11 @@ from ...stats import distributions
 
 @dataclass
 class Distribution(Prior):
-    """Calculates prior probability of a parameter according to a distribution."""
+    """Calculates prior probability of a parameter according to a distribution
+
+    For multidimensional parameters the independent probability of all
+    dimensions is calculated.
+    """
 
     param: Parameter
     """

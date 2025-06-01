@@ -7,7 +7,13 @@ from ...rng import RNG
 
 @dataclass
 class WilsonBalding(Operator):
-    """TODO."""
+    """A version of a subtree regraft move
+
+    Introduced in [this paper][paper], it picks a random subtree and inserts it
+    in-between two other nodes.
+
+    [paper]: https://doi.org/10.1093/genetics/161.3.1307
+    """
 
     tree: Tree
     rng: RNG
