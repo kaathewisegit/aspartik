@@ -94,10 +94,14 @@ impl Mcmc {
 			})?;
 
 			for logger in &self_.loggers {
-				logger.log(py, this.clone_ref(py), index)
-					.with_context(|| {
-						anyhow!("Failed to log on step {index}")
-					})?;
+				let result = logger.log(
+					py,
+					this.clone_ref(py),
+					index,
+				);
+				result.with_context(|| {
+					anyhow!("Failed to log on step {index}")
+				})?;
 			}
 		}
 
@@ -141,23 +145,23 @@ impl Mcmc {
 		let rng = self.rng.get();
 		let operator = self.scheduler.select_operator(&mut rng.inner());
 
-		let hastings =
-			match operator.propose(py).with_context(|| {
-				anyhow!(
-			"Operator {} failed while generating a proposal",
-			operator.repr(py).unwrap()
-		)
-			})? {
-				Proposal::Accept() => {
-					self.accept()?;
-					return Ok(());
-				}
-				Proposal::Reject() => {
-					self.reject()?;
-					return Ok(());
-				}
-				Proposal::Hastings(ratio) => ratio,
-			};
+		let proposal = operator.propose(py).with_context(|| {
+			anyhow!(
+				"Operator {} failed while generating a proposal",
+				operator.repr(py).unwrap()
+			)
+		})?;
+		let hastings = match proposal {
+			Proposal::Accept() => {
+				self.accept()?;
+				return Ok(());
+			}
+			Proposal::Reject() => {
+				self.reject()?;
+				return Ok(());
+			}
+			Proposal::Hastings(ratio) => ratio,
+		};
 
 		if self.validate {
 			for tree in &self.trees {
