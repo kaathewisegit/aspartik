@@ -6,10 +6,10 @@ pub fn parse_append_str<S>(seq: &mut S, string: &str) -> Result<()>
 where
 	S: SeqMut,
 {
-	for ch in string.chars() {
+	for (i, ch) in string.chars().enumerate() {
 		let character = ch
 			.try_into()
-			.with_context(|| highlight_error(string, seq.len()))?;
+			.with_context(|| highlight_error(string, i))?;
 		seq.push(character);
 	}
 	Ok(())
