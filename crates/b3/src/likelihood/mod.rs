@@ -4,8 +4,8 @@ use pyo3::prelude::*;
 use tracing::{instrument, trace};
 
 use crate::{
-	substitution::PySubstitution, tree::PyTree, util::dna_to_rows,
-	Transitions,
+	clock::PyClock, substitution::PySubstitution, tree::PyTree,
+	util::dna_to_rows, Transitions,
 };
 use data::{
 	seq::{python::PyDnaSeq, Seq},
@@ -44,6 +44,7 @@ type DynCalculator<const N: usize> =
 
 pub struct GenericLikelihood<const N: usize> {
 	substitution: PySubstitution<N>,
+	clock: PyClock,
 	transitions: Transitions<N>,
 	calculator: DynCalculator<N>,
 	/// Last accepted likelihood
@@ -58,6 +59,7 @@ impl GenericLikelihood<4> {
 	#[instrument(skip_all, fields(calculator))]
 	fn new(
 		substitution: PySubstitution<4>,
+		clock: PyClock,
 		sites: Vec<Vec<Vector<f64, 4>>>,
 		tree: Py<PyTree>,
 		calculator: String,
@@ -76,6 +78,7 @@ impl GenericLikelihood<4> {
 
 		let mut out = Self {
 			substitution,
+			clock,
 			transitions,
 			calculator,
 			tree,
@@ -95,8 +98,12 @@ impl<const N: usize> GenericLikelihood<N> {
 	fn propose(&mut self, py: Python) -> Result<f64> {
 		let tree = &self.tree.get().inner();
 		let substitution_matrix = self.substitution.get_matrix(py)?;
-		let full_update =
-			self.transitions.update(substitution_matrix, tree);
+		let rate = self.clock.get_rate(py)?;
+		let full_update = self.transitions.update(
+			substitution_matrix,
+			rate,
+			tree,
+		);
 		let nodes = if full_update {
 			tree.full_update()
 		} else {
@@ -202,12 +209,13 @@ impl PyLikelihood {
 impl PyLikelihood {
 	#[new]
 	#[pyo3(signature = (
-		sequences, substitution, tree,
+		sequences, substitution, clock, tree,
 		calculator = String::from("cpu"),
 	))]
 	fn new4(
 		sequences: Vec<PyDnaSeq>,
 		substitution: PySubstitution<4>,
+		clock: PyClock,
 		tree: Py<PyTree>,
 		calculator: String,
 	) -> Result<Self> {
@@ -219,6 +227,7 @@ impl PyLikelihood {
 
 		let generic_likelihood = GenericLikelihood::new(
 			substitution,
+			clock,
 			sites,
 			tree,
 			calculator,

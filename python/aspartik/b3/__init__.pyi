@@ -218,7 +218,9 @@ class Likelihood:
     def __init__(
         self,
         sequences: Sequence[DNASeq],
+        # TODO: types
         substitution: Any,
+        clock: Any,
         tree: Tree,
         calculator: Literal["cpu", "thread", "cuda"] = "cpu",
     ): ...

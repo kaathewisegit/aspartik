@@ -13,6 +13,7 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.priors import Yule, Distribution, ConstantPopulation
 from aspartik.b3.substitutions import HKY
+from aspartik.b3.clocks import StrictClock
 from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import RNG
 from aspartik.io.fasta import FASTADNAReader
@@ -109,10 +110,12 @@ operators = [
 ]
 
 # TODO: frequencies from alignment
-model = HKY((0.25, 0.25, 0.25, 0.25), kappa_noncoding)
+sub_model = HKY((0.25, 0.25, 0.25, 0.25), kappa_noncoding)
+clock_model = StrictClock(Parameter.Real(1.0))
 likelihood = Likelihood(
     sequences=sequences,
-    substitution=model,
+    substitution=sub_model,
+    clock=clock_model,
     tree=tree,
     calculator="thread",
 )

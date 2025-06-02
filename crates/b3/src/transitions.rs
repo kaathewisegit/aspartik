@@ -11,6 +11,8 @@ pub struct Transitions<const N: usize> {
 	diag: RowMatrix<f64, N, N>,
 	inv_p: RowMatrix<f64, N, N>,
 
+	rate: f64,
+
 	transitions: SkVec<RowMatrix<f64, N, N>>,
 }
 
@@ -25,6 +27,8 @@ impl<const N: usize> Transitions<N> {
 			diag: RowMatrix::default(),
 			inv_p: RowMatrix::default(),
 
+			rate: 1.0,
+
 			transitions,
 		}
 	}
@@ -33,11 +37,14 @@ impl<const N: usize> Transitions<N> {
 	pub fn update(
 		&mut self,
 		substitution: Substitution<N>,
+		rate: f64,
 		tree: &Tree,
 	) -> bool {
-		let full_update = substitution != self.current;
+		let full_update =
+			substitution != self.current || rate != self.rate;
 		if full_update {
 			self.current = substitution;
+			self.rate = rate;
 
 			self.diag = RowMatrix::from_diagonal(
 				substitution.eigenvalues(),
@@ -54,7 +61,7 @@ impl<const N: usize> Transitions<N> {
 		let distances: Vec<f64> = edges
 			.iter()
 			.copied()
-			.map(|e| tree.edge_distance(e))
+			.map(|e| tree.edge_distance(e) * rate)
 			.collect();
 
 		self.update_edges(&edges, &distances);
