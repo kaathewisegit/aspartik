@@ -22,3 +22,6 @@ build-backend = "maturin"
 python-source = "python"
 module-name = "aspartik._aspartik_rust_impl"
 features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]

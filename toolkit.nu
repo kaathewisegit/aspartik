@@ -16,8 +16,16 @@ export def lint [] {
 	cargo clippy --workspace -- -D warnings
 }
 
-export def test [] {
-	cargo test --workspace --features approx,proptest
+export def test [
+	--no-rust
+	--no-python
+] {
+	if not $no_rust {
+		cargo test --workspace --features approx,proptest
+	}
+	if not $no_python {
+		pytest
+	}
 }
 
 export def run [] {
@@ -36,5 +44,6 @@ export def clean [] {
 			b3.log
 			tracing.log.*
 			crates/**/__pycache__/
+			.pytest_cache/
 	)
 }
