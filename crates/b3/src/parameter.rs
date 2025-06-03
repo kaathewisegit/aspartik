@@ -275,6 +275,54 @@ impl PyParameter {
 		}
 	}
 
+	fn __imul__(&self, other: Bound<PyAny>) -> Result<()> {
+		let inner = &mut *self.inner();
+
+		match inner {
+			Parameter::Real(ref mut p) => {
+				let other = other.extract::<f64>()?;
+				for i in 0..p.len() {
+					p.set(i, p[i] * other);
+				}
+			}
+			Parameter::Integer(p) => {
+				let other = other.extract::<i64>()?;
+				for i in 0..p.len() {
+					p.set(i, p[i] * other);
+				}
+			}
+			Parameter::Boolean(_) => {
+				bail!("Booleans don't support multiplication");
+			}
+		}
+
+		Ok(())
+	}
+
+	fn __itruediv__(&self, other: Bound<PyAny>) -> Result<()> {
+		let inner = &mut *self.inner();
+
+		match inner {
+			Parameter::Real(ref mut p) => {
+				let other = other.extract::<f64>()?;
+				for i in 0..p.len() {
+					p.set(i, p[i] / other);
+				}
+			}
+			Parameter::Integer(p) => {
+				let other = other.extract::<i64>()?;
+				for i in 0..p.len() {
+					p.set(i, p[i] / other);
+				}
+			}
+			Parameter::Boolean(_) => {
+				bail!("Booleans don't support divison");
+			}
+		}
+
+		Ok(())
+	}
+
 	pub fn is_real(&self) -> bool {
 		matches!(&*self.inner(), Parameter::Real(..))
 	}
