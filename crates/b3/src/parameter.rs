@@ -10,19 +10,21 @@ use pyo3::{
 
 use std::fmt::{self, Display};
 
+use skvec::SkVec;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Parameter {
-	Real(Vec<f64>, Vec<f64>),
-	Integer(Vec<i64>, Vec<i64>),
-	Boolean(Vec<bool>, Vec<bool>),
+	Real(SkVec<f64>),
+	Integer(SkVec<i64>),
+	Boolean(SkVec<bool>),
 }
 
 impl Parameter {
 	fn len(&self) -> usize {
 		match self {
-			Parameter::Real(p, _) => p.len(),
-			Parameter::Integer(p, _) => p.len(),
-			Parameter::Boolean(p, _) => p.len(),
+			Parameter::Real(p) => p.len(),
+			Parameter::Integer(p) => p.len(),
+			Parameter::Boolean(p) => p.len(),
 		}
 	}
 
@@ -42,7 +44,7 @@ impl Parameter {
 	}
 }
 
-fn compare<T: PartialOrd>(values: &[T], other: T, op: CompareOp) -> bool {
+fn compare<T: PartialOrd>(values: &SkVec<T>, other: T, op: CompareOp) -> bool {
 	values.iter().all(|v| match op {
 		CompareOp::Lt => *v < other,
 		CompareOp::Le => *v <= other,
@@ -56,7 +58,7 @@ fn compare<T: PartialOrd>(values: &[T], other: T, op: CompareOp) -> bool {
 impl Display for Parameter {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
-			Parameter::Real(p, _) => {
+			Parameter::Real(p) => {
 				for (i, value) in p.iter().enumerate() {
 					value.fmt(f)?;
 					if i < p.len() - 1 {
@@ -64,7 +66,7 @@ impl Display for Parameter {
 					}
 				}
 			}
-			Parameter::Integer(p, _) => {
+			Parameter::Integer(p) => {
 				for (i, value) in p.iter().enumerate() {
 					value.fmt(f)?;
 					if i < p.len() - 1 {
@@ -72,7 +74,7 @@ impl Display for Parameter {
 					}
 				}
 			}
-			Parameter::Boolean(p, _) => {
+			Parameter::Boolean(p) => {
 				for (i, value) in p.iter().enumerate() {
 					if *value {
 						f.write_str("True")?;
@@ -116,15 +118,9 @@ impl PyParameter {
 		let inner = &mut *self.inner();
 
 		match inner {
-			Parameter::Real(active, ref mut backup) => {
-				backup.clone_from(active);
-			}
-			Parameter::Integer(active, ref mut backup) => {
-				backup.clone_from(active);
-			}
-			Parameter::Boolean(active, ref mut backup) => {
-				backup.clone_from(active);
-			}
+			Parameter::Real(p) => p.accept(),
+			Parameter::Integer(p) => p.accept(),
+			Parameter::Boolean(p) => p.accept(),
 		}
 	}
 
@@ -132,15 +128,9 @@ impl PyParameter {
 		let inner = &mut *self.inner();
 
 		match inner {
-			Parameter::Real(ref mut active, backup) => {
-				active.clone_from(backup);
-			}
-			Parameter::Integer(ref mut active, backup) => {
-				active.clone_from(backup);
-			}
-			Parameter::Boolean(ref mut active, backup) => {
-				active.clone_from(backup);
-			}
+			Parameter::Real(p) => p.reject(),
+			Parameter::Integer(p) => p.reject(),
+			Parameter::Boolean(p) => p.reject(),
 		}
 	}
 }
@@ -171,7 +161,7 @@ impl PyParameter {
 		check_empty(values)?;
 
 		let values: Vec<f64> = extract(values)?;
-		let parameter = Parameter::Real(values.clone(), values);
+		let parameter = Parameter::Real(values.into());
 		Ok(Self {
 			inner: Mutex::new(parameter),
 		})
@@ -188,7 +178,7 @@ impl PyParameter {
 		check_empty(values)?;
 
 		let values: Vec<i64> = extract(values)?;
-		let parameter = Parameter::Integer(values.clone(), values);
+		let parameter = Parameter::Integer(values.into());
 		Ok(Self {
 			inner: Mutex::new(parameter),
 		})
@@ -201,7 +191,7 @@ impl PyParameter {
 		check_empty(values)?;
 
 		let values: Vec<bool> = extract(values)?;
-		let parameter = Parameter::Boolean(values.clone(), values);
+		let parameter = Parameter::Boolean(values.into());
 		Ok(Self {
 			inner: Mutex::new(parameter),
 		})
@@ -216,11 +206,9 @@ impl PyParameter {
 		inner.check_index(i)?;
 
 		Ok(match inner {
-			Parameter::Real(p, _) => p[i].into_pyobject(py)?.into(),
-			Parameter::Integer(p, _) => {
-				p[i].into_pyobject(py)?.into()
-			}
-			Parameter::Boolean(p, _) => {
+			Parameter::Real(p) => p[i].into_pyobject(py)?.into(),
+			Parameter::Integer(p) => p[i].into_pyobject(py)?.into(),
+			Parameter::Boolean(p) => {
 				p[i].into_pyobject(py)?.to_owned().into()
 			}
 		})
@@ -231,17 +219,17 @@ impl PyParameter {
 		inner.check_index(i)?;
 
 		match inner {
-			Parameter::Real(p, _) => {
+			Parameter::Real(p) => {
 				let value = value.extract::<f64>()?;
-				p[i] = value;
+				p.set(i, value);
 			}
-			Parameter::Integer(p, _) => {
+			Parameter::Integer(p) => {
 				let value = value.extract::<i64>()?;
-				p[i] = value;
+				p.set(i, value);
 			}
-			Parameter::Boolean(p, _) => {
+			Parameter::Boolean(p) => {
 				let value = value.extract::<bool>()?;
-				p[i] = value;
+				p.set(i, value);
 			}
 		}
 
@@ -272,15 +260,15 @@ impl PyParameter {
 		let inner = &*self.inner();
 
 		match inner {
-			Parameter::Real(p, _) => {
+			Parameter::Real(p) => {
 				let other = other.extract::<f64>()?;
 				Ok(compare(p, other, op))
 			}
-			Parameter::Integer(p, _) => {
+			Parameter::Integer(p) => {
 				let other = other.extract::<i64>()?;
 				Ok(compare(p, other, op))
 			}
-			Parameter::Boolean(p, _) => {
+			Parameter::Boolean(p) => {
 				let other = other.extract::<bool>()?;
 				Ok(compare(p, other, op))
 			}
@@ -307,7 +295,7 @@ impl PyParameter {
 		);
 
 		match inner {
-			Parameter::Real(p, _) => Ok(p[0]),
+			Parameter::Real(p) => Ok(p[0]),
 			_ => bail!("Not a real parameter"),
 		}
 	}
