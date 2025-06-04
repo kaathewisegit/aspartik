@@ -314,6 +314,26 @@ impl<T: Copy + Float + NumAssign, const N: usize> Vector<T, N> {
 	pub fn normalize(&self) -> Self {
 		*self / self.norm()
 	}
+
+	pub fn minimum(&self) -> T {
+		let mut out = self[0];
+
+		for i in 1..N {
+			out = out.min(self[i]);
+		}
+
+		out
+	}
+
+	pub fn maximum(&self) -> T {
+		let mut out = self[0];
+
+		for i in 1..N {
+			out = out.max(self[i]);
+		}
+
+		out
+	}
 }
 
 #[cfg(test)]
