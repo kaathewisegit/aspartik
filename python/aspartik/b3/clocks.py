@@ -1,13 +1,12 @@
 from dataclasses import dataclass
-
-from . import Parameter
+from typing import SupportsFloat
 
 
 @dataclass
 class StrictClock:
     """Clock model which just returns a parameter"""
 
-    mu: Parameter
+    mu: SupportsFloat
 
     def get_rate(self):
-        return self.mu[0]
+        return float(self.mu)

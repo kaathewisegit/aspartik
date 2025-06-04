@@ -1,7 +1,7 @@
 from math import inf
 from dataclasses import dataclass
 
-from .. import Parameter, Prior
+from .. import Real, Prior
 
 
 @dataclass
@@ -18,15 +18,15 @@ class Bound(Prior):
     the bounds aren't satisfied.
     """
 
-    param: Parameter
+    param: Real
     """The parameter to be constrained."""
-    lower: int | float = 0
+    lower: float = 0
     """Minimum possible value of the parameter, inclusive."""
-    upper: int | float = inf
+    upper: float = inf
     """Maximum value of the parameter, exclusive (strictly compared)."""
 
     def probability(self) -> float:
-        for i in range(len(self.param)):
-            if not (self.lower <= self.param[i] < self.upper):
-                return -inf
-        return 1
+        if not (self.lower <= self.param < self.upper):
+            return -inf
+        else:
+            return 1

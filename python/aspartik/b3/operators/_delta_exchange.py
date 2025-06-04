@@ -1,7 +1,7 @@
 from typing import List
 from dataclasses import dataclass
 
-from .. import Proposal, Parameter, Operator
+from .. import Proposal, Real, Operator
 from ...rng import RNG
 
 
@@ -16,7 +16,7 @@ class DeltaExchange(Operator):
     decrement is `delta * weights[inc_param] / weights[dec_param]`.
     """
 
-    params: List[Parameter]
+    params: List[Real]
     """
     A list of parameters to edit.  Two random ones will be sampled for each
     proposal.

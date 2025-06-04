@@ -1,4 +1,4 @@
-from aspartik.b3 import MCMC, Tree, Parameter, Likelihood
+from aspartik.b3 import MCMC, Tree, Real, Likelihood
 from aspartik.b3.loggers import TreeLogger, PrintLogger, ValueLogger
 from aspartik.b3.operators import (
     ParamScale,
@@ -27,7 +27,7 @@ for record in FASTADNAReader(path):
 rng = RNG(4)
 tree = Tree(names, rng)
 
-birth_rate_y = Parameter.Real(2.0)
+birth_rate_y = Real(2.0)
 
 params = [
     birth_rate_y,
@@ -50,8 +50,8 @@ operators = [
 ]
 
 
-sub_model = HKY((0.25, 0.25, 0.25, 0.25), Parameter.Real(2.0))
-clock_model = StrictClock(Parameter.Real(1.0))
+sub_model = HKY((0.25, 0.25, 0.25, 0.25), 2.0)
+clock_model = StrictClock(1.0)
 likelihood = Likelihood(
     sequences=sequences,
     substitution=sub_model,

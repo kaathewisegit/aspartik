@@ -3,7 +3,7 @@ from typing import Literal
 from dataclasses import dataclass
 
 from ._util import sample_range
-from .. import Proposal, Parameter, Operator
+from .. import Proposal, Real, Operator
 from ...rng import RNG
 from ...stats.distributions import Distribution
 
@@ -20,7 +20,7 @@ class ParamScale(Operator):
     parameter values.
     """
 
-    param: Parameter
+    param: Real
     """The parameter to scale."""
     factor: float
     """

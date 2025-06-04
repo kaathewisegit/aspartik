@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .. import Parameter, Prior
+from .. import Real, Integer, Prior
 from ...stats import distributions
 
 
@@ -12,7 +12,7 @@ class Distribution(Prior):
     dimensions is calculated.
     """
 
-    param: Parameter
+    param: Real | Integer
     """
     Parameter to estimate.  Can be either `Real` or `Integer` for discrete
     distributions.
@@ -21,6 +21,7 @@ class Distribution(Prior):
     """Distribution against which the parameter prior is calculated."""
 
     def __post_init__(self):
+        # TODO: check that param type fits the distr type
         if hasattr(self.distribution, "pdf"):
             self.distr_prob = self.distribution.ln_pdf  # type: ignore
         elif hasattr(self.distribution, "pmf"):

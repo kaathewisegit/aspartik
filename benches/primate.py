@@ -1,4 +1,4 @@
-from aspartik.b3 import MCMC, Tree, Parameter, Likelihood
+from aspartik.b3 import MCMC, Tree, Real, Likelihood
 from aspartik.b3.loggers import TreeLogger, PrintLogger, ValueLogger
 from aspartik.b3.operators import (
     ParamScale,
@@ -28,22 +28,22 @@ for record in FASTADNAReader(path):
 rng = RNG(4)
 tree = Tree(names, rng)
 
-mutation_rate_noncoding = Parameter.Real(1.0)
-gamma_shape_noncoding = Parameter.Real(1.0)
-kappa_noncoding = Parameter.Real(2.0)
-mutation_rate_1stpos = Parameter.Real(1.0)
-gamma_shape_1stpos = Parameter.Real(1.0)
-kappa_1stpos = Parameter.Real(2.0)
-mutation_rate_2ndpos = Parameter.Real(1.0)
-gamma_shape_2ndpos = Parameter.Real(1.0)
-kappa_2ndpos = Parameter.Real(2.0)
-mutation_rate_3rdpos = Parameter.Real(1.0)
-gamma_shape_3rdpos = Parameter.Real(1.0)
-kappa_3rdpos = Parameter.Real(2.0)
+mutation_rate_noncoding = Real(1.0)
+gamma_shape_noncoding = Real(1.0)
+kappa_noncoding = Real(2.0)
+mutation_rate_1stpos = Real(1.0)
+gamma_shape_1stpos = Real(1.0)
+kappa_1stpos = Real(2.0)
+mutation_rate_2ndpos = Real(1.0)
+gamma_shape_2ndpos = Real(1.0)
+kappa_2ndpos = Real(2.0)
+mutation_rate_3rdpos = Real(1.0)
+gamma_shape_3rdpos = Real(1.0)
+kappa_3rdpos = Real(2.0)
 
-population = Parameter.Real(1.0)
-birth_rate_y = Parameter.Real(1.0)
-clock_rate = Parameter.Real(1.0)
+population = Real(1.0)
+birth_rate_y = Real(1.0)
+clock_rate = Real(1.0)
 
 params = [
     mutation_rate_noncoding,
@@ -111,7 +111,7 @@ operators = [
 
 # TODO: frequencies from alignment
 sub_model = HKY((0.25, 0.25, 0.25, 0.25), kappa_noncoding)
-clock_model = StrictClock(Parameter.Real(1.0))
+clock_model = StrictClock(Real(1.0))
 likelihood = Likelihood(
     sequences=sequences,
     substitution=sub_model,

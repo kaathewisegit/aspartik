@@ -7,11 +7,11 @@ use tracing::{instrument, trace};
 use crate::{
 	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
-	parameter::PyParameter,
 	tree::PyTree,
 	PyLogger, PyPrior,
 };
 use rng::PyRng;
+use util::py_call_method;
 
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
 pub struct Mcmc {
@@ -24,7 +24,7 @@ pub struct Mcmc {
 	trees: Vec<Py<PyTree>>,
 
 	/// Current set of parameters by name.
-	params: Vec<Py<PyParameter>>,
+	params: Vec<PyObject>,
 
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
@@ -55,7 +55,7 @@ impl Mcmc {
 		length: usize,
 
 		trees: Vec<Py<PyTree>>,
-		params: Vec<Py<PyParameter>>,
+		params: Vec<PyObject>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
 		likelihoods: Vec<Py<PyLikelihood>>,
@@ -153,11 +153,11 @@ impl Mcmc {
 		})?;
 		let hastings = match proposal {
 			Proposal::Accept() => {
-				self.accept()?;
+				self.accept(py)?;
 				return Ok(());
 			}
 			Proposal::Reject() => {
-				self.reject()?;
+				self.reject(py)?;
 				return Ok(());
 			}
 			Proposal::Hastings(ratio) => ratio,
@@ -172,7 +172,7 @@ impl Mcmc {
 		let prior = self.prior(py)?;
 		// The proposal will be rejected regardless of likelihood
 		if prior == f64::NEG_INFINITY {
-			self.reject()?;
+			self.reject(py)?;
 			return Ok(());
 		}
 
@@ -200,15 +200,15 @@ impl Mcmc {
 		if ratio > random_0_1.ln() {
 			*self.posterior.lock() = new_posterior;
 
-			self.accept()?;
+			self.accept(py)?;
 		} else {
-			self.reject()?;
+			self.reject(py)?;
 		}
 
 		Ok(())
 	}
 
-	fn accept(&self) -> Result<()> {
+	fn accept(&self, py: Python) -> Result<()> {
 		trace!("accept proposal");
 
 		self.scheduler.accept();
@@ -221,14 +221,14 @@ impl Mcmc {
 			likelihood.get().inner().accept()?;
 		}
 
-		for i in 0..self.params.len() {
-			self.params[i].get().accept();
+		for parameter in &self.params {
+			py_call_method!(py, parameter, "accept")?;
 		}
 
 		Ok(())
 	}
 
-	fn reject(&self) -> Result<()> {
+	fn reject(&self, py: Python) -> Result<()> {
 		trace!("reject proposal");
 
 		self.scheduler.reject();
@@ -241,8 +241,8 @@ impl Mcmc {
 			likelihood.get().inner().reject()?;
 		}
 
-		for i in 0..self.params.len() {
-			self.params[i].get().reject();
+		for parameter in &self.params {
+			py_call_method!(py, parameter, "reject")?;
 		}
 
 		Ok(())

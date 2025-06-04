@@ -3,25 +3,25 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use crate::{parameter::PyParameter, tree::PyTree};
+use crate::tree::PyTree;
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ConstantPopulation {
 	tree: Py<PyTree>,
-	population: Py<PyParameter>,
+	population: PyObject,
 }
 
 #[pymethods]
 impl ConstantPopulation {
 	#[new]
-	fn new(tree: Py<PyTree>, population: Py<PyParameter>) -> Self {
+	fn new(tree: Py<PyTree>, population: PyObject) -> Self {
 		Self { tree, population }
 	}
 
-	fn probability(&self) -> Result<f64> {
+	fn probability(&self, py: Python) -> Result<f64> {
 		let tree = self.tree.get().inner();
-		let pop = self.population.get().one_real()?;
+		let pop = self.population.bind(py).extract::<f64>()?;
 		let mut nodes = Vec::with_capacity(tree.num_internals());
 
 		for node in tree.internals() {

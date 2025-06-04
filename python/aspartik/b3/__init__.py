@@ -3,8 +3,30 @@ from typing import Protocol, runtime_checkable
 
 from .._aspartik_rust_impl import _b3_rust_impl
 
+__all__ = [
+    # Rust
+    "Likelihood",
+    "Proposal",
+    "MCMC",
+    "Tree",
+    "Real",
+    "Integer",
+    "Boolean",
+    # Rust submodules
+    "tree",
+    # Protocols
+    "Prior",
+    "Operator",
+    "Logger",
+    # Python
+    "loggers",
+    "operators",
+    "priors",
+    "substitutions",
+]
 
-for item in ["Likelihood", "Parameter", "Proposal", "MCMC", "Tree"]:
+
+for item in __all__[:8]:
     locals()[item] = getattr(_b3_rust_impl, item)
 
 
@@ -25,27 +47,6 @@ class Logger(Protocol):
     every: int
 
     def log(self, mcmc, index): ...
-
-
-__all__ = [
-    # Rust
-    "Likelihood",
-    "Parameter",
-    "Proposal",
-    "MCMC",
-    "Tree",
-    # Rust submodules
-    "tree",
-    # Protocols
-    "Prior",
-    "Operator",
-    "Logger",
-    # Python
-    "loggers",
-    "operators",
-    "priors",
-    "substitutions",
-]
 
 
 def __dir__():

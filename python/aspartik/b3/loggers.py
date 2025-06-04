@@ -4,11 +4,12 @@ All classes here adhere to the `Logger` protocol and can be passed to the `run`
 function.
 """
 
-from dataclasses import dataclass
 from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any
 import json
 
-from . import MCMC, Tree, Parameter, Prior, Logger
+from . import MCMC, Tree, Prior, Logger
 
 
 @dataclass
@@ -48,7 +49,7 @@ class PrintLogger(Logger):
 
 @dataclass
 class ValueLogger(Logger):
-    map: Mapping[str, Parameter | Prior]
+    map: Mapping[str, Any]
     path: str
     every: int
 
@@ -58,8 +59,9 @@ class ValueLogger(Logger):
         self._priors = {}
 
         for key, item in self.map.items():
-            if isinstance(item, Parameter):
-                self._params[key] = item
+            # TODO
+            # if isinstance(item, Parameter):
+            #     self._params[key] = item
             if isinstance(item, Prior):
                 self._priors[key] = item
 

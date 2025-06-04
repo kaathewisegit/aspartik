@@ -1,8 +1,6 @@
-from typing import List, Tuple, ClassVar
 from dataclasses import dataclass
 from math import prod
-
-from . import Parameter
+from typing import List, Tuple, ClassVar, SupportsFloat
 
 
 def normalize(matrix: List[List[float]], coef: float) -> List[List[float]]:
@@ -29,14 +27,14 @@ class JC:
 @dataclass
 class K80:
     dimensions: ClassVar[int] = 4
-    kappa: Parameter
+    kappa: SupportsFloat
 
     def __post_init__(self):
         # TODO: check that kappa is a single-dimensional real
         pass
 
     def get_matrix(self):
-        k = self.kappa[0]
+        k = float(self.kappa)
         s = [
             [-2 - k, 1, k, 1],
             [1, -2 - k, 1, k],
@@ -72,7 +70,7 @@ class F81:
 class HKY:
     dimensions: ClassVar[int] = 4
     frequencies: Tuple[float, float, float, float]
-    kappa: Parameter
+    kappa: SupportsFloat
 
     def __post_init__(self):
         # XXX: what delta should this use?
@@ -80,16 +78,10 @@ class HKY:
             s = sum(self.frequencies)
             raise ValueError(f"Sum of frequencies must be 1, got {s}")
 
-        if len(self.kappa) != 1:
-            raise ValueError("Expected single-dimensional parameter")
-
-        if not self.kappa.is_real():
-            raise ValueError("Expected a real parameter")
-
         self._update_matrix()
 
     def _update_matrix(self):
-        k = self.kappa[0]
+        k = float(self.kappa)
 
         a, c, g, t = self.frequencies
         s = [
@@ -111,7 +103,7 @@ class HKY:
         self._cached_kappa = k
 
     def get_matrix(self):
-        if self.kappa[0] != self._cached_kappa:
+        if float(self.kappa) != self._cached_kappa:
             self._update_matrix()
 
         return self._cached_matrix
