@@ -6,31 +6,63 @@ def "metadata root" [] {
 	cargo metadata  --format-version 1 | from json | get workspace_root
 }
 
-export def lint [] {
-	ruff format --check
-	ruff check
+# Validate with linters and type checkers
+export def lint [
+	--rust
+	--python
+] {
+	let all = $rust == false and $python == false
+	let $rust = $rust or $all
+	let $python = $python or $all
 
-	pyright
+	if $rust {
+		cargo fmt --check
+		cargo clippy --workspace -- -D warnings
+	}
 
-	cargo fmt --check
-	cargo clippy --workspace -- -D warnings
+	if $python {
+		ruff format --check
+		ruff check
+
+		pyright
+	}
 }
 
+# Run all tests
 export def test [
-	--no-rust
-	--no-python
+	--rust
+	--python
 ] {
-	if not $no_rust {
+	let all = $rust == false and $python == false
+	let $rust = $rust or $all
+	let $python = $python or $all
+
+	if $rust {
 		cargo test --workspace --features approx,proptest
 	}
-	if not $no_python {
+	if $python {
 		pytest
 	}
 }
 
+# Runs a smoke test
 export def run [] {
 	maturin develop --release
 	timeit { python3 benches/primate.py }
+}
+
+# Run all checks
+export def check [
+	--rust
+	--python
+] {
+	let all = $rust == false and $python == false
+	let $rust = $rust or $all
+	let $python = $python or $all
+
+	lint --rust=$rust --python=$python
+	test --rust=$rust --python=$python
+	run
 }
 
 # Remove temporary files and `b3` output
