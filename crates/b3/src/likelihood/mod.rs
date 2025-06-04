@@ -63,14 +63,23 @@ impl GenericLikelihood<4> {
 		sites: Vec<Vec<Vector<f64, 4>>>,
 		tree: Py<PyTree>,
 		calculator: String,
+
+		cuda_device: usize,
+		thread_split_size: usize,
 	) -> Result<Self> {
 		let num_internals = sites[0].len() - 1;
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
 		let calculator: DynCalculator<4> = match calculator.as_str() {
 			"cpu" => Box::new(CpuLikelihood::new(sites)),
-			"thread" => Box::new(ThreadedLikelihood::new(sites)),
-			"cuda" => Box::new(CudaLikelihood::new(sites)?),
+			"thread" => Box::new(ThreadedLikelihood::new(
+				sites,
+				thread_split_size,
+			)),
+			"cuda" => Box::new(CudaLikelihood::new(
+				sites,
+				cuda_device,
+			)?),
 			_ => {
 				panic!("Unknown calculator type '{calculator}'");
 			}
@@ -211,6 +220,9 @@ impl PyLikelihood {
 	#[pyo3(signature = (
 		sequences, substitution, clock, tree,
 		calculator = String::from("cpu"),
+		*,
+		cuda_device = 0,
+		thread_split_size = 400,
 	))]
 	fn new4(
 		sequences: Vec<PyDnaSeq>,
@@ -218,6 +230,9 @@ impl PyLikelihood {
 		clock: PyClock,
 		tree: Py<PyTree>,
 		calculator: String,
+
+		cuda_device: usize,
+		thread_split_size: usize,
 	) -> Result<Self> {
 		let sequences: Vec<Vec<DnaNucleotide>> = sequences
 			.iter()
@@ -231,6 +246,8 @@ impl PyLikelihood {
 			sites,
 			tree,
 			calculator,
+			cuda_device,
+			thread_split_size,
 		)?;
 
 		let erased_likelihood =

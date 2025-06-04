@@ -73,13 +73,13 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 }
 
 impl<const N: usize> ThreadedLikelihood<N> {
-	pub fn new(sites: Vec<Vec<Row<N>>>) -> Self {
+	pub fn new(sites: Vec<Vec<Row<N>>>, thread_split_size: usize) -> Self {
 		let mut update_senders = Vec::new();
 		let mut likelihoods_receivers = Vec::new();
 		let mut accept_senders = Vec::new();
 
 		let num_sites = sites.len();
-		let num_threads = (num_sites + 399) / 400;
+		let num_threads = num_sites.div_ceil(thread_split_size);
 		let segment_len = num_sites / num_threads;
 
 		for i in 0..num_threads {

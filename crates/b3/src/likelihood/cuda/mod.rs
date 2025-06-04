@@ -136,13 +136,16 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 }
 
 impl CudaLikelihood {
-	pub fn new(leaves: Vec<Vec<Row<4>>>) -> Result<Self> {
+	pub fn new(
+		leaves: Vec<Vec<Row<4>>>,
+		cuda_device: usize,
+	) -> Result<Self> {
 		let num_sites = leaves.len();
 		let num_leaves = leaves[0].len();
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
 
-		let context = CudaContext::new(0)?;
+		let context = CudaContext::new(cuda_device)?;
 		let stream = context.default_stream();
 
 		let leaves = stream.memcpy_stod(&transpose(leaves))?;

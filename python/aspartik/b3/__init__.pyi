@@ -284,7 +284,10 @@ class MCMC:
         likelihoods: Sequence[Likelihood],
         loggers: Sequence[Logger],
         rng: RNG,
+        *,
         validate: bool = False,
+        cuda_device: int = 0,
+        thread_split_size: int = 400,
     ): ...
     def run(self) -> None: ...
     @property
