@@ -225,14 +225,14 @@ impl Tree {
 		}
 	}
 
-	pub(crate) fn accept(&mut self) {
+	pub fn accept(&mut self) {
 		self.children.accept();
 		self.parents.accept();
 		self.weights.accept();
 		self.clear_updated();
 	}
 
-	pub(crate) fn reject(&mut self) {
+	pub fn reject(&mut self) {
 		self.children.reject();
 		self.parents.reject();
 		self.weights.reject();
@@ -903,6 +903,14 @@ impl PyTree {
 
 	fn validate(&self) -> Result<()> {
 		self.inner().validate()
+	}
+
+	fn accept(&self) {
+		self.inner().accept()
+	}
+
+	fn reject(&self) {
+		self.inner().reject()
 	}
 
 	fn newick(&self) -> String {

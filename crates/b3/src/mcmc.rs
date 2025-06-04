@@ -7,7 +7,6 @@ use tracing::{instrument, trace};
 use crate::{
 	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
-	tree::PyTree,
 	PyLogger, PyPrior,
 };
 use rng::PyRng;
@@ -21,19 +20,14 @@ pub struct Mcmc {
 	burnin: usize,
 	length: usize,
 
-	trees: Vec<Py<PyTree>>,
-
 	/// Current set of parameters by name.
-	params: Vec<PyObject>,
+	state: Vec<PyObject>,
 
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
 	likelihoods: Vec<Py<PyLikelihood>>,
 	loggers: Vec<PyLogger>,
 	rng: Py<PyRng>,
-
-	// Config
-	validate: bool,
 }
 
 #[pymethods]
@@ -45,8 +39,7 @@ impl Mcmc {
 	#[new]
 	#[pyo3(signature = (
 		burnin, length,
-		trees, params, priors, operators, likelihoods, loggers, rng,
-		validate = false,
+		state, priors, operators, likelihoods, loggers, rng,
 	))]
 	fn new(
 		py: Python,
@@ -54,15 +47,12 @@ impl Mcmc {
 		burnin: usize,
 		length: usize,
 
-		trees: Vec<Py<PyTree>>,
-		params: Vec<PyObject>,
+		state: Vec<PyObject>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
 		likelihoods: Vec<Py<PyLikelihood>>,
 		loggers: Vec<PyLogger>,
 		rng: Py<PyRng>,
-
-		validate: bool,
 	) -> Result<Mcmc> {
 		let scheduler = WeightedScheduler::new(py, operators)?;
 
@@ -72,15 +62,12 @@ impl Mcmc {
 			burnin,
 			length,
 
-			trees,
-			params,
+			state,
 			priors,
 			scheduler,
 			likelihoods,
 			loggers,
 			rng,
-
-			validate,
 		})
 	}
 
@@ -163,12 +150,6 @@ impl Mcmc {
 			Proposal::Hastings(ratio) => ratio,
 		};
 
-		if self.validate {
-			for tree in &self.trees {
-				tree.get().inner().validate()?;
-			}
-		}
-
 		let prior = self.prior(py)?;
 		// The proposal will be rejected regardless of likelihood
 		if prior == f64::NEG_INFINITY {
@@ -213,15 +194,11 @@ impl Mcmc {
 
 		self.scheduler.accept();
 
-		for tree in &self.trees {
-			tree.get().inner().accept();
-		}
-
 		for likelihood in &self.likelihoods {
 			likelihood.get().inner().accept()?;
 		}
 
-		for parameter in &self.params {
+		for parameter in &self.state {
 			py_call_method!(py, parameter, "accept")?;
 		}
 
@@ -233,15 +210,11 @@ impl Mcmc {
 
 		self.scheduler.reject();
 
-		for tree in &self.trees {
-			tree.get().inner().reject();
-		}
-
 		for likelihood in &self.likelihoods {
 			likelihood.get().inner().reject()?;
 		}
 
-		for parameter in &self.params {
+		for parameter in &self.state {
 			py_call_method!(py, parameter, "reject")?;
 		}
 

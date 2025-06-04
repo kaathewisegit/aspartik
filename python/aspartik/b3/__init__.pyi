@@ -19,7 +19,7 @@ class tree: ...
 
 __all__: List[str]
 
-class Tree:
+class Tree(Stateful):
     """A phylogenetic tree
 
     Unlike in BEAST2, `Tree` is a self-contained typed which all of the
@@ -176,7 +176,7 @@ class Proposal:
     def Accept(cls) -> Proposal:
         """Accepts the move unconditionally"""
 
-class Real:
+class Real(Stateful):
     def __init__(self, *values: float): ...
     def __len__(self) -> int: ...
     def __getitem__(self, index: int) -> float: ...
@@ -190,7 +190,7 @@ class Real:
     def __gt__(self, other: float) -> bool: ...
     def __ge__(self, other: float) -> bool: ...
 
-class Integer:
+class Integer(Stateful):
     def __init__(self, *values: int): ...
     def __len__(self) -> int: ...
     def __getitem__(self, index: int) -> int: ...
@@ -204,7 +204,7 @@ class Integer:
     def __gt__(self, other: int) -> bool: ...
     def __ge__(self, other: int) -> bool: ...
 
-class Boolean:
+class Boolean(Stateful):
     def __init__(self, *values: bool): ...
     def __len__(self) -> int: ...
     def __getitem__(self, index: int) -> bool: ...
@@ -262,6 +262,10 @@ class Operator(Protocol):
         still be used.
         """
 
+class Stateful(Protocol):
+    def accept(self) -> None: ...
+    def reject(self) -> None: ...
+
 class Logger(Protocol):
     every: int
     """How often a logger should be called
@@ -282,8 +286,7 @@ class MCMC:
         self,
         burnin: int,
         length: int,
-        trees: Sequence[Tree],
-        params: Sequence[Parameter],
+        state: Sequence[Stateful],
         priors: Sequence[Prior],
         operators: Sequence[Operator],
         likelihoods: Sequence[Likelihood],
