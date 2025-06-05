@@ -70,11 +70,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		builder.arg(&self.likelihoods);
 
 		// TODO: safety
-		let events = unsafe { builder.launch(self.cfg) }?;
-		if let Some((left, right)) = events {
-			self.stream.wait(&left)?;
-			self.stream.wait(&right)?;
-		}
+		unsafe { builder.launch(self.cfg) }?;
 
 		let likelihoods = self.stream.memcpy_dtov(&self.likelihoods)?;
 
@@ -97,11 +93,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		builder.arg(&self.updated_edges);
 
 		// TODO: safety
-		let events = unsafe { builder.launch(self.cfg) }?;
-		if let Some((left, right)) = events {
-			self.stream.wait(&left)?;
-			self.stream.wait(&right)?;
-		}
+		unsafe { builder.launch(self.cfg) }?;
 
 		self.num_updated_nodes = 0;
 
@@ -124,11 +116,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		builder.arg(&self.updated_edges);
 
 		// TODO: safety
-		let events = unsafe { builder.launch(self.cfg) }?;
-		if let Some((left, right)) = events {
-			self.stream.wait(&left)?;
-			self.stream.wait(&right)?;
-		}
+		unsafe { builder.launch(self.cfg) }?;
 
 		self.num_updated_nodes = 0;
 
@@ -148,6 +136,10 @@ impl CudaLikelihood {
 
 		let context = CudaContext::new(cuda_device)?;
 		let stream = context.default_stream();
+
+		// SAFETY: CudaLikelihood only uses a single stream, so there's
+		// no need for cross-stream synchronization
+		unsafe { context.disable_event_tracking() };
 
 		let leaves = stream.memcpy_stod(&transpose(leaves))?;
 		let projections: CudaSlice<Row<4>> =
