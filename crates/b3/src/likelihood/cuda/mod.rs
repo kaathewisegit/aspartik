@@ -24,10 +24,13 @@ pub struct CudaLikelihood {
 	projections: CudaSlice<Row<4>>,
 	projections_backup: CudaSlice<Row<4>>,
 	likelihoods: CudaSlice<f64>,
+	host_likelihoods: Vec<f64>,
 	updated_edges: CudaSlice<u32>,
+	transitions: CudaSlice<Transition<4>>,
+	nodes: CudaSlice<u32>,
 
-	num_edges: u32,
 	num_sites: u32,
+	num_leaves: u32,
 	num_updated_nodes: u32,
 }
 
@@ -46,24 +49,27 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		let edges: Vec<_> = edges.iter().map(|e| *e as u32).collect();
 
 		self.num_updated_nodes = nodes.len() as u32;
-		let nodes = self.stream.memcpy_stod(&nodes)?;
+
 		self.stream.memcpy_htod(&edges, &mut self.updated_edges)?;
-		let transitions = self.stream.memcpy_stod(transitions)?;
+		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
+		self.stream
+			.memcpy_htod(transitions, &mut self.transitions)?;
+
 		let cutoff = cutoff as u32;
 		let root = root as u32;
 
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
 
-		builder.arg(&self.num_edges);
 		builder.arg(&self.num_sites);
+		builder.arg(&self.num_leaves);
 
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
 
 		builder.arg(&self.num_updated_nodes);
-		builder.arg(&nodes);
+		builder.arg(&self.nodes);
 		builder.arg(&self.updated_edges);
-		builder.arg(&transitions);
+		builder.arg(&self.transitions);
 		builder.arg(&cutoff);
 		builder.arg(&root);
 
@@ -72,9 +78,12 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		// TODO: safety
 		unsafe { builder.launch(self.cfg) }?;
 
-		let likelihoods = self.stream.memcpy_dtov(&self.likelihoods)?;
+		self.stream.memcpy_dtoh(
+			&self.likelihoods,
+			&mut self.host_likelihoods,
+		)?;
 
-		Ok(likelihoods.into_iter().map(|l| l.ln()).sum())
+		Ok(self.host_likelihoods.iter().sum())
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -132,6 +141,7 @@ impl CudaLikelihood {
 		let num_sites = leaves.len();
 		let num_leaves = leaves[0].len();
 		let num_internals = num_leaves - 1;
+		let num_nodes = num_leaves + num_internals;
 		let num_edges = num_internals * 2;
 
 		let context = CudaContext::new(cuda_device)?;
@@ -150,6 +160,8 @@ impl CudaLikelihood {
 		let likelihoods: CudaSlice<f64> =
 			stream.alloc_zeros(num_sites)?;
 		let updated_edges = stream.alloc_zeros(num_edges)?;
+		let transitions = stream.alloc_zeros(num_edges)?;
+		let nodes = stream.alloc_zeros(num_nodes)?;
 
 		let ptx = compile_ptx(CUDA_MODULE)?;
 		let module = context.load_module(ptx)?;
@@ -176,11 +188,15 @@ impl CudaLikelihood {
 			projections,
 			projections_backup,
 			likelihoods,
+			host_likelihoods: vec![0.0; num_sites],
 			updated_edges,
+			transitions,
+			nodes,
+
+			num_sites: num_sites as u32,
+			num_leaves: num_leaves as u32,
 
 			num_updated_nodes: 0,
-			num_edges: num_edges as u32,
-			num_sites: num_sites as u32,
 		})
 	}
 }

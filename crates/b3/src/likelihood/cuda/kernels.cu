@@ -1,6 +1,10 @@
 typedef unsigned char byte;
 typedef unsigned int uint;
 
+typedef struct {
+	double4 a, c, g, t;
+} Transition;
+
 __device__ double dot(const double4 a, const double4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
@@ -14,15 +18,15 @@ __device__ double4 hadamard(const double4 a, const double4 b) {
 	);
 }
 
-__device__ double4 mat_aplly(
-	const double4* __restrict__ matrix,
+__device__ double4 apply(
+	const Transition transition,
 	const double4 vector
 ) {
 	return make_double4(
-		dot(matrix[0], vector),
-		dot(matrix[1], vector),
-		dot(matrix[2], vector),
-		dot(matrix[3], vector)
+		dot(transition.a, vector),
+		dot(transition.c, vector),
+		dot(transition.g, vector),
+		dot(transition.t, vector)
 	);
 }
 
@@ -30,8 +34,8 @@ __device__ double4 mat_aplly(
 	((edge) * num_sites + site)
 
 extern "C" __global__ void propose(
-	const uint num_edges,
 	const uint num_sites,
+	const uint num_leaves,
 
 	const double4* __restrict__ leaves,
 	double4* __restrict__ projections,
@@ -39,7 +43,7 @@ extern "C" __global__ void propose(
 	const uint num_updated_nodes,
 	const uint* __restrict__ nodes,
 	const uint* __restrict__ edges,
-	const double4* __restrict__ transitions,
+	const Transition* __restrict__ transitions,
 	const uint cutoff,
 	const uint root,
 	double* __restrict__ likelihoods
@@ -48,11 +52,10 @@ extern "C" __global__ void propose(
 	if (site >= num_sites) {
 		return;
 	}
-	uint num_leaves = (num_edges / 2) + 1;
 
 	for (uint i = 0; i < cutoff; i++) {
-		double4 projection = mat_aplly(
-			transitions + i * 4,
+		double4 projection = apply(
+			transitions[i],
 			leaves[nodes[i] * num_sites + site]
 		);
 
@@ -68,8 +71,8 @@ extern "C" __global__ void propose(
 			projections[idx(right_edge)]
 		);
 
-		double4 projection = mat_aplly(
-			transitions + i * 4,
+		double4 projection = apply(
+			transitions[i],
 			likelihood
 		);
 
@@ -85,7 +88,7 @@ extern "C" __global__ void propose(
 	);
 
 	double sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
-	likelihoods[site] = sum;
+	likelihoods[site] = log(sum);
 }
 
 extern "C"  __global__ void reject(
