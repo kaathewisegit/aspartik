@@ -1,6 +1,7 @@
 use anyhow::Result;
 
 use super::{LikelihoodTrait, Row, Transition};
+use crate::util::transpose;
 use skvec::{skvec, SkVec};
 
 pub struct CpuLikelihood<const N: usize> {
@@ -9,7 +10,6 @@ pub struct CpuLikelihood<const N: usize> {
 
 	num_sites: usize,
 	num_leaves: usize,
-	num_edges: usize,
 
 	updated_edges: Vec<usize>,
 }
@@ -30,47 +30,61 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 
 		let num_sites = self.num_sites;
 		let num_leaves = self.num_leaves;
-		let num_edges = self.num_edges;
 
-		for site in 0..num_sites {
-			let offset = site * num_edges;
-			let leaves_offset = site * num_leaves;
+		for i in 0..cuttoff {
+			let transition = transitions[i];
 
-			for i in 0..cuttoff {
-				let projection = transitions[i]
-					* self.leaves[leaves_offset + nodes[i]];
+			let edge = edges[i];
+			let edge_idx = edge * num_sites;
+
+			let leaf = nodes[i];
+			let leaf_idx = leaf * num_sites;
+
+			for site in 0..num_sites {
+				let leaf = self.leaves[leaf_idx + site];
+				let projection = transition * leaf;
 
 				self.projections
-					.set(offset + edges[i], projection);
+					.set(edge_idx + site, projection);
 			}
 		}
 
-		for site in 0..num_sites {
-			let offset = site * num_edges;
+		for i in cuttoff..nodes.len() {
+			let transition = transitions[i];
+			let node = nodes[i];
 
-			for i in cuttoff..nodes.len() {
-				let left_idx =
-					offset + (nodes[i] - num_leaves) * 2;
-				let right_idx = left_idx + 1;
-				let left = self.projections[left_idx];
-				let right = self.projections[right_idx];
+			let edge = edges[i];
+			let edge_idx = edge * num_sites;
+
+			let left_edge = (node - num_leaves) * 2;
+			let right_edge = left_edge + 1;
+
+			let left_idx = left_edge * num_sites;
+			let right_idx = right_edge * num_sites;
+
+			for site in 0..num_sites {
+				let left = self.projections[left_idx + site];
+				let right = self.projections[right_idx + site];
 
 				let likelihood = left * right;
-				let projection = transitions[i] * likelihood;
+				let projection = transition * likelihood;
 
 				self.projections
-					.set(offset + edges[i], projection);
+					.set(edge_idx + site, projection);
 			}
 		}
 
 		let mut out = 0.0;
-		let root_left = (root - num_leaves) * 2;
-		let root_right = root_left + 1;
-		for i in 0..num_sites {
-			let offset = i * num_edges;
 
-			let left = self.projections[offset + root_left];
-			let right = self.projections[offset + root_right];
+		let root_left_edge = (root - num_leaves) * 2;
+		let root_right_edge = root_left_edge + 1;
+
+		let root_left_idx = root_left_edge * num_sites;
+		let root_right_idx = root_right_edge * num_sites;
+
+		for site in 0..num_sites {
+			let left = self.projections[root_left_idx + site];
+			let right = self.projections[root_right_idx + site];
 			let likelihood = left * right;
 			let log_sum = likelihood.sum().ln();
 			out += log_sum;
@@ -86,13 +100,16 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 
 	fn reject(&mut self) -> Result<()> {
 		let edges = std::mem::take(&mut self.updated_edges);
+		let num_sites = self.num_sites;
 
-		for i in 0..self.num_sites {
-			let offset = i * self.num_edges;
-			for edge in &edges {
-				self.projections.reject_element(*edge + offset);
+		for edge in &edges {
+			let edge_offset = edge * num_sites;
+			for site in 0..num_sites {
+				self.projections
+					.reject_element(edge_offset + site);
 			}
 		}
+
 		// All of the edited items have been manually unset, so
 		// there's no need for `accept` or `reject`.
 
@@ -107,7 +124,7 @@ impl<const N: usize> CpuLikelihood<N> {
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
 
-		let leaves = leaves.concat();
+		let leaves = transpose(leaves);
 
 		let projections = skvec![Row::default(); num_edges * num_sites];
 
@@ -117,7 +134,6 @@ impl<const N: usize> CpuLikelihood<N> {
 
 			num_sites,
 			num_leaves,
-			num_edges,
 
 			updated_edges: Vec::new(),
 		}

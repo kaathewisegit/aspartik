@@ -135,3 +135,19 @@ pub fn slices_iter(key: Bound<PyAny>, length: usize) -> Result<SlicesIter> {
 		curr_index: start,
 	})
 }
+
+pub fn transpose<const N: usize>(leaves: Vec<Vec<Row<N>>>) -> Vec<Row<N>> {
+	let num_sites = leaves.len();
+	let num_edges = leaves[0].len();
+
+	let mut out = Vec::with_capacity(num_sites * num_edges);
+
+	for edge in 0..num_edges {
+		#[expect(clippy::needless_range_loop)]
+		for site in 0..num_sites {
+			out.push(leaves[site][edge]);
+		}
+	}
+
+	out
+}
