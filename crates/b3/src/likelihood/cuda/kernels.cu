@@ -30,6 +30,31 @@ __device__ double4 apply(
 	);
 }
 
+extern "C" __global__ void update_leaves(
+	const uint num_sites,
+
+	const uint* __restrict__ edges,
+	const uint* __restrict__ nodes,
+	const Transition* __restrict__ transitions,
+
+	const double4* __restrict__ leaves,
+	double4* __restrict__ projections
+) {
+	uint site = threadIdx.x;
+	uint i = blockIdx.x;
+
+	uint edge = edges[i];
+	uint leaf_idx = nodes[i];
+	Transition transition = transitions[i];
+
+	uint leaf_offset = leaf_idx * num_sites;
+	uint edge_offset = edge * num_sites;
+
+	double4 leaf = leaves[leaf_offset + site];
+	double4 projection = apply(transition, leaf);
+	projections[edge_offset + site] = projection;
+}
+
 #define idx(edge) \
 	((edge) * num_sites + site)
 
@@ -53,13 +78,15 @@ extern "C" __global__ void propose(
 		return;
 	}
 
-	for (uint i = 0; i < cutoff; i++) {
-		double4 projection = apply(
-			transitions[i],
-			leaves[nodes[i] * num_sites + site]
-		);
+	if (cutoff > 10) {
+		for (uint i = 0; i < cutoff; i++) {
+			double4 projection = apply(
+				transitions[i],
+				leaves[nodes[i] * num_sites + site]
+			);
 
-		projections[idx(edges[i])] = projection;
+			projections[idx(edges[i])] = projection;
+		}
 	}
 
 	for (uint i = cutoff; i < num_updated_nodes; i++) {

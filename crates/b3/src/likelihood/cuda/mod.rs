@@ -19,6 +19,7 @@ pub struct CudaLikelihood {
 	propose_fn: CudaFunction,
 	accept_fn: CudaFunction,
 	reject_fn: CudaFunction,
+	update_leaves_fn: CudaFunction,
 
 	leaves: CudaSlice<Row<4>>,
 	projections: CudaSlice<Row<4>>,
@@ -57,6 +58,30 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 
 		let cutoff = cutoff as u32;
 		let root = root as u32;
+
+		if cutoff > 10 {
+			let mut builder = self
+				.stream
+				.launch_builder(&self.update_leaves_fn);
+
+			let cfg = LaunchConfig {
+				grid_dim: (cutoff, 1, 1),
+				block_dim: (self.num_sites, 1, 1),
+				shared_mem_bytes: 0,
+			};
+
+			builder.arg(&self.num_sites);
+
+			builder.arg(&self.updated_edges);
+			builder.arg(&self.nodes);
+			builder.arg(&self.transitions);
+
+			builder.arg(&self.leaves);
+			builder.arg(&self.projections);
+
+			// TODO: safety
+			unsafe { builder.launch(cfg) }?;
+		}
 
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
 
@@ -168,6 +193,7 @@ impl CudaLikelihood {
 		let propose_fn = module.load_function("propose")?;
 		let accept_fn = module.load_function("accept")?;
 		let reject_fn = module.load_function("reject")?;
+		let update_leaves_fn = module.load_function("update_leaves")?;
 
 		const SIZE: u32 = 32;
 		let cfg = LaunchConfig {
@@ -183,6 +209,7 @@ impl CudaLikelihood {
 			propose_fn,
 			accept_fn,
 			reject_fn,
+			update_leaves_fn,
 
 			leaves,
 			projections,
