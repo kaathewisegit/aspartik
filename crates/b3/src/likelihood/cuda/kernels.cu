@@ -40,8 +40,11 @@ extern "C" __global__ void update_leaves(
 	const double4* __restrict__ leaves,
 	double4* __restrict__ projections
 ) {
-	uint site = threadIdx.x;
-	uint i = blockIdx.x;
+	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	if (site > num_sites) {
+		return;
+	}
+	uint i = blockIdx.y;
 
 	uint edge = edges[i];
 	uint leaf_idx = nodes[i];

@@ -37,13 +37,15 @@ pub struct CudaLikelihood {
 
 const CUDA_MODULE: &str = include_str!("kernels.cu");
 
+const BIG_BLOCK_SIZE: u32 = 128;
+
 impl LikelihoodTrait<4> for CudaLikelihood {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
 		transitions: &[Transition<4>],
-		cutoff: usize,
+		leaves_end: usize,
 		root: usize,
 	) -> Result<f64> {
 		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
@@ -56,31 +58,11 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		self.stream
 			.memcpy_htod(transitions, &mut self.transitions)?;
 
-		let cutoff = cutoff as u32;
+		let leaves_end = leaves_end as u32;
 		let root = root as u32;
 
-		if cutoff > 10 {
-			let mut builder = self
-				.stream
-				.launch_builder(&self.update_leaves_fn);
-
-			let cfg = LaunchConfig {
-				grid_dim: (cutoff, 1, 1),
-				block_dim: (self.num_sites, 1, 1),
-				shared_mem_bytes: 0,
-			};
-
-			builder.arg(&self.num_sites);
-
-			builder.arg(&self.updated_edges);
-			builder.arg(&self.nodes);
-			builder.arg(&self.transitions);
-
-			builder.arg(&self.leaves);
-			builder.arg(&self.projections);
-
-			// TODO: safety
-			unsafe { builder.launch(cfg) }?;
+		if leaves_end > 10 {
+			self.update_leaves(leaves_end)?;
 		}
 
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
@@ -95,7 +77,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		builder.arg(&self.nodes);
 		builder.arg(&self.updated_edges);
 		builder.arg(&self.transitions);
-		builder.arg(&cutoff);
+		builder.arg(&leaves_end);
 		builder.arg(&root);
 
 		builder.arg(&self.likelihoods);
@@ -159,6 +141,33 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 }
 
 impl CudaLikelihood {
+	fn update_leaves(&self, leaves_end: u32) -> Result<()> {
+		let mut builder =
+			self.stream.launch_builder(&self.update_leaves_fn);
+
+		let num_site_groups = self.num_sites.div_ceil(BIG_BLOCK_SIZE);
+
+		let cfg = LaunchConfig {
+			grid_dim: (num_site_groups, leaves_end, 1),
+			block_dim: (BIG_BLOCK_SIZE, 1, 1),
+			shared_mem_bytes: 0,
+		};
+
+		builder.arg(&self.num_sites);
+
+		builder.arg(&self.updated_edges);
+		builder.arg(&self.nodes);
+		builder.arg(&self.transitions);
+
+		builder.arg(&self.leaves);
+		builder.arg(&self.projections);
+
+		// TODO: safety
+		unsafe { builder.launch(cfg) }?;
+
+		Ok(())
+	}
+
 	pub fn new(
 		leaves: Vec<Vec<Row<4>>>,
 		cuda_device: usize,
