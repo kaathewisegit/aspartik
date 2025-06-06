@@ -105,7 +105,7 @@ impl GenericLikelihood<4> {
 impl<const N: usize> GenericLikelihood<N> {
 	#[instrument(skip_all)]
 	fn propose(&mut self, py: Python) -> Result<f64> {
-		let tree = &self.tree.get().inner();
+		let tree = &mut self.tree.get().inner();
 		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let rate = self.clock.get_rate(py)?;
 		let full_update = self.transitions.update(

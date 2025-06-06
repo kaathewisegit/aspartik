@@ -33,7 +33,9 @@ pub struct Tree {
 	weights: SkVec<f64>,
 
 	updated_edges: Vec<usize>,
-	updated_nodes: Vec<Node>,
+	/// An array of length num_nodes, where `true` means that the node has
+	/// been updated.
+	updated_nodes: Box<[bool]>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -90,6 +92,12 @@ impl From<Leaf> for Node {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[pyclass(frozen, module = "aspartik.b3.tree")]
 pub struct Internal(usize);
+
+impl Internal {
+	fn into_node(self) -> Node {
+		self.into()
+	}
+}
 
 #[pymethods]
 impl Internal {
@@ -220,7 +228,7 @@ impl Tree {
 			weights: weights.into(),
 
 			updated_edges: Vec::new(),
-			updated_nodes: Vec::new(),
+			updated_nodes: vec![false; num_nodes].into(),
 		}
 	}
 
@@ -240,79 +248,79 @@ impl Tree {
 
 	fn clear_updated(&mut self) {
 		self.updated_edges.clear();
-		self.updated_nodes.clear();
+		for node_status in &mut self.updated_nodes {
+			*node_status = false;
+		}
 	}
 
 	pub fn edges_to_update(&self) -> Vec<usize> {
 		self.updated_edges.clone()
 	}
 
-	pub fn nodes_to_update(&self) -> Vec<Node> {
-		use hashbrown::HashMap;
+	#[allow(unused)]
+	pub fn nodes_to_update(&mut self) -> Vec<Node> {
+		let mut out = Vec::<Node>::with_capacity(self.num_nodes());
 
-		let mut leaves = Vec::new();
-		let mut set = HashMap::<Node, Reverse<usize>>::with_capacity(
-			self.updated_nodes.len(),
-		);
-		// Reused between iterations to avoid repeated allocations
-		let mut chain = Vec::<Node>::new();
-
-		for node in &self.updated_nodes {
-			chain.clear();
-			let mut curr = *node;
-
-			// if curr is a leaf, add it to leaves and set curr to
-			// the parent
-			if self.is_leaf(curr) {
-				leaves.push(curr);
-				// it's fine to `unwrap` since we know that curr
-				// is a leaf
-				curr = self.parent_of(curr).unwrap().into();
-			}
-
-			let mut final_rank: usize = 0;
-
-			// Walk up from the starting nodes until the root, stop
-			// when we encounter a node we have already walked.
-			loop {
-				if set.contains_key(&curr) {
-					// this node is not root, so we must've
-					// visited it and added it at some
-					// point.
-					final_rank = set[&curr].0 + 1;
-					break;
-				}
-
-				set.insert(curr, Reverse(0));
-				chain.push(curr);
-
-				if let Some(parent) = self.parent_of(curr) {
+		// For each updated node go upwards in the tree until root and
+		// mark nodes as updated
+		for node in (0..self.num_nodes()).map(Node) {
+			if self.updated_nodes[node.0] {
+				let mut curr = node;
+				while let Some(parent) = self.parent_of(curr) {
+					// return early when we find an already
+					// visited node to avoid wasting time on
+					// already checked paths
+					if self.updated_nodes[parent.0] {
+						break;
+					}
+					self.mark_updated(parent);
 					curr = parent.into();
-				} else {
-					break;
 				}
 			}
+		}
 
-			for node in chain.iter_mut().rev() {
-				set.insert(*node, Reverse(final_rank));
-				final_rank += 1;
+		// Updated leaves, in order
+		for i in 0..self.num_leaves() {
+			if self.updated_nodes[i] {
+				out.push(Node(i));
 			}
 		}
 
-		// remove root
-		set.remove::<Node>(&self.root().into());
-		let mut internals = Vec::with_capacity(set.len());
-		for (node, rank) in set.into_iter() {
-			internals.push((rank, node));
+		// current rank
+		let mut current = Vec::from([self.root()]);
+		// next rank
+		let mut next = Vec::<Internal>::new();
+		// collects nodes for output
+		let mut internals = Vec::<Node>::new();
+
+		while !current.is_empty() {
+			// For each rank we fill out the next rank with internal
+			// nodes.  When there are no more ranks the updated
+			// `current` will be empty and the iteration will stop
+			for node in current.iter().copied() {
+				let (left, right) = self.children_of(node);
+
+				if let Some(left) = self.as_internal(left) {
+					if self.updated_nodes[left.0] {
+						next.push(left);
+					}
+				}
+				if let Some(right) = self.as_internal(right) {
+					if self.updated_nodes[right.0] {
+						next.push(right);
+					}
+				}
+			}
+			internals.extend(current.iter().map(|n| n.into_node()));
+			current = std::mem::take(&mut next);
 		}
 
-		internals.sort_unstable();
+		internals.reverse();
+		// remove root
+		internals.pop();
+		out.append(&mut internals);
 
-		leaves.sort_unstable();
-		leaves.dedup();
-
-		leaves.extend(internals.into_iter().map(|(_, node)| node));
-		leaves
+		out
 	}
 
 	/// A breadth-first order of internals starting from the root.
@@ -358,6 +366,10 @@ impl Tree {
 		(out_nodes, edges, root)
 	}
 
+	fn mark_updated<N: Into<Node>>(&mut self, node: N) {
+		self.updated_nodes[node.into().0] = true;
+	}
+
 	/// Overwrites the child of `edge` with `new_child`.  Only `edge` and
 	/// `new_child` changes are recorded, it is presumed that the operator
 	/// will call another method for the old child and `new_child`'s parent
@@ -373,14 +385,14 @@ impl Tree {
 		// `parent` is now the parent of `new_child`, so it'll
 		// be updated.  The operator must handle the old node
 		// separately.
-		self.updated_nodes.push(new_child);
+		self.mark_updated(new_child);
 	}
 
 	/// Sets the weight of `node`, recording it and it's parent and child
 	/// edges (if it has those).
 	pub fn update_weight(&mut self, node: Node, weight: f64) {
 		self.weights.set(node.0, weight);
-		self.updated_nodes.push(node);
+		self.mark_updated(node);
 
 		if self.parent_of(node).is_some() {
 			self.updated_edges.push(self.edge_index(node));
@@ -390,8 +402,8 @@ impl Tree {
 			self.updated_edges.push(self.edge_index(left));
 			self.updated_edges.push(self.edge_index(right));
 
-			self.updated_nodes.push(left);
-			self.updated_nodes.push(right);
+			self.mark_updated(left);
+			self.mark_updated(right);
 		}
 	}
 
