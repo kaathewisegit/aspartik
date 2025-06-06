@@ -33,6 +33,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 
 	m.add_class::<builtin::priors::Yule>()?;
 	m.add_class::<builtin::priors::ConstantPopulation>()?;
+	m.add_class::<builtin::operators::TreeScale>()?;
 
 	Ok(m)
 }

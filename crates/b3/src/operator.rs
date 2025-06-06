@@ -22,6 +22,12 @@ pub enum Proposal {
 #[pyclass(module = "aspartik.b3", name = "Proposal", frozen)]
 pub struct PyProposal(Proposal);
 
+impl From<Proposal> for PyProposal {
+	fn from(value: Proposal) -> PyProposal {
+		PyProposal(value)
+	}
+}
+
 #[pymethods]
 impl PyProposal {
 	#[classmethod]

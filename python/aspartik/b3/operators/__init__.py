@@ -1,21 +1,24 @@
-from ._param_scale import ParamScale as ParamScale
 from ._tree_exchange import (
     NarrowExchange as NarrowExchange,
     WideExchange as WideExchange,
 )
-from ._tree_scale import TreeScale as TreeScale
-from ._epoch_scale import EpochScale as EpochScale
-from ._root_scale import RootScale as RootScale
-from ._node_slide import NodeSlide as NodeSlide
 from ._delta_exchange import DeltaExchange as DeltaExchange
+from ._epoch_scale import EpochScale as EpochScale
+from ._node_slide import NodeSlide as NodeSlide
+from ._param_scale import ParamScale as ParamScale
 from ._wilson_balding import WilsonBalding as WilsonBalding
 
+
+from ..._aspartik_rust_impl import _b3_rust_impl
+
+TreeScale = _b3_rust_impl.TreeScale
+
+
 __all__ = [
-    "ParamScale",
-    "NarrowExchange",
-    "WideExchange",
-    "TreeScale",
-    "RootScale",
-    "NodeSlide",
     "DeltaExchange",
+    "NarrowExchange",
+    "NodeSlide",
+    "ParamScale",
+    "TreeScale",
+    "WideExchange",
 ]

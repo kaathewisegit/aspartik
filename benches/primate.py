@@ -4,7 +4,6 @@ from aspartik.b3.operators import (
     ParamScale,
     EpochScale,
     TreeScale,
-    RootScale,
     NarrowExchange,
     WideExchange,
     NodeSlide,
@@ -91,7 +90,6 @@ operators = [
     WideExchange(tree, rng, weight=3.0),
     WilsonBalding(tree, rng, weight=3.0),
     NodeSlide(tree, Uniform(0, 1), rng, weight=15.0),
-    RootScale(tree, 0.9, Uniform(0, 1), rng, weight=3.0),
     TreeScale(tree, 0.9, Uniform(0, 1), rng, weight=2.0),
     DeltaExchange(
         params=[
