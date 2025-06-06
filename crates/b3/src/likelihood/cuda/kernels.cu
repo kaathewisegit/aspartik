@@ -41,7 +41,7 @@ extern "C" __global__ void update_leaves(
 	double4* __restrict__ projections
 ) {
 	uint site = blockIdx.x * blockDim.x + threadIdx.x;
-	if (site > num_sites) {
+	if (site >= num_sites) {
 		return;
 	}
 	uint i = blockIdx.y;
@@ -121,26 +121,6 @@ extern "C" __global__ void propose(
 	likelihoods[site] = log(sum);
 }
 
-extern "C"  __global__ void reject(
-	const uint num_sites,
-
-	double4* __restrict__ projections,
-	const double4* __restrict__ projections_backup,
-
-	const uint num_updated_nodes,
-	const uint* __restrict__ edges
-) {
-	uint site = blockIdx.x * blockDim.x + threadIdx.x;
-	if (site >= num_sites) {
-		return;
-	}
-
-	for (uint i = 0; i < num_updated_nodes; i++) {
-		uint proj_idx = idx(edges[i]);
-		projections[proj_idx] = projections_backup[proj_idx];
-	}
-}
-
 extern "C"  __global__ void accept(
 	const uint num_sites,
 
@@ -154,9 +134,27 @@ extern "C"  __global__ void accept(
 	if (site >= num_sites) {
 		return;
 	}
+	uint i = blockIdx.y;
 
-	for (uint i = 0; i < num_updated_nodes; i++) {
-		uint proj_idx = idx(edges[i]);
-		projections_backup[proj_idx] = projections[proj_idx];
+	uint proj_idx = idx(edges[i]);
+	projections_backup[proj_idx] = projections[proj_idx];
+}
+
+extern "C"  __global__ void reject(
+	const uint num_sites,
+
+	double4* __restrict__ projections,
+	const double4* __restrict__ projections_backup,
+
+	const uint num_updated_nodes,
+	const uint* __restrict__ edges
+) {
+	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	if (site >= num_sites) {
+		return;
 	}
+	uint i = blockIdx.y;
+
+	uint proj_idx = idx(edges[i]);
+	projections[proj_idx] = projections_backup[proj_idx];
 }

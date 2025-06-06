@@ -94,49 +94,11 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 	}
 
 	fn accept(&mut self) -> Result<()> {
-		if self.num_updated_nodes == 0 {
-			return Ok(());
-		}
-
-		let mut builder = self.stream.launch_builder(&self.accept_fn);
-
-		builder.arg(&self.num_sites);
-
-		builder.arg(&self.projections);
-		builder.arg(&self.projections_backup);
-
-		builder.arg(&self.num_updated_nodes);
-		builder.arg(&self.updated_edges);
-
-		// TODO: safety
-		unsafe { builder.launch(self.cfg) }?;
-
-		self.num_updated_nodes = 0;
-
-		Ok(())
+		self.projections_copy(true)
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		if self.num_updated_nodes == 0 {
-			return Ok(());
-		}
-
-		let mut builder = self.stream.launch_builder(&self.reject_fn);
-
-		builder.arg(&self.num_sites);
-
-		builder.arg(&self.projections);
-		builder.arg(&self.projections_backup);
-
-		builder.arg(&self.num_updated_nodes);
-		builder.arg(&self.updated_edges);
-
-		// TODO: safety
-		unsafe { builder.launch(self.cfg) }?;
-
-		self.num_updated_nodes = 0;
-
-		Ok(())
+		self.projections_copy(false)
 	}
 }
 
@@ -164,6 +126,46 @@ impl CudaLikelihood {
 
 		// TODO: safety
 		unsafe { builder.launch(cfg) }?;
+
+		Ok(())
+	}
+
+	/// Applies a copy function to all of the updated edges.
+	///
+	/// This is an abstraction which unifies `accept` and `reject`, since
+	/// they are basically the same.
+	fn projections_copy(&mut self, accept: bool) -> Result<()> {
+		if self.num_updated_nodes == 0 {
+			return Ok(());
+		}
+
+		let num_site_groups = self.num_sites.div_ceil(BIG_BLOCK_SIZE);
+
+		let cfg = LaunchConfig {
+			grid_dim: (num_site_groups, self.num_updated_nodes, 1),
+			block_dim: (BIG_BLOCK_SIZE, 1, 1),
+			shared_mem_bytes: 0,
+		};
+
+		let func = if accept {
+			&self.accept_fn
+		} else {
+			&self.reject_fn
+		};
+		let mut builder = self.stream.launch_builder(func);
+
+		builder.arg(&self.num_sites);
+
+		builder.arg(&self.projections);
+		builder.arg(&self.projections_backup);
+
+		builder.arg(&self.num_updated_nodes);
+		builder.arg(&self.updated_edges);
+
+		// TODO: safety
+		unsafe { builder.launch(cfg) }?;
+
+		self.num_updated_nodes = 0;
 
 		Ok(())
 	}
