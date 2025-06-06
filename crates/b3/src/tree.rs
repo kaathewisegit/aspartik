@@ -15,7 +15,6 @@ use std::{
 	collections::{BinaryHeap, VecDeque},
 };
 
-use bitmap::Bitmap;
 use io::newick::{
 	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
 };
@@ -249,29 +248,40 @@ impl Tree {
 	}
 
 	pub fn nodes_to_update(&self) -> Vec<Node> {
-		let mut deq = VecDeque::<Node>::with_capacity(
+		use hashbrown::HashMap;
+
+		let mut leaves = Vec::new();
+		let mut set = HashMap::<Node, Reverse<usize>>::with_capacity(
 			self.updated_nodes.len(),
 		);
-		let mut leaves = Vec::new();
-		let mut set = Bitmap::new(self.num_nodes());
 
 		for node in &self.updated_nodes {
-			let mut chain = Vec::new();
+			let mut chain = Vec::<Node>::new();
 			let mut curr = *node;
 
+			// if curr is a leaf, add it to leaves and set curr to
+			// the parent
 			if self.is_leaf(curr) {
 				leaves.push(curr);
+				// it's fine to `unwrap` since we know that curr
+				// is a leaf
 				curr = self.parent_of(curr).unwrap().into();
 			}
+
+			let mut final_rank: usize = 0;
 
 			// Walk up from the starting nodes until the root, stop
 			// when we encounter a node we have already walked.
 			loop {
-				if set.contains(curr.0) {
+				if set.contains_key(&curr) {
+					// this node is not root, so we must've
+					// visited it and added it at some
+					// point.
+					final_rank = set[&curr].0 + 1;
 					break;
 				}
 
-				set.set(curr.0, true);
+				set.insert(curr, Reverse(0));
 				chain.push(curr);
 
 				if let Some(parent) = self.parent_of(curr) {
@@ -281,23 +291,25 @@ impl Tree {
 				}
 			}
 
-			// Prepend the chain to the deque.  The first chain will
-			// insert the root node and walk backwards.  All of the
-			// rest will also go in the front, ensuring that
-			// children always go befor their parents.
-			while let Some(node) = chain.pop() {
-				deq.push_front(node);
+			for node in chain.iter_mut().rev() {
+				set.insert(*node, Reverse(final_rank));
+				final_rank += 1;
 			}
 		}
 
 		// remove root
-		deq.pop_back();
-		let mut internals: Vec<_> = deq.into();
+		set.remove::<Node>(&self.root().into());
+		let mut internals = Vec::with_capacity(set.len());
+		for (node, rank) in set.into_iter() {
+			internals.push((rank, node));
+		}
+
+		internals.sort();
 
 		leaves.sort();
 		leaves.dedup();
 
-		leaves.append(&mut internals);
+		leaves.extend(internals.into_iter().map(|(_, node)| node));
 		leaves
 	}
 

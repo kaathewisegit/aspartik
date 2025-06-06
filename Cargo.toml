@@ -26,6 +26,7 @@ bytemuck = "1.23"
 crossbeam-channel = "0.5.15"
 cudarc = { version = "0.16.4", default-features = false }
 divan = "0.1"
+hashbrown = "0.15.3"
 lapack-sys = "0.15"
 nom = "8.0"
 num-traits = "0.2"

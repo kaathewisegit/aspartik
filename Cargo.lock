@@ -59,6 +59,7 @@ dependencies = [
  "crossbeam-channel",
  "cudarc",
  "data",
+ "hashbrown",
  "io",
  "linalg",
  "parking_lot",
