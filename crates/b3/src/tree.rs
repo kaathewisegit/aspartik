@@ -254,9 +254,11 @@ impl Tree {
 		let mut set = HashMap::<Node, Reverse<usize>>::with_capacity(
 			self.updated_nodes.len(),
 		);
+		// Reused between iterations to avoid repeated allocations
+		let mut chain = Vec::<Node>::new();
 
 		for node in &self.updated_nodes {
-			let mut chain = Vec::<Node>::new();
+			chain.clear();
 			let mut curr = *node;
 
 			// if curr is a leaf, add it to leaves and set curr to
@@ -304,9 +306,9 @@ impl Tree {
 			internals.push((rank, node));
 		}
 
-		internals.sort();
+		internals.sort_unstable();
 
-		leaves.sort();
+		leaves.sort_unstable();
 		leaves.dedup();
 
 		leaves.extend(internals.into_iter().map(|(_, node)| node));
