@@ -19,6 +19,10 @@ class tree: ...
 
 __all__: List[str]
 
+class Stateful(Protocol):
+    def accept(self) -> None: ...
+    def reject(self) -> None: ...
+
 class Tree(Stateful):
     """A phylogenetic tree
 
@@ -261,10 +265,6 @@ class Operator(Protocol):
         once on startup.  So if it's changed mid-execution the old value will
         still be used.
         """
-
-class Stateful(Protocol):
-    def accept(self) -> None: ...
-    def reject(self) -> None: ...
 
 class Logger(Protocol):
     every: int

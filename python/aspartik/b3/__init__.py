@@ -49,5 +49,11 @@ class Logger(Protocol):
     def log(self, mcmc, index): ...
 
 
+@runtime_checkable
+class Stateful(Protocol):
+    def accept(self): ...
+    def reject(self): ...
+
+
 def __dir__():
     return __all__
