@@ -170,7 +170,7 @@ impl CudaLikelihood {
 		let num_edges = num_internals * 2;
 
 		let context = CudaContext::new(cuda_device)?;
-		let stream = context.default_stream();
+		let stream = context.new_stream()?;
 
 		// SAFETY: CudaLikelihood only uses a single stream, so there's
 		// no need for cross-stream synchronization
