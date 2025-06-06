@@ -47,7 +47,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		transitions: &[Transition<4>],
 		leaves_end: usize,
 		root: usize,
-	) -> Result<f64> {
+	) -> Result<()> {
 		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
 		let edges: Vec<_> = edges.iter().map(|e| *e as u32).collect();
 
@@ -85,6 +85,10 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		// TODO: safety
 		unsafe { builder.launch(self.cfg) }?;
 
+		Ok(())
+	}
+
+	fn likelihood(&mut self) -> Result<f64> {
 		self.stream.memcpy_dtoh(
 			&self.likelihoods,
 			&mut self.host_likelihoods,

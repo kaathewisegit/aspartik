@@ -157,11 +157,22 @@ impl Mcmc {
 			return Ok(());
 		}
 
+		// Update likelihoods.
+		for py_likelihood in &self.likelihoods {
+			py_likelihood.get().inner().propose(py)?;
+		}
+
+		// Collect the resulting likelihoods.  This is done separately
+		// from proposing to allow launching parallel workloads.  A user
+		// might, for example, use two CUDA devices.  Then `propose`
+		// will queue both of them asynchronously and `likelihood` will
+		// wait for completion of both.
 		let mut likelihood = 0.0;
 		for py_likelihood in &self.likelihoods {
 			likelihood +=
-				py_likelihood.get().inner().propose(py)?;
+				py_likelihood.get().inner().likelihood()?;
 		}
+
 		let new_posterior = likelihood + prior;
 
 		let old_posterior = *self.posterior.lock();

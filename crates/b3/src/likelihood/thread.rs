@@ -27,7 +27,7 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 		transitions: &[Transition<N>],
 		cutoff: usize,
 		root: usize,
-	) -> Result<f64> {
+	) -> Result<()> {
 		let update = Arc::new((
 			nodes.to_owned(),
 			edges.to_owned(),
@@ -39,12 +39,16 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 			sender.send(update.clone())?;
 		}
 
+		self.has_proposed = true;
+
+		Ok(())
+	}
+
+	fn likelihood(&mut self) -> Result<f64> {
 		let mut out = 0.0;
 		for receiver in &self.likelihoods {
 			out += receiver.recv()?;
 		}
-
-		self.has_proposed = true;
 
 		Ok(out)
 	}
@@ -135,12 +139,11 @@ fn worker<const N: usize>(
 			// terminate too.
 			break;
 		};
-		let likelihood = cpu
-			.propose(
-				&update.0, &update.1, &update.2, update.3,
-				update.4,
-			)
-			.unwrap();
+		cpu.propose(
+			&update.0, &update.1, &update.2, update.3, update.4,
+		)
+		.unwrap();
+		let likelihood = cpu.likelihood().unwrap();
 		likelihood_sender.send(likelihood).unwrap();
 
 		let accept = accept_receiver.recv().unwrap();

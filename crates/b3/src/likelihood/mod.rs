@@ -32,7 +32,9 @@ trait LikelihoodTrait<const N: usize> {
 		transitions: &[Transition<N>],
 		cutoff: usize,
 		root: usize,
-	) -> Result<f64>;
+	) -> Result<()>;
+
+	fn likelihood(&mut self) -> Result<f64>;
 
 	fn accept(&mut self) -> Result<()>;
 
@@ -52,6 +54,7 @@ pub struct GenericLikelihood<const N: usize> {
 	/// Last calculated likelihood.  It's different from the cache, because
 	/// it might get rejected.
 	last: f64,
+	launched_update: bool,
 	tree: Py<PyTree>,
 }
 
@@ -90,11 +93,15 @@ impl GenericLikelihood<4> {
 			clock,
 			transitions,
 			calculator,
-			tree,
 			cache: f64::NAN,
 			last: f64::NAN,
+			launched_update: false,
+			tree,
 		};
 		Python::with_gil(|py| out.propose(py))?;
+		// This cannot be removed: the likelihood must be run to
+		// completion in case the calculator is async.
+		out.likelihood()?;
 		// propose sets `last` and accept updates the cache, so neither
 		// cache nor last will be NaN.
 		out.accept()?;
@@ -104,7 +111,7 @@ impl GenericLikelihood<4> {
 
 impl<const N: usize> GenericLikelihood<N> {
 	#[instrument(skip_all)]
-	fn propose(&mut self, py: Python) -> Result<f64> {
+	fn propose(&mut self, py: Python) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
 		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let rate = self.clock.get_rate(py)?;
@@ -122,8 +129,8 @@ impl<const N: usize> GenericLikelihood<N> {
 
 		// no tree update, return the cache
 		if nodes.is_empty() {
-			self.last = self.cache;
-			return Ok(self.cache);
+			self.launched_update = false;
+			return Ok(());
 		}
 
 		let cutoff = nodes
@@ -135,13 +142,25 @@ impl<const N: usize> GenericLikelihood<N> {
 
 		let transitions = self.transitions.matrices(&edges);
 
-		let likelihood = self.calculator.propose(
+		self.calculator.propose(
 			&nodes,
 			&edges,
 			&transitions,
 			cutoff,
 			root,
 		)?;
+		self.launched_update = true;
+
+		Ok(())
+	}
+
+	fn likelihood(&mut self) -> Result<f64> {
+		if !self.launched_update {
+			self.last = self.cache;
+			return Ok(self.cache);
+		}
+
+		let likelihood = self.calculator.likelihood()?;
 		trace!(likelihood);
 		self.last = likelihood;
 		Ok(likelihood)
@@ -169,10 +188,19 @@ pub enum ErasedLikelihood {
 }
 
 impl ErasedLikelihood {
-	pub fn propose(&mut self, py: Python) -> Result<f64> {
+	pub fn propose(&mut self, py: Python) -> Result<()> {
 		match self {
 			ErasedLikelihood::Nucleotide4(inner) => {
 				inner.propose(py)
+			}
+			_ => todo!(),
+		}
+	}
+
+	pub fn likelihood(&mut self) -> Result<f64> {
+		match self {
+			ErasedLikelihood::Nucleotide4(inner) => {
+				inner.likelihood()
 			}
 			_ => todo!(),
 		}
