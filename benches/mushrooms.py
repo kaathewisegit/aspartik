@@ -22,7 +22,7 @@ sequences = []
 names = []
 for record in FASTADNAReader(path):
     sequences.append(record.sequence)
-    names.append(record.description)
+    names.append(record.id)
 
 rng = RNG(4)
 tree = Tree(names, rng)

@@ -38,6 +38,19 @@ impl<S: Seq> Record<S> {
 		&self.description[1..]
 	}
 
+	pub fn id(&self) -> &str {
+		// The FASTA identifier is the part of the description until the
+		// first space.  This gets the index of the first space or
+		// returns the description whole if there isn't a post-space
+		// comment
+		let end = self
+			.description
+			.find(' ')
+			.unwrap_or(self.description.len());
+
+		&self.description[1..end]
+	}
+
 	pub fn sequence(&self) -> &S {
 		&self.seq
 	}

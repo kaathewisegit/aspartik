@@ -35,6 +35,11 @@ impl PyFastaDnaRecord {
 		self.0.description().to_owned()
 	}
 
+	#[getter]
+	fn id(&self) -> String {
+		self.0.id().to_string()
+	}
+
 	fn __str__(&self) -> String {
 		self.0.to_string()
 	}
