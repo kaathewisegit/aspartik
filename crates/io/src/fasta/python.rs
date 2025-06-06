@@ -7,7 +7,7 @@ use std::{fs::File, io::BufReader};
 use super::{FastaReader, Record};
 use data::seq::python::PyDnaSeq;
 
-#[pyclass(name = "FASTADNARecord", module = "aspartik.io.fasta", frozen)]
+#[pyclass(name = "DNARecord", module = "aspartik.io.fasta", frozen)]
 pub struct PyFastaDnaRecord(Record<Py<PyDnaSeq>>);
 
 #[pymethods]
@@ -46,14 +46,14 @@ impl PyFastaDnaRecord {
 
 	fn __repr__(&self) -> String {
 		format!(
-			r#"FASTADNARecord({:?}, DNASeq("{}"))"#,
+			r#"DNARecord({:?}, DNASeq("{}"))"#,
 			self.0.raw_description(),
 			self.0.sequence(),
 		)
 	}
 }
 
-#[pyclass(name = "FASTADNAReader", module = "aspartik.io.fasta", frozen)]
+#[pyclass(name = "DNAReader", module = "aspartik.io.fasta", frozen)]
 pub struct PyFastaDnaReader {
 	inner: Mutex<FastaReader<Py<PyDnaSeq>, BufReader<File>>>,
 }

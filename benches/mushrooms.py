@@ -15,12 +15,12 @@ from aspartik.b3.substitutions import HKY
 from aspartik.b3.clocks import StrictClock
 from aspartik.stats.distributions import Gamma, Uniform
 from aspartik.rng import RNG
-from aspartik.io.fasta import FASTADNAReader
+from aspartik.io.fasta import DNAReader
 
 path = "crates/b3/data/512.fasta"
 sequences = []
 names = []
-for record in FASTADNAReader(path):
+for record in DNAReader(path):
     sequences.append(record.sequence)
     names.append(record.id)
 
