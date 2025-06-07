@@ -14,7 +14,6 @@ use crate::util::transpose;
 
 pub struct CudaLikelihood {
 	stream: Arc<CudaStream>,
-	cfg: LaunchConfig,
 
 	propose_fn: CudaFunction,
 	accept_fn: CudaFunction,
@@ -37,7 +36,8 @@ pub struct CudaLikelihood {
 
 const CUDA_MODULE: &str = include_str!("kernels.cu");
 
-const BIG_BLOCK_SIZE: u32 = 128;
+const SEQ_BLOCK_SIZE: u32 = 32;
+const PAR_BLOCK_SIZE: u32 = 128;
 
 impl LikelihoodTrait<4> for CudaLikelihood {
 	fn propose(
@@ -82,8 +82,10 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 
 		builder.arg(&self.likelihoods);
 
+		let cfg = self.small_block_cfg();
+
 		// TODO: safety
-		unsafe { builder.launch(self.cfg) }?;
+		unsafe { builder.launch(cfg) }?;
 
 		Ok(())
 	}
@@ -111,11 +113,11 @@ impl CudaLikelihood {
 		let mut builder =
 			self.stream.launch_builder(&self.update_leaves_fn);
 
-		let num_site_groups = self.num_sites.div_ceil(BIG_BLOCK_SIZE);
+		let num_site_groups = self.num_sites.div_ceil(PAR_BLOCK_SIZE);
 
 		let cfg = LaunchConfig {
 			grid_dim: (num_site_groups, leaves_end, 1),
-			block_dim: (BIG_BLOCK_SIZE, 1, 1),
+			block_dim: (PAR_BLOCK_SIZE, 1, 1),
 			shared_mem_bytes: 0,
 		};
 
@@ -143,11 +145,11 @@ impl CudaLikelihood {
 			return Ok(());
 		}
 
-		let num_site_groups = self.num_sites.div_ceil(BIG_BLOCK_SIZE);
+		let num_site_groups = self.num_sites.div_ceil(PAR_BLOCK_SIZE);
 
 		let cfg = LaunchConfig {
 			grid_dim: (num_site_groups, self.num_updated_nodes, 1),
-			block_dim: (BIG_BLOCK_SIZE, 1, 1),
+			block_dim: (PAR_BLOCK_SIZE, 1, 1),
 			shared_mem_bytes: 0,
 		};
 
@@ -172,6 +174,15 @@ impl CudaLikelihood {
 		self.num_updated_nodes = 0;
 
 		Ok(())
+	}
+
+	fn small_block_cfg(&self) -> LaunchConfig {
+		let num_blocks = self.num_sites.div_ceil(SEQ_BLOCK_SIZE);
+		LaunchConfig {
+			grid_dim: (num_blocks, 1, 1),
+			block_dim: (SEQ_BLOCK_SIZE, 1, 1),
+			shared_mem_bytes: 0,
+		}
 	}
 
 	pub fn new(
@@ -210,16 +221,8 @@ impl CudaLikelihood {
 		let reject_fn = module.load_function("reject")?;
 		let update_leaves_fn = module.load_function("update_leaves")?;
 
-		const SIZE: u32 = 32;
-		let cfg = LaunchConfig {
-			grid_dim: ((num_sites as u32).div_ceil(SIZE), 1, 1),
-			block_dim: (SIZE, 1, 1),
-			shared_mem_bytes: 0,
-		};
-
 		Ok(Self {
 			stream,
-			cfg,
 
 			propose_fn,
 			accept_fn,

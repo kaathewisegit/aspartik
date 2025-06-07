@@ -61,7 +61,10 @@ extern "C" __global__ void update_leaves(
 #define idx(edge) \
 	((edge) * num_sites + site)
 
-extern "C" __global__ void propose(
+// __launch_bounds__ specifies the maximum number of threads each work group
+// will have.  32 here means it can use more registers.
+extern "C" __global__ __launch_bounds__(32)
+void propose(
 	const uint num_sites,
 	const uint num_leaves,
 
