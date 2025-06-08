@@ -38,6 +38,17 @@ __device__ f64x4 apply(
 #define idx(edge) \
 	((edge) * num_sites + site)
 
+// Gets the site index from the thread and block id
+#define SITE_PRELUDE \
+	u32 site = blockIdx.x * blockDim.x + threadIdx.x; \
+	if (site >= num_sites) { \
+		return; \
+	} \
+
+#define PAR_BLOCK_PRELUDE \
+	SITE_PRELUDE \
+	u32 i = blockIdx.y; \
+
 extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
 void update_leaves(
 	const u32 num_sites,
@@ -49,13 +60,39 @@ void update_leaves(
 	const f64x4* __restrict__ leaves,
 	f64x4* __restrict__ projections
 ) {
-	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
-	if (site >= num_sites) {
-		return;
-	}
-	u32 i = blockIdx.y;
+	PAR_BLOCK_PRELUDE
 
 	f64x4 projection = apply(transitions[i], leaves[idx(nodes[i])]);
+	projections[idx(edges[i])] = projection;
+}
+
+extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
+void update_internals(
+	const u32 num_sites,
+	const u32 num_leaves,
+
+	const f64x4* __restrict__ leaves,
+	f64x4* __restrict__ projections,
+
+	const u32* __restrict__ edges,
+	const u32* __restrict__ nodes,
+	const Transition* __restrict__ transitions
+) {
+	PAR_BLOCK_PRELUDE
+
+	u32 left_edge = (nodes[i] - num_leaves) * 2;
+	u32 right_edge = left_edge + 1;
+
+	f64x4 likelihood = hadamard(
+		projections[idx(left_edge)],
+		projections[idx(right_edge)]
+	);
+
+	f64x4 projection = apply(
+		transitions[i],
+		likelihood
+	);
+
 	projections[idx(edges[i])] = projection;
 }
 
@@ -77,10 +114,7 @@ void propose(
 	const u32 internals_start,
 	const u32 root
 ) {
-	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
-	if (site >= num_sites) {
-		return;
-	}
+	SITE_PRELUDE
 
 	for (u32 i = 0; i < leaves_end; i++) {
 		f64x4 projection = apply(
@@ -130,11 +164,7 @@ void accept(
 	const u32 num_updated_nodes,
 	const u32* __restrict__ edges
 ) {
-	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
-	if (site >= num_sites) {
-		return;
-	}
-	u32 i = blockIdx.y;
+	PAR_BLOCK_PRELUDE
 
 	u32 proj_idx = idx(edges[i]);
 	projections_backup[proj_idx] = projections[proj_idx];
@@ -150,11 +180,7 @@ void reject(
 	const u32 num_updated_nodes,
 	const u32* __restrict__ edges
 ) {
-	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
-	if (site >= num_sites) {
-		return;
-	}
-	u32 i = blockIdx.y;
+	PAR_BLOCK_PRELUDE
 
 	u32 proj_idx = idx(edges[i]);
 	projections[proj_idx] = projections_backup[proj_idx];
