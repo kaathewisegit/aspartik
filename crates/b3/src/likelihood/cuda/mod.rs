@@ -82,17 +82,17 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
+		builder.arg(&self.likelihoods);
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.nodes);
 		builder.arg(&self.updated_edges);
 		builder.arg(&self.transitions);
+
 		builder.arg(&leaves_end);
 		builder.arg(&root);
 
-		builder.arg(&self.likelihoods);
-
-		let cfg = self.small_block_cfg();
+		let cfg = self.seq_block_cfg(1);
 
 		// TODO: safety
 		unsafe { builder.launch(cfg) }?;
@@ -123,12 +123,10 @@ impl CudaLikelihood {
 		let mut builder =
 			self.stream.launch_builder(&self.update_leaves_fn);
 
-		let num_site_groups = self.num_sites.div_ceil(BLOCK_SIZE_PAR);
-
-		let cfg = LaunchConfig {
-			grid_dim: (num_site_groups, leaves_end, 1),
-			block_dim: (BLOCK_SIZE_PAR, 1, 1),
-			shared_mem_bytes: 0,
+		let cfg = if leaves_end > 10 {
+			self.par_block_cfg(leaves_end)
+		} else {
+			self.seq_block_cfg(leaves_end)
 		};
 
 		builder.arg(&self.num_sites);
@@ -155,13 +153,7 @@ impl CudaLikelihood {
 			return Ok(());
 		}
 
-		let num_site_groups = self.num_sites.div_ceil(BLOCK_SIZE_PAR);
-
-		let cfg = LaunchConfig {
-			grid_dim: (num_site_groups, self.num_updated_nodes, 1),
-			block_dim: (BLOCK_SIZE_PAR, 1, 1),
-			shared_mem_bytes: 0,
-		};
+		let cfg = self.par_block_cfg(self.num_updated_nodes);
 
 		let func = if accept {
 			&self.accept_fn
@@ -186,11 +178,20 @@ impl CudaLikelihood {
 		Ok(())
 	}
 
-	fn small_block_cfg(&self) -> LaunchConfig {
+	fn seq_block_cfg(&self, dim2: u32) -> LaunchConfig {
 		let num_blocks = self.num_sites.div_ceil(BLOCK_SIZE_SEQ);
 		LaunchConfig {
-			grid_dim: (num_blocks, 1, 1),
+			grid_dim: (num_blocks, dim2, 1),
 			block_dim: (BLOCK_SIZE_SEQ, 1, 1),
+			shared_mem_bytes: 0,
+		}
+	}
+
+	fn par_block_cfg(&self, dim2: u32) -> LaunchConfig {
+		let num_blocks = self.num_sites.div_ceil(BLOCK_SIZE_PAR);
+		LaunchConfig {
+			grid_dim: (num_blocks, dim2, 1),
+			block_dim: (BLOCK_SIZE_PAR, 1, 1),
 			shared_mem_bytes: 0,
 		}
 	}

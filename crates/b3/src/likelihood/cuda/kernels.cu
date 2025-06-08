@@ -35,6 +35,9 @@ __device__ f64x4 apply(
 	);
 }
 
+#define idx(edge) \
+	((edge) * num_sites + site)
+
 extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
 void update_leaves(
 	const u32 num_sites,
@@ -52,20 +55,9 @@ void update_leaves(
 	}
 	u32 i = blockIdx.y;
 
-	u32 edge = edges[i];
-	u32 leaf_idx = nodes[i];
-	Transition transition = transitions[i];
-
-	u32 leaf_offset = leaf_idx * num_sites;
-	u32 edge_offset = edge * num_sites;
-
-	f64x4 leaf = leaves[leaf_offset + site];
-	f64x4 projection = apply(transition, leaf);
-	projections[edge_offset + site] = projection;
+	f64x4 projection = apply(transitions[i], leaves[idx(nodes[i])]);
+	projections[idx(edges[i])] = projection;
 }
-
-#define idx(edge) \
-	((edge) * num_sites + site)
 
 extern "C" __global__ __launch_bounds__(BLOCK_SIZE_SEQ)
 void propose(
@@ -74,14 +66,15 @@ void propose(
 
 	const f64x4* __restrict__ leaves,
 	f64x4* __restrict__ projections,
+	double* __restrict__ likelihoods,
 
 	const u32 num_updated_nodes,
 	const u32* __restrict__ nodes,
 	const u32* __restrict__ edges,
 	const Transition* __restrict__ transitions,
+
 	const u32 cutoff,
-	const u32 root,
-	double* __restrict__ likelihoods
+	const u32 root
 ) {
 	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
 	if (site >= num_sites) {
@@ -92,7 +85,7 @@ void propose(
 		for (u32 i = 0; i < cutoff; i++) {
 			f64x4 projection = apply(
 				transitions[i],
-				leaves[nodes[i] * num_sites + site]
+				leaves[idx(nodes[i])]
 			);
 
 			projections[idx(edges[i])] = projection;
