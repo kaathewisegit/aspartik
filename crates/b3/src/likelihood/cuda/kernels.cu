@@ -4,7 +4,7 @@ typedef struct {
 	f64x4 a, c, g, t;
 } Transition;
 
-__device__ double dot(const f64x4 a, const f64x4 b) {
+__device__ f64 dot(const f64x4 a, const f64x4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
@@ -99,7 +99,6 @@ void propose(
 
 	const f64x4* __restrict__ leaves,
 	f64x4* __restrict__ projections,
-	double* __restrict__ likelihoods,
 
 	const u32 num_updated_nodes,
 	const u32* __restrict__ nodes,
@@ -107,8 +106,7 @@ void propose(
 	const Transition* __restrict__ transitions,
 
 	const u32 leaves_end,
-	const u32 internals_start,
-	const u32 root
+	const u32 internals_start
 ) {
 	SITE_PRELUDE
 
@@ -137,6 +135,19 @@ void propose(
 
 		projections[idx(edges[i])] = projection;
 	}
+}
+
+extern "C" __global__ __launch_bounds__(32)
+void update_likelihoods(
+	const u32 num_sites,
+	const u32 num_leaves,
+
+	f64x4* __restrict__ projections,
+	f64* __restrict__ likelihoods,
+
+	u32 root
+) {
+	SITE_PRELUDE
 
 	u32 left_root_edge = (root - num_leaves) * 2;
 	u32 right_root_edge = left_root_edge + 1;
@@ -146,7 +157,7 @@ void propose(
 		projections[idx(right_root_edge)]
 	);
 
-	double sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
+	f64 sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
 	likelihoods[site] = log(sum);
 }
 

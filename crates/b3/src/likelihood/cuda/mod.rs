@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use cudarc::{
 	driver::{
 		CudaContext, CudaFunction, CudaSlice, CudaStream, LaunchConfig,
@@ -28,6 +28,7 @@ pub struct CudaLikelihood {
 	reject_fn: CudaFunction,
 	update_leaves_fn: CudaFunction,
 	update_internals_fn: CudaFunction,
+	update_likelihoods_fn: CudaFunction,
 
 	leaves: CudaSlice<Row<4>>,
 	projections: CudaSlice<Row<4>>,
@@ -69,8 +70,6 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		num_nodes_left -= leaves_end;
 		internals_start += leaves_end;
 
-		let root = root as u32;
-
 		const CUTOFF: f64 = 2.0;
 
 		if ratio(num_nodes_left, ranks.len()) > CUTOFF {
@@ -90,10 +89,12 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 				num_nodes_left -= num_rank_nodes;
 				internals_start += num_rank_nodes;
 			}
-			self.update_all_seq(0, internals_start, root)?;
+			self.update_all(0, internals_start)?;
 		} else {
-			self.update_all_seq(leaves_end, leaves_end, root)?;
+			self.update_all(leaves_end, leaves_end)?;
 		}
+
+		self.update_likelihoods(root as u32)?;
 
 		Ok(())
 	}
@@ -117,11 +118,10 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 }
 
 impl CudaLikelihood {
-	fn update_all_seq(
+	fn update_all(
 		&self,
 		leaves_end: u32,
 		internals_start: u32,
-		root: u32,
 	) -> Result<()> {
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
 
@@ -130,7 +130,6 @@ impl CudaLikelihood {
 
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
-		builder.arg(&self.likelihoods);
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.nodes);
@@ -139,12 +138,12 @@ impl CudaLikelihood {
 
 		builder.arg(&leaves_end);
 		builder.arg(&internals_start);
-		builder.arg(&root);
 
 		let cfg = self.cfg(32, 1);
 
 		// TODO: safety
-		unsafe { builder.launch(cfg) }?;
+		unsafe { builder.launch(cfg) }
+			.with_context(|| anyhow!("update_all: {cfg:?}"))?;
 
 		Ok(())
 	}
@@ -166,7 +165,8 @@ impl CudaLikelihood {
 		builder.arg(&self.projections);
 
 		// TODO: safety
-		unsafe { builder.launch(cfg) }?;
+		unsafe { builder.launch(cfg) }
+			.with_context(|| anyhow!("update_leaves: {cfg:?}"))?;
 
 		Ok(())
 	}
@@ -189,7 +189,31 @@ impl CudaLikelihood {
 		builder.arg(&start);
 
 		// TODO: safety
-		unsafe { builder.launch(cfg) }?;
+		unsafe { builder.launch(cfg) }.with_context(|| {
+			anyhow!("update_internals: {cfg:?}")
+		})?;
+
+		Ok(())
+	}
+
+	fn update_likelihoods(&self, root: u32) -> Result<()> {
+		let mut builder =
+			self.stream.launch_builder(&self.update_likelihoods_fn);
+
+		let cfg = self.cfg(32, 1);
+
+		builder.arg(&self.num_sites);
+		builder.arg(&self.num_leaves);
+
+		builder.arg(&self.projections);
+		builder.arg(&self.likelihoods);
+
+		builder.arg(&root);
+
+		// TODO: safety
+		unsafe { builder.launch(cfg) }.with_context(|| {
+			anyhow!("update_likelihoods: {cfg:?}")
+		})?;
 
 		Ok(())
 	}
@@ -221,7 +245,10 @@ impl CudaLikelihood {
 		builder.arg(&self.updated_edges);
 
 		// TODO: safety
-		unsafe { builder.launch(cfg) }?;
+		unsafe { builder.launch(cfg) }.with_context(|| {
+			let op = if accept { "accept" } else { "reject" };
+			anyhow!("{op}: {cfg:#?}")
+		})?;
 
 		self.num_updated_nodes = 0;
 
@@ -278,6 +305,8 @@ impl CudaLikelihood {
 		let update_leaves_fn = module.load_function("update_leaves")?;
 		let update_internals_fn =
 			module.load_function("update_internals")?;
+		let update_likelihoods_fn =
+			module.load_function("update_likelihoods")?;
 
 		Ok(Self {
 			stream,
@@ -287,6 +316,7 @@ impl CudaLikelihood {
 			reject_fn,
 			update_leaves_fn,
 			update_internals_fn,
+			update_likelihoods_fn,
 
 			leaves,
 			projections,
@@ -306,5 +336,5 @@ impl CudaLikelihood {
 }
 
 fn ratio(x: u32, y: usize) -> f64 {
-	x as f64 / y as f64
+	f64::from(x) / y as f64
 }
