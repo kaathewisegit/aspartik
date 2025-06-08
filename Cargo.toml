@@ -84,3 +84,6 @@ data = { workspace = true }
 io = { workspace = true }
 rng = { workspace = true }
 stats = { workspace = true }
+
+[features]
+cuda = ["b3/cuda"]

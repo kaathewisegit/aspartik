@@ -1,16 +1,21 @@
-typedef unsigned char byte;
-typedef unsigned int uint;
+#include "typedefs.h"
+
+// These are used in __launch_bounds__, which define maximum number of threads
+// per block.  The less threads there are, the more registers each kernel can
+// use.
+#define BLOCK_SIZE_SEQ 32
+#define BLOCK_SIZE_PAR 128
 
 typedef struct {
-	double4 a, c, g, t;
+	f64x4 a, c, g, t;
 } Transition;
 
-__device__ double dot(const double4 a, const double4 b) {
+__device__ double dot(const f64x4 a, const f64x4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
-__device__ double4 hadamard(const double4 a, const double4 b) {
-	return make_double4(
+__device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
+	return make_f64x4(
 		a.x * b.x,
 		a.y * b.y,
 		a.z * b.z,
@@ -18,11 +23,11 @@ __device__ double4 hadamard(const double4 a, const double4 b) {
 	);
 }
 
-__device__ double4 apply(
+__device__ f64x4 apply(
 	const Transition transition,
-	const double4 vector
+	const f64x4 vector
 ) {
-	return make_double4(
+	return make_f64x4(
 		dot(transition.a, vector),
 		dot(transition.c, vector),
 		dot(transition.g, vector),
@@ -30,63 +35,62 @@ __device__ double4 apply(
 	);
 }
 
-extern "C" __global__ void update_leaves(
-	const uint num_sites,
+extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
+void update_leaves(
+	const u32 num_sites,
 
-	const uint* __restrict__ edges,
-	const uint* __restrict__ nodes,
+	const u32* __restrict__ edges,
+	const u32* __restrict__ nodes,
 	const Transition* __restrict__ transitions,
 
-	const double4* __restrict__ leaves,
-	double4* __restrict__ projections
+	const f64x4* __restrict__ leaves,
+	f64x4* __restrict__ projections
 ) {
-	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
 	if (site >= num_sites) {
 		return;
 	}
-	uint i = blockIdx.y;
+	u32 i = blockIdx.y;
 
-	uint edge = edges[i];
-	uint leaf_idx = nodes[i];
+	u32 edge = edges[i];
+	u32 leaf_idx = nodes[i];
 	Transition transition = transitions[i];
 
-	uint leaf_offset = leaf_idx * num_sites;
-	uint edge_offset = edge * num_sites;
+	u32 leaf_offset = leaf_idx * num_sites;
+	u32 edge_offset = edge * num_sites;
 
-	double4 leaf = leaves[leaf_offset + site];
-	double4 projection = apply(transition, leaf);
+	f64x4 leaf = leaves[leaf_offset + site];
+	f64x4 projection = apply(transition, leaf);
 	projections[edge_offset + site] = projection;
 }
 
 #define idx(edge) \
 	((edge) * num_sites + site)
 
-// __launch_bounds__ specifies the maximum number of threads each work group
-// will have.  32 here means it can use more registers.
-extern "C" __global__ __launch_bounds__(32)
+extern "C" __global__ __launch_bounds__(BLOCK_SIZE_SEQ)
 void propose(
-	const uint num_sites,
-	const uint num_leaves,
+	const u32 num_sites,
+	const u32 num_leaves,
 
-	const double4* __restrict__ leaves,
-	double4* __restrict__ projections,
+	const f64x4* __restrict__ leaves,
+	f64x4* __restrict__ projections,
 
-	const uint num_updated_nodes,
-	const uint* __restrict__ nodes,
-	const uint* __restrict__ edges,
+	const u32 num_updated_nodes,
+	const u32* __restrict__ nodes,
+	const u32* __restrict__ edges,
 	const Transition* __restrict__ transitions,
-	const uint cutoff,
-	const uint root,
+	const u32 cutoff,
+	const u32 root,
 	double* __restrict__ likelihoods
 ) {
-	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
 	if (site >= num_sites) {
 		return;
 	}
 
 	if (cutoff > 10) {
-		for (uint i = 0; i < cutoff; i++) {
-			double4 projection = apply(
+		for (u32 i = 0; i < cutoff; i++) {
+			f64x4 projection = apply(
 				transitions[i],
 				leaves[nodes[i] * num_sites + site]
 			);
@@ -95,16 +99,16 @@ void propose(
 		}
 	}
 
-	for (uint i = cutoff; i < num_updated_nodes; i++) {
-		uint left_edge = (nodes[i] - num_leaves) * 2;
-		uint right_edge = left_edge + 1;
+	for (u32 i = cutoff; i < num_updated_nodes; i++) {
+		u32 left_edge = (nodes[i] - num_leaves) * 2;
+		u32 right_edge = left_edge + 1;
 
-		double4 likelihood = hadamard(
+		f64x4 likelihood = hadamard(
 			projections[idx(left_edge)],
 			projections[idx(right_edge)]
 		);
 
-		double4 projection = apply(
+		f64x4 projection = apply(
 			transitions[i],
 			likelihood
 		);
@@ -112,10 +116,10 @@ void propose(
 		projections[idx(edges[i])] = projection;
 	}
 
-	uint left_root_edge = (root - num_leaves) * 2;
-	uint right_root_edge = left_root_edge + 1;
+	u32 left_root_edge = (root - num_leaves) * 2;
+	u32 right_root_edge = left_root_edge + 1;
 
-	double4 likelihood = hadamard(
+	f64x4 likelihood = hadamard(
 		projections[idx(left_root_edge)],
 		projections[idx(right_root_edge)]
 	);
@@ -124,40 +128,42 @@ void propose(
 	likelihoods[site] = log(sum);
 }
 
-extern "C"  __global__ void accept(
-	const uint num_sites,
+extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
+void accept(
+	const u32 num_sites,
 
-	const double4* __restrict__ projections,
-	double4* __restrict__ projections_backup,
+	const f64x4* __restrict__ projections,
+	f64x4* __restrict__ projections_backup,
 
-	const uint num_updated_nodes,
-	const uint* __restrict__ edges
+	const u32 num_updated_nodes,
+	const u32* __restrict__ edges
 ) {
-	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
 	if (site >= num_sites) {
 		return;
 	}
-	uint i = blockIdx.y;
+	u32 i = blockIdx.y;
 
-	uint proj_idx = idx(edges[i]);
+	u32 proj_idx = idx(edges[i]);
 	projections_backup[proj_idx] = projections[proj_idx];
 }
 
-extern "C"  __global__ void reject(
-	const uint num_sites,
+extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
+void reject(
+	const u32 num_sites,
 
-	double4* __restrict__ projections,
-	const double4* __restrict__ projections_backup,
+	f64x4* __restrict__ projections,
+	const f64x4* __restrict__ projections_backup,
 
-	const uint num_updated_nodes,
-	const uint* __restrict__ edges
+	const u32 num_updated_nodes,
+	const u32* __restrict__ edges
 ) {
-	uint site = blockIdx.x * blockDim.x + threadIdx.x;
+	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
 	if (site >= num_sites) {
 		return;
 	}
-	uint i = blockIdx.y;
+	u32 i = blockIdx.y;
 
-	uint proj_idx = idx(edges[i]);
+	u32 proj_idx = idx(edges[i]);
 	projections[proj_idx] = projections_backup[proj_idx];
 }

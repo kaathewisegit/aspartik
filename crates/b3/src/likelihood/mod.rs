@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use tracing::{instrument, trace};
@@ -84,7 +84,7 @@ impl GenericLikelihood<4> {
 				cuda_device,
 			)?),
 			_ => {
-				panic!("Unknown calculator type '{calculator}'");
+				bail!("Unknown calculator type '{calculator}'");
 			}
 		};
 

@@ -1,16 +1,31 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use cudarc::{
 	driver::{
 		CudaContext, CudaFunction, CudaSlice, CudaStream, LaunchConfig,
 		PushKernelArg,
 	},
-	nvrtc::compile_ptx,
+	nvrtc::Ptx,
 };
 
 use std::sync::Arc;
 
 use super::{LikelihoodTrait, Row, Transition};
 use crate::util::transpose;
+
+/// This is somewhat of a hack.  The PTX assembly file is compiled in build.rs
+/// and the variable contains the path to it.  However, I didn't gate off this
+/// module behind the CUDA features because rust-analyzer would start warning
+/// about CUDA variables in super used here being unused.  So, instead the `new`
+/// constructor bails if the CUDA feature isn't enabled, so we never see the
+/// dummy empty file which is created when the CUDA feature isn't enabled.
+const PTX_SRC: &str = include_str!(env!("ASPARTIK_B3_PTX_SRC_PATH"));
+/// Block size for sequential workloads.  When the workload is sequential the
+/// number of jobs is small, so the block size is the minimum possible warp
+/// size.  Increasing it would make SM utilization even worse.
+const BLOCK_SIZE_SEQ: u32 = 32;
+/// Block size for parallel workloads where we have a lot of jobs.  If changed,
+/// this constant should also be updated in `kernels.cu`.
+const BLOCK_SIZE_PAR: u32 = 128;
 
 pub struct CudaLikelihood {
 	stream: Arc<CudaStream>,
@@ -33,11 +48,6 @@ pub struct CudaLikelihood {
 	num_leaves: u32,
 	num_updated_nodes: u32,
 }
-
-const CUDA_MODULE: &str = include_str!("kernels.cu");
-
-const SEQ_BLOCK_SIZE: u32 = 32;
-const PAR_BLOCK_SIZE: u32 = 128;
 
 impl LikelihoodTrait<4> for CudaLikelihood {
 	fn propose(
@@ -113,11 +123,11 @@ impl CudaLikelihood {
 		let mut builder =
 			self.stream.launch_builder(&self.update_leaves_fn);
 
-		let num_site_groups = self.num_sites.div_ceil(PAR_BLOCK_SIZE);
+		let num_site_groups = self.num_sites.div_ceil(BLOCK_SIZE_PAR);
 
 		let cfg = LaunchConfig {
 			grid_dim: (num_site_groups, leaves_end, 1),
-			block_dim: (PAR_BLOCK_SIZE, 1, 1),
+			block_dim: (BLOCK_SIZE_PAR, 1, 1),
 			shared_mem_bytes: 0,
 		};
 
@@ -145,11 +155,11 @@ impl CudaLikelihood {
 			return Ok(());
 		}
 
-		let num_site_groups = self.num_sites.div_ceil(PAR_BLOCK_SIZE);
+		let num_site_groups = self.num_sites.div_ceil(BLOCK_SIZE_PAR);
 
 		let cfg = LaunchConfig {
 			grid_dim: (num_site_groups, self.num_updated_nodes, 1),
-			block_dim: (PAR_BLOCK_SIZE, 1, 1),
+			block_dim: (BLOCK_SIZE_PAR, 1, 1),
 			shared_mem_bytes: 0,
 		};
 
@@ -177,10 +187,10 @@ impl CudaLikelihood {
 	}
 
 	fn small_block_cfg(&self) -> LaunchConfig {
-		let num_blocks = self.num_sites.div_ceil(SEQ_BLOCK_SIZE);
+		let num_blocks = self.num_sites.div_ceil(BLOCK_SIZE_SEQ);
 		LaunchConfig {
 			grid_dim: (num_blocks, 1, 1),
-			block_dim: (SEQ_BLOCK_SIZE, 1, 1),
+			block_dim: (BLOCK_SIZE_SEQ, 1, 1),
 			shared_mem_bytes: 0,
 		}
 	}
@@ -189,6 +199,10 @@ impl CudaLikelihood {
 		leaves: Vec<Vec<Row<4>>>,
 		cuda_device: usize,
 	) -> Result<Self> {
+		if cfg!(not(feature = "cuda")) {
+			bail!("b3 was built without CUDA support");
+		}
+
 		let num_sites = leaves.len();
 		let num_leaves = leaves[0].len();
 		let num_internals = num_leaves - 1;
@@ -214,7 +228,7 @@ impl CudaLikelihood {
 		let transitions = stream.alloc_zeros(num_edges)?;
 		let nodes = stream.alloc_zeros(num_nodes)?;
 
-		let ptx = compile_ptx(CUDA_MODULE)?;
+		let ptx = Ptx::from_src(PTX_SRC);
 		let module = context.load_module(ptx)?;
 		let propose_fn = module.load_function("propose")?;
 		let accept_fn = module.load_function("accept")?;
