@@ -1,11 +1,5 @@
 #include "typedefs.h"
 
-// These are used in __launch_bounds__, which define maximum number of threads
-// per block.  The less threads there are, the more registers each kernel can
-// use.
-#define BLOCK_SIZE_SEQ 32
-#define BLOCK_SIZE_PAR 128
-
 typedef struct {
 	f64x4 a, c, g, t;
 } Transition;
@@ -49,7 +43,7 @@ __device__ f64x4 apply(
 	SITE_PRELUDE \
 	u32 i = blockIdx.y; \
 
-extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
+extern "C" __global__ __launch_bounds__(128)
 void update_leaves(
 	const u32 num_sites,
 
@@ -66,7 +60,7 @@ void update_leaves(
 	projections[idx(edges[i])] = projection;
 }
 
-extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
+extern "C" __global__ __launch_bounds__(32)
 void update_internals(
 	const u32 num_sites,
 	const u32 num_leaves,
@@ -98,7 +92,7 @@ void update_internals(
 	projections[idx(edges[i])] = projection;
 }
 
-extern "C" __global__ __launch_bounds__(BLOCK_SIZE_SEQ)
+extern "C" __global__ __launch_bounds__(32)
 void propose(
 	const u32 num_sites,
 	const u32 num_leaves,
@@ -156,7 +150,7 @@ void propose(
 	likelihoods[site] = log(sum);
 }
 
-extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
+extern "C" __global__ __launch_bounds__(128)
 void accept(
 	const u32 num_sites,
 
@@ -172,7 +166,7 @@ void accept(
 	projections_backup[proj_idx] = projections[proj_idx];
 }
 
-extern "C" __global__ __launch_bounds__(BLOCK_SIZE_PAR)
+extern "C" __global__ __launch_bounds__(128)
 void reject(
 	const u32 num_sites,
 

@@ -19,13 +19,6 @@ use crate::util::transpose;
 /// constructor bails if the CUDA feature isn't enabled, so we never see the
 /// dummy empty file which is created when the CUDA feature isn't enabled.
 const PTX_SRC: &str = include_str!(env!("ASPARTIK_B3_PTX_SRC_PATH"));
-/// Block size for sequential workloads.  When the workload is sequential the
-/// number of jobs is small, so the block size is the minimum possible warp
-/// size.  Increasing it would make SM utilization even worse.
-const BLOCK_SIZE_SEQ: u32 = 32;
-/// Block size for parallel workloads where we have a lot of jobs.  If changed,
-/// this constant should also be updated in `kernels.cu`.
-const BLOCK_SIZE_PAR: u32 = 128;
 
 pub struct CudaLikelihood {
 	stream: Arc<CudaStream>,
@@ -148,7 +141,7 @@ impl CudaLikelihood {
 		builder.arg(&internals_start);
 		builder.arg(&root);
 
-		let cfg = self.seq_block_cfg(1);
+		let cfg = self.cfg(32, 1);
 
 		// TODO: safety
 		unsafe { builder.launch(cfg) }?;
@@ -160,11 +153,8 @@ impl CudaLikelihood {
 		let mut builder =
 			self.stream.launch_builder(&self.update_leaves_fn);
 
-		let cfg = if leaves_end > 10 {
-			self.par_block_cfg(leaves_end)
-		} else {
-			self.seq_block_cfg(leaves_end)
-		};
+		let block_size = if leaves_end > 10 { 128 } else { 32 };
+		let cfg = self.cfg(block_size, leaves_end);
 
 		builder.arg(&self.num_sites);
 
@@ -185,7 +175,7 @@ impl CudaLikelihood {
 		let mut builder =
 			self.stream.launch_builder(&self.update_internals_fn);
 
-		let cfg = self.par_block_cfg(num);
+		let cfg = self.cfg(32, num);
 
 		builder.arg(&self.num_sites);
 		builder.arg(&self.num_leaves);
@@ -213,7 +203,7 @@ impl CudaLikelihood {
 			return Ok(());
 		}
 
-		let cfg = self.par_block_cfg(self.num_updated_nodes);
+		let cfg = self.cfg(128, self.num_updated_nodes);
 
 		let func = if accept {
 			&self.accept_fn
@@ -238,20 +228,11 @@ impl CudaLikelihood {
 		Ok(())
 	}
 
-	fn seq_block_cfg(&self, dim2: u32) -> LaunchConfig {
-		let num_blocks = self.num_sites.div_ceil(BLOCK_SIZE_SEQ);
+	fn cfg(&self, block_size: u32, dim2: u32) -> LaunchConfig {
+		let num_site_blocks = self.num_sites.div_ceil(block_size);
 		LaunchConfig {
-			grid_dim: (num_blocks, dim2, 1),
-			block_dim: (BLOCK_SIZE_SEQ, 1, 1),
-			shared_mem_bytes: 0,
-		}
-	}
-
-	fn par_block_cfg(&self, dim2: u32) -> LaunchConfig {
-		let num_blocks = self.num_sites.div_ceil(BLOCK_SIZE_PAR);
-		LaunchConfig {
-			grid_dim: (num_blocks, dim2, 1),
-			block_dim: (BLOCK_SIZE_PAR, 1, 1),
+			grid_dim: (num_site_blocks, dim2, 1),
+			block_dim: (block_size, 1, 1),
 			shared_mem_bytes: 0,
 		}
 	}
