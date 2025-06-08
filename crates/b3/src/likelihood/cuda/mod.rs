@@ -34,6 +34,7 @@ pub struct CudaLikelihood {
 	accept_fn: CudaFunction,
 	reject_fn: CudaFunction,
 	update_leaves_fn: CudaFunction,
+	update_internals_fn: CudaFunction,
 
 	leaves: CudaSlice<Row<4>>,
 	projections: CudaSlice<Row<4>>,
@@ -55,11 +56,13 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		nodes: &[usize],
 		edges: &[usize],
 		transitions: &[Transition<4>],
-		ranks: &[usize],
+		mut ranks: &[usize],
 		root: usize,
 	) -> Result<()> {
 		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
 		let edges: Vec<_> = edges.iter().map(|e| *e as u32).collect();
+		let mut num_nodes_left = nodes.len() as u32;
+		let mut internals_start = 0;
 
 		self.num_updated_nodes = nodes.len() as u32;
 
@@ -68,17 +71,65 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		self.stream
 			.memcpy_htod(transitions, &mut self.transitions)?;
 
-		let mut leaves_end = ranks[0] as u32;
-		let internals_start = leaves_end;
+		let leaves_end = ranks[0] as u32;
+		ranks = &ranks[1..];
+		num_nodes_left -= leaves_end;
+		internals_start += leaves_end;
+
 		let root = root as u32;
 
-		if leaves_end > 10 {
+		const CUTOFF: f64 = 2.0;
+
+		if ratio(num_nodes_left, ranks.len()) > CUTOFF {
 			self.update_leaves(leaves_end)?;
-			// we have already updated all of the leaves, no need to
-			// do it twice
-			leaves_end = 0;
+
+			while !ranks.is_empty()
+				&& ratio(num_nodes_left, ranks.len()) > CUTOFF
+			{
+				let num_rank_nodes = ranks[0] as u32;
+				ranks = &ranks[1..];
+
+				self.update_internals(
+					internals_start,
+					num_rank_nodes,
+				)?;
+
+				num_nodes_left -= num_rank_nodes;
+				internals_start += num_rank_nodes;
+			}
+			self.update_all_seq(0, internals_start, root)?;
+		} else {
+			self.update_all_seq(leaves_end, leaves_end, root)?;
 		}
 
+		Ok(())
+	}
+
+	fn likelihood(&mut self) -> Result<f64> {
+		self.stream.memcpy_dtoh(
+			&self.likelihoods,
+			&mut self.host_likelihoods,
+		)?;
+
+		Ok(self.host_likelihoods.iter().sum())
+	}
+
+	fn accept(&mut self) -> Result<()> {
+		self.projections_copy(true)
+	}
+
+	fn reject(&mut self) -> Result<()> {
+		self.projections_copy(false)
+	}
+}
+
+impl CudaLikelihood {
+	fn update_all_seq(
+		&self,
+		leaves_end: u32,
+		internals_start: u32,
+		root: u32,
+	) -> Result<()> {
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
 
 		builder.arg(&self.num_sites);
@@ -105,30 +156,15 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<f64> {
-		self.stream.memcpy_dtoh(
-			&self.likelihoods,
-			&mut self.host_likelihoods,
-		)?;
-
-		Ok(self.host_likelihoods.iter().sum())
-	}
-
-	fn accept(&mut self) -> Result<()> {
-		self.projections_copy(true)
-	}
-
-	fn reject(&mut self) -> Result<()> {
-		self.projections_copy(false)
-	}
-}
-
-impl CudaLikelihood {
 	fn update_leaves(&self, leaves_end: u32) -> Result<()> {
 		let mut builder =
 			self.stream.launch_builder(&self.update_leaves_fn);
 
-		let cfg = self.par_block_cfg(leaves_end);
+		let cfg = if leaves_end > 10 {
+			self.par_block_cfg(leaves_end)
+		} else {
+			self.seq_block_cfg(leaves_end)
+		};
 
 		builder.arg(&self.num_sites);
 
@@ -138,6 +174,29 @@ impl CudaLikelihood {
 
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
+
+		// TODO: safety
+		unsafe { builder.launch(cfg) }?;
+
+		Ok(())
+	}
+
+	fn update_internals(&self, start: u32, num: u32) -> Result<()> {
+		let mut builder =
+			self.stream.launch_builder(&self.update_internals_fn);
+
+		let cfg = self.par_block_cfg(num);
+
+		builder.arg(&self.num_sites);
+		builder.arg(&self.num_leaves);
+
+		builder.arg(&self.leaves);
+		builder.arg(&self.projections);
+
+		builder.arg(&self.updated_edges);
+		builder.arg(&self.nodes);
+		builder.arg(&self.transitions);
+		builder.arg(&start);
 
 		// TODO: safety
 		unsafe { builder.launch(cfg) }?;
@@ -236,6 +295,8 @@ impl CudaLikelihood {
 		let accept_fn = module.load_function("accept")?;
 		let reject_fn = module.load_function("reject")?;
 		let update_leaves_fn = module.load_function("update_leaves")?;
+		let update_internals_fn =
+			module.load_function("update_internals")?;
 
 		Ok(Self {
 			stream,
@@ -244,6 +305,7 @@ impl CudaLikelihood {
 			accept_fn,
 			reject_fn,
 			update_leaves_fn,
+			update_internals_fn,
 
 			leaves,
 			projections,
@@ -260,4 +322,8 @@ impl CudaLikelihood {
 			num_updated_nodes: 0,
 		})
 	}
+}
+
+fn ratio(x: u32, y: usize) -> f64 {
+	x as f64 / y as f64
 }

@@ -76,9 +76,11 @@ void update_internals(
 
 	const u32* __restrict__ edges,
 	const u32* __restrict__ nodes,
-	const Transition* __restrict__ transitions
+	const Transition* __restrict__ transitions,
+	const u32 start
 ) {
 	PAR_BLOCK_PRELUDE
+	i += start;
 
 	u32 left_edge = (nodes[i] - num_leaves) * 2;
 	u32 right_edge = left_edge + 1;
