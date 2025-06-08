@@ -73,7 +73,8 @@ void propose(
 	const u32* __restrict__ edges,
 	const Transition* __restrict__ transitions,
 
-	const u32 cutoff,
+	const u32 leaves_end,
+	const u32 internals_start,
 	const u32 root
 ) {
 	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
@@ -81,18 +82,16 @@ void propose(
 		return;
 	}
 
-	if (cutoff > 10) {
-		for (u32 i = 0; i < cutoff; i++) {
-			f64x4 projection = apply(
-				transitions[i],
-				leaves[idx(nodes[i])]
-			);
+	for (u32 i = 0; i < leaves_end; i++) {
+		f64x4 projection = apply(
+			transitions[i],
+			leaves[idx(nodes[i])]
+		);
 
-			projections[idx(edges[i])] = projection;
-		}
+		projections[idx(edges[i])] = projection;
 	}
 
-	for (u32 i = cutoff; i < num_updated_nodes; i++) {
+	for (u32 i = internals_start; i < num_updated_nodes; i++) {
 		u32 left_edge = (nodes[i] - num_leaves) * 2;
 		u32 right_edge = left_edge + 1;
 

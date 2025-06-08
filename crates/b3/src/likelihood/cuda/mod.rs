@@ -68,11 +68,15 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		self.stream
 			.memcpy_htod(transitions, &mut self.transitions)?;
 
-		let leaves_end = leaves_end as u32;
+		let mut leaves_end = leaves_end as u32;
+		let internals_start = leaves_end;
 		let root = root as u32;
 
 		if leaves_end > 10 {
 			self.update_leaves(leaves_end)?;
+			// we have already updated all of the leaves, no need to
+			// do it twice
+			leaves_end = 0;
 		}
 
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
@@ -90,6 +94,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		builder.arg(&self.transitions);
 
 		builder.arg(&leaves_end);
+		builder.arg(&internals_start);
 		builder.arg(&root);
 
 		let cfg = self.seq_block_cfg(1);
@@ -123,11 +128,7 @@ impl CudaLikelihood {
 		let mut builder =
 			self.stream.launch_builder(&self.update_leaves_fn);
 
-		let cfg = if leaves_end > 10 {
-			self.par_block_cfg(leaves_end)
-		} else {
-			self.seq_block_cfg(leaves_end)
-		};
+		let cfg = self.par_block_cfg(leaves_end);
 
 		builder.arg(&self.num_sites);
 
