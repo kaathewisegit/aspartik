@@ -55,7 +55,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		nodes: &[usize],
 		edges: &[usize],
 		transitions: &[Transition<4>],
-		leaves_end: usize,
+		ranks: &[usize],
 		root: usize,
 	) -> Result<()> {
 		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
@@ -68,7 +68,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		self.stream
 			.memcpy_htod(transitions, &mut self.transitions)?;
 
-		let mut leaves_end = leaves_end as u32;
+		let mut leaves_end = ranks[0] as u32;
 		let internals_start = leaves_end;
 		let root = root as u32;
 

@@ -258,8 +258,9 @@ impl Tree {
 	}
 
 	#[allow(unused)]
-	pub fn nodes_to_update(&mut self) -> Vec<Node> {
-		let mut out = Vec::<Node>::with_capacity(self.num_nodes());
+	pub fn nodes_to_update(&mut self) -> (Vec<Node>, Vec<usize>) {
+		let mut nodes = Vec::<Node>::with_capacity(self.num_nodes());
+		let mut ranks = Vec::<usize>::new();
 
 		// For each updated node go upwards in the tree until root and
 		// mark nodes as updated
@@ -282,9 +283,11 @@ impl Tree {
 		// Updated leaves, in order
 		for i in 0..self.num_leaves() {
 			if self.updated_nodes[i] {
-				out.push(Node(i));
+				nodes.push(Node(i));
 			}
 		}
+		// number of leaves goes first
+		let num_updated_leaves = nodes.len();
 
 		// current rank
 		let mut current = Vec::from([self.root()]);
@@ -311,41 +314,29 @@ impl Tree {
 					}
 				}
 			}
+			ranks.push(current.len());
 			internals.extend(current.iter().map(|n| n.into_node()));
 			current = std::mem::take(&mut next);
 		}
 
-		internals.reverse();
-		// remove root
-		internals.pop();
-		out.append(&mut internals);
+		ranks.push(num_updated_leaves);
+		ranks.reverse();
+		ranks.pop(); // remove root
 
-		out
+		internals.reverse();
+		internals.pop(); // remove root
+		nodes.append(&mut internals);
+
+		(nodes, ranks)
 	}
 
 	/// A breadth-first order of internals starting from the root.
-	pub fn full_update(&self) -> Vec<Node> {
-		let mut queue = VecDeque::<Node>::from([self.root().into()]);
-		let mut internals = Vec::<Node>::new();
-		let mut leaves = Vec::<Node>::new();
-		while let Some(node) = queue.pop_front() {
-			if let Some(internal) = self.as_internal(node) {
-				internals.push(internal.into());
-				let (left, right) = self.children_of(internal);
-
-				queue.push_back(left);
-				queue.push_back(right);
-			} else {
-				leaves.push(node);
-			}
+	pub fn full_update(&mut self) -> (Vec<Node>, Vec<usize>) {
+		for edited in &mut self.updated_nodes {
+			*edited = true;
 		}
 
-		internals.reverse();
-		// remove root
-		internals.pop();
-
-		leaves.append(&mut internals);
-		leaves
+		self.nodes_to_update()
 	}
 
 	pub fn to_lists(

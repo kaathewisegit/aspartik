@@ -30,7 +30,7 @@ trait LikelihoodTrait<const N: usize> {
 		nodes: &[usize],
 		edges: &[usize],
 		transitions: &[Transition<N>],
-		cutoff: usize,
+		ranks: &[usize],
 		root: usize,
 	) -> Result<()>;
 
@@ -120,7 +120,7 @@ impl<const N: usize> GenericLikelihood<N> {
 			rate,
 			tree,
 		);
-		let nodes = if full_update {
+		let (nodes, ranks) = if full_update {
 			tree.full_update()
 		} else {
 			tree.nodes_to_update()
@@ -133,11 +133,6 @@ impl<const N: usize> GenericLikelihood<N> {
 			return Ok(());
 		}
 
-		let cutoff = nodes
-			.iter()
-			.position(|n| tree.is_internal(*n))
-			.unwrap();
-
 		let (nodes, edges, root) = tree.to_lists(&nodes);
 
 		let transitions = self.transitions.matrices(&edges);
@@ -146,7 +141,7 @@ impl<const N: usize> GenericLikelihood<N> {
 			&nodes,
 			&edges,
 			&transitions,
-			cutoff,
+			&ranks,
 			root,
 		)?;
 		self.launched_update = true;

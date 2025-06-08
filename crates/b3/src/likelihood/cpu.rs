@@ -22,7 +22,7 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		nodes: &[usize],
 		edges: &[usize],
 		transitions: &[Transition<N>],
-		cuttoff: usize,
+		ranks: &[usize],
 		root: usize,
 	) -> Result<()> {
 		assert_eq!(nodes.len(), edges.len());
@@ -32,8 +32,9 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 
 		let num_sites = self.num_sites;
 		let num_leaves = self.num_leaves;
+		let leaves_end = ranks[0];
 
-		for i in 0..cuttoff {
+		for i in 0..leaves_end {
 			let transition = transitions[i];
 
 			let edge = edges[i];
@@ -51,7 +52,7 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 			}
 		}
 
-		for i in cuttoff..nodes.len() {
+		for i in leaves_end..nodes.len() {
 			let transition = transitions[i];
 			let node = nodes[i];
 
