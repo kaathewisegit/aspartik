@@ -29,8 +29,13 @@ __device__ f64x4 apply(
 	);
 }
 
+#define BLOCK_SIZE 16 * 4
+
 #define idx(edge) \
 	((edge) * num_sites + site)
+
+#define sidx(edge) \
+	((edge) * num_sites + site) * 4 + sub
 
 // Gets the site index from the thread and block id
 #define SITE_PRELUDE \
@@ -43,97 +48,89 @@ __device__ f64x4 apply(
 	SITE_PRELUDE \
 	u32 i = blockIdx.y; \
 
-entrypoint __launch_bounds__(128)
+// # Variables
+// - i: index of the update
+// - sub: index of the site allele
+#define CALCULATE_LEAF_PROJECTION \
+	f64 projection = dot( \
+		transitions[i * 4 + sub], \
+		leaves[idx(nodes[i])] \
+	); \
+	projections[sidx(edges[i])] = projection; \
+
+entrypoint __launch_bounds__(BLOCK_SIZE)
 void update_leaves(
 	const u32 num_sites,
 
 	const f64x4* restrict leaves,
-	f64x4* restrict projections,
+	f64* restrict projections,
 
 	const u32* restrict nodes,
 	const u32* restrict edges,
-	const Transition* restrict transitions
+	const f64x4* restrict transitions
 ) {
-	PAR_BLOCK_PRELUDE
+	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
+	if (site >= num_sites) {
+		return;
+	}
+	u32 sub = threadIdx.y;
+	u32 i = blockIdx.y;
 
-	f64x4 projection = apply(transitions[i], leaves[idx(nodes[i])]);
-	projections[idx(edges[i])] = projection;
+	CALCULATE_LEAF_PROJECTION
 }
 
-entrypoint __launch_bounds__(32)
-void update_internals(
-	const u32 num_sites,
-	const u32 num_leaves,
-
-	const f64x4* restrict leaves,
-	f64x4* restrict projections,
-
-	const u32* restrict nodes,
-	const u32* restrict edges,
-	const Transition* restrict transitions,
-	const u32 start
-) {
-	PAR_BLOCK_PRELUDE
-	i += start;
-
-	u32 left_edge = (nodes[i] - num_leaves) * 2;
-	u32 right_edge = left_edge + 1;
-
-	f64x4 likelihood = hadamard(
-		projections[idx(left_edge)],
-		projections[idx(right_edge)]
-	);
-
-	f64x4 projection = apply(
-		transitions[i],
-		likelihood
-	);
-
-	projections[idx(edges[i])] = projection;
-}
-
-entrypoint __launch_bounds__(32)
+entrypoint __launch_bounds__(BLOCK_SIZE)
 void propose(
 	const u32 num_sites,
 	const u32 num_leaves,
 
 	const f64x4* restrict leaves,
-	f64x4* restrict projections,
+	f64* restrict projections,
 
 	const u32 num_updated_nodes,
 	const u32* restrict nodes,
 	const u32* restrict edges,
-	const Transition* restrict transitions,
+	const f64x4* restrict transitions,
 
 	const u32 leaves_end,
 	const u32 internals_start
 ) {
-	SITE_PRELUDE
+	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
+	if (site >= num_sites) {
+		return;
+	}
+	u32 sub = threadIdx.y;
+
+	__shared__ f64 s_likelihood[BLOCK_SIZE * 4];
 
 	for (u32 i = 0; i < leaves_end; i++) {
-		f64x4 projection = apply(
-			transitions[i],
-			leaves[idx(nodes[i])]
-		);
-
-		projections[idx(edges[i])] = projection;
+		CALCULATE_LEAF_PROJECTION
 	}
 
 	for (u32 i = internals_start; i < num_updated_nodes; i++) {
 		u32 left_edge = (nodes[i] - num_leaves) * 2;
 		u32 right_edge = left_edge + 1;
 
-		f64x4 likelihood = hadamard(
-			projections[idx(left_edge)],
-			projections[idx(right_edge)]
+		// thread-local likelihood
+		f64 l_likelihood = projections[sidx(left_edge)] *
+			projections[sidx(right_edge)];
+		s_likelihood[threadIdx.x * 4 + sub] = l_likelihood;
+
+		__syncthreads();
+		// rebuild the likelihood from the 4 neighbouring threads
+		auto likelihood = make_f64x4(
+			s_likelihood[threadIdx.x * 4 + 0],
+			s_likelihood[threadIdx.x * 4 + 1],
+			s_likelihood[threadIdx.x * 4 + 2],
+			s_likelihood[threadIdx.x * 4 + 3]
 		);
 
-		f64x4 projection = apply(
-			transitions[i],
+		f64 projection = dot(
+			transitions[i * 4 + sub],
 			likelihood
 		);
 
-		projections[idx(edges[i])] = projection;
+		projections[sidx(edges[i])] = projection;
 	}
 }
 
