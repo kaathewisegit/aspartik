@@ -16,10 +16,13 @@ from aspartik.stats.distributions import Gamma, Uniform
 from aspartik.rng import RNG
 from aspartik.io.fasta import DNAReader
 
-path = "crates/b3/data/512.fasta"
+path = "crates/b3/data/8384-shrooms.fasta"
 sequences = []
 names = []
-for record in DNAReader(path):
+for i, record in enumerate(DNAReader(path)):
+    # new hard limit with thread scaling
+    if i == 1150:
+        break
     sequences.append(record.sequence)
     names.append(record.id)
 
@@ -55,7 +58,7 @@ likelihood = Likelihood(
     substitution=sub_model,
     clock=clock_model,
     tree=tree,
-    calculator="cuda",
+    calculator="thread",
 )
 
 loggers = [

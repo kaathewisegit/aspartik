@@ -7,6 +7,7 @@ use skvec::{skvec, SkVec};
 pub struct CpuLikelihood<const N: usize> {
 	leaves: Vec<Row<N>>,
 	projections: SkVec<Row<N>>,
+	scales: SkVec<bool>,
 
 	num_sites: usize,
 	num_leaves: usize,
@@ -15,6 +16,8 @@ pub struct CpuLikelihood<const N: usize> {
 
 	likelihood: f64,
 }
+
+const SCALE: f64 = 1e-30;
 
 impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 	fn propose(
@@ -52,6 +55,8 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		}
 
 		for i in leaves_end..nodes.len() {
+			let mut should_scale = true;
+
 			let transition = transitions[i];
 			let node = nodes[i];
 
@@ -70,9 +75,28 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 
 				let likelihood = left * right;
 				let projection = transition * likelihood;
+				should_scale &= projection[0] < SCALE;
+				should_scale &= projection[1] < SCALE;
+				should_scale &= projection[2] < SCALE;
+				should_scale &= projection[3] < SCALE;
 
 				self.projections
 					.set(edge_idx + site, projection);
+			}
+
+			if should_scale {
+				for site in 0..num_sites {
+					let mut projection = self.projections
+						[edge_idx + site];
+					projection /= SCALE;
+					self.projections.set(
+						edge_idx + site,
+						projection,
+					);
+				}
+				self.scales.set(edge, true);
+			} else {
+				self.scales.set(edge, false);
 			}
 		}
 
@@ -100,11 +124,20 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 	}
 
 	fn likelihood(&mut self) -> Result<f64> {
-		Ok(self.likelihood)
+		let mut out = self.likelihood;
+
+		for scaled in &self.scales {
+			if *scaled {
+				out += SCALE.ln() * self.num_sites as f64;
+			}
+		}
+
+		Ok(out)
 	}
 
 	fn accept(&mut self) -> Result<()> {
 		self.projections.accept();
+		self.scales.accept();
 		Ok(())
 	}
 
@@ -123,6 +156,9 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		// All of the edited items have been manually unset, so
 		// there's no need for `accept` or `reject`.
 
+		// small, so it's cheap to just reject
+		self.scales.reject();
+
 		Ok(())
 	}
 }
@@ -137,10 +173,12 @@ impl<const N: usize> CpuLikelihood<N> {
 		let leaves = transpose(leaves);
 
 		let projections = skvec![Row::default(); num_edges * num_sites];
+		let scales = skvec![false; num_edges];
 
 		Self {
 			leaves,
 			projections,
+			scales,
 
 			num_sites,
 			num_leaves,
