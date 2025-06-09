@@ -43,16 +43,16 @@ __device__ f64x4 apply(
 	SITE_PRELUDE \
 	u32 i = blockIdx.y; \
 
-extern "C" __global__ __launch_bounds__(128)
+entrypoint __launch_bounds__(128)
 void update_leaves(
 	const u32 num_sites,
 
-	const u32* __restrict__ edges,
-	const u32* __restrict__ nodes,
-	const Transition* __restrict__ transitions,
+	const f64x4* restrict leaves,
+	f64x4* restrict projections,
 
-	const f64x4* __restrict__ leaves,
-	f64x4* __restrict__ projections
+	const u32* restrict nodes,
+	const u32* restrict edges,
+	const Transition* restrict transitions
 ) {
 	PAR_BLOCK_PRELUDE
 
@@ -60,17 +60,17 @@ void update_leaves(
 	projections[idx(edges[i])] = projection;
 }
 
-extern "C" __global__ __launch_bounds__(32)
+entrypoint __launch_bounds__(32)
 void update_internals(
 	const u32 num_sites,
 	const u32 num_leaves,
 
-	const f64x4* __restrict__ leaves,
-	f64x4* __restrict__ projections,
+	const f64x4* restrict leaves,
+	f64x4* restrict projections,
 
-	const u32* __restrict__ edges,
-	const u32* __restrict__ nodes,
-	const Transition* __restrict__ transitions,
+	const u32* restrict nodes,
+	const u32* restrict edges,
+	const Transition* restrict transitions,
 	const u32 start
 ) {
 	PAR_BLOCK_PRELUDE
@@ -92,18 +92,18 @@ void update_internals(
 	projections[idx(edges[i])] = projection;
 }
 
-extern "C" __global__ __launch_bounds__(32)
+entrypoint __launch_bounds__(32)
 void propose(
 	const u32 num_sites,
 	const u32 num_leaves,
 
-	const f64x4* __restrict__ leaves,
-	f64x4* __restrict__ projections,
+	const f64x4* restrict leaves,
+	f64x4* restrict projections,
 
 	const u32 num_updated_nodes,
-	const u32* __restrict__ nodes,
-	const u32* __restrict__ edges,
-	const Transition* __restrict__ transitions,
+	const u32* restrict nodes,
+	const u32* restrict edges,
+	const Transition* restrict transitions,
 
 	const u32 leaves_end,
 	const u32 internals_start
@@ -137,13 +137,13 @@ void propose(
 	}
 }
 
-extern "C" __global__ __launch_bounds__(32)
+entrypoint __launch_bounds__(32)
 void update_likelihoods(
 	const u32 num_sites,
 	const u32 num_leaves,
 
-	f64x4* __restrict__ projections,
-	f64* __restrict__ likelihoods,
+	f64x4* restrict projections,
+	f64* restrict likelihoods,
 
 	u32 root
 ) {
@@ -161,15 +161,14 @@ void update_likelihoods(
 	likelihoods[site] = log(sum);
 }
 
-extern "C" __global__ __launch_bounds__(128)
+entrypoint __launch_bounds__(128)
 void accept(
 	const u32 num_sites,
 
-	const f64x4* __restrict__ projections,
-	f64x4* __restrict__ projections_backup,
+	const f64x4* restrict projections,
+	f64x4* restrict projections_backup,
 
-	const u32 num_updated_nodes,
-	const u32* __restrict__ edges
+	const u32* restrict edges
 ) {
 	PAR_BLOCK_PRELUDE
 
@@ -177,15 +176,14 @@ void accept(
 	projections_backup[proj_idx] = projections[proj_idx];
 }
 
-extern "C" __global__ __launch_bounds__(128)
+entrypoint __launch_bounds__(128)
 void reject(
 	const u32 num_sites,
 
-	f64x4* __restrict__ projections,
-	const f64x4* __restrict__ projections_backup,
+	f64x4* restrict projections,
+	const f64x4* restrict projections_backup,
 
-	const u32 num_updated_nodes,
-	const u32* __restrict__ edges
+	const u32* restrict edges
 ) {
 	PAR_BLOCK_PRELUDE
 

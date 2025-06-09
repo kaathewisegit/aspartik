@@ -15,3 +15,6 @@ typedef double f64;
 
 typedef double4 f64x4;
 #define make_f64x4 make_double4
+
+#define restrict __restrict__
+#define entrypoint extern "C" __global__

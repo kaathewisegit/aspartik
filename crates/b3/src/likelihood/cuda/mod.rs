@@ -35,7 +35,7 @@ pub struct CudaLikelihood {
 	projections_backup: CudaSlice<Row<4>>,
 	likelihoods: CudaSlice<f64>,
 	host_likelihoods: Vec<f64>,
-	updated_edges: CudaSlice<u32>,
+	edges: CudaSlice<u32>,
 	transitions: CudaSlice<Transition<4>>,
 	nodes: CudaSlice<u32>,
 
@@ -60,7 +60,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 
 		self.num_updated_nodes = nodes.len() as u32;
 
-		self.stream.memcpy_htod(&edges, &mut self.updated_edges)?;
+		self.stream.memcpy_htod(&edges, &mut self.edges)?;
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
 		self.stream
 			.memcpy_htod(transitions, &mut self.transitions)?;
@@ -133,7 +133,7 @@ impl CudaLikelihood {
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.nodes);
-		builder.arg(&self.updated_edges);
+		builder.arg(&self.edges);
 		builder.arg(&self.transitions);
 
 		builder.arg(&leaves_end);
@@ -157,12 +157,12 @@ impl CudaLikelihood {
 
 		builder.arg(&self.num_sites);
 
-		builder.arg(&self.updated_edges);
-		builder.arg(&self.nodes);
-		builder.arg(&self.transitions);
-
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
+
+		builder.arg(&self.nodes);
+		builder.arg(&self.edges);
+		builder.arg(&self.transitions);
 
 		// TODO: safety
 		unsafe { builder.launch(cfg) }
@@ -183,8 +183,8 @@ impl CudaLikelihood {
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
 
-		builder.arg(&self.updated_edges);
 		builder.arg(&self.nodes);
+		builder.arg(&self.edges);
 		builder.arg(&self.transitions);
 		builder.arg(&start);
 
@@ -241,8 +241,7 @@ impl CudaLikelihood {
 		builder.arg(&self.projections);
 		builder.arg(&self.projections_backup);
 
-		builder.arg(&self.num_updated_nodes);
-		builder.arg(&self.updated_edges);
+		builder.arg(&self.edges);
 
 		// TODO: safety
 		unsafe { builder.launch(cfg) }.with_context(|| {
@@ -293,7 +292,7 @@ impl CudaLikelihood {
 
 		let likelihoods: CudaSlice<f64> =
 			stream.alloc_zeros(num_sites)?;
-		let updated_edges = stream.alloc_zeros(num_edges)?;
+		let edges = stream.alloc_zeros(num_edges)?;
 		let transitions = stream.alloc_zeros(num_edges)?;
 		let nodes = stream.alloc_zeros(num_nodes)?;
 
@@ -323,7 +322,7 @@ impl CudaLikelihood {
 			projections_backup,
 			likelihoods,
 			host_likelihoods: vec![0.0; num_sites],
-			updated_edges,
+			edges,
 			transitions,
 			nodes,
 
