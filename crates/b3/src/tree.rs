@@ -258,9 +258,8 @@ impl Tree {
 	}
 
 	#[allow(unused)]
-	pub fn nodes_to_update(&mut self) -> (Vec<Node>, Vec<usize>) {
+	pub fn nodes_to_update(&mut self) -> (Vec<Node>, usize) {
 		let mut nodes = Vec::<Node>::with_capacity(self.num_nodes());
-		let mut ranks = Vec::<usize>::new();
 
 		// For each updated node go upwards in the tree until root and
 		// mark nodes as updated
@@ -286,7 +285,6 @@ impl Tree {
 				nodes.push(Node(i));
 			}
 		}
-		// number of leaves goes first
 		let num_updated_leaves = nodes.len();
 
 		// current rank
@@ -314,24 +312,19 @@ impl Tree {
 					}
 				}
 			}
-			ranks.push(current.len());
 			internals.extend(current.iter().map(|n| n.into_node()));
 			current = std::mem::take(&mut next);
 		}
-
-		ranks.push(num_updated_leaves);
-		ranks.reverse();
-		ranks.pop(); // remove root
 
 		internals.reverse();
 		internals.pop(); // remove root
 		nodes.append(&mut internals);
 
-		(nodes, ranks)
+		(nodes, num_updated_leaves)
 	}
 
 	/// A breadth-first order of internals starting from the root.
-	pub fn full_update(&mut self) -> (Vec<Node>, Vec<usize>) {
+	pub fn full_update(&mut self) -> (Vec<Node>, usize) {
 		for edited in &mut self.updated_nodes {
 			*edited = true;
 		}

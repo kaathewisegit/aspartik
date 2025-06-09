@@ -30,7 +30,7 @@ trait LikelihoodTrait<const N: usize> {
 		nodes: &[usize],
 		edges: &[usize],
 		transitions: &[Transition<N>],
-		ranks: &[usize],
+		leaves_end: usize,
 		root: usize,
 	) -> Result<()>;
 
@@ -120,7 +120,7 @@ impl<const N: usize> GenericLikelihood<N> {
 			rate,
 			tree,
 		);
-		let (nodes, ranks) = if full_update {
+		let (nodes, leaves_end) = if full_update {
 			tree.full_update()
 		} else {
 			tree.nodes_to_update()
@@ -141,7 +141,7 @@ impl<const N: usize> GenericLikelihood<N> {
 			&nodes,
 			&edges,
 			&transitions,
-			&ranks,
+			leaves_end,
 			root,
 		)?;
 		self.launched_update = true;

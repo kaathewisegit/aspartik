@@ -5,13 +5,8 @@ use std::{sync::Arc, thread};
 
 use super::{CpuLikelihood, LikelihoodTrait, Row, Transition};
 
-type Update<const N: usize> = (
-	Vec<usize>,
-	Vec<usize>,
-	Vec<Transition<N>>,
-	Vec<usize>,
-	usize,
-);
+type Update<const N: usize> =
+	(Vec<usize>, Vec<usize>, Vec<Transition<N>>, usize, usize);
 
 pub struct ThreadedLikelihood<const N: usize> {
 	updates: Vec<Sender<Arc<Update<N>>>>,
@@ -30,14 +25,14 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 		nodes: &[usize],
 		edges: &[usize],
 		transitions: &[Transition<N>],
-		ranks: &[usize],
+		leaves_end: usize,
 		root: usize,
 	) -> Result<()> {
 		let update = Arc::new((
 			nodes.to_owned(),
 			edges.to_owned(),
 			transitions.to_owned(),
-			ranks.to_owned(),
+			leaves_end,
 			root,
 		));
 		for sender in &self.updates {
@@ -145,7 +140,7 @@ fn worker<const N: usize>(
 			break;
 		};
 		cpu.propose(
-			&update.0, &update.1, &update.2, &update.3, update.4,
+			&update.0, &update.1, &update.2, update.3, update.4,
 		)
 		.unwrap();
 		let likelihood = cpu.likelihood().unwrap();
