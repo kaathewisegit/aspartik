@@ -24,8 +24,7 @@ pub struct CudaLikelihood {
 	stream: Arc<CudaStream>,
 
 	propose_fn: CudaFunction,
-	accept_fn: CudaFunction,
-	reject_fn: CudaFunction,
+	copy_projections_fn: CudaFunction,
 	update_leaves_fn: CudaFunction,
 	update_likelihoods_fn: CudaFunction,
 
@@ -86,11 +85,11 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 	}
 
 	fn accept(&mut self) -> Result<()> {
-		self.projections_copy(true)
+		self.copy_projections(true)
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		self.projections_copy(false)
+		self.copy_projections(false)
 	}
 }
 
@@ -185,24 +184,25 @@ impl CudaLikelihood {
 	///
 	/// This is an abstraction which unifies `accept` and `reject`, since
 	/// they are basically the same.
-	fn projections_copy(&mut self, accept: bool) -> Result<()> {
+	fn copy_projections(&mut self, accept: bool) -> Result<()> {
 		if self.num_updated_nodes == 0 {
 			return Ok(());
 		}
 
 		let cfg = self.cfg(128, self.num_updated_nodes);
 
-		let func = if accept {
-			&self.accept_fn
-		} else {
-			&self.reject_fn
-		};
-		let mut builder = self.stream.launch_builder(func);
+		let mut builder =
+			self.stream.launch_builder(&self.copy_projections_fn);
 
 		builder.arg(&self.num_sites);
 
-		builder.arg(&self.projections);
-		builder.arg(&self.projections_backup);
+		if accept {
+			builder.arg(&self.projections);
+			builder.arg(&self.projections_backup);
+		} else {
+			builder.arg(&self.projections_backup);
+			builder.arg(&self.projections);
+		}
 
 		builder.arg(&self.edges);
 
@@ -262,8 +262,8 @@ impl CudaLikelihood {
 		let ptx = Ptx::from_src(PTX_SRC);
 		let module = context.load_module(ptx)?;
 		let propose_fn = module.load_function("propose")?;
-		let accept_fn = module.load_function("accept")?;
-		let reject_fn = module.load_function("reject")?;
+		let copy_projections_fn =
+			module.load_function("copy_projections")?;
 		let update_leaves_fn = module.load_function("update_leaves")?;
 		let update_likelihoods_fn =
 			module.load_function("update_likelihoods")?;
@@ -272,8 +272,7 @@ impl CudaLikelihood {
 			stream,
 
 			propose_fn,
-			accept_fn,
-			reject_fn,
+			copy_projections_fn,
 			update_leaves_fn,
 			update_likelihoods_fn,
 

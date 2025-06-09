@@ -44,10 +44,6 @@ __device__ f64x4 apply(
 		return; \
 	} \
 
-#define PAR_BLOCK_PRELUDE \
-	SITE_PRELUDE \
-	u32 i = blockIdx.y; \
-
 // # Variables
 // - i: index of the update
 // - sub: index of the site allele
@@ -159,31 +155,17 @@ void update_likelihoods(
 }
 
 entrypoint __launch_bounds__(128)
-void accept(
+void copy_projections(
 	const u32 num_sites,
 
-	const f64x4* restrict projections,
-	f64x4* restrict projections_backup,
+	const f64x4* restrict src,
+	f64x4* restrict dst,
 
 	const u32* restrict edges
 ) {
-	PAR_BLOCK_PRELUDE
+	SITE_PRELUDE
+	u32 i = blockIdx.y;
 
 	u32 proj_idx = idx(edges[i]);
-	projections_backup[proj_idx] = projections[proj_idx];
-}
-
-entrypoint __launch_bounds__(128)
-void reject(
-	const u32 num_sites,
-
-	f64x4* restrict projections,
-	const f64x4* restrict projections_backup,
-
-	const u32* restrict edges
-) {
-	PAR_BLOCK_PRELUDE
-
-	u32 proj_idx = idx(edges[i]);
-	projections[proj_idx] = projections_backup[proj_idx];
+	dst[proj_idx] = src[proj_idx];
 }
