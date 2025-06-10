@@ -233,6 +233,34 @@ impl<'a, T> Iterator for Iter<'a, T> {
 			Some(out)
 		}
 	}
+
+	fn size_hint(&self) -> (usize, Option<usize>) {
+		(self.len(), Some(self.len()))
+	}
+
+	fn count(self) -> usize
+	where
+		Self: Sized,
+	{
+		self.len()
+	}
+
+	fn last(self) -> Option<Self::Item>
+	where
+		Self: Sized,
+	{
+		if self.index == self.vec.len() {
+			None
+		} else {
+			self.vec.last()
+		}
+	}
+}
+
+impl<T> ExactSizeIterator for Iter<'_, T> {
+	fn len(&self) -> usize {
+		self.vec.len() - self.index
+	}
 }
 
 impl<T> SkVec<T> {
@@ -246,7 +274,7 @@ impl<T> SkVec<T> {
 	}
 }
 
-impl<'a, T: Copy> IntoIterator for &'a SkVec<T> {
+impl<'a, T> IntoIterator for &'a SkVec<T> {
 	type Item = &'a T;
 	type IntoIter = Iter<'a, T>;
 
