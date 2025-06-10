@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 use pyo3::{
 	class::basic::CompareOp,
 	conversion::FromPyObjectBound,
-	exceptions::{PyIndexError, PyTypeError},
+	exceptions::{PyIndexError, PyTypeError, PyValueError},
 	types::{PyBytes, PyTuple},
 };
 use serde::{Deserialize, Serialize};
@@ -101,109 +101,131 @@ pub struct PyBoolean {
 	inner: Mutex<Parameter<bool>>,
 }
 
+#[rustfmt::skip]
 macro_rules! pymethod_impl {
-	($class:ident, $name:literal, $type:ty) => {
-		#[pymethods]
-		impl $class {
-			#[new]
-			#[pyo3(signature = (*values))]
-			fn new(values: &Bound<PyTuple>) -> Result<Self> {
-				check_empty(values)?;
+($class:ident, $name:literal, $type:ty, $pytype:literal) => {
+	#[pymethods]
+	impl $class {
+		#[new]
+		#[pyo3(signature = (*values))]
+		fn new(values: &Bound<PyTuple>) -> Result<Self> {
+			check_empty(values)?;
 
-				let values: Vec<$type> = extract(values)?;
-				let parameter = Parameter(values.into());
-				Ok(Self {
-					inner: Mutex::new(parameter),
-				})
+			let values: Vec<$type> = extract(values)?;
+		let parameter = Parameter(values.into());
+		Ok(Self {
+			inner: Mutex::new(parameter),
+		})
+	}
+
+	fn __len__(&self) -> usize {
+		self.inner.lock().len()
+	}
+
+	fn __getitem__(&self, i: usize) -> Result<$type> {
+		let inner = &*self.inner.lock();
+		inner.check_index(i)?;
+
+		Ok(inner.0[i])
+	}
+
+	fn __setitem__(
+		&self,
+		i: usize,
+		value: $type,
+	) -> Result<()> {
+		let inner = &mut *self.inner.lock();
+		inner.check_index(i)?;
+		inner.0.set(i, value);
+
+		Ok(())
+	}
+
+	fn __repr__(&self) -> String {
+		let inner = &*self.inner.lock();
+
+		format!("{}({})", $name, inner)
+	}
+
+	fn __str__(&self) -> String {
+		format!("[{}]", self.inner.lock())
+	}
+
+	fn __richcmp__(
+		&self,
+		other: Bound<PyAny>,
+		op: CompareOp,
+	) -> Result<bool> {
+		let inner = &*self.inner.lock();
+
+		if let Ok(other) = other.downcast::<Self>() {
+			let other = &*other.get().inner.lock();
+
+			if inner.0.len() != other.0.len() {
+				py_bail!(
+					PyValueError,
+					"Can't compare parameters of different lengths: {} and {}",
+					inner.0.len(), other.0.len()
+				);
 			}
 
-			fn __len__(&self) -> usize {
-				self.inner.lock().len()
-			}
-
-			fn __getitem__(&self, i: usize) -> Result<$type> {
-				let inner = &*self.inner.lock();
-				inner.check_index(i)?;
-
-				Ok(inner.0[i])
-			}
-
-			fn __setitem__(
-				&self,
-				i: usize,
-				value: $type,
-			) -> Result<()> {
-				let inner = &mut *self.inner.lock();
-				inner.check_index(i)?;
-				inner.0.set(i, value);
-
-				Ok(())
-			}
-
-			fn __repr__(&self) -> String {
-				let inner = &*self.inner.lock();
-
-				format!("{}({})", $name, inner)
-			}
-
-			fn __str__(&self) -> String {
-				format!("[{}]", self.inner.lock())
-			}
-
-			fn __richcmp__(
-				&self,
-				other: $type,
-				op: CompareOp,
-			) -> Result<bool> {
-				let inner = &*self.inner.lock();
-
-				Ok(compare(&inner.0, other, op))
-			}
-
-			fn __getstate__<'py>(
-				&self,
-				py: Python<'py>,
-			) -> Result<Bound<'py, PyBytes>> {
-				let inner = &*self.inner.lock();
-				let vec = encode_to_vec(inner, BINCODE_CONFIG)?;
-
-				Ok(PyBytes::new(py, &vec))
-			}
-
-			fn __getnewargs__<'py>(
-				&self,
-				py: Python<'py>,
-			) -> PyResult<Bound<'py, PyTuple>> {
-				let inner = &*self.inner.lock();
-
-				PyTuple::new(py, &inner.0)
-			}
-
-			fn __setstate__(
-				&self,
-				state: Bound<PyBytes>,
-			) -> Result<()> {
-				let slice = state.as_bytes();
-				let (state, _) = decode_from_slice(
-					slice,
-					BINCODE_CONFIG,
-				)?;
-
-				let inner = &mut *self.inner.lock();
-				*inner = state;
-
-				Ok(())
-			}
-
-			fn accept(&self) {
-				self.inner.lock().0.accept();
-			}
-
-			fn reject(&self) {
-				self.inner.lock().0.reject();
-			}
+			return Ok(compare_elements(&inner.0, &other.0, op));
+		} else if let Ok(value) = other.extract::<$type>() {
+			return Ok(compare_value(&inner.0, value, op));
 		}
-	};
+
+		py_bail!(
+			PyTypeError,
+			"{} can only be compared to other instances or to {}",
+			stringify!($name), $pytype
+		);
+
+	}
+
+	fn __getstate__<'py>(
+		&self,
+		py: Python<'py>,
+	) -> Result<Bound<'py, PyBytes>> {
+		let inner = &*self.inner.lock();
+		let vec = encode_to_vec(inner, BINCODE_CONFIG)?;
+
+		Ok(PyBytes::new(py, &vec))
+	}
+
+	fn __getnewargs__<'py>(
+		&self,
+		py: Python<'py>,
+	) -> PyResult<Bound<'py, PyTuple>> {
+		let inner = &*self.inner.lock();
+
+		PyTuple::new(py, &inner.0)
+	}
+
+	fn __setstate__(
+		&self,
+		state: Bound<PyBytes>,
+	) -> Result<()> {
+		let slice = state.as_bytes();
+		let (state, _) = decode_from_slice(
+			slice,
+			BINCODE_CONFIG,
+		)?;
+
+		let inner = &mut *self.inner.lock();
+		*inner = state;
+
+		Ok(())
+	}
+
+	fn accept(&self) {
+		self.inner.lock().0.accept();
+	}
+
+	fn reject(&self) {
+		self.inner.lock().0.reject();
+	}
+}
+};
 }
 
 macro_rules! pymethod_math_impl {
@@ -235,9 +257,9 @@ macro_rules! pymethod_math_impl {
 	};
 }
 
-pymethod_impl!(PyReal, "Real", f64);
-pymethod_impl!(PyInteger, "Integer", i64);
-pymethod_impl!(PyBoolean, "Boolean", bool);
+pymethod_impl!(PyReal, "Real", f64, "float");
+pymethod_impl!(PyInteger, "Integer", i64, "int");
+pymethod_impl!(PyBoolean, "Boolean", bool, "bool");
 
 pymethod_math_impl!(PyReal, "Real", f64);
 pymethod_math_impl!(PyInteger, "Integer", i64);
@@ -260,14 +282,33 @@ impl PyInteger {
 	}
 }
 
-fn compare<T: PartialOrd>(values: &SkVec<T>, other: T, op: CompareOp) -> bool {
-	values.iter().all(|v| match op {
-		CompareOp::Lt => *v < other,
-		CompareOp::Le => *v <= other,
-		CompareOp::Eq => *v == other,
-		CompareOp::Ne => *v != other,
-		CompareOp::Gt => *v > other,
-		CompareOp::Ge => *v >= other,
+fn compare_value<T: PartialOrd>(
+	values: &SkVec<T>,
+	value: T,
+	op: CompareOp,
+) -> bool {
+	values.iter().all(|element| match op {
+		CompareOp::Lt => *element < value,
+		CompareOp::Le => *element <= value,
+		CompareOp::Eq => *element == value,
+		CompareOp::Ne => *element != value,
+		CompareOp::Gt => *element > value,
+		CompareOp::Ge => *element >= value,
+	})
+}
+
+fn compare_elements<T: PartialOrd>(
+	this: &SkVec<T>,
+	other: &SkVec<T>,
+	op: CompareOp,
+) -> bool {
+	this.iter().zip(other.iter()).all(|(a, b)| match op {
+		CompareOp::Lt => a < b,
+		CompareOp::Le => a <= b,
+		CompareOp::Eq => a == b,
+		CompareOp::Ne => a != b,
+		CompareOp::Gt => a > b,
+		CompareOp::Ge => a >= b,
 	})
 }
 
