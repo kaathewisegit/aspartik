@@ -1,19 +1,26 @@
 use anyhow::{ensure, Result};
+use bincode::{
+	config::Configuration,
+	serde::{decode_from_slice, encode_to_vec},
+};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
 	class::basic::CompareOp,
 	conversion::FromPyObjectBound,
 	exceptions::{PyIndexError, PyTypeError},
-	types::PyTuple,
+	types::{PyBytes, PyTuple},
 };
+use serde::{Deserialize, Serialize};
 
 use std::fmt::{self, Display};
 
 use skvec::SkVec;
 use util::py_bail;
 
-#[derive(Debug, Clone, PartialEq)]
+const BINCODE_CONFIG: Configuration = bincode::config::standard();
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct Parameter<T>(SkVec<T>);
 
 impl<T> Parameter<T> {
@@ -151,6 +158,41 @@ macro_rules! pymethod_impl {
 				let inner = &*self.inner.lock();
 
 				Ok(compare(&inner.0, other, op))
+			}
+
+			fn __getstate__<'py>(
+				&self,
+				py: Python<'py>,
+			) -> Result<Bound<'py, PyBytes>> {
+				let inner = &*self.inner.lock();
+				let vec = encode_to_vec(inner, BINCODE_CONFIG)?;
+
+				Ok(PyBytes::new(py, &vec))
+			}
+
+			fn __getnewargs__<'py>(
+				&self,
+				py: Python<'py>,
+			) -> PyResult<Bound<'py, PyTuple>> {
+				let inner = &*self.inner.lock();
+
+				PyTuple::new(py, &inner.0)
+			}
+
+			fn __setstate__(
+				&self,
+				state: Bound<PyBytes>,
+			) -> Result<()> {
+				let slice = state.as_bytes();
+				let (state, _) = decode_from_slice(
+					slice,
+					BINCODE_CONFIG,
+				)?;
+
+				let inner = &mut *self.inner.lock();
+				*inner = state;
+
+				Ok(())
 			}
 
 			fn accept(&self) {

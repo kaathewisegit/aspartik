@@ -43,6 +43,7 @@ thiserror = "2.0"
 tracing = "0.1.41"
 tracing-appender = "0.2.3"
 tracing-subscriber = "0.3.19"
+bincode = { version = "2.0", default-features = false }
 
 b3 = { version = "0.1.0-alpha.2", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.2", path = "crates/bitmap" }

@@ -12,10 +12,11 @@ data = { workspace = true }
 io = { workspace = true }
 linalg = { workspace = true, features = ["bytemuck", "cuda"] }
 rng = { workspace = true }
-skvec = { workspace = true }
+skvec = { workspace = true, features = ["serde"] }
 util = { workspace = true }
 
 anyhow = { workspace = true }
+bincode = { workspace = true, features = ["serde", "alloc"] }
 crossbeam-channel = { workspace = true }
 cudarc = { workspace = true, features = ["driver", "dynamic-loading", "cuda-12000", "std"] }
 hashbrown = { workspace = true }
@@ -25,7 +26,6 @@ rand = { workspace = true }
 rand_distr = { workspace = true }
 rand_pcg = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
