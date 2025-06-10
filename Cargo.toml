@@ -21,22 +21,22 @@ repository = "https://github.com/kaathewisegit/aspartik"
 
 [workspace.dependencies]
 anyhow = "1.0"
-approx = "0.5"
+approx = "0.5.1"
 bytemuck = "1.23"
 crossbeam-channel = "0.5.15"
 cudarc = { version = "0.16.4", default-features = false }
-divan = "0.1"
+divan = "0.1.21"
 hashbrown = "0.15.3"
-lapack-sys = "0.15"
+lapack-sys = "0.15.0"
 nom = "8.0"
-num-traits = "0.2"
-parking_lot = "0.12"
-petgraph = { version = "0.8", default-features = false }
+num-traits = "0.2.19"
+parking_lot = "0.12.4"
+petgraph = { version = "0.8.2", default-features = false }
 proptest = "1.6"
 pyo3 = "0.25"
-rand = { version = "0.9", default-features = false }
-rand_distr = "0.5"
-rand_pcg = "0.9"
+rand = { version = "0.9.1", default-features = false }
+rand_distr = "0.5.1"
+rand_pcg = "0.9.0"
 serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0"
