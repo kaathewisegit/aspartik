@@ -30,7 +30,48 @@ def test_eq():
         Boolean(True) == Real(0.1)
 
 
-# TODO: other CompareOp methods
+# XXX: do these semantics make sense?
+def test_comparison_elements():
+    assert Real(100.5, 99.5) > Real(12.5, 99)
+    assert Integer(1, 2) > Integer(-100, -1000)
+
+    assert Real(0.3) >= Real(0.3)
+    assert Integer(1, 2, 3) >= Integer(1, 2, 3)
+
+    assert Real(0) < Real(1e40)
+    assert Integer(-1000, 0) < Integer(-999, 1)
+    assert not Integer(-1000, 0) < Integer(-999, 0)
+
+    assert Real(1e-40) <= Real(1e-40)
+    assert Integer(0, 1) <= Integer(0, 2)
+
+
+def test_comparison_value():
+    assert Real(1e-40) < 1
+    assert Real(1, 2, 3, 0.5) < 3.5
+    assert Integer(100) < 101
+    assert Integer(1, 2, 3) < 4
+
+    assert Real(0) <= 0
+    assert Real(0.25, 0.25, 0.25, 0.25) <= 0.25
+    assert Integer(1) <= 1
+    assert Integer(0, 1, 0, 1) <= 1
+
+    assert Real(2.0) > 1.0
+    assert Real(0.8, 0.1, 0.05, 0.05) > 0
+    assert Integer(1) > 0
+    assert Integer(1, 2, 3) > 0
+
+    assert Real(2.0, 1.0) >= 1.0
+    assert Real(0.25, 0.25, 0.25, 0.25) >= 0.25
+    assert Integer(1) >= 1
+    assert Integer(1, 2, 3) >= 1
+
+    with pytest.raises(TypeError) as error:
+        Integer(1, 2, 3) > 0.5
+    assert "Integer can only be compared to other instances or to int" in str(
+        error.value
+    )
 
 
 def test_pickle_roundtrip_basic():

@@ -177,7 +177,7 @@ macro_rules! pymethod_impl {
 		py_bail!(
 			PyTypeError,
 			"{} can only be compared to other instances or to {}",
-			stringify!($name), $pytype
+			$name, $pytype
 		);
 
 	}
