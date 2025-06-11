@@ -9,6 +9,7 @@ members = [
 	"crates/rng",
 	"crates/skvec",
 	"crates/stats",
+	"crates/tracing",
 	"crates/util",
 ]
 
