@@ -1,24 +1,18 @@
 use anyhow::{ensure, Result};
-use bincode::{
-	config::Configuration,
-	serde::{decode_from_slice, encode_to_vec},
-};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
 	class::basic::CompareOp,
 	conversion::FromPyObjectBound,
 	exceptions::{PyIndexError, PyTypeError, PyValueError},
-	types::{PyBytes, PyTuple},
+	types::PyTuple,
 };
 use serde::{Deserialize, Serialize};
 
 use std::fmt::{self, Display};
 
 use skvec::SkVec;
-use util::py_bail;
-
-const BINCODE_CONFIG: Configuration = bincode::config::standard();
+use util::{py_bail, py_pickle_state_impl};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct Parameter<T>(SkVec<T>);
@@ -182,16 +176,15 @@ macro_rules! pymethod_impl {
 
 	}
 
-	fn __getstate__<'py>(
-		&self,
-		py: Python<'py>,
-	) -> Result<Bound<'py, PyBytes>> {
-		let inner = &*self.inner.lock();
-		let vec = encode_to_vec(inner, BINCODE_CONFIG)?;
-
-		Ok(PyBytes::new(py, &vec))
+	fn accept(&self) {
+		self.inner.lock().0.accept();
 	}
 
+	fn reject(&self) {
+		self.inner.lock().0.reject();
+	}
+
+	// pickle
 	fn __getnewargs__<'py>(
 		&self,
 		py: Python<'py>,
@@ -199,30 +192,6 @@ macro_rules! pymethod_impl {
 		let inner = &*self.inner.lock();
 
 		PyTuple::new(py, &inner.0)
-	}
-
-	fn __setstate__(
-		&self,
-		state: Bound<PyBytes>,
-	) -> Result<()> {
-		let slice = state.as_bytes();
-		let (state, _) = decode_from_slice(
-			slice,
-			BINCODE_CONFIG,
-		)?;
-
-		let inner = &mut *self.inner.lock();
-		*inner = state;
-
-		Ok(())
-	}
-
-	fn accept(&self) {
-		self.inner.lock().0.accept();
-	}
-
-	fn reject(&self) {
-		self.inner.lock().0.reject();
 	}
 }
 };
@@ -260,6 +229,10 @@ macro_rules! pymethod_math_impl {
 pymethod_impl!(PyReal, "Real", f64, "float");
 pymethod_impl!(PyInteger, "Integer", i64, "int");
 pymethod_impl!(PyBoolean, "Boolean", bool, "bool");
+
+py_pickle_state_impl!(PyReal, _real_pickle_impl);
+py_pickle_state_impl!(PyInteger, _integer_pickle_impl);
+py_pickle_state_impl!(PyBoolean, _boolean_pickle_impl);
 
 pymethod_math_impl!(PyReal, "Real", f64);
 pymethod_math_impl!(PyInteger, "Integer", i64);

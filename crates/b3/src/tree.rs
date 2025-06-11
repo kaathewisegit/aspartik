@@ -3,7 +3,7 @@ use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::{
 	exceptions::PyTypeError,
-	types::{PyAny, PyDict},
+	types::{PyAny, PyDict, PyTuple},
 };
 use rand::distr::{Distribution, Uniform};
 use rand::seq::SliceRandom;
@@ -20,11 +20,11 @@ use io::newick::{
 };
 use rng::{PyRng, Rng};
 use skvec::SkVec;
-use util::py_bail;
+use util::{py_bail, py_pickle_state_impl};
 
 const ROOT: usize = usize::MAX;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Tree {
 	names: Vec<String>,
 
@@ -662,25 +662,6 @@ impl Tree {
 	}
 }
 
-impl Serialize for Tree {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-	where
-		S: serde::Serializer,
-	{
-		serializer.serialize_str(&self.to_newick())
-	}
-}
-
-impl<'de> Deserialize<'de> for Tree {
-	fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
-	where
-		D: serde::Deserializer<'de>,
-	{
-		// Parse Newick tree from string
-		todo!()
-	}
-}
-
 macro_rules! make_iterator {
 	($name: ident, $t: tt) => {
 		#[pyclass(frozen, module = "aspartik.b3.tree")]
@@ -926,7 +907,24 @@ impl PyTree {
 	fn newick(&self) -> String {
 		self.inner().to_newick()
 	}
+
+	// protocols
+
+	// pickle
+	fn __getnewargs__<'py>(
+		&self,
+		py: Python<'py>,
+	) -> PyResult<Bound<'py, PyTuple>> {
+		let inner = &*self.inner.lock();
+		let dummy_rng = PyRng::new(Some(0))?;
+
+		// the tree will be overwritten by `__setstate__`, so we're
+		// passing no names and a dummy RNG
+		(inner.names.clone(), dummy_rng).into_pyobject(py)
+	}
 }
+
+py_pickle_state_impl!(PyTree, _tree_pickle_impl);
 
 pub fn submodule(py: Python<'_>) -> PyResult<Bound<'_, PyModule>> {
 	let m = PyModule::new(py, "tree")?;
