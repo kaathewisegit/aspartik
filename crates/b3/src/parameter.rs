@@ -165,6 +165,13 @@ macro_rules! pymethod_impl {
 
 			return Ok(compare_elements(&inner.0, &other.0, op));
 		} else if let Ok(value) = other.extract::<$type>() {
+			if matches!(op, CompareOp::Eq | CompareOp::Ne) {
+				py_bail!(
+					PyTypeError,
+					"Can't check equality of {} and {}",
+					$name, $pytype,
+				)
+			}
 			return Ok(compare_value(&inner.0, value, op));
 		}
 

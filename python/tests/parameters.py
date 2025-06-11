@@ -29,6 +29,12 @@ def test_eq():
     with pytest.raises(TypeError):
         Boolean(True) == Real(0.1)
 
+    with pytest.raises(TypeError):
+        Real(0.1) == 0.1
+
+    with pytest.raises(TypeError):
+        Integer(1, 1) == 1
+
 
 # XXX: do these semantics make sense?
 def test_comparison_elements():
@@ -68,7 +74,8 @@ def test_comparison_value():
     assert Integer(1, 2, 3) >= 1
 
     with pytest.raises(TypeError) as error:
-        Integer(1, 2, 3) > 0.5
+        # the type error is deliberate
+        Integer(1, 2, 3) > 0.5  # type: ignore
     assert "Integer can only be compared to other instances or to int" in str(
         error.value
     )
