@@ -17,6 +17,7 @@ use util::py_call_method;
 pub struct Mcmc {
 	posterior: Mutex<f64>,
 
+	current_step: Mutex<usize>,
 	burnin: usize,
 	length: usize,
 
@@ -56,6 +57,7 @@ impl Mcmc {
 
 		Ok(Mcmc {
 			posterior: Mutex::new(f64::NEG_INFINITY),
+			current_step: Mutex::new(0),
 
 			burnin,
 			length,
@@ -114,22 +116,22 @@ impl Mcmc {
 	#[instrument(skip_all)]
 	fn run(this: Py<Self>, py: Python) -> Result<()> {
 		let self_ = this.get();
-		for index in 0..self_.length {
+		loop {
+			let index = *self_.current_step.lock();
+			if index == self_.length {
+				break;
+			}
+
 			trace!(step = index);
 			self_.step(py).with_context(|| {
 				anyhow!("Failed on step {index}")
 			})?;
 
-			for logger in &self_.loggers {
-				let result = logger.log(
-					py,
-					this.clone_ref(py),
-					index,
-				);
-				result.with_context(|| {
-					anyhow!("Failed to log on step {index}")
-				})?;
+			if index >= self_.burnin {
+				Self::log(this.clone_ref(py), py, index)?;
 			}
+
+			*self_.current_step.lock() += 1;
 		}
 
 		self_.scheduler.report(py)?;
@@ -267,6 +269,22 @@ impl Mcmc {
 
 		for parameter in &self.state {
 			py_call_method!(py, parameter, "reject")?;
+		}
+
+		Ok(())
+	}
+
+	fn log(this: Py<Self>, py: Python, index: usize) -> Result<()> {
+		let self_ = this.get();
+
+		for logger in &self_.loggers {
+			let result = logger.log(py, this.clone_ref(py), index);
+			result.with_context(|| {
+				anyhow!(
+					"Failed to log on step {}",
+					self_.current_step.lock()
+				)
+			})?;
 		}
 
 		Ok(())
