@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
+use pyo3::types::PyList;
 use rand::Rng as _;
 use tracing::{instrument, trace};
 
@@ -16,13 +17,10 @@ use util::py_call_method;
 pub struct Mcmc {
 	posterior: Mutex<f64>,
 
-	#[expect(unused)]
 	burnin: usize,
 	length: usize,
 
-	/// Current set of parameters by name.
 	state: Vec<PyObject>,
-
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
 	likelihoods: Vec<Py<PyLikelihood>>,
@@ -69,6 +67,48 @@ impl Mcmc {
 			loggers,
 			rng,
 		})
+	}
+
+	#[getter]
+	fn state(&self, py: Python) -> Vec<PyObject> {
+		self.state.iter().map(|s| s.clone_ref(py)).collect()
+	}
+
+	#[getter]
+	fn priors(&self, py: Python) -> Vec<PyObject> {
+		self.priors.iter().map(|p| p.clone_ref(py)).collect()
+	}
+
+	#[getter]
+	fn likelihoods(&self, py: Python) -> Vec<Py<PyLikelihood>> {
+		self.likelihoods.iter().map(|l| l.clone_ref(py)).collect()
+	}
+
+	#[getter]
+	fn loggers(&self, py: Python) -> Vec<PyObject> {
+		self.loggers.iter().map(|l| l.clone_ref(py)).collect()
+	}
+
+	#[getter]
+	fn rng(&self, py: Python) -> Py<PyRng> {
+		self.rng.clone_ref(py)
+	}
+
+	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
+		let tuple = (
+			self.burnin,
+			self.length,
+			self.state(py),
+			self.priors(py),
+			// TODO: operators
+			PyList::empty(py),
+			self.likelihoods(py),
+			self.loggers(py),
+			self.rng(py),
+		)
+			.into_pyobject(py)?;
+
+		Ok(tuple.into_any().unbind())
 	}
 
 	#[instrument(skip_all)]

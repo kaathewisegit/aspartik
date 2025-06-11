@@ -29,6 +29,10 @@ impl<'py> FromPyObject<'py> for PyLogger {
 }
 
 impl PyLogger {
+	pub fn clone_ref(&self, py: Python) -> PyObject {
+		self.inner.clone_ref(py)
+	}
+
 	pub fn log(
 		&self,
 		py: Python,

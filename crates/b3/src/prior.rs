@@ -15,6 +15,10 @@ impl PyPrior {
 		self.inner.as_ptr() as usize
 	}
 
+	pub fn clone_ref(&self, py: Python) -> PyObject {
+		self.inner.clone_ref(py)
+	}
+
 	#[instrument(level = "trace", skip_all, fields(id = self.id()))]
 	pub fn probability(&self, py: Python) -> Result<f64> {
 		let out = py_call_method!(py, self.inner, "probability")?;
