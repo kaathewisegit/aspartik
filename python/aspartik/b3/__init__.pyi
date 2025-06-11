@@ -275,7 +275,7 @@ class Logger(Protocol):
     the old `every` value will continue to be used.
     """
 
-    def log(self, mcmc: MCMC, index: int) -> None:
+    def log(self, mcmc: MCMC) -> None:
         """Logging step
 
         Allows the logger to perform arbitrary actions.
@@ -297,7 +297,18 @@ class MCMC:
         cuda_device: int = 0,
         thread_split_size: int = 400,
     ): ...
-    def run(self) -> None: ...
+    @property
+    def current_step(self) -> int: ...
+    @property
+    def state(self) -> List[Stateful]: ...
+    @property
+    def priors(self) -> List[Prior]: ...
+    @property
+    def likelihoods(self) -> List[Likelihood]: ...
+    @property
+    def loggers(self) -> List[Logger]: ...
+    @property
+    def rng(self) -> RNG: ...
     @property
     def posterior(self) -> float:
         """Posterior probability for the last accepted step"""
@@ -312,3 +323,5 @@ class MCMC:
 
         This will trigger a recalculation on all priors.
         """
+
+    def run(self) -> None: ...

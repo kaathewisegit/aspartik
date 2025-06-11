@@ -7,7 +7,7 @@ use util::{py_bail, py_call_method};
 
 pub struct PyLogger {
 	inner: PyObject,
-	every: Option<usize>,
+	every: usize,
 }
 
 impl<'py> FromPyObject<'py> for PyLogger {
@@ -19,7 +19,7 @@ impl<'py> FromPyObject<'py> for PyLogger {
 			);
 		}
 
-		let every = obj.getattr("every")?.extract::<usize>().ok();
+		let every = obj.getattr("every")?.extract::<usize>()?;
 
 		Ok(PyLogger {
 			inner: obj.clone().unbind(),
@@ -33,17 +33,12 @@ impl PyLogger {
 		self.inner.clone_ref(py)
 	}
 
-	pub fn log(
-		&self,
-		py: Python,
-		mcmc: Py<Mcmc>,
-		index: usize,
-	) -> Result<()> {
-		if self.every.is_some_and(|every| index % every != 0) {
-			return Ok(());
-		}
+	pub fn should_log(&self, current_step: usize) -> bool {
+		current_step % self.every == 0
+	}
 
-		py_call_method!(py, self.inner, "log", mcmc, index)?;
+	pub fn log(&self, py: Python, mcmc: Py<Mcmc>) -> Result<()> {
+		py_call_method!(py, self.inner, "log", mcmc)?;
 
 		Ok(())
 	}

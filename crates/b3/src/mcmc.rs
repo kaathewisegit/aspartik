@@ -72,6 +72,11 @@ impl Mcmc {
 	}
 
 	#[getter]
+	fn current_step(&self) -> usize {
+		*self.current_step.lock()
+	}
+
+	#[getter]
 	fn state(&self, py: Python) -> Vec<PyObject> {
 		self.state.iter().map(|s| s.clone_ref(py)).collect()
 	}
@@ -117,18 +122,22 @@ impl Mcmc {
 	fn run(this: Py<Self>, py: Python) -> Result<()> {
 		let self_ = this.get();
 		loop {
-			let index = *self_.current_step.lock();
-			if index == self_.length {
+			let current_step = *self_.current_step.lock();
+			if current_step == self_.length {
 				break;
 			}
 
-			trace!(step = index);
+			trace!(step = current_step);
 			self_.step(py).with_context(|| {
-				anyhow!("Failed on step {index}")
+				anyhow!("Failed on step {current_step}")
 			})?;
 
-			if index >= self_.burnin {
-				Self::log(this.clone_ref(py), py, index)?;
+			if current_step >= self_.burnin {
+				Self::log(
+					this.clone_ref(py),
+					py,
+					current_step,
+				)?;
 			}
 
 			*self_.current_step.lock() += 1;
@@ -274,16 +283,17 @@ impl Mcmc {
 		Ok(())
 	}
 
-	fn log(this: Py<Self>, py: Python, index: usize) -> Result<()> {
+	fn log(this: Py<Self>, py: Python, current_step: usize) -> Result<()> {
 		let self_ = this.get();
 
 		for logger in &self_.loggers {
-			let result = logger.log(py, this.clone_ref(py), index);
+			if !logger.should_log(current_step) {
+				continue;
+			}
+
+			let result = logger.log(py, this.clone_ref(py));
 			result.with_context(|| {
-				anyhow!(
-					"Failed to log on step {}",
-					self_.current_step.lock()
-				)
+				anyhow!("Failed to log on step {current_step}")
 			})?;
 		}
 

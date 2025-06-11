@@ -28,7 +28,7 @@ class TreeLogger(Logger):
     def __post_init__(self):
         self._file = open(self.path, "w")
 
-    def log(self, mcmc: MCMC, index: int):
+    def log(self, mcmc: MCMC):
         line = self.tree.newick()
         self._file.write(line)
         self._file.write("\n")
@@ -41,9 +41,9 @@ class PrintLogger(Logger):
     def __post_init__(self):
         print(f"{'step':>16}{'posterior':>16}{'likelihood':>16}{'prior':>16}")
 
-    def log(self, mcmc: MCMC, index: int):
+    def log(self, mcmc: MCMC):
         print(
-            f"{index:>16}{mcmc.posterior:>16.2f}{mcmc.likelihood:>16.2f}{mcmc.prior:>16.2f}"
+            f"{mcmc.current_step:>16}{mcmc.posterior:>16.2f}{mcmc.likelihood:>16.2f}{mcmc.prior:>16.2f}"
         )
 
 
@@ -65,7 +65,7 @@ class ValueLogger(Logger):
             if isinstance(item, Prior):
                 self._priors[key] = item
 
-    def log(self, mcmc: MCMC, index: int):
+    def log(self, mcmc: MCMC):
         entry = {}
 
         for key, item in self._params.items():
