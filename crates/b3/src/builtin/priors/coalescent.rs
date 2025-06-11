@@ -19,6 +19,23 @@ impl ConstantPopulation {
 		Self { tree, population }
 	}
 
+	#[getter]
+	fn tree(&self, py: Python) -> Py<PyTree> {
+		self.tree.clone_ref(py)
+	}
+
+	#[getter]
+	fn population(&self, py: Python) -> PyObject {
+		self.population.clone_ref(py)
+	}
+
+	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
+		let tuple = (self.tree(py), self.population(py))
+			.into_pyobject(py)?;
+
+		Ok(tuple.into_any().unbind())
+	}
+
 	fn probability(&self, py: Python) -> Result<f64> {
 		let tree = self.tree.get().inner();
 		let pop = self.population.bind(py).extract::<f64>()?;

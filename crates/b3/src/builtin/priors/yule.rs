@@ -17,6 +17,23 @@ impl Yule {
 		Self { tree, birth_rate }
 	}
 
+	#[getter]
+	fn tree(&self, py: Python) -> Py<PyTree> {
+		self.tree.clone_ref(py)
+	}
+
+	#[getter]
+	fn birth_rate(&self, py: Python) -> PyObject {
+		self.birth_rate.clone_ref(py)
+	}
+
+	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
+		let tuple = (self.tree(py), self.birth_rate(py))
+			.into_pyobject(py)?;
+
+		Ok(tuple.into_any().unbind())
+	}
+
 	fn probability(&self, py: Python) -> Result<f64> {
 		let tree = self.tree.get().inner();
 		let rate = self.birth_rate.bind(py).extract::<f64>()?;
