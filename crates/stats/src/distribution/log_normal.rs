@@ -47,6 +47,7 @@ impl_pymethods! {for LogNormal;
 	ContinuousCDF;
 	Distribution;
 	sample;
+	pickle(location, scale);
 }
 
 /// Represents the errors that can occur when creating a [`LogNormal`].

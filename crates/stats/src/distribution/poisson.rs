@@ -33,6 +33,17 @@ pub struct Poisson {
 	lambda: f64,
 }
 
+#[cfg(feature = "python")]
+impl_pymethods! {for Poisson;
+	new(lambda_: f64) throws PoissonError;
+	get(as lambda_) lambda: f64;
+	repr("Poisson({})", lambda);
+	Discrete;
+	DiscreteCDF;
+	Distribution;
+	pickle(lambda);
+}
+
 /// Represents the errors that can occur when creating a [`Poisson`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 #[non_exhaustive]
@@ -343,16 +354,6 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 			}
 		}
 	}
-}
-
-#[cfg(feature = "python")]
-impl_pymethods! {for Poisson;
-	new(lambda_: f64) throws PoissonError;
-	get(as lambda_) lambda: f64;
-	repr("Poisson({})", lambda);
-	Discrete;
-	DiscreteCDF;
-	Distribution;
 }
 
 #[cfg(test)]

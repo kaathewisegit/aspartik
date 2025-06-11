@@ -43,6 +43,7 @@ impl_pymethods! {for Normal;
 	ContinuousCDF;
 	Distribution;
 	sample;
+	pickle(mean, std_dev);
 }
 
 /// Represents the errors that can occur when creating a [`Normal`].

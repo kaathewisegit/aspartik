@@ -45,6 +45,7 @@ impl_pymethods! {for InverseGamma;
 	ContinuousCDF;
 	Distribution;
 	sample;
+	pickle(shape, rate);
 }
 
 /// Represents the errors that can occur when creating an [`InverseGamma`].

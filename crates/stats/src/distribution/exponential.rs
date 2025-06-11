@@ -44,6 +44,7 @@ impl_pymethods! {for Exp;
 	ContinuousCDF;
 	Distribution;
 	sample;
+	pickle(rate);
 }
 
 /// Represents the errors that can occur when creating a [`Exp`].

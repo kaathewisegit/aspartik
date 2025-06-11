@@ -43,6 +43,7 @@ impl_pymethods! {for Beta;
 	ContinuousCDF;
 	Distribution;
 	sample;
+	pickle(shape_a, shape_b);
 }
 
 /// Represents the errors that can occur when creating a [`Beta`].

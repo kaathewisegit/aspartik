@@ -222,5 +222,26 @@ macro_rules! impl_pymethods {
 
 		impl_pymethods!(for $class; $($rest)*);
 	};
+	(
+		for $class:ty;
+		pickle($($args:tt),* $(,)?);
+		$($rest:tt)*
+	) => {
+		#[cfg(feature = "python")]
+		#[pymethods]
+		impl $class {
+			fn __getnewargs__(
+				&self,
+				py: Python
+			) -> PyResult<PyObject> {
+				let tuple = ($(self.$args),*,).into_pyobject(py)?;
+
+				Ok(tuple.into_any().unbind())
+
+			}
+		}
+
+		impl_pymethods!(for $class; $($rest)*);
+	};
 }
 pub(crate) use impl_pymethods;
