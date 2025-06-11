@@ -66,6 +66,19 @@ impl EpochScale {
 		self.weight
 	}
 
+	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
+		let tuple = (
+			self.tree(py),
+			self.factor,
+			self.distribution(py),
+			self.rng(py),
+			self.weight,
+		)
+			.into_pyobject(py)?;
+
+		Ok(tuple.into_any().unbind())
+	}
+
 	fn propose(&self, py: Python) -> Result<PyProposal> {
 		let mut tree = self.tree.get().inner();
 
