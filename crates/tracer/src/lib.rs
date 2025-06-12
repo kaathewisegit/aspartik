@@ -16,18 +16,37 @@ use std::{
 	time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 struct SpanData {
 	start: Instant,
 	total: Duration,
+	name: &'static str,
+	target: String,
+	values: ValueMap<String, Value>,
 }
 
 impl SpanData {
-	fn new() -> Self {
-		SpanData {
+	fn new(attrs: &Attributes<'_>) -> Self {
+		let mut out = SpanData {
 			start: Instant::now(),
 			total: Duration::default(),
-		}
+			name: attrs.metadata().name(),
+			target: attrs.metadata().target().to_owned(),
+			values: ValueMap::with_capacity(
+				attrs.metadata().fields().len(),
+			),
+		};
+
+		attrs.values().record(&mut out);
+
+		out
+	}
+}
+
+impl Visit for SpanData {
+	fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
+		self.values
+			.insert(field.to_string(), format!("{value:?}").into());
 	}
 }
 
@@ -130,17 +149,22 @@ impl Subscriber for Tracer {
 		*metadata.level() >= self.level
 	}
 
-	fn new_span(&self, _span: &Attributes<'_>) -> Id {
+	fn new_span(&self, span: &Attributes<'_>) -> Id {
 		let value = self.counter.fetch_add(1, Ordering::Relaxed);
 		let id = Id::from_u64(value);
 
 		let spans = &mut *self.spans.lock();
-		spans.insert(id.clone(), SpanData::new());
+		spans.insert(id.clone(), SpanData::new(span));
 
 		id
 	}
 
-	fn record(&self, _span: &Id, _values: &Record<'_>) {}
+	fn record(&self, span: &Id, values: &Record<'_>) {
+		let spans = &mut *self.spans.lock();
+
+		spans.entry(span.clone())
+			.and_modify(|data| values.record(data));
+	}
 
 	fn record_follows_from(&self, _span: &Id, _follows: &Id) {}
 
@@ -177,16 +201,15 @@ impl Subscriber for Tracer {
 			return true;
 		};
 
-		let json = json!({"duration": data.total.as_nanos()});
+		let json = json!({
+			"duration": data.total.as_nanos(),
+			"name": data.name,
+			"target": data.target,
+			"fields": data.values,
+		});
 		self.write_json(json);
 
 		true
-	}
-}
-
-impl Drop for Tracer {
-	fn drop(&mut self) {
-		self.file.get_mut().flush().unwrap();
 	}
 }
 
