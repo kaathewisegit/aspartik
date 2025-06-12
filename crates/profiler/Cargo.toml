@@ -1,5 +1,5 @@
 [package]
-name = "tracer"
+name = "profiler"
 
 version.workspace = true
 edition.workspace = true
@@ -7,10 +7,7 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-hashbrown = { workspace = true }
 parking_lot = { workspace = true }
-serde_json = { workspace = true }
-tracing-core = { workspace = true }
 
 [lints]
 workspace = true

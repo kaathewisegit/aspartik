@@ -6,8 +6,8 @@ use pyo3::{
 	types::{PyString, PyType},
 };
 use rand::distr::{weighted::WeightedIndex, Distribution};
-use tracing::{instrument, trace};
 
+use profiler::profile;
 use rng::Rng;
 use util::{py_bail, py_call_method};
 
@@ -88,27 +88,30 @@ impl<'py> FromPyObject<'py> for PyOperator {
 			accepts: Mutex::new(0),
 			rejects: Mutex::new(0),
 		};
-		trace!(
-			name: "extract_bound",
-			target: "b3::operators",
-			%repr,
-			id = out.id(),
-		);
+		// trace!(
+		// 	name: "extract_bound",
+		// 	target: "b3::operators",
+		// 	%repr,
+		// 	id = out.id(),
+		// );
 		Ok(out)
 	}
 }
 
 impl PyOperator {
-	fn id(&self) -> usize {
+	pub fn id(&self) -> usize {
 		self.inner.as_ptr() as usize
 	}
 
-	#[instrument(level = "trace", skip_all, fields(id = self.id()))]
 	pub fn propose(&self, py: Python) -> Result<Proposal> {
-		let proposal = py_call_method!(py, self.inner, "propose")?;
+		let proposal = profile!(
+			target: "b3::operator::propose"
+			id = self.id();
+			py_call_method!(py, self.inner, "propose")?
+		);
 		let proposal = proposal.extract::<PyProposal>(py)?;
 		let proposal = proposal.0;
-		trace!(?proposal);
+		// trace!(?proposal);
 
 		Ok(proposal)
 	}
@@ -174,11 +177,11 @@ impl WeightedScheduler {
 		let index = dist.sample(rng);
 		*self.current.lock() = index;
 
-		trace!(
-			name: "select_operator",
-			target: "b3::operators::WeightedScheduler",
-			index,
-		);
+		// trace!(
+		// 	name: "select_operator",
+		// 	target: "b3::operators::WeightedScheduler",
+		// 	index,
+		// );
 
 		&self.operators[index]
 	}

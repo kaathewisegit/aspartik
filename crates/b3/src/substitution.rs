@@ -2,7 +2,6 @@ use anyhow::{anyhow, Context, Result};
 use linalg::RowMatrix;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
-use tracing::{instrument, trace};
 
 use util::{py_bail, py_call_method};
 
@@ -28,22 +27,21 @@ impl<'py, const N: usize> FromPyObject<'py> for PySubstitution<N> {
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
-		trace!(
-			name: "extract_bound",
-			target: "b3::substitution",
-			%repr,
-			id = out.id(),
-		);
+		// trace!(
+		// 	name: "extract_bound",
+		// 	target: "b3::substitution",
+		// 	%repr,
+		// 	id = out.id(),
+		// );
 		Ok(out)
 	}
 }
 
 impl<const N: usize> PySubstitution<N> {
-	fn id(&self) -> usize {
+	pub fn id(&self) -> usize {
 		self.inner.as_ptr() as usize
 	}
 
-	#[instrument(skip_all, fields(id = self.id()))]
 	pub fn get_matrix(&self, py: Python) -> Result<Substitution<N>> {
 		let matrix = py_call_method!(py, self.inner, "get_matrix")?;
 

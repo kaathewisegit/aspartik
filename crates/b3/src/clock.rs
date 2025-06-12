@@ -2,8 +2,8 @@ use anyhow::Result;
 use linalg::RowMatrix;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
-use tracing::{instrument, trace};
 
+use profiler::profile;
 use util::{py_bail, py_call_method};
 
 pub struct PyClock {
@@ -22,19 +22,22 @@ impl<'py> FromPyObject<'py> for PyClock {
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
-		trace!(%repr, id = out.id(), "new PyClock");
+		// trace!(%repr, id = out.id(), "new PyClock");
 		Ok(out)
 	}
 }
 
 impl PyClock {
-	fn id(&self) -> usize {
+	pub fn id(&self) -> usize {
 		self.inner.as_ptr() as usize
 	}
 
-	#[instrument(skip_all, fields(id = self.id()))]
 	pub fn get_rate(&self, py: Python) -> Result<f64> {
-		let rate = py_call_method!(py, self.inner, "get_rate")?;
+		let rate = profile!(
+			target: "b3::operator::propose",
+			id = self.id();
+			py_call_method!(py, self.inner, "get_rate")?
+		);
 		let rate = rate.extract::<f64>(py)?;
 
 		Ok(rate)

@@ -1,7 +1,6 @@
 use anyhow::{bail, Result};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
-use tracing::{instrument, trace};
 
 use crate::{
 	clock::PyClock, substitution::PySubstitution, tree::PyTree,
@@ -109,7 +108,6 @@ impl GenericLikelihood<4> {
 }
 
 impl<const N: usize> GenericLikelihood<N> {
-	#[instrument(skip_all)]
 	fn propose(&mut self, py: Python) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
 		let substitution_matrix = self.substitution.get_matrix(py)?;
@@ -124,7 +122,7 @@ impl<const N: usize> GenericLikelihood<N> {
 		} else {
 			tree.nodes_to_update()
 		};
-		trace!(num_nodes_to_update = nodes.len(), full_update);
+		// trace!(num_nodes_to_update = nodes.len(), full_update);
 
 		// no tree update, return the cache
 		if nodes.is_empty() {
@@ -155,7 +153,7 @@ impl<const N: usize> GenericLikelihood<N> {
 		}
 
 		let likelihood = self.calculator.likelihood()?;
-		trace!(likelihood);
+		// trace!(likelihood);
 		self.last = likelihood;
 		Ok(likelihood)
 	}

@@ -6,10 +6,10 @@ members = [
 	"crates/data",
 	"crates/io",
 	"crates/linalg",
+	"crates/profiler",
 	"crates/rng",
 	"crates/skvec",
 	"crates/stats",
-	"crates/tracer",
 	"crates/util",
 ]
 
@@ -42,18 +42,16 @@ rand_pcg = "0.9.0"
 serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0"
-tracing = "0.1.41"
-tracing-core = "0.1.34"
 
 b3 = { version = "0.1.0-alpha.2", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.2", path = "crates/bitmap" }
 data = { version = "0.1.0-alpha.2", path = "crates/data" }
 io = { version = "0.1.0-alpha.2", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.2", path = "crates/linalg" }
+profiler = { version = "0.1.0-alpha.2", path = "crates/profiler" }
 rng = { version = "0.1.0-alpha.2", path = "crates/rng" }
 skvec = { version = "0.1.0-alpha.2", path = "crates/skvec" }
 stats = { version = "0.1.0-alpha.2", path = "crates/stats" }
-tracer = { version = "0.1.0-alpha.2", path = "crates/tracer" }
 util = { version = "0.1.0-alpha.2", path = "crates/util" }
 
 [workspace.lints.clippy]
@@ -83,7 +81,7 @@ data = { workspace = true }
 io = { workspace = true }
 rng = { workspace = true }
 stats = { workspace = true }
-tracer = { workspace = true }
+profiler = { workspace = true }
 
 [features]
 cuda = ["b3/cuda"]

@@ -1,8 +1,8 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
-use tracing::{instrument, trace};
 
+use profiler::profile;
 use util::{py_bail, py_call_method};
 
 pub struct PyPrior {
@@ -11,7 +11,7 @@ pub struct PyPrior {
 }
 
 impl PyPrior {
-	fn id(&self) -> usize {
+	pub fn id(&self) -> usize {
 		self.inner.as_ptr() as usize
 	}
 
@@ -19,11 +19,14 @@ impl PyPrior {
 		self.inner.clone_ref(py)
 	}
 
-	#[instrument(level = "trace", skip_all, fields(id = self.id()))]
 	pub fn probability(&self, py: Python) -> Result<f64> {
-		let out = py_call_method!(py, self.inner, "probability")?;
+		let out = profile!(
+			target: "b3::prior::probability"
+			id = self.id();
+			py_call_method!(py, self.inner, "probability")?
+		);
 		let out = out.extract::<f64>(py)?;
-		trace!(probability = out);
+		// trace!(probability = out);
 		Ok(out)
 	}
 }
@@ -43,12 +46,12 @@ impl<'py> FromPyObject<'py> for PyPrior {
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
-		trace!(
-			name: "extract_bound",
-			target: "b3::prior",
-			%repr,
-			id = out.id(),
-		);
+		// trace!(
+		// 	name: "extract_bound",
+		// 	target: "b3::prior",
+		// 	%repr,
+		// 	id = out.id(),
+		// );
 		Ok(out)
 	}
 }

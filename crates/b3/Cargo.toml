@@ -11,6 +11,7 @@ bitmap = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
 linalg = { workspace = true, features = ["bytemuck", "cuda"] }
+profiler = { workspace = true }
 rng = { workspace = true }
 skvec = { workspace = true, features = ["serde"] }
 util = { workspace = true }
@@ -26,7 +27,6 @@ rand = { workspace = true }
 rand_distr = { workspace = true }
 rand_pcg = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
-tracing = { workspace = true }
 
 [features]
 cuda = []

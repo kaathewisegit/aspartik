@@ -3,7 +3,6 @@ use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use rand::Rng as _;
-use tracing::{instrument, trace};
 
 use crate::{
 	likelihood::PyLikelihood,
@@ -118,7 +117,6 @@ impl Mcmc {
 		Ok(tuple.into_any().unbind())
 	}
 
-	#[instrument(skip_all)]
 	fn run(this: Py<Self>, py: Python) -> Result<()> {
 		let self_ = this.get();
 		loop {
@@ -177,7 +175,6 @@ impl Mcmc {
 }
 
 impl Mcmc {
-	#[instrument(skip_all, fields(step = *self.current_step.lock()))]
 	fn step(&self, py: Python) -> Result<()> {
 		let rng = self.rng.get();
 		let operator = self.scheduler.select_operator(&mut rng.inner());
@@ -229,14 +226,14 @@ impl Mcmc {
 
 		let ratio = new_posterior - old_posterior + hastings;
 
-		trace!(
-			likelihood,
-			prior,
-			hastings,
-			new_posterior,
-			old_posterior,
-			ratio
-		);
+		// trace!(
+		// 	likelihood,
+		// 	prior,
+		// 	hastings,
+		// 	new_posterior,
+		// 	old_posterior,
+		// 	ratio
+		// );
 
 		let random_0_1 = self.rng.get().inner().random::<f64>();
 		if ratio > random_0_1.ln() {
@@ -251,7 +248,7 @@ impl Mcmc {
 	}
 
 	fn accept(&self, py: Python) -> Result<()> {
-		trace!(name: "accept", target: "b3::mcmc", "accept");
+		// trace!(name: "accept", target: "b3::mcmc", "accept");
 
 		self.scheduler.accept();
 
@@ -267,7 +264,7 @@ impl Mcmc {
 	}
 
 	fn reject(&self, py: Python) -> Result<()> {
-		trace!(name: "accept", target: "b3::mcmc", "reject");
+		// trace!(name: "accept", target: "b3::mcmc", "reject");
 
 		self.scheduler.reject();
 
