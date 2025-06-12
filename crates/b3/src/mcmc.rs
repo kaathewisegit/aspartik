@@ -127,7 +127,6 @@ impl Mcmc {
 				break;
 			}
 
-			trace!(step = current_step);
 			self_.step(py).with_context(|| {
 				anyhow!("Failed on step {current_step}")
 			})?;
@@ -178,7 +177,7 @@ impl Mcmc {
 }
 
 impl Mcmc {
-	#[instrument(skip_all)]
+	#[instrument(skip_all, fields(step = *self.current_step.lock()))]
 	fn step(&self, py: Python) -> Result<()> {
 		let rng = self.rng.get();
 		let operator = self.scheduler.select_operator(&mut rng.inner());
@@ -233,9 +232,9 @@ impl Mcmc {
 		trace!(
 			likelihood,
 			prior,
+			hastings,
 			new_posterior,
 			old_posterior,
-			hastings,
 			ratio
 		);
 
@@ -252,7 +251,7 @@ impl Mcmc {
 	}
 
 	fn accept(&self, py: Python) -> Result<()> {
-		trace!("accept proposal");
+		trace!(name: "accept", target: "b3::mcmc", "accept");
 
 		self.scheduler.accept();
 
@@ -268,7 +267,7 @@ impl Mcmc {
 	}
 
 	fn reject(&self, py: Python) -> Result<()> {
-		trace!("reject proposal");
+		trace!(name: "accept", target: "b3::mcmc", "reject");
 
 		self.scheduler.reject();
 

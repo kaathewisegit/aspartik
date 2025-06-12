@@ -88,7 +88,12 @@ impl<'py> FromPyObject<'py> for PyOperator {
 			accepts: Mutex::new(0),
 			rejects: Mutex::new(0),
 		};
-		trace!(%repr, id = out.id(), %repr, "new PyOperator");
+		trace!(
+			name: "extract_bound",
+			target: "b3::operators",
+			%repr,
+			id = out.id(),
+		);
 		Ok(out)
 	}
 }
@@ -162,14 +167,18 @@ impl WeightedScheduler {
 		})
 	}
 
-	#[instrument(level = "trace", skip_all)]
 	pub fn select_operator(&self, rng: &mut Rng) -> &PyOperator {
 		// error handling or validation in `new`
 		let dist = WeightedIndex::new(&self.weights).unwrap();
 
 		let index = dist.sample(rng);
 		*self.current.lock() = index;
-		trace!(index);
+
+		trace!(
+			name: "select_operator",
+			target: "b3::operators::WeightedScheduler",
+			index,
+		);
 
 		&self.operators[index]
 	}

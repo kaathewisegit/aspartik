@@ -59,7 +59,6 @@ pub struct GenericLikelihood<const N: usize> {
 }
 
 impl GenericLikelihood<4> {
-	#[instrument(skip_all, fields(calculator))]
 	fn new(
 		substitution: PySubstitution<4>,
 		clock: PyClock,
@@ -125,7 +124,7 @@ impl<const N: usize> GenericLikelihood<N> {
 		} else {
 			tree.nodes_to_update()
 		};
-		trace!(num_nodes_to_update = nodes.len());
+		trace!(num_nodes_to_update = nodes.len(), full_update);
 
 		// no tree update, return the cache
 		if nodes.is_empty() {

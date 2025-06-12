@@ -176,6 +176,7 @@ impl Subscriber for Tracer {
 			"time": unix_time().as_nanos(),
 			"level": event.metadata().level().as_str(),
 			"target": event.metadata().target(),
+			"name": event.metadata().name(),
 			"fields": visitor.fields,
 		});
 		self.write_json(json);

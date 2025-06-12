@@ -29,7 +29,6 @@ impl PyPrior {
 }
 
 impl<'py> FromPyObject<'py> for PyPrior {
-	#[instrument(level = "trace", skip_all)]
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
 		let repr = obj.repr()?;
 		if !obj.getattr("probability")?.is_callable() {
@@ -44,7 +43,12 @@ impl<'py> FromPyObject<'py> for PyPrior {
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
-		trace!(%repr, id = out.id(), "new PyPrior");
+		trace!(
+			name: "extract_bound",
+			target: "b3::prior",
+			%repr,
+			id = out.id(),
+		);
 		Ok(out)
 	}
 }

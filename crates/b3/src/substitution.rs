@@ -28,7 +28,12 @@ impl<'py, const N: usize> FromPyObject<'py> for PySubstitution<N> {
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
-		trace!(%repr, id = out.id(), "new PySubstitution");
+		trace!(
+			name: "extract_bound",
+			target: "b3::substitution",
+			%repr,
+			id = out.id(),
+		);
 		Ok(out)
 	}
 }
