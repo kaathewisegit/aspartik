@@ -1,14 +1,15 @@
 use hashbrown::HashMap;
 use parking_lot::Mutex;
-use serde_json::{json, to_writer};
+use serde_json::{json, to_writer, value::Map as ValueMap, Value};
 use tracing_core::{
 	dispatcher::{set_global_default, SetGlobalDefaultError},
+	field::{Field, Visit},
 	span::{Attributes, Id, Record},
 	Event, Level, Metadata, Subscriber,
 };
 
 use std::{
-	env,
+	env, fmt,
 	fs::File,
 	io::{BufWriter, Write},
 	sync::atomic::{AtomicU64, Ordering},
@@ -27,6 +28,28 @@ impl SpanData {
 			start: Instant::now(),
 			total: Duration::default(),
 		}
+	}
+}
+
+struct JsonVisitor {
+	fields: ValueMap<String, Value>,
+}
+
+impl JsonVisitor {
+	fn new() -> Self {
+		Self {
+			fields: ValueMap::new(),
+		}
+	}
+}
+
+// XXX: this is suboptimal as it does a lot of intermediary allocations.  It'd
+// be best to replace this and ad-hoc `json` creation with some kind of
+// streaming.
+impl Visit for JsonVisitor {
+	fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
+		self.fields
+			.insert(field.to_string(), format!("{value:?}").into());
 	}
 }
 
@@ -95,6 +118,11 @@ impl Tracer {
 			Ok(())
 		}
 	}
+
+	fn write_json(&self, value: Value) {
+		to_writer(&mut *self.file.lock(), &value).unwrap();
+		self.file.lock().write_all(b"\n").unwrap();
+	}
 }
 
 impl Subscriber for Tracer {
@@ -116,8 +144,18 @@ impl Subscriber for Tracer {
 
 	fn record_follows_from(&self, _span: &Id, _follows: &Id) {}
 
-	// TODO
-	fn event(&self, _event: &Event<'_>) {}
+	fn event(&self, event: &Event<'_>) {
+		let mut visitor = JsonVisitor::new();
+		event.record(&mut visitor);
+
+		let json = json!({
+			"time": unix_time().as_nanos(),
+			"level": event.metadata().level().as_str(),
+			"target": event.metadata().target(),
+			"fields": visitor.fields,
+		});
+		self.write_json(json);
+	}
 
 	fn enter(&self, span: &Id) {
 		let spans = &mut *self.spans.lock();
@@ -140,8 +178,7 @@ impl Subscriber for Tracer {
 		};
 
 		let json = json!({"duration": data.total.as_nanos()});
-		to_writer(&mut *self.file.lock(), &json).unwrap();
-		self.file.lock().write_all(b"\n").unwrap();
+		self.write_json(json);
 
 		true
 	}
@@ -151,4 +188,8 @@ impl Drop for Tracer {
 	fn drop(&mut self) {
 		self.file.get_mut().flush().unwrap();
 	}
+}
+
+fn unix_time() -> Duration {
+	SystemTime::now().duration_since(UNIX_EPOCH).unwrap()
 }
