@@ -74,7 +74,7 @@ export def clean [] {
 			perf.data perf.data.old
 			b3.trees
 			b3.log
-			tracing.log.*
+			aspartik-*.log
 			crates/**/__pycache__/
 			.pytest_cache/
 	)

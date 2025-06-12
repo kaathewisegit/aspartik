@@ -9,7 +9,7 @@ members = [
 	"crates/rng",
 	"crates/skvec",
 	"crates/stats",
-	"crates/tracing",
+	"crates/tracer",
 	"crates/util",
 ]
 
@@ -23,6 +23,7 @@ repository = "https://github.com/kaathewisegit/aspartik"
 [workspace.dependencies]
 anyhow = "1.0"
 approx = "0.5.1"
+bincode = { version = "2.0", default-features = false }
 bytemuck = "1.23"
 crossbeam-channel = "0.5.15"
 cudarc = { version = "0.16.4", default-features = false }
@@ -42,9 +43,7 @@ serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0"
 tracing = "0.1.41"
-tracing-appender = "0.2.3"
-tracing-subscriber = "0.3.19"
-bincode = { version = "2.0", default-features = false }
+tracing-core = "0.1.34"
 
 b3 = { version = "0.1.0-alpha.2", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.2", path = "crates/bitmap" }
@@ -54,6 +53,7 @@ linalg = { version = "0.1.0-alpha.2", path = "crates/linalg" }
 rng = { version = "0.1.0-alpha.2", path = "crates/rng" }
 skvec = { version = "0.1.0-alpha.2", path = "crates/skvec" }
 stats = { version = "0.1.0-alpha.2", path = "crates/stats" }
+tracer = { version = "0.1.0-alpha.2", path = "crates/tracer" }
 util = { version = "0.1.0-alpha.2", path = "crates/util" }
 
 [workspace.lints.clippy]
@@ -77,15 +77,13 @@ repository.workspace = true
 
 [dependencies]
 pyo3 = { workspace = true, features = ["anyhow"] }
-tracing = { workspace = true }
-tracing-appender = { workspace = true }
-tracing-subscriber = { workspace = true, features = ["json"] }
 
 b3 = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
 rng = { workspace = true }
 stats = { workspace = true }
+tracer = { workspace = true }
 
 [features]
 cuda = ["b3/cuda"]
