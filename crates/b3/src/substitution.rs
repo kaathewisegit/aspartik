@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use linalg::RowMatrix;
+use log::debug;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
 
@@ -27,12 +28,11 @@ impl<'py, const N: usize> FromPyObject<'py> for PySubstitution<N> {
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
-		// trace!(
-		// 	name: "extract_bound",
-		// 	target: "b3::substitution",
-		// 	%repr,
-		// 	id = out.id(),
-		// );
+		debug!(
+			target: "b3::substitution::extract_bound",
+			repr:%, id = out.id();
+			""
+		);
 		Ok(out)
 	}
 }

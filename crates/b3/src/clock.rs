@@ -1,5 +1,6 @@
 use anyhow::Result;
 use linalg::RowMatrix;
+use log::debug;
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
 
@@ -22,7 +23,11 @@ impl<'py> FromPyObject<'py> for PyClock {
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
-		// trace!(%repr, id = out.id(), "new PyClock");
+		debug!(
+			target: "b3::clock::extract_bound",
+			repr:%, id = out.id();
+			""
+		);
 		Ok(out)
 	}
 }

@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use log::trace;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
@@ -122,7 +123,12 @@ impl<const N: usize> GenericLikelihood<N> {
 		} else {
 			tree.nodes_to_update()
 		};
-		// trace!(num_nodes_to_update = nodes.len(), full_update);
+		trace!(
+			target: "b3::likelihood::propose",
+			num_nodes_to_update = nodes.len(),
+			full_update;
+			""
+		);
 
 		// no tree update, return the cache
 		if nodes.is_empty() {
@@ -153,7 +159,11 @@ impl<const N: usize> GenericLikelihood<N> {
 		}
 
 		let likelihood = self.calculator.likelihood()?;
-		// trace!(likelihood);
+		trace!(
+			target: "b3::likelihood::likelihood",
+			likelihood;
+			""
+		);
 		self.last = likelihood;
 		Ok(likelihood)
 	}

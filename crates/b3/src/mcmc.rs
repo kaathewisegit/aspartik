@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context, Result};
+use log::trace;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
@@ -226,14 +227,12 @@ impl Mcmc {
 
 		let ratio = new_posterior - old_posterior + hastings;
 
-		// trace!(
-		// 	likelihood,
-		// 	prior,
-		// 	hastings,
-		// 	new_posterior,
-		// 	old_posterior,
-		// 	ratio
-		// );
+		trace!(
+			target: "b3::mcmc::step",
+			likelihood, prior, hastings,
+			new_posterior, old_posterior, ratio;
+			""
+		);
 
 		let random_0_1 = self.rng.get().inner().random::<f64>();
 		if ratio > random_0_1.ln() {
@@ -248,7 +247,7 @@ impl Mcmc {
 	}
 
 	fn accept(&self, py: Python) -> Result<()> {
-		// trace!(name: "accept", target: "b3::mcmc", "accept");
+		trace!(target: "b3::mcmc", "accept");
 
 		self.scheduler.accept();
 
@@ -264,7 +263,7 @@ impl Mcmc {
 	}
 
 	fn reject(&self, py: Python) -> Result<()> {
-		// trace!(name: "accept", target: "b3::mcmc", "reject");
+		trace!(target: "b3::mcmc", "reject");
 
 		self.scheduler.reject();
 

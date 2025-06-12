@@ -1,4 +1,5 @@
 use anyhow::Result;
+use log::{debug, trace};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
@@ -88,12 +89,11 @@ impl<'py> FromPyObject<'py> for PyOperator {
 			accepts: Mutex::new(0),
 			rejects: Mutex::new(0),
 		};
-		// trace!(
-		// 	name: "extract_bound",
-		// 	target: "b3::operators",
-		// 	%repr,
-		// 	id = out.id(),
-		// );
+		debug!(
+			target: "b3::operator::extract_bound",
+			repr:%, id = out.id();
+			""
+		);
 		Ok(out)
 	}
 }
@@ -111,7 +111,7 @@ impl PyOperator {
 		);
 		let proposal = proposal.extract::<PyProposal>(py)?;
 		let proposal = proposal.0;
-		// trace!(?proposal);
+		trace!(target: "b3::operator", propose:? = proposal; "");
 
 		Ok(proposal)
 	}
@@ -177,11 +177,11 @@ impl WeightedScheduler {
 		let index = dist.sample(rng);
 		*self.current.lock() = index;
 
-		// trace!(
-		// 	name: "select_operator",
-		// 	target: "b3::operators::WeightedScheduler",
-		// 	index,
-		// );
+		trace!(
+			target: "b3::operators::select_operator",
+			index;
+			""
+		);
 
 		&self.operators[index]
 	}

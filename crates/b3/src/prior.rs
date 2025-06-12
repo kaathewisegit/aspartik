@@ -1,4 +1,5 @@
 use anyhow::Result;
+use log::{debug, trace};
 use pyo3::prelude::*;
 use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
 
@@ -26,7 +27,7 @@ impl PyPrior {
 			py_call_method!(py, self.inner, "probability")?
 		);
 		let out = out.extract::<f64>(py)?;
-		// trace!(probability = out);
+		trace!(target: "b3::prior", probability = out; "");
 		Ok(out)
 	}
 }
@@ -46,12 +47,11 @@ impl<'py> FromPyObject<'py> for PyPrior {
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
-		// trace!(
-		// 	name: "extract_bound",
-		// 	target: "b3::prior",
-		// 	%repr,
-		// 	id = out.id(),
-		// );
+		debug!(
+			target: "b3::prior::extract_bound",
+			repr:%, id = out.id();
+			""
+		);
 		Ok(out)
 	}
 }
