@@ -11,11 +11,16 @@ prunes most of the non-distribution functionality and adds a Python API.
 
 ### [`strsim`](./strsim-license)
 
-Generic string similarity searches, which I instantiated instead of
-reusing the library.
+Generic string similarity searches, whose code I copied and instantiated
+instead of reusing the generic functions from the library.
 
 
 ## Dependencies
+
+### [`allocator-api2`](./allocator-api2-license)
+
+Stable version of Rust's unstable `allocator_api` used by `hashbrown`.
+
 
 ### [`anyhow`](./anyhow-license)
 
@@ -24,28 +29,106 @@ APIs and non-recoverable errors, because the Rust code can attach layers
 of context which are more friendly than backtraces.
 
 
-### [`petgraph`](./petgraph-license)
+### [`approx`](./approx-license)
 
-The graph library, which will probably power the generic tree API from
-`io`.
-
-
-### [`thiserror`](./thiserror-license)
-
-`anyhow`'s sister project.  It's unfortunate that it doesn't support
-`no_std`, as it'd be really convenient to use it for all those `stats`
-`Display` implementations.
+Approximate floating point comparison library, which is used by `stats`
+and by `linalg` in tests.
 
 
-### [`nom`](./nom-license)
+### [`autocfg`](./autocfg-license)
 
-Parser which is currently used by `io`.  I plan to replace it at some
-point in the future.
+A build dependency used by `parking_lot`, `num-traits`, and `memoffset`,
+which detects Rust compiler feature support in build scripts.
+
+
+### [`bincode`](./bincode-license)
+
+Binary encoder and decoder.  It's serde-compatible, compact, and only
+has one dependency (`unty`) managed by the developers themselves, so I
+use it for pickling.
 
 
 ### [`bytemuck`](./bytemuck-license)
 
-Byte casting, useful for interfacing with GPU.
+Byte casting, which I was using for the old Vulkan calculator.  It's no
+longer used anywhere, but I decided to keep it around in `linalg`.
+
+
+### [`cfg-if`](./cfg-if-license)
+
+Provides a macro which allows using `if else` with `cfg` directive.
+Used by `libloading`, `parking_lot_core`, `getrandom`, and `divan`.
+
+
+### [`crossbeam-channel`](./crossbeam-license)
+
+MPMC channel with senders and consumers which implement `Clone` and
+`Send`, used by the `thread` calculator in `b3`.
+
+
+### [`crossbeam-utils`](./crossbeam-license)
+
+A crate shared by all of the high-level `crossbeam` crates, pulled in by
+`crossbeam-channel`.
+
+
+### [`cudarc`](./cudarc-license)
+
+A crate which includes `sys`, unsafe idiomatic, and safe abstraction
+APIs for CUDA.
+
+
+### [`equivalent`](./equivalent-license)
+
+Traits for key comparison, used by `hashbrown`.
+
+
+### [`fixedbitset`](./fixedbitset-license)
+
+Bit set collection implementation used by `petgraph`.
+
+
+### [`foldhash`](./foldhash-license)
+
+A fast non-DoS resistant hash function used by `hashbrown`.
+
+
+### [`getrandom`](./getrandom-license)
+
+A crate which fetches random data from the OS, used by `rand_core`.
+
+
+### [`hashbrown`](./hashbrown-license)
+
+The Swiss Tables implementation which powers `std`'s `HashMap`.  I use
+it because it configures a faster `foldhash` and is pulled by `petgraph`
+anyways.
+
+
+### [`heck`](./heck-license)
+
+Case conversion library used by `pyo3` during build time for case
+conversion attributes on pyclasses.
+
+
+### [`indexmap`](./indexmap-license)
+
+Hash map which preserves insertion order, used by `petgraph`.
+
+
+### [`indoc`](./indoc-license)
+
+Macro which de-indents strings, used by `pyo3` in the `py_run` macro.
+
+
+### [`inventory`](./inventory-license)
+
+"Distributed plugin registration", which uses platform-specific
+implementations to create a global list of objects, which can be
+populated by different crates.  I use it via `pyo3`'s
+`multiple-pymethods` feature because I create several of those with
+macros.  And `#[pymethods]`, being a proc macro, doesn't support nested
+macros by example.
 
 
 ### [`lapack-sys`](./lapack-sys-license)
@@ -54,52 +137,175 @@ LAPACK C interface bindings.  I couldn't get the LAPACK source crate to
 work, so I might need to fork it in the future.
 
 
+### [`libc`](./libc-license)
+
+Raw bindings to platform-specific C libraries.
+
+
+### [`libloading`](./libloading-license)
+
+Used by `cudarc` to dynamically load CUDA libraries.
+
+
+### [`libm`](./libm-license)
+
+Floating point emulation library, used by `num-traits` for `no_std`
+targets.
+
+
+### [`lock_api`](./parking_lot-license)
+
+A library for implementing Rust-style `Mutex` using `RawMutex` types.
+Used (and developed) by `parking_lot`
+
+
+### [`log`](./log-license)
+
+Unified Rust `log` facade.
+
+
+### [`memchr`](./memchr-license)
+
+SIMD-optimized string search, used by `nom` and `serde_json`.
+
+
+### [`memoffset`](./memoffset-license)
+
+Provides `offset_of`, used in `pyo3`.  It's equivalent to `std`'s
+`offset_of`, but its MSRV is lower (`std`'s is 1.77).
+
+
+### [`nom`](./nom-license)
+
+Parser which is currently used by `io`.  I plan to replace it at some
+point in the future.
+
+
 ### [`num-traits`](./num-traits-license)
 
 Unified numerical interfaces.  Used in `linalg` and `stats`.
 
 
+### [`once_cell`](./once_cell-license)
+
+`OnceCell` implementation, also used by `pyo3`.
+
+
+### [`parking_lot`](./parking_lot-license)
+
+A great concurrency primitives library, from which I use small (1-byte)
+non-poisoning `Mutex` for interior mutability in pyclasses.
+
+
+### [`parking_lot_core`](./parking_lot-license)
+
+
+### [`petgraph`](./petgraph-license)
+
+The graph library, which will probably power the generic tree API from
+`io`.
+
+
+### [`ppv-lite86`](./ppv-lite86-license)
+
+SIMD for cryptography, used by `rand_chacha`.
+
+
+### [`proc-macro2`](./proc-macro2-license)
+
+Part of Tolnay's macro suite, used by derives in `thiserror`, `serde`,
+`pyo3`, and `divan`.
+
+
 ### [`pyo3`](./pyo3-license)
 
-The GOAT which provides Python inter-op.  I don't think `b3` would've
-existed in its current form if it wasn't for this crate.  It'd probably
-have some homegrown Luau scripting interface instead.
+A great library which provides Python inter-op.  I don't think `b3`
+would've existed in its current form if it wasn't for this crate.
+
+
+### [`pyo3-build-config`](./pyo3-license)
+
+### [`pyo3-ffi`](./pyo3-license)
+
+### [`pyo3-macros`](./pyo3-license)
+
+### [`pyo3-macros-backend`](./pyo3-license)
+
+
+### [`quote`](./quote-license)
+
+See `proc-macro2`.
 
 
 ### [`rand`/`rand_pcg`][`rand`], [`rand_distr`]
 
-Randomness crates, including PCG, which has a nice property of being
-serializable.
+Randomness crates used by both `b3` and `stats`.  The PCG generator
+powers the `rng` module because it's serializable.
 
 
-### [`rayon`]
+### [`scopeguard`](./scopeguard-license)
 
-Simple parallelism library.  I used to use for multithreaded CPU
-likelihood in `b3`, but the thread overhead turned to be too big.  It
-seems you need at least 50k total bases to make it worth it.
+Panic-resistant `defer`, used in `lock_api`.
 
 
-### [`serde`]
+### [`serde`](./serde-license)
 
-### [`serde_json`]
+### [`serde_derive`](./serde-license)
 
-### [`divan`]
+### [`serde_json`](./serde_json-license)
+
+### [`smallvec`](./smallvec-license)
+
+One-word `Vec` which stores its length and capacity in the allocation,
+used by `parking_lot_core`.
+
+
+### [`syn`](./syn-license)
+
+See `proc-macro2`.
+
+
+### [`target-lexicon`](./target-lexicon-license)
+
+Library for working with host triples, used by `pyo3-build-config`.
+
+
+### [`thiserror`](./thiserror-license)
+
+`anyhow`'s sister project for deriving `Display` and `Error` on types.
+Currently only used in data because `stats` still supports `no_std`.
+
+
+### [`thiserror-impl`](./thiserror-license)
+
+
+### [`unicode-indent`](./unicode-ident-license)
+
+Unicode-aware identifiers check, used by `serde_derive`.
+
+
+### [`unindent`](./indoc-license)
+
+Runtime version of `indoc`.
+
+
+### [`unty`](./unty-license)
+
+Tiny (100 lines) type cast library used in `bincode`.
+
+
+### [`zerocopy`](./zerocopy-license)
+
+A library for safely casting between bytes and Rust types, used by
+`ppv-lite86`.
+
+
+### [`divan`](./divan-license)
 
 A convenient benchmarking library.  I picked it over `criterion` because
 it allowed to set the number of iterations to one, which was useful for
 long-running `b3` tests.
 
 
-### [`approx`]
-
-A little floating point comparison library, useful for numerical tests.
-
-
-
 [`rand`]: ./rand-license
 [`rand_distr`]: ./rand_distr-license
-[`rayon`]: ./rayon-license
-[`serde`]: ./serde-license
-[`serde_json`]: ./serde_json-license
-[`divan`]: ./divan-license
-[`approx`]: ./approx-license
