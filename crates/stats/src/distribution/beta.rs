@@ -79,7 +79,6 @@ impl core::fmt::Display for BetaError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for BetaError {}
 
 impl Beta {

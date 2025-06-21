@@ -50,7 +50,6 @@ impl core::fmt::Display for HypergeometricError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for HypergeometricError {}
 
 impl Hypergeometric {

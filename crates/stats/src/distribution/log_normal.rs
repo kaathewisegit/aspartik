@@ -82,7 +82,6 @@ impl core::fmt::Display for LogNormalError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for LogNormalError {}
 
 impl LogNormal {

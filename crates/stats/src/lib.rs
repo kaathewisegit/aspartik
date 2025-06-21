@@ -65,7 +65,6 @@
 #![expect(clippy::excessive_precision)]
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![cfg_attr(not(feature = "std"), no_std)]
 
 pub(crate) mod consts;
 #[macro_use]

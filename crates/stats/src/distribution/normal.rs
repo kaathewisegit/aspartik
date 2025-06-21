@@ -78,7 +78,6 @@ impl core::fmt::Display for NormalError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for NormalError {}
 
 impl Normal {

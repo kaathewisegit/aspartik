@@ -87,7 +87,6 @@ impl core::fmt::Display for GammaError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for GammaError {}
 
 impl Gamma {

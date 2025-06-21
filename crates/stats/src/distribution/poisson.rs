@@ -70,7 +70,6 @@ impl core::fmt::Display for PoissonError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for PoissonError {}
 
 impl Poisson {

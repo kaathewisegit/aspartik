@@ -10,22 +10,26 @@ description = "Statistical computing library for Rust"
 keywords = ["probability", "statistics", "stats", "distribution", "math"]
 categories = ["science"]
 
-[features]
-default = ["std", "rand", "python"]
-std = ["rand?/std", "rand?/std_rng", "rand?/thread_rng"]
-rand = ["dep:rand"]
-python = ["std", "dep:pyo3"]
-
 [dependencies]
 rng = { workspace = true }
 
 approx = { workspace = true }
 num-traits = { workspace = true }
 pyo3 = { workspace = true, features = ["multiple-pymethods"], optional = true }
-rand = { workspace = true, default-features = false, optional = true }
+
+[dependencies.rand]
+workspace = true
+default-features = false
+optional = true
+features = ["std", "std_rng", "thread_rng"]
 
 [dev-dependencies]
 pyo3 = { workspace = true, features = ["auto-initialize"] }
+
+[features]
+default = ["rand", "python"]
+rand = ["dep:rand"]
+python = ["dep:pyo3"]
 
 [lints]
 workspace = true

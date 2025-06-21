@@ -34,7 +34,6 @@ impl core::fmt::Display for GammaFuncError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for GammaFuncError {}
 
 /// Auxiliary variable when evaluating the `gamma_ln` function

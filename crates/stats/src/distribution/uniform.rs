@@ -85,7 +85,6 @@ impl core::fmt::Display for UniformError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for UniformError {}
 
 impl Uniform {

@@ -45,7 +45,6 @@ impl core::fmt::Display for LevyError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for LevyError {}
 
 impl Levy {

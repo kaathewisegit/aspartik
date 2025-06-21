@@ -39,7 +39,6 @@ impl core::fmt::Display for DiscreteUniformError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for DiscreteUniformError {}
 
 impl DiscreteUniform {

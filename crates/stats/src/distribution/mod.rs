@@ -6,7 +6,6 @@ use num_traits::{Float, Num, NumAssignOps, One};
 mod bernoulli;
 mod beta;
 mod binomial;
-#[cfg(feature = "std")]
 mod categorical;
 mod cauchy;
 mod chi;
@@ -43,7 +42,6 @@ mod ziggurat_tables;
 pub use bernoulli::Bernoulli;
 pub use beta::{Beta, BetaError};
 pub use binomial::{Binomial, BinomialError};
-#[cfg(feature = "std")]
 pub use categorical::{Categorical, CategoricalError};
 pub use cauchy::{Cauchy, CauchyError};
 pub use chi::{Chi, ChiError};

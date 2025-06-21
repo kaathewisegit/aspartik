@@ -59,7 +59,6 @@ impl core::fmt::Display for NegativeBinomialError {
 	}
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for NegativeBinomialError {}
 
 impl NegativeBinomial {
