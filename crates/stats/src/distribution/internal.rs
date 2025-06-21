@@ -1,38 +1,35 @@
 use num_traits::Num;
 
-/// Implements univariate function bisection searching for criteria
-/// ```text
-/// smallest k such that f(k) >= z
-/// ```
-/// Evaluates to `None` if
-/// - provided interval has lower bound greater than upper bound
-/// - function found not semi-monotone on the provided interval containing `z`
+/// Implements univariate function bisection searching for smallest `k` such
+/// that `f(k) >= z`.
 ///
-/// Evaluates to `Some(k)`, where `k` satisfies the search criteria
+/// Returns `None` if:
+///
+/// - Provided interval has lower bound greater than upper bound
+/// - Function was found to be non semi-monotone on the provided interval
 pub fn integral_bisection_search<K: Num + Clone, T: Num + PartialOrd>(
 	f: impl Fn(&K) -> T,
 	z: T,
-	lb: K,
-	ub: K,
+	mut lower: K,
+	mut upper: K,
 ) -> Option<K> {
-	if !(f(&lb)..=f(&ub)).contains(&z) {
+	if !(f(&lower)..=f(&upper)).contains(&z) {
 		return None;
 	}
 	let two = K::one() + K::one();
-	let mut lb = lb;
-	let mut ub = ub;
 	loop {
-		let mid = (lb.clone() + ub.clone()) / two.clone();
-		if !(f(&lb)..=f(&ub)).contains(&f(&mid)) {
+		let mid = (lower.clone() + upper.clone()) / two.clone();
+		if !(f(&lower)..=f(&upper)).contains(&f(&mid)) {
 			return None; // f found not monotone on interval
-		} else if f(&lb) == z {
-			return Some(lb);
-		} else if f(&ub) == z || (lb.clone() + K::one()) == ub {
-			return Some(ub); // found or no more integers between
+		} else if f(&lower) == z {
+			return Some(lower);
+		} else if f(&upper) == z || (lower.clone() + K::one()) == upper
+		{
+			return Some(upper); // found or no more integers between
 		} else if f(&mid) >= z {
-			ub = mid;
+			upper = mid;
 		} else {
-			lb = mid;
+			lower = mid;
 		}
 	}
 }
@@ -534,10 +531,8 @@ pub mod test {
 
 	#[test]
 	fn test_integer_bisection() {
-		use super::*;
-
 		fn search(z: usize, data: &[usize]) -> Option<usize> {
-			integral_bisection_search(
+			super::integral_bisection_search(
 				|idx: &usize| data[*idx],
 				z,
 				0,
@@ -551,13 +546,12 @@ pub mod test {
 			.collect::<Vec<_>>();
 
 		for i in 0..(data.len()) {
-			assert_eq!(search(data[i], &data), Some(i),)
+			assert_eq!(search(data[i], &data), Some(i))
 		}
-		{
-			let infimum = search(needle, &data);
-			let found_element = search(needle + 1, &data); // 4 > needle && member of range
-			assert_eq!(found_element, Some(needle));
-			assert_eq!(infimum, found_element)
-		}
+
+		let infimum = search(needle, &data);
+		let found_element = search(needle + 1, &data); // 4 > needle && member of range
+		assert_eq!(found_element, Some(needle));
+		assert_eq!(infimum, found_element)
 	}
 }
