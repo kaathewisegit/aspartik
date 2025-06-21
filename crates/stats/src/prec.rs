@@ -3,7 +3,7 @@
 use approx::AbsDiffEq;
 
 /// Targeted accuracy instantiated over `f64`
-pub const ACCURACY: f64 = 10e-11;
+pub const ACCURACY: f64 = 1e-10;
 
 /// Standard epsilon, maximum relative precision of IEEE 754 double-precision
 /// floating point numbers (64 bit) e.g. `2^-53`

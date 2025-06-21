@@ -1,12 +1,12 @@
 use approx::AbsDiffEq;
-use num_traits::Float;
 use stats::assert_almost_eq;
 use stats::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
 
 mod distributions;
 
-/// Targeted accuracy instantiated over `f64`
-pub const ACCURACY: f64 = 10e-11;
+/// NumPy's `assert_allclose` has the default relative accuracy of 1e-7.  SciPy
+/// uses `sqrt(eps) * 4`, which is roughly 1.5e-8.
+pub const ACCURACY: f64 = 1e-10;
 
 pub fn almost_eq(a: f64, b: f64, acc: f64) -> bool {
 	if a.is_infinite() && b.is_infinite() {
@@ -29,168 +29,162 @@ macro_rules! assert_almost_eq {
 }
 
 #[macro_export]
-macro_rules! test_new_is_ok {
-	($dist:ty; $( ($($arg:expr),+) ),+ $(,)?) => {
-		#[test]
-		fn test_new_is_ok() {
-		$(
-			let result = <$dist>::new($($arg),+);
-			if !result.is_ok() {
-				panic!(
+macro_rules! make_test_harness {
+	($dist:ident($($arg_name:ident: $arg_type:ty),+), $err:ty) => {
+		type NewArgs = ($($arg_type),+);
+
+		fn new_dist(($($arg_name),+): NewArgs) -> $dist {
+			match <$dist>::new($($arg_name),+) {
+				Ok(dist) => dist,
+				Err(err) => panic!(
 					"Expected {}::new{:?} to return Ok(_), got {:?} instead",
 					stringify!($dist),
 					// args tuple
-					($($arg),+),
-					result,
-				);
+					($($arg_name),+),
+					err,
+				)
 			}
-		)+
 		}
-	};
-}
 
-#[macro_export]
-macro_rules! test_new_is_err {
-	($dist:ty; $( ($($arg:expr),+) -> $err:expr ),+ $(,)?) => {
-		#[test]
-		fn test_new_is_err() {
-		$(
-			let result = <$dist>::new($($arg),+);
-			if result != Err($err) {
-				panic!(
-					"Expected {}::new{:?} to return Err({}), got {:?} instead",
+		fn assert_new_is_ok(args: NewArgs) {
+			new_dist(args);
+		}
+
+		fn assert_new_is_err(($($arg_name),+): NewArgs, err: $err) {
+			match <$dist>::new($($arg_name),+) {
+				Err(this_err) if this_err == err => return,
+				result @ Ok(_) | result @ Err(_) => panic!(
+					"Expected {}::new{:?} to return {:?}, got {:?} instead",
 					stringify!($dist),
-					// args tuple
-					($($arg),+),
-					stringify!($err),
+					($($arg_name),+),
+					err,
 					result,
-				);
+				)
 			}
-		)+
+
+		}
+
+		fn assert_exact<T, F, O>(
+			new_args: NewArgs,
+			op_args: T,
+			op: F,
+			expected: O,
+		) where
+			T: std::fmt::Debug + Copy,
+			F: Fn($dist, T) -> O,
+			O: std::fmt::Debug + PartialEq,
+		{
+			let dist = new_dist(new_args);
+			let value = op(dist, op_args);
+
+			if expected == value {
+				return;
+			}
+
+			panic!(
+				"Expected {}{:?} with {:?} to return {:?}, got {:?} instead",
+				stringify!($dist),
+				new_args,
+				op_args,
+				expected,
+				value,
+			)
+
+		}
+
+		fn assert_close<T, F>(
+			new_args: NewArgs,
+			op_args: T,
+			op: F,
+			expected: f64
+		) where
+			T: std::fmt::Debug + Copy,
+			F: Fn($dist, T) -> f64,
+		{
+			let dist = new_dist(new_args);
+			let value = op(dist, op_args);
+
+			if approx::relative_eq!(expected, value, max_relative = ACCURACY) {
+				return;
+			}
+
+			panic!(
+				"Expected {}{:?} with {:?} to be close to {}, got {} instead",
+				stringify!($dist),
+				new_args,
+				op_args,
+				expected,
+				value,
+			)
 		}
 	};
 }
 
-#[macro_export]
-macro_rules! test_value {
-	(
-		$name:ident, $dist:ty, $func:tt;
-	 	$(
-			($($new_arg:expr),+):
-			($($func_arg:expr),*) => $expected:expr
-			$(, $mode:ident $($value:literal)? $($unwrap:ident)?)?
-		),+
-		$(,)?
-	) => {
-		#[test]
-		fn $name() {
-		$(
-			let dist = <$dist>::new($($new_arg),+).unwrap();
-			let result = dist.$func($($func_arg),*);
-			if !$crate::compare!(
-				result,
-				$expected
-				$(, $mode $($value)? $($unwrap)?)?
-			) {
-				panic!(
-					"Expected {}.{}({:?}) to return {:?}, got {:?} instead",
-					dist,
-					stringify!($func),
-					($($func_arg),*),
-					$expected,
-					result,
-				);
-			}
-		)+
-		}
-	};
-}
-
-pub fn is_infinite<F: Float>(f: F) -> bool {
-	f.is_infinite()
-}
-
-#[macro_export]
-macro_rules! compare {
-	($result:expr, $expected:expr, $mode:ident $($value:literal)? unwrap) => {
-		compare!($result.unwrap(), $expected, $mode $($value)?)
-	};
-	($result:expr, $expected:expr) => {
-		$result == $expected
-	};
-	($result:expr, $expected:expr, relative) => {
-		compare!($result, $expected, relative ACCURACY)
-	};
-	($result:expr, $expected:expr, relative $max_relative:expr) => {
-		approx::relative_eq!(
-			$expected,
-			$result,
-			max_relative = $max_relative
-		)
-	};
-	($result:expr, $expected:expr, absolute) => {
-		compare!($result, $expected, absolute 1e-16)
-	};
-	($result:expr, $expected:expr, absolute $epsilon:expr) => {
-		// abs_diff_eq! cannot handle infinities, so we manually accept
-		// them here
-		(is_infinite($expected) && $result == $expected)
-		||
-		approx::abs_diff_eq!($expected, $result, epsilon = $epsilon)
-	};
-}
-
-pub mod prelude {
-	pub use super::{is_infinite, ACCURACY};
-	pub use approx::{abs_diff_eq, AbsDiffEq};
-	pub use num_traits::Float;
-	pub use stats::{
-		assert_almost_eq,
-		distribution::{
-			Continuous, ContinuousCDF, Discrete, DiscreteCDF,
-		},
-		statistics::{Distribution, Mode},
-	};
-
-	pub use super::{compare, test_new_is_err, test_new_is_ok, test_value};
-}
-
-mod macro_test {
+mod test_make_test_harness {
 	use stats::distribution::{Beta, BetaError};
 	use stats::statistics::*;
 
 	use crate::prelude::*;
 
-	test_new_is_ok! {
-		Beta;
-		(0.8, 1.2),
-		(10e10, 10e10),
+	make_test_harness!(Beta(shape_a: f64, shape_b: f64), BetaError);
+
+	#[test]
+	fn test_new_is_ok_success() {
+		assert_new_is_ok((0.8, 1.2));
 	}
 
-	test_new_is_err! {
-		Beta;
-		(-0.5, 1.2) -> BetaError::InvalidAlpha,
-		(0.5, -0.0) -> BetaError::InvalidBeta,
+	#[test]
+	#[should_panic]
+	fn test_new_is_ok_failure() {
+		assert_new_is_ok((-1.0, 1.0));
 	}
 
-	test_value! {
-		test_exact_success, Beta, mode;
-		(1.5, 1.5): () => Some(0.5),
+	#[test]
+	fn test_new_is_err_success() {
+		assert_new_is_err((-0.8, 1.2), BetaError::InvalidAlpha);
 	}
 
-	test_value! {
-		test_relative_success, Beta, mode;
-		(1.2, 1.4): () => 0.333333333333, relative unwrap,
+	#[test]
+	#[should_panic]
+	fn test_new_is_err_failure() {
+		assert_new_is_err((0.8, 1.2), BetaError::InvalidAlpha);
 	}
 
-	test_value! {
-		test_absolute_success, Beta, mode;
-		(1.2, 1.4): () => 0.333333333333, absolute 1e-12 unwrap,
+	#[test]
+	fn test_exact_success() {
+		assert_exact((1.5, 1.5), (), |d, _| d.mode(), Some(0.5));
 	}
 
-	test_value! {
-		test_is_none, Beta, mode;
-		(0.5, 1.2): () => None::<f64>,
+	#[test]
+	#[should_panic]
+	fn test_exact_failure() {
+		assert_exact(
+			(0.8, 1.2),
+			(),
+			|d, _| d.mode(),
+			Some(0.333333333333),
+		);
+	}
+
+	#[test]
+	fn test_close_success() {
+		assert_close(
+			(1.2, 1.4),
+			(),
+			|d, _| d.mode().unwrap(),
+			0.333333333333,
+		);
+	}
+
+	#[test]
+	#[should_panic]
+	fn test_close_failure() {
+		assert_close(
+			(1.2, 1.4),
+			(),
+			|d, _| d.mode().unwrap(),
+			0.3333333333,
+		);
 	}
 }
 
@@ -346,4 +340,20 @@ where
 	// assert_eq!(dist.cdf(f64::INFINITY), 1.0);
 
 	check_sum_pmf_is_cdf(dist, x_max);
+}
+
+pub mod prelude {
+	pub use approx::{abs_diff_eq, AbsDiffEq};
+	pub use num_traits::Float;
+	pub use stats::{
+		assert_almost_eq,
+		distribution::{
+			Continuous, ContinuousCDF, Discrete, DiscreteCDF,
+		},
+		statistics::{Distribution, Mode},
+	};
+
+	pub use super::{
+		check_continuous_distribution, make_test_harness, ACCURACY,
+	};
 }
