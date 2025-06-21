@@ -5,11 +5,11 @@ use skvec::SkVec;
 use crate::tree::Tree;
 
 pub struct Transitions<const N: usize> {
-	current: Substitution<N>,
+	current: Box<Substitution<N>>,
 
-	p: RowMatrix<f64, N, N>,
-	diag: RowMatrix<f64, N, N>,
-	inv_p: RowMatrix<f64, N, N>,
+	p: Box<RowMatrix<f64, N, N>>,
+	diag: Box<RowMatrix<f64, N, N>>,
+	inv_p: Box<RowMatrix<f64, N, N>>,
 
 	rate: f64,
 
@@ -21,11 +21,11 @@ impl<const N: usize> Transitions<N> {
 		let transitions = SkVec::repeat(RowMatrix::default(), length);
 
 		Self {
-			current: RowMatrix::default(),
+			current: Box::new(RowMatrix::default()),
 
-			p: RowMatrix::default(),
-			diag: RowMatrix::default(),
-			inv_p: RowMatrix::default(),
+			p: Box::new(RowMatrix::default()),
+			diag: Box::new(RowMatrix::default()),
+			inv_p: Box::new(RowMatrix::default()),
 
 			rate: 1.0,
 
@@ -41,16 +41,16 @@ impl<const N: usize> Transitions<N> {
 		tree: &Tree,
 	) -> bool {
 		let full_update =
-			substitution != self.current || rate != self.rate;
+			substitution != *self.current || rate != self.rate;
 		if full_update {
-			self.current = substitution;
+			self.current = Box::new(substitution);
 			self.rate = rate;
 
-			self.diag = RowMatrix::from_diagonal(
+			self.diag = Box::new(RowMatrix::from_diagonal(
 				substitution.eigenvalues(),
-			);
-			self.p = substitution.eigenvectors();
-			self.inv_p = self.p.inverse();
+			));
+			self.p = Box::new(substitution.eigenvectors());
+			self.inv_p = Box::new(self.p.inverse());
 		}
 
 		let edges: Vec<usize> = if full_update {
@@ -70,12 +70,14 @@ impl<const N: usize> Transitions<N> {
 	}
 
 	fn update_edges(&mut self, edges: &[usize], distances: &[f64]) {
+		let inv_p = *self.inv_p;
+		let p = *self.p;
 		for (edge, distance) in edges.iter().zip(distances) {
 			let diag = self
 				.diag
 				.map_diagonal(|v| (v * distance).exp());
 
-			let transition = self.inv_p * diag * self.p;
+			let transition = inv_p * diag * p;
 
 			self.transitions.set(*edge, transition);
 		}
