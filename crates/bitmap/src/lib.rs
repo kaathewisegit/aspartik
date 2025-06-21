@@ -5,7 +5,7 @@ pub struct Bitmap {
 
 impl Bitmap {
 	pub fn new(size: usize) -> Self {
-		let length = (size + 7) / 8;
+		let length = size.div_ceil(8);
 		Bitmap {
 			inner: (0..length).map(|_| 0).collect(),
 		}
