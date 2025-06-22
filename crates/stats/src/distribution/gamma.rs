@@ -1,6 +1,7 @@
 use approx::ulps_eq;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use thiserror::Error;
 
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
@@ -49,65 +50,46 @@ impl_pymethods! {for Gamma;
 }
 
 /// Represents the errors that can occur when creating a [`Gamma`].
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Error)]
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum GammaError {
-	/// The shape is NaN, zero or less than zero.
+	#[error("Shape is NaN, zero or less than zero")]
 	ShapeInvalid,
 
-	/// The rate is NaN, zero or less than zero.
+	#[error("Rate is NaN, zero or less than zero")]
 	RateInvalid,
 
-	/// The shape and rate are both infinite.
+	#[error("Shape and rate are both infinite")]
 	ShapeAndRateInfinite,
 }
 
 #[cfg(feature = "python")]
 impl_pyerr!(GammaError, pyo3::exceptions::PyValueError);
 
-impl core::fmt::Display for GammaError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			GammaError::ShapeInvalid => write!(
-				f,
-				"Shape is NaN zero, or less than zero."
-			),
-			GammaError::RateInvalid => write!(
-				f,
-				"Rate is NaN zero, or less than zero."
-			),
-			GammaError::ShapeAndRateInfinite => {
-				write!(f, "Shape and rate are infinite")
-			}
-		}
-	}
-}
-
-impl std::error::Error for GammaError {}
-
 impl Gamma {
-	/// Constructs a new gamma distribution with a shape (α)
-	/// of `shape` and a rate (β) of `rate`
+	/// Constructs a new gamma distribution with a shape (α) of `shape` and
+	/// a rate (β) of `rate`
 	///
-	/// # Errors
-	///
-	/// Returns an error if `shape` is 'NaN' or inf or `rate` is `NaN` or inf.
-	/// Also returns an error if `shape <= 0.0` or `rate <= 0.0`
+	/// Shape and rate must be positive non-zero non-NaN values.  Either
+	/// shape or rate can be infinite, but if both of them are, an error is
+	/// returned.
 	///
 	/// # Examples
 	///
 	/// ```
-	/// use stats::distribution::Gamma;
+	/// use stats::distribution::{Gamma, GammaError};
 	///
-	/// let mut result = Gamma::new(3.0, 1.0);
-	/// assert!(result.is_ok());
-	///
-	/// result = Gamma::new(0.0, 0.0);
-	/// assert!(result.is_err());
+	/// assert!(Gamma::new(3.0, 1.0).is_ok());
+	/// assert_eq!(Gamma::new(0.0, 1.0), Err(GammaError::ShapeInvalid));
+	/// assert!(Gamma::new(f64::INFINITY, 2.0).is_ok());
+	/// assert_eq!(
+	///     Gamma::new(f64::INFINITY, f64::INFINITY),
+	///     Err(GammaError::ShapeAndRateInfinite)
+	/// );
 	/// ```
 	pub fn new(shape: f64, rate: f64) -> Result<Gamma, GammaError> {
 		if shape.is_nan() || shape <= 0.0 {
@@ -132,8 +114,8 @@ impl Gamma {
 	/// ```
 	/// use stats::distribution::Gamma;
 	///
-	/// let n = Gamma::new(3.0, 1.0).unwrap();
-	/// assert_eq!(n.shape(), 3.0);
+	/// let g = Gamma::new(3.0, 1.0).unwrap();
+	/// assert_eq!(g.shape(), 3.0);
 	/// ```
 	pub fn shape(&self) -> f64 {
 		self.shape
@@ -146,8 +128,8 @@ impl Gamma {
 	/// ```
 	/// use stats::distribution::Gamma;
 	///
-	/// let n = Gamma::new(3.0, 1.0).unwrap();
-	/// assert_eq!(n.rate(), 1.0);
+	/// let g = Gamma::new(3.0, 1.0).unwrap();
+	/// assert_eq!(g.rate(), 1.0);
 	/// ```
 	pub fn rate(&self) -> f64 {
 		self.rate
@@ -160,27 +142,10 @@ impl core::fmt::Display for Gamma {
 	}
 }
 
-#[cfg(feature = "rand")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl rand::distr::Distribution<f64> for Gamma {
-	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-		sample_unchecked(rng, self.shape, self.rate)
-	}
-}
-
 impl ContinuousCDF for Gamma {
-	/// Calculates the cumulative distribution function for the gamma
-	/// distribution
-	/// at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (1 / Γ(α)) * γ(α, β * x)
-	/// ```
-	///
-	/// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
-	/// and `γ` is the lower incomplete gamma function
+	/// `(1 / Γ(α)) * γ(α, β * x)`, where `α` is the shape, `β` is the rate,
+	/// `Γ` is the gamma function, and `γ` is the lower incomplete gamma
+	/// function.
 	fn cdf(&self, x: f64) -> f64 {
 		if x <= 0.0 {
 			0.0
@@ -195,17 +160,9 @@ impl ContinuousCDF for Gamma {
 		}
 	}
 
-	/// Calculates the survival function for the gamma
-	/// distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (1 / Γ(α)) * γ(α, β * x)
-	/// ```
-	///
-	/// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
-	/// and `γ` is the upper incomplete gamma function
+	/// `(1 / Γ(α)) * γ(α, β * x)` where `α` is the shape, `β` is the rate,
+	/// `Γ` is the gamma function, and `γ` is the upper incomplete gamma
+	/// function.
 	fn sf(&self, x: f64) -> f64 {
 		if x <= 0.0 {
 			1.0
@@ -276,42 +233,19 @@ impl ContinuousCDF for Gamma {
 }
 
 impl Distribution for Gamma {
-	/// Returns the mean of the gamma distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// α / β
-	/// ```
-	///
-	/// where `α` is the shape and `β` is the rate
+	/// `α / β`, where `α` is the shape and `β` is the rate
 	fn mean(&self) -> Option<f64> {
 		Some(self.shape / self.rate)
 	}
 
-	/// Returns the variance of the gamma distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// α / β^2
-	/// ```
-	///
-	/// where `α` is the shape and `β` is the rate
+	/// `α / β^2`, where `α` is the shape and `β` is the rate
 	fn variance(&self) -> Option<f64> {
 		Some(self.shape / (self.rate * self.rate))
 	}
 
-	/// Returns the entropy of the gamma distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// α - ln(β) + ln(Γ(α)) + (1 - α) * ψ(α)
-	/// ```
-	///
-	/// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
-	/// and `ψ` is the digamma function
+	/// `α - ln(β) + ln(Γ(α)) + (1 - α) * ψ(α)`, where `α` is the shape, `β`
+	/// is the rate, `Γ` is the gamma function, and `ψ` is the digamma
+	/// function.
 	fn entropy(&self) -> Option<f64> {
 		let entr = self.shape - self.rate.ln()
 			+ gamma::ln_gamma(self.shape)
@@ -319,30 +253,16 @@ impl Distribution for Gamma {
 		Some(entr)
 	}
 
-	/// Returns the skewness of the gamma distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 2 / sqrt(α)
-	/// ```
-	///
-	/// where `α` is the shape
+	/// `2 / sqrt(α)`, where `α` is the shape
 	fn skewness(&self) -> Option<f64> {
 		Some(2.0 / self.shape.sqrt())
 	}
 }
 
 impl Mode<Option<f64>> for Gamma {
-	/// Returns the mode for the gamma distribution
+	/// `(α - 1) / β`, where `α` is the shape and `β` is the rate.
 	///
-	/// # Formula
-	///
-	/// ```text
-	/// (α - 1) / β, where α≥1
-	/// ```
-	///
-	/// where `α` is the shape and `β` is the rate
+	/// If `α < 1`, this method returns `None`.
 	fn mode(&self) -> Option<f64> {
 		if self.shape < 1.0 {
 			None
@@ -355,21 +275,11 @@ impl Mode<Option<f64>> for Gamma {
 impl Continuous for Gamma {
 	type T = f64;
 
-	/// Calculates the probability density function for the gamma distribution
-	/// at `x`
+	/// `(β^α / Γ(α)) * x^(α - 1) * e^(-β * x)`, where `α` is the shape, `β`
+	/// is the rate, and `Γ` is the gamma function.
 	///
-	/// # Remarks
-	///
-	/// Returns `NAN` if any of `shape` or `rate` are `f64::INFINITY`
-	/// or if `x` is `f64::INFINITY`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (β^α / Γ(α)) * x^(α - 1) * e^(-β * x)
-	/// ```
-	///
-	/// where `α` is the shape, `β` is the rate, and `Γ` is the gamma function
+	/// Returns `NAN` if any of `shape` or `rate` are `f64::INFINITY` or if
+	/// `x` is `f64::INFINITY`.
 	fn pdf(&self, x: f64) -> f64 {
 		if x < 0.0 {
 			0.0
@@ -386,22 +296,7 @@ impl Continuous for Gamma {
 		}
 	}
 
-	/// Calculates the log probability density function for the gamma
-	/// distribution
-	/// at `x`
-	///
-	/// # Remarks
-	///
-	/// Returns `NAN` if any of `shape` or `rate` are `f64::INFINITY`
-	/// or if `x` is `f64::INFINITY`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// ln((β^α / Γ(α)) * x^(α - 1) * e ^(-β * x))
-	/// ```
-	///
-	/// where `α` is the shape, `β` is the rate, and `Γ` is the gamma function
+	/// See [`pdf`][Gamma::pdf] for the notes on degenerate cases handling.
 	fn ln_pdf(&self, x: f64) -> f64 {
 		if x < 0.0 {
 			f64::NEG_INFINITY
@@ -417,8 +312,16 @@ impl Continuous for Gamma {
 	}
 }
 
-/// Samples from a gamma distribution with a shape of `shape` and a
-/// rate of `rate` using `rng` as the source of randomness. Implementation from:
+#[cfg(feature = "rand")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
+impl rand::distr::Distribution<f64> for Gamma {
+	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+		sample_unchecked(rng, self.shape, self.rate)
+	}
+}
+
+/// Samples from a gamma distribution with a shape of `shape` and a rate of
+/// `rate` using `rng` as the source of randomness. Implementation from:
 ///
 /// _"A Simple Method for Generating Gamma Variables"_ - Marsaglia & Tsang
 ///

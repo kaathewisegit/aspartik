@@ -67,8 +67,8 @@ pub mod test {
                 param_text
             }
 
-            /// Creates and returns a distribution with the given parameters,
-            /// panicking if `::new` fails.
+	    /// Creates and returns a distribution with the given parameters,
+	    /// panicking if `::new` fails.
             fn create_ok($($arg_name: $arg_ty),+) -> $dist {
                 match <$dist>::new($($arg_name),+) {
                     Ok(d) => d,
@@ -81,8 +81,8 @@ pub mod test {
                 }
             }
 
-            /// Returns the error when creating a distribution with the given parameters,
-            /// panicking if `::new` succeeds.
+	    /// Returns the error when creating a distribution with the given
+	    /// parameters, panicking if `::new` succeeds.
             #[allow(dead_code)]
             fn create_err($($arg_name: $arg_ty),+) -> $dist_err {
                 match <$dist>::new($($arg_name),+) {
