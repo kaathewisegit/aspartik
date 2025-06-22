@@ -39,11 +39,8 @@ impl core::fmt::Display for BetaFuncError {
 
 impl std::error::Error for BetaFuncError {}
 
-/// Computes the natural logarithm
-/// of the beta function
-/// where `a` is the first beta parameter
-/// and `b` is the second beta parameter
-/// and `a > 0`, `b > 0`.
+/// Natural logarithm of the beta function where `a` is the first beta parameter
+/// and `b` is the second beta parameter and `a > 0`, `b > 0`.
 ///
 /// # Panics
 ///
@@ -52,11 +49,8 @@ pub fn ln_beta(a: f64, b: f64) -> f64 {
 	checked_ln_beta(a, b).unwrap()
 }
 
-/// Computes the natural logarithm
-/// of the beta function
-/// where `a` is the first beta parameter
-/// and `b` is the second beta parameter
-/// and `a > 0`, `b > 0`.
+/// Natural logarithm of the beta function where `a` is the first beta parameter
+/// and `b` is the second beta parameter and `a > 0`, `b > 0`.
 ///
 /// # Errors
 ///
@@ -72,10 +66,8 @@ pub fn checked_ln_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
 	}
 }
 
-/// Computes the beta function
-/// where `a` is the first beta parameter
-/// and `b` is the second beta parameter.
-///
+/// Beta function, where `a` is the first beta parameter and `b` is the second
+/// beta parameter.
 ///
 /// # Panics
 ///
@@ -84,10 +76,8 @@ pub fn beta(a: f64, b: f64) -> f64 {
 	checked_beta(a, b).unwrap()
 }
 
-/// Computes the beta function
-/// where `a` is the first beta parameter
-/// and `b` is the second beta parameter.
-///
+/// Beta function, where `a` is the first beta parameter and `b` is the second
+/// beta parameter.
 ///
 /// # Errors
 ///
@@ -96,10 +86,10 @@ pub fn checked_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
 	checked_ln_beta(a, b).map(|x| x.exp())
 }
 
-/// Computes the lower incomplete (unregularized) beta function
-/// `B(a,b,x) = int(t^(a-1)*(1-t)^(b-1),t=0..x)` for `a > 0, b > 0, 1 >= x >= 0`
-/// where `a` is the first beta parameter, `b` is the second beta parameter, and
-/// `x` is the upper limit of the integral
+/// Lower incomplete (unregularized) beta function `B(a,b,x) =
+/// int(t^(a-1)*(1-t)^(b-1),t=0..x)` for `a > 0, b > 0, 1 >= x >= 0` where `a`
+/// is the first beta parameter, `b` is the second beta parameter, and `x` is
+/// the upper limit of the integral
 ///
 /// # Panics
 ///
@@ -108,10 +98,10 @@ pub fn beta_inc(a: f64, b: f64, x: f64) -> f64 {
 	checked_beta_inc(a, b, x).unwrap()
 }
 
-/// Computes the lower incomplete (unregularized) beta function
-/// `B(a,b,x) = int(t^(a-1)*(1-t)^(b-1),t=0..x)` for `a > 0, b > 0, 1 >= x >= 0`
-/// where `a` is the first beta parameter, `b` is the second beta parameter, and
-/// `x` is the upper limit of the integral
+/// Lower incomplete (unregularized) beta function `B(a,b,x) =
+/// int(t^(a-1)*(1-t)^(b-1),t=0..x)` for `a > 0, b > 0, 1 >= x >= 0` where `a`
+/// is the first beta parameter, `b` is the second beta parameter, and `x` is
+/// the upper limit of the integral.
 ///
 /// # Errors
 ///
@@ -121,11 +111,10 @@ pub fn checked_beta_inc(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
 		.and_then(|x| checked_beta(a, b).map(|y| x * y))
 }
 
-/// Computes the regularized lower incomplete beta function
-/// `I_x(a,b) = 1/Beta(a,b) * int(t^(a-1)*(1-t)^(b-1), t=0..x)`
-/// `a > 0`, `b > 0`, `1 >= x >= 0` where `a` is the first beta parameter,
-/// `b` is the second beta parameter, and `x` is the upper limit of the
-/// integral.
+/// Computes the regularized lower incomplete beta function `I_x(a,b) =
+/// 1/Beta(a,b) * int(t^(a-1)*(1-t)^(b-1), t=0..x)` `a > 0`, `b > 0`, `1 >= x >=
+/// 0` where `a` is the first beta parameter, `b` is the second beta parameter,
+/// and `x` is the upper limit of the integral.
 ///
 /// # Panics
 ///
@@ -134,11 +123,10 @@ pub fn beta_reg(a: f64, b: f64, x: f64) -> f64 {
 	checked_beta_reg(a, b, x).unwrap()
 }
 
-/// Computes the regularized lower incomplete beta function
-/// `I_x(a,b) = 1/Beta(a,b) * int(t^(a-1)*(1-t)^(b-1), t=0..x)`
-/// `a > 0`, `b > 0`, `1 >= x >= 0` where `a` is the first beta parameter,
-/// `b` is the second beta parameter, and `x` is the upper limit of the
-/// integral.
+/// Computes the regularized lower incomplete beta function `I_x(a,b) =
+/// 1/Beta(a,b) * int(t^(a-1)*(1-t)^(b-1), t=0..x)` `a > 0`, `b > 0`, `1 >= x >=
+/// 0` where `a` is the first beta parameter, `b` is the second beta parameter,
+/// and `x` is the upper limit of the integral.
 ///
 /// # Errors
 ///

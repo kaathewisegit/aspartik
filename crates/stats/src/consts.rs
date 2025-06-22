@@ -1,6 +1,3 @@
-//! Mathematical expressions commonly used when computing distribution values as
-//! constants
-
 /// `sqrt(2 * pi)`
 pub const SQRT_2PI: f64 = 2.5066282746310005024157652848110452530069867406099;
 
@@ -26,3 +23,5 @@ pub const TWO_SQRT_E_OVER_PI: f64 =
 /// Euler-Masheroni constant: `lim(n -> inf) { sum(k=1 -> n) { 1/k - ln(n) } }`
 pub const EULER_MASCHERONI: f64 =
 	0.5772156649015328606065120900824024310421593359399235988057672348849;
+
+pub use core::f64::consts::*;

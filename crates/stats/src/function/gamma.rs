@@ -3,9 +3,7 @@
 
 use approx::ulps_eq;
 
-use crate::consts;
-use crate::prec;
-use core::f64;
+use crate::{consts::*, prec};
 
 /// Represents the errors that can occur when computing any of the incomplete
 /// gamma functions.
@@ -54,11 +52,9 @@ const GAMMA_DK: &[f64] = &[
 	-2.71994908488607703910e-9,
 ];
 
-/// Computes the logarithm of the gamma function
-/// with an accuracy of 16 floating point digits.
-/// The implementation is derived from
-/// "An Analysis of the Lanczos Gamma Approximation",
-/// Glendon Ralph Pugh, 2004 p. 116
+/// Computes the logarithm of the gamma function with an accuracy of 16 digits.
+/// The implementation is derived from "An Analysis of the Lanczos Gamma
+/// Approximation", Glendon Ralph Pugh, 2004 p. 116
 pub fn ln_gamma(x: f64) -> f64 {
 	if x < 0.5 {
 		let s = GAMMA_DK
@@ -67,11 +63,9 @@ pub fn ln_gamma(x: f64) -> f64 {
 			.skip(1)
 			.fold(GAMMA_DK[0], |s, t| s + t.1 / (t.0 as f64 - x));
 
-		consts::LN_PI
-			- (f64::consts::PI * x).sin().ln()
-			- s.ln() - consts::LN_2_SQRT_E_OVER_PI
-			- (0.5 - x)
-				* ((0.5 - x + GAMMA_R) / f64::consts::E).ln()
+		LN_PI - (PI * x).sin().ln()
+			- s.ln() - LN_2_SQRT_E_OVER_PI
+			- (0.5 - x) * ((0.5 - x + GAMMA_R) / E).ln()
 	} else {
 		let s = GAMMA_DK
 			.iter()
@@ -81,16 +75,14 @@ pub fn ln_gamma(x: f64) -> f64 {
 				s + t.1 / (x + t.0 as f64 - 1.0)
 			});
 
-		s.ln() + consts::LN_2_SQRT_E_OVER_PI
-			+ (x - 0.5)
-				* ((x - 0.5 + GAMMA_R) / f64::consts::E).ln()
+		s.ln() + LN_2_SQRT_E_OVER_PI
+			+ (x - 0.5) * ((x - 0.5 + GAMMA_R) / E).ln()
 	}
 }
 
-/// Computes the gamma function with an accuracy
-/// of 16 floating point digits. The implementation
-/// is derived from "An Analysis of the Lanczos Gamma Approximation",
-/// Glendon Ralph Pugh, 2004 p. 116
+/// Computes the gamma function with an accuracy of 16 digits. The
+/// implementation is derived from "An Analysis of the Lanczos Gamma
+/// Approximation", Glendon Ralph Pugh, 2004 p. 116
 pub fn gamma(x: f64) -> f64 {
 	if x < 0.5 {
 		let s = GAMMA_DK
@@ -99,11 +91,9 @@ pub fn gamma(x: f64) -> f64 {
 			.skip(1)
 			.fold(GAMMA_DK[0], |s, t| s + t.1 / (t.0 as f64 - x));
 
-		f64::consts::PI
-			/ ((f64::consts::PI * x).sin()
-				* s * consts::TWO_SQRT_E_OVER_PI
-				* ((0.5 - x + GAMMA_R) / f64::consts::E)
-					.powf(0.5 - x))
+		PI / ((PI * x).sin()
+			* s * TWO_SQRT_E_OVER_PI
+			* ((0.5 - x + GAMMA_R) / E).powf(0.5 - x))
 	} else {
 		let s = GAMMA_DK
 			.iter()
@@ -113,15 +103,13 @@ pub fn gamma(x: f64) -> f64 {
 				s + t.1 / (x + t.0 as f64 - 1.0)
 			});
 
-		s * consts::TWO_SQRT_E_OVER_PI
-			* ((x - 0.5 + GAMMA_R) / f64::consts::E).powf(x - 0.5)
+		s * TWO_SQRT_E_OVER_PI * ((x - 0.5 + GAMMA_R) / E).powf(x - 0.5)
 	}
 }
 
-/// Computes the upper incomplete gamma function
-/// `Gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and
-/// `x` is the lower intergral limit.
+/// Computes the upper incomplete gamma function `Gamma(a,x) =
+/// int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0` where `a` is the argument for
+/// the gamma function and `x` is the lower intergral limit.
 ///
 /// # Panics
 ///
@@ -130,10 +118,9 @@ pub fn gamma_ui(a: f64, x: f64) -> f64 {
 	checked_gamma_ui(a, x).unwrap()
 }
 
-/// Computes the upper incomplete gamma function
-/// `Gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and
-/// `x` is the lower intergral limit.
+/// Computes the upper incomplete gamma function `Gamma(a,x) =
+/// int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0` where `a` is the argument for
+/// the gamma function and `x` is the lower intergral limit.
 ///
 /// # Errors
 ///
@@ -142,11 +129,9 @@ pub fn checked_gamma_ui(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	checked_gamma_ur(a, x).map(|x| x * gamma(a))
 }
 
-/// Computes the lower incomplete gamma function
-/// `gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and `x`
-/// is the upper integral limit.
-///
+/// Computes the lower incomplete gamma function `gamma(a,x) =
+/// int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0` where `a` is the argument for
+/// the gamma function and `x` is the upper integral limit.
 ///
 /// # Panics
 ///
@@ -155,11 +140,9 @@ pub fn gamma_li(a: f64, x: f64) -> f64 {
 	checked_gamma_li(a, x).unwrap()
 }
 
-/// Computes the lower incomplete gamma function
-/// `gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and `x`
-/// is the upper integral limit.
-///
+/// Computes the lower incomplete gamma function `gamma(a,x) =
+/// int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0` where `a` is the argument for
+/// the gamma function and `x` is the upper integral limit.
 ///
 /// # Errors
 ///
@@ -168,34 +151,28 @@ pub fn checked_gamma_li(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	checked_gamma_lr(a, x).map(|x| x * gamma(a))
 }
 
-/// Computes the upper incomplete regularized gamma function
-/// `Q(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and
-/// `x` is the lower integral limit.
-///
-/// # Remarks
+/// Computes the upper incomplete regularized gamma function `Q(a,x) = 1 /
+/// Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0` where `a` is the
+/// argument for the gamma function and `x` is the lower integral limit.
 ///
 /// Returns `f64::NAN` if either argument is `f64::NAN`
 ///
 /// # Panics
 ///
-/// if `a` or `x` are not in `(0, +inf)`
+/// If `a` or `x` are not in `(0, +inf)`
 pub fn gamma_ur(a: f64, x: f64) -> f64 {
 	checked_gamma_ur(a, x).unwrap()
 }
 
-/// Computes the upper incomplete regularized gamma function
-/// `Q(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and
-/// `x` is the lower integral limit.
-///
-/// # Remarks
+/// Computes the upper incomplete regularized gamma function `Q(a,x) = 1 /
+/// Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0` where `a` is the
+/// argument for the gamma function and `x` is the lower integral limit.
 ///
 /// Returns `f64::NAN` if either argument is `f64::NAN`
 ///
 /// # Errors
 ///
-/// if `a` or `x` are not in `(0, +inf)`
+/// If `a` or `x` are not in `(0, +inf)`
 pub fn checked_gamma_ur(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	if a.is_nan() || x.is_nan() {
 		return Ok(f64::NAN);
@@ -262,34 +239,28 @@ pub fn checked_gamma_ur(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	Ok(ans * ax)
 }
 
-/// Computes the lower incomplete regularized gamma function
-/// `P(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for real a > 0, x > 0`
-/// where `a` is the argument for the gamma function and `x` is the upper
-/// integral limit.
-///
-/// # Remarks
+/// Computes the lower incomplete regularized gamma function `P(a,x) = 1 /
+/// Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for real a > 0, x > 0` where `a` is
+/// the argument for the gamma function and `x` is the upper integral limit.
 ///
 /// Returns `f64::NAN` if either argument is `f64::NAN`
 ///
 /// # Panics
 ///
-/// if `a` or `x` are not in `(0, +inf)`
+/// If `a` or `x` are not in `(0, +inf)`
 pub fn gamma_lr(a: f64, x: f64) -> f64 {
 	checked_gamma_lr(a, x).unwrap()
 }
 
-/// Computes the lower incomplete regularized gamma function
-/// `P(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for real a > 0, x > 0`
-/// where `a` is the argument for the gamma function and `x` is the upper
-/// integral limit.
-///
-/// # Remarks
+/// Computes the lower incomplete regularized gamma function `P(a,x) = 1 /
+/// Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for real a > 0, x > 0` where `a` is
+/// the argument for the gamma function and `x` is the upper integral limit.
 ///
 /// Returns `f64::NAN` if either argument is `f64::NAN`
 ///
 /// # Errors
 ///
-/// if `a` or `x` are not in `(0, +inf)`
+/// If `a` or `x` are not in `(0, +inf)`
 pub fn checked_gamma_lr(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	if a.is_nan() || x.is_nan() {
 		return Ok(f64::NAN);
@@ -379,10 +350,9 @@ pub fn checked_gamma_lr(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	Ok(1.0 - ax.exp() * ans)
 }
 
-/// Computes the Digamma function which is defined as the derivative of
-/// the log of the gamma function. The implementation is based on
-/// "Algorithm AS 103", Jose Bernardo, Applied Statistics, Volume 25, Number 3
-/// 1976, pages 315 - 317
+/// Computes the Digamma function which is defined as the derivative of the log
+/// of the gamma function. The implementation is based on "Algorithm AS 103",
+/// Jose Bernardo, Applied Statistics, Volume 25, Number 3 1976, pages 315 - 317
 pub fn digamma(x: f64) -> f64 {
 	let c = 12.0;
 	let d1 = -0.57721566490153286;
@@ -401,8 +371,7 @@ pub fn digamma(x: f64) -> f64 {
 		return f64::NEG_INFINITY;
 	}
 	if x < 0.0 {
-		return digamma(1.0 - x)
-			+ f64::consts::PI / (-f64::consts::PI * x).tan();
+		return digamma(1.0 - x) + PI / (-PI * x).tan();
 	}
 	if x <= s {
 		return d1 - 1.0 / x + d2 * x;
@@ -444,9 +413,8 @@ pub fn inv_digamma(x: f64) -> f64 {
 	y
 }
 
-// modified signum that returns 0.0 if x == 0.0. Used
-// by inv_digamma, may consider extracting into a public
-// method
+// modified signum that returns 0.0 if x == 0.0. Used by inv_digamma, may
+// consider extracting into a public method
 fn signum(x: f64) -> f64 {
 	if x == 0.0 {
 		0.0
@@ -460,7 +428,6 @@ mod tests {
 	use super::*;
 
 	use crate::assert_almost_eq;
-	use core::f64::consts;
 
 	#[test]
 	fn test_gamma() {
@@ -478,11 +445,11 @@ mod tests {
 		assert_almost_eq!(super::gamma(1.0), 1.0, 1e-15);
 		assert_almost_eq!(super::gamma(1.0 + 1.0e-14), 0.99999999999999422784335098477029953441189552403615306268023, 1e-15);
 		assert_almost_eq!(super::gamma(1.5), 0.886226925452758013649083741670572591398774728061193564106903, 1e-14);
-		assert_almost_eq!(super::gamma(consts::PI/2.0), 0.890560890381539328010659635359121005933541962884758999762766, 1e-15);
+		assert_almost_eq!(super::gamma(PI/2.0), 0.890560890381539328010659635359121005933541962884758999762766, 1e-15);
 		assert_eq!(super::gamma(2.0), 1.0);
 		assert_almost_eq!(super::gamma(2.5), 1.329340388179137020473625612505858887098162092091790346160355, 1e-13);
 		assert_almost_eq!(super::gamma(3.0), 2.0, 1e-14);
-		assert_almost_eq!(super::gamma(consts::PI), 2.288037795340032417959588909060233922889688153356222441199380, 1e-13);
+		assert_almost_eq!(super::gamma(PI), 2.288037795340032417959588909060233922889688153356222441199380, 1e-13);
 		assert_almost_eq!(super::gamma(3.5), 3.323350970447842551184064031264647217745405230229475865400889, 1e-14);
 		assert_almost_eq!(super::gamma(4.0), 6.0, 1e-13);
 		assert_almost_eq!(super::gamma(4.5), 11.63172839656744892914422410942626526210891830580316552890311, 1e-12);
@@ -506,12 +473,12 @@ mod tests {
 		assert_almost_eq!(super::ln_gamma(1.0), 0.0, 1e-15);
 		assert_almost_eq!(super::ln_gamma(1.0 + 1.0e-14), -5.77215664901524635936177848990288632404978978079827014e-15, 1e-15);
 		assert_almost_eq!(super::ln_gamma(1.5), -0.12078223763524522234551844578164721225185272790259946836386, 1e-14);
-		assert_almost_eq!(super::ln_gamma(consts::PI/2.0), -0.11590380084550241329912089415904874214542604767006895, 1e-14);
+		assert_almost_eq!(super::ln_gamma(PI/2.0), -0.11590380084550241329912089415904874214542604767006895, 1e-14);
 		assert_eq!(super::ln_gamma(2.0), 0.0);
 		assert_almost_eq!(super::ln_gamma(2.5), 0.284682870472919159632494669682701924320137695559894729250145, 1e-13);
 		assert_almost_eq!(super::ln_gamma(3.0), 0.693147180559945309417232121458176568075500134360255254120680, 1e-14);
 		assert_almost_eq!(
-			super::ln_gamma(consts::PI),
+			super::ln_gamma(PI),
 			0.82769459232343710152957855845235995115350173412073715,
 			1e-13
 		);
@@ -1039,7 +1006,7 @@ mod tests {
 		assert_almost_eq!(super::digamma(1.0), -0.57721566490153286060651209008240243104215933593992359, 1e-14);
 		assert_almost_eq!(super::digamma(1.5), 0.036489973978576520559023667001244432806840395339565888, 1e-14);
 		assert_almost_eq!(
-			super::digamma(consts::PI / 2.0),
+			super::digamma(PI / 2.0),
 			0.10067337642740238636795561404029690452798358068944001,
 			1e-14
 		);
@@ -1059,7 +1026,7 @@ mod tests {
 			1e-14
 		);
 		assert_almost_eq!(
-			super::digamma(consts::PI),
+			super::digamma(PI),
 			0.97721330794200673329206948640618234364083460999432603,
 			1e-14
 		);
@@ -1102,11 +1069,11 @@ mod tests {
 		assert_almost_eq!(super::inv_digamma(-10.423754940411076232100295314502760886768558023951363), 0.1, 1e-15);
 		assert_almost_eq!(super::inv_digamma(-0.57721566490153286060651209008240243104215933593992359), 1.0, 1e-14);
 		assert_almost_eq!(super::inv_digamma(0.036489973978576520559023667001244432806840395339565888), 1.5, 1e-14);
-		assert_almost_eq!(super::inv_digamma(0.10067337642740238636795561404029690452798358068944001), consts::PI / 2.0, 1e-14);
+		assert_almost_eq!(super::inv_digamma(0.10067337642740238636795561404029690452798358068944001), PI / 2.0, 1e-14);
 		assert_almost_eq!(super::inv_digamma(0.42278433509846713939348790991759756895784066406007641), 2.0, 1e-14);
 		assert_almost_eq!(super::inv_digamma(0.70315664064524318722569033366791109947350706200623255), 2.5, 1e-14);
 		assert_almost_eq!(super::inv_digamma(0.92278433509846713939348790991759756895784066406007641), 3.0, 1e-14);
-		assert_almost_eq!(super::inv_digamma(0.97721330794200673329206948640618234364083460999432603), consts::PI, 1e-14);
+		assert_almost_eq!(super::inv_digamma(0.97721330794200673329206948640618234364083460999432603), PI, 1e-14);
 		assert_almost_eq!(super::inv_digamma(1.1031566406452431872256903336679110994735070620062326), 3.5, 1e-14);
 		assert_almost_eq!(super::inv_digamma(1.2561176684318004727268212432509309022911739973934097), 4.0, 1e-14);
 		assert_almost_eq!(super::inv_digamma(1.3888709263595289015114046193821968137592213477205183), 4.5, 1e-14);
