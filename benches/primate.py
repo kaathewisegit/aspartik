@@ -147,7 +147,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=100_000,
+    length=10_000,
     state=params + [tree],
     priors=priors,
     operators=operators,
