@@ -255,14 +255,6 @@ fn test_sf() {
 
 #[test]
 fn test_continuous() {
-	check_continuous_distribution(
-		&Gamma::new(1.0, 0.5).unwrap(),
-		0.0,
-		20.0,
-	);
-	check_continuous_distribution(
-		&Gamma::new(9.0, 2.0).unwrap(),
-		0.0,
-		20.0,
-	);
+	check_continuous_distribution(&new_dist((1.0, 0.5)), 0.0, 20.0);
+	check_continuous_distribution(&new_dist((9.0, 2.0)), 0.0, 20.0);
 }

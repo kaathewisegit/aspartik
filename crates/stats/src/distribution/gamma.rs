@@ -57,13 +57,16 @@ impl_pymethods! {for Gamma;
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum GammaError {
-	#[error("Shape is NaN, zero or less than zero")]
+	/// Shape is NaN, zero or less than zero
+	#[error("Shape must be a positive non-zero value")]
 	ShapeInvalid,
 
-	#[error("Rate is NaN, zero or less than zero")]
+	/// Rate is NaN, zero or less than zero
+	#[error("Rate must be a positive non-zero value")]
 	RateInvalid,
 
-	#[error("Shape and rate are both infinite")]
+	/// Both rate and shape are inifinite
+	#[error("Shape and rate must not both be infinite")]
 	ShapeAndRateInfinite,
 }
 
