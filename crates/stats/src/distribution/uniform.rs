@@ -611,6 +611,6 @@ mod tests {
 		// Check that the mean of the distribution is close to 1 / 2
 		assert_almost_eq!(n_mean, 0.5, 1e-15);
 		// Check that the standard deviation of the distribution is close to 1 / sqrt(12)
-		assert_almost_eq!(n_std, 0.288_675_134_594_812_9, 1e-15);
+		assert_almost_eq!(n_std, 0.2886751345948129, 1e-15);
 	}
 }
