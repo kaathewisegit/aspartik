@@ -18,7 +18,7 @@ use crate::{
 /// ```
 /// use stats::distribution::{Poisson, Discrete};
 /// use stats::statistics::Distribution;
-/// use stats::assert_almost_eq;
+/// use math::assert_almost_eq;
 ///
 /// let n = Poisson::new(1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0);

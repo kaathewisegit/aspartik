@@ -14,7 +14,7 @@ use core::f64;
 /// ```
 /// use stats::distribution::{Weibull, Continuous};
 /// use stats::statistics::Distribution;
-/// use stats::assert_almost_eq;
+/// use math::assert_almost_eq;
 ///
 /// let n = Weibull::new(10.0, 1.0).unwrap();
 /// assert_almost_eq!(

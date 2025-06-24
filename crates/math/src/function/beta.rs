@@ -442,7 +442,7 @@ mod tests {
 		);
 		assert_almost_eq!(
 			super::ln_beta(2.5, 0.5),
-			0.163900632837673937284,
+			0.16390063283767395,
 			1e-15
 		);
 		assert_almost_eq!(

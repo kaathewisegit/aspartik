@@ -11,6 +11,7 @@ keywords = ["probability", "statistics", "stats", "distribution", "math"]
 categories = ["science"]
 
 [dependencies]
+math = { workspace = true }
 rng = { workspace = true }
 
 approx = { workspace = true }

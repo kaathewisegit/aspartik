@@ -11,7 +11,7 @@ use core::f64;
 /// ```
 /// use stats::distribution::{StudentsT, Continuous};
 /// use stats::statistics::Distribution;
-/// use stats::assert_almost_eq;
+/// use math::assert_almost_eq;
 ///
 /// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.0);

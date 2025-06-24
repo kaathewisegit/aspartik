@@ -66,15 +66,21 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub(crate) mod consts;
 #[macro_use]
 pub mod distribution;
-pub mod function;
-#[macro_use]
-mod prec;
 #[cfg(feature = "python")]
 pub(crate) mod python_macros;
 pub mod statistics;
+
+pub(crate) mod function {
+	pub use math::function::*;
+}
+pub(crate) mod consts {
+	pub use math::consts::*;
+}
+pub(crate) mod prec {
+	pub use math::prec::*;
+}
 
 // used in the `assert_almost_eq` macro
 #[doc(hidden)]

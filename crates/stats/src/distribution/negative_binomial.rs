@@ -22,7 +22,7 @@ use crate::statistics::*;
 /// ```
 /// use stats::distribution::{NegativeBinomial, Discrete};
 /// use stats::statistics::Distribution;
-/// use stats::assert_almost_eq;
+/// use math::assert_almost_eq;
 ///
 /// let r = NegativeBinomial::new(4.0, 0.5).unwrap();
 /// assert_eq!(r.mean().unwrap(), 4.0);
@@ -309,7 +309,8 @@ impl Discrete for NegativeBinomial {
 mod tests {
 	use super::*;
 	use crate::distribution::internal::test;
-	use crate::{assert_almost_eq, testing_boiler};
+	use crate::testing_boiler;
+	use math::assert_almost_eq;
 
 	testing_boiler!(r: f64, p: f64; NegativeBinomial; NegativeBinomialError);
 

@@ -387,9 +387,11 @@ impl core::default::Default for Normal {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 	use crate::distribution::internal::*;
-	use crate::{assert_almost_eq, testing_boiler};
+	use crate::testing_boiler;
+	use math::assert_almost_eq;
 
 	testing_boiler!(mean: f64, std_dev: f64; Normal; NormalError);
 

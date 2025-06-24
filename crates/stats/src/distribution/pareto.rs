@@ -10,7 +10,7 @@ use core::f64;
 /// ```
 /// use stats::distribution::{Pareto, Continuous};
 /// use stats::statistics::Distribution;
-/// use stats::assert_almost_eq;
+/// use math::assert_almost_eq;
 ///
 /// let p = Pareto::new(1.0, 2.0).unwrap();
 /// assert_eq!(p.mean().unwrap(), 2.0);

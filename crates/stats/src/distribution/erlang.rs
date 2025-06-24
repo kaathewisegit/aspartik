@@ -12,7 +12,7 @@ use crate::statistics::*;
 /// ```
 /// use stats::distribution::{Erlang, Continuous};
 /// use stats::statistics::Distribution;
-/// use stats::assert_almost_eq;
+/// use math::assert_almost_eq;
 ///
 /// let n = Erlang::new(3, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);

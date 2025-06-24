@@ -1,5 +1,6 @@
 use approx::AbsDiffEq;
-use stats::assert_almost_eq;
+use math::assert_almost_eq;
+
 use stats::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
 
 mod distributions;
@@ -344,9 +345,9 @@ where
 
 pub mod prelude {
 	pub use approx::{abs_diff_eq, AbsDiffEq};
+	pub use math::assert_almost_eq;
 	pub use num_traits::Float;
 	pub use stats::{
-		assert_almost_eq,
 		distribution::{
 			Continuous, ContinuousCDF, Discrete, DiscreteCDF,
 		},

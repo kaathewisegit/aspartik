@@ -12,7 +12,7 @@ use core::cmp;
 /// ```
 /// use stats::distribution::{Hypergeometric, Discrete};
 /// use stats::statistics::Distribution;
-/// use stats::assert_almost_eq;
+/// use math::assert_almost_eq;
 ///
 /// let n = Hypergeometric::new(500, 50, 100).unwrap();
 /// assert_eq!(n.mean().unwrap(), 10.0);

@@ -1,4 +1,4 @@
-//! Provides utility functions for working with floating point precision
+//! Utility functions for working with floating point precision
 
 use approx::AbsDiffEq;
 

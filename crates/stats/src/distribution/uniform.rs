@@ -377,7 +377,8 @@ impl Continuous for Uniform {
 mod tests {
 	use super::*;
 	use crate::distribution::internal::*;
-	use crate::{assert_almost_eq, testing_boiler};
+	use crate::testing_boiler;
+	use math::assert_almost_eq;
 
 	testing_boiler!(min: f64, max: f64; Uniform; UniformError);
 

@@ -18,7 +18,7 @@ use crate::{
 /// ```
 /// use stats::distribution::{Beta, Continuous};
 /// use stats::statistics::*;
-/// use stats::assert_almost_eq;
+/// use math::assert_almost_eq;
 ///
 /// let n = Beta::new(2.0, 2.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.5);
