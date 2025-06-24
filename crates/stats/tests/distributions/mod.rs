@@ -12,3 +12,7 @@ mod gamma;
 mod geometric;
 mod gumbel;
 mod hypergeometric;
+mod inverse_gamma;
+mod laplace;
+mod levy;
+mod log_normal;
