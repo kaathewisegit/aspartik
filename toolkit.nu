@@ -17,7 +17,7 @@ export def lint [
 
 	if $rust {
 		cargo fmt --check
-		cargo clippy --workspace -- -D warnings
+		cargo clippy --workspace --tests --features approx,proptest -- -D warnings
 	}
 
 	if $python {
