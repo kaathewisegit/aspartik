@@ -4,4 +4,8 @@ mod binomial;
 mod categorical;
 mod cauchy;
 mod chi;
+mod chi_squared;
+mod discrete_uniform;
+mod erlang;
+mod exponential;
 mod gamma;
