@@ -34,56 +34,59 @@ pub fn gen_harmonic(n: u64, m: f64) -> f64 {
 mod tests {
 	use crate::assert_almost_eq;
 
+	use super::*;
+
 	#[test]
 	fn test_harmonic() {
 		assert_eq!(super::harmonic(0), 1.0);
-		assert_almost_eq!(super::harmonic(1), 1.0, 1e-14);
-		assert_almost_eq!(super::harmonic(2), 1.5, 1e-14);
-		assert_almost_eq!(
-			super::harmonic(4),
-			2.083333333333333333333,
-			1e-14
-		);
-		assert_almost_eq!(
-			super::harmonic(8),
-			2.717857142857142857143,
-			1e-14
-		);
-		assert_almost_eq!(
-			super::harmonic(16),
-			3.380728993228993228993,
-			1e-14
-		);
+
+		let cases = [
+			(1, 1.0, 1e-14),
+			(2, 1.5, 1e-14),
+			(4, 2.083333333333333333333, 1e-14),
+			(8, 2.717857142857142857143, 1e-14),
+			(16, 3.380728993228993228993, 1e-14),
+		];
+		for (x, expected, epsilon) in cases {
+			assert_almost_eq!(harmonic(x), expected, epsilon);
+		}
+	}
+
+	#[test]
+	fn test_gen_harmonic_exact() {
+		let cases = [
+			((0, 0.0), 1.0),
+			((0, f64::INFINITY), 1.0),
+			((0, f64::NEG_INFINITY), 1.0),
+			((1, 0.0), 1.0),
+			((1, f64::INFINITY), 1.0),
+			((1, f64::NEG_INFINITY), 1.0),
+			((2, 1.0), 1.5),
+			((2, 3.0), 1.125),
+			((2, f64::INFINITY), 1.0),
+			((2, f64::NEG_INFINITY), f64::INFINITY),
+			((4, f64::INFINITY), 1.0),
+			((4, f64::NEG_INFINITY), f64::INFINITY),
+		];
+
+		for ((n, m), expected) in cases {
+			assert_eq!(gen_harmonic(n, m), expected);
+		}
 	}
 
 	#[test]
 	fn test_gen_harmonic() {
-		assert_eq!(super::gen_harmonic(0, 0.0), 1.0);
-		assert_eq!(super::gen_harmonic(0, f64::INFINITY), 1.0);
-		assert_eq!(super::gen_harmonic(0, f64::NEG_INFINITY), 1.0);
-		assert_eq!(super::gen_harmonic(1, 0.0), 1.0);
-		assert_eq!(super::gen_harmonic(1, f64::INFINITY), 1.0);
-		assert_eq!(super::gen_harmonic(1, f64::NEG_INFINITY), 1.0);
-		assert_eq!(super::gen_harmonic(2, 1.0), 1.5);
-		assert_eq!(super::gen_harmonic(2, 3.0), 1.125);
-		assert_eq!(super::gen_harmonic(2, f64::INFINITY), 1.0);
-		assert_eq!(
-			super::gen_harmonic(2, f64::NEG_INFINITY),
-			f64::INFINITY
-		);
-		assert_almost_eq!(
-			super::gen_harmonic(4, 1.0),
-			2.083333333333333333333,
-			1e-14
-		);
-		assert_eq!(
-			super::gen_harmonic(4, 3.0),
-			1.177662037037037037037
-		);
-		assert_eq!(super::gen_harmonic(4, f64::INFINITY), 1.0);
-		assert_eq!(
-			super::gen_harmonic(4, f64::NEG_INFINITY),
-			f64::INFINITY
-		);
+		let cases = [
+			((4, 1.0), 2.083333333333333333333, 1e-14),
+			((4, 3.0), 1.177662037037037037037, 1e-16),
+		];
+
+		for ((n, m), expected, epsilon) in cases {
+			assert_almost_eq!(
+				gen_harmonic(n, m),
+				expected,
+				epsilon
+			);
+		}
 	}
 }

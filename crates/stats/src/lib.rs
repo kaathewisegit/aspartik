@@ -82,10 +82,6 @@ pub(crate) mod prec {
 	pub use math::prec::*;
 }
 
-// used in the `assert_almost_eq` macro
-#[doc(hidden)]
-pub use prec::almost_eq;
-
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 

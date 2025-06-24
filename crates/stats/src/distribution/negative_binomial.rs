@@ -480,7 +480,6 @@ mod tests {
 	#[test]
 	#[cfg(feature = "rand")]
 	fn test_sample() {
-		use crate::prec;
 		use rand::{distr::Distribution, rngs::StdRng, SeedableRng};
 
 		let dist = NegativeBinomial::new(4.0, 0.5).unwrap();
@@ -501,11 +500,7 @@ mod tests {
 		let theoretical_variance = dist.variance().unwrap();
 
 		assert_almost_eq!(sample_mean, theoretical_mean, tol);
-		assert!(prec::almost_eq(
-			sample_variance,
-			theoretical_variance,
-			tol
-		));
+		assert_almost_eq!(sample_variance, theoretical_variance, tol);
 	}
 
 	#[test]
