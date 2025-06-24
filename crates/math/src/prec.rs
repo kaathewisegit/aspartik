@@ -14,7 +14,27 @@ pub const DEFAULT_F64_ACC: f64 = 0.0000000000000011102230246251565;
 #[macro_export]
 macro_rules! assert_almost_eq {
 	($a:expr, $b:expr, $epsilon:expr $(,)?) => {
-		::approx::assert_abs_diff_eq!($a, $b, epsilon = $epsilon);
+		if !::approx::relative_eq!($a, $b, epsilon = $epsilon) {
+			let abs_diff = ($a - $b).abs();
+			let relative = $a.max($b) / $a.min($b) - 1.0;
+			let a_bits = f64::to_bits($a);
+			let b_bits = f64::to_bits($b);
+			let ulps = a_bits.abs_diff(b_bits);
+			panic!(
+				"assert_almost_eq!({}, {}) failed:
+  left: {}
+ right: {}
+ ---------
+abs diff: {abs_diff}
+relative: {relative}
+    ulps: {ulps}
+",
+				stringify!($a),
+				stringify!($b),
+				$a,
+				$b,
+			);
+		}
 	};
 	($a:expr, $b:expr, $(,)?) => {
 		::approx::assert_abs_diff_eq!($a, $b);
