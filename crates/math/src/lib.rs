@@ -1,4 +1,3 @@
-#![expect(clippy::excessive_precision)]
 #![forbid(unsafe_code)]
 
 pub mod consts;

@@ -387,7 +387,6 @@ impl core::default::Default for Normal {
 
 #[cfg(test)]
 mod tests {
-
 	use super::*;
 	use crate::distribution::internal::*;
 	use crate::testing_boiler;

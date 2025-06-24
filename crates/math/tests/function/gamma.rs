@@ -1,0 +1,468 @@
+use math::{assert_almost_eq, function::gamma::*};
+
+use core::f64::consts::*;
+
+#[test]
+fn test_gamma_nan() {
+	assert!(gamma(f64::NAN).is_nan());
+}
+
+#[test]
+fn test_gamma() {
+	let cases = [
+		(1.000001e-35, 9.99999000001e34, 1e20),
+		(1.000001e-10, 9.999989999432785e9, 1e-5),
+		(1.000001e-5, 99999.32279432558, 1e-10),
+		(1.000001e-2, 99.43248512896257, 1e-13),
+		(-4.8, -0.06242336135475955, 1e-13),
+		(-1.5, 2.363271801207355, 1e-13),
+		(-0.5, -3.544907701811032, 1e-13),
+		(1.0e-5 + 1.0e-16, 99999.42279322557, 1e-9),
+		(0.1, 9.513507698668732, 1e-14),
+		(1.0 - 1.0e-14, 1.0000000000000058, 1e-16),
+		(1.0, 1.0, 1e-15),
+		(1.0 + 1.0e-14, 0.9999999999999942, 1e-15),
+		(1.5, 0.886226925452758, 1e-14),
+		(PI / 2.0, 0.8905608903815393, 1e-15),
+		(2.0, 1.0, 1e-16),
+		(2.5, 1.329340388179137, 1e-13),
+		(3.0, 2.0, 1e-14),
+		(PI, 2.2880377953400326, 1e-13),
+		(3.5, 3.3233509704478426, 1e-14),
+		(4.0, 6.0, 1e-13),
+		(4.5, 11.631728396567448, 1e-12),
+		(5.0 - 1.0e-14, 23.999999999999638, 1e-13),
+		(5.0, 24.0, 1e-12),
+		(5.0 + 1.0e-14, 24.000000000000362, 1e-12),
+		(5.5, 52.34277778455352, 1e-12),
+		(10.1, 454760.75144158595, 1e-7),
+		(150.0 + 1.0e-12, 3.808922637649642e260, 1e248),
+	];
+
+	for (input, expected, epsilon) in cases {
+		assert_almost_eq!(gamma(input), expected, epsilon);
+	}
+}
+
+#[test]
+fn test_ln_gamma_nan() {
+	assert!(ln_gamma(f64::NAN).is_nan());
+}
+
+#[test]
+fn test_ln_gamma() {
+	let cases = [
+		(1.000001e-35, 80.5904772547921, 1e-16),
+		(1.000001e-10, 23.025849929883236, 1e-14),
+		(1.000001e-5, 11.512918692890553, 1e-14),
+		(1.000001e-2, 4.599478872433667, 1e-16),
+		(0.1, 2.252712651734206, 1e-14),
+		(1.0 - 1.0e-14, 5.772156649015411e-15, 1e-15),
+		(1.0, 0.0, 1e-15),
+		(1.0 + 1.0e-14, -5.772156649015246e-15, 1e-15),
+		(1.5, -0.12078223763524522, 1e-14),
+		(PI / 2.0, -0.11590380084550242, 1e-14),
+		(2.0, 0.0, 1e-16),
+		(2.5, 0.2846828704729192, 1e-13),
+		(3.0, LN_2, 1e-14),
+		(PI, 0.8276945923234371, 1e-13),
+		(3.5, 1.2009736023470743, 1e-14),
+		(4.0, 1.791759469228055, 1e-14),
+		(4.5, 2.4537365708424423, 1e-13),
+		(5.0 - 1.0e-14, 3.1780538303479307, 1e-14),
+		(5.0, 3.1780538303479458, 1e-14),
+		(5.0 + 1.0e-14, 3.178053830347961, 1e-13),
+		(5.5, 3.9578139676187165, 1e-14),
+		(10.1, 13.027526738633238, 1e-14),
+		(150.0 + 1.0e-12, 600.0094705553324, 1e-12),
+		(1.001e+7, 1.513421353238179e8, 1e-13),
+	];
+
+	for (input, expected, epsilon) in cases {
+		assert_almost_eq!(ln_gamma(input), expected, epsilon);
+	}
+}
+
+#[test]
+fn test_gamma_lr_nan() {
+	assert!(gamma_lr(f64::NAN, f64::NAN).is_nan());
+}
+
+#[test]
+fn test_gamma_lr() {
+	let cases = [
+		(0.1, 1.0, 0.9758726562736723, 1e-14),
+		(0.1, 2.0, 0.9943261760201885, 1e-16),
+		(0.1, 8.0, 0.999995075192052, 1e-16),
+		(1.5, 1.0, 0.4275932955291202, 1e-13),
+		(1.5, 2.0, 0.7385358700508894, 1e-15),
+		(1.5, 8.0, 0.9988660157102147, 1e-16),
+		(2.5, 1.0, 0.15085496391539036, 1e-13),
+		(2.5, 2.0, 0.4505840486472198, 1e-14),
+		(2.5, 8.0, 0.9931559260775795, 1e-15),
+		(5.5, 1.0, 0.0015041182825838038, 1e-15),
+		(5.5, 2.0, 0.03008297612122605, 1e-14),
+		(5.5, 8.0, 0.8588691197329419, 1e-14),
+		(100.0, 0.5, 0.0, 1e-16),
+		(100.0, 1.5, 0.0, 1e-16),
+		(100.0, 90.0, 0.15822098918643016, 1e-13),
+		(100.0, 100.0, 0.5132987982791487, 1e-13),
+		(100.0, 110.0, 0.8417213299399129, 1e-13),
+		(100.0, 200.0, 1.0, 1e-14),
+		(500.0, 0.5, 0.0, 1e-16),
+		(500.0, 1.5, 0.0, 1e-16),
+		(500.0, 200.0, 0.0, 1e-16),
+		(500.0, 450.0, 0.010717238091289742, 1e-14),
+		(500.0, 500.0, 0.5059471461707603, 1e-13),
+		(500.0, 550.0, 0.9853855918737048, 1e-14),
+		(500.0, 700.0, 1.0, 1e-15),
+		(1000.0, 10000.0, 1.0, 1e-16),
+		(1e+50, 1e+48, 0.0, 1e-16),
+		(1e+50, 1e+52, 1.0, 1e-16),
+	];
+
+	for (a, x, expected, epsilon) in cases {
+		assert_almost_eq!(gamma_lr(a, x), expected, epsilon);
+	}
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_lr_a_lower_bound() {
+	gamma_lr(-1.0, 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_lr_a_upper_bound() {
+	gamma_lr(f64::INFINITY, 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_lr_x_lower_bound() {
+	gamma_lr(1.0, -1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_lr_x_upper_bound() {
+	gamma_lr(1.0, f64::INFINITY);
+}
+
+#[test]
+fn test_checked_gamma_lr_a_lower_bound() {
+	assert!(checked_gamma_lr(-1.0, 1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_lr_a_upper_bound() {
+	assert!(checked_gamma_lr(f64::INFINITY, 1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_lr_x_lower_bound() {
+	assert!(checked_gamma_lr(1.0, -1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_lr_x_upper_bound() {
+	assert!(checked_gamma_lr(1.0, f64::INFINITY).is_err());
+}
+
+#[test]
+fn test_gamma_li_nan() {
+	assert!(gamma_li(f64::NAN, f64::NAN).is_nan());
+}
+
+#[test]
+fn test_gamma_li() {
+	let cases = [
+		(0.1, 1.0, 9.283972028379885, 1e-14),
+		(0.1, 2.0, 9.459529730555904, 1e-14),
+		(0.1, 8.0, 9.513460846470403, 1e-13),
+		(1.5, 1.0, 0.3789446916409847, 1e-15),
+		(1.5, 2.0, 0.6545103734517773, 1e-14),
+		(1.5, 8.0, 0.8852219580421098, 1e-13),
+		(2.5, 1.0, 0.20053759629003473, 1e-16),
+		(2.5, 2.0, 0.5989795741360223, 1e-15),
+		(2.5, 8.0, 1.32024228429438, 1e-14),
+		(5.5, 1.0, 0.07872972902696831, 1e-16),
+		(5.5, 2.0, 1.574626534211365, 1e-15),
+		(5.5, 8.0, 44.955595480196465, 1e-12),
+	];
+
+	for (a, x, expected, epsilon) in cases {
+		assert_almost_eq!(gamma_li(a, x), expected, epsilon);
+	}
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_li_a_lower_bound() {
+	gamma_li(-1.0, 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_li_a_upper_bound() {
+	gamma_li(f64::INFINITY, 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_li_x_lower_bound() {
+	gamma_li(1.0, -1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_li_x_upper_bound() {
+	gamma_li(1.0, f64::INFINITY);
+}
+
+#[test]
+fn test_checked_gamma_li_a_lower_bound() {
+	assert!(checked_gamma_li(-1.0, 1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_li_a_upper_bound() {
+	assert!(checked_gamma_li(f64::INFINITY, 1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_li_x_lower_bound() {
+	assert!(checked_gamma_li(1.0, -1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_li_x_upper_bound() {
+	assert!(checked_gamma_li(1.0, f64::INFINITY).is_err());
+}
+
+#[test]
+fn test_gamma_ur_nan() {
+	assert!(gamma_ur(f64::NAN, f64::NAN).is_nan());
+}
+
+// TODO: precision testing could be more accurate, borrowed wholesale from Math.NET
+#[test]
+fn test_gamma_ur() {
+	let cases = [
+		(0.1, 1.0, 0.024127343726327778, 1e-13),
+		(0.1, 2.0, 0.005673823979811528, 1e-13),
+		(0.1, 8.0, 0.000004924807948019513, 1e-13),
+		(1.5, 1.0, 0.5724067044708798, 1e-13),
+		(1.5, 2.0, 0.2614641299491106, 1e-13),
+		(1.5, 8.0, 0.0011339842897853227, 1e-13),
+		(2.5, 1.0, 0.8491450360846097, 1e-13),
+		(2.5, 2.0, 0.5494159513527802, 1e-13),
+		(2.5, 8.0, 0.006844073922420431, 1e-13),
+		(5.5, 1.0, 0.9984958817174162, 1e-13),
+		(5.5, 2.0, 0.969917023878774, 1e-13),
+		(5.5, 8.0, 0.14113088026705814, 1e-13),
+		(100.0, 0.5, 1.0, 1e-14),
+		(100.0, 1.5, 1.0, 1e-14),
+		(100.0, 90.0, 0.8417790108135699, 1e-12),
+		(100.0, 100.0, 0.48670120172085135, 1e-12),
+		(100.0, 110.0, 0.15827867006008708, 1e-12),
+		(100.0, 200.0, 0.0, 1e-14),
+		(500.0, 0.5, 1.0, 1e-14),
+		(500.0, 1.5, 1.0, 1e-14),
+		(500.0, 200.0, 1.0, 1e-14),
+		(500.0, 450.0, 0.9892827619087102, 1e-12),
+		(500.0, 500.0, 0.49405285382923964, 1e-12),
+		(500.0, 550.0, 0.014614408126295194, 1e-12),
+		(500.0, 700.0, 0.0, 1e-14),
+		(1000.0, 10000.0, 0.0, 1e-14),
+		(1e+50, 1e+48, 1.0, 1e-14),
+		(1e+50, 1e+52, 0.0, 1e-14),
+	];
+
+	for (a, x, expected, epsilon) in cases {
+		assert_almost_eq!(gamma_ur(a, x), expected, epsilon);
+	}
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_ur_a_lower_bound() {
+	gamma_ur(-1.0, 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_ur_a_upper_bound() {
+	gamma_ur(f64::INFINITY, 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_ur_x_lower_bound() {
+	gamma_ur(1.0, -1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_ur_x_upper_bound() {
+	gamma_ur(1.0, f64::INFINITY);
+}
+
+#[test]
+fn test_checked_gamma_ur_a_lower_bound() {
+	assert!(checked_gamma_ur(-1.0, 1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_ur_a_upper_bound() {
+	assert!(checked_gamma_ur(f64::INFINITY, 1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_ur_x_lower_bound() {
+	assert!(checked_gamma_ur(1.0, -1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_ur_x_upper_bound() {
+	assert!(checked_gamma_ur(1.0, f64::INFINITY).is_err());
+}
+
+#[test]
+fn test_gamma_ui_nan() {
+	assert!(gamma_ui(f64::NAN, f64::NAN).is_nan());
+}
+
+#[test]
+fn test_gamma_ui() {
+	let cases = [
+		(0.1, 1.0, 0.22953567028884603, 1e-14),
+		(0.1, 2.0, 0.053977968112828234, 1e-15),
+		(0.1, 8.0, 0.00004685219832794859, 1e-19),
+		(1.5, 1.0, 0.5072822338117733, 1e-14),
+		(1.5, 2.0, 0.23171655200098068, 1e-15),
+		(1.5, 8.0, 0.001004967410648176, 1e-17),
+		(2.5, 1.0, 1.1288027918891024, 1e-14),
+		(2.5, 2.0, 0.7303608140431147, 1e-14),
+		(2.5, 8.0, 0.009098103884757085, 1e-17),
+		(5.5, 1.0, 52.26404805552655, 1e-12),
+		(5.5, 2.0, 50.76815125034216, 1e-12),
+		(5.5, 8.0, 7.387182304357054, 1e-13),
+	];
+
+	for (a, x, expected, epsilon) in cases {
+		assert_almost_eq!(gamma_ui(a, x), expected, epsilon);
+	}
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_ui_a_lower_bound() {
+	gamma_ui(-1.0, 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_ui_a_upper_bound() {
+	gamma_ui(f64::INFINITY, 1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_ui_x_lower_bound() {
+	gamma_ui(1.0, -1.0);
+}
+
+#[test]
+#[should_panic]
+fn test_gamma_ui_x_upper_bound() {
+	gamma_ui(1.0, f64::INFINITY);
+}
+
+#[test]
+fn test_checked_gamma_ui_a_lower_bound() {
+	assert!(checked_gamma_ui(-1.0, 1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_ui_a_upper_bound() {
+	assert!(checked_gamma_ui(f64::INFINITY, 1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_ui_x_lower_bound() {
+	assert!(checked_gamma_ui(1.0, -1.0).is_err());
+}
+
+#[test]
+fn test_checked_gamma_ui_x_upper_bound() {
+	assert!(checked_gamma_ui(1.0, f64::INFINITY).is_err());
+}
+
+#[test]
+fn test_digamma_nan() {
+	assert!(digamma(f64::NAN).is_nan());
+}
+
+// TODO: precision testing could be more accurate
+#[test]
+fn test_digamma() {
+	let cases = [
+		(-1.5, 0.7031566406452432, 1e-14),
+		(-0.5, 0.03648997397857652, 1e-14),
+		(0.1, -10.423754940411076, 1e-14),
+		(1.0, -0.5772156649015329, 1e-14),
+		(1.5, 0.03648997397857652, 1e-14),
+		(PI / 2.0, 0.10067337642740239, 1e-14),
+		(2.0, 0.42278433509846713, 1e-14),
+		(2.5, 0.7031566406452432, 1e-14),
+		(3.0, 0.9227843350984671, 1e-14),
+		(PI, 0.9772133079420068, 1e-14),
+		(3.5, 1.103156640645243, 1e-14),
+		(4.0, 1.2561176684318005, 1e-14),
+		(4.5, 1.388870926359529, 1e-14),
+		(5.0, 1.5061176684318005, 1e-14),
+		(5.5, 1.6110931485817512, 1e-14),
+		(10.1, 2.262214357094148, 1e-14),
+	];
+
+	for (x, expected, epsilon) in cases {
+		assert_almost_eq!(digamma(x), expected, epsilon);
+	}
+}
+
+#[test]
+fn test_inv_digamma_nan() {
+	assert!(inv_digamma(f64::NAN).is_nan());
+}
+
+#[test]
+fn test_inv_digamma() {
+	let cases = [
+		(-10.423754940411076, 0.1, 1e-15),
+		(-0.5772156649015329, 1.0, 1e-14),
+		(0.03648997397857652, 1.5, 1e-14),
+		(0.10067337642740239, PI / 2.0, 1e-14),
+		(0.42278433509846713, 2.0, 1e-14),
+		(0.7031566406452432, 2.5, 1e-14),
+		(0.9227843350984671, 3.0, 1e-14),
+		(0.9772133079420068, PI, 1e-14),
+		(1.103156640645243, 3.5, 1e-14),
+		(1.2561176684318005, 4.0, 1e-14),
+		(1.388870926359529, 4.5, 1e-14),
+		(1.5061176684318005, 5.0, 1e-14),
+		(1.6110931485817512, 5.5, 1e-14),
+		(2.262214357094148, 10.1, 1e-13),
+	];
+
+	for (x, expected, epsilon) in cases {
+		assert_almost_eq!(inv_digamma(x), expected, epsilon);
+	}
+}
+
+#[test]
+fn test_error_is_sync_send() {
+	fn assert_sync_send<T: Sync + Send>() {}
+	assert_sync_send::<GammaFuncError>();
+}
