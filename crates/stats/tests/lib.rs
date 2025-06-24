@@ -32,9 +32,8 @@ macro_rules! assert_almost_eq {
 #[macro_export]
 macro_rules! make_test_harness {
 	($dist:ident($($arg_name:ident: $arg_type:ty),+), $err:ty) => {
-		type NewArgs = ($($arg_type),+);
-
-		fn new_dist(($($arg_name),+): NewArgs) -> $dist {
+		#[allow(unused_parens)]
+		fn new_dist(($($arg_name),+): ($($arg_type),+)) -> $dist {
 			match <$dist>::new($($arg_name),+) {
 				Ok(dist) => dist,
 				Err(err) => panic!(
@@ -47,11 +46,13 @@ macro_rules! make_test_harness {
 			}
 		}
 
-		fn assert_new_is_ok(args: NewArgs) {
+		#[allow(unused_parens)]
+		fn assert_new_is_ok(args: ($($arg_type),+)) {
 			new_dist(args);
 		}
 
-		fn assert_new_is_err(($($arg_name),+): NewArgs, err: $err) {
+		#[allow(unused_parens)]
+		fn assert_new_is_err(($($arg_name),+): ($($arg_type),+), err: $err) {
 			match <$dist>::new($($arg_name),+) {
 				Err(this_err) if this_err == err => return,
 				result @ Ok(_) | result @ Err(_) => panic!(
@@ -65,8 +66,9 @@ macro_rules! make_test_harness {
 
 		}
 
+		#[allow(unused)]
 		fn assert_exact<T, F, O>(
-			new_args: NewArgs,
+			new_args: ($($arg_type),+),
 			op_args: T,
 			op: F,
 			expected: O,
@@ -93,8 +95,9 @@ macro_rules! make_test_harness {
 
 		}
 
+		#[allow(unused_parens)]
 		fn assert_close<T, F>(
-			new_args: NewArgs,
+			new_args: ($($arg_type),+),
 			op_args: T,
 			op: F,
 			expected: f64
@@ -355,6 +358,7 @@ pub mod prelude {
 	};
 
 	pub use super::{
-		check_continuous_distribution, make_test_harness, ACCURACY,
+		check_continuous_distribution, check_discrete_distribution,
+		make_test_harness, ACCURACY,
 	};
 }
