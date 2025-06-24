@@ -9,3 +9,6 @@ mod discrete_uniform;
 mod erlang;
 mod exponential;
 mod gamma;
+mod geometric;
+mod gumbel;
+mod hypergeometric;
