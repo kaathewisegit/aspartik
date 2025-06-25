@@ -8,6 +8,7 @@ mod chi_squared;
 mod discrete_uniform;
 mod erlang;
 mod exponential;
+mod fisher_snedecor;
 mod gamma;
 mod geometric;
 mod gumbel;

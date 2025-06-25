@@ -96,6 +96,7 @@ macro_rules! make_test_harness {
 		}
 
 		#[allow(unused_parens)]
+		#[allow(unused)]
 		fn assert_close<T, F>(
 			new_args: ($($arg_type),+),
 			op_args: T,
