@@ -1,7 +1,5 @@
 use stats::distribution::{Levy, LevyError};
 
-// XXX: precision
-
 use crate::prelude::*;
 
 make_test_harness!(Levy(mu: f64, c: f64), LevyError);

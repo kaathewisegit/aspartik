@@ -43,7 +43,7 @@ fn test_variance() {
 
 #[test]
 fn test_entropy() {
-	let cases = [(0.3, 2.937_636_330_768_973_5)];
+	let cases = [(0.3, 2.9376363307689735)];
 	for (args, expected) in cases {
 		assert_close(args, (), |d, _| d.entropy().unwrap(), expected);
 	}
@@ -52,7 +52,7 @@ fn test_entropy() {
 
 #[test]
 fn test_skewness() {
-	let cases = [(0.3, 2.031_888_635_868_469_4)];
+	let cases = [(0.3, 2.0318886358684694)];
 	for (args, expected) in cases {
 		assert_close(args, (), |d, _| d.skewness().unwrap(), expected);
 	}
@@ -117,8 +117,8 @@ fn test_pmf() {
 #[test]
 fn test_ln_pmf() {
 	let cases = [
-		(0.3, 1, -1.203_972_804_325_936),
-		(0.3, 2, -1.560_647_748_264_668_3),
+		(0.3, 1, -1.203972804325936),
+		(0.3, 2, -1.5606477482646683),
 		(1.0, 1, 0.0),
 		(1.0, 2, f64::NEG_INFINITY),
 		// at zero

@@ -16,3 +16,7 @@ mod inverse_gamma;
 mod laplace;
 mod levy;
 mod log_normal;
+mod negative_binomial;
+mod normal;
+mod pareto;
+mod poisson;

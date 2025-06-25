@@ -39,9 +39,7 @@ pub fn integral_bisection_search<K: Num + Clone, T: Num + PartialOrd>(
 pub mod test {
 	use math::assert_almost_eq;
 
-	use crate::distribution::{
-		Continuous, ContinuousCDF, Discrete, DiscreteCDF,
-	};
+	use crate::distribution::{Continuous, ContinuousCDF};
 
 	#[macro_export]
 	macro_rules! testing_boiler {
@@ -409,37 +407,6 @@ pub mod test {
 		assert!(sum <= 1.001);
 	}
 
-	/// cdf should be the sum of the pmf
-	fn check_sum_pmf_is_cdf<D>(dist: &D, x_max: u64)
-	where
-		D: DiscreteCDF + Discrete<T = u64>,
-	{
-		let mut sum = 0.0;
-
-		// go slightly beyond x_max to test for off-by-one errors
-		for i in 0..x_max + 3 {
-			let prob = dist.pmf(i);
-
-			assert!(prob >= 0.0);
-			assert!(prob <= 1.0);
-
-			sum += prob;
-
-			if i == x_max {
-				assert!(sum > 0.99);
-			}
-
-			assert_almost_eq!(sum, dist.cdf(i), 1e-10);
-			// assert_almost_eq!(sum, dist.cdf(i as f64), 1e-10);
-			// assert_almost_eq!(sum, dist.cdf(i as f64 + 0.1), 1e-10);
-			// assert_almost_eq!(sum, dist.cdf(i as f64 + 0.5), 1e-10);
-			// assert_almost_eq!(sum, dist.cdf(i as f64 + 0.9), 1e-10);
-		}
-
-		assert!(sum > 0.99);
-		assert!(sum <= 1.0 + 1e-10);
-	}
-
 	/// pdf should be derivative of cdf
 	fn check_derivative_of_cdf_is_pdf<D>(
 		dist: &D,
@@ -512,22 +479,6 @@ pub mod test {
 				"Integration of pdf doesn't equal cdf and derivative of cdf doesn't equal pdf!"
 			);
 		}
-	}
-
-	/// Does a series of checks that all positive discrete distributions must
-	/// obey.
-	/// 99% of the probability mass should be between 0 and x_max (inclusive).
-	pub fn check_discrete_distribution<D>(dist: &D, x_max: u64)
-	where
-		D: DiscreteCDF + Discrete<T = u64>,
-	{
-		// assert_eq!(dist.cdf(f64::NEG_INFINITY), 0.0);
-		// assert_eq!(dist.cdf(-10.0), 0.0);
-		// assert_eq!(dist.cdf(-1.0), 0.0);
-		// assert_eq!(dist.cdf(-0.01), 0.0);
-		// assert_eq!(dist.cdf(f64::INFINITY), 1.0);
-
-		check_sum_pmf_is_cdf(dist, x_max);
 	}
 
 	#[test]
