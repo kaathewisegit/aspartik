@@ -1,10 +1,10 @@
 use approx::ulps_eq;
 
-use crate::consts;
+use math::{consts::EULER_MASCHERONI, function::gamma};
+use std::f64::consts::LN_2;
+
 use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::gamma;
 use crate::statistics::*;
-use core::f64;
 
 /// Implements the [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
 /// distribution
@@ -230,7 +230,7 @@ impl Distribution for Weibull {
 	///
 	/// where `k` is the shape and `λ` is the scale
 	fn median(&self) -> Option<f64> {
-		Some(self.scale * f64::consts::LN_2.powf(1.0 / self.shape))
+		Some(self.scale * LN_2.powf(1.0 / self.shape))
 	}
 
 	/// Returns the variance of the weibull distribution
@@ -261,7 +261,7 @@ impl Distribution for Weibull {
 	/// where `k` is the shape, `λ` is the scale, and `γ` is
 	/// the Euler-Mascheroni constant
 	fn entropy(&self) -> Option<f64> {
-		let entr = consts::EULER_MASCHERONI * (1.0 - 1.0 / self.shape)
+		let entr = EULER_MASCHERONI * (1.0 - 1.0 / self.shape)
 			+ (self.scale / self.shape).ln()
 			+ 1.0;
 		Some(entr)

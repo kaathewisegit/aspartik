@@ -1,6 +1,9 @@
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::{beta, gamma};
-use crate::statistics::*;
+use math::function::{beta, gamma};
+
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	statistics::{Distribution, Mode},
+};
 use core::f64;
 
 /// Implements the [Student's

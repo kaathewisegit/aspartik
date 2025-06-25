@@ -2,11 +2,12 @@ use core::f64;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
+use math::function::{factorial, gamma};
+
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
-	function::{factorial, gamma},
 	statistics::*,
 };
 

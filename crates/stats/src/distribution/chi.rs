@@ -1,8 +1,9 @@
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::gamma;
-use crate::statistics::*;
 use core::f64;
 use core::num::NonZeroU64;
+use math::function::gamma;
+
+use crate::distribution::{Continuous, ContinuousCDF};
+use crate::statistics::*;
 
 /// Implements the [Chi](https://en.wikipedia.org/wiki/Chi_distribution)
 /// distribution

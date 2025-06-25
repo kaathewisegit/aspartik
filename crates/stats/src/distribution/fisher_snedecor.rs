@@ -1,5 +1,6 @@
+use math::function::beta;
+
 use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::beta;
 use crate::statistics::*;
 
 /// Implements the

@@ -2,11 +2,12 @@ use approx::ulps_eq;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
+use math::function::gamma;
+
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	function::gamma,
 	statistics::{Distribution, Mode},
 };
 

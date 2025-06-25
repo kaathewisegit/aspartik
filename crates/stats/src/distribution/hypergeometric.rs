@@ -1,7 +1,10 @@
-use crate::distribution::{Discrete, DiscreteCDF};
-use crate::function::factorial;
-use crate::statistics::*;
 use core::cmp;
+use math::function::factorial;
+
+use crate::{
+	distribution::{Discrete, DiscreteCDF},
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the
 /// [Hypergeometric](http://en.wikipedia.org/wiki/Hypergeometric_distribution)

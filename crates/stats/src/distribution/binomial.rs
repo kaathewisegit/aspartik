@@ -1,7 +1,8 @@
 use approx::ulps_eq;
 
+use math::function::{beta, factorial};
+
 use crate::distribution::{Discrete, DiscreteCDF};
-use crate::function::{beta, factorial};
 use crate::statistics::*;
 
 /// Implements the

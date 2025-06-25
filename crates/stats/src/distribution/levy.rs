@@ -1,8 +1,12 @@
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::function::erf::{erf, erfc, erfc_inv};
-
-use crate::statistics::*;
 use core::f64;
+use math::{
+	consts::LN_SQRT_2PI,
+	function::erf::{erf, erfc, erfc_inv},
+};
+
+use crate::distribution::{Continuous, ContinuousCDF};
+
+use crate::statistics::{Distribution, Mode};
 
 /// Implements the [Levy](https://en.wikipedia.org/wiki/L%C3%A9vy_distribution) distribution.
 ///
@@ -301,8 +305,6 @@ impl Continuous for Levy {
 	///
 	/// where `μ` is the mean and `σ` is the standard deviation
 	fn ln_pdf(&self, x: f64) -> f64 {
-		use crate::consts::LN_SQRT_2PI;
-
 		if x <= self.mu {
 			f64::NEG_INFINITY
 		} else {

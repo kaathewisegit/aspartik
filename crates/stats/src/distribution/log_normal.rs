@@ -2,13 +2,15 @@
 use pyo3::prelude::*;
 
 use core::f64;
+use math::{
+	consts::{LN_SQRT_2PI, SQRT_2PI},
+	function::erf,
+};
 
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::{
-	consts,
 	distribution::{Continuous, ContinuousCDF},
-	function::erf,
 	statistics::{Distribution, Mode},
 };
 
@@ -315,8 +317,7 @@ impl Distribution for LogNormal {
 	///
 	/// where `μ` is the location and `σ` is the scale
 	fn entropy(&self) -> Option<f64> {
-		Some(0.5 + self.scale.ln()
-			+ self.location + consts::LN_SQRT_2PI)
+		Some(0.5 + self.scale.ln() + self.location + LN_SQRT_2PI)
 	}
 
 	/// Returns the skewness of the log-normal distribution
@@ -367,8 +368,7 @@ impl Continuous for LogNormal {
 			0.0
 		} else {
 			let d = (x.ln() - self.location) / self.scale;
-			(-0.5 * d * d).exp()
-				/ (x * consts::SQRT_2PI * self.scale)
+			(-0.5 * d * d).exp() / (x * SQRT_2PI * self.scale)
 		}
 	}
 
@@ -387,8 +387,7 @@ impl Continuous for LogNormal {
 			f64::NEG_INFINITY
 		} else {
 			let d = (x.ln() - self.location) / self.scale;
-			(-0.5 * d * d)
-				- consts::LN_SQRT_2PI - (x * self.scale).ln()
+			(-0.5 * d * d) - LN_SQRT_2PI - (x * self.scale).ln()
 		}
 	}
 }

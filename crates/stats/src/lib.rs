@@ -61,7 +61,6 @@
 //! Gamma, Student's T, Exponential, Weibull, etc. view all implemented in
 //! `distributions` module.
 
-#![crate_type = "lib"]
 #![expect(clippy::excessive_precision)]
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -71,16 +70,6 @@ pub mod distribution;
 #[cfg(feature = "python")]
 pub(crate) mod python_macros;
 pub mod statistics;
-
-pub(crate) mod function {
-	pub use math::function::*;
-}
-pub(crate) mod consts {
-	pub use math::consts::*;
-}
-pub(crate) mod prec {
-	pub use math::prec::*;
-}
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;

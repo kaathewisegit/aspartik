@@ -1,8 +1,8 @@
-use super::{Continuous, ContinuousCDF};
-use crate::consts::EULER_MASCHERONI;
-use crate::statistics::*;
-use core::f64;
 use core::f64::consts::PI;
+use math::consts::EULER_MASCHERONI;
+
+use super::{Continuous, ContinuousCDF};
+use crate::statistics::{Distribution, Mode};
 
 /// Implements the [Gumbel](https://en.wikipedia.org/wiki/Gumbel_distribution)
 /// distribution, also known as the type-I generalized extreme value distribution.

@@ -3,11 +3,12 @@ use approx::ulps_eq;
 use pyo3::prelude::*;
 use thiserror::Error;
 
+use math::function::{beta, gamma};
+
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	function::{beta, gamma},
 	statistics::{Distribution, Mode},
 };
 

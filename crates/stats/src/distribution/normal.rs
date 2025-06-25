@@ -2,13 +2,15 @@
 use pyo3::prelude::*;
 
 use core::f64;
+use math::{
+	consts::{LN_SQRT_2PI, LN_SQRT_2PIE, SQRT_2PI},
+	function::erf,
+};
 
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
 use crate::{
-	consts,
 	distribution::{Continuous, ContinuousCDF},
-	function::erf,
 	statistics::{Distribution, Mode},
 };
 
@@ -275,7 +277,7 @@ impl Distribution for Normal {
 	///
 	/// where `σ` is the standard deviation
 	fn entropy(&self) -> Option<f64> {
-		Some(self.std_dev.ln() + consts::LN_SQRT_2PIE)
+		Some(self.std_dev.ln() + LN_SQRT_2PIE)
 	}
 
 	/// Returns the skewness of the normal distribution
@@ -354,14 +356,14 @@ pub fn sf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
 /// with the given mean and standard deviation at x
 pub fn pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
 	let d = (x - mean) / std_dev;
-	(-0.5 * d * d).exp() / (consts::SQRT_2PI * std_dev)
+	(-0.5 * d * d).exp() / (SQRT_2PI * std_dev)
 }
 
 /// performs an unchecked log(pdf) calculation for a normal distribution
 /// with the given mean and standard deviation at x
 pub fn ln_pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
 	let d = (x - mean) / std_dev;
-	(-0.5 * d * d) - consts::LN_SQRT_2PI - std_dev.ln()
+	(-0.5 * d * d) - LN_SQRT_2PI - std_dev.ln()
 }
 
 #[cfg(feature = "rand")]
