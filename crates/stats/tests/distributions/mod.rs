@@ -20,3 +20,7 @@ mod negative_binomial;
 mod normal;
 mod pareto;
 mod poisson;
+mod students_t;
+mod triangular;
+mod uniform;
+mod weibull;

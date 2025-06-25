@@ -36,7 +36,7 @@ relative: {relative}
 			);
 		}
 	};
-	($a:expr, $b:expr, $(,)?) => {
+	($a:expr, $b:expr $(,)?) => {
 		::approx::assert_abs_diff_eq!($a, $b);
 	};
 }
