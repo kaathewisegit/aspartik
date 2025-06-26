@@ -3,8 +3,7 @@
 
 use approx::ulps_eq;
 
-use crate::function::gamma;
-use crate::prec;
+use crate::{function::gamma, tolerance};
 
 /// Represents the errors that can occur when computing the natural logarithm
 /// of the beta function or the regularized lower incomplete beta function.
@@ -153,7 +152,7 @@ pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
 		.exp()
 	};
 	let symm_transform = x >= (a + 1.0) / (a + b + 2.0);
-	let eps = prec::F64_PREC;
+	let eps = tolerance::F64_PREC;
 	let fpmin = f64::MIN_POSITIVE / eps;
 
 	let mut a = a;

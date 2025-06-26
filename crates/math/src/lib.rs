@@ -2,4 +2,4 @@
 
 pub mod consts;
 pub mod function;
-pub mod prec;
+pub mod tolerance;

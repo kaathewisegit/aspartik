@@ -3,7 +3,7 @@ use approx::ulps_eq;
 use pyo3::prelude::*;
 use thiserror::Error;
 
-use math::{function::gamma, prec};
+use math::{function::gamma, tolerance::ACCURACY};
 
 #[cfg(feature = "python")]
 use crate::python_macros::{impl_pyerr, impl_pymethods};
@@ -210,7 +210,7 @@ impl ContinuousCDF for Gamma {
 			} else {
 				low = x_0;
 			}
-			if prec::convergence(&mut x_0, (high + low) / 2.0) {
+			if convergence(&mut x_0, (high + low) / 2.0) {
 				break;
 			}
 		}
@@ -218,7 +218,7 @@ impl ContinuousCDF for Gamma {
 		// Newton Raphson, for at least one step
 		for _ in 0..4 {
 			let x_next = x_0 - (self.cdf(x_0) - p) / self.pdf(x_0);
-			if prec::convergence(&mut x_0, x_next) {
+			if convergence(&mut x_0, x_next) {
 				break;
 			}
 		}
@@ -366,4 +366,12 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 			return afix * d * v / rate;
 		}
 	}
+}
+
+/// Compares two floats with `approx::relative_eq!` and `ACCURACY` relative
+/// precision.  Updates first argument to value of second argument
+pub fn convergence(x: &mut f64, x_new: f64) -> bool {
+	let res = approx::relative_eq!(*x, x_new, max_relative = ACCURACY);
+	*x = x_new;
+	res
 }

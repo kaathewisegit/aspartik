@@ -2,10 +2,9 @@
 //! related functions
 
 use approx::ulps_eq;
-
-use crate::consts;
-use crate::prec;
 use core::f64;
+
+use crate::{consts, tolerance::DEFAULT_F64_ACC};
 
 /// Represents the errors that can occur when computing any of the incomplete
 /// gamma functions.
@@ -305,10 +304,10 @@ pub fn checked_gamma_lr(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	let big = 4503599627370496.0;
 	let big_inv = 2.220446049250313e-16;
 
-	if approx::abs_diff_eq!(a, 0.0, epsilon = prec::DEFAULT_F64_ACC) {
+	if approx::abs_diff_eq!(a, 0.0, epsilon = DEFAULT_F64_ACC) {
 		return Ok(1.0);
 	}
-	if approx::abs_diff_eq!(x, 0.0, epsilon = prec::DEFAULT_F64_ACC) {
+	if approx::abs_diff_eq!(x, 0.0, epsilon = DEFAULT_F64_ACC) {
 		return Ok(0.0);
 	}
 
