@@ -1,4 +1,6 @@
-//! Utility functions for working with floating point precision
+use indoc::indoc;
+
+use std::fmt::Display;
 
 /// Targeted accuracy instantiated over `f64`
 pub const ACCURACY: f64 = 1e-10;
@@ -14,28 +16,23 @@ pub const DEFAULT_F64_ACC: f64 = F64_PREC * 10.0;
 macro_rules! assert_almost_eq {
 	($a:expr, $b:expr, $epsilon:expr $(,)?) => {
 		if !::approx::relative_eq!($a, $b, epsilon = $epsilon) {
-			use ::math::tolerance::Tolerance;
 			panic!(
-				"assert_almost_eq!({}, {}) failed:
-  left: {}
- right: {}
- ---------
-abs diff: {}
-relative: {}
-    ulps: {}
-",
+				"assert_almost_eq!({}, {}) failed:\n{}",
 				stringify!($a),
 				stringify!($b),
-				$a,
-				$b,
-				$a.abs_diff($b),
-				$a.relative($b),
-				$a.ulps($b),
+				::math::tolerance::report($a, $b),
 			);
 		}
 	};
 	($a:expr, $b:expr $(,)?) => {
-		::approx::assert_abs_diff_eq!($a, $b);
+		if !::approx::abs_diff_eq!($a, $b) {
+			panic!(
+				"assert_almost_eq!({}, {}) failed:\n{}",
+				stringify!($a),
+				stringify!($b),
+				::math::tolerance::report($a, $b),
+			);
+		}
 	};
 }
 
@@ -76,4 +73,24 @@ impl Tolerance for f64 {
 
 		self_bits.abs_diff(other_bits)
 	}
+}
+
+pub fn report<T>(given: T, expected: T) -> String
+where
+	T: Display + Copy + Tolerance,
+{
+	format!(
+		indoc!("
+			   given: {}
+			expected: {}
+			 ---------
+			abs diff: {}
+			relative: {}
+			    ulps: {}"),
+		given,
+		expected,
+		given.abs_diff(expected),
+		given.relative(expected),
+		given.ulps(expected),
+	)
 }

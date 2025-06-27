@@ -30,6 +30,7 @@ crossbeam-channel = "0.5.15"
 cudarc = { version = "0.16.4", default-features = false }
 divan = "0.1.21"
 hashbrown = "0.15.3"
+indoc = "2.0"
 lapack-sys = "0.15.0"
 log = "0.4.27"
 nom = "8.0"
