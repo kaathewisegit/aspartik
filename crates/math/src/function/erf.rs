@@ -1,9 +1,13 @@
 //! Provides the [error](https://en.wikipedia.org/wiki/Error_function) and
 //! related functions
 
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 use crate::function::evaluate;
 
 /// `erf` calculates the error function at `x`.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn erf(x: f64) -> f64 {
 	if x.is_nan() {
 		f64::NAN
@@ -20,6 +24,7 @@ pub fn erf(x: f64) -> f64 {
 
 /// `erf_inv` calculates the inverse error function
 /// at `x`.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn erf_inv(x: f64) -> f64 {
 	if x == 0.0 {
 		0.0
@@ -36,6 +41,7 @@ pub fn erf_inv(x: f64) -> f64 {
 
 /// `erfc` calculates the complementary error function
 /// at `x`.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn erfc(x: f64) -> f64 {
 	if x.is_nan() {
 		f64::NAN
@@ -50,6 +56,7 @@ pub fn erfc(x: f64) -> f64 {
 
 /// `erfc_inv` calculates the complementary inverse
 /// error function at `x`.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn erfc_inv(x: f64) -> f64 {
 	if x <= 0.0 {
 		f64::INFINITY

@@ -36,6 +36,7 @@ dependencies = [
  "b3",
  "data",
  "io",
+ "math",
  "profiler",
  "pyo3",
  "rng",
@@ -399,6 +400,7 @@ name = "math"
 version = "0.1.0-alpha.3"
 dependencies = [
  "indoc",
+ "pyo3",
 ]
 
 [[package]]

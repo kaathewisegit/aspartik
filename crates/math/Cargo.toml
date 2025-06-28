@@ -8,6 +8,11 @@ authors.workspace = true
 
 [dependencies]
 indoc = { workspace = true }
+pyo3 = { workspace = true, features = ["multiple-pymethods"], optional = true }
+
+[features]
+default = ["python"]
+python = ["dep:pyo3"]
 
 [lints]
 workspace = true

@@ -74,9 +74,6 @@ pub mod statistics;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-/// Short title.
-///
-/// Description.
 #[cfg(feature = "python")]
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	let m = PyModule::new(py, "_stats_rust_impl")?;
