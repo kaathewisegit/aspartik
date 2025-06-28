@@ -11,11 +11,12 @@ pub const F64_PREC: f64 = 0.00000000000000011102230246251565;
 
 pub const DEFAULT_F64_ACC: f64 = F64_PREC * 10.0;
 
-/// A shorthand version of `approx::assert_abs_diff_eq`.
 #[macro_export]
 macro_rules! assert_almost_eq {
-	($a:expr, $b:expr, $epsilon:expr $(,)?) => {
-		if !::approx::relative_eq!($a, $b, epsilon = $epsilon) {
+	($a:expr, $b:expr, $epsilon:expr $(,)?) => {{
+		use ::math::tolerance::Tolerance;
+
+		if $a.abs_diff($b) > $epsilon {
 			panic!(
 				"assert_almost_eq!({}, {}) failed:\n{}",
 				stringify!($a),
@@ -23,16 +24,9 @@ macro_rules! assert_almost_eq {
 				::math::tolerance::report($a, $b),
 			);
 		}
-	};
+	}};
 	($a:expr, $b:expr $(,)?) => {
-		if !::approx::abs_diff_eq!($a, $b) {
-			panic!(
-				"assert_almost_eq!({}, {}) failed:\n{}",
-				stringify!($a),
-				stringify!($b),
-				::math::tolerance::report($a, $b),
-			);
-		}
+		assert_almost_eq!($a, $b, f64::EPSILON);
 	};
 }
 
@@ -56,11 +50,19 @@ impl Tolerance for f64 {
 
 	// XXX: is this a good algorithm?
 	fn relative(self, other: Self) -> Self {
-		if self > other {
-			self / other - 1.0
-		} else {
-			other / self - 1.0
+		if self == other {
+			return 0.0;
 		}
+
+		let a = self.abs();
+		let b = other.abs();
+
+		let (a, b) = (a.max(b), a.min(b));
+		// `a` can't be zero, because both `a >= 0`, `b >= 0`, and if
+		// `a` is a zero, then `b` must be too, but in this case the
+		// function would've returned early in the first condition
+
+		(a - b) / a
 	}
 
 	/// ULPS calculated with a simple bitcast.
@@ -70,6 +72,9 @@ impl Tolerance for f64 {
 	fn ulps(self, other: Self) -> u64 {
 		let self_bits = self.to_bits();
 		let other_bits = other.to_bits();
+
+		// XXX: what if one of them is zero and the other is close to
+		// zero?
 
 		self_bits.abs_diff(other_bits)
 	}
