@@ -1,8 +1,6 @@
 //! Provides the [beta](https://en.wikipedia.org/wiki/Beta_function) and related
 //! function
 
-use approx::ulps_eq;
-
 use crate::{function::gamma, tolerance};
 
 /// Represents the errors that can occur when computing the natural logarithm
@@ -143,7 +141,7 @@ pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
 		return Err(BetaFuncError::XOutOfRange);
 	}
 
-	let bt = if x == 0.0 || ulps_eq!(x, 1.0) {
+	let bt = if x == 0.0 {
 		0.0
 	} else {
 		(gamma::ln_gamma(a + b)

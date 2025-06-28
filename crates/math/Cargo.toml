@@ -7,7 +7,6 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-approx = { workspace = true }
 indoc = { workspace = true }
 
 [lints]

@@ -1,10 +1,12 @@
 //! Provides the [gamma](https://en.wikipedia.org/wiki/Gamma_function) and
 //! related functions
 
-use approx::ulps_eq;
 use core::f64;
 
-use crate::{consts, tolerance::DEFAULT_F64_ACC};
+use crate::{
+	consts,
+	tolerance::{Tolerance, DEFAULT_F64_ACC},
+};
 
 /// Represents the errors that can occur when computing any of the incomplete
 /// gamma functions.
@@ -304,10 +306,10 @@ pub fn checked_gamma_lr(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	let big = 4503599627370496.0;
 	let big_inv = 2.220446049250313e-16;
 
-	if approx::abs_diff_eq!(a, 0.0, epsilon = DEFAULT_F64_ACC) {
+	if a.abs_diff(0.0) <= DEFAULT_F64_ACC {
 		return Ok(1.0);
 	}
-	if approx::abs_diff_eq!(x, 0.0, epsilon = DEFAULT_F64_ACC) {
+	if x.abs_diff(0.0) <= DEFAULT_F64_ACC {
 		return Ok(0.0);
 	}
 
@@ -396,7 +398,7 @@ pub fn digamma(x: f64) -> f64 {
 	if x == f64::NEG_INFINITY || x.is_nan() {
 		return f64::NAN;
 	}
-	if x <= 0.0 && ulps_eq!(x.floor(), x) {
+	if x <= 0.0 && x.floor() == x {
 		return f64::NEG_INFINITY;
 	}
 	if x < 0.0 {
