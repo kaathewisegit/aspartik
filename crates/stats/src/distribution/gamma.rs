@@ -159,7 +159,8 @@ impl ContinuousCDF for Gamma {
 		} else if x.is_infinite() {
 			1.0
 		} else {
-			gamma::gamma_lr(self.shape, x * self.rate)
+			// XXX: panics?
+			gamma::gamma_lr(self.shape, x * self.rate).unwrap()
 		}
 	}
 
@@ -176,7 +177,8 @@ impl ContinuousCDF for Gamma {
 		} else if x.is_infinite() {
 			0.0
 		} else {
-			gamma::gamma_ur(self.shape, x * self.rate)
+			// XXX: panics?
+			gamma::gamma_ur(self.shape, x * self.rate).unwrap()
 		}
 	}
 

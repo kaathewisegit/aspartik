@@ -36,23 +36,10 @@ impl core::fmt::Display for BetaFuncError {
 
 impl std::error::Error for BetaFuncError {}
 
-/// Natural logarithm of the beta function where `a` is the first beta parameter
-/// and `b` is the second beta parameter and `a > 0`, `b > 0`.
+/// Natural logarithm of the beta function
 ///
-/// # Panics
-///
-/// if `a <= 0.0` or `b <= 0.0`
-pub fn ln_beta(a: f64, b: f64) -> f64 {
-	checked_ln_beta(a, b).unwrap()
-}
-
-/// Natural logarithm of the beta function where `a` is the first beta parameter
-/// and `b` is the second beta parameter and `a > 0`, `b > 0`.
-///
-/// # Errors
-///
-/// if `a <= 0.0` or `b <= 0.0`
-pub fn checked_ln_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
+/// Returns [`BetaFuncError`] if `a <= 0.0` or `b <= 0.0`
+pub fn ln_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
 	if a <= 0.0 {
 		Err(BetaFuncError::ANotGreaterThanZero)
 	} else if b <= 0.0 {
@@ -63,36 +50,11 @@ pub fn checked_ln_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
 	}
 }
 
-/// Beta function, where `a` is the first beta parameter and `b` is the second
-/// beta parameter.
+/// Beta function
 ///
-/// # Panics
-///
-/// if `a <= 0.0` or `b <= 0.0`
-pub fn beta(a: f64, b: f64) -> f64 {
-	checked_beta(a, b).unwrap()
-}
-
-/// Beta function, where `a` is the first beta parameter and `b` is the second
-/// beta parameter.
-///
-/// # Errors
-///
-/// if `a <= 0.0` or `b <= 0.0`
-pub fn checked_beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
-	checked_ln_beta(a, b).map(|x| x.exp())
-}
-
-/// Lower incomplete (unregularized) beta function `B(a,b,x) =
-/// int(t^(a-1)*(1-t)^(b-1),t=0..x)` for `a > 0, b > 0, 1 >= x >= 0` where `a`
-/// is the first beta parameter, `b` is the second beta parameter, and `x` is
-/// the upper limit of the integral
-///
-/// # Panics
-///
-/// If `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
-pub fn beta_inc(a: f64, b: f64, x: f64) -> f64 {
-	checked_beta_inc(a, b, x).unwrap()
+/// Returns [`BetaFuncError`] if `a <= 0.0` or `b <= 0.0`
+pub fn beta(a: f64, b: f64) -> Result<f64, BetaFuncError> {
+	ln_beta(a, b).map(|x| x.exp())
 }
 
 /// Lower incomplete (unregularized) beta function `B(a,b,x) =
@@ -103,21 +65,8 @@ pub fn beta_inc(a: f64, b: f64, x: f64) -> f64 {
 /// # Errors
 ///
 /// If `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
-pub fn checked_beta_inc(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
-	checked_beta_reg(a, b, x)
-		.and_then(|x| checked_beta(a, b).map(|y| x * y))
-}
-
-/// Computes the regularized lower incomplete beta function `I_x(a,b) =
-/// 1/Beta(a,b) * int(t^(a-1)*(1-t)^(b-1), t=0..x)` `a > 0`, `b > 0`, `1 >= x >=
-/// 0` where `a` is the first beta parameter, `b` is the second beta parameter,
-/// and `x` is the upper limit of the integral.
-///
-/// # Panics
-///
-/// if `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
-pub fn beta_reg(a: f64, b: f64, x: f64) -> f64 {
-	checked_beta_reg(a, b, x).unwrap()
+pub fn beta_inc(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
+	beta_reg(a, b, x).and_then(|x| beta(a, b).map(|y| x * y))
 }
 
 /// Computes the regularized lower incomplete beta function `I_x(a,b) =
@@ -128,7 +77,7 @@ pub fn beta_reg(a: f64, b: f64, x: f64) -> f64 {
 /// # Errors
 ///
 /// if `a <= 0.0`, `b <= 0.0`, `x < 0.0`, or `x > 1.0`
-pub fn checked_beta_reg(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
+pub fn beta_reg(a: f64, b: f64, x: f64) -> Result<f64, BetaFuncError> {
 	if a <= 0.0 {
 		return Err(BetaFuncError::ANotGreaterThanZero);
 	}
@@ -289,7 +238,7 @@ pub fn inv_beta_reg(mut a: f64, mut b: f64, mut x: f64) -> f64 {
 	// where
 	//
 	// f(x) = I(x, p, q) - α.
-	let ln_beta = ln_beta(a, b);
+	let ln_beta = ln_beta(a, b).unwrap();
 
 	// Remark AS R83
 	// http://www.jstor.org/stable/2347779
@@ -364,7 +313,7 @@ pub fn inv_beta_reg(mut a: f64, mut b: f64, mut x: f64) -> f64 {
 	'outer: loop {
 		// Remark AS R19 and Algorithm AS 109
 		// http://www.jstor.org/stable/2346887
-		q = beta_reg(a, b, p);
+		q = beta_reg(a, b, p).unwrap();
 		q = (q - x)
 			* (ln_beta
 				+ (1.0 - a) * p.ln() + (1.0 - b) * (1.0 - p).ln())

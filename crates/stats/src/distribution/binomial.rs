@@ -156,6 +156,8 @@ impl DiscreteCDF for Binomial {
 				k as f64 + 1.0,
 				1.0 - self.p,
 			)
+			// XXX: panics?
+			.unwrap()
 		}
 	}
 
@@ -179,6 +181,8 @@ impl DiscreteCDF for Binomial {
 				(self.n - k) as f64,
 				self.p,
 			)
+			// XXX: panics?
+			.unwrap()
 		}
 	}
 

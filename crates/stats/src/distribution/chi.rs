@@ -129,20 +129,15 @@ impl ContinuousCDF for Chi {
 				self.freedom() as f64 / 2.0,
 				x * x / 2.0,
 			)
+			// `freedom > 0`, so `s > 0`.  `x^2` is either 0 or
+			// positive, but `x <= 0` is removed earlir, so it must
+			// be positive.  It could overflow, though.
+			.unwrap()
 		}
 	}
 
-	/// Calculates the survival function for the chi
-	/// distribution at `x`.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// P(k / 2, x^2 / 2)
-	/// ```
-	///
-	/// where `k` is the degrees of freedom and `P` is
-	/// the regularized upper incomplete Gamma function
+	/// `P(k / 2, x^2 / 2)`, where `k` is the degrees of freedom and `P` is
+	/// the regularized upper incomplete Gamma function.
 	fn sf(&self, x: f64) -> f64 {
 		if x == f64::INFINITY {
 			0.0
@@ -153,6 +148,8 @@ impl ContinuousCDF for Chi {
 				self.freedom() as f64 / 2.0,
 				x * x / 2.0,
 			)
+			// Infallible, see `cdf` method
+			.unwrap()
 		}
 	}
 

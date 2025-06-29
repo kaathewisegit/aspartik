@@ -85,7 +85,7 @@ fn test_ln_gamma() {
 
 #[test]
 fn test_gamma_lr_nan() {
-	assert!(gamma_lr(f64::NAN, f64::NAN).is_nan());
+	assert!(gamma_lr(f64::NAN, f64::NAN).unwrap().is_nan());
 }
 
 #[test]
@@ -122,57 +122,33 @@ fn test_gamma_lr() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		assert_almost_eq!(gamma_lr(a, x), expected, epsilon);
+		assert_almost_eq!(gamma_lr(a, x).unwrap(), expected, epsilon);
 	}
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_lr_a_lower_bound() {
-	gamma_lr(-1.0, 1.0);
+	assert!(gamma_lr(-1.0, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_lr_a_upper_bound() {
-	gamma_lr(f64::INFINITY, 1.0);
+	assert!(gamma_lr(f64::INFINITY, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_lr_x_lower_bound() {
-	gamma_lr(1.0, -1.0);
+	assert!(gamma_lr(1.0, -1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_lr_x_upper_bound() {
-	gamma_lr(1.0, f64::INFINITY);
-}
-
-#[test]
-fn test_checked_gamma_lr_a_lower_bound() {
-	assert!(checked_gamma_lr(-1.0, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_lr_a_upper_bound() {
-	assert!(checked_gamma_lr(f64::INFINITY, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_lr_x_lower_bound() {
-	assert!(checked_gamma_lr(1.0, -1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_lr_x_upper_bound() {
-	assert!(checked_gamma_lr(1.0, f64::INFINITY).is_err());
+	assert!(gamma_lr(1.0, f64::INFINITY).is_err());
 }
 
 #[test]
 fn test_gamma_li_nan() {
-	assert!(gamma_li(f64::NAN, f64::NAN).is_nan());
+	assert!(gamma_li(f64::NAN, f64::NAN).unwrap().is_nan());
 }
 
 #[test]
@@ -193,57 +169,33 @@ fn test_gamma_li() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		assert_almost_eq!(gamma_li(a, x), expected, epsilon);
+		assert_almost_eq!(gamma_li(a, x).unwrap(), expected, epsilon);
 	}
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_li_a_lower_bound() {
-	gamma_li(-1.0, 1.0);
+	assert!(gamma_li(-1.0, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_li_a_upper_bound() {
-	gamma_li(f64::INFINITY, 1.0);
+	assert!(gamma_li(f64::INFINITY, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_li_x_lower_bound() {
-	gamma_li(1.0, -1.0);
+	assert!(gamma_li(1.0, -1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_li_x_upper_bound() {
-	gamma_li(1.0, f64::INFINITY);
-}
-
-#[test]
-fn test_checked_gamma_li_a_lower_bound() {
-	assert!(checked_gamma_li(-1.0, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_li_a_upper_bound() {
-	assert!(checked_gamma_li(f64::INFINITY, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_li_x_lower_bound() {
-	assert!(checked_gamma_li(1.0, -1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_li_x_upper_bound() {
-	assert!(checked_gamma_li(1.0, f64::INFINITY).is_err());
+	assert!(gamma_li(1.0, f64::INFINITY).is_err());
 }
 
 #[test]
 fn test_gamma_ur_nan() {
-	assert!(gamma_ur(f64::NAN, f64::NAN).is_nan());
+	assert!(gamma_ur(f64::NAN, f64::NAN).unwrap().is_nan());
 }
 
 // TODO: precision testing could be more accurate, borrowed wholesale from Math.NET
@@ -281,57 +233,33 @@ fn test_gamma_ur() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		assert_almost_eq!(gamma_ur(a, x), expected, epsilon);
+		assert_almost_eq!(gamma_ur(a, x).unwrap(), expected, epsilon);
 	}
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_ur_a_lower_bound() {
-	gamma_ur(-1.0, 1.0);
+	assert!(gamma_ur(-1.0, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_ur_a_upper_bound() {
-	gamma_ur(f64::INFINITY, 1.0);
+	assert!(gamma_ur(f64::INFINITY, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_ur_x_lower_bound() {
-	gamma_ur(1.0, -1.0);
+	assert!(gamma_ur(1.0, -1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_ur_x_upper_bound() {
-	gamma_ur(1.0, f64::INFINITY);
-}
-
-#[test]
-fn test_checked_gamma_ur_a_lower_bound() {
-	assert!(checked_gamma_ur(-1.0, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_ur_a_upper_bound() {
-	assert!(checked_gamma_ur(f64::INFINITY, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_ur_x_lower_bound() {
-	assert!(checked_gamma_ur(1.0, -1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_ur_x_upper_bound() {
-	assert!(checked_gamma_ur(1.0, f64::INFINITY).is_err());
+	assert!(gamma_ur(1.0, f64::INFINITY).is_err());
 }
 
 #[test]
 fn test_gamma_ui_nan() {
-	assert!(gamma_ui(f64::NAN, f64::NAN).is_nan());
+	assert!(gamma_ui(f64::NAN, f64::NAN).unwrap().is_nan());
 }
 
 #[test]
@@ -352,52 +280,28 @@ fn test_gamma_ui() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		assert_almost_eq!(gamma_ui(a, x), expected, epsilon);
+		assert_almost_eq!(gamma_ui(a, x).unwrap(), expected, epsilon);
 	}
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_ui_a_lower_bound() {
-	gamma_ui(-1.0, 1.0);
+	assert!(gamma_ui(-1.0, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_ui_a_upper_bound() {
-	gamma_ui(f64::INFINITY, 1.0);
+	assert!(gamma_ui(f64::INFINITY, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_ui_x_lower_bound() {
-	gamma_ui(1.0, -1.0);
+	assert!(gamma_ui(1.0, -1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_gamma_ui_x_upper_bound() {
-	gamma_ui(1.0, f64::INFINITY);
-}
-
-#[test]
-fn test_checked_gamma_ui_a_lower_bound() {
-	assert!(checked_gamma_ui(-1.0, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_ui_a_upper_bound() {
-	assert!(checked_gamma_ui(f64::INFINITY, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_ui_x_lower_bound() {
-	assert!(checked_gamma_ui(1.0, -1.0).is_err());
-}
-
-#[test]
-fn test_checked_gamma_ui_x_upper_bound() {
-	assert!(checked_gamma_ui(1.0, f64::INFINITY).is_err());
+	assert!(gamma_ui(1.0, f64::INFINITY).is_err());
 }
 
 #[test]

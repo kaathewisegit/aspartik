@@ -47,19 +47,13 @@ fn test_ln_binomial() {
 
 #[test]
 fn test_multinomial() {
-	assert_eq!(1.0, multinomial(1, &[1, 0]));
-	assert_eq!(10.0, multinomial(5, &[3, 2]));
-	assert_eq!(10.0, multinomial(5, &[2, 3]));
-	assert_eq!(35.0, multinomial(7, &[3, 4]));
+	assert_eq!(multinomial(1, &[1, 0]).unwrap(), 1.0);
+	assert_eq!(multinomial(5, &[3, 2]).unwrap(), 10.0);
+	assert_eq!(multinomial(5, &[2, 3]).unwrap(), 10.0);
+	assert_eq!(multinomial(7, &[3, 4]).unwrap(), 35.0);
 }
 
 #[test]
-#[should_panic]
 fn test_multinomial_bad_ni() {
-	multinomial(1, &[1, 1]);
-}
-
-#[test]
-fn test_checked_multinomial_bad_ni() {
-	assert!(checked_multinomial(1, &[1, 1]).is_none());
+	assert!(multinomial(1, &[1, 1]).is_none());
 }

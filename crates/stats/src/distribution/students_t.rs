@@ -211,7 +211,9 @@ impl ContinuousCDF for StudentsT {
 				self.freedom / 2.0,
 				0.5,
 				h,
-			);
+			)
+			// panics?
+			.unwrap();
 			if x <= self.location {
 				ib
 			} else {
@@ -251,7 +253,9 @@ impl ContinuousCDF for StudentsT {
 				self.freedom / 2.0,
 				0.5,
 				h,
-			);
+			)
+			// XXX: panics?
+			.unwrap();
 			if x <= self.location {
 				1.0 - ib
 			} else {
@@ -374,7 +378,9 @@ impl Distribution for StudentsT {
 			* (gamma::digamma((self.freedom + 1.0) / 2.0)
 				- gamma::digamma(self.freedom / 2.0))
 			+ (self.freedom.sqrt()
-				* beta::beta(self.freedom / 2.0, 0.5))
+				* beta::beta(self.freedom / 2.0, 0.5)
+					// XXX: panics?
+					.unwrap())
 			.ln();
 		Some(result + shift)
 	}

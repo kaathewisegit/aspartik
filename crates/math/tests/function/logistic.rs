@@ -25,8 +25,8 @@ fn test_logistic() {
 
 #[test]
 fn test_logit_bounds() {
-	assert_eq!(logit(0.0), f64::NEG_INFINITY);
-	assert_eq!(logit(1.0), f64::INFINITY);
+	assert_eq!(logit(0.0).unwrap(), f64::NEG_INFINITY);
+	assert_eq!(logit(1.0).unwrap(), f64::INFINITY);
 }
 
 #[test]
@@ -42,28 +42,16 @@ fn test_logit() {
 	];
 
 	for (input, expected, epsilon) in cases {
-		assert_almost_eq!(logit(input), expected, epsilon);
+		assert_almost_eq!(logit(input).unwrap(), expected, epsilon);
 	}
 }
 
 #[test]
-#[should_panic]
 fn test_logit_p_lt_0() {
-	logit(-1.0);
+	assert!(logit(-1.0).is_none());
 }
 
 #[test]
-#[should_panic]
 fn test_logit_p_gt_1() {
-	logit(2.0);
-}
-
-#[test]
-fn test_checked_logit_p_lt_0() {
-	assert!(checked_logit(-1.0).is_none());
-}
-
-#[test]
-fn test_checked_logit_p_gt_1() {
-	assert!(checked_logit(2.0).is_none());
+	assert!(logit(2.0).is_none());
 }

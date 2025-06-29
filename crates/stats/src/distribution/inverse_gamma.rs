@@ -167,47 +167,31 @@ impl rand::distr::Distribution<f64> for InverseGamma {
 }
 
 impl ContinuousCDF for InverseGamma {
-	/// Calculates the cumulative distribution function for the inverse gamma
-	/// distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// Γ(α, β / x) / Γ(α)
-	/// ```
-	///
-	/// where the numerator is the upper incomplete gamma function,
-	/// the denominator is the gamma function, `α` is the shape,
-	/// and `β` is the rate
+	/// `Γ(α, β / x) / Γ(α)`, where the numerator is the upper incomplete
+	/// gamma function, the denominator is the gamma function, `α` is the
+	/// shape, and `β` is the rate
 	fn cdf(&self, x: f64) -> f64 {
 		if x <= 0.0 {
 			0.0
 		} else if x.is_infinite() {
 			1.0
 		} else {
-			gamma::gamma_ur(self.shape, self.rate / x)
+			// XXX: is this infallible?  If not, document panics
+			gamma::gamma_ur(self.shape, self.rate / x).unwrap()
 		}
 	}
 
-	/// Calculates the survival function for the inverse gamma
-	/// distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// Γ(α, β / x) / Γ(α)
-	/// ```
-	///
-	/// where the numerator is the lower incomplete gamma function,
-	/// the denominator is the gamma function, `α` is the shape,
-	/// and `β` is the rate
+	/// `Γ(α, β / x) / Γ(α)`, where the numerator is the lower incomplete
+	/// gamma function, the denominator is the gamma function, `α` is the
+	/// shape, and `β` is the rate
 	fn sf(&self, x: f64) -> f64 {
 		if x <= 0.0 {
 			1.0
 		} else if x.is_infinite() {
 			0.0
 		} else {
-			gamma::gamma_lr(self.shape, self.rate / x)
+			// XXX: is this infallible?  If not, document panics
+			gamma::gamma_lr(self.shape, self.rate / x).unwrap()
 		}
 	}
 

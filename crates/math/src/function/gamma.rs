@@ -119,89 +119,38 @@ pub fn gamma(x: f64) -> f64 {
 	}
 }
 
-/// Computes the upper incomplete gamma function
-/// `Gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and
-/// `x` is the lower intergral limit.
+/// Upper incomplete gamma function.
 ///
-/// # Panics
-///
-/// if `a` or `x` are not in `(0, +inf)`
-pub fn gamma_ui(a: f64, x: f64) -> f64 {
-	checked_gamma_ui(a, x).unwrap()
+/// The formula is `Γ(s,x) = ∫_x^inf t^(s-1) exp(-t)` for `s > 0` and `x > 0`,
+/// where `a` is the argument for the gamma function and `x` is the lower
+/// intergral limit.  If `s` or `x` are not in `(0, inf)`, returns
+/// [`GammaFuncError`].
+pub fn gamma_ui(s: f64, x: f64) -> Result<f64, GammaFuncError> {
+	gamma_ur(s, x).map(|x| x * gamma(s))
 }
 
-/// Computes the upper incomplete gamma function
-/// `Gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and
-/// `x` is the lower intergral limit.
+/// Lower incomplete gamma function.
 ///
-/// # Errors
-///
-/// if `a` or `x` are not in `(0, +inf)`
-pub fn checked_gamma_ui(a: f64, x: f64) -> Result<f64, GammaFuncError> {
-	checked_gamma_ur(a, x).map(|x| x * gamma(a))
+/// The formula is `Γ(s,x) = ∫_0^s t^(s-1) exp(-t)` for `s > 0` and `x > 0`,
+/// where `a` is the argument for the gamma function and `x` is the lower
+/// intergral limit.  If `s` or `x` are not in `(0, inf)`, returns
+/// [`GammaFuncError`].
+pub fn gamma_li(s: f64, x: f64) -> Result<f64, GammaFuncError> {
+	gamma_lr(s, x).map(|x| x * gamma(s))
 }
 
-/// Computes the lower incomplete gamma function
-/// `gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and `x`
-/// is the upper integral limit.
+/// Upper incomplete regularized gamma function
 ///
-///
-/// # Panics
-///
-/// if `a` or `x` are not in `(0, +inf)`
-pub fn gamma_li(a: f64, x: f64) -> f64 {
-	checked_gamma_li(a, x).unwrap()
-}
-
-/// Computes the lower incomplete gamma function
-/// `gamma(a,x) = int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and `x`
-/// is the upper integral limit.
-///
-///
-/// # Errors
-///
-/// if `a` or `x` are not in `(0, +inf)`
-pub fn checked_gamma_li(a: f64, x: f64) -> Result<f64, GammaFuncError> {
-	checked_gamma_lr(a, x).map(|x| x * gamma(a))
-}
-
-/// Computes the upper incomplete regularized gamma function
-/// `Q(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and
-/// `x` is the lower integral limit.
-///
-/// # Remarks
+/// TODO: formula
 ///
 /// Returns `f64::NAN` if either argument is `f64::NAN`
 ///
-/// # Panics
-///
-/// if `a` or `x` are not in `(0, +inf)`
-pub fn gamma_ur(a: f64, x: f64) -> f64 {
-	checked_gamma_ur(a, x).unwrap()
-}
-
-/// Computes the upper incomplete regularized gamma function
-/// `Q(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for a > 0, x > 0`
-/// where `a` is the argument for the gamma function and
-/// `x` is the lower integral limit.
-///
-/// # Remarks
-///
-/// Returns `f64::NAN` if either argument is `f64::NAN`
-///
-/// # Errors
-///
-/// if `a` or `x` are not in `(0, +inf)`
-pub fn checked_gamma_ur(a: f64, x: f64) -> Result<f64, GammaFuncError> {
-	if a.is_nan() || x.is_nan() {
+/// TODO: error
+pub fn gamma_ur(s: f64, x: f64) -> Result<f64, GammaFuncError> {
+	if s.is_nan() || x.is_nan() {
 		return Ok(f64::NAN);
 	}
-	if a <= 0.0 || a == f64::INFINITY {
+	if s <= 0.0 || s == f64::INFINITY {
 		return Err(GammaFuncError::AInvalid);
 	}
 	if x <= 0.0 || x == f64::INFINITY {
@@ -212,17 +161,17 @@ pub fn checked_gamma_ur(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	let big = 4503599627370496.0;
 	let big_inv = 2.220446049250313e-16;
 
-	if x < 1.0 || x <= a {
-		return Ok(1.0 - gamma_lr(a, x));
+	if x < 1.0 || x <= s {
+		return Ok(1.0 - gamma_lr(s, x)?);
 	}
 
-	let mut ax = a * x.ln() - x - ln_gamma(a);
+	let mut ax = s * x.ln() - x - ln_gamma(s);
 	if ax < -709.782712893384 {
-		return if a < x { Ok(0.0) } else { Ok(1.0) };
+		return if s < x { Ok(0.0) } else { Ok(1.0) };
 	}
 
 	ax = ax.exp();
-	let mut y = 1.0 - a;
+	let mut y = 1.0 - s;
 	let mut z = x + y + 1.0;
 	let mut c = 0.0;
 	let mut pkm2 = 1.0;
@@ -272,30 +221,14 @@ pub fn checked_gamma_ur(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 ///
 /// Returns `f64::NAN` if either argument is `f64::NAN`
 ///
-/// # Panics
-///
-/// if `a` or `x` are not in `(0, +inf)`
-pub fn gamma_lr(a: f64, x: f64) -> f64 {
-	checked_gamma_lr(a, x).unwrap()
-}
-
-/// Computes the lower incomplete regularized gamma function
-/// `P(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for real a > 0, x > 0`
-/// where `a` is the argument for the gamma function and `x` is the upper
-/// integral limit.
-///
-/// # Remarks
-///
-/// Returns `f64::NAN` if either argument is `f64::NAN`
-///
 /// # Errors
 ///
 /// if `a` or `x` are not in `(0, +inf)`
-pub fn checked_gamma_lr(a: f64, x: f64) -> Result<f64, GammaFuncError> {
-	if a.is_nan() || x.is_nan() {
+pub fn gamma_lr(s: f64, x: f64) -> Result<f64, GammaFuncError> {
+	if s.is_nan() || x.is_nan() {
 		return Ok(f64::NAN);
 	}
-	if a <= 0.0 || a == f64::INFINITY {
+	if s <= 0.0 || s == f64::INFINITY {
 		return Err(GammaFuncError::AInvalid);
 	}
 	if x <= 0.0 || x == f64::INFINITY {
@@ -306,22 +239,22 @@ pub fn checked_gamma_lr(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 	let big = 4503599627370496.0;
 	let big_inv = 2.220446049250313e-16;
 
-	if a.abs_diff(0.0) <= DEFAULT_F64_ACC {
+	if s.abs_diff(0.0) <= DEFAULT_F64_ACC {
 		return Ok(1.0);
 	}
 	if x.abs_diff(0.0) <= DEFAULT_F64_ACC {
 		return Ok(0.0);
 	}
 
-	let ax = a * x.ln() - x - ln_gamma(a);
+	let ax = s * x.ln() - x - ln_gamma(s);
 	if ax < -709.782712893384 {
-		if a < x {
+		if s < x {
 			return Ok(1.0);
 		}
 		return Ok(0.0);
 	}
-	if x <= 1.0 || x <= a {
-		let mut r2 = a;
+	if x <= 1.0 || x <= s {
+		let mut r2 = s;
 		let mut c2 = 1.0;
 		let mut ans2 = 1.0;
 		loop {
@@ -333,10 +266,10 @@ pub fn checked_gamma_lr(a: f64, x: f64) -> Result<f64, GammaFuncError> {
 				break;
 			}
 		}
-		return Ok(ax.exp() * ans2 / a);
+		return Ok(ax.exp() * ans2 / s);
 	}
 
-	let mut y = 1.0 - a;
+	let mut y = 1.0 - s;
 	let mut z = x + y + 1.0;
 	let mut c = 0;
 

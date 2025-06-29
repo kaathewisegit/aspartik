@@ -65,20 +65,11 @@ pub fn ln_binomial(n: u64, k: u64) -> f64 {
 	}
 }
 
-/// Computes the multinomial coefficient: `n choose n1, n2, n3, ...`
+/// Computes the multinomial coefficient: `n choose k_1, k_2, k_3, ...`
 ///
-/// # Panics
-///
-/// If the elements in `ni` do not sum to `n`
-pub fn multinomial(n: u64, ni: &[u64]) -> f64 {
-	checked_multinomial(n, ni).unwrap()
-}
-
-/// Computes the multinomial coefficient: `n choose n1, n2, n3, ...`
-///
-/// Returns `None` if the elements in `ni` do not sum to `n`.
-pub fn checked_multinomial(n: u64, ni: &[u64]) -> Option<f64> {
-	let (sum, ret) = ni.iter().fold((0, ln_factorial(n)), |acc, &x| {
+/// Returns `None` if the elements in `ks` do not sum to `n`.
+pub fn multinomial(n: u64, ks: &[u64]) -> Option<f64> {
+	let (sum, ret) = ks.iter().fold((0, ln_factorial(n)), |acc, &x| {
 		(acc.0 + x, acc.1 - ln_factorial(x))
 	});
 

@@ -142,7 +142,8 @@ impl ContinuousCDF for Beta {
 		{
 			x
 		} else {
-			beta::beta_reg(self.shape_a, self.shape_b, x)
+			// XXX: panics?
+			beta::beta_reg(self.shape_a, self.shape_b, x).unwrap()
 		}
 	}
 
@@ -158,7 +159,9 @@ impl ContinuousCDF for Beta {
 		{
 			1.0 - x
 		} else {
+			// XXX: panics?
 			beta::beta_reg(self.shape_b, self.shape_a, 1.0 - x)
+				.unwrap()
 		}
 	}
 
@@ -199,10 +202,10 @@ impl Distribution for Beta {
 				* (self.shape_a + self.shape_b + 1.0)))
 	}
 
-	/// `ln(B(α, β)) - (α - 1) ψ(α) - (β - 1) ψ(β) + (α + β - 2) ψ(α + β)`,
-	/// where `ψ` is the digamma function.
+	/// `ln(B(α, β)) - (α - 1) ψ(α) - (β - 1) ψ(β) + (α + β - 2) ψ(α +
+	/// β)`, where `ψ` is the digamma function.
 	fn entropy(&self) -> Option<f64> {
-		Some(beta::ln_beta(self.shape_a, self.shape_b)
+		Some(beta::ln_beta(self.shape_a, self.shape_b).unwrap()
 			- (self.shape_a - 1.0) * gamma::digamma(self.shape_a)
 			- (self.shape_b - 1.0) * gamma::digamma(self.shape_b)
 			+ (self.shape_a + self.shape_b - 2.0)

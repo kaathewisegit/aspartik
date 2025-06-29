@@ -170,6 +170,8 @@ impl ContinuousCDF for FisherSnedecor {
 				self.freedom_1 * x
 					/ (self.freedom_1 * x + self.freedom_2),
 			)
+			// XXX: panics?
+			.unwrap()
 		}
 	}
 
@@ -198,6 +200,8 @@ impl ContinuousCDF for FisherSnedecor {
 					/ (self.freedom_1 * x
 						+ self.freedom_2)),
 			)
+			// XXX: panics?
+			.unwrap()
 		}
 	}
 
@@ -391,7 +395,9 @@ impl Continuous for FisherSnedecor {
 			.sqrt() / (x * beta::beta(
 				self.freedom_1 / 2.0,
 				self.freedom_2 / 2.0,
-			))
+			)
+			// XXX: panics?
+			.unwrap())
 		}
 	}
 

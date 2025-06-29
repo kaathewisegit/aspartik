@@ -165,7 +165,8 @@ impl DiscreteCDF for NegativeBinomial {
 	///
 	/// where `I_(x)(a, b)` is the regularized incomplete beta function.
 	fn cdf(&self, x: u64) -> f64 {
-		beta::beta_reg(self.r, x as f64 + 1.0, self.p)
+		// XXX: panics?
+		beta::beta_reg(self.r, x as f64 + 1.0, self.p).unwrap()
 	}
 
 	/// Calculates the survival function for the
@@ -185,7 +186,8 @@ impl DiscreteCDF for NegativeBinomial {
 	///
 	/// where `I_(x)(a, b)` is the regularized incomplete beta function
 	fn sf(&self, x: u64) -> f64 {
-		beta::beta_reg(x as f64 + 1.0, self.r, 1.0 - self.p)
+		// XXX: panics?
+		beta::beta_reg(x as f64 + 1.0, self.r, 1.0 - self.p).unwrap()
 	}
 
 	fn lower(&self) -> u64 {

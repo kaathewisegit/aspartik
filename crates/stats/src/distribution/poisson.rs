@@ -148,32 +148,23 @@ impl rand::distr::Distribution<f64> for Poisson {
 }
 
 impl DiscreteCDF for Poisson {
-	/// Calculates the cumulative distribution function for the poisson
-	/// distribution at `x`
+	/// `P(x + 1, λ)`, where `λ` is the rate and `P` is the upper
+	/// regularized gamma function
 	///
-	/// # Formula
+	/// # Panics
 	///
-	/// ```text
-	/// P(x + 1, λ)
-	/// ```
-	///
-	/// where `λ` is the rate and `P` is the upper regularized gamma function
+	/// If `x <= 0`.
 	fn cdf(&self, x: u64) -> f64 {
+		// lambda must be `>= 0`
 		gamma::gamma_ur(x as f64 + 1.0, self.lambda)
+			.expect("x must be positive")
 	}
 
-	/// Calculates the survival function for the poisson
-	/// distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// P(x + 1, λ)
-	/// ```
-	///
-	/// where `λ` is the rate and `P` is the lower regularized gamma function
+	/// `P(x + 1, λ)`, where `λ` is the rate and `P` is the lower
+	/// regularized gamma function
 	fn sf(&self, x: u64) -> f64 {
-		gamma::gamma_lr(x as f64 + 1.0, self.lambda)
+		// XXX: panics?
+		gamma::gamma_lr(x as f64 + 1.0, self.lambda).unwrap()
 	}
 
 	fn lower(&self) -> u64 {

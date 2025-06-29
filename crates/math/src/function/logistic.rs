@@ -6,17 +6,8 @@ pub fn logistic(p: f64) -> f64 {
 	1.0 / ((-p).exp() + 1.0)
 }
 
-/// Computes the logit function
-///
-/// # Panics
-///
-/// If `p < 0.0` or `p > 1.0`
-pub fn logit(p: f64) -> f64 {
-	checked_logit(p).unwrap()
-}
-
 /// Computes the logit function, returning `None` if `p < 0.0` or `p > 1.0`.
-pub fn checked_logit(p: f64) -> Option<f64> {
+pub fn logit(p: f64) -> Option<f64> {
 	if (0.0..=1.0).contains(&p) {
 		Some((p / (1.0 - p)).ln())
 	} else {

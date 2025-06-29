@@ -17,52 +17,28 @@ fn test_ln_beta() {
 	];
 
 	for ((a, b), expected, epsilon) in cases {
-		assert_almost_eq!(ln_beta(a, b), expected, epsilon)
+		assert_almost_eq!(ln_beta(a, b).unwrap(), expected, epsilon)
 	}
 }
 
 #[test]
-#[should_panic]
 fn test_ln_beta_a_lte_0() {
-	ln_beta(0.0, 0.5);
+	assert!(ln_beta(0.0, 0.5).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_ln_beta_b_lte_0() {
-	ln_beta(0.5, 0.0);
+	assert!(ln_beta(0.5, 0.0).is_err());
 }
 
 #[test]
-fn test_checked_ln_beta_a_lte_0() {
-	assert!(checked_ln_beta(0.0, 0.5).is_err());
-}
-
-#[test]
-fn test_checked_ln_beta_b_lte_0() {
-	assert!(checked_ln_beta(0.5, 0.0).is_err());
-}
-
-#[test]
-#[should_panic]
 fn test_beta_a_lte_0() {
-	beta(0.0, 0.5);
+	assert!(beta(0.0, 0.5).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_beta_b_lte_0() {
-	beta(0.5, 0.0);
-}
-
-#[test]
-fn test_checked_beta_a_lte_0() {
-	assert!(checked_beta(0.0, 0.5).is_err());
-}
-
-#[test]
-fn test_checked_beta_b_lte_0() {
-	assert!(checked_beta(0.5, 0.0).is_err());
+	assert!(beta(0.5, 0.0).is_err());
 }
 
 #[test]
@@ -80,7 +56,7 @@ fn test_beta() {
 	];
 
 	for ((a, b), expected, epsilon) in cases {
-		assert_almost_eq!(beta(a, b), expected, epsilon)
+		assert_almost_eq!(beta(a, b).unwrap(), expected, epsilon)
 	}
 }
 
@@ -108,52 +84,28 @@ fn test_beta_inc() {
 	];
 
 	for ((a, b, x), expected, epsilon) in cases {
-		assert_almost_eq!(beta_inc(a, b, x), expected, epsilon)
+		assert_almost_eq!(beta_inc(a, b, x).unwrap(), expected, epsilon)
 	}
 }
 
 #[test]
-#[should_panic]
 fn test_beta_inc_a_lte_0() {
-	beta_inc(0.0, 1.0, 1.0);
+	assert!(beta_inc(0.0, 1.0, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_beta_inc_b_lte_0() {
-	beta_inc(1.0, 0.0, 1.0);
+	assert!(beta_inc(1.0, 0.0, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_beta_inc_x_lt_0() {
-	beta_inc(1.0, 1.0, -1.0);
+	assert!(beta_inc(1.0, 1.0, -1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_beta_inc_x_gt_1() {
-	beta_inc(1.0, 1.0, 2.0);
-}
-
-#[test]
-fn test_checked_beta_inc_a_lte_0() {
-	assert!(checked_beta_inc(0.0, 1.0, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_beta_inc_b_lte_0() {
-	assert!(checked_beta_inc(1.0, 0.0, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_beta_inc_x_lt_0() {
-	assert!(checked_beta_inc(1.0, 1.0, -1.0).is_err());
-}
-
-#[test]
-fn test_checked_beta_inc_x_gt_1() {
-	assert!(checked_beta_inc(1.0, 1.0, 2.0).is_err());
+	assert!(beta_inc(1.0, 1.0, 2.0).is_err());
 }
 
 #[test]
@@ -180,52 +132,28 @@ fn test_beta_reg() {
 	];
 
 	for ((a, b, x), expected, epsilon) in cases {
-		assert_almost_eq!(beta_reg(a, b, x), expected, epsilon)
+		assert_almost_eq!(beta_reg(a, b, x).unwrap(), expected, epsilon)
 	}
 }
 
 #[test]
-#[should_panic]
 fn test_beta_reg_a_lte_0() {
-	beta_reg(0.0, 1.0, 1.0);
+	assert!(beta_reg(0.0, 1.0, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_beta_reg_b_lte_0() {
-	beta_reg(1.0, 0.0, 1.0);
+	assert!(beta_reg(1.0, 0.0, 1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_beta_reg_x_lt_0() {
-	beta_reg(1.0, 1.0, -1.0);
+	assert!(beta_reg(1.0, 1.0, -1.0).is_err());
 }
 
 #[test]
-#[should_panic]
 fn test_beta_reg_x_gt_1() {
-	beta_reg(1.0, 1.0, 2.0);
-}
-
-#[test]
-fn test_checked_beta_reg_a_lte_0() {
-	assert!(checked_beta_reg(0.0, 1.0, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_beta_reg_b_lte_0() {
-	assert!(checked_beta_reg(1.0, 0.0, 1.0).is_err());
-}
-
-#[test]
-fn test_checked_beta_reg_x_lt_0() {
-	assert!(checked_beta_reg(1.0, 1.0, -1.0).is_err());
-}
-
-#[test]
-fn test_checked_beta_reg_x_gt_1() {
-	assert!(checked_beta_reg(1.0, 1.0, 2.0).is_err());
+	assert!(beta_reg(1.0, 1.0, 2.0).is_err());
 }
 
 #[test]
