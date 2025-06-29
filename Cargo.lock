@@ -808,6 +808,7 @@ dependencies = [
  "rand",
  "rng",
  "thiserror",
+ "util",
 ]
 
 [[package]]
@@ -897,12 +898,6 @@ checksum = "6d49784317cd0d1ee7ec5c716dd598ec5b4483ea832a2dced265471cc0f690ae"
 [[package]]
 name = "util"
 version = "0.1.0-alpha.3"
-dependencies = [
- "anyhow",
- "bincode",
- "log",
- "pyo3",
-]
 
 [[package]]
 name = "wait-timeout"

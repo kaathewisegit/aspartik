@@ -3,9 +3,11 @@ use core::f64;
 use pyo3::prelude::*;
 
 use math::function::{factorial, gamma};
+#[cfg(feature = "python")]
+use util::impl_pyerr;
 
 #[cfg(feature = "python")]
-use crate::python_macros::{impl_pyerr, impl_pymethods};
+use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::*,
