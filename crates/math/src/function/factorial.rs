@@ -1,6 +1,9 @@
 //! Provides functions related to factorial calculations (e.g. binomial
 //! coefficient, factorial, multinomial)
 
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 use crate::function::gamma;
 
 /// The maximum factorial representable
@@ -8,24 +11,19 @@ use crate::function::gamma;
 /// overflowing
 pub const MAX_FACTORIAL: usize = 170;
 
-/// Computes the factorial function `x -> x!` for
-/// `170 >= x >= 0`. All factorials larger than `170!`
-/// will overflow an `f64`.
+/// Factorial function: `x!`
 ///
-/// # Remarks
-///
-/// Returns `f64::INFINITY` if `x > 170`
+/// Gives exact values for `x <= 170`.  For larger inputs returns infnity.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn factorial(x: u64) -> f64 {
 	let x = x as usize;
 	FCACHE.get(x).map_or(f64::INFINITY, |&fac| fac)
 }
 
-/// Computes the logarithmic factorial function `x -> ln(x!)`
-/// for `x >= 0`.
+/// Logarithmic factorial function: `ln(x!)`
 ///
-/// # Remarks
-///
-/// Returns `0.0` if `x <= 1`
+/// Returns `0.0` if `x <= 1`.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn ln_factorial(x: u64) -> f64 {
 	let x = x as usize;
 	FCACHE.get(x).map_or_else(
@@ -34,12 +32,10 @@ pub fn ln_factorial(x: u64) -> f64 {
 	)
 }
 
-/// Computes the binomial coefficient `n choose k`
-/// where `k` and `n` are non-negative values.
-///
-/// # Remarks
+/// Binomial coefficient: `n choose k`
 ///
 /// Returns `0.0` if `k > n`
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn binomial(n: u64, k: u64) -> f64 {
 	if k > n {
 		0.0
@@ -51,12 +47,10 @@ pub fn binomial(n: u64, k: u64) -> f64 {
 	}
 }
 
-/// Computes the natural logarithm of the binomial coefficient
-/// `ln(n choose k)` where `k` and `n` are non-negative values
-///
-/// # Remarks
+/// Natural logarithm of the binomial coefficient
 ///
 /// Returns `f64::NEG_INFINITY` if `k > n`
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn ln_binomial(n: u64, k: u64) -> f64 {
 	if k > n {
 		f64::NEG_INFINITY
@@ -80,8 +74,7 @@ pub fn multinomial(n: u64, ks: &[u64]) -> Option<f64> {
 	}
 }
 
-// Initialization for pre-computed cache of 171 factorial
-// values 0!...170!
+// Initialization for pre-computed cache of 171 factorial values 0!...170!
 const FCACHE: [f64; MAX_FACTORIAL + 1] = {
 	let mut fcache = [1.0; MAX_FACTORIAL + 1];
 

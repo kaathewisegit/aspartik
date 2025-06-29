@@ -10,12 +10,21 @@ use pyo3::prelude::*;
 #[cfg(feature = "python")]
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	let m = PyModule::new(py, "_math_rust_impl")?;
-	m.add_function(wrap_pyfunction!(function::erf::erf, &m)?)?;
-	m.add_function(wrap_pyfunction!(function::erf::erf_inv, &m)?)?;
-	m.add_function(wrap_pyfunction!(function::erf::erfc, &m)?)?;
-	m.add_function(wrap_pyfunction!(function::erf::erfc_inv, &m)?)?;
 
-	m.add_function(wrap_pyfunction!(function::exponential::ei, &m)?)?;
+	use function::erf::*;
+	m.add_function(wrap_pyfunction!(erf, &m)?)?;
+	m.add_function(wrap_pyfunction!(erf_inv, &m)?)?;
+	m.add_function(wrap_pyfunction!(erfc, &m)?)?;
+	m.add_function(wrap_pyfunction!(erfc_inv, &m)?)?;
+
+	use function::exponential::*;
+	m.add_function(wrap_pyfunction!(ei, &m)?)?;
+
+	use function::factorial::*;
+	m.add_function(wrap_pyfunction!(factorial, &m)?)?;
+	m.add_function(wrap_pyfunction!(ln_factorial, &m)?)?;
+	m.add_function(wrap_pyfunction!(binomial, &m)?)?;
+	m.add_function(wrap_pyfunction!(ln_binomial, &m)?)?;
 
 	m.add_function(wrap_pyfunction!(tolerance::is_close, &m)?)?;
 
