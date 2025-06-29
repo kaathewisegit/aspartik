@@ -15,5 +15,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_function(wrap_pyfunction!(function::erf::erfc, &m)?)?;
 	m.add_function(wrap_pyfunction!(function::erf::erfc_inv, &m)?)?;
 
+	m.add_function(wrap_pyfunction!(tolerance::is_close, &m)?)?;
+
 	Ok(m)
 }

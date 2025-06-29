@@ -1,4 +1,6 @@
 use indoc::indoc;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 
 use std::fmt::Display;
 
@@ -14,9 +16,9 @@ pub const DEFAULT_F64_ACC: f64 = F64_PREC * 10.0;
 #[macro_export]
 macro_rules! assert_almost_eq {
 	($a:expr, $b:expr, $epsilon:expr $(,)?) => {{
-		use ::math::tolerance::Tolerance;
+		use ::math::tolerance::{is_close, Tolerance};
 
-		if $a.abs_diff($b) > $epsilon {
+		if !is_close($a, $b, $epsilon, 1e-16, 4) {
 			panic!(
 				"assert_almost_eq!({}, {}) failed:\n{}",
 				stringify!($a),
@@ -98,4 +100,25 @@ where
 		given.relative(expected),
 		given.ulps(expected),
 	)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+#[pyo3(signature = (
+	given, expected,
+	epsilon = f64::EPSILON, relative = 1e-15, ulps = 4,
+))]
+pub fn is_close(
+	given: f64,
+	expected: f64,
+	epsilon: f64,
+	relative: f64,
+	ulps: u64,
+) -> bool {
+	let abs_diff = given.abs_diff(expected);
+	let largest = given.max(expected);
+
+	abs_diff <= epsilon
+		|| abs_diff <= largest * relative
+		|| given.ulps(expected) <= ulps
 }
