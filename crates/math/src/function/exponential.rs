@@ -1,30 +1,31 @@
 //! Provides functions related to exponential calculations
 
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 use crate::consts;
 
-/// Computes the generalized Exponential Integral function
-/// where `x` is the argument and `n` is the integer power of the
-/// denominator term.
+/// Generalized exponential integral function
 ///
-/// Returns `None` if `x < 0.0` or the computation could not
-/// converge after 100 iterations
+/// `x` is the argument and `n` is the integer power of the denominator.  The
+/// formula is `∫_1^inf exp(-x t) / t^n dt`
 ///
-/// # Remarks
+/// Returns `None` if `x < 0.0` or the computation could not converge after 100
+/// iterations
 ///
-/// This implementation follows the derivation in
+/// This implementation follows the derivation in:
 ///
-/// _"Handbook of Mathematical Functions, Applied Mathematics Series, Volume
-/// 55"_ - Abramowitz, M., and Stegun, I.A 1964
+/// - _"Handbook of Mathematical Functions, Applied Mathematics Series, Volume
+///   55"_ - Abramowitz, M., and Stegun, I.A 1964
 ///
-/// AND
+/// - _"Advanced mathematical methods for scientists and engineers"_ - Bender,
+///   Carl M.; Steven A. Orszag (1978).  Page 253
 ///
-/// _"Advanced mathematical methods for scientists and engineers"_ - Bender,
-/// Carl M.; Steven A. Orszag (1978). page 253
-///
-/// The continued fraction approach is used for `x > 1.0` while the taylor
+/// The continued fraction approach is used for `x > 1.0` while the Taylor
 /// series expansions is used for `0.0 < x <= 1`.
 // TODO: Add examples
-pub fn integral(x: f64, n: u64) -> Option<f64> {
+#[cfg_attr(feature = "python", pyfunction)]
+pub fn ei(n: u64, x: f64) -> Option<f64> {
 	let eps = 0.00000000000000001;
 	let max_iter = 100;
 	let nf64 = n as f64;

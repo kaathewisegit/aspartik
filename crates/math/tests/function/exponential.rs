@@ -22,6 +22,6 @@ fn test_integral() {
 	];
 
 	for ((x, n), expected, epsilon) in cases {
-		assert_almost_eq!(integral(x, n).unwrap(), expected, epsilon);
+		assert_almost_eq!(ei(n, x).unwrap(), expected, epsilon);
 	}
 }

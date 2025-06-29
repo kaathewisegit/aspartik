@@ -7,6 +7,7 @@ __all__ = [
     "erfc",
     "erf_inv",
     "erfc_inv",
+    "ei",
 ]
 
 for item in __all__:
