@@ -7,8 +7,11 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+util = { workspace = true }
+
 indoc = { workspace = true }
 pyo3 = { workspace = true, features = ["multiple-pymethods"], optional = true }
+thiserror = { workspace = true }
 
 [features]
 default = ["python"]

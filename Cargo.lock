@@ -401,6 +401,8 @@ version = "0.1.0-alpha.3"
 dependencies = [
  "indoc",
  "pyo3",
+ "thiserror",
+ "util",
 ]
 
 [[package]]

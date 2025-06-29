@@ -1,7 +1,13 @@
 //! Provides the [gamma](https://en.wikipedia.org/wiki/Gamma_function) and
 //! related functions
 
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+use thiserror::Error;
+
 use core::f64;
+#[cfg(feature = "python")]
+use util::impl_pyerr;
 
 use crate::{
 	consts,
@@ -10,32 +16,24 @@ use crate::{
 
 /// Represents the errors that can occur when computing any of the incomplete
 /// gamma functions.
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
+#[cfg_attr(
+	feature = "python",
+	pyclass(module = "aspartik.math.functions", frozen, eq, str)
+)]
 pub enum GammaFuncError {
-	/// `a` is infinite, zero or less than zero.
+	/// `a` must be a finite non-zero positive number.
+	#[error("a is infinite, zero, or negative")]
 	AInvalid,
 
-	/// `x` is infinite, zero or less than zero.
+	/// `x` must be a finite non-zero positive number.
+	#[error("x is infinite, zero, or negative")]
 	XInvalid,
 }
 
-impl core::fmt::Display for GammaFuncError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			GammaFuncError::AInvalid => write!(
-				f,
-				"a is infinite, zero or less than zero"
-			),
-			GammaFuncError::XInvalid => write!(
-				f,
-				"x is infinite, zero or less than zero"
-			),
-		}
-	}
-}
-
-impl std::error::Error for GammaFuncError {}
+#[cfg(feature = "python")]
+impl_pyerr!(GammaFuncError, pyo3::exceptions::PyValueError);
 
 /// Auxiliary variable when evaluating the `gamma_ln` function
 const GAMMA_R: f64 = 10.900511;
@@ -55,11 +53,12 @@ const GAMMA_DK: &[f64] = &[
 	-2.7199490848860772e-9,
 ];
 
-/// Computes the logarithm of the gamma function
-/// with an accuracy of 16 floating point digits.
-/// The implementation is derived from
-/// "An Analysis of the Lanczos Gamma Approximation",
-/// Glendon Ralph Pugh, 2004 p. 116
+/// Logarithm of the gamma function
+///
+/// The accuracy should be 16 floating point digits.  The implementation is
+/// derived from "An Analysis of the Lanczos Gamma Approximation", Glendon Ralph
+/// Pugh, 2004 p. 116
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn ln_gamma(x: f64) -> f64 {
 	if x < 0.5 {
 		let s = GAMMA_DK
@@ -88,10 +87,12 @@ pub fn ln_gamma(x: f64) -> f64 {
 	}
 }
 
-/// Computes the gamma function with an accuracy
-/// of 16 floating point digits. The implementation
-/// is derived from "An Analysis of the Lanczos Gamma Approximation",
-/// Glendon Ralph Pugh, 2004 p. 116
+/// Gamma function
+///
+/// The accuracy should be 16 floating point digits.  The implementation is
+/// derived from "An Analysis of the Lanczos Gamma Approximation", Glendon Ralph
+/// Pugh, 2004 p. 116
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn gamma(x: f64) -> f64 {
 	if x < 0.5 {
 		let s = GAMMA_DK
@@ -125,6 +126,7 @@ pub fn gamma(x: f64) -> f64 {
 /// where `a` is the argument for the gamma function and `x` is the lower
 /// intergral limit.  If `s` or `x` are not in `(0, inf)`, returns
 /// [`GammaFuncError`].
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn gamma_ui(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 	gamma_ur(s, x).map(|x| x * gamma(s))
 }
@@ -135,17 +137,18 @@ pub fn gamma_ui(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 /// where `a` is the argument for the gamma function and `x` is the lower
 /// intergral limit.  If `s` or `x` are not in `(0, inf)`, returns
 /// [`GammaFuncError`].
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn gamma_li(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 	gamma_lr(s, x).map(|x| x * gamma(s))
 }
 
 /// Upper incomplete regularized gamma function
 ///
-/// TODO: formula
+/// The formula is `gamma_ui(s, x) / gamma(s)`.
 ///
-/// Returns `f64::NAN` if either argument is `f64::NAN`
-///
-/// TODO: error
+/// If either argument is zero or negative, returns [`GammaFuncError`].  If
+/// either argument is `NaN`, returns `NaN`.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn gamma_ur(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 	if s.is_nan() || x.is_nan() {
 		return Ok(f64::NAN);
@@ -212,18 +215,13 @@ pub fn gamma_ur(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 	Ok(ans * ax)
 }
 
-/// Computes the lower incomplete regularized gamma function
-/// `P(a,x) = 1 / Gamma(a) * int(exp(-t)t^(a-1), t=0..x) for real a > 0, x > 0`
-/// where `a` is the argument for the gamma function and `x` is the upper
-/// integral limit.
+/// lower incomplete regularized gamma function
 ///
-/// # Remarks
+/// The formula is `gamma_li(s, x) / gamma(s)`.
 ///
-/// Returns `f64::NAN` if either argument is `f64::NAN`
-///
-/// # Errors
-///
-/// if `a` or `x` are not in `(0, +inf)`
+/// If either argument is zero or negative, returns [`GammaFuncError`].  This
+/// function also propagates NaNs.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn gamma_lr(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 	if s.is_nan() || x.is_nan() {
 		return Ok(f64::NAN);
@@ -313,10 +311,12 @@ pub fn gamma_lr(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 	Ok(1.0 - ax.exp() * ans)
 }
 
-/// Computes the Digamma function which is defined as the derivative of
-/// the log of the gamma function. The implementation is based on
-/// "Algorithm AS 103", Jose Bernardo, Applied Statistics, Volume 25, Number 3
-/// 1976, pages 315 - 317
+/// Digamma function
+///
+/// Digamma is defined as the derivative of the log of the gamma function.  The
+/// implementation is based on "Algorithm AS 103", Jose Bernardo, Applied
+/// Statistics, Volume 25, Number 3 1976, pages 315 - 317.
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn digamma(x: f64) -> f64 {
 	let c = 12.0;
 	let d1 = -0.5772156649015329;
@@ -359,7 +359,11 @@ pub fn digamma(x: f64) -> f64 {
 	result
 }
 
-pub fn inv_digamma(x: f64) -> f64 {
+/// Inverse digamma function
+///
+/// This function propagates NaNs.
+#[cfg_attr(feature = "python", pyfunction)]
+pub fn digamma_inv(x: f64) -> f64 {
 	if x.is_nan() {
 		return f64::NAN;
 	}
@@ -378,9 +382,8 @@ pub fn inv_digamma(x: f64) -> f64 {
 	y
 }
 
-// modified signum that returns 0.0 if x == 0.0. Used
-// by inv_digamma, may consider extracting into a public
-// method
+/// Modified signum that returns 0.0 if x == 0.0
+// XXX: used by inv_digamma, consider extracting into a public method
 fn signum(x: f64) -> f64 {
 	if x == 0.0 {
 		0.0

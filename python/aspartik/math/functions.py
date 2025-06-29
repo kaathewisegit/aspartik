@@ -15,6 +15,14 @@ __all__ = [
     "ln_factorial",
     "binomial",
     "ln_binomial",
+    # gamma
+    "gamma",
+    "gamma_ui",
+    "gamma_li",
+    "gamma_ur",
+    "gamma_lr",
+    "digamma",
+    "digamma_inv",
 ]
 
 for item in __all__:

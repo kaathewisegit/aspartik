@@ -26,6 +26,15 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_function(wrap_pyfunction!(binomial, &m)?)?;
 	m.add_function(wrap_pyfunction!(ln_binomial, &m)?)?;
 
+	use function::gamma::*;
+	m.add_function(wrap_pyfunction!(gamma, &m)?)?;
+	m.add_function(wrap_pyfunction!(gamma_ui, &m)?)?;
+	m.add_function(wrap_pyfunction!(gamma_li, &m)?)?;
+	m.add_function(wrap_pyfunction!(gamma_ur, &m)?)?;
+	m.add_function(wrap_pyfunction!(gamma_lr, &m)?)?;
+	m.add_function(wrap_pyfunction!(digamma, &m)?)?;
+	m.add_function(wrap_pyfunction!(digamma_inv, &m)?)?;
+
 	m.add_function(wrap_pyfunction!(tolerance::is_close, &m)?)?;
 
 	Ok(m)

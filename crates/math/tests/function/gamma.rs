@@ -338,7 +338,7 @@ fn test_digamma() {
 
 #[test]
 fn test_inv_digamma_nan() {
-	assert!(inv_digamma(f64::NAN).is_nan());
+	assert!(digamma_inv(f64::NAN).is_nan());
 }
 
 #[test]
@@ -361,7 +361,7 @@ fn test_inv_digamma() {
 	];
 
 	for (x, expected, epsilon) in cases {
-		assert_almost_eq!(inv_digamma(x), expected, epsilon);
+		assert_almost_eq!(digamma_inv(x), expected, epsilon);
 	}
 }
 
