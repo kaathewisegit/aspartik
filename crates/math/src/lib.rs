@@ -28,6 +28,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 
 	use function::gamma::*;
 	m.add_function(wrap_pyfunction!(gamma, &m)?)?;
+	m.add_function(wrap_pyfunction!(ln_gamma, &m)?)?;
 	m.add_function(wrap_pyfunction!(gamma_ui, &m)?)?;
 	m.add_function(wrap_pyfunction!(gamma_li, &m)?)?;
 	m.add_function(wrap_pyfunction!(gamma_ur, &m)?)?;

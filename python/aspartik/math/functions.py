@@ -17,6 +17,7 @@ __all__ = [
     "ln_binomial",
     # gamma
     "gamma",
+    "ln_gamma",
     "gamma_ui",
     "gamma_li",
     "gamma_ur",
