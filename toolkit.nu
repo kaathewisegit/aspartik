@@ -75,7 +75,7 @@ export def clean [] {
 			b3.trees
 			b3.log
 			aspartik-*.log
-			crates/**/__pycache__/
+			python/**/__pycache__/
 			.pytest_cache/
 	)
 }
