@@ -203,10 +203,7 @@ impl WeightedScheduler {
 			let name = operator.type_name(py)?;
 			let accepts = *operator.accepts.lock();
 			let rejects = *operator.rejects.lock();
-			println!(
-				"{: <20}{: <12}{: <12}",
-				name, accepts, rejects
-			);
+			println!("{name: <20}{accepts: <12}{rejects: <12}",);
 		}
 		Ok(())
 	}
