@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 pub mod consts;
+pub mod float;
 pub mod function;
 pub mod tolerance;
 
