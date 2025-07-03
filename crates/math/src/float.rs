@@ -9,33 +9,40 @@ pub fn sign(x: f64) -> bool {
 	(bits >> 63) == 1
 }
 
+/// Exponent as raw bits
+///
+/// This is the unbiased raw value.  To get the mathematical exponent, use
+/// [`exponent`].
 pub fn exponent_bits(x: f64) -> u16 {
 	let bits = x.to_bits();
 	let exponent = (bits >> 52) & 0x7FF; // mask clears the sign bit
 	exponent.try_into().expect("infallible")
 }
 
-/// Returns the true exponent value
+/// The mathematical exponent
 ///
-/// This is the exact value of the exponent, account for bias.  Note that since
-/// smoe IEEE floats are normalized (the mantissa has one implicit 52nd bit) the
-/// formula `mantissa * 2^true_exponent` won't give the correct value.  You'll
-/// need to use [`exponent`], which shifts the value by 52 to account for that.
-pub fn true_exponent(x: f64) -> i16 {
-	exponent_bits(x) as i16 - 1023 // bias
-}
-
+/// This is the value of the exponent.  It's the absolute value of the exponent
+/// shifted by 1023, and further by 52 to account for the implicit leading 1 in
+/// mantissa.  The value of the float is thus `mantissa * 2^exponent`.
 pub fn exponent(x: f64) -> i16 {
-	true_exponent(x) - 52
+	exponent_bits(x) as i16 - 1023 - 52
 }
 
-pub fn true_mantissa(x: f64) -> u64 {
+/// Mantissa as raw bits
+///
+/// This is the raw value.  For the mathematical mantissa use [`mantissa`].
+pub fn mantissa_bits(x: f64) -> u64 {
 	x.to_bits() & MANTISSA_MASK
 }
 
+/// Mathematical mantissa
+///
+/// It's 53 bits, because denormals are shifted by one and regular values have
+/// the implicit one added.
 pub fn mantissa(x: f64) -> u64 {
-	let mut mantissa = true_mantissa(x);
+	let mut mantissa = mantissa_bits(x);
 	if exponent_bits(x) == 0 {
+		// demormals
 		mantissa <<= 1;
 	} else {
 		mantissa |= 0x10000000000000; // 2^52
