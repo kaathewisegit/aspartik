@@ -1,5 +1,6 @@
 # ruff: noqa: E712
 import math
+import pytest
 
 from aspartik.math.float import sign, exponent_bits, mantissa_bits
 
@@ -16,13 +17,16 @@ def test_sign():
     assert sign(-0.0) == True
 
 
-def test_exponent_bits():
-    cases = [
+@pytest.mark.parametrize(
+    "x,expected",
+    [
         (0.0, 0),
         (1.0, 1023 + 0),
         (2.0, 1023 + 1),
         (0.5, 1023 - 1),
         (10.0, 1023 + 3),
+        *[(2**i, 1023 + i) for i in range(1023)],
+        *[(2 ** (-i), 1023 - i) for i in range(1023)],
         (2**100, 1023 + 100),
         (2**100 + 77, 1023 + 100),  # non-zero mantissa
         (2**-1000, 1023 - 1000),
@@ -34,19 +38,20 @@ def test_exponent_bits():
         (math.nextafter(0.0, 1.0), 0),
         (2**-1074, 0),
         (1e-320, 0),
-    ]
-
-    for x, expected in cases:
-        assert exponent_bits(x) == expected
-        # sign shouldn't matter, so we check for negated xs too
-        assert exponent_bits(-x) == expected
+    ],
+)
+def test_exponent_bits(x, expected):
+    assert exponent_bits(x) == expected
+    # sign shouldn't matter, so we check for negated xs too
+    assert exponent_bits(-x) == expected
 
 
 # TODO: property testing for exponent
 
 
-def test_mantissa_bits():
-    cases = [
+@pytest.mark.parametrize(
+    "x,expected",
+    [
         # powers of 2
         *[(2.0**i, 0) for i in range(1000)],
         # one has already been included as 2^0
@@ -57,11 +62,11 @@ def test_mantissa_bits():
         # CPython implementation detail, empty quiet NaN.  If this case starts
         # failing, it should be removed
         (math.nan, 0x8000000000000),
-    ]
-
-    for x, expected in cases:
-        assert mantissa_bits(x) == expected
-        assert mantissa_bits(-x) == expected
+    ],
+)
+def test_mantissa_bits(x, expected):
+    assert mantissa_bits(x) == expected
+    assert mantissa_bits(-x) == expected
 
 
 # TODO: property testing for mantissa
