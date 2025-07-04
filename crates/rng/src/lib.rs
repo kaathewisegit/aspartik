@@ -1,7 +1,12 @@
+use anyhow::{ensure, Result};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
-use rand::{rngs::OsRng, Rng as _, SeedableRng, TryRngCore};
+use rand::{
+	distr::uniform::{UniformFloat, UniformSampler},
+	rngs::OsRng,
+	Rng as _, SeedableRng, TryRngCore,
+};
 use rand_pcg::Pcg64;
 
 use util::py_pickle_state_impl;
@@ -45,8 +50,18 @@ impl PyRng {
 		self.inner().random_range(lower..upper)
 	}
 
-	fn random_float(&self) -> f64 {
-		self.inner().random()
+	#[pyo3(signature = (lower = 0.0, upper = 1.0))]
+	fn random_float(&self, lower: f64, upper: f64) -> Result<f64> {
+		Ok(if lower == 0.0 && upper == 1.0 {
+			self.inner().random()
+		} else {
+			ensure!(
+				lower <= upper,
+				"`lower` must be less than `upper`, got {lower} > {upper}",
+			);
+			let d = UniformFloat::<f64>::new(lower, upper)?;
+			d.sample(&mut self.inner())
+		})
 	}
 
 	// pickle

@@ -26,8 +26,8 @@ class RNG:
         """
     def random_int(self, lower: int, upper: int) -> int:
         """Returns a random int in $[lower, upper)$."""
-    def random_float(self) -> float:
-        """Returns a float uniformly distributed on $[0, 1)$
+    def random_float(self, lower: float = 0.0, upper: float = 1.0) -> float:
+        """Returns a float uniformly distributed on $[lower, upper]$
 
         See the [`rand` notes][float] for details on how the values are
         sampled.
