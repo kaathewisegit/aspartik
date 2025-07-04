@@ -39,5 +39,12 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 
 	m.add_function(wrap_pyfunction!(tolerance::is_close, &m)?)?;
 
+	use float::*;
+	m.add_function(wrap_pyfunction!(sign, &m)?)?;
+	m.add_function(wrap_pyfunction!(exponent, &m)?)?;
+	m.add_function(wrap_pyfunction!(exponent_bits, &m)?)?;
+	m.add_function(wrap_pyfunction!(mantissa, &m)?)?;
+	m.add_function(wrap_pyfunction!(mantissa_bits, &m)?)?;
+
 	Ok(m)
 }
