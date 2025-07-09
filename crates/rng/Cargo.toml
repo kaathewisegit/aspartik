@@ -12,6 +12,6 @@ util = { workspace = true }
 anyhow = { workspace = true }
 bincode = { workspace = true, features = ["alloc", "serde"] }
 parking_lot = { workspace = true }
-pyo3 = { workspace = true }
+pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true, features = ["os_rng"] }
 rand_pcg = { workspace = true, features = ["serde"] }
