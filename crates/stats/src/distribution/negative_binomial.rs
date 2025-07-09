@@ -1,13 +1,11 @@
+use thiserror::Error;
+
 use math::function::{beta, gamma};
 
 use crate::distribution::{Discrete, DiscreteCDF};
 use crate::statistics::{Distribution, Mode};
 
-/// [Negative binomial
-/// distribution](http://en.wikipedia.org/wiki/Negative_binomial_distribution)
-///
-/// As noted in the wikipedia article, there are several different commonly used
-/// conventions for the parameters of the negative binomial distribution.
+/// [Negative binomial distribution][wiki]
 ///
 /// The negative binomial distribution is a discrete distribution with two
 /// parameters, `r` and `p`.  When `r` is an integer, the negative binomial
@@ -30,6 +28,8 @@ use crate::statistics::{Distribution, Mode};
 /// assert_almost_eq!(r.pmf(0), 0.0625, 1e-8);
 /// assert_almost_eq!(r.pmf(3), 0.15625, 1e-8);
 /// ```
+///
+/// [wiki]: http://en.wikipedia.org/wiki/Negative_binomial_distribution
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct NegativeBinomial {
 	r: f64,
@@ -37,53 +37,30 @@ pub struct NegativeBinomial {
 }
 
 /// Represents the errors that can occur when creating a [`NegativeBinomial`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum NegativeBinomialError {
 	/// `r` is NaN or less than zero.
+	#[error("`r` must positive")]
 	RInvalid,
 
 	/// `p` is NaN or not in `[0, 1]`.
+	#[error("`p` must lie in [0, 1]")]
 	PInvalid,
 }
 
-impl core::fmt::Display for NegativeBinomialError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			NegativeBinomialError::RInvalid => {
-				write!(f, "r is NaN or less than zero")
-			}
-			NegativeBinomialError::PInvalid => {
-				write!(f, "p is NaN or not in [0, 1]")
-			}
-		}
-	}
-}
-
-impl std::error::Error for NegativeBinomialError {}
-
 impl NegativeBinomial {
-	/// Constructs a new negative binomial distribution with parameters `r`
-	/// and `p`.  When `r` is an integer, the negative binomial distribution
-	/// can be interpreted as the distribution of the number of failures in
-	/// a sequence of Bernoulli trials that continue until `r` successes occur.
-	/// `p` is the probability of success in a single Bernoulli trial.
+	/// Creates a new [`NegativeBinomial`] distribution
 	///
-	/// # Errors
-	///
-	/// Returns an error if `p` is `NaN`, less than `0.0`,
-	/// greater than `1.0`, or if `r` is `NaN` or less than `0`
+	/// `p` must be `>= 0.0`, `r` must be in `[0, 1]`, neither can be `NaN`.
 	///
 	/// # Examples
 	///
 	/// ```
 	/// use stats::distribution::NegativeBinomial;
 	///
-	/// let mut result = NegativeBinomial::new(4.0, 0.5);
-	/// assert!(result.is_ok());
-	///
-	/// result = NegativeBinomial::new(-0.5, 5.0);
-	/// assert!(result.is_err());
+	/// NegativeBinomial::new(4.0, 0.5).unwrap();
+	/// NegativeBinomial::new(-0.5, 5.0).unwrap_err();
 	/// ```
 	pub fn new(
 		r: f64,
@@ -100,32 +77,29 @@ impl NegativeBinomial {
 		Ok(NegativeBinomial { r, p })
 	}
 
-	/// Returns the probability of success `p` of a single
-	/// Bernoulli trial associated with the negative binomial
-	/// distribution.
+	/// Probability of success of a single Bernoulli trial
 	///
 	/// # Examples
 	///
 	/// ```
 	/// use stats::distribution::NegativeBinomial;
 	///
-	/// let r = NegativeBinomial::new(5.0, 0.5).unwrap();
-	/// assert_eq!(r.p(), 0.5);
+	/// let nb = NegativeBinomial::new(5.0, 0.5).unwrap();
+	/// assert_eq!(nb.p(), 0.5);
 	/// ```
 	pub fn p(&self) -> f64 {
 		self.p
 	}
 
-	/// Returns the number `r` of success of this negative
-	/// binomial distribution.
+	/// Number of successes of all the trials
 	///
 	/// # Examples
 	///
 	/// ```
 	/// use stats::distribution::NegativeBinomial;
 	///
-	/// let r = NegativeBinomial::new(5.0, 0.5).unwrap();
-	/// assert_eq!(r.r(), 5.0);
+	/// let nb = NegativeBinomial::new(5.0, 0.5).unwrap();
+	/// assert_eq!(nb.r(), 5.0);
 	/// ```
 	pub fn r(&self) -> f64 {
 		self.r
@@ -200,51 +174,24 @@ impl DiscreteCDF for NegativeBinomial {
 }
 
 impl Distribution for NegativeBinomial {
-	/// Returns the mean of the negative binomial distribution.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// r * (1-p) / p
-	/// ```
+	/// `r * (1-p) / p`
 	fn mean(&self) -> Option<f64> {
 		Some(self.r * (1.0 - self.p) / self.p)
 	}
 
-	/// Returns the variance of the negative binomial distribution.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// r * (1-p) / p^2
-	/// ```
+	/// `r * (1-p) / p^2`
 	fn variance(&self) -> Option<f64> {
 		Some(self.r * (1.0 - self.p) / (self.p * self.p))
 	}
 
-	/// Returns the skewness of the negative binomial distribution.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (2-p) / sqrt(r * (1-p))
-	/// ```
+	/// `(2-p) / sqrt(r * (1-p))`
 	fn skewness(&self) -> Option<f64> {
 		Some((2.0 - self.p) / f64::sqrt(self.r * (1.0 - self.p)))
 	}
 }
 
 impl Mode<Option<f64>> for NegativeBinomial {
-	/// Returns the mode for the negative binomial distribution.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// if r > 1 then
-	///     floor((r - 1) * (1-p / p))
-	/// else
-	///     0
-	/// ```
+	/// `floor((r - 1) * (1-p / p))` for `r > 1`, else `0`
 	fn mode(&self) -> Option<f64> {
 		let mode = if self.r > 1.0 {
 			f64::floor((self.r - 1.0) * (1.0 - self.p) / self.p)

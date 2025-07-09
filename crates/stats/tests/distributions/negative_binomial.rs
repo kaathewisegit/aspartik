@@ -1,6 +1,5 @@
 use stats::distribution::{NegativeBinomial, NegativeBinomialError};
 
-// TODO: precision is very poor for the PMF
 use math::assert_almost_eq;
 
 use crate::prelude::*;
@@ -127,7 +126,7 @@ fn test_pmf() {
 	];
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.pmf(p), expected, 1e-7);
+		assert_almost_eq!(dist.pmf(p), expected, 1e-12);
 	}
 }
 
