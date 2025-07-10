@@ -38,14 +38,3 @@ class Stateful(Protocol):
 
 
 Parameter = Real | Integer | Boolean
-
-
-# XXX: revisit when pyright is replaced with ty
-def is_parameter(v):
-    """Checks that `v` is a parameter
-
-    This is functionally identical to `isinstance(v, Parameter)`.  The reason
-    it has to exist is because `pyright` doesn't accept
-    """
-
-    return isinstance(v, Real | Integer | Boolean)

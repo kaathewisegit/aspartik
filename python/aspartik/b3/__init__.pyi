@@ -219,9 +219,7 @@ class Boolean(Stateful):
     def __gt__(self, other: bool | Boolean) -> bool: ...
     def __ge__(self, other: bool | Boolean) -> bool: ...
 
-type Parameter = Real | Integer | Boolean
-
-def is_parameter(v: Any) -> bool: ...
+Parameter = Real | Integer | Boolean
 
 class Likelihood:
     def __init__(
