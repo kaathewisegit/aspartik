@@ -10,7 +10,8 @@ use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	let m = PyModule::new(py, "_math_rust_impl")?;
+	use util::py_make_submodule;
+	let m = py_make_submodule!(py, "_math_rust_impl");
 
 	use function::erf::*;
 	m.add_function(wrap_pyfunction!(erf, &m)?)?;

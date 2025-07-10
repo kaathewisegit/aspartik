@@ -185,6 +185,7 @@ dependencies = [
  "anyhow",
  "pyo3",
  "thiserror",
+ "util",
 ]
 
 [[package]]
@@ -316,6 +317,7 @@ dependencies = [
  "parking_lot",
  "petgraph",
  "pyo3",
+ "util",
 ]
 
 [[package]]

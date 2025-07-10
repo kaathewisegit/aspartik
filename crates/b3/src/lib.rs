@@ -19,7 +19,8 @@ pub use tree::Tree;
 use pyo3::prelude::*;
 
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	let m = PyModule::new(py, "_b3_rust_impl")?;
+	use ::util::py_make_submodule;
+	let m = py_make_submodule!(py, "_b3_rust_impl");
 
 	m.add_submodule(&tree::submodule(py)?)?;
 

@@ -76,7 +76,9 @@ use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	let m = PyModule::new(py, "_stats_rust_impl")?;
+	use util::py_make_submodule;
+	let m = py_make_submodule!(py, "_stats_rust_impl");
+
 	m.add_submodule(&distribution::pymodule(py)?)?;
 
 	Ok(m)

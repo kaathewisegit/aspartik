@@ -8,6 +8,7 @@ authors.workspace = true
 
 [dependencies]
 data = { workspace = true }
+util = { workspace = true }
 
 anyhow = { workspace = true }
 nom = { workspace = true }

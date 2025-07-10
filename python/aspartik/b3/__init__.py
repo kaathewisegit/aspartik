@@ -1,33 +1,15 @@
 from typing import Protocol, runtime_checkable
 
-
-from .._aspartik_rust_impl import _b3_rust_impl
-
-__all__ = [
-    # Rust
-    "Likelihood",
-    "Proposal",
-    "MCMC",
-    "Tree",
-    "Real",
-    "Integer",
-    "Boolean",
-    # Rust submodules
-    "tree",
-    # Protocols
-    "Prior",
-    "Operator",
-    "Logger",
-    # Python
-    "loggers",
-    "operators",
-    "priors",
-    "substitutions",
-]
-
-
-for item in __all__[:8]:
-    locals()[item] = getattr(_b3_rust_impl, item)
+from .._aspartik_rust_impl._b3_rust_impl import (
+    Likelihood as Likelihood,
+    Proposal as Proposal,
+    MCMC as MCMC,
+    Tree as Tree,
+    Real as Real,
+    Integer as Integer,
+    Boolean as Boolean,
+    tree as tree,
+)
 
 
 @runtime_checkable
@@ -53,7 +35,3 @@ class Logger(Protocol):
 class Stateful(Protocol):
     def accept(self): ...
     def reject(self): ...
-
-
-def __dir__():
-    return __all__

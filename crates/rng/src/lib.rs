@@ -78,7 +78,8 @@ impl PyRng {
 py_pickle_state_impl!(PyRng, _pickle_impl);
 
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	let m = PyModule::new(py, "_rng_rust_impl")?;
+	use util::py_make_submodule;
+	let m = py_make_submodule!(py, "_rng_rust_impl");
 
 	m.add_class::<PyRng>()?;
 

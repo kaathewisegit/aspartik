@@ -7,6 +7,8 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+util = { workspace = true }
+
 anyhow = { workspace = true }
 pyo3 = { workspace = true, optional = true, features = ["anyhow"] }
 thiserror = { workspace = true }
