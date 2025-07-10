@@ -2,7 +2,7 @@ import pickle
 import pytest
 
 
-from aspartik.b3 import Real, Integer, Boolean
+from aspartik.b3 import Real, Integer, Boolean, is_parameter
 
 
 def pickle_roundtrip(obj):
@@ -103,3 +103,9 @@ def test_pickle_preserves_state():
     assert restored_r[0] == 1.5
     restored_r.reject()
     assert restored_r[0] == 0.5
+
+
+def test_union():
+    assert is_parameter(Real(0.5))
+    assert is_parameter(Integer(5))
+    assert is_parameter(Boolean(True))

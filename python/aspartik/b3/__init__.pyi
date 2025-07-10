@@ -221,6 +221,8 @@ class Boolean(Stateful):
 
 type Parameter = Real | Integer | Boolean
 
+def is_parameter(v: Any) -> bool: ...
+
 class Likelihood:
     def __init__(
         self,

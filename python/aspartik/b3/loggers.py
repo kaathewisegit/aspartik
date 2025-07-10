@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any
 import json
 
-from . import MCMC, Tree, Prior, Logger
+from . import MCMC, Tree, Prior, Logger, is_parameter
 
 
 @dataclass
@@ -59,9 +59,8 @@ class ValueLogger(Logger):
         self._priors = {}
 
         for key, item in self.map.items():
-            # TODO
-            # if isinstance(item, Parameter):
-            #     self._params[key] = item
+            if is_parameter(item):
+                self._params[key] = item
             if isinstance(item, Prior):
                 self._priors[key] = item
 
