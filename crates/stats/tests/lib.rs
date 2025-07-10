@@ -1,4 +1,3 @@
-use approx::AbsDiffEq;
 use math::assert_almost_eq;
 
 use stats::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
@@ -8,26 +7,6 @@ mod distributions;
 /// NumPy's `assert_allclose` has the default relative accuracy of 1e-7.  SciPy
 /// uses `sqrt(eps) * 4`, which is roughly 1.5e-8.
 pub const ACCURACY: f64 = 1e-10;
-
-pub fn almost_eq(a: f64, b: f64, acc: f64) -> bool {
-	if a.is_infinite() && b.is_infinite() {
-		return a == b;
-	}
-	a.abs_diff_eq(&b, acc)
-}
-
-/// Compares if two floats are close via `approx::abs_diff_eq` using a maximum
-/// absolute difference (epsilon) of `acc`.
-macro_rules! assert_almost_eq {
-    ($a:expr, $b:expr, $prec:expr $(,)?) => {
-        if !$crate::almost_eq($a, $b, $prec) {
-            panic!(
-                "assertion failed: `abs(left - right) < {:e}`, (left: `{}`, right: `{}`)",
-                $prec, $a, $b
-            );
-        }
-    };
-}
 
 #[macro_export]
 macro_rules! make_test_harness {

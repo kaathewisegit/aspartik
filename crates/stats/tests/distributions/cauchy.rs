@@ -43,7 +43,7 @@ fn test_entropy() {
 		((10.0, 11.0), 4.928919519767661),
 	];
 	for (args, expected) in cases {
-		assert_exact(args, (), |d, _| d.entropy().unwrap(), expected);
+		assert_almost_eq!(new_dist(args).entropy().unwrap(), expected);
 	}
 }
 
@@ -57,7 +57,7 @@ fn test_mode() {
 		((0.0, f64::INFINITY), 0.0),
 	];
 	for (args, expected) in cases {
-		assert_exact(args, (), |d, _| d.mode().unwrap(), expected);
+		assert_almost_eq!(new_dist(args).mode().unwrap(), expected);
 	}
 }
 
@@ -71,7 +71,7 @@ fn test_median() {
 		((0.0, f64::INFINITY), 0.0),
 	];
 	for (args, expected) in cases {
-		assert_exact(args, (), |d, _| d.median().unwrap(), expected);
+		assert_almost_eq!(new_dist(args).median().unwrap(), expected);
 	}
 }
 
@@ -83,7 +83,7 @@ fn test_lower() {
 		((f64::INFINITY, 1.0), f64::NEG_INFINITY),
 	];
 	for (args, expected) in cases {
-		assert_exact(args, (), |d, _| d.lower(), expected);
+		assert_almost_eq!(new_dist(args).lower(), expected);
 	}
 }
 
@@ -95,7 +95,7 @@ fn test_upper() {
 		((f64::INFINITY, 1.0), f64::INFINITY),
 	];
 	for (args, expected) in cases {
-		assert_exact(args, (), |d, _| d.upper(), expected);
+		assert_almost_eq!(new_dist(args).upper(), expected);
 	}
 }
 
@@ -134,7 +134,7 @@ fn test_pdf() {
 		((f64::INFINITY, 1.0), 5.0, 0.0),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.pdf(p), expected);
+		assert_almost_eq!(new_dist(args).pdf(p), expected);
 	}
 }
 
@@ -173,7 +173,7 @@ fn test_ln_pdf() {
 		((f64::INFINITY, 1.0), 5.0, f64::NEG_INFINITY),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.ln_pdf(p), expected);
+		assert_almost_eq!(new_dist(args).ln_pdf(p), expected);
 	}
 }
 
@@ -212,7 +212,7 @@ fn test_cdf() {
 		((f64::INFINITY, 1.0), 5.0, 0.0),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.cdf(p), expected);
+		assert_almost_eq!(new_dist(args).cdf(p), expected);
 	}
 }
 
@@ -251,7 +251,7 @@ fn test_sf() {
 		((f64::INFINITY, 1.0), 5.0, 1.0),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.sf(p), expected);
+		assert_almost_eq!(new_dist(args).sf(p), expected);
 	}
 }
 
@@ -275,13 +275,13 @@ fn test_inverse_cdf() {
 		((0.0, 10.0), 5.0),
 		((-5.0, 100.0), -5.0),
 		((-5.0, 100.0), -1.0),
-		// TODO: 1e-14 abs diff
-		// ((-5.0, 100.0), 0.0),
+		((-5.0, 100.0), 0.0),
 		((-5.0, 100.0), 1.0),
 		((-5.0, 100.0), 5.0),
 	];
 	for (args, p) in cases {
-		assert_close(args, p, |d, p| d.inverse_cdf(d.cdf(p)), p);
+		let d = new_dist(args);
+		assert_almost_eq!(d.inverse_cdf(d.cdf(p)), p, 1e-13);
 	}
 }
 

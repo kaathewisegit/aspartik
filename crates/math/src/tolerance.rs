@@ -15,10 +15,21 @@ pub const DEFAULT_F64_ACC: f64 = F64_PREC * 10.0;
 
 #[macro_export]
 macro_rules! assert_almost_eq {
-	($a:expr, $b:expr, $epsilon:expr $(,)?) => {{
+	($a:expr, $b:expr $(, $opt:ident = $val:expr)*) => {{
+		let mut c = ::math::tolerance::Comparator {
+			epsilon: f64::EPSILON,
+			relative: 1e-16,
+			ulps: 4,
+		};
+
+		$(c.$opt = $val;)*
+
 		use ::math::tolerance::{is_close, Tolerance};
 
-		if !is_close($a, $b, $epsilon, 1e-16, 4) {
+		if !is_close($a, $b, c.epsilon, c.relative, c.ulps) {
+			println!("epsilon: {}", c.epsilon);
+			println!("relative: {}", c.relative);
+			println!("ulps: {}", c.ulps);
 			panic!(
 				"assert_almost_eq!({}, {}) failed:\n{}",
 				stringify!($a),
@@ -27,8 +38,9 @@ macro_rules! assert_almost_eq {
 			);
 		}
 	}};
-	($a:expr, $b:expr $(,)?) => {
-		assert_almost_eq!($a, $b, f64::EPSILON);
+
+	($a:expr, $b:expr, $epsilon:expr) => {
+		assert_almost_eq!($a, $b, epsilon = $epsilon)
 	};
 }
 
@@ -121,4 +133,10 @@ pub fn is_close(
 	abs_diff <= epsilon
 		|| abs_diff <= largest * relative
 		|| given.ulps(expected) <= ulps
+}
+
+pub struct Comparator {
+	pub epsilon: f64,
+	pub relative: f64,
+	pub ulps: u64,
 }

@@ -3,6 +3,8 @@ use stats::distribution::{LogNormal, LogNormalError};
 // TODO: precision
 use approx::assert_abs_diff_eq;
 
+use math::assert_almost_eq;
+
 use crate::prelude::*;
 
 make_test_harness!(LogNormal(location: f64, scale: f64), LogNormalError);
@@ -61,17 +63,17 @@ fn test_mean() {
 	}
 
 	let abs_cases = [
-		((-0.1, 5.5), 3351772.941252694, 1e-9),
-		((0.1, 2.5), 25.15357415581836, 1e-14),
-		((0.1, 5.5), 4093864.715172665, 1e-8),
-		((1.5, 0.1), 4.504153630288484, 1e-15),
-		((2.5, 0.1), 12.243558965801027, 1e-14),
-		((2.5, 1.5), 37.524723159601, 1e-11),
-		((5.5, 0.1), 245.91845567882194, 1e-13),
+		((-0.1, 5.5), 3351772.941252694),
+		((0.1, 2.5), 25.15357415581836),
+		((0.1, 5.5), 4093864.715172665),
+		((1.5, 0.1), 4.504153630288484),
+		((2.5, 0.1), 12.243558965801027),
+		((2.5, 1.5), 37.524723159601),
+		((5.5, 0.1), 245.91845567882194),
 	];
-	for (args, expected, epsilon) in abs_cases {
+	for (args, expected) in abs_cases {
 		let mean = new_dist(args).mean().unwrap();
-		assert_abs_diff_eq!(mean, expected, epsilon = epsilon)
+		assert_almost_eq!(mean, expected);
 	}
 }
 
@@ -111,7 +113,8 @@ fn test_variance() {
 	];
 	for (args, expected, epsilon) in abs_cases {
 		let variance = new_dist(args).variance().unwrap();
-		assert_abs_diff_eq!(variance, expected, epsilon = epsilon)
+		assert_abs_diff_eq!(variance, expected, epsilon = epsilon);
+		// assert_almost_eq!(variance, expected, relative = 1e-15);
 	}
 }
 
