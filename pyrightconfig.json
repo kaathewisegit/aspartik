@@ -1,7 +1,0 @@
-{
-	"venvPath": ".",
-	"venv": ".venv",
-
-	"reportMissingModuleSource": false,
-	"reportUnsupportedDunderAll": false
-}
