@@ -7,10 +7,9 @@ mod serialize;
 
 pub use petgraph::stable_graph::NodeIndex;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct Node {
 	name: String,
-	#[expect(dead_code)]
 	attributes: String,
 	distance: Option<f64>,
 }

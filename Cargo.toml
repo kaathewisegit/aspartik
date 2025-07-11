@@ -33,7 +33,7 @@ hashbrown = "0.15.3"
 indoc = "2.0"
 lapack-sys = "0.15.0"
 log = "0.4.27"
-nom = "8.0"
+logos = "0.15.0"
 num-traits = "0.2.19"
 parking_lot = "0.12.4"
 petgraph = { version = "0.8.2", default-features = false }
