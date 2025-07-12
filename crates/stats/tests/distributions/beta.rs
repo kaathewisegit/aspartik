@@ -62,11 +62,15 @@ fn test_entropy() {
 	let cases = [
 		((9.0, 1.0), -1.3083356884473305),
 		((5.0, 100.0), -2.520162318760274),
-		// TODO: imprecise
-		// ((1.0, 1.0), 0.0),
+		((1.0, 1.0), 0.0),
 	];
 	for (args, expected) in cases {
-		assert_close(args, (), |d, _| d.entropy().unwrap(), expected);
+		assert_almost_eq!(
+			new_dist(args).entropy().unwrap(),
+			expected,
+			epsilon = f64::EPSILON * 4.0,
+			relative = 1e-14,
+		);
 	}
 }
 

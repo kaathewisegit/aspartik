@@ -15,7 +15,7 @@ pub const DEFAULT_F64_ACC: f64 = F64_PREC * 10.0;
 
 #[macro_export]
 macro_rules! assert_almost_eq {
-	($a:expr, $b:expr $(, $opt:ident = $val:expr)*) => {{
+	($a:expr, $b:expr $(, $opt:ident = $val:expr)* $(,)?) => {{
 		let mut c = ::math::tolerance::Comparator {
 			epsilon: f64::EPSILON,
 			relative: 1e-16,
@@ -27,9 +27,6 @@ macro_rules! assert_almost_eq {
 		use ::math::tolerance::{is_close, Tolerance};
 
 		if !is_close($a, $b, c.epsilon, c.relative, c.ulps) {
-			println!("epsilon: {}", c.epsilon);
-			println!("relative: {}", c.relative);
-			println!("ulps: {}", c.ulps);
 			panic!(
 				"assert_almost_eq!({}, {}) failed:\n{}",
 				stringify!($a),
@@ -128,7 +125,7 @@ pub fn is_close(
 	ulps: u64,
 ) -> bool {
 	let abs_diff = given.abs_diff(expected);
-	let largest = given.max(expected);
+	let largest = given.abs().max(expected.abs());
 
 	abs_diff <= epsilon
 		|| abs_diff <= largest * relative
