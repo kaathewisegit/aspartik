@@ -11,25 +11,28 @@ pub mod python;
 pub struct Record<S: Seq> {
 	/// The sequence description.  Must start with a '>' character and have
 	/// an ID follow right after without a space.
-	description: String,
+	raw_description: String,
 	seq: S,
 }
 
 impl<S: Seq> Record<S> {
-	pub fn new(description: String, seq: S) -> Self {
-		Self { description, seq }
+	pub fn new(raw_description: String, seq: S) -> Self {
+		Self {
+			raw_description,
+			seq,
+		}
 	}
 
 	/// The sequence header line, exactly as it appeared in the source.
 	pub fn raw_description(&self) -> &str {
-		&self.description
+		&self.raw_description
 	}
 
 	/// Description, excludes the starting '>'.
 	pub fn description(&self) -> &str {
 		// SAFETY: this won't panic because `description` must start
 		// with an ASCII character '>'.
-		&self.description[1..]
+		&self.raw_description[1..]
 	}
 
 	pub fn id(&self) -> &str {
@@ -38,11 +41,11 @@ impl<S: Seq> Record<S> {
 		// returns the description whole if there isn't a post-space
 		// comment
 		let end = self
-			.description
+			.raw_description
 			.find(' ')
-			.unwrap_or(self.description.len());
+			.unwrap_or(self.raw_description.len());
 
-		&self.description[1..end]
+		&self.raw_description[1..end]
 	}
 
 	pub fn sequence(&self) -> &S {
@@ -104,7 +107,10 @@ impl<S: FromChars> FastaParser<S> {
 
 		let seq = S::from_vec(chars);
 
-		Some(Record { description, seq })
+		Some(Record {
+			raw_description: description,
+			seq,
+		})
 	}
 
 	/// Incrementally parse a FASTA file

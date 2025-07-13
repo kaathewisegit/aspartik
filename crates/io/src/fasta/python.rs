@@ -16,7 +16,10 @@ pub struct PyFastaDnaRecord(Record<Py<PyDnaSeq>>);
 #[pymethods]
 impl PyFastaDnaRecord {
 	#[new]
-	fn new(description: String, sequence: Py<PyDnaSeq>) -> Self {
+	fn new(mut description: String, sequence: Py<PyDnaSeq>) -> Self {
+		if !description.starts_with('>') {
+			description.insert(0, '>');
+		}
 		let record = Record::new(description, sequence);
 		Self(record)
 	}
@@ -47,7 +50,7 @@ impl PyFastaDnaRecord {
 		let self_seq = self.0.seq.get();
 		let other_seq = other.0.seq.get();
 
-		self.0.description == other.0.description
+		self.0.raw_description == other.0.raw_description
 			&& self_seq == other_seq
 	}
 

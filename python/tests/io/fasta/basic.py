@@ -9,7 +9,7 @@ def test_one():
     records = list(r)
 
     assert len(records) == 1
-    assert records[0] == DNARecord(">Record", DNASeq("AAAAAAAAAAAAAA"))
+    assert records[0] == DNARecord("Record", DNASeq("AAAAAAAAAAAAAA"))
 
 
 def test_two():
@@ -17,8 +17,8 @@ def test_two():
     records = list(r)
 
     assert len(records) == 2
-    assert records[0] == DNARecord(">Record 1", DNASeq("AAAAAAAAAAAAAAAAAA"))
-    assert records[1] == DNARecord(">Record 2", DNASeq("CCCCCCCCCCCCCCCCCCCC"))
+    assert records[0] == DNARecord("Record 1", DNASeq("AAAAAAAAAAAAAAAAAA"))
+    assert records[1] == DNARecord("Record 2", DNASeq("CCCCCCCCCCCCCCCCCCCC"))
 
 
 def test_multiline():
@@ -26,4 +26,4 @@ def test_multiline():
     records = list(r)
 
     assert len(records) == 1
-    assert records[0] == DNARecord(">Multiline record", DNASeq("ACGTACGTTTTTTTTTTTT"))
+    assert records[0] == DNARecord("Multiline record", DNASeq("ACGTACGTTTTTTTTTTTT"))
