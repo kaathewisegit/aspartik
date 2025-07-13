@@ -1,6 +1,6 @@
 use anyhow::Result;
 use parking_lot::Mutex;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyType};
 
 use std::{
 	fs::File,
@@ -8,6 +8,7 @@ use std::{
 };
 
 use super::{FastaParser, Record};
+use crate::reader::AnyReader;
 use data::seq::python::PyDnaSeq;
 
 #[pyclass(name = "DNARecord", module = "aspartik.io.fasta", frozen)]
@@ -71,7 +72,7 @@ impl PyFastaDnaRecord {
 pub struct PyFastaDnaReader {
 	parser: Mutex<FastaParser<Py<PyDnaSeq>>>,
 	// TODO: universal reader struct for IO
-	reader: Mutex<BufReader<File>>,
+	reader: Mutex<BufReader<AnyReader>>,
 }
 
 macro_rules! bubble {
@@ -86,12 +87,23 @@ macro_rules! bubble {
 #[pymethods]
 impl PyFastaDnaReader {
 	#[new]
-	fn new(path: &str) -> Result<Self> {
+	fn new(obj: PyObject) -> Self {
+		let reader = AnyReader::from_python(obj);
+		let buf_reader = BufReader::new(reader);
+		Self {
+			parser: Mutex::new(FastaParser::new()),
+			reader: Mutex::new(buf_reader),
+		}
+	}
+
+	#[classmethod]
+	fn from_file(_cls: Py<PyType>, path: &str) -> Result<Self> {
 		let file = File::open(path)?;
-		let reader = BufReader::new(file);
+		let reader = AnyReader::from_rust(file);
+		let buf_reader = BufReader::new(reader);
 		Ok(Self {
 			parser: Mutex::new(FastaParser::new()),
-			reader: Mutex::new(reader),
+			reader: Mutex::new(buf_reader),
 		})
 	}
 

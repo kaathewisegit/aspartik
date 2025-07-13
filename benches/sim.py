@@ -19,7 +19,7 @@ from aspartik.io.fasta import DNAReader
 path = "crates/b3/data/sim.fasta"
 sequences = []
 names = []
-for i, record in enumerate(DNAReader(path)):
+for i, record in enumerate(DNAReader.from_file(path)):
     if i == 500:
         break
     sequences.append(record.sequence)

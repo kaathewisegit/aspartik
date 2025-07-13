@@ -1,11 +1,11 @@
 from aspartik.io.fasta import DNAReader, DNARecord
 from aspartik.data import DNASeq
 
-# TODO: fuzzing, a harness, testing various reader interfaces
+# TODO: fuzzing, a harness, testing various reader interfaces, file vs obj
 
 
 def test_one():
-    r = DNAReader("python/tests/io/fasta/one.fasta")
+    r = DNAReader.from_file("python/tests/io/fasta/one.fasta")
     records = list(r)
 
     assert len(records) == 1
@@ -13,7 +13,7 @@ def test_one():
 
 
 def test_two():
-    r = DNAReader("python/tests/io/fasta/two.fasta")
+    r = DNAReader(open("python/tests/io/fasta/two.fasta"))
     records = list(r)
 
     assert len(records) == 2
@@ -22,7 +22,7 @@ def test_two():
 
 
 def test_multiline():
-    r = DNAReader("python/tests/io/fasta/multiline.fasta")
+    r = DNAReader.from_file("python/tests/io/fasta/multiline.fasta")
     records = list(r)
 
     assert len(records) == 1

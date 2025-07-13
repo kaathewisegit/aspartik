@@ -19,7 +19,7 @@ from aspartik.io.fasta import DNAReader
 path = "crates/b3/data/8384-shrooms.fasta"
 sequences = []
 names = []
-for i, record in enumerate(DNAReader(path)):
+for i, record in enumerate(DNAReader.from_file(path)):
     # new hard limit with thread scaling
     if i == 1150:
         break

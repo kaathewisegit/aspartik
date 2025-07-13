@@ -20,7 +20,7 @@ from aspartik.io.fasta import DNAReader
 path = "crates/b3/data/primate-mdna-full.fasta"
 sequences = []
 names = []
-for record in DNAReader(path):
+for record in DNAReader.from_file(path):
     sequences.append(record.sequence)
     names.append(record.id)
 
