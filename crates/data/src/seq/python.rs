@@ -4,8 +4,8 @@ use pyo3::prelude::*;
 use super::{parse_str, DnaSeq, FromChars, Seq};
 use crate::DnaNucleotide;
 
-#[derive(Debug, Clone)]
-#[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[pyclass(name = "DNASeq", module = "aspartik.data", frozen, eq)]
 pub struct PyDnaSeq(pub Box<[DnaNucleotide]>);
 
 impl Seq for PyDnaSeq {

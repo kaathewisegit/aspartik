@@ -2,9 +2,12 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use std::{fs::File, io::BufReader};
+use std::{
+	fs::File,
+	io::{BufRead, BufReader},
+};
 
-use super::{FastaReader, Record};
+use super::{FastaParser, Record};
 use data::seq::python::PyDnaSeq;
 
 #[pyclass(name = "DNARecord", module = "aspartik.io.fasta", frozen)]
@@ -40,6 +43,14 @@ impl PyFastaDnaRecord {
 		self.0.id().to_string()
 	}
 
+	fn __eq__(&self, other: &Self) -> bool {
+		let self_seq = self.0.seq.get();
+		let other_seq = other.0.seq.get();
+
+		self.0.description == other.0.description
+			&& self_seq == other_seq
+	}
+
 	fn __str__(&self) -> String {
 		self.0.to_string()
 	}
@@ -55,7 +66,18 @@ impl PyFastaDnaRecord {
 
 #[pyclass(name = "DNAReader", module = "aspartik.io.fasta", frozen)]
 pub struct PyFastaDnaReader {
-	inner: Mutex<FastaReader<Py<PyDnaSeq>, BufReader<File>>>,
+	parser: Mutex<FastaParser<Py<PyDnaSeq>>>,
+	// TODO: universal reader struct for IO
+	reader: Mutex<BufReader<File>>,
+}
+
+macro_rules! bubble {
+	($e: expr) => {
+		match $e {
+			Ok(out) => out,
+			Err(e) => return Some(Err(e.into())),
+		}
+	};
 }
 
 #[pymethods]
@@ -63,9 +85,10 @@ impl PyFastaDnaReader {
 	#[new]
 	fn new(path: &str) -> Result<Self> {
 		let file = File::open(path)?;
-		let reader = FastaReader::from_file(file);
+		let reader = BufReader::new(file);
 		Ok(Self {
-			inner: Mutex::new(reader),
+			parser: Mutex::new(FastaParser::new()),
+			reader: Mutex::new(reader),
 		})
 	}
 
@@ -74,7 +97,36 @@ impl PyFastaDnaReader {
 	}
 
 	fn __next__(&self) -> Option<Result<PyFastaDnaRecord>> {
-		let record = self.inner.lock().next()?;
-		Some(record.map(PyFastaDnaRecord))
+		let parser = &mut *self.parser.lock();
+		let reader = &mut *self.reader.lock();
+
+		let mut buf = String::new();
+
+		loop {
+			buf.clear();
+			if bubble!(reader.read_line(&mut buf)) == 0 {
+				break;
+			}
+			trim_line_end(&mut buf);
+
+			if let Some(record) =
+				bubble!(parser.read_line(Some(&buf)))
+			{
+				return Some(Ok(PyFastaDnaRecord(record)));
+			}
+		}
+
+		let record = bubble!(parser.read_line(None));
+
+		record.map(PyFastaDnaRecord).map(Ok)
+	}
+}
+
+fn trim_line_end(line: &mut String) {
+	if line.ends_with('\n') {
+		line.pop();
+		if line.ends_with('\r') {
+			line.pop();
+		}
 	}
 }

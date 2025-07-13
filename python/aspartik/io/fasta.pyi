@@ -3,6 +3,7 @@ from __future__ import annotations
 from ..data import DNASeq
 
 class DNARecord:
+    def __init__(self, name: str, sequence: DNASeq): ...
     @property
     def sequence(self) -> DNASeq: ...
     @property
