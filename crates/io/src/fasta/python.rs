@@ -8,7 +8,7 @@ use std::{
 };
 
 use super::{FastaParser, Record};
-use crate::reader::AnyReader;
+use crate::rw::AnyReader;
 use data::seq::python::PyDnaSeq;
 
 #[pyclass(name = "DNARecord", module = "aspartik.io.fasta", frozen)]

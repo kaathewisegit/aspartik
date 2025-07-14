@@ -1,7 +1,7 @@
 pub mod fasta;
 pub mod newick;
 #[cfg(feature = "python")]
-pub mod reader;
+pub mod rw;
 pub mod sam;
 
 #[cfg(feature = "python")]
