@@ -6,6 +6,7 @@ use crate::{
 	tree::PyTree,
 };
 use rng::PyRng;
+use util::py_get_attr;
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.operators", frozen)]
@@ -88,7 +89,7 @@ impl EpochScale {
 			py,
 			intern!(py, "aspartik.b3.operators._util"),
 		)?;
-		let func = module.getattr(intern!(py, "scale_on_range"))?;
+		let func = py_get_attr!(module, "scale_on_range")?;
 
 		let (scale, ratio) = func
 			.call1((

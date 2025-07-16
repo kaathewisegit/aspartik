@@ -3,14 +3,14 @@ use log::{debug, trace};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
-	exceptions::{PyTypeError, PyValueError},
+	exceptions::PyValueError,
 	types::{PyString, PyType},
 };
 use rand::distr::{weighted::WeightedIndex, Distribution};
 
 use profiler::profile;
 use rng::Rng;
-use util::{py_bail, py_call_method};
+use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Proposal {
@@ -69,20 +69,8 @@ pub struct PyOperator {
 
 impl<'py> FromPyObject<'py> for PyOperator {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
-		let repr = obj.repr()?;
-		if !obj.getattr("propose").is_ok_and(|a| a.is_callable()) {
-			py_bail!(
-				PyTypeError,
-				"Operator objects must have a `propose` method, which takes no arguments and returns a `Proposal`.  Got {repr}",
-			);
-		}
-
-		if obj.getattr("weight")?.extract::<f64>().is_err() {
-			py_bail!(
-				PyTypeError,
-				"Operator must have a `weight` attribute which returns a real number.  Got {repr}",
-			);
-		}
+		py_check_method!(obj, "propose");
+		py_extract_attr!(obj, "weight", f64)?;
 
 		let out = Self {
 			inner: obj.clone().unbind(),
@@ -91,7 +79,7 @@ impl<'py> FromPyObject<'py> for PyOperator {
 		};
 		debug!(
 			target: "b3::operator::extract_bound",
-			repr:%, id = out.id();
+			repr:% = obj.repr()?, id = out.id();
 			""
 		);
 		Ok(out)

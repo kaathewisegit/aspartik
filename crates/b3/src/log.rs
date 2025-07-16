@@ -1,9 +1,8 @@
 use anyhow::Result;
-use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 
 use crate::mcmc::Mcmc;
-use util::{py_bail, py_call_method};
+use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
 pub struct PyLogger {
 	inner: PyObject,
@@ -12,14 +11,9 @@ pub struct PyLogger {
 
 impl<'py> FromPyObject<'py> for PyLogger {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
-		if !obj.getattr("log")?.is_callable() {
-			py_bail!(
-				PyTypeError,
-				"Loggers must have a callable `log` method"
-			);
-		}
+		py_check_method!(obj, "log");
 
-		let every = obj.getattr("every")?.extract::<usize>()?;
+		let every = py_extract_attr!(obj, "every", usize)?;
 
 		Ok(PyLogger {
 			inner: obj.clone().unbind(),

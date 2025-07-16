@@ -2,9 +2,9 @@ use anyhow::{anyhow, Context, Result};
 use linalg::RowMatrix;
 use log::debug;
 use pyo3::prelude::*;
-use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
+use pyo3::{conversion::FromPyObject, exceptions::PyValueError};
 
-use util::{py_bail, py_call_method};
+use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
 pub struct PySubstitution<const N: usize> {
 	inner: PyObject,
@@ -14,15 +14,11 @@ pub type Substitution<const N: usize> = RowMatrix<f64, N, N>;
 
 impl<'py, const N: usize> FromPyObject<'py> for PySubstitution<N> {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
-		let repr = obj.repr()?;
-		if !obj.getattr("get_matrix")?.is_callable() {
-			py_bail!(PyTypeError, "Substitution model objects must have an `get_matrix` method which returns a substitution matrix.  Instead got {repr}");
-		}
+		py_check_method!(obj, "get_matrix");
 
-		let dimensions =
-			obj.getattr("dimensions")?.extract::<usize>()?;
+		let dimensions = py_extract_attr!(obj, "dimensions", usize)?;
 		if dimensions != N {
-			py_bail!(PyTypeError, "Expected the substitution model to have {N} dimensions, got {dimensions}");
+			py_bail!(PyValueError, "Expected the substitution model to have {N} dimensions, got {dimensions}");
 		}
 
 		let out = Self {
@@ -30,7 +26,7 @@ impl<'py, const N: usize> FromPyObject<'py> for PySubstitution<N> {
 		};
 		debug!(
 			target: "b3::substitution::extract_bound",
-			repr:%, id = out.id();
+			repr:% = obj.repr()?, id = out.id();
 			""
 		);
 		Ok(out)

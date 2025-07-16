@@ -1,11 +1,11 @@
 use anyhow::Result;
 use linalg::RowMatrix;
 use log::debug;
+use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
-use pyo3::{conversion::FromPyObject, exceptions::PyTypeError};
 
 use profiler::profile;
-use util::{py_bail, py_call_method};
+use util::{py_bail, py_call_method, py_check_method};
 
 pub struct PyClock {
 	inner: PyObject,
@@ -15,17 +15,14 @@ pub type Substitution = RowMatrix<f64, 4, 4>;
 
 impl<'py> FromPyObject<'py> for PyClock {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
-		let repr = obj.repr()?;
-		if !obj.getattr("get_rate")?.is_callable() {
-			py_bail!(PyTypeError, "Substitution model objects must have a `get_rate` method, which returns the clock rate.  Instead got {repr}");
-		}
+		py_check_method!(obj, "get_rate");
 
 		let out = Self {
 			inner: obj.clone().unbind(),
 		};
 		debug!(
 			target: "b3::clock::extract_bound",
-			repr:%, id = out.id();
+			repr:% = obj.repr()?, id = out.id();
 			""
 		);
 		Ok(out)

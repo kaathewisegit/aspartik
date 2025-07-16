@@ -119,3 +119,35 @@ macro_rules! py_make_submodule {
 		m
 	}}
 }
+
+#[macro_export]
+macro_rules! py_get_attr {
+	($obj:expr, $name:literal) => {
+		$obj.getattr(pyo3::intern!($obj.py(), $name))
+	};
+}
+
+#[macro_export]
+macro_rules! py_extract_attr {
+	($obj:expr, $name:literal, $type:ty $(,)?) => {
+		$crate::py_get_attr!($obj, $name)
+			.and_then(|attr| attr.extract::<$type>())
+	};
+}
+
+#[macro_export]
+macro_rules! py_check_method {
+	($obj:expr, $name:literal) => {{
+		use pyo3::{exceptions::PyTypeError, intern};
+
+		let method = $crate::py_get_attr!($obj, $name);
+		if !method.is_ok_and(|m| m.is_callable()) {
+			py_bail!(
+				PyTypeError,
+				"method {} not found in {}",
+				$name,
+				$obj.get_type().name()?,
+			);
+		}
+	}};
+}
