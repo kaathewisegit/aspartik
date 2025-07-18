@@ -17,7 +17,7 @@ fn test_harmonic() {
 }
 
 #[test]
-fn test_gen_harmonic_exact() {
+fn test_generalized_harmonic_exact() {
 	let cases = [
 		((0, 0.0), 1.0),
 		((0, f64::INFINITY), 1.0),
@@ -34,18 +34,22 @@ fn test_gen_harmonic_exact() {
 	];
 
 	for ((n, m), expected) in cases {
-		assert_eq!(gen_harmonic(n, m), expected);
+		assert_eq!(generalized_harmonic(n, m), expected);
 	}
 }
 
 #[test]
-fn test_gen_harmonic() {
+fn test_generalized_harmonic() {
 	let cases = [
 		((4, 1.0), 2.0833333333333335, 1e-14),
 		((4, 3.0), 1.177662037037037, 1e-16),
 	];
 
 	for ((n, m), expected, epsilon) in cases {
-		assert_almost_eq!(gen_harmonic(n, m), expected, epsilon);
+		assert_almost_eq!(
+			generalized_harmonic(n, m),
+			expected,
+			epsilon
+		);
 	}
 }

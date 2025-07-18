@@ -36,7 +36,7 @@
 
 ## `math`
 
-- [ ] Expose Harmonic and Logistic functions to Python
+- [x] Expose Harmonic and Logistic functions to Python
 
 
 ## `skvec`

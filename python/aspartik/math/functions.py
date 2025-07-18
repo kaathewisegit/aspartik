@@ -24,6 +24,12 @@ __all__ = [
     "gamma_lr",
     "digamma",
     "digamma_inv",
+    # harmonic
+    "harmonic",
+    "generalized_harmonic",
+    # logistic
+    "logistic",
+    "logit",
 ]
 
 for item in __all__:

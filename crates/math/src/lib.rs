@@ -38,6 +38,14 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_function(wrap_pyfunction!(digamma, &m)?)?;
 	m.add_function(wrap_pyfunction!(digamma_inv, &m)?)?;
 
+	use function::harmonic::*;
+	m.add_function(wrap_pyfunction!(harmonic, &m)?)?;
+	m.add_function(wrap_pyfunction!(generalized_harmonic, &m)?)?;
+
+	use function::logistic::*;
+	m.add_function(wrap_pyfunction!(logistic, &m)?)?;
+	m.add_function(wrap_pyfunction!(logit, &m)?)?;
+
 	m.add_function(wrap_pyfunction!(tolerance::is_close, &m)?)?;
 
 	use float::*;
