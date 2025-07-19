@@ -5,7 +5,7 @@ from .. import Proposal, Tree, Operator
 from ...rng import RNG
 
 
-@dataclass
+@dataclass(slots=True)
 class WilsonBalding(Operator):
     """A version of a subtree regraft move
 

@@ -6,7 +6,7 @@ from ..tree import Internal, Node
 from ...rng import RNG
 
 
-@dataclass
+@dataclass(slots=True)
 class NarrowExchange(Operator):
     """Exchanges the parents of two neighbouring nodes
 
@@ -65,7 +65,7 @@ class NarrowExchange(Operator):
         return Proposal.Hastings(ratio)
 
 
-@dataclass
+@dataclass(slots=True)
 class WideExchange(Operator):
     """Exchanges the parent of two random nodes
 

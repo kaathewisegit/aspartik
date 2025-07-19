@@ -6,7 +6,7 @@ from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
-@dataclass
+@dataclass(slots=True)
 class NodeSlide(Operator):
     """Slides the age of a random internal node between its parent and children
 

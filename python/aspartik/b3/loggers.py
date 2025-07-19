@@ -12,7 +12,7 @@ import json
 from . import MCMC, Tree, Prior, Logger, Parameter
 
 
-@dataclass
+@dataclass(slots=True)
 class TreeLogger(Logger):
     """Records the topology of the tree into a `.trees` file."""
 
@@ -34,7 +34,7 @@ class TreeLogger(Logger):
         self._file.write("\n")
 
 
-@dataclass
+@dataclass(slots=True)
 class PrintLogger(Logger):
     every: int
 
@@ -47,7 +47,7 @@ class PrintLogger(Logger):
         )
 
 
-@dataclass
+@dataclass(slots=True)
 class ValueLogger(Logger):
     map: Mapping[str, Any]
     path: str

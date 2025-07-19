@@ -4,7 +4,7 @@ from .. import Real, Integer, Prior
 from ...stats import distributions
 
 
-@dataclass
+@dataclass(slots=True)
 class Distribution(Prior):
     """Calculates prior probability of a parameter according to a distribution
 

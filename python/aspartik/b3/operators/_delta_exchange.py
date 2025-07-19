@@ -5,7 +5,7 @@ from .. import Proposal, Real, Operator
 from ...rng import RNG
 
 
-@dataclass
+@dataclass(slots=True)
 class DeltaExchange(Operator):
     """Scales a multidimensional parameter without changing its sum
 

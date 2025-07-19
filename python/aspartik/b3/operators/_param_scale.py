@@ -8,7 +8,7 @@ from ...rng import RNG
 from ...stats.distributions import Distribution
 
 
-@dataclass
+@dataclass(slots=True)
 class ParamScale(Operator):
     """Scales one parameter
 

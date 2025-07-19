@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import SupportsFloat
 
 
-@dataclass
+@dataclass(slots=True)
 class StrictClock:
     """Clock model which just returns a parameter"""
 

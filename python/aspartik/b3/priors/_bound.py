@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from .. import Real, Prior
 
 
-@dataclass
+@dataclass(slots=True)
 class Bound(Prior):
     """Puts limits on the value of a parameter
 

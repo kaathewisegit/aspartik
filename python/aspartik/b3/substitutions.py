@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import prod
 from typing import List, Tuple, ClassVar, SupportsFloat
 
@@ -7,7 +7,7 @@ def normalize(matrix: List[List[float]], coef: float) -> List[List[float]]:
     return [[element / coef for element in row] for row in matrix]
 
 
-@dataclass
+@dataclass(slots=True)
 class JC:
     dimensions: ClassVar[int] = 4
     matrix: ClassVar[List[List[float]]] = normalize(
@@ -24,7 +24,7 @@ class JC:
         return self.matrix
 
 
-@dataclass
+@dataclass(slots=True)
 class K80:
     dimensions: ClassVar[int] = 4
     kappa: SupportsFloat
@@ -46,10 +46,12 @@ class K80:
         return s
 
 
-@dataclass
+@dataclass(slots=True)
 class F81:
     dimensions: ClassVar[int] = 4
     frequencies: Tuple[float, float, float, float]
+    # TODO: either a `linalg` type or something else static
+    _matrix: List[List[float]]
 
     def __post_init__(self):
         # XXX: perhaps the frequencies should be made dynamic
@@ -60,17 +62,19 @@ class F81:
             [a, c, g - 1, t],
             [a, c, g, t - 1],
         ]
-        self.matrix = normalize(s, 1 - a**2 - c**2 - g**2 - t**2)
+        self._matrix = normalize(s, 1 - a**2 - c**2 - g**2 - t**2)
 
     def get_matrix(self):
-        return self.matrix
+        return self._matrix
 
 
-@dataclass
+@dataclass(slots=True)
 class HKY:
     dimensions: ClassVar[int] = 4
     frequencies: Tuple[float, float, float, float]
     kappa: SupportsFloat
+    _cached_matrix: List[List[float]] = field(default_factory=list, init=False)
+    _cached_kappa: float = field(default=0.0, init=False)
 
     def __post_init__(self):
         # XXX: what delta should this use?
