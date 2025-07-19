@@ -32,18 +32,16 @@ def execute(*args):
 
 def lint():
     execute("cargo", "fmt", "--check")
-    subprocess.run(
-        [
-            "cargo",
-            "clippy",
-            "--workspace",
-            "--tests",
-            "--features",
-            "approx,proptest",
-            "--",
-            "-D",
-            "warnings",
-        ]
+    execute(
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--tests",
+        "--features",
+        "approx,proptest",
+        "--",
+        "-D",
+        "warnings",
     )
 
     execute("ruff", "format", "--check")
