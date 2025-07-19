@@ -1,7 +1,7 @@
 from mpmath import mp
 import pytest
-from tests.utils import random_float
 
+from utils import random_float
 from aspartik.math import is_close
 from aspartik.math.functions import erf, erfc, erf_inv, erfc_inv
 

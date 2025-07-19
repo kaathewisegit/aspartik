@@ -1,12 +1,12 @@
 import pytest
 from math import nan
 from mpmath import mp
-from tests.utils import random_integer
+from utils import random_integer
 from aspartik.math import is_close
 
 from aspartik.stats.distributions import Poisson, PoissonError
 
-mp.dps = 1000
+mp.pds = 1000
 
 
 def test_basic():
