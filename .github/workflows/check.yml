@@ -1,0 +1,40 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.7.21"
+
+      - name: Install system libraries
+        run: sudo apt-get install -y liblapack-dev
+
+      - uses: actions/checkout@v4
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          uv sync --extra dev
+          uv pip install gmpy2
+
+      # TODO: remove it when I come up with a better way to include test data
+      - name: Download data files
+        run: |
+          mkdir -p crates/b3/data/
+          wget -P crates/b3/data/ https://gist.githubusercontent.com/kaathewisegit/f5cbc656c226175922c658ff2c4ab043/raw/293fd26a67396137ed8b7431586ef3049f1dc0af/primate-mdna-full.fasta
+
+      - name: Run the checks
+        run: uv run -m python.toolkit check
