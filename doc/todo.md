@@ -8,11 +8,15 @@
 
   - [ ] Adjust all operators to respect (or check for) dated tips
 
+- [ ] Deterministic tests with approximate tree comparisons
+
 
 ## `data`
 
 - [ ] A general tree type for `io`.  And perhaps it can be used in `b3`,
   if copying is fast enough.
+
+- [ ] Sequence alignment format (formats?)
 
 
 ## `io`
@@ -21,17 +25,24 @@
 
 - [ ] Convert parsers to Sans IO implementations
 
-  - [ ] Line-based Sans IO generator which wraps Rust and Python readers
+  - [x] Line-based Sans IO readers/writers which wrap Rust and Python
+    readers
   - [ ] Token-based Sans IO generator?
 
 - [ ] Non-recursive Newick parser
+
+- [ ] Nexus parser
+
+- [ ] VCF parser
+
+- [ ] tskit conversion
 
 
 ## `linalg`
 
 - [ ] Custom solvers?
 
-- [ ] Heap-allocated objects (storage types)?
+- [ ] Heap-allocated vectors and matrices (storage types)?
 
 
 ## `math`
