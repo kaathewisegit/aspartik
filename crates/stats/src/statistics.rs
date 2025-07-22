@@ -13,7 +13,7 @@ pub trait Distribution {
 	/// assert_eq!(0.5, n.mean().unwrap());
 	/// ```
 	fn mean(&self) -> Option<f64> {
-		None
+		unimplemented!()
 	}
 
 	/// Median
@@ -28,7 +28,7 @@ pub trait Distribution {
 	/// assert_eq!(Some(0.5), n.median());
 	/// ```
 	fn median(&self) -> Option<f64> {
-		None
+		unimplemented!()
 	}
 
 	/// Variance, or `None` if it doesn't exist
@@ -43,7 +43,7 @@ pub trait Distribution {
 	/// assert_eq!(1.0 / 12.0, n.variance().unwrap());
 	/// ```
 	fn variance(&self) -> Option<f64> {
-		None
+		unimplemented!()
 	}
 
 	/// Standard deviation, or `None` if it doesn't exist
@@ -73,7 +73,7 @@ pub trait Distribution {
 	/// assert_eq!(0.0, n.entropy().unwrap());
 	/// ```
 	fn entropy(&self) -> Option<f64> {
-		None
+		unimplemented!()
 	}
 
 	/// Skewness, of `None` if it doesn't exist
@@ -88,7 +88,7 @@ pub trait Distribution {
 	/// assert_eq!(0.0, n.skewness().unwrap());
 	/// ```
 	fn skewness(&self) -> Option<f64> {
-		None
+		unimplemented!()
 	}
 }
 
