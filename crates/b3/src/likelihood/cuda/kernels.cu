@@ -140,12 +140,23 @@ void update_likelihoods(
 	const u32 num_sites,
 	const u32 num_leaves,
 
-	f64x4* restrict projections,
+	const f64x4* restrict projections,
+	const u8* restrict scales,
+
 	f64* restrict likelihoods,
+
+	const u32 num_updated_nodes,
+	const u32* restrict edges,
 
 	u32 root
 ) {
 	SITE_PRELUDE
+
+	u32 scale = 0;
+	for (u32 i = 0; i < num_updated_nodes * 2; i++) {
+		u8 edge_scale = scales[idx(edges[i])];
+		scale += edge_scale;
+	}
 
 	u32 left_root_edge = (root - num_leaves) * 2;
 	u32 right_root_edge = left_root_edge + 1;

@@ -198,9 +198,15 @@ impl CudaLikelihood {
 		builder.arg(&self.num_leaves);
 
 		builder.arg(&self.projections);
+		builder.arg(&self.scales);
+
 		builder.arg(&self.likelihoods);
 
+		builder.arg(&self.num_updated_nodes);
+		builder.arg(&self.edges);
+
 		builder.arg(&root);
+		builder.arg(&self.likelihoods);
 
 		// TODO: safety
 		unsafe { builder.launch(cfg) }.with_context(|| {
