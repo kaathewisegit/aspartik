@@ -28,14 +28,43 @@ pub struct CudaLikelihood {
 	update_leaves_fn: CudaFunction,
 	update_likelihoods_fn: CudaFunction,
 
+	/// Leaf likelihoods
+	///
+	/// Has the size of `num_sites * num_leaves`, stored in row-major order:
+	/// for each leaf all the sites go in one row.
 	leaves: CudaSlice<Row<4>>,
+
+	/// A contiguous array which stores projection likelihoods
+	///
+	/// It has the length of `num_edges * num_sites`, with each likelihood
+	/// being associated with a particular edge.  It's row-major: each row
+	/// contains the values for a particular edge for all sites.
 	projections: CudaSlice<Row<4>>,
+
+	/// A copy of `projections`
 	projections_backup: CudaSlice<Row<4>>,
+
+	/// `num_sites`-long root likelihoods
 	likelihoods: CudaSlice<f64>,
+
+	/// A host storage for `likelihoods` to avoid repeating allocations
 	host_likelihoods: Vec<f64>,
+
+	/// Edges updated in the current proposal
+	///
+	/// The length is `nodes.len() * 2`.
 	edges: CudaSlice<u32>,
+
+	/// Transitions for each edge from `edges`
+	///
+	/// Same length as `edges`.
 	transitions: CudaSlice<Transition<4>>,
+
+	/// Nodes updated in the current proposal
 	nodes: CudaSlice<u32>,
+
+	scales: CudaSlice<u8>,
+	scales_backup: CudaSlice<u8>,
 
 	num_sites: u32,
 	num_leaves: u32,
@@ -114,6 +143,7 @@ impl CudaLikelihood {
 
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
+		builder.arg(&self.scales);
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.nodes);
@@ -199,9 +229,15 @@ impl CudaLikelihood {
 		if accept {
 			builder.arg(&self.projections);
 			builder.arg(&self.projections_backup);
+
+			builder.arg(&self.scales);
+			builder.arg(&self.scales_backup);
 		} else {
 			builder.arg(&self.projections_backup);
 			builder.arg(&self.projections);
+
+			builder.arg(&self.scales_backup);
+			builder.arg(&self.scales);
 		}
 
 		builder.arg(&self.edges);
@@ -259,6 +295,10 @@ impl CudaLikelihood {
 		let transitions = stream.alloc_zeros(num_edges)?;
 		let nodes = stream.alloc_zeros(num_nodes)?;
 
+		let scales = stream.alloc_zeros(num_edges * num_sites)?;
+		let scales_backup =
+			stream.alloc_zeros(num_edges * num_sites)?;
+
 		let ptx = Ptx::from_src(PTX_SRC);
 		let module = context.load_module(ptx)?;
 		let propose_fn = module.load_function("propose")?;
@@ -284,6 +324,8 @@ impl CudaLikelihood {
 			edges,
 			transitions,
 			nodes,
+			scales,
+			scales_backup,
 
 			num_sites: num_sites as u32,
 			num_leaves: num_leaves as u32,

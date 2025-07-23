@@ -54,6 +54,7 @@ __device__ f64x4 apply(
 	); \
 	projections[sidx(edges[i])] = projection; \
 
+// Update partial likelihoods for edges which go to leaves
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void update_leaves(
 	const u32 num_sites,
@@ -75,6 +76,9 @@ void update_leaves(
 	CALCULATE_LEAF_PROJECTION
 }
 
+// e^-40
+constexpr f64 CUTOFF = 0.000000000000000004248354255291589;
+
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void propose(
 	const u32 num_sites,
@@ -82,6 +86,7 @@ void propose(
 
 	const f64x4* restrict leaves,
 	f64* restrict projections,
+	u8* restrict scales,
 
 	const u32 num_updated_nodes,
 	const u32* restrict nodes,
@@ -154,12 +159,20 @@ void update_likelihoods(
 	likelihoods[site] = log(sum);
 }
 
+// Updates the backups or resets the working arrays
+//
+// TODO: it might make sense to separate it into two kernels: one for
+// projections and one for scales.  I can't use the default memcpy because it
+// needs to sample by edges.
 entrypoint __launch_bounds__(128)
 void copy_projections(
 	const u32 num_sites,
 
-	const f64x4* restrict src,
-	f64x4* restrict dst,
+	const f64x4* restrict p_src,
+	f64x4* restrict p_dst,
+
+	const u8* restrict s_src,
+	u8* restrict s_dst,
 
 	const u32* restrict edges
 ) {
@@ -167,5 +180,6 @@ void copy_projections(
 	u32 i = blockIdx.y;
 
 	u32 proj_idx = idx(edges[i]);
-	dst[proj_idx] = src[proj_idx];
+	p_dst[proj_idx] = p_src[proj_idx];
+	s_dst[proj_idx] = s_src[proj_idx];
 }

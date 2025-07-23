@@ -51,7 +51,7 @@ likelihood = Likelihood(
     substitution=sub_model,
     clock=clock_model,
     tree=tree,
-    calculator="thread",
+    calculator="cuda",
 )
 
 loggers = [
@@ -60,7 +60,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=100_000,
+    length=20_000,
     state=[birth_rate_y, tree],
     priors=priors,
     operators=operators,
