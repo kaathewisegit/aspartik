@@ -78,6 +78,8 @@ void update_leaves(
 
 // e^-40
 constexpr f64 CUTOFF = 0.000000000000000004248354255291589;
+// e^40
+constexpr f64 MULT = 235385266837020000.0;
 
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void propose(
@@ -111,6 +113,7 @@ void propose(
 	for (u32 i = internals_start; i < num_updated_nodes; i++) {
 		u32 left_edge = (nodes[i] - num_leaves) * 2;
 		u32 right_edge = left_edge + 1;
+		u32 this_edge = edges[i];
 
 		// thread-local likelihood
 		f64 l_likelihood = projections[sidx(left_edge)] *
@@ -118,6 +121,26 @@ void propose(
 		s_likelihood[threadIdx.x * 4 + sub] = l_likelihood;
 
 		__syncthreads();
+
+		if (sub == 0) {
+			if (
+				s_likelihood[threadIdx.x * 4 + 0] < CUTOFF
+				&& s_likelihood[threadIdx.x * 4 + 1] < CUTOFF
+				&& s_likelihood[threadIdx.x * 4 + 2] < CUTOFF
+				&& s_likelihood[threadIdx.x * 4 + 3] < CUTOFF
+			) {
+				s_likelihood[threadIdx.x * 4 + 0] *= MULT;
+				s_likelihood[threadIdx.x * 4 + 1] *= MULT;
+				s_likelihood[threadIdx.x * 4 + 2] *= MULT;
+				s_likelihood[threadIdx.x * 4 + 3] *= MULT;
+				scales[idx(this_edge)] = 40;
+			} else {
+				scales[idx(this_edge)] = 0;
+			}
+		}
+
+		__syncthreads();
+
 		// rebuild the likelihood from the 4 neighbouring threads
 		auto likelihood = make_f64x4(
 			s_likelihood[threadIdx.x * 4 + 0],
@@ -131,7 +154,7 @@ void propose(
 			likelihood
 		);
 
-		projections[sidx(edges[i])] = projection;
+		projections[sidx(this_edge)] = projection;
 	}
 }
 
@@ -145,16 +168,17 @@ void update_likelihoods(
 
 	f64* restrict likelihoods,
 
-	const u32 num_updated_nodes,
 	const u32* restrict edges,
 
 	u32 root
 ) {
 	SITE_PRELUDE
 
+	u32 num_edges = (num_leaves - 1) * 2;
+
 	u32 scale = 0;
-	for (u32 i = 0; i < num_updated_nodes * 2; i++) {
-		u8 edge_scale = scales[idx(edges[i])];
+	for (u32 i = 0; i < num_edges; i++) {
+		u8 edge_scale = scales[idx(i)];
 		scale += edge_scale;
 	}
 
@@ -167,7 +191,7 @@ void update_likelihoods(
 	);
 
 	f64 sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
-	likelihoods[site] = log(sum);
+	likelihoods[site] = log(sum) - scale;
 }
 
 // Updates the backups or resets the working arrays

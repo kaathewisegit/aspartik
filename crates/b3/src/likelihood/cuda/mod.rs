@@ -52,7 +52,8 @@ pub struct CudaLikelihood {
 
 	/// Edges updated in the current proposal
 	///
-	/// The length is `nodes.len() * 2`.
+	/// For each updated node this is the index of the edge leading to its
+	/// parent.
 	edges: CudaSlice<u32>,
 
 	/// Transitions for each edge from `edges`
@@ -202,11 +203,10 @@ impl CudaLikelihood {
 
 		builder.arg(&self.likelihoods);
 
-		builder.arg(&self.num_updated_nodes);
-		builder.arg(&self.edges);
+		let num_edges = self.num_edges();
+		builder.arg(&num_edges);
 
 		builder.arg(&root);
-		builder.arg(&self.likelihoods);
 
 		// TODO: safety
 		unsafe { builder.launch(cfg) }.with_context(|| {
@@ -338,5 +338,9 @@ impl CudaLikelihood {
 
 			num_updated_nodes: 0,
 		})
+	}
+
+	fn num_edges(&self) -> u32 {
+		(self.num_leaves - 1) * 2
 	}
 }
