@@ -165,7 +165,6 @@ void update_likelihoods(
 
 	const f64x4* restrict projections,
 	const u8* restrict scales,
-
 	f64* restrict likelihoods,
 
 	const u32* restrict edges,

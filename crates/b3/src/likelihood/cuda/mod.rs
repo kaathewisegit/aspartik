@@ -200,11 +200,9 @@ impl CudaLikelihood {
 
 		builder.arg(&self.projections);
 		builder.arg(&self.scales);
-
 		builder.arg(&self.likelihoods);
 
-		let num_edges = self.num_edges();
-		builder.arg(&num_edges);
+		builder.arg(&self.edges);
 
 		builder.arg(&root);
 
@@ -338,9 +336,5 @@ impl CudaLikelihood {
 
 			num_updated_nodes: 0,
 		})
-	}
-
-	fn num_edges(&self) -> u32 {
-		(self.num_leaves - 1) * 2
 	}
 }
