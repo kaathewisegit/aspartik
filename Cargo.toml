@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+	"crates/aspartik",
 	"crates/b3",
 	"crates/bitmap",
 	"crates/data",
@@ -63,30 +64,3 @@ branches_sharing_code = "warn"
 cast_lossless = "warn"
 default_trait_access = "warn"
 derive_partial_eq_without_eq = "warn"
-
-[profile.bench]
-debug = true
-
-[package]
-name = "aspartik"
-description = "Computational biology toolkit"
-
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
-
-[dependencies]
-pyo3 = { workspace = true, features = ["anyhow"] }
-
-b3 = { workspace = true }
-data = { workspace = true }
-io = { workspace = true }
-math = { workspace = true }
-profiler = { workspace = true }
-rng = { workspace = true }
-stats = { workspace = true }
-
-[features]
-cuda = ["b3/cuda"]
