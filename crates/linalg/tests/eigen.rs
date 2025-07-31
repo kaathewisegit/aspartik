@@ -1,7 +1,7 @@
 use approx::assert_relative_eq;
-use proptest::prelude::*;
+use arbtest::arbtest;
 
-use linalg::{RowMatrix, proptest::symmetric};
+use linalg::{RowMatrix, arbitrary::symmetric};
 
 #[test]
 fn roundtrip() {
@@ -20,9 +20,10 @@ fn roundtrip() {
 	assert_relative_eq!(jc * 0.1, inverse * (diag * 0.1) * eigenvectors);
 }
 
-proptest! {
-	#[test]
-	fn symmetric_eigen_2(m in symmetric::<2>()) {
+#[test]
+fn symmetric_eigen_2() {
+	arbtest(|u| {
+		let m: RowMatrix<f64, 2, 2> = symmetric(u)?;
 		let eigenvalues = m.eigenvalues();
 		let eigenvectors = m.eigenvectors();
 
@@ -30,15 +31,21 @@ proptest! {
 			assert_relative_eq!(
 				m * eigenvectors[i],
 				eigenvectors[i] * eigenvalues[i],
-				max_relative = 1e-10,
+				// 0xe4b8998f00010000 for 1e-15
+				max_relative = 1e-14,
 			);
 		}
-	}
 
-	// TODO: hermetic matrices
+		Ok(())
+	});
+}
 
-	#[test]
-	fn inverse_2(m in symmetric::<2>()) {
+// TODO: hermetic matrices
+
+#[test]
+fn inverse_2() {
+	arbtest(|u| {
+		let m: RowMatrix<f64, 2, 2> = symmetric(u)?;
 		let diag = RowMatrix::from_diagonal(m.eigenvalues());
 		let eigenvectors = m.eigenvectors();
 		let inverse = eigenvectors.inverse();
@@ -46,7 +53,10 @@ proptest! {
 		assert_relative_eq!(
 			m,
 			inverse * diag * eigenvectors,
-			max_relative = 1e-10,
+			// 0xaac90ff800010000 for 1e-14
+			max_relative = 1e-13,
 		);
-	}
+
+		Ok(())
+	});
 }

@@ -38,7 +38,7 @@ def lint():
         "--workspace",
         "--tests",
         "--features",
-        "approx,proptest",
+        "approx,arbitrary",
         "--",
         "-D",
         "warnings",
@@ -51,7 +51,7 @@ def lint():
 
 
 def test():
-    execute("cargo", "test", "--workspace", "--features", "approx,proptest")
+    execute("cargo", "test", "--workspace", "--features", "approx,arbitrary")
 
     execute("pytest")
 

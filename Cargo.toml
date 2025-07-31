@@ -25,6 +25,8 @@ repository = "https://github.com/kaathewisegit/aspartik"
 [workspace.dependencies]
 anyhow = "1.0"
 approx = "0.5.1"
+arbitrary = "1.4"
+arbtest = "0.3.2"
 bincode = { version = "2.0", default-features = false }
 bytemuck = "1.23"
 crossbeam-channel = "0.5.15"
