@@ -1,4 +1,4 @@
-use skvec::{skvec, SkVec};
+use skvec::{SkVec, skvec};
 
 #[test]
 fn empty() {

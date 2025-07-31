@@ -1,7 +1,7 @@
 use stats::distribution::{Laplace, LaplaceError};
 
 use crate::prelude::*;
-use std::f64::consts::{E, LN_10, LN_2};
+use std::f64::consts::{E, LN_2, LN_10};
 
 make_test_harness!(Laplace(location: f64, scale: f64), LaplaceError);
 
@@ -249,9 +249,9 @@ fn test_sample() {
 #[cfg(feature = "rand")]
 #[test]
 fn test_sample_distribution() {
+	use rand::SeedableRng;
 	use rand::distr::Distribution;
 	use rand::rngs::StdRng;
-	use rand::SeedableRng;
 
 	let location = 0.0;
 	let scale = 1.0;

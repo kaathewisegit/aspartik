@@ -1,4 +1,4 @@
-use crate::{lapack, RowMatrix, Vector};
+use crate::{RowMatrix, Vector, lapack};
 
 impl<const N: usize> RowMatrix<f64, N, N> {
 	/// Returns eigenvalues and matrices whose rows are right and left

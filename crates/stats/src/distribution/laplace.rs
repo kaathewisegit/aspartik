@@ -171,11 +171,7 @@ impl ContinuousCDF for Laplace {
 	/// where `μ` is the location, `b` is the scale
 	fn cdf(&self, x: f64) -> f64 {
 		let y = (-(x - self.location).abs() / self.scale).exp() / 2.0;
-		if x >= self.location {
-			1.0 - y
-		} else {
-			y
-		}
+		if x >= self.location { 1.0 - y } else { y }
 	}
 
 	/// Calculates the survival function for the
@@ -190,11 +186,7 @@ impl ContinuousCDF for Laplace {
 	/// where `μ` is the location, `b` is the scale
 	fn sf(&self, x: f64) -> f64 {
 		let y = (-(x - self.location).abs() / self.scale).exp() / 2.0;
-		if x >= self.location {
-			y
-		} else {
-			1.0 - y
-		}
+		if x >= self.location { y } else { 1.0 - y }
 	}
 
 	/// Calculates the inverse cumulative distribution function for the

@@ -1,7 +1,7 @@
 use stats::distribution::{Uniform, UniformError};
 
 use math::assert_almost_eq;
-use std::f64::consts::{LN_10, LN_2};
+use std::f64::consts::{LN_2, LN_10};
 
 use crate::prelude::*;
 
@@ -205,9 +205,9 @@ fn test_continuous() {
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 #[test]
 fn test_samples_in_range() {
+	use rand::SeedableRng;
 	use rand::distr::Distribution;
 	use rand::rngs::StdRng;
-	use rand::SeedableRng;
 
 	let seed = [
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,

@@ -11,7 +11,7 @@ use util::impl_pyerr;
 
 use crate::{
 	consts,
-	tolerance::{Tolerance, DEFAULT_F64_ACC},
+	tolerance::{DEFAULT_F64_ACC, Tolerance},
 };
 
 /// Represents the errors that can occur when computing any of the incomplete
@@ -385,9 +385,5 @@ pub fn digamma_inv(x: f64) -> f64 {
 /// Modified signum that returns 0.0 if x == 0.0
 // XXX: used by inv_digamma, consider extracting into a public method
 fn signum(x: f64) -> f64 {
-	if x == 0.0 {
-		0.0
-	} else {
-		x.signum()
-	}
+	if x == 0.0 { 0.0 } else { x.signum() }
 }

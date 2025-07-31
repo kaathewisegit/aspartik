@@ -307,7 +307,9 @@ where
 	}))
 	.is_err()
 	{
-		panic!("Integration of pdf doesn't equal cdf and derivative of cdf doesn't equal pdf!");
+		panic!(
+			"Integration of pdf doesn't equal cdf and derivative of cdf doesn't equal pdf!"
+		);
 	}
 }
 
@@ -327,7 +329,7 @@ where
 }
 
 pub mod prelude {
-	pub use approx::{abs_diff_eq, AbsDiffEq};
+	pub use approx::{AbsDiffEq, abs_diff_eq};
 	pub use math::assert_almost_eq;
 	pub use num_traits::Float;
 	pub use stats::{
@@ -338,7 +340,7 @@ pub mod prelude {
 	};
 
 	pub use super::{
-		check_continuous_distribution, check_discrete_distribution,
-		make_test_harness, ACCURACY,
+		ACCURACY, check_continuous_distribution,
+		check_discrete_distribution, make_test_harness,
 	};
 }

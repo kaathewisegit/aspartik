@@ -120,7 +120,10 @@ pub fn dsyev<const N: usize>(
 		)
 	}
 
-	assert_info!(info, "the algorithm failed to converge, {info} off-diagonal elements of an intermediate tridiagonal form did not converge to zero");
+	assert_info!(
+		info,
+		"the algorithm failed to converge, {info} off-diagonal elements of an intermediate tridiagonal form did not converge to zero"
+	);
 
 	(w, a)
 }
@@ -149,7 +152,10 @@ pub fn dgetrf<const N: usize, const M: usize>(
 		)
 	}
 
-	assert_info!(info, "U({info}, {info}) is exactly zero.  Division by zero will occur if U is used");
+	assert_info!(
+		info,
+		"U({info}, {info}) is exactly zero.  Division by zero will occur if U is used"
+	);
 
 	(a, ipiv)
 }
@@ -184,7 +190,10 @@ pub fn dgetri<const N: usize>(
 		)
 	}
 
-	assert_info!(info, "U({info}, {info}) is exactly zero, the input matrix is singular");
+	assert_info!(
+		info,
+		"U({info}, {info}) is exactly zero, the input matrix is singular"
+	);
 
 	a
 }

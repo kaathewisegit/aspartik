@@ -214,11 +214,7 @@ impl ContinuousCDF for StudentsT {
 			)
 			// panics?
 			.unwrap();
-			if x <= self.location {
-				ib
-			} else {
-				1.0 - ib
-			}
+			if x <= self.location { ib } else { 1.0 - ib }
 		}
 	}
 
@@ -256,11 +252,7 @@ impl ContinuousCDF for StudentsT {
 			)
 			// XXX: panics?
 			.unwrap();
-			if x <= self.location {
-				1.0 - ib
-			} else {
-				ib
-			}
+			if x <= self.location { 1.0 - ib } else { ib }
 		}
 	}
 
@@ -397,11 +389,7 @@ impl Distribution for StudentsT {
 	/// 0
 	/// ```
 	fn skewness(&self) -> Option<f64> {
-		if self.freedom <= 3.0 {
-			None
-		} else {
-			Some(0.0)
-		}
+		if self.freedom <= 3.0 { None } else { Some(0.0) }
 	}
 }
 

@@ -11,8 +11,8 @@ pub fn vector<const N: usize>() -> impl Strategy<Value = Vector<f64, N>> + Clone
 	[PROPTEST_F64; N].prop_map_into()
 }
 
-pub fn matrix<const N: usize, const M: usize>(
-) -> impl Strategy<Value = RowMatrix<f64, N, M>> {
+pub fn matrix<const N: usize, const M: usize>()
+-> impl Strategy<Value = RowMatrix<f64, N, M>> {
 	vec![vector::<N>(); M].prop_map(|val| {
 		let arr = val.as_slice().first_chunk::<M>().unwrap();
 		(*arr).into()

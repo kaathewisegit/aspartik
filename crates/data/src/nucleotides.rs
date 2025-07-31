@@ -20,7 +20,9 @@ use std::fmt;
 pub enum DnaNucleotideError {
 	#[error("'{0}' not a valid IUPAC nucleotide code character")]
 	InvalidChar(char),
-	#[error("{0:X} is not a valid Aspartik nucleotide binary representation")]
+	#[error(
+		"{0:X} is not a valid Aspartik nucleotide binary representation"
+	)]
 	InvalidByte(u8),
 }
 

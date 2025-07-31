@@ -17,7 +17,7 @@ members = [
 
 [workspace.package]
 version = "0.1.0-alpha.3"
-edition = "2021"
+edition = "2024"
 license = "AGPL-3.0-only"
 authors = ["Andrej Kolčin <self@kaathewise.net>"]
 repository = "https://github.com/kaathewisegit/aspartik"

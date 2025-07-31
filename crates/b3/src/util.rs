@@ -1,5 +1,5 @@
 //! Kitchen sink utilities.
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use pyo3::prelude::*;
 use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 

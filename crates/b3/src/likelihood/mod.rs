@@ -1,15 +1,15 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use log::trace;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
 use crate::{
-	clock::PyClock, substitution::PySubstitution, tree::PyTree,
-	util::dna_to_rows, Transitions,
+	Transitions, clock::PyClock, substitution::PySubstitution,
+	tree::PyTree, util::dna_to_rows,
 };
 use data::{
-	seq::{python::PyDnaSeq, Seq},
 	DnaNucleotide,
+	seq::{Seq, python::PyDnaSeq},
 };
 use linalg::{RowMatrix, Vector};
 

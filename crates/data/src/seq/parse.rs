@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 
 use super::{FromChars, SeqMut};
 
@@ -81,8 +81,7 @@ fn highlight_error(src: &str, index: usize) -> String {
 	} else {
 		format!(
 			"Illegal character encountered in the sequence:\n> {}\n  {:index$}^",
-			src,
-			"",
+			src, "",
 		)
 	}
 }

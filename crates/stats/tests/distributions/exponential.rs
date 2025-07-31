@@ -1,6 +1,6 @@
 use stats::distribution::{Exp, ExpError};
 
-use std::f64::consts::{LN_10, LN_2};
+use std::f64::consts::{LN_2, LN_10};
 
 use crate::prelude::*;
 

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use cudarc::{
 	driver::{
 		CudaContext, CudaFunction, CudaSlice, CudaStream, LaunchConfig,

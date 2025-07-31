@@ -1,5 +1,5 @@
-use data::seq::*;
 use data::DnaNucleotide::{self, *};
+use data::seq::*;
 
 #[test]
 fn decode() {

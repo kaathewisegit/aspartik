@@ -164,11 +164,7 @@ impl ContinuousCDF for Exp {
 	///
 	/// where `λ` is the rate
 	fn sf(&self, x: f64) -> f64 {
-		if x < 0.0 {
-			1.0
-		} else {
-			(-self.rate * x).exp()
-		}
+		if x < 0.0 { 1.0 } else { (-self.rate * x).exp() }
 	}
 
 	/// Calculates the inverse cumulative distribution function.

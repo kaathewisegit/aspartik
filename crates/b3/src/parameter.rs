@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
@@ -30,7 +30,13 @@ impl<T> Parameter<T> {
 			} else {
 				"dimensions"
 			};
-			py_bail!(PyIndexError, "Parameter has {} {}, index {} is out of bounds", self.len(), dimension, i);
+			py_bail!(
+				PyIndexError,
+				"Parameter has {} {}, index {} is out of bounds",
+				self.len(),
+				dimension,
+				i
+			);
 		} else {
 			Ok(())
 		}
@@ -248,7 +254,10 @@ pymethod_math_impl!(PyInteger, "Integer", i64);
 impl PyReal {
 	fn __float__(&self) -> Result<f64> {
 		let inner = &*self.inner.lock();
-		ensure!(inner.len() == 1, "Tried to coerce a multidimensional parameter to a float");
+		ensure!(
+			inner.len() == 1,
+			"Tried to coerce a multidimensional parameter to a float"
+		);
 		Ok(inner.0[0])
 	}
 }
@@ -257,7 +266,10 @@ impl PyReal {
 impl PyInteger {
 	fn __int__(&self) -> Result<i64> {
 		let inner = &*self.inner.lock();
-		ensure!(inner.len() == 1, "Tried to coerce a multidimensional parameter to an int");
+		ensure!(
+			inner.len() == 1,
+			"Tried to coerce a multidimensional parameter to an int"
+		);
 		Ok(inner.0[0])
 	}
 }

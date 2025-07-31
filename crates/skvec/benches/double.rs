@@ -1,6 +1,6 @@
 use divan::Bencher;
 
-use rand::{rngs::SmallRng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use std::hint::black_box;
 

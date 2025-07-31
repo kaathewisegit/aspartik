@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use super::{LikelihoodTrait, Row, Transition};
 use crate::util::transpose;
-use skvec::{skvec, SkVec};
+use skvec::{SkVec, skvec};
 
 pub struct CpuLikelihood<const N: usize> {
 	leaves: Vec<Row<N>>,

@@ -1,8 +1,8 @@
-use anyhow::{anyhow, Context, Error, Result};
+use anyhow::{Context, Error, Result, anyhow};
 
 use std::{cmp::min, fmt, mem};
 
-use data::seq::{parse_append_str, FromChars, Seq};
+use data::seq::{FromChars, Seq, parse_append_str};
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -140,7 +140,11 @@ impl<S: FromChars> FastaParser<S> {
 		}
 
 		if self.description.is_empty() {
-			return Err(anyhow!("Encountered a sequence which does not belong to a record:\n{}: {}", self.line_idx, line));
+			return Err(anyhow!(
+				"Encountered a sequence which does not belong to a record:\n{}: {}",
+				self.line_idx,
+				line
+			));
 		}
 
 		parse_append_str(&mut self.chars, line)

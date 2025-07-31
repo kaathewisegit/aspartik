@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use pyo3::{intern, prelude::*};
 
 use crate::{

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use linalg::RowMatrix;
 use log::debug;
 use pyo3::prelude::*;
@@ -18,7 +18,10 @@ impl<'py, const N: usize> FromPyObject<'py> for PySubstitution<N> {
 
 		let dimensions = py_extract_attr!(obj, "dimensions", usize)?;
 		if dimensions != N {
-			py_bail!(PyValueError, "Expected the substitution model to have {N} dimensions, got {dimensions}");
+			py_bail!(
+				PyValueError,
+				"Expected the substitution model to have {N} dimensions, got {dimensions}"
+			);
 		}
 
 		let out = Self {
@@ -45,7 +48,10 @@ impl<const N: usize> PySubstitution<N> {
 
 		let matrix =
 			matrix.extract::<Matrix<N>>(py).with_context(|| {
-				anyhow!("Expected the substitution model to return a matrix {0}x{0}.", N)
+				anyhow!(
+					"Expected the substitution model to return a matrix {0}x{0}.",
+					N
+				)
 			})?;
 		let matrix = RowMatrix::from(matrix);
 

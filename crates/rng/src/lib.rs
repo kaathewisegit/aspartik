@@ -1,11 +1,11 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 use rand::{
+	Rng as _, SeedableRng, TryRngCore,
 	distr::uniform::{UniformFloat, UniformSampler},
 	rngs::OsRng,
-	Rng as _, SeedableRng, TryRngCore,
 };
 use rand_pcg::Pcg64;
 

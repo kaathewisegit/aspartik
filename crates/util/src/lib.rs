@@ -117,7 +117,7 @@ macro_rules! py_make_submodule {
 		);
 
 		m
-	}}
+	}};
 }
 
 #[macro_export]

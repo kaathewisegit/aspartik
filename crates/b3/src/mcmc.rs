@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use log::trace;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
@@ -6,9 +6,9 @@ use pyo3::types::PyList;
 use rand::Rng as _;
 
 use crate::{
+	PyLogger, PyPrior,
 	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
-	PyLogger, PyPrior,
 };
 use rng::PyRng;
 use util::py_call_method;

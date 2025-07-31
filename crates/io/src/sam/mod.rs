@@ -1,4 +1,4 @@
-use anyhow::{bail, Error, Result};
+use anyhow::{Error, Result, bail};
 use data::{DnaNucleotide, Phred};
 
 #[repr(transparent)]

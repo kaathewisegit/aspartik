@@ -1,13 +1,13 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::{
 	exceptions::PyTypeError,
 	types::{PyAny, PyDict, PyTuple},
 };
+use rand::Rng as _;
 use rand::distr::{Distribution, Uniform};
 use rand::seq::SliceRandom;
-use rand::Rng as _;
 use serde::{Deserialize, Serialize};
 
 use std::{
@@ -428,7 +428,8 @@ impl Tree {
 			let (left, right) = self.children_of(node);
 
 			ensure!(
-				self.weight_of(node.into()) > self.weight_of(left),
+				self.weight_of(node.into())
+					> self.weight_of(left),
 				"Node {} ({}) is younger than it's left child {} ({})",
 				node.0,
 				self.weight_of(node.into()),
@@ -436,7 +437,8 @@ impl Tree {
 				self.weight_of(left),
 			);
 			ensure!(
-				self.weight_of(node.into()) > self.weight_of(right),
+				self.weight_of(node.into())
+					> self.weight_of(right),
 				"Node {} ({}) is younger than it's right child {} ({})",
 				node.0,
 				self.weight_of(node.into()),

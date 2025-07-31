@@ -1,7 +1,7 @@
 use approx::assert_relative_eq;
 use proptest::prelude::*;
 
-use linalg::{proptest::symmetric, RowMatrix};
+use linalg::{RowMatrix, proptest::symmetric};
 
 #[test]
 fn roundtrip() {

@@ -6,7 +6,7 @@ use pyo3::{
 	exceptions::PyValueError,
 	types::{PyString, PyType},
 };
-use rand::distr::{weighted::WeightedIndex, Distribution};
+use rand::distr::{Distribution, weighted::WeightedIndex};
 
 use profiler::profile;
 use rng::Rng;

@@ -238,7 +238,7 @@ fn test_discrete() {
 #[test]
 #[cfg(feature = "rand")]
 fn test_sample() {
-	use rand::{distr::Distribution, rngs::StdRng, SeedableRng};
+	use rand::{SeedableRng, distr::Distribution, rngs::StdRng};
 
 	let dist = NegativeBinomial::new(4.0, 0.5).unwrap();
 	let mut rng = StdRng::seed_from_u64(1600);
