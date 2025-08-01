@@ -1,7 +1,7 @@
 # Aspartik
 
 Aspartik is a computational biology toolkit inspired by [BioPython] and
-[SciPy].  It's goal is to provide a suit of utilities for working with
+[SciPy].  Its goal is to provide a suite of utilities for working with
 genetic data and phylogenetic simulations.
 
 Aspartik was initially created for the sake of [`b3`], a Bayesian
