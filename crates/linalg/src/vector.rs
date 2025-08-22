@@ -237,7 +237,9 @@ impl<T, const N: usize> Vector<T, N> {
 	where
 		F: Fn(&mut T),
 	{
-		self.v.each_mut().map(f);
+		for element in self.v.each_mut() {
+			f(element);
+		}
 	}
 
 	pub fn map<F, U>(&self, f: F) -> Vector<U, N>

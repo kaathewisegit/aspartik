@@ -21,7 +21,7 @@ pub struct PyRng {
 }
 
 impl PyRng {
-	pub fn inner(&self) -> MutexGuard<Pcg64> {
+	pub fn inner(&self) -> MutexGuard<'_, Pcg64> {
 		self.inner.lock()
 	}
 }

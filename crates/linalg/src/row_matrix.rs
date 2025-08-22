@@ -281,7 +281,9 @@ impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 	where
 		F: Fn(&mut T),
 	{
-		self.m.each_mut().map(|v| v.apply(&f));
+		for v in self.m.each_mut() {
+			v.apply(&f);
+		}
 	}
 
 	pub fn map<F, U>(&self, f: F) -> RowMatrix<U, N, M>

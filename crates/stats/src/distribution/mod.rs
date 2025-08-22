@@ -317,7 +317,7 @@ where
 use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
-pub fn pymodule(py: Python) -> PyResult<Bound<'_, PyModule>> {
+pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	let m = PyModule::new(py, "distributions")?;
 
 	m.add_class::<Beta>()?;

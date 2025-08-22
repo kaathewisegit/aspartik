@@ -301,15 +301,15 @@ impl Tree {
 			for node in current.iter().copied() {
 				let (left, right) = self.children_of(node);
 
-				if let Some(left) = self.as_internal(left) {
-					if self.updated_nodes[left.0] {
-						next.push(left);
-					}
+				if let Some(left) = self.as_internal(left)
+					&& self.updated_nodes[left.0]
+				{
+					next.push(left);
 				}
-				if let Some(right) = self.as_internal(right) {
-					if self.updated_nodes[right.0] {
-						next.push(right);
-					}
+				if let Some(right) = self.as_internal(right)
+					&& self.updated_nodes[right.0]
+				{
+					next.push(right);
 				}
 			}
 			internals.extend(current.iter().map(|n| n.into_node()));
@@ -744,7 +744,7 @@ pub struct PyTree {
 }
 
 impl PyTree {
-	pub fn inner(&self) -> MutexGuard<Tree> {
+	pub fn inner(&self) -> MutexGuard<'_, Tree> {
 		self.inner.lock()
 	}
 }

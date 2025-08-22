@@ -63,7 +63,7 @@ impl Profiler {
 		Instant::now() - *start.lock()
 	}
 
-	pub fn writer(&self) -> MutexGuard<BufWriter<File>> {
+	pub fn writer(&self) -> MutexGuard<'_, BufWriter<File>> {
 		let file = self.file.as_ref().unwrap();
 		file.lock()
 	}

@@ -239,7 +239,7 @@ pub struct PyLikelihood {
 }
 
 impl PyLikelihood {
-	pub fn inner(&self) -> MutexGuard<ErasedLikelihood> {
+	pub fn inner(&self) -> MutexGuard<'_, ErasedLikelihood> {
 		self.inner.lock()
 	}
 }

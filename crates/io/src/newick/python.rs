@@ -12,7 +12,7 @@ pub(crate) struct PyNode {
 }
 
 impl PyNode {
-	fn inner(&self) -> MutexGuard<Node> {
+	fn inner(&self) -> MutexGuard<'_, Node> {
 		self.inner.lock().expect("Mutex was poisoned")
 	}
 }
@@ -55,7 +55,7 @@ pub(crate) struct PyTree {
 }
 
 impl PyTree {
-	fn inner(&self) -> MutexGuard<Tree> {
+	fn inner(&self) -> MutexGuard<'_, Tree> {
 		self.inner.lock().expect("Mutex was poisoned")
 	}
 }
