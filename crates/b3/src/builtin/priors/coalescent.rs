@@ -1,5 +1,3 @@
-#![expect(unused)]
-
 use anyhow::Result;
 use pyo3::prelude::*;
 
@@ -50,7 +48,7 @@ impl ConstantPopulation {
 		let mut out = 1.0;
 		let mut last_weight = 0.0;
 		let mut num = tree.num_leaves();
-		for (node, weight) in nodes {
+		for (_node, weight) in nodes {
 			let time_diff = weight - last_weight;
 
 			let binomial = num * (num - 1);
