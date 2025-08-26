@@ -7,4 +7,11 @@ Yule = _b3_rust_impl.Yule
 ConstantPopulation = _b3_rust_impl.ConstantPopulation
 
 
-__all__ = ["Bound", "Distribution", "Yule"]
+__all__ = [
+    # Python
+    "Bound",
+    "Distribution",
+    # Rust
+    "ConstantPopulation",
+    "Yule",
+]
