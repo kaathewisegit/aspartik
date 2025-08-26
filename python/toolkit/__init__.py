@@ -93,7 +93,9 @@ def clean():
 
 
 def pdoc():
-    execute("pdoc", "-t", "docs/template", "-o", "target/pdoc/", "aspartik")
+    execute(
+        "pdoc", "--no-search", "-t", "docs/template", "-o", "target/pdoc/", "aspartik"
+    )
 
 
 def main():
