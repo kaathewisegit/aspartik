@@ -19,3 +19,7 @@ __pycache__/
 perf.data
 perf.data.old
 flamegraph.svg
+
+# JavaScript
+node_modules/
+.astro/
