@@ -15,11 +15,17 @@ body {
 .casl-1\/3 {
 	font-variation-settings: "CASL" 0.33;
 }
-
 .casl-2\/3 {
 	font-variation-settings: "CASL" 0.66;
 }
-
 .casl {
 	font-variation-settings: "CASL" 1;
+}
+
+a {
+	@apply underline;
+}
+
+a:hover {
+	@apply font-semibold;
 }
