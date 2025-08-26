@@ -58,7 +58,7 @@ def test():
 
 def run():
     execute("maturin", "develop", "--release")
-    execute("python", "benches/primate.py")
+    execute("python", "python/benches/primate.py")
 
 
 ARTIFACTS = [
