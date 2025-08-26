@@ -18,6 +18,8 @@ def make_parser():
     check = subparsers.add_parser("check", help="run all checks")  # noqa: F841
     subparsers.add_parser("clean", help="remove temporary files and `b3` output")
 
+    subparsers.add_parser("pdoc", help="build the pdoc HTML files")
+
     return parser
 
 
@@ -90,6 +92,10 @@ def clean():
             rmtree(path)
 
 
+def pdoc():
+    execute("pdoc", "-t", "docs/template", "-o", "target/pdoc/", "aspartik")
+
+
 def main():
     parser = make_parser()
     args = parser.parse_args()
@@ -105,5 +111,7 @@ def main():
             check()
         case "clean":
             clean()
+        case "pdoc":
+            pdoc()
         case None:
             parser.print_help()
