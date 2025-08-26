@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 
-def parser():
+def make_parser():
     parser = ArgumentParser(
         prog="toolkit",
         description="Command runner for working on Aspartik",
@@ -91,7 +91,8 @@ def clean():
 
 
 def main():
-    args = parser().parse_args()
+    parser = make_parser()
+    args = parser.parse_args()
 
     match args.subcommand:
         case "lint":
@@ -104,3 +105,5 @@ def main():
             check()
         case "clean":
             clean()
+        case None:
+            parser.print_help()
