@@ -22,7 +22,6 @@
 		"preview": "astro preview"
 	},
 	"dependencies": {
-		"@fontsource-variable/recursive": "^5.2.6",
 		"astro": "^5.13.3"
 	}
 }

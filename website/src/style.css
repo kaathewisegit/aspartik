@@ -5,8 +5,7 @@
 	font-style: normal;
 	font-display: swap;
 	font-weight: 300 1000;
-	src: url(node_modules/@fontsource-variable/recursive/files/recursive-latin-full-normal.woff2)
-		format("woff2-variations");
+	src: url(/assets/Recursive_VF_1.085.woff2) format("woff2-variations");
 }
 
 body {
