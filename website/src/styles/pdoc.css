@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+.pdoc {
+	@apply mx-auto max-w-200;
+}
+
+pre {
+	@apply overflow-x-scroll bg-gray-100;
+	@apply pl-2;
+
+	.linenos {
+		@apply mr-4;
+	}
+}
+
+div.pdoc-code {
+	@apply hidden;
+}
+
+div.attr {
+	@apply bg-gray-200 p-2;
+}
+
+.docstring {
+	@apply ml-2 mt-2 mb-4;
+}
+
+.pdoc > section:not(.module-info) {
+	@apply mb-8;
+}
+
+.pdoc .attr {
+	@apply p-2;
+}
+
+.pdoc .classattr {
+	@apply ml-4 mb-4;
+}
+
+input.view-source-toggle-state {
+	@apply hidden;
+}
+label.view-source-button {
+	@apply float-right before:content-['▶'];
+}
+/* individual fields/methods/classes */
+input.view-source-toggle-state:checked + div + a + div.pdoc-code {
+	@apply block;
+}
+/* module */
+input.view-source-toggle-state:checked + label + div.pdoc-code {
+	@apply block;
+}

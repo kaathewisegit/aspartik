@@ -10,6 +10,7 @@
 
 body {
 	font-family: "Recursive", sans-serif;
+	@apply text-base/7;
 }
 
 .casl-1\/3 {
