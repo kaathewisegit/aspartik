@@ -29,8 +29,13 @@ function Class(props: ClassType): JSXElement {
 	)
 
 	return (
-		<section class="mx-auto mb-6 max-w-200" id={props.name}>
+		<section
+			class="relative mx-auto mb-6 max-w-200"
+			id={props.name}
+		>
 			<Header object={props} title={title} />
+
+			<Ref qualname={props.qualname} />
 
 			<div class="ml-4">
 				<Docstring docstring={props.docstring} />
@@ -61,10 +66,10 @@ function Variable(props: VariableType): JSXElement {
 		</span>
 	)
 
-	// TODO: id
 	return (
-		<section class="my-2">
+		<section id={props.qualname} class="relative my-2">
 			<Header object={props} title={title} />
+			<Ref qualname={props.qualname} />
 			<Docstring docstring={props.docstring} />
 		</section>
 	)
@@ -92,8 +97,9 @@ function Func(props: FunctionType): JSXElement {
 	)
 
 	return (
-		<section class="my-2">
+		<section id={props.qualname} class="relative my-2">
 			<Header object={props} title={title} />
+			<Ref qualname={props.qualname} />
 			<Docstring docstring={props.docstring} />
 		</section>
 	)
@@ -106,6 +112,17 @@ function Funcs(props: FunctionType[]): JSXElement {
 	)
 
 	return <For each={vars}>{(func, _) => <Func {...func} />}</For>
+}
+
+function Ref(props: { qualname: string }): JSXElement {
+	return (
+		<a
+			class="absolute top-0 -left-8 h-8 w-8 text-center text-2xl opacity-0 transition duration-200 hover:opacity-100"
+			href={`#${props.qualname}`}
+		>
+			#
+		</a>
+	)
 }
 
 function Header(props: {
@@ -128,7 +145,11 @@ function Header(props: {
 }
 
 function HeaderBare(props: { title: JSXElement }): JSXElement {
-	return <h2 class="bg-gray-200 px-4 py-2">{props.title}</h2>
+	return (
+		<h2 class="flex flex-row bg-gray-200 px-4 py-2">
+			{props.title}
+		</h2>
+	)
 }
 
 function HeaderCode(props: {
