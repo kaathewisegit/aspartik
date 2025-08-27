@@ -1,4 +1,4 @@
-import "../styles/pdoc.css"
+import "./pdoc.css"
 import { For, type JSXElement } from "solid-js"
 import type {
 	ClassType,
