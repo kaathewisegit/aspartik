@@ -92,13 +92,18 @@ class Tree(Stateful):
         """The number of leaf nodes"""
     def is_internal(self, node: Node) -> bool:
         """Returns `True` if the node is internal"""
-    def is_leaf(self, node: Node) -> bool: ...
+    def is_leaf(self, node: Node) -> bool:
+        """Returns `True` if the node is a leaf"""
     def as_internal(self, node: Node) -> Optional[Internal]:
         """
         Converts `node` to the type `Internal` if it is internal, or returns
         `None` otherwise
         """
-    def as_leaf(self, node: Node) -> Optional[Leaf]: ...
+    def as_leaf(self, node: Node) -> Optional[Leaf]:
+        """
+        Converts `node` to the type `Leaf` if it is a leaf, or returns
+        `None` otherwise
+        """
     def root(self) -> Internal:
         """Returns the root node of the tree
 
@@ -151,7 +156,7 @@ class Tree(Stateful):
         """An iterator over all of the trees internal nodes"""
     def leaves(self) -> Iterator[Leaf]:
         """An iterator over all of the trees leaf nodes"""
-    def verify(self) -> None:
+    def validate(self) -> None:
         """Throws an exception if a tree is malformed
 
         This function ensures that:
@@ -196,6 +201,13 @@ class Proposal:
         """Accepts the move unconditionally"""
 
 class Real(Stateful):
+    """
+    Real multidimensional parameter
+
+    It acts as a list of `float`s, except it implements
+    [`Stateful`](#Stateful).  Note that this uses regular 64-bit floating point
+    numbers underneath, not some custom arbitrary precision real type.
+    """
     def __init__(self, *values: float): ...
     def __len__(self) -> int: ...
     def __getitem__(self, index: int) -> float: ...
@@ -210,6 +222,11 @@ class Real(Stateful):
     def __ge__(self, other: float | Real) -> bool: ...
 
 class Integer(Stateful):
+    """
+    Integer multidimensional parameter
+
+    It acts as a list of `int`s, except it implements [`Stateful`](#Stateful).
+    """
     def __init__(self, *values: int): ...
     def __len__(self) -> int: ...
     def __getitem__(self, index: int) -> int: ...
@@ -224,6 +241,12 @@ class Integer(Stateful):
     def __ge__(self, other: int | Integer) -> bool: ...
 
 class Boolean(Stateful):
+    """
+    Boolean multidimensional parameter
+
+    It acts as a list of `bool`s, except it implements [`Stateful`](#Stateful).
+    """
+
     def __init__(self, *values: bool): ...
     def __len__(self) -> int: ...
     def __getitem__(self, index: int) -> bool: ...
@@ -239,6 +262,16 @@ class Boolean(Stateful):
 Parameter = Real | Integer | Boolean
 
 class Likelihood:
+    """
+    Tree likelihood calculator
+
+    This object calculates the likelihood of a tree given the sequence data
+    using Felsenstein's tree pruning algorithm.
+
+    There are several implementations, each with its own options (**TODO**
+    docs).
+    """
+
     def __init__(
         self,
         sequences: Sequence[DNASeq],
@@ -251,23 +284,45 @@ class Likelihood:
 
 @runtime_checkable
 class Prior(Protocol):
+    """
+    Interface which describes all prior distributions
+
+    A `Prior` object will be queried by `MCMC` on each step after the operator
+    edits the state to get the prior probability of the new state.  It's the
+    responsibility of the prior to track the stateful objects it's interested
+    in, so they will typically be passed in the constructor.
+
+    Variable priors, coalescents, birth-death models, and all other
+    non-likelihood models implement this protocol.
+    """
+
     def probability(self) -> float:
         """Calculates the log prior probability of the model state
 
         The return value must be a **natural logarithm** of the probability.
 
-        It is presumed that the prior will store all the references to
-        parameters and trees it needs for its calculations by itself.
+        `MCMC` will short-circuit and abort the move if `probability` returns a
+        negative infinity.  This can be used to avoid expensive likelihood
+        calculations for obviously invalid moves, like going out of variable
+        bounds.
         """
 
 class Operator(Protocol):
+    """
+    Objects which propose moves by editing state
+
+    It is the responsibility of the objects to track the parts of the state it
+    might want to edit.  Typically these objects will be passed in the
+    constructor.
+    """
+
     def propose(self) -> Proposal:
         """Proposes a new MCMC step
 
         It is presumed that the operator will store all the references to
         parameters and trees it wants to edit and will change them accordingly.
         If a move cannot be proposed for any reason `Proposal.Reject` should be
-        returned.  MCMC will deal with rolling back the state.
+        returned.  `MCMC` will deal with rolling back the state.
         """
 
     @property
@@ -277,11 +332,23 @@ class Operator(Protocol):
         On each step `MCMC` picks a random operator from the list passed to it.
         It uses this value to weight them.  So, the larger it is, the more
         often the operator will be picked, and visa versa.  This value is read
-        once on startup.  So if it's changed mid-execution the old value will
-        still be used.
+        once on startup.  Therefore, if it's changed mid-execution the old
+        cached value will still be used.
         """
 
 class Logger(Protocol):
+    """
+    Custom state loggers
+
+    `b3` supports arbitrary logging via this protocol.  The `log` function is
+    passed a reference to the main `MCMC` object, so the logger can either take
+    state variables in the constructor of fetch them via the `MCMC` attributes.
+
+    The `log` function won't be called after each step for efficiency.  See
+    [`every`](#Logger.every) for configuring how often the logger will be
+    invoked.
+    """
+
     every: int
     """How often a logger should be called
 
@@ -297,6 +364,10 @@ class Logger(Protocol):
         """
 
 class MCMC:
+    """
+    The main object which runs the analysis
+    """
+
     def __init__(
         self,
         burnin: int,
@@ -313,17 +384,42 @@ class MCMC:
         thread_split_size: int = 400,
     ): ...
     @property
-    def current_step(self) -> int: ...
+    def current_step(self) -> int:
+        """
+        Index of the current MCMC step
+
+        Starts from 0, includes burn-in.
+        """
     @property
-    def state(self) -> List[Stateful]: ...
+    def state(self) -> List[Stateful]:
+        """
+        All stateful objects tracked by this `MCMC` instance
+        """
     @property
-    def priors(self) -> List[Prior]: ...
+    def priors(self) -> List[Prior]:
+        """
+        All priors
+        """
     @property
-    def likelihoods(self) -> List[Likelihood]: ...
+    def likelihoods(self) -> List[Likelihood]:
+        """
+        All accounted for likelihoods
+        """
     @property
-    def loggers(self) -> List[Logger]: ...
+    def loggers(self) -> List[Logger]:
+        """
+        All active loggers
+        """
     @property
-    def rng(self) -> RNG: ...
+    def rng(self) -> RNG:
+        """
+        Randomness source of this analysis
+
+        This objects is passed to operators and used for internal randomness
+        generation (such as picking the operator on each step).  Since the
+        underlying object is shared, using it will alter the rest of the
+        analysis.
+        """
     @property
     def posterior(self) -> float:
         """Posterior probability for the last accepted step"""
@@ -336,7 +432,14 @@ class MCMC:
     def prior(self) -> float:
         """Prior likelihood for the current step
 
-        This will trigger a recalculation on all priors.
+        Note that unlike [`posterior`](#MCMC.posterior) and
+        [`Likelihood`](#MCMC.Likelihood), this property isn't cached.  It will
+        trigger a recalculation on all priors on each access.
         """
 
-    def run(self) -> None: ...
+    def run(self) -> None:
+        """Start the simulation
+
+        This yields flow control to the Rust core until the simulation is done.
+        Press Ctrl+C to interrupt and stop the execution.
+        """
