@@ -8,29 +8,6 @@
 			"src/**/*.astro"
 		]
 	},
-	"javascript": {
-		"formatter": {
-			"enabled": true,
-			"indentWidth": 8,
-			"lineWidth": 80,
-			"semicolons": "asNeeded",
-			"arrowParentheses": "asNeeded"
-		}
-	},
-	"json": {
-		"formatter": {
-			"enabled": true,
-			"indentWidth": 8,
-			"indentStyle": "tab"
-		}
-	},
-	"css": {
-		"formatter": {
-			"enabled": true,
-			"indentWidth": 8,
-			"indentStyle": "tab"
-		}
-	},
 	"linter": {
 		"rules": {
 			"nursery": { "useSortedClasses": "error" },
