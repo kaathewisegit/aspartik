@@ -1,5 +1,11 @@
 ---
 import "../style.css"
+
+interface Props {
+	class: string
+}
+
+const { class: cls } = Astro.props
 ---
 
 <!doctype html>
@@ -10,7 +16,7 @@ import "../style.css"
 		<meta name="generator" content={Astro.generator} />
 		<title>Aspartik</title>
 	</head>
-	<body>
+	<body class={cls}>
 		<slot />
 	</body>
 </html>
