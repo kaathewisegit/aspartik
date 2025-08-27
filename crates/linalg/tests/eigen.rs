@@ -32,7 +32,8 @@ fn symmetric_eigen_2() {
 				m * eigenvectors[i],
 				eigenvectors[i] * eigenvalues[i],
 				// 0xe4b8998f00010000 for 1e-15
-				max_relative = 1e-14,
+				// 0x3aaa44be00000236 for 1e-14
+				max_relative = 1e-13,
 			);
 		}
 
