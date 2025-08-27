@@ -65,6 +65,7 @@ function Variable(props: VariableType): JSXElement {
 	return (
 		<section class="my-2">
 			<Header object={props} title={title} />
+			<Docstring docstring={props.docstring} />
 		</section>
 	)
 }
@@ -93,6 +94,7 @@ function Func(props: FunctionType): JSXElement {
 	return (
 		<section class="my-2">
 			<Header object={props} title={title} />
+			<Docstring docstring={props.docstring} />
 		</section>
 	)
 }
@@ -144,11 +146,11 @@ function HeaderCode(props: {
 				id={inputId}
 				type="checkbox"
 			/>
-			<h2 class="bg-gray-200 px-4 py-2">
+			<h2 class="flex flex-row bg-gray-200 px-4 py-2">
 				{props.title}
 
 				<label
-					class="float-right cursor-pointer select-none"
+					class="float-right ml-auto cursor-pointer select-none"
 					for={inputId}
 				>
 					<span class="triangle mr-1">▶</span>
