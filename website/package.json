@@ -22,6 +22,12 @@
 		"preview": "astro preview"
 	},
 	"dependencies": {
-		"astro": "^5.13.3"
+		"@astrojs/solid-js": "^5.1.0",
+		"astro": "^5.13.3",
+		"rehype-stringify": "^10.0.1",
+		"remark-parse": "^11.0.0",
+		"remark-rehype": "^11.1.2",
+		"solid-js": "^1.9.9",
+		"unified": "^11.0.5"
 	}
 }

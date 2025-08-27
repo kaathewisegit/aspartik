@@ -1,32 +1,43 @@
 import { defineCollection } from "astro:content"
-import * as path from "node:path"
-import type { LoaderContext } from "astro/loaders"
-import { $, Glob } from "bun"
+import fs from "node:fs/promises"
+import { type ModuleType, moduleSchema } from "./schema"
+import { md2html } from "./utils"
 
-const htmlLoader = {
-	name: "pdoc-loader",
-	load: async (context: LoaderContext): Promise<void> => {
-		const store = context.store
+async function flattenModules(
+	module: Record<string, any>,
+): Promise<ModuleType[]> {
+	const modules = [] as any[]
 
-		$`uv run -m python.toolkit pdoc`.cwd("..").quiet()
+	async function traverse(module: any) {
+		const submodules = module.submodules
 
-		const base = "../target/pdoc/"
-		const files = new Glob("**/*.html").scan(base)
-		for await (const filePath of files) {
-			if (filePath === "index.html") {
-				continue
-			}
-
-			const html = await Bun.file(
-				path.join(base, filePath),
-			).text()
-			store.set({ id: filePath, data: { html } })
+		module.id = module.fullname
+		module.submodules = module.submodules.map((mod: any) => ({
+			fullname: mod.fullname,
+			name: mod.name,
+		}))
+		if (module.docstring) {
+			module.docstring = await md2html(module.docstring)
 		}
-	},
+
+		modules.push(module)
+
+		submodules.forEach(traverse)
+	}
+
+	traverse(module)
+
+	return modules
 }
 
 const reference = defineCollection({
-	loader: htmlLoader,
+	loader: async () => {
+		const text = await fs.readFile("../target/pdoc.json", "utf8")
+		const json = JSON.parse(text)
+		const modules = await flattenModules(json)
+		return modules
+	},
+	schema: moduleSchema,
 })
 
 export const collections = { reference }

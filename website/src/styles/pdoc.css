@@ -1,9 +1,5 @@
 @import "tailwindcss";
 
-.pdoc {
-	@apply mx-auto max-w-200;
-}
-
 pre {
 	@apply overflow-x-scroll bg-gray-100;
 	@apply pl-2;
@@ -13,16 +9,16 @@ pre {
 	}
 }
 
-div.pdoc-code {
-	@apply hidden;
+input + div span.triangle {
+	@apply select-none;
+	@apply inline-block transition duration-200;
 }
-
-div.attr {
-	@apply bg-gray-200 p-2;
+input:checked + div span.triangle {
+	@apply rotate-90;
 }
 
 .docstring {
-	@apply ml-2 mt-2 mb-4;
+	@apply mt-2 mb-4 ml-2;
 }
 
 .pdoc > section:not(.module-info) {
@@ -34,20 +30,5 @@ div.attr {
 }
 
 .pdoc .classattr {
-	@apply ml-4 mb-4;
-}
-
-input.view-source-toggle-state {
-	@apply hidden;
-}
-label.view-source-button {
-	@apply float-right before:content-['▶'];
-}
-/* individual fields/methods/classes */
-input.view-source-toggle-state:checked + div + a + div.pdoc-code {
-	@apply block;
-}
-/* module */
-input.view-source-toggle-state:checked + label + div.pdoc-code {
-	@apply block;
+	@apply mb-4 ml-4;
 }

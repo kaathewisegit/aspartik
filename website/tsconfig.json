@@ -12,6 +12,9 @@
 		"verbatimModuleSyntax": true,
 		"noEmit": true,
 
+		"jsx": "preserve",
+		"jsxImportSource": "solid-js",
+
 		"strict": true,
 		"skipLibCheck": true,
 		"noFallthroughCasesInSwitch": true,

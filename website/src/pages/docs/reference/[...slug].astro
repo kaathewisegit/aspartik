@@ -1,27 +1,31 @@
 ---
 import { getCollection } from "astro:content"
+import { Module } from "../../../components/pdoc"
 import Layout from "../../../layouts/Html.astro"
-import "../../../styles/pdoc.css"
+import type { ModuleType } from "../../../schema"
 
 export async function getStaticPaths() {
-	const pages = await getCollection("reference")
+	const modules = await getCollection("reference")
 
 	const out = []
-	for (const page of pages) {
-		const path = (page.id as string).replace(/\.html$/, "")
-
+	for (const module of modules) {
+		const url = module.id.replaceAll(".", "/")
 		out.push({
-			params: { slug: path },
-			props: { content: page.data.html },
+			params: { slug: url },
+			props: module,
 		})
 	}
 
 	return out
 }
 
-const { content } = Astro.props
+interface Props {
+	data: ModuleType
+}
+
+const { data: module } = Astro.props
 ---
 
 <Layout>
-	<Fragment set:html={content} />
+	<Module {...module} />
 </Layout>
