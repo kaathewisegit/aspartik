@@ -48,6 +48,7 @@ export const classSchema = commonKeys
 	.merge(
 		z.object({
 			type: z.literal("class"),
+			decorators: z.array(z.string()),
 			bases: z.array(
 				z.tuple([z.string(), z.string(), z.string()]),
 			),
