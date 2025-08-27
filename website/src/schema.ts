@@ -17,6 +17,7 @@ const commonKeys = z.object({
 
 export const variableSchema = commonKeys.merge(
 	z.object({
+		type: z.literal("variable"),
 		default: z.string(),
 	}),
 )
@@ -25,6 +26,7 @@ export type VariableType = z.infer<typeof variableSchema>
 
 export const functionSchema = commonKeys.merge(
 	z.object({
+		type: z.literal("function"),
 		classmethod: z.boolean(),
 		staticmethod: z.boolean(),
 		decorators: z.array(z.string()),
@@ -38,6 +40,7 @@ export type FunctionType = z.infer<typeof functionSchema>
 
 export const classSchema = commonKeys.merge(
 	z.object({
+		type: z.literal("class"),
 		bases: z.array(z.tuple([z.string(), z.string(), z.string()])),
 		class_variables: z.array(variableSchema),
 		instance_variables: z.array(variableSchema),

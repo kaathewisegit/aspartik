@@ -1,34 +1,19 @@
 @import "tailwindcss";
 
-pre {
-	@apply overflow-x-scroll bg-gray-100;
-	@apply pl-2;
-
-	.linenos {
-		@apply mr-4;
-	}
-}
-
-input + div span.triangle {
-	@apply select-none;
+input + h2 span.triangle {
 	@apply inline-block transition duration-200;
 }
-input:checked + div span.triangle {
+input:checked + h2 span.triangle {
 	@apply rotate-90;
 }
 
-.docstring {
-	@apply mt-2 mb-4 ml-2;
+section:target h2 > span.title {
+	@apply font-bold;
 }
-
-.pdoc > section:not(.module-info) {
-	@apply mb-8;
+section:target h2 {
+	@apply bg-gray-300;
 }
-
-.pdoc .attr {
-	@apply p-2;
-}
-
-.pdoc .classattr {
-	@apply mb-4 ml-4;
+section:target h2::before {
+	@apply font-bold;
+	content: "> ";
 }

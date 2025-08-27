@@ -1,7 +1,35 @@
 import { defineCollection } from "astro:content"
 import fs from "node:fs/promises"
-import { type ModuleType, moduleSchema } from "./schema"
+import {
+	type ClassType,
+	type FunctionType,
+	type ModuleType,
+	moduleSchema,
+	type VariableType,
+} from "./schema"
 import { md2html } from "./utils"
+
+async function renderDocstrings(
+	value: ModuleType | ClassType | FunctionType | VariableType,
+): Promise<void> {
+	if (value.docstring) {
+		value.docstring = await md2html(value.docstring)
+	}
+
+	if (value.type === "module") {
+		value.classes.forEach(renderDocstrings)
+		value.variables.forEach(renderDocstrings)
+		value.functions.forEach(renderDocstrings)
+	}
+
+	if (value.type === "class") {
+		value.instance_variables.forEach(renderDocstrings)
+		value.class_variables.forEach(renderDocstrings)
+		value.classmethods.forEach(renderDocstrings)
+		value.staticmethods.forEach(renderDocstrings)
+		value.methods.forEach(renderDocstrings)
+	}
+}
 
 async function flattenModules(
 	module: Record<string, any>,
@@ -16,9 +44,7 @@ async function flattenModules(
 			fullname: mod.fullname,
 			name: mod.name,
 		}))
-		if (module.docstring) {
-			module.docstring = await md2html(module.docstring)
-		}
+		renderDocstrings(module)
 
 		modules.push(module)
 
