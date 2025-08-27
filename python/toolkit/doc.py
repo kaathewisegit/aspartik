@@ -60,7 +60,10 @@ def variable_to_obj(variable: Variable):
     if annotation is inspect._empty:
         repr_annot = None
     elif hasattr(annotation, "__qualname__"):
-        repr_annot = f"{annotation.__module__}.{annotation.__qualname__}"
+        if annotation.__module__ != "builtins":
+            repr_annot = f"{annotation.__module__}.{annotation.__qualname__}"
+        else:
+            repr_annot = f"{annotation.__qualname__}"
     else:
         repr_annot = None
 
