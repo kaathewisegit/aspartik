@@ -3,6 +3,7 @@ from shutil import rmtree
 import subprocess
 import sys
 from pathlib import Path
+from . import doc
 
 
 def make_parser():
@@ -93,9 +94,7 @@ def clean():
 
 
 def pdoc():
-    execute(
-        "pdoc", "--no-search", "-t", "docs/template", "-o", "target/pdoc/", "aspartik"
-    )
+    doc.dump_json("aspartik")
 
 
 def main():
