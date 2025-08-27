@@ -2,6 +2,7 @@ from pdoc.doc import Doc, Module, Class, Function, Variable
 from pathlib import Path
 from typing import List, Dict
 import json
+import inspect
 
 
 def dump_json(module_name: str):
@@ -55,8 +56,17 @@ def function_to_obj(function: Function):
 
 
 def variable_to_obj(variable: Variable):
+    annotation = variable.annotation
+    if annotation is inspect._empty:
+        repr_annot = None
+    elif hasattr(annotation, "__qualname__"):
+        repr_annot = f"{annotation.__module__}.{annotation.__qualname__}"
+    else:
+        repr_annot = None
+
     return {
         **_common_items(variable),
+        "annotation": repr_annot,
         "default": variable.default_value_str,
     }
 

@@ -15,12 +15,15 @@ const commonKeys = z.object({
 	source_file: z.string().nullable(),
 })
 
-export const variableSchema = commonKeys.merge(
-	z.object({
-		type: z.literal("variable"),
-		default: z.string(),
-	}),
-)
+export const variableSchema = commonKeys
+	.merge(
+		z.object({
+			type: z.literal("variable"),
+			annotation: z.string().nullable(),
+			default: z.string(),
+		}),
+	)
+	.strict()
 
 export type VariableType = z.infer<typeof variableSchema>
 
