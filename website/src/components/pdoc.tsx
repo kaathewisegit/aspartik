@@ -1,6 +1,6 @@
 import "../styles/pdoc.css"
 import { For, type JSXElement } from "solid-js"
-import type { ClassType, ModuleType } from "../schema"
+import type { ClassType, ModuleType, VariableType } from "../schema"
 
 export function Module(props: ModuleType): JSXElement {
 	return (
@@ -38,11 +38,52 @@ function Class(props: ClassType): JSXElement {
 	}
 
 	return (
-		<section class="mx-auto max-w-200" id={props.name}>
+		<section class="mx-auto mb-6 max-w-200" id={props.name}>
 			{header}
 
-			<Docstring docstring={props.docstring} />
+			<div class="ml-4">
+				<Docstring docstring={props.docstring} />
+
+				<Variables {...props.class_variables} />
+				<Variables {...props.instance_variables} />
+			</div>
 		</section>
+	)
+}
+
+function Variable(props: VariableType): JSXElement {
+	let annotation = null
+	if (props.annotation) {
+		annotation = (
+			<span class="text-gray-600">: {props.annotation}</span>
+		)
+	}
+
+	const title = (
+		<span class="font-mono">
+			{props.name}
+			{annotation}
+		</span>
+	)
+
+	// TODO: id
+	return (
+		<section class="my-2">
+			<HeaderBare title={title} />
+		</section>
+	)
+}
+
+function Variables(props: VariableType[]): JSXElement {
+	const varsArr = Array.from(props)
+	const vars = varsArr.filter(
+		(variable) => !variable.name.startsWith("_"),
+	)
+
+	return (
+		<For each={vars}>
+			{(variable, _) => <Variable {...variable} />}
+		</For>
 	)
 }
 
@@ -98,10 +139,10 @@ function Source(props: {
 function Docstring(props: { docstring: string | null }): JSXElement | null {
 	if (props.docstring) {
 		return (
-			<section
-				class="m-2 pl-2 text-base/7"
+			<div
+				class="my-2 pl-2 text-base/7"
 				innerHTML={props.docstring}
-			></section>
+			></div>
 		)
 	} else {
 		return null
