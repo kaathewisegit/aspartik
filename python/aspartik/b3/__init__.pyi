@@ -17,9 +17,26 @@ from ..data import DNASeq
 
 class tree: ...
 
+@runtime_checkable
 class Stateful(Protocol):
-    def accept(self) -> None: ...
-    def reject(self) -> None: ...
+    """
+    Epoch-versioned objects for use with MCMC
+
+    All stateful objects handled by `MCMC` must conform to this protocol.
+    During each step operators can edit objects using whatever APIs provided.
+    Then, at the end of the step, `MCMC` calls `accept` if the move has been
+    accepted, or `reject` otherwise.
+    """
+
+    def accept(self) -> None:
+        """Accept changes made during the current step"""
+
+    def reject(self) -> None:
+        """Reject changes made during the current step
+
+        This method must roll the state of the object back to how it was at the
+        beginning of the MCMC step.
+        """
 
 class Tree(Stateful):
     """A phylogenetic tree
