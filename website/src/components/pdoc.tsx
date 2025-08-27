@@ -1,6 +1,11 @@
 import "../styles/pdoc.css"
 import { For, type JSXElement } from "solid-js"
-import type { ClassType, ModuleType, VariableType } from "../schema"
+import type {
+	ClassType,
+	FunctionType,
+	ModuleType,
+	VariableType,
+} from "../schema"
 
 export function Module(props: ModuleType): JSXElement {
 	return (
@@ -23,29 +28,19 @@ function Class(props: ClassType): JSXElement {
 		</span>
 	)
 
-	let header: JSXElement
-	if (props.source && props.source_lines) {
-		header = (
-			<HeaderCode
-				title={title}
-				name={props.name}
-				source={props.source}
-				source_lines={props.source_lines}
-			/>
-		)
-	} else {
-		header = <HeaderBare title={title} />
-	}
-
 	return (
 		<section class="mx-auto mb-6 max-w-200" id={props.name}>
-			{header}
+			<Header object={props} title={title} />
 
 			<div class="ml-4">
 				<Docstring docstring={props.docstring} />
 
 				<Variables {...props.class_variables} />
 				<Variables {...props.instance_variables} />
+
+				<Funcs {...props.staticmethods} />
+				<Funcs {...props.classmethods} />
+				<Funcs {...props.methods} />
 			</div>
 		</section>
 	)
@@ -69,7 +64,7 @@ function Variable(props: VariableType): JSXElement {
 	// TODO: id
 	return (
 		<section class="my-2">
-			<HeaderBare title={title} />
+			<Header object={props} title={title} />
 		</section>
 	)
 }
@@ -85,6 +80,49 @@ function Variables(props: VariableType[]): JSXElement {
 			{(variable, _) => <Variable {...variable} />}
 		</For>
 	)
+}
+
+function Func(props: FunctionType): JSXElement {
+	const title = (
+		<pre class="overflow-x-scroll font-mono">
+			<span class="italic">{props.def}</span> {props.name}
+			{props.signature}
+		</pre>
+	)
+
+	return (
+		<section class="my-2">
+			<Header object={props} title={title} />
+		</section>
+	)
+}
+
+function Funcs(props: FunctionType[]): JSXElement {
+	const varsArr = Array.from(props)
+	const vars = varsArr.filter(
+		(variable) => !variable.name.startsWith("_"),
+	)
+
+	return <For each={vars}>{(func, _) => <Func {...func} />}</For>
+}
+
+function Header(props: {
+	title: JSXElement
+	object: VariableType | FunctionType | ClassType
+}): JSXElement {
+	const obj = props.object
+	if (obj.source && obj.source_lines) {
+		return (
+			<HeaderCode
+				title={props.title}
+				name={obj.name}
+				source={obj.source}
+				source_lines={obj.source_lines}
+			/>
+		)
+	} else {
+		return <HeaderBare title={props.title} />
+	}
 }
 
 function HeaderBare(props: { title: JSXElement }): JSXElement {
