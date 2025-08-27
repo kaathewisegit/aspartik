@@ -1,6 +1,6 @@
 import "../styles/pdoc.css"
 import { For, type JSXElement } from "solid-js"
-import type { ModuleType } from "../schema"
+import type { ClassType, ModuleType } from "../schema"
 
 function Docstring(props: { docstring: string | null }): JSXElement | null {
 	if (props.docstring) {
@@ -22,13 +22,13 @@ export function Module(props: ModuleType): JSXElement {
 			<Docstring docstring={props.docstring} />
 
 			<For each={props.classes}>
-				{(cls, _) => <Class {...(cls as object[])} />}
+				{(cls, _) => <Class {...cls} />}
 			</For>
 		</section>
 	)
 }
 
-function Class(props: any): JSXElement {
+function Class(props: ClassType): JSXElement {
 	const inputId = `${props.name}-view-source`
 
 	return (
