@@ -14,7 +14,7 @@
 		"typescript-language-server": "^4.4.0"
 	},
 	"scripts": {
-		"check": "biome lint && tsc --noEmit",
+		"check": "biome lint && prettier --check src/ *ts *.js && tsc --noEmit",
 		"format": "prettier --check --write src/ *.ts *.js",
 		"lint": "biome check --fix --unsafe",
 		"dev": "astro dev",
