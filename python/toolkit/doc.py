@@ -83,6 +83,7 @@ def _common_items(value: Doc) -> dict:
 
     return {
         "type": value.kind,
+        "qualname": value.qualname,
         "fullname": value.fullname,
         "name": value.name,
         "docstring": value.docstring if value.docstring else None,
