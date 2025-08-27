@@ -10,7 +10,6 @@
 	},
 	"linter": {
 		"rules": {
-			"nursery": { "useSortedClasses": "error" },
 			"suspicious": {
 				"noExplicitAny": "off",
 				"noUnknownAtRules": "off"
