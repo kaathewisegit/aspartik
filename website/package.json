@@ -16,7 +16,7 @@
 	"scripts": {
 		"check": "biome lint && prettier --check src/ *ts *.js && tsc --noEmit",
 		"format": "prettier --check --write src/ *.ts *.js",
-		"lint": "biome check --fix --unsafe",
+		"fix": "biome lint --fix --unsafe",
 		"dev": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview"

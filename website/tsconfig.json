@@ -1,26 +1,19 @@
 {
+	// https://github.com/withastro/astro/blob/main/packages/astro/tsconfigs/base.json
+	"extends": "astro/tsconfigs/base",
 	"compilerOptions": {
-		"lib": ["ESNext"],
-		"target": "ESNext",
-		"module": "Preserve",
 		"moduleDetection": "force",
-		"allowJs": true,
 
-		// Bundler mode
-		"moduleResolution": "bundler",
-		"allowImportingTsExtensions": true,
-		"verbatimModuleSyntax": true,
-		"noEmit": true,
-
+		// SolidJS
 		"jsx": "preserve",
 		"jsxImportSource": "solid-js",
 
 		"strict": true,
-		"skipLibCheck": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": true,
 		"noImplicitOverride": true,
 
+		// Biome handles that
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false

@@ -52,6 +52,8 @@ def lint():
 
     execute("pyright")
 
+    execute("bun", "run", "--cwd", "website/", "check")
+
 
 def test():
     execute("cargo", "test", "--workspace", "--features", "approx,arbitrary")
