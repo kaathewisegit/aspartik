@@ -135,7 +135,7 @@ function Header(props: {
 		return (
 			<HeaderCode
 				title={props.title}
-				name={obj.name}
+				qualname={obj.qualname}
 				source={obj.source}
 				source_lines={obj.source_lines}
 			/>
@@ -155,11 +155,11 @@ function HeaderBare(props: { title: JSXElement }): JSXElement {
 
 function HeaderCode(props: {
 	title: JSXElement
-	name: string
+	qualname: string
 	source: string
 	source_lines: [number, number]
 }): JSXElement {
-	const inputId = `${props.name}-view-source`
+	const inputId = `${props.qualname}-view-source`
 
 	return (
 		<>
