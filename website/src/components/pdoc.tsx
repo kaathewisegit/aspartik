@@ -6,6 +6,7 @@ import type {
 	ModuleType,
 	VariableType,
 } from "../schema"
+import highlight from "../utils/highlight"
 
 export function Module(props: ModuleType): JSXElement {
 	return (
@@ -190,10 +191,13 @@ function Source(props: {
 	source: string
 	source_lines: [number, number]
 }): JSXElement {
+	const code = highlight(props.source, "python")
+
 	return (
-		<pre class="overflow-x-scroll bg-gray-100 pl-2 font-mono peer-not-checked:hidden">
-			{props.source}
-		</pre>
+		<pre
+			innerHTML={code}
+			class="overflow-x-scroll bg-gray-100 pl-2 font-mono peer-not-checked:hidden"
+		/>
 	)
 }
 

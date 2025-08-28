@@ -7,7 +7,7 @@ import {
 	moduleSchema,
 	type VariableType,
 } from "./schema"
-import { md2html } from "./utils"
+import md2html from "./utils/md2html"
 
 async function renderDocstrings(
 	value: ModuleType | ClassType | FunctionType | VariableType,

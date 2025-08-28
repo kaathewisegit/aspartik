@@ -3,7 +3,7 @@ import remarkParse from "remark-parse"
 import remarkRehype from "remark-rehype"
 import { unified } from "unified"
 
-export async function md2html(md: string) {
+export default async function md2html(md: string) {
 	const file = await unified()
 		.use(remarkParse)
 		.use(remarkRehype)
