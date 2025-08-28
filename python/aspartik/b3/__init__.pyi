@@ -437,6 +437,17 @@ class MCMC:
         trigger a recalculation on all priors on each access.
         """
 
+    @property
+    def operator_statistics(self) -> List[Tuple[Operator, int, int]]:
+        """
+        Operator statistics for this run
+
+        Returns a list of `(operator, accepts, rejects)` tuple, where `accepts`
+        is the number of times operator's proposals have been accepted and
+        `rejects` is the number of times they have been rejected.  `operator`
+        is the reference to the original operator object.
+        """
+
     def run(self) -> None:
         """Start the simulation
 

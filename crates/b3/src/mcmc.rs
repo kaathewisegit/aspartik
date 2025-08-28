@@ -141,8 +141,6 @@ impl Mcmc {
 			*self_.current_step.lock() += 1;
 		}
 
-		self_.scheduler.report(py)?;
-
 		Ok(())
 	}
 
@@ -172,6 +170,11 @@ impl Mcmc {
 			}
 		}
 		Ok(out)
+	}
+
+	#[getter]
+	fn operator_statistics(&self, py: Python) -> Result<Py<PyList>> {
+		self.scheduler.statistics(py)
 	}
 }
 

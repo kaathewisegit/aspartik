@@ -4,7 +4,7 @@ use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
 	exceptions::PyValueError,
-	types::{PyString, PyType},
+	types::{PyList, PyString, PyType},
 };
 use rand::distr::{Distribution, weighted::WeightedIndex};
 
@@ -182,17 +182,20 @@ impl WeightedScheduler {
 		self.operators[*self.current.lock()].reject();
 	}
 
-	pub fn report(&self, py: Python) -> Result<()> {
-		println!(
-			"{: <20}{: <12}{: <12}",
-			"Operator", "#accept", "#reject"
-		);
+	pub fn statistics(&self, py: Python) -> Result<Py<PyList>> {
+		let out = PyList::empty(py);
+
 		for operator in &self.operators {
-			let name = operator.type_name(py)?;
+			let copy = operator.inner.clone_ref(py);
 			let accepts = *operator.accepts.lock();
 			let rejects = *operator.rejects.lock();
-			println!("{name: <20}{accepts: <12}{rejects: <12}",);
+
+			let tuple =
+				(copy, accepts, rejects).into_pyobject(py)?;
+
+			out.append(tuple)?;
 		}
-		Ok(())
+
+		Ok(out.unbind())
 	}
 }

@@ -13,6 +13,7 @@ from aspartik.b3.operators import (
 from aspartik.b3.priors import Yule, Distribution, ConstantPopulation
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.clocks import StrictClock
+from aspartik.b3.utils import print_operator_stats
 from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
 from aspartik.rng import RNG
 from aspartik.io.fasta import DNAReader
@@ -157,3 +158,5 @@ mcmc = MCMC(
 )
 
 mcmc.run()
+
+print_operator_stats(mcmc)
