@@ -62,11 +62,11 @@ likelihood = Likelihood(
 )
 
 loggers = [
-    TreeLogger(tree=tree, path="b3.trees", every=1_000),
+    TreeLogger(tree=tree, path="target/b3.trees", every=1_000),
     PrintLogger(every=1_000),
     ValueLogger(
         {"birth_rate_y": birth_rate_y},
-        path="b3.log",
+        path="target/b3.log",
         every=1_000,
     ),
 ]
