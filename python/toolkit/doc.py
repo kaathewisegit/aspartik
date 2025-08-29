@@ -1,8 +1,9 @@
-from pdoc.doc import Doc, Module, Class, Function, Variable
-from pathlib import Path
-from typing import List, Dict
-import json
+from pdoc.doc import Class, Doc, Function, Module, Variable
+
 import inspect
+import json
+from pathlib import Path
+from typing import Dict, List
 
 
 def dump_json(module_name: str):

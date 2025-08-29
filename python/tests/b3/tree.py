@@ -1,6 +1,5 @@
 import pickle
 
-
 from aspartik.b3 import Tree
 from aspartik.rng import RNG
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from math import prod
-from typing import List, Tuple, ClassVar, SupportsFloat
+from typing import ClassVar, List, SupportsFloat, Tuple
 
 
 def normalize(matrix: List[List[float]], coef: float) -> List[List[float]]:

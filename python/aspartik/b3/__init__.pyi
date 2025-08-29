@@ -1,19 +1,20 @@
 from __future__ import annotations
+
+from collections.abc import Iterator
 from typing import (
-    List,
     Any,
+    List,
+    Literal,
     Optional,
+    Protocol,
     Sequence,
     Tuple,
-    Protocol,
     runtime_checkable,
-    Literal,
 )
-from collections.abc import Iterator
 
-from ..rng import RNG
-from .tree import Node, Leaf, Internal
 from ..data import DNASeq
+from ..rng import RNG
+from .tree import Internal, Leaf, Node
 
 class tree: ...
 

@@ -1,22 +1,22 @@
-from aspartik.b3 import MCMC, Tree, Real, Likelihood
-from aspartik.b3.loggers import TreeLogger, PrintLogger, ValueLogger
+from aspartik.b3 import MCMC, Likelihood, Real, Tree
+from aspartik.b3.clocks import StrictClock
+from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
-    ParamScale,
-    EpochScale,
-    TreeScale,
-    NarrowExchange,
-    WideExchange,
-    NodeSlide,
     DeltaExchange,
+    EpochScale,
+    NarrowExchange,
+    NodeSlide,
+    ParamScale,
+    TreeScale,
+    WideExchange,
     WilsonBalding,
 )
-from aspartik.b3.priors import Yule, Distribution, ConstantPopulation
+from aspartik.b3.priors import ConstantPopulation, Distribution, Yule
 from aspartik.b3.substitutions import HKY
-from aspartik.b3.clocks import StrictClock
 from aspartik.b3.utils import print_operator_stats
-from aspartik.stats.distributions import Gamma, Uniform, Exp, LogNormal
-from aspartik.rng import RNG
 from aspartik.io.fasta import DNAReader
+from aspartik.rng import RNG
+from aspartik.stats.distributions import Exp, Gamma, LogNormal, Uniform
 
 path = "crates/b3/data/primate-mdna-full.fasta"
 sequences = []

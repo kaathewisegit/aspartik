@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TextIO, BinaryIO
+from typing import BinaryIO, TextIO
 
 from ..data import DNASeq
 

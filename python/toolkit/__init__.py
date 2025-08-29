@@ -1,8 +1,9 @@
-from argparse import ArgumentParser
-from shutil import rmtree
 import subprocess
 import sys
+from argparse import ArgumentParser
 from pathlib import Path
+from shutil import rmtree
+
 from . import doc
 
 

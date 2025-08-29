@@ -1,9 +1,9 @@
 # ruff: noqa: E712
-import math
 import pytest
 
-from aspartik.math.float import sign, exponent_bits, mantissa_bits
+import math
 
+from aspartik.math.float import exponent_bits, mantissa_bits, sign
 
 MAX = 1.7976931348623157e308
 

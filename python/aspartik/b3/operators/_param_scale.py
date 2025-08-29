@@ -1,11 +1,11 @@
+from dataclasses import dataclass
 from math import log
 from typing import Literal
-from dataclasses import dataclass
 
-from ._util import sample_range
-from .. import Proposal, Real, Operator
 from ...rng import RNG
 from ...stats.distributions import Distribution
+from .. import Operator, Proposal, Real
+from ._util import sample_range
 
 
 @dataclass(slots=True)

@@ -1,5 +1,5 @@
-from aspartik.io.fasta import DNAReader, DNARecord
 from aspartik.data import DNASeq
+from aspartik.io.fasta import DNAReader, DNARecord
 
 # TODO: fuzzing, a harness, testing various reader interfaces, file vs obj
 

@@ -41,3 +41,17 @@ python_files = "*.py"
 
 [tool.pyright]
 reportUnsupportedDunderAll = false
+
+[tool.ruff.lint]
+select = ["I"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+section-order = [
+	"future",
+	"third-party",
+	"standard-library",
+	"first-party",
+	"local-folder",
+]
+known-first-party = ["aspartik"]

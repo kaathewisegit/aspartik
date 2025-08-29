@@ -1,7 +1,8 @@
-from typing import List
-from pytest import TestReport, Config
-from aspartik.rng import RNG
+from pytest import Config, TestReport
 
+from typing import List
+
+from aspartik.rng import RNG
 
 _rng = RNG(4)
 

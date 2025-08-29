@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Protocol, Optional
+
+from typing import Optional, Protocol
+
 from ..rng import RNG
 
 class Continuous[T](Protocol):

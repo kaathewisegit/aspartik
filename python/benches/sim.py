@@ -1,20 +1,20 @@
-from aspartik.b3 import MCMC, Tree, Real, Likelihood
+from aspartik.b3 import MCMC, Likelihood, Real, Tree
+from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger
 from aspartik.b3.operators import (
-    ParamScale,
     EpochScale,
-    TreeScale,
     NarrowExchange,
-    WideExchange,
     NodeSlide,
+    ParamScale,
+    TreeScale,
+    WideExchange,
     WilsonBalding,
 )
 from aspartik.b3.priors import Yule
 from aspartik.b3.substitutions import HKY
-from aspartik.b3.clocks import StrictClock
-from aspartik.stats.distributions import Uniform
-from aspartik.rng import RNG
 from aspartik.io.fasta import DNAReader
+from aspartik.rng import RNG
+from aspartik.stats.distributions import Uniform
 
 path = "crates/b3/data/sim.fasta"
 sequences = []

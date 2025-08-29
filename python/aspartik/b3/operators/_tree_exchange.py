@@ -1,9 +1,9 @@
-from math import log
 from dataclasses import dataclass
+from math import log
 
-from .. import Tree, Proposal, Operator
-from ..tree import Internal, Node
 from ...rng import RNG
+from .. import Operator, Proposal, Tree
+from ..tree import Internal, Node
 
 
 @dataclass(slots=True)

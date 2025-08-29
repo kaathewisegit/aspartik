@@ -1,13 +1,13 @@
 from typing import Protocol, runtime_checkable
 
 from .._aspartik_rust_impl._b3_rust_impl import (
+    MCMC as MCMC,
+    Boolean as Boolean,
+    Integer as Integer,
     Likelihood as Likelihood,
     Proposal as Proposal,
-    MCMC as MCMC,
-    Tree as Tree,
     Real as Real,
-    Integer as Integer,
-    Boolean as Boolean,
+    Tree as Tree,
     tree as tree,
 )
 

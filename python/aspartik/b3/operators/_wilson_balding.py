@@ -1,8 +1,8 @@
-from math import log
 from dataclasses import dataclass
+from math import log
 
-from .. import Proposal, Tree, Operator
 from ...rng import RNG
+from .. import Operator, Proposal, Tree
 
 
 @dataclass(slots=True)

@@ -1,5 +1,5 @@
-from mpmath import mp
 import pytest
+from mpmath import mp
 
 from aspartik.math import is_close
 from aspartik.math.functions import harmonic

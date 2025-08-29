@@ -1,8 +1,8 @@
-from typing import List
 from dataclasses import dataclass
+from typing import List
 
-from .. import Proposal, Real, Operator
 from ...rng import RNG
+from .. import Operator, Proposal, Real
 
 
 @dataclass(slots=True)

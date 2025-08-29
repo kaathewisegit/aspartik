@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ..b3 import Prior, Tree, Parameter, Operator
+from ..b3 import Operator, Parameter, Prior, Tree
 from ..rng import RNG
 from ..stats.distributions import Distribution
 

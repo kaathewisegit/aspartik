@@ -1,9 +1,10 @@
 import pytest
-from math import nan
 from mpmath import mp
 from utils import random_integer
-from aspartik.math import is_close
 
+from math import nan
+
+from aspartik.math import is_close
 from aspartik.stats.distributions import Poisson, PoissonError
 
 mp.pds = 1000

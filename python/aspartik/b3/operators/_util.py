@@ -1,5 +1,6 @@
-from math import inf, exp, log, isfinite
+from math import exp, inf, isfinite, log
 from typing import Tuple
+
 from ...rng import RNG
 
 

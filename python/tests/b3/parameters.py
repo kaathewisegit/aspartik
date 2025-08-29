@@ -1,8 +1,8 @@
-import pickle
 import pytest
 
+import pickle
 
-from aspartik.b3 import Real, Integer, Boolean, Parameter
+from aspartik.b3 import Boolean, Integer, Parameter, Real
 
 
 def pickle_roundtrip(obj):

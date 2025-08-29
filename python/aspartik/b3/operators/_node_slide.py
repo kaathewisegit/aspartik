@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from ._util import scale_on_range
-from .. import Proposal, Tree, Operator
 from ...rng import RNG
 from ...stats.distributions import Distribution
+from .. import Operator, Proposal, Tree
+from ._util import scale_on_range
 
 
 @dataclass(slots=True)

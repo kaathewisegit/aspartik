@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from .. import Real, Integer, Prior
 from ...stats import distributions
+from .. import Integer, Prior, Real
 
 
 @dataclass(slots=True)

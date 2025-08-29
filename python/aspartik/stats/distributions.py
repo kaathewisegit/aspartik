@@ -1,5 +1,6 @@
-from .._aspartik_rust_impl import _stats_rust_impl
 from typing import Protocol
+
+from .._aspartik_rust_impl import _stats_rust_impl
 
 
 # fmt: off

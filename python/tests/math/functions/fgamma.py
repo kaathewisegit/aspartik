@@ -1,5 +1,5 @@
-from mpmath import mp
 import pytest
+from mpmath import mp
 from utils import random_float
 
 from aspartik.math import is_close
