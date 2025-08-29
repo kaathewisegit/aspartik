@@ -14,6 +14,7 @@ def make_parser():
     )
     subparsers = parser.add_subparsers(dest="subcommand")
 
+    subparsers.add_parser("fix", help="automatically fix code")
     subparsers.add_parser("lint", help="validate with linters and formatters")
     subparsers.add_parser("test", help="run tests")
     subparsers.add_parser("run", help="run a minimal `b3` simulation")
@@ -32,6 +33,16 @@ def execute(*args):
         sys.exit(
             f"Command `{' '.join(args)}` failed with exit code {result.returncode}"
         )
+
+
+def fix():
+    execute("cargo", "fmt")
+    execute("cargo", "clippy", "--fix", "--allow-dirty")
+
+    execute("ruff", "format")
+    execute("ruff", "check", "--fix")
+
+    execute("bun", "run", "--cwd", "website/", "fix")
 
 
 def lint():
@@ -105,6 +116,8 @@ def main():
     args = parser.parse_args()
 
     match args.subcommand:
+        case "fix":
+            fix()
         case "lint":
             lint()
         case "test":
