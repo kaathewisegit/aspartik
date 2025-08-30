@@ -1,13 +1,13 @@
-use anyhow::{Result, ensure};
+use anyhow::{ensure, Result};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::{
 	exceptions::PyTypeError,
 	types::{PyAny, PyDict, PyTuple},
 };
-use rand::Rng as _;
 use rand::distr::{Distribution, Uniform};
 use rand::seq::SliceRandom;
+use rand::Rng as _;
 use serde::{Deserialize, Serialize};
 
 use std::{
@@ -257,7 +257,6 @@ impl Tree {
 		self.updated_edges.clone()
 	}
 
-	#[allow(unused)]
 	pub fn nodes_to_update(&mut self) -> (Vec<Node>, usize) {
 		let mut nodes = Vec::<Node>::with_capacity(self.num_nodes());
 
@@ -412,6 +411,28 @@ impl Tree {
 
 		self.update_edge(edge_a, b);
 		self.update_edge(edge_b, a);
+	}
+
+	#[expect(unused)]
+	pub(crate) fn node_is_valid(&self, node: Node) -> bool {
+		if let Some(leaf) = self.as_leaf(node) {
+			let parent = self.parent_of(leaf.into()).unwrap();
+			self.weight_of(leaf.into())
+				< self.weight_of(parent.into())
+		} else if let Some(internal) = self.as_internal(node) {
+			let (left, right) = self.children_of(internal);
+			if left == right {
+				return false;
+			}
+
+			let (left_weight, right_weight) =
+				(self.weight_of(left), self.weight_of(right));
+			let weight = self.weight_of(internal.into());
+
+			weight > left_weight && weight > right_weight
+		} else {
+			unreachable!()
+		}
 	}
 
 	pub fn validate(&self) -> Result<()> {
