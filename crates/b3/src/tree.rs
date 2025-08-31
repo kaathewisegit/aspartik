@@ -185,6 +185,16 @@ impl Tree {
 		}
 	}
 
+	pub fn set_leaf_heights(&mut self, heights: Vec<f64>) {
+		assert_eq!(heights.len(), self.num_leaves());
+
+		#[expect(clippy::needless_range_loop)]
+		for i in 0..self.num_leaves() {
+			self.heights.set(i, heights[i]);
+			self.heights.accept_element(i);
+		}
+	}
+
 	// Sets the heights of internal nodes by walking upwards breadth-first
 	// starting with all of the leaves
 	pub fn set_random_heights(&mut self, rng: &mut Rng) {
@@ -754,6 +764,10 @@ impl PyTree {
 			inner: Mutex::new(tree),
 		};
 		Ok(tree)
+	}
+
+	fn set_leaf_heights(&self, heights: Vec<f64>) {
+		self.inner().set_leaf_heights(heights);
 	}
 
 	fn set_random_heights(&self, rng: Py<PyRng>) {

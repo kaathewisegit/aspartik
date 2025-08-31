@@ -55,8 +55,18 @@ class Tree(Stateful):
         - `names` is the list of names of leaf nodes.
         - `rng` is used to build a random tree.
 
-        All heights are set to 0.  Use `set_random_heights` to randomize the
-        positions of internal nodes.
+        All heights are initially set to 0.  Use `set_leaf_heights` for dated
+        tips and `set_random_heights` to randomize the positions of internal
+        nodes.
+        """
+
+    def set_leaf_heights(self, heights: Sequence[float]):
+        """
+        Set the tip dates.
+
+        When a tree is first created, all of the nodes have a height of 0.
+        This method allows to date leaf nodes.  The length of `heights` must be
+        equal `num_leaves`.
         """
 
     def set_random_heights(self, rng: RNG):
