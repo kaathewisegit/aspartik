@@ -119,11 +119,11 @@ impl EpochScale {
 			if lower < weight && weight <= upper {
 				let new_weight =
 					lower + scale * (weight - lower);
-				tree.update_weight(node.into(), new_weight);
+				tree.update_weight(&node, new_weight);
 				num_scaled += 1;
 			} else if weight > upper {
 				let new_weight = weight + delta;
-				tree.update_weight(node.into(), new_weight);
+				tree.update_weight(&node, new_weight);
 			}
 		}
 

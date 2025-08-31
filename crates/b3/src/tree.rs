@@ -65,11 +65,9 @@ impl Node {
 impl<'py> FromPyObject<'py> for Node {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Node> {
 		if let Ok(internal) = obj.downcast::<Internal>() {
-			let node = *internal.get();
-			Ok(node.into())
+			Ok(Node(internal.get().0))
 		} else if let Ok(leaf) = obj.downcast::<Leaf>() {
-			let node = *leaf.get();
-			Ok(node.into())
+			Ok(Node(leaf.get().0))
 		} else {
 			py_bail!(
 				PyTypeError,
@@ -80,28 +78,10 @@ impl<'py> FromPyObject<'py> for Node {
 	}
 }
 
-impl From<Internal> for Node {
-	fn from(internal: Internal) -> Node {
-		Self(internal.0)
-	}
-}
-
-impl From<Leaf> for Node {
-	fn from(leaf: Leaf) -> Node {
-		Node(leaf.0)
-	}
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[pyclass(frozen, module = "aspartik.b3.tree")]
 #[repr(transparent)]
 pub struct Internal(usize);
-
-impl Internal {
-	fn into_node(self) -> Node {
-		self.into()
-	}
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[pyclass(frozen, module = "aspartik.b3.tree")]
@@ -297,18 +277,20 @@ impl Tree {
 			for node in current.iter() {
 				let (left, right) = self.children_of(node);
 
-				if let Some(left) = self.as_internal(left)
+				if let Some(left) = self.as_internal(&left)
 					&& self.updated_nodes[left.0]
 				{
 					next.push(left);
 				}
-				if let Some(right) = self.as_internal(right)
+				if let Some(right) = self.as_internal(&right)
 					&& self.updated_nodes[right.0]
 				{
 					next.push(right);
 				}
 			}
-			internals.extend(current.iter().map(|n| n.into_node()));
+			internals.extend(current
+				.iter()
+				.map(|n| -> Node { *n.deref() }));
 			current = std::mem::take(&mut next);
 		}
 
@@ -354,7 +336,7 @@ impl Tree {
 	/// `new_child` changes are recorded, it is presumed that the operator
 	/// will call another method for the old child and `new_child`'s parent
 	/// edge.
-	fn update_edge(&mut self, edge: usize, new_child: Node) {
+	fn update_edge(&mut self, edge: usize, new_child: &Node) {
 		let (_, parent) = self.edge_nodes(edge);
 
 		self.children.set(edge, new_child.0);
@@ -365,17 +347,17 @@ impl Tree {
 		// `parent` is now the parent of `new_child`, so it'll
 		// be updated.  The operator must handle the old node
 		// separately.
-		self.mark_updated(&new_child);
+		self.mark_updated(new_child);
 	}
 
 	/// Sets the weight of `node`, recording it and it's parent and child
 	/// edges (if it has those).
-	pub fn update_weight(&mut self, node: Node, weight: f64) {
+	pub fn update_weight(&mut self, node: &Node, weight: f64) {
 		self.weights.set(node.0, weight);
-		self.mark_updated(&node);
+		self.mark_updated(node);
 
-		if self.parent_of(&node).is_some() {
-			self.updated_edges.push(self.edge_index(&node));
+		if self.parent_of(node).is_some() {
+			self.updated_edges.push(self.edge_index(node));
 		}
 		if let Some(node) = self.as_internal(node) {
 			let (left, right) = self.children_of(&node);
@@ -388,30 +370,30 @@ impl Tree {
 	}
 
 	/// Doesn't overwrite the old root.
-	pub fn update_root(&mut self, node: Node) {
+	pub fn update_root(&mut self, node: &Node) {
 		self.parents.set(node.0, ROOT);
 	}
 
 	/// Replaces `child` with `replacement` in respect to `child`'s parent.
-	pub fn update_replacement(&mut self, child: Node, replacement: Node) {
-		let edge = self.edge_index(&child);
+	pub fn update_replacement(&mut self, child: &Node, replacement: &Node) {
+		let edge = self.edge_index(child);
 		self.update_edge(edge, replacement);
 	}
 
 	// TODO: invariants (a can't be a parent of b)
-	pub fn swap_parents(&mut self, a: Node, b: Node) {
-		assert!(self.parent_of(&a).is_some(), "a must not be root");
-		assert!(self.parent_of(&b).is_some(), "b must not be root");
+	pub fn swap_parents(&mut self, a: &Node, b: &Node) {
+		assert!(self.parent_of(a).is_some(), "a must not be root");
+		assert!(self.parent_of(b).is_some(), "b must not be root");
 
-		let edge_a = self.edge_index(&a);
-		let edge_b = self.edge_index(&b);
+		let edge_a = self.edge_index(a);
+		let edge_b = self.edge_index(b);
 
 		self.update_edge(edge_a, b);
 		self.update_edge(edge_b, a);
 	}
 
 	#[expect(unused)]
-	pub(crate) fn node_is_valid(&self, node: Node) -> bool {
+	pub(crate) fn node_is_valid(&self, node: &Node) -> bool {
 		if let Some(leaf) = self.as_leaf(node) {
 			let parent = self.parent_of(&leaf).unwrap();
 			self.weight_of(&leaf) < self.weight_of(&parent)
@@ -509,15 +491,15 @@ impl Tree {
 		self.num_internals() + 1
 	}
 
-	pub fn is_internal(&self, node: Node) -> bool {
+	pub fn is_internal(&self, node: &Node) -> bool {
 		node.0 >= self.num_leaves()
 	}
 
-	pub fn is_leaf(&self, node: Node) -> bool {
+	pub fn is_leaf(&self, node: &Node) -> bool {
 		node.0 < self.num_leaves()
 	}
 
-	pub fn as_internal(&self, node: Node) -> Option<Internal> {
+	pub fn as_internal(&self, node: &Node) -> Option<Internal> {
 		if self.is_internal(node) {
 			Some(Internal(node.0))
 		} else {
@@ -525,7 +507,7 @@ impl Tree {
 		}
 	}
 
-	pub fn as_leaf(&self, node: Node) -> Option<Leaf> {
+	pub fn as_leaf(&self, node: &Node) -> Option<Leaf> {
 		if self.is_leaf(node) {
 			Some(Leaf(node.0))
 		} else {
@@ -591,7 +573,7 @@ impl Tree {
 
 	pub fn is_grandparent(&self, node: &Internal) -> bool {
 		let (left, right) = self.children_of(node);
-		self.is_internal(left) && self.is_internal(right)
+		self.is_internal(&left) && self.is_internal(&right)
 	}
 
 	pub fn num_grandparents(&self) -> usize {
@@ -648,7 +630,7 @@ impl Tree {
 				distance = 0.0;
 			}
 
-			let name = if self.is_leaf(node) {
+			let name = if self.is_leaf(&node) {
 				self.names[node.0].clone()
 			} else {
 				String::new()
@@ -666,12 +648,12 @@ impl Tree {
 		for parent in self.internals() {
 			let (left, right) = self.children_of(&parent);
 
-			tree.add_edge(map[&parent.into()], map[&left]);
-			tree.add_edge(map[&parent.into()], map[&right]);
+			tree.add_edge(map[&parent], map[&left]);
+			tree.add_edge(map[&parent], map[&right]);
 
 			// set root
 			if self.parent_of(&parent).is_none() {
-				tree.set_root(map[&parent.into()]);
+				tree.set_root(map[&parent]);
 			}
 		}
 
@@ -776,22 +758,22 @@ impl PyTree {
 	}
 
 	fn update_edge(&self, edge: usize, new_child: Node) -> Result<()> {
-		self.inner().update_edge(edge, new_child);
+		self.inner().update_edge(edge, &new_child);
 		Ok(())
 	}
 
 	fn update_weight(&self, node: Node, weight: f64) -> Result<()> {
-		self.inner().update_weight(node, weight);
+		self.inner().update_weight(&node, weight);
 		Ok(())
 	}
 
 	fn update_root(&self, node: Node) -> Result<()> {
-		self.inner().update_root(node);
+		self.inner().update_root(&node);
 		Ok(())
 	}
 
 	fn swap_parents(&self, a: Node, b: Node) -> Result<()> {
-		self.inner().swap_parents(a, b);
+		self.inner().swap_parents(&a, &b);
 		Ok(())
 	}
 
@@ -811,19 +793,19 @@ impl PyTree {
 	}
 
 	fn is_internal(&self, node: Node) -> Result<bool> {
-		Ok(self.inner().is_internal(node))
+		Ok(self.inner().is_internal(&node))
 	}
 
 	fn is_leaf(&self, node: Node) -> Result<bool> {
-		Ok(self.inner().is_leaf(node))
+		Ok(self.inner().is_leaf(&node))
 	}
 
 	fn as_internal(&self, node: Node) -> Option<Internal> {
-		self.inner().as_internal(node)
+		self.inner().as_internal(&node)
 	}
 
 	fn as_leaf(&self, node: Node) -> Option<Leaf> {
-		self.inner().as_leaf(node)
+		self.inner().as_leaf(&node)
 	}
 
 	fn root(&self) -> Internal {
