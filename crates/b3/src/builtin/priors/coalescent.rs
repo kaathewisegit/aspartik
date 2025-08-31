@@ -40,7 +40,7 @@ impl ConstantPopulation {
 		let mut nodes = Vec::with_capacity(tree.num_internals());
 
 		for node in tree.internals() {
-			let weight = tree.weight_of(node.into());
+			let weight = tree.weight_of(&node);
 			nodes.push((node, weight));
 		}
 		nodes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());

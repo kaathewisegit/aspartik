@@ -101,7 +101,7 @@ impl TreeScale {
 			.extract::<f64>()?;
 
 		for node in tree.internals() {
-			let new_weight = tree.weight_of(node.into()) * scale;
+			let new_weight = tree.weight_of(&node) * scale;
 			tree.update_weight(node.into(), new_weight);
 		}
 
