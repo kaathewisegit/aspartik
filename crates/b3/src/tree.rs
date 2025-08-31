@@ -1,13 +1,13 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::{
 	exceptions::PyTypeError,
 	types::{PyAny, PyDict, PyTuple},
 };
+use rand::Rng as _;
 use rand::distr::{Distribution, Uniform};
 use rand::seq::SliceRandom;
-use rand::Rng as _;
 use serde::{Deserialize, Serialize};
 
 use std::{
@@ -103,55 +103,24 @@ impl Internal {
 	}
 }
 
-#[pymethods]
-impl Internal {
-	fn __repr__(&self) -> String {
-		format!("Internal({})", self.0)
-	}
-
-	fn __eq__(&self, other: Bound<PyAny>) -> Result<bool> {
-		if let Ok(node) = other.downcast::<Internal>() {
-			Ok(self.0 == node.get().0)
-		} else if other.downcast::<Leaf>().is_ok() {
-			Ok(false)
-		} else {
-			py_bail!(
-				PyTypeError,
-				"Expected `Leaf` or `Internal`, got {}",
-				other.get_type().name()?
-			);
-		}
-	}
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[pyclass(frozen, module = "aspartik.b3.tree")]
 #[repr(transparent)]
 pub struct Leaf(usize);
 
-#[pymethods]
-impl Leaf {
-	fn __repr__(&self) -> String {
-		format!("Leaf({})", self.0)
-	}
-
-	fn __eq__(&self, other: Bound<PyAny>) -> Result<bool> {
-		if let Ok(node) = other.downcast::<Leaf>() {
-			Ok(self.0 == node.get().0)
-		} else if other.downcast::<Internal>().is_ok() {
-			Ok(false)
-		} else {
-			py_bail!(
-				PyTypeError,
-				"Expected `Leaf` or `Internal`, got {}",
-				other.get_type().name()?
-			);
-		}
-	}
-}
-
 macro_rules! nodes_2 {
 	($type:ty) => {
+		#[pymethods]
+		impl $type {
+			fn __repr__(&self) -> String {
+				format!("{}({})", stringify!($type), self.0)
+			}
+
+			fn __eq__(&self, other: Node) -> bool {
+				self.0 == other.0
+			}
+		}
+
 		impl Deref for $type {
 			type Target = Node;
 
