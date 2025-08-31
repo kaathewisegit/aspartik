@@ -54,6 +54,17 @@ class Tree(Stateful):
         """
         - `names` is the list of names of leaf nodes.
         - `rng` is used to build a random tree.
+
+        All heights are set to 0.  Use `set_random_weights` to randomize the
+        positions of internal nodes.
+        """
+
+    def set_random_weights(self, rng: RNG):
+        """
+        Randomizes the heights of internal nodes
+
+        Each internal node gets a height distributed between 0.2 and 0.3 from
+        the highest of its children.
         """
 
     def update_edge(self, edge: int, new_child: Node) -> None:

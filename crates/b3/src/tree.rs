@@ -21,7 +21,7 @@ use io::newick::{
 	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
 };
 use rng::{PyRng, Rng};
-use skvec::SkVec;
+use skvec::{SkVec, skvec};
 use util::{py_bail, py_pickle_state_impl};
 
 const ROOT: usize = usize::MAX;
@@ -172,40 +172,42 @@ impl Tree {
 		parents[child] = root;
 		children[(root - num_leaves) * 2 + 1] = child;
 
-		// Sets the weights by walking upwards breadth-first starting
-		// with all of the leaves
-		const DIFF: f64 = 0.1;
-		// The children are all at the position 0
-		let mut weights = vec![0.0; num_nodes];
-		let mut walk = VecDeque::new();
-		for node in parents.iter().take(num_leaves).copied() {
-			// the root isn't here because all leaves have a parent
-			walk.push_back(node);
-		}
-		while let Some(node) = walk.pop_front() {
-			let idx = 2 * (node - num_leaves);
-
-			let left = weights[children[idx]];
-			let right = weights[children[idx + 1]];
-			let max = f64::max(left, right);
-			let diff = DIFF * (2.0 + rng.random::<f64>());
-			weights[node] = max + diff;
-
-			let parent = parents[node];
-			if parent != ROOT {
-				walk.push_front(parent);
-			}
-		}
-
 		Self {
 			names,
 
 			children: children.into(),
 			parents: parents.into(),
-			weights: weights.into(),
+			weights: skvec![0.0; num_nodes],
 
 			updated_edges: Vec::new(),
 			updated_nodes: vec![false; num_nodes].into(),
+		}
+	}
+
+	// Sets the weights by walking upwards breadth-first starting with all
+	// of the leaves
+	pub fn set_random_weights(&mut self, rng: &mut Rng) {
+		const DIFF: f64 = 0.1;
+
+		let mut walk = VecDeque::new();
+		for leaf in self.leaves() {
+			// All leaves have a parent
+			let parent = self.parent_of(&leaf).unwrap();
+			walk.push_back(parent);
+		}
+		while let Some(internal) = walk.pop_front() {
+			let (left, right) = self.children_of(&internal);
+			let max = f64::max(
+				self.weight_of(&left),
+				self.weight_of(&right),
+			);
+
+			let diff = DIFF * (2.0 + rng.random::<f64>());
+			self.update_weight(&internal, max + diff);
+
+			if let Some(parent) = self.parent_of(&internal) {
+				walk.push_front(parent);
+			}
 		}
 	}
 
@@ -755,6 +757,10 @@ impl PyTree {
 			inner: Mutex::new(tree),
 		};
 		Ok(tree)
+	}
+
+	fn set_random_weights(&self, rng: Py<PyRng>) {
+		self.inner().set_random_weights(&mut rng.get().inner());
 	}
 
 	fn update_edge(&self, edge: usize, new_child: Node) -> Result<()> {
