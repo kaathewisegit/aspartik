@@ -27,7 +27,7 @@ for record in DNAReader.from_file(path):
 
 rng = RNG(4)
 tree = Tree(names, rng)
-tree.set_random_weights(rng)
+tree.set_random_heights(rng)
 
 mutation_rate_noncoding = Real(1.0)
 gamma_shape_noncoding = Real(1.0)

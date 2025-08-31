@@ -16,7 +16,7 @@ def test_pickle_state():
 
     old = Tree([str(i) for i in range(10)], rng)
     internal = old.random_internal(rng)
-    old.update_weight(internal, 100)
+    old.set_height(internal, 100)
 
     new = pickle.loads(pickle.dumps(old))
 

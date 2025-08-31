@@ -40,16 +40,16 @@ impl ConstantPopulation {
 		let mut nodes = Vec::with_capacity(tree.num_internals());
 
 		for node in tree.internals() {
-			let weight = tree.weight_of(&node);
-			nodes.push((node, weight));
+			let height = tree.height_of(&node);
+			nodes.push((node, height));
 		}
 		nodes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
 		let mut out = 1.0;
-		let mut last_weight = 0.0;
+		let mut last_height = 0.0;
 		let mut num = tree.num_leaves();
-		for (_node, weight) in nodes {
-			let time_diff = weight - last_weight;
+		for (_node, height) in nodes {
+			let time_diff = height - last_height;
 
 			let binomial = num * (num - 1);
 			let mult = binomial as f64 / pop;
@@ -57,7 +57,7 @@ impl ConstantPopulation {
 			out += mult * (-mult * time_diff).exp();
 
 			num -= 1;
-			last_weight = weight;
+			last_height = height;
 		}
 
 		Ok(out)

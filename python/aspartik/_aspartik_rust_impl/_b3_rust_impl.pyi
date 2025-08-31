@@ -42,7 +42,7 @@ class EpochScale(Operator):
 
     This parameter is analogous to BEAST2's `ScaleOperator` when it's used on a
     tree.  It will scale the full tree (so, for now, only its internal nodes,
-    since leaves all have the weight of 0).
+    since leaves all have the height of 0).
     """
 
     tree: Tree

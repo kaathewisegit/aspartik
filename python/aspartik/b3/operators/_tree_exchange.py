@@ -38,9 +38,9 @@ class NarrowExchange(Operator):
                 break
 
         left, right = tree.children_of(grandparent)
-        if tree.weight_of(left) > tree.weight_of(right):
+        if tree.height_of(left) > tree.height_of(right):
             parent, uncle = left, right
-        elif tree.weight_of(right) > tree.weight_of(left):
+        elif tree.height_of(right) > tree.height_of(left):
             parent, uncle = right, left
         else:
             return Proposal.Reject()
@@ -107,8 +107,8 @@ class WideExchange(Operator):
         if (
             j != i_parent
             and i != j_parent
-            and tree.weight_of(j) < tree.weight_of(i_parent)
-            and tree.weight_of(i) < tree.weight_of(j_parent)
+            and tree.height_of(j) < tree.height_of(i_parent)
+            and tree.height_of(i) < tree.height_of(j_parent)
         ):
             tree.swap_parents(i, j)
 

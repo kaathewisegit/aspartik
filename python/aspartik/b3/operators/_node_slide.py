@@ -46,13 +46,13 @@ class NodeSlide(Operator):
 
         left, right = tree.children_of(node)
 
-        oldest = tree.weight_of(parent)
-        youngest = max(tree.weight_of(left), tree.weight_of(right))
+        oldest = tree.height_of(parent)
+        youngest = max(tree.height_of(left), tree.height_of(right))
 
-        (new_weight, ratio) = scale_on_range(
+        (new_height, ratio) = scale_on_range(
             youngest, oldest, self.distribution, self.rng
         )
 
-        tree.update_weight(node, new_weight)
+        tree.set_height(node, new_height)
 
         return Proposal.Hastings(ratio)

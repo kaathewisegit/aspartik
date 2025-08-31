@@ -45,7 +45,7 @@ class Tree(Stateful):
     Unlike in BEAST2, `Tree` is a self-contained typed which all of the
     topological data.  What this means is that node types (`Internal` and
     `Leaf`) are simply indexes into the `Tree`.  So, all operations, like
-    getting parents of node weights have to go through `Tree`'s methods.
+    getting parents of node heights have to go through `Tree`'s methods.
 
     The current implementation of `Tree` only supports bifurcating topologies.
     """
@@ -55,11 +55,11 @@ class Tree(Stateful):
         - `names` is the list of names of leaf nodes.
         - `rng` is used to build a random tree.
 
-        All heights are set to 0.  Use `set_random_weights` to randomize the
+        All heights are set to 0.  Use `set_random_heights` to randomize the
         positions of internal nodes.
         """
 
-    def set_random_weights(self, rng: RNG):
+    def set_random_heights(self, rng: RNG):
         """
         Randomizes the heights of internal nodes
 
@@ -76,9 +76,9 @@ class Tree(Stateful):
         This function doesn't do any validation, it's up to the operator to
         preserve the validity of the tree.
         """
-    def update_weight(self, node: Node, weigth: float) -> None:
-        """Sets the weight of `node` to `weight`"""
-    def update_root(self, node: Node) -> None:
+    def set_height(self, node: Node, weigth: float) -> None:
+        """Sets the height of `node` to `height`"""
+    def set_root(self, node: Node) -> None:
         """Makes `node` the root of the tree
 
         As the topology can be temporarily broken while the edges are being
@@ -123,10 +123,10 @@ class Tree(Stateful):
         returned node is only guaranteed to be root as long as the tree hasn't
         been edited.
         """
-    def weight_of(self, node: Node) -> float:
-        """Returns the weight of `node`
+    def height_of(self, node: Node) -> float:
+        """Returns the height of `node`
 
-        Weight here means node's age in some unlabeled units.
+        Height here means node's age in some unlabeled units.
         """
     def children_of(self, node: Internal) -> Tuple[Node, Node]:
         """Returns a tuple of the left and right children of `node`
@@ -177,7 +177,7 @@ class Tree(Stateful):
         - All parent nodes are older than their children.
         - Parents match their children (mismatches can happen when
           `update_edge` is used incorrectly).
-        - There's only one root (two or more can be set with `update_root`).
+        - There's only one root (two or more can be set with `set_root`).
         - The tree is a tree, meaning that topologically it has no cycles and
           is connected.
         """

@@ -42,7 +42,7 @@ impl Yule {
 		let mut out = (tree.num_leaves() - 1) as f64 * rate.ln();
 
 		for internal in tree.internals() {
-			let diff = -rate * tree.weight_of(&internal);
+			let diff = -rate * tree.height_of(&internal);
 
 			out += diff;
 			if internal == root {

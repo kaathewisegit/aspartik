@@ -32,7 +32,7 @@ pub struct Tree {
 
 	children: SkVec<usize>,
 	parents: SkVec<usize>,
-	weights: SkVec<f64>,
+	heights: SkVec<f64>,
 
 	updated_edges: Vec<usize>,
 	/// An array of length num_nodes, where `true` means that the node has
@@ -177,16 +177,16 @@ impl Tree {
 
 			children: children.into(),
 			parents: parents.into(),
-			weights: skvec![0.0; num_nodes],
+			heights: skvec![0.0; num_nodes],
 
 			updated_edges: Vec::new(),
 			updated_nodes: vec![false; num_nodes].into(),
 		}
 	}
 
-	// Sets the weights by walking upwards breadth-first starting with all
-	// of the leaves
-	pub fn set_random_weights(&mut self, rng: &mut Rng) {
+	// Sets the heights of internal nodes by walking upwards breadth-first
+	// starting with all of the leaves
+	pub fn set_random_heights(&mut self, rng: &mut Rng) {
 		const DIFF: f64 = 0.1;
 
 		let mut walk = VecDeque::new();
@@ -198,12 +198,12 @@ impl Tree {
 		while let Some(internal) = walk.pop_front() {
 			let (left, right) = self.children_of(&internal);
 			let max = f64::max(
-				self.weight_of(&left),
-				self.weight_of(&right),
+				self.height_of(&left),
+				self.height_of(&right),
 			);
 
 			let diff = DIFF * (2.0 + rng.random::<f64>());
-			self.update_weight(&internal, max + diff);
+			self.set_height(&internal, max + diff);
 
 			if let Some(parent) = self.parent_of(&internal) {
 				walk.push_front(parent);
@@ -214,14 +214,14 @@ impl Tree {
 	pub fn accept(&mut self) {
 		self.children.accept();
 		self.parents.accept();
-		self.weights.accept();
+		self.heights.accept();
 		self.clear_updated();
 	}
 
 	pub fn reject(&mut self) {
 		self.children.reject();
 		self.parents.reject();
-		self.weights.reject();
+		self.heights.reject();
 		self.clear_updated();
 	}
 
@@ -352,10 +352,10 @@ impl Tree {
 		self.mark_updated(new_child);
 	}
 
-	/// Sets the weight of `node`, recording it and it's parent and child
+	/// Sets the height of `node`, recording it and it's parent and child
 	/// edges (if it has those).
-	pub fn update_weight(&mut self, node: &Node, weight: f64) {
-		self.weights.set(node.0, weight);
+	pub fn set_height(&mut self, node: &Node, height: f64) {
+		self.heights.set(node.0, height);
 		self.mark_updated(node);
 
 		if self.parent_of(node).is_some() {
@@ -372,7 +372,7 @@ impl Tree {
 	}
 
 	/// Doesn't overwrite the old root.
-	pub fn update_root(&mut self, node: &Node) {
+	pub fn set_root(&mut self, node: &Node) {
 		self.parents.set(node.0, ROOT);
 	}
 
@@ -398,18 +398,18 @@ impl Tree {
 	pub(crate) fn node_is_valid(&self, node: &Node) -> bool {
 		if let Some(leaf) = self.as_leaf(node) {
 			let parent = self.parent_of(&leaf).unwrap();
-			self.weight_of(&leaf) < self.weight_of(&parent)
+			self.height_of(&leaf) < self.height_of(&parent)
 		} else if let Some(internal) = self.as_internal(node) {
 			let (left, right) = self.children_of(&internal);
 			if left == right {
 				return false;
 			}
 
-			let (left_weight, right_weight) =
-				(self.weight_of(&left), self.weight_of(&right));
-			let weight = self.weight_of(&internal);
+			let (left_height, right_height) =
+				(self.height_of(&left), self.height_of(&right));
+			let height = self.height_of(&internal);
 
-			weight > left_weight && weight > right_weight
+			height > left_height && height > right_height
 		} else {
 			unreachable!()
 		}
@@ -429,20 +429,20 @@ impl Tree {
 			let (left, right) = self.children_of(&node);
 
 			ensure!(
-				self.weight_of(&node) > self.weight_of(&left),
+				self.height_of(&node) > self.height_of(&left),
 				"Node {} ({}) is younger than it's left child {} ({})",
 				node.0,
-				self.weight_of(&node),
+				self.height_of(&node),
 				left.0,
-				self.weight_of(&left),
+				self.height_of(&left),
 			);
 			ensure!(
-				self.weight_of(&node) > self.weight_of(&right),
+				self.height_of(&node) > self.height_of(&right),
 				"Node {} ({}) is younger than it's right child {} ({})",
 				node.0,
-				self.weight_of(&node),
+				self.height_of(&node),
 				right.0,
-				self.weight_of(&right),
+				self.height_of(&right),
 			);
 
 			let left_parent = self.parent_of(&left);
@@ -482,7 +482,7 @@ impl Tree {
 	}
 
 	pub fn num_nodes(&self) -> usize {
-		self.weights.len()
+		self.heights.len()
 	}
 
 	pub fn num_internals(&self) -> usize {
@@ -527,8 +527,8 @@ impl Tree {
 		Internal(i)
 	}
 
-	pub fn weight_of(&self, node: &Node) -> f64 {
-		self.weights[node.0]
+	pub fn height_of(&self, node: &Node) -> f64 {
+		self.heights[node.0]
 	}
 
 	pub fn children_of(&self, node: &Internal) -> (Node, Node) {
@@ -557,7 +557,7 @@ impl Tree {
 	pub fn edge_distance(&self, edge: usize) -> f64 {
 		let (child, parent) = self.edge_nodes(edge);
 
-		self.weight_of(&parent) - self.weight_of(&child)
+		self.height_of(&parent) - self.height_of(&child)
 	}
 
 	fn edge_nodes(&self, edge: usize) -> (Node, Internal) {
@@ -626,8 +626,8 @@ impl Tree {
 		for node in self.nodes() {
 			let distance;
 			if let Some(parent) = self.parent_of(&node) {
-				distance = self.weight_of(&parent)
-					- self.weight_of(&node);
+				distance = self.height_of(&parent)
+					- self.height_of(&node);
 			} else {
 				distance = 0.0;
 			}
@@ -759,8 +759,8 @@ impl PyTree {
 		Ok(tree)
 	}
 
-	fn set_random_weights(&self, rng: Py<PyRng>) {
-		self.inner().set_random_weights(&mut rng.get().inner());
+	fn set_random_heights(&self, rng: Py<PyRng>) {
+		self.inner().set_random_heights(&mut rng.get().inner());
 	}
 
 	fn update_edge(&self, edge: usize, new_child: Node) -> Result<()> {
@@ -768,13 +768,13 @@ impl PyTree {
 		Ok(())
 	}
 
-	fn update_weight(&self, node: Node, weight: f64) -> Result<()> {
-		self.inner().update_weight(&node, weight);
+	fn set_height(&self, node: Node, height: f64) -> Result<()> {
+		self.inner().set_height(&node, height);
 		Ok(())
 	}
 
-	fn update_root(&self, node: Node) -> Result<()> {
-		self.inner().update_root(&node);
+	fn set_root(&self, node: Node) -> Result<()> {
+		self.inner().set_root(&node);
 		Ok(())
 	}
 
@@ -818,8 +818,8 @@ impl PyTree {
 		self.inner().root()
 	}
 
-	fn weight_of(&self, node: Node) -> Result<f64> {
-		Ok(self.inner().weight_of(&node))
+	fn height_of(&self, node: Node) -> Result<f64> {
+		Ok(self.inner().height_of(&node))
 	}
 
 	fn children_of<'py>(

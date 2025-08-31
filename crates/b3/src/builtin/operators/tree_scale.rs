@@ -93,8 +93,8 @@ impl TreeScale {
 			.extract::<f64>()?;
 
 		for node in tree.internals() {
-			let new_weight = tree.weight_of(&node) * scale;
-			tree.update_weight(&node, new_weight);
+			let new_height = tree.height_of(&node) * scale;
+			tree.set_height(&node, new_height);
 		}
 
 		let ratio = scale.ln() * (tree.num_internals() - 2) as f64;

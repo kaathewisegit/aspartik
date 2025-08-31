@@ -28,7 +28,7 @@ for i, record in enumerate(DNAReader.from_file(path)):
 
 rng = RNG(4)
 tree = Tree(names, rng)
-tree.set_random_weights(rng)
+tree.set_random_heights(rng)
 
 birth_rate_y = Real(2.0)
 

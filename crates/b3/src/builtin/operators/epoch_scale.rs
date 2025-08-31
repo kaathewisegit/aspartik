@@ -96,10 +96,10 @@ impl EpochScale {
 
 		let x = tree.random_internal(&mut rng);
 		let y = tree.random_internal(&mut rng);
-		let (weight_x, weight_y) =
-			(tree.weight_of(&x), tree.weight_of(&y));
-		let lower = f64::min(weight_x, weight_y);
-		let upper = f64::max(weight_x, weight_y);
+		let (x_height, y_height) =
+			(tree.height_of(&x), tree.height_of(&y));
+		let lower = f64::min(x_height, y_height);
+		let upper = f64::max(x_height, y_height);
 
 		let move_to = lower + scale * (upper - lower);
 		let delta = move_to - upper;
@@ -107,15 +107,15 @@ impl EpochScale {
 		let mut num_scaled = 0;
 
 		for node in tree.internals() {
-			let weight = tree.weight_of(&node);
-			if lower < weight && weight <= upper {
-				let new_weight =
-					lower + scale * (weight - lower);
-				tree.update_weight(&node, new_weight);
+			let height = tree.height_of(&node);
+			if lower < height && height <= upper {
+				let new_height =
+					lower + scale * (height - lower);
+				tree.set_height(&node, new_height);
 				num_scaled += 1;
-			} else if weight > upper {
-				let new_weight = weight + delta;
-				tree.update_weight(&node, new_weight);
+			} else if height > upper {
+				let new_height = height + delta;
+				tree.set_height(&node, new_height);
 			}
 		}
 
