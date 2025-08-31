@@ -12,9 +12,11 @@ use util::py_get_attr;
 #[pyclass(module = "aspartik.b3.operators", frozen)]
 pub struct EpochScale {
 	tree: Py<PyTree>,
+	#[pyo3(get)]
 	factor: f64,
-	distribution: PyObject,
+	distribution: Py<PyAny>,
 	rng: Py<PyRng>,
+	#[pyo3(get)]
 	weight: f64,
 }
 
@@ -48,11 +50,6 @@ impl EpochScale {
 	}
 
 	#[getter]
-	fn factor(&self) -> f64 {
-		self.factor
-	}
-
-	#[getter]
 	fn distribution(&self, py: Python) -> PyObject {
 		self.distribution.clone_ref(py)
 	}
@@ -60,11 +57,6 @@ impl EpochScale {
 	#[getter]
 	fn rng(&self, py: Python) -> Py<PyRng> {
 		self.rng.clone_ref(py)
-	}
-
-	#[getter]
-	fn weight(&self) -> f64 {
-		self.weight
 	}
 
 	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
