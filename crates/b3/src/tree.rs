@@ -17,6 +17,7 @@ use std::{
 	ops::Deref,
 };
 
+use bitmap::Bitmap;
 use io::newick::{
 	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
 };
@@ -37,7 +38,7 @@ pub struct Tree {
 	updated_edges: Vec<usize>,
 	/// An array of length num_nodes, where `true` means that the node has
 	/// been updated.
-	updated_nodes: Box<[bool]>,
+	updated_nodes: Bitmap,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -180,7 +181,7 @@ impl Tree {
 			heights: skvec![0.0; num_nodes],
 
 			updated_edges: Vec::new(),
-			updated_nodes: vec![false; num_nodes].into(),
+			updated_nodes: Bitmap::new(num_nodes),
 		}
 	}
 
@@ -227,9 +228,7 @@ impl Tree {
 
 	fn clear_updated(&mut self) {
 		self.updated_edges.clear();
-		for node_status in &mut self.updated_nodes {
-			*node_status = false;
-		}
+		self.updated_nodes.clear();
 	}
 
 	pub fn edges_to_update(&self) -> Vec<usize> {
@@ -242,13 +241,13 @@ impl Tree {
 		// For each updated node go upwards in the tree until root and
 		// mark nodes as updated
 		for node in (0..self.num_nodes()).map(Node) {
-			if self.updated_nodes[node.0] {
+			if self.updated_nodes.at(node.0) {
 				let mut curr = node;
 				while let Some(parent) = self.parent_of(&curr) {
 					// return early when we find an already
 					// visited node to avoid wasting time on
 					// already checked paths
-					if self.updated_nodes[parent.0] {
+					if self.updated_nodes.at(parent.0) {
 						break;
 					}
 					self.mark_updated(&parent);
@@ -259,7 +258,7 @@ impl Tree {
 
 		// Updated leaves, in order
 		for i in 0..self.num_leaves() {
-			if self.updated_nodes[i] {
+			if self.updated_nodes.at(i) {
 				nodes.push(Node(i));
 			}
 		}
@@ -280,12 +279,12 @@ impl Tree {
 				let (left, right) = self.children_of(node);
 
 				if let Some(left) = self.as_internal(&left)
-					&& self.updated_nodes[left.0]
+					&& self.updated_nodes.at(left.0)
 				{
 					next.push(left);
 				}
 				if let Some(right) = self.as_internal(&right)
-					&& self.updated_nodes[right.0]
+					&& self.updated_nodes.at(right.0)
 				{
 					next.push(right);
 				}
@@ -305,9 +304,7 @@ impl Tree {
 
 	/// A breadth-first order of internals starting from the root.
 	pub fn full_update(&mut self) -> (Vec<Node>, usize) {
-		for edited in &mut self.updated_nodes {
-			*edited = true;
-		}
+		self.updated_nodes.set_all_on();
 
 		self.nodes_to_update()
 	}
@@ -331,7 +328,7 @@ impl Tree {
 	}
 
 	fn mark_updated(&mut self, node: &Node) {
-		self.updated_nodes[node.0] = true;
+		self.updated_nodes.set_on(node.0);
 	}
 
 	/// Overwrites the child of `edge` with `new_child`.  Only `edge` and
