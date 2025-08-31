@@ -8,7 +8,7 @@ use util::{py_bail, py_call_method, py_check_method};
 
 pub struct PyPrior {
 	/// INVARIANT: the type has a `probability` method
-	inner: PyObject,
+	inner: Py<PyAny>,
 }
 
 impl PyPrior {
@@ -16,7 +16,7 @@ impl PyPrior {
 		self.inner.as_ptr() as usize
 	}
 
-	pub fn clone_ref(&self, py: Python) -> PyObject {
+	pub fn clone_ref(&self, py: Python) -> Py<PyAny> {
 		self.inner.clone_ref(py)
 	}
 

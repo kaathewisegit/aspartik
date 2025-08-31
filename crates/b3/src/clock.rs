@@ -8,7 +8,7 @@ use profiler::profile;
 use util::{py_bail, py_call_method, py_check_method};
 
 pub struct PyClock {
-	inner: PyObject,
+	inner: Py<PyAny>,
 }
 
 pub type Substitution = RowMatrix<f64, 4, 4>;

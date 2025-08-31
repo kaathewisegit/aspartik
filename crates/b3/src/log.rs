@@ -5,7 +5,7 @@ use crate::mcmc::Mcmc;
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
 pub struct PyLogger {
-	inner: PyObject,
+	inner: Py<PyAny>,
 	every: usize,
 }
 
@@ -23,7 +23,7 @@ impl<'py> FromPyObject<'py> for PyLogger {
 }
 
 impl PyLogger {
-	pub fn clone_ref(&self, py: Python) -> PyObject {
+	pub fn clone_ref(&self, py: Python) -> Py<PyAny> {
 		self.inner.clone_ref(py)
 	}
 

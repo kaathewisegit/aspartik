@@ -7,13 +7,13 @@ use crate::tree::PyTree;
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ConstantPopulation {
 	tree: Py<PyTree>,
-	population: PyObject,
+	population: Py<PyAny>,
 }
 
 #[pymethods]
 impl ConstantPopulation {
 	#[new]
-	fn new(tree: Py<PyTree>, population: PyObject) -> Self {
+	fn new(tree: Py<PyTree>, population: Py<PyAny>) -> Self {
 		Self { tree, population }
 	}
 
@@ -23,11 +23,11 @@ impl ConstantPopulation {
 	}
 
 	#[getter]
-	fn population(&self, py: Python) -> PyObject {
+	fn population(&self, py: Python) -> Py<PyAny> {
 		self.population.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
 		let tuple = (self.tree(py), self.population(py))
 			.into_pyobject(py)?;
 

@@ -32,7 +32,7 @@ impl Seq for Py<PyDnaSeq> {
 
 impl FromChars for Py<PyDnaSeq> {
 	fn from_vec(chars: Vec<DnaNucleotide>) -> Self {
-		Python::with_gil(|py| Self::new(py, PyDnaSeq::from_vec(chars)))
+		Python::attach(|py| Self::new(py, PyDnaSeq::from_vec(chars)))
 			.expect("Failed to acquire GIL")
 	}
 }

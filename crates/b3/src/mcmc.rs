@@ -21,7 +21,7 @@ pub struct Mcmc {
 	burnin: usize,
 	length: usize,
 
-	state: Vec<PyObject>,
+	state: Vec<Py<PyAny>>,
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
 	likelihoods: Vec<Py<PyLikelihood>>,
@@ -46,7 +46,7 @@ impl Mcmc {
 		burnin: usize,
 		length: usize,
 
-		state: Vec<PyObject>,
+		state: Vec<Py<PyAny>>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
 		likelihoods: Vec<Py<PyLikelihood>>,
@@ -77,12 +77,12 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn state(&self, py: Python) -> Vec<PyObject> {
+	fn state(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.state.iter().map(|s| s.clone_ref(py)).collect()
 	}
 
 	#[getter]
-	fn priors(&self, py: Python) -> Vec<PyObject> {
+	fn priors(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.priors.iter().map(|p| p.clone_ref(py)).collect()
 	}
 
@@ -92,7 +92,7 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn loggers(&self, py: Python) -> Vec<PyObject> {
+	fn loggers(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.loggers.iter().map(|l| l.clone_ref(py)).collect()
 	}
 
@@ -101,7 +101,7 @@ impl Mcmc {
 		self.rng.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
 		let tuple = (
 			self.burnin,
 			self.length,

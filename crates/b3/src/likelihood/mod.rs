@@ -97,7 +97,7 @@ impl GenericLikelihood<4> {
 			launched_update: false,
 			tree,
 		};
-		Python::with_gil(|py| out.propose(py))?;
+		Python::attach(|py| out.propose(py))?;
 		// This cannot be removed: the likelihood must be run to
 		// completion in case the calculator is async.
 		out.likelihood()?;

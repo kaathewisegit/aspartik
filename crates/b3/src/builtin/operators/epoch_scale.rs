@@ -26,7 +26,7 @@ impl EpochScale {
 	fn new(
 		tree: Py<PyTree>,
 		factor: f64,
-		distribution: PyObject,
+		distribution: Py<PyAny>,
 		rng: Py<PyRng>,
 		weight: f64,
 	) -> Result<Self> {
@@ -50,7 +50,7 @@ impl EpochScale {
 	}
 
 	#[getter]
-	fn distribution(&self, py: Python) -> PyObject {
+	fn distribution(&self, py: Python) -> Py<PyAny> {
 		self.distribution.clone_ref(py)
 	}
 
@@ -59,7 +59,7 @@ impl EpochScale {
 		self.rng.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
 		let tuple = (
 			self.tree(py),
 			self.factor,

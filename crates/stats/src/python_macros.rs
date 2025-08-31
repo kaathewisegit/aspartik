@@ -222,7 +222,7 @@ macro_rules! impl_pymethods {
 			fn __getnewargs__(
 				&self,
 				py: Python
-			) -> PyResult<PyObject> {
+			) -> PyResult<Py<PyAny>> {
 				let tuple = ($(self.$args),*,).into_pyobject(py)?;
 
 				Ok(tuple.into_any().unbind())

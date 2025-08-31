@@ -7,7 +7,7 @@ use pyo3::{conversion::FromPyObject, exceptions::PyValueError};
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
 pub struct PySubstitution<const N: usize> {
-	inner: PyObject,
+	inner: Py<PyAny>,
 }
 
 pub type Substitution<const N: usize> = RowMatrix<f64, N, N>;

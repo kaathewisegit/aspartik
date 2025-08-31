@@ -20,7 +20,7 @@ use util::{py_bail, py_call_method};
 
 pub enum AnyReader {
 	Rust(Box<dyn Read + Send>),
-	Python(PyObject),
+	Python(Py<PyAny>),
 }
 
 impl AnyReader {
@@ -31,7 +31,7 @@ impl AnyReader {
 		AnyReader::Rust(Box::new(reader))
 	}
 
-	pub fn from_python(obj: PyObject) -> Self {
+	pub fn from_python(obj: Py<PyAny>) -> Self {
 		AnyReader::Python(obj)
 	}
 }
@@ -45,10 +45,10 @@ impl Read for AnyReader {
 	}
 }
 
-fn py_read(obj: &mut PyObject, buf: &mut [u8]) -> IoResult<usize> {
+fn py_read(obj: &mut Py<PyAny>, buf: &mut [u8]) -> IoResult<usize> {
 	let len = buf.len();
 
-	Python::with_gil(|py| {
+	Python::attach(|py| {
 		let result = py_call_method!(py, obj, "read", len)?;
 		let bytes = if let Ok(bytes) =
 			result.downcast_bound::<PyBytes>(py)
@@ -81,7 +81,7 @@ fn py_read(obj: &mut PyObject, buf: &mut [u8]) -> IoResult<usize> {
 
 pub enum AnyWriter {
 	Rust(Box<dyn Write + Send>),
-	Python(PyObject),
+	Python(Py<PyAny>),
 }
 
 impl AnyWriter {
@@ -92,7 +92,7 @@ impl AnyWriter {
 		AnyWriter::Rust(Box::new(writer))
 	}
 
-	pub fn from_python(obj: PyObject) -> Self {
+	pub fn from_python(obj: Py<PyAny>) -> Self {
 		AnyWriter::Python(obj)
 	}
 }
@@ -113,8 +113,8 @@ impl Write for AnyWriter {
 	}
 }
 
-fn py_write(obj: &mut PyObject, buf: &[u8]) -> IoResult<usize> {
-	Python::with_gil(|py| {
+fn py_write(obj: &mut Py<PyAny>, buf: &[u8]) -> IoResult<usize> {
+	Python::attach(|py| {
 		let result = py_call_method!(py, obj, "write", buf)?;
 		let Ok(num) = result.extract::<isize>(py) else {
 			py_bail!(
@@ -136,8 +136,8 @@ fn py_write(obj: &mut PyObject, buf: &[u8]) -> IoResult<usize> {
 	})
 }
 
-fn py_flush(obj: &mut PyObject) -> IoResult<()> {
-	Python::with_gil(|py| {
+fn py_flush(obj: &mut Py<PyAny>) -> IoResult<()> {
+	Python::attach(|py| {
 		py_call_method!(py, obj, "flush")?;
 		Ok(())
 	})

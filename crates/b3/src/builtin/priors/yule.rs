@@ -7,13 +7,13 @@ use crate::tree::PyTree;
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct Yule {
 	tree: Py<PyTree>,
-	birth_rate: PyObject,
+	birth_rate: Py<PyAny>,
 }
 
 #[pymethods]
 impl Yule {
 	#[new]
-	fn new(tree: Py<PyTree>, birth_rate: PyObject) -> Self {
+	fn new(tree: Py<PyTree>, birth_rate: Py<PyAny>) -> Self {
 		Self { tree, birth_rate }
 	}
 
@@ -23,11 +23,11 @@ impl Yule {
 	}
 
 	#[getter]
-	fn birth_rate(&self, py: Python) -> PyObject {
+	fn birth_rate(&self, py: Python) -> Py<PyAny> {
 		self.birth_rate.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<PyObject> {
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
 		let tuple = (self.tree(py), self.birth_rate(py))
 			.into_pyobject(py)?;
 

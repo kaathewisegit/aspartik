@@ -62,7 +62,7 @@ impl PyProposal {
 
 #[derive(Debug)]
 pub struct PyOperator {
-	inner: PyObject,
+	inner: Py<PyAny>,
 	accepts: Mutex<usize>,
 	rejects: Mutex<usize>,
 }

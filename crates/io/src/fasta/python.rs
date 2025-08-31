@@ -87,7 +87,7 @@ macro_rules! bubble {
 #[pymethods]
 impl PyFastaDnaReader {
 	#[new]
-	fn new(obj: PyObject) -> Self {
+	fn new(obj: Py<PyAny>) -> Self {
 		let reader = AnyReader::from_python(obj);
 		let buf_reader = BufReader::new(reader);
 		Self {
