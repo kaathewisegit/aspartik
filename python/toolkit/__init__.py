@@ -1,10 +1,28 @@
 import subprocess
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from shutil import rmtree
 
 from . import doc
+
+
+def add_langopts(parser: ArgumentParser):
+    parser.add_argument("--rust", action="store_true", help="run Rust commands")
+    parser.add_argument("--python", action="store_true", help="run Python commands")
+    parser.add_argument(
+        "--website", action="store_true", help="run JavaScript commands"
+    )
+
+
+def set_lang_args(args: Namespace):
+    if "rust" not in args:
+        return
+
+    if not args.rust and not args.python and not args.website:
+        args.rust = True
+        args.python = True
+        args.website = True
 
 
 def make_parser():
@@ -14,11 +32,16 @@ def make_parser():
     )
     subparsers = parser.add_subparsers(dest="subcommand")
 
-    subparsers.add_parser("fix", help="automatically fix code")
+    fix = subparsers.add_parser("fix", help="automatically fix code")
+    add_langopts(fix)
+
     subparsers.add_parser("lint", help="validate with linters and formatters")
     subparsers.add_parser("test", help="run tests")
     subparsers.add_parser("run", help="run a minimal `b3` simulation")
-    check = subparsers.add_parser("check", help="run all checks")  # noqa: F841
+
+    check = subparsers.add_parser("check", help="run all checks")
+    add_langopts(check)
+
     subparsers.add_parser("clean", help="remove temporary files and `b3` output")
 
     subparsers.add_parser("pdoc", help="build the pdoc HTML files")
@@ -35,42 +58,50 @@ def execute(*args):
         )
 
 
-def fix():
-    execute("cargo", "fmt")
-    execute("cargo", "clippy", "--fix", "--allow-dirty")
+def fix(args: Namespace):
+    if args.rust:
+        execute("cargo", "fmt")
+        execute("cargo", "clippy", "--fix", "--allow-dirty")
 
-    execute("ruff", "format")
-    execute("ruff", "check", "--fix")
+    if args.python:
+        execute("ruff", "format")
+        execute("ruff", "check", "--fix")
 
-    execute("bun", "run", "--cwd", "website/", "fix")
-
-
-def lint():
-    execute("cargo", "fmt", "--check")
-    execute(
-        "cargo",
-        "clippy",
-        "--workspace",
-        "--tests",
-        "--features",
-        "approx,arbitrary",
-        "--",
-        "-D",
-        "warnings",
-    )
-
-    execute("ruff", "format", "--check")
-    execute("ruff", "check")
-
-    execute("pyright")
-
-    execute("bun", "run", "--cwd", "website/", "check")
+    if args.website:
+        execute("bun", "run", "--cwd", "website/", "fix")
 
 
-def test():
-    execute("cargo", "test", "--workspace", "--features", "approx,arbitrary")
+def lint(args: Namespace):
+    if args.rust:
+        execute("cargo", "fmt", "--check")
+        execute(
+            "cargo",
+            "clippy",
+            "--workspace",
+            "--tests",
+            "--features",
+            "approx,arbitrary",
+            "--",
+            "-D",
+            "warnings",
+        )
 
-    execute("pytest")
+    if args.python:
+        execute("ruff", "format", "--check")
+        execute("ruff", "check")
+
+        execute("pyright")
+
+    if args.website:
+        execute("bun", "run", "--cwd", "website/", "check")
+
+
+def test(args: Namespace):
+    if args.rust:
+        execute("cargo", "test", "--workspace", "--features", "approx,arbitrary")
+
+    if args.python:
+        execute("pytest")
 
 
 def run():
@@ -88,9 +119,9 @@ ARTIFACTS = [
 ]
 
 
-def check():
-    lint()
-    test()
+def check(args: Namespace):
+    lint(args)
+    test(args)
     run()
 
 
@@ -114,18 +145,19 @@ def pdoc():
 def main():
     parser = make_parser()
     args = parser.parse_args()
+    set_lang_args(args)
 
     match args.subcommand:
         case "fix":
-            fix()
+            fix(args)
         case "lint":
-            lint()
+            lint(args)
         case "test":
-            test()
+            test(args)
         case "run":
             run()
         case "check":
-            check()
+            check(args)
         case "clean":
             clean()
         case "pdoc":
