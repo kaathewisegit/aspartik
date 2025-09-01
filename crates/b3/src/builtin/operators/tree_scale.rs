@@ -1,10 +1,7 @@
 use anyhow::{Result, ensure};
 use pyo3::{intern, prelude::*};
 
-use crate::{
-	operator::{Proposal, PyProposal},
-	tree::PyTree,
-};
+use crate::{operator::Proposal, tree::PyTree};
 use rng::PyRng;
 use util::py_get_attr;
 
@@ -72,7 +69,7 @@ impl TreeScale {
 		Ok(tuple.into_any().unbind())
 	}
 
-	fn propose(&self, py: Python) -> Result<PyProposal> {
+	fn propose(&self, py: Python) -> Result<Proposal> {
 		let mut tree = self.tree.get().inner();
 
 		let (low, high) = (self.factor, 1.0 / self.factor);
@@ -97,12 +94,12 @@ impl TreeScale {
 			tree.set_height(&node, new_height);
 
 			if !tree.is_node_height_valid(&node) {
-				return Ok(Proposal::Reject().into());
+				return Ok(Proposal::Reject());
 			}
 		}
 
 		let ratio = scale.ln() * (tree.num_internals() - 2) as f64;
 
-		Ok(Proposal::Hastings(ratio).into())
+		Ok(Proposal::Hastings(ratio))
 	}
 }

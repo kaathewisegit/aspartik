@@ -26,7 +26,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 
 	m.add_class::<likelihood::PyLikelihood>()?;
 	m.add_class::<mcmc::Mcmc>()?;
-	m.add_class::<operator::PyProposal>()?;
+	m.add_class::<operator::Proposal>()?;
 	m.add_class::<parameter::PyBoolean>()?;
 	m.add_class::<parameter::PyInteger>()?;
 	m.add_class::<parameter::PyReal>()?;

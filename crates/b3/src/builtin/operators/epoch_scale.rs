@@ -1,10 +1,7 @@
 use anyhow::{Result, ensure};
 use pyo3::{intern, prelude::*};
 
-use crate::{
-	operator::{Proposal, PyProposal},
-	tree::PyTree,
-};
+use crate::{operator::Proposal, tree::PyTree};
 use rng::PyRng;
 use util::py_get_attr;
 
@@ -72,7 +69,7 @@ impl EpochScale {
 		Ok(tuple.into_any().unbind())
 	}
 
-	fn propose(&self, py: Python) -> Result<PyProposal> {
+	fn propose(&self, py: Python) -> Result<Proposal> {
 		let mut tree = self.tree.get().inner();
 
 		let (low, high) = (self.factor, 1.0 / self.factor);
@@ -119,14 +116,14 @@ impl EpochScale {
 			}
 
 			if !tree.is_node_height_valid(&node) {
-				return Ok(Proposal::Reject().into());
+				return Ok(Proposal::Reject());
 			}
 		}
 
 		if num_scaled < 2 {
-			return Ok(Proposal::Reject().into());
+			return Ok(Proposal::Reject());
 		}
 
-		Ok(Proposal::Hastings(ratio).into())
+		Ok(Proposal::Hastings(ratio))
 	}
 }

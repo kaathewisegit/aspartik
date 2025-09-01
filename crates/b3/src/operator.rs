@@ -13,44 +13,35 @@ use rng::Rng;
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[pyclass(module = "aspartik.b3", frozen)]
 pub enum Proposal {
 	Reject(),
 	Hastings(f64),
 	Accept(),
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-#[pyclass(module = "aspartik.b3", name = "Proposal", frozen)]
-pub struct PyProposal(Proposal);
-
-impl From<Proposal> for PyProposal {
-	fn from(value: Proposal) -> PyProposal {
-		PyProposal(value)
-	}
-}
-
 #[pymethods]
-impl PyProposal {
+impl Proposal {
 	#[classmethod]
 	#[pyo3(name = "Reject")]
-	fn reject(_cls: Py<PyType>) -> PyProposal {
-		PyProposal(Proposal::Reject())
+	fn reject(_cls: Py<PyType>) -> Proposal {
+		Proposal::Reject()
 	}
 
 	#[classmethod]
 	#[pyo3(name = "Hastings")]
-	fn hastings(_cls: Py<PyType>, ratio: f64) -> PyProposal {
-		PyProposal(Proposal::Hastings(ratio))
+	fn hastings(_cls: Py<PyType>, ratio: f64) -> Proposal {
+		Proposal::Hastings(ratio)
 	}
 
 	#[classmethod]
 	#[pyo3(name = "Accept")]
-	fn accept(_cls: Py<PyType>) -> PyProposal {
-		PyProposal(Proposal::Accept())
+	fn accept(_cls: Py<PyType>) -> Proposal {
+		Proposal::Accept()
 	}
 
 	fn __repr__(&self) -> String {
-		match self.0 {
+		match self {
 			Proposal::Reject() => "Proposal.Reject()".to_owned(),
 			Proposal::Hastings(r) => {
 				format!("Proposal.Hastings({r})")
@@ -97,8 +88,7 @@ impl PyOperator {
 			id = self.id();
 			py_call_method!(py, self.inner, "propose")?
 		);
-		let proposal = proposal.extract::<PyProposal>(py)?;
-		let proposal = proposal.0;
+		let proposal = proposal.extract::<Proposal>(py)?;
 		trace!(target: "b3::operator", propose:? = proposal; "");
 
 		Ok(proposal)
