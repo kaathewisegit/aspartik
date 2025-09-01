@@ -401,20 +401,16 @@ impl Tree {
 		self.update_edge(edge_b, a);
 	}
 
-	#[expect(unused)]
-	pub(crate) fn node_is_valid(&self, node: &Node) -> bool {
+	pub(crate) fn is_node_height_valid(&self, node: &Node) -> bool {
+		let height = self.height_of(node);
+
 		if let Some(leaf) = self.as_leaf(node) {
 			let parent = self.parent_of(&leaf).unwrap();
-			self.height_of(&leaf) < self.height_of(&parent)
+			height < self.height_of(&parent)
 		} else if let Some(internal) = self.as_internal(node) {
 			let (left, right) = self.children_of(&internal);
-			if left == right {
-				return false;
-			}
-
 			let (left_height, right_height) =
 				(self.height_of(&left), self.height_of(&right));
-			let height = self.height_of(&internal);
 
 			height > left_height && height > right_height
 		} else {

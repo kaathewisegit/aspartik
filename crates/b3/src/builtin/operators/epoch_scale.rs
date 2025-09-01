@@ -117,6 +117,10 @@ impl EpochScale {
 				let new_height = height + delta;
 				tree.set_height(&node, new_height);
 			}
+
+			if !tree.is_node_height_valid(&node) {
+				return Ok(Proposal::Reject().into());
+			}
 		}
 
 		if num_scaled < 2 {

@@ -95,6 +95,10 @@ impl TreeScale {
 		for node in tree.internals() {
 			let new_height = tree.height_of(&node) * scale;
 			tree.set_height(&node, new_height);
+
+			if !tree.is_node_height_valid(&node) {
+				return Ok(Proposal::Reject().into());
+			}
 		}
 
 		let ratio = scale.ln() * (tree.num_internals() - 2) as f64;
