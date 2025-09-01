@@ -20,7 +20,6 @@ anyhow = { workspace = true }
 bincode = { workspace = true, features = ["serde", "alloc"] }
 crossbeam-channel = { workspace = true }
 cudarc = { workspace = true, features = ["driver", "dynamic-loading", "cuda-12000", "std"] }
-hashbrown = { workspace = true }
 log = { workspace = true, features = ["kv"] }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
