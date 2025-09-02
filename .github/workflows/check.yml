@@ -7,9 +7,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install system libraries
-        run: sudo apt-get install -y liblapack-dev
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
