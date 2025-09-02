@@ -7,8 +7,8 @@ mod bytemuck;
 #[cfg(feature = "cuda")]
 mod cuda;
 mod float;
-mod lapack;
 mod math;
+mod nalgebra;
 mod row_matrix;
 mod vector;
 

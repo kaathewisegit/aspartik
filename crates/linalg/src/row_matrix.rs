@@ -269,12 +269,23 @@ impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 	pub const NUM_ITEMS: usize = N * M;
 	pub const IS_SQUARE: bool = N == M;
 
+	pub fn as_ptr(&self) -> *const T {
+		self[0].as_ptr()
+	}
+
 	pub fn as_mut_ptr(&mut self) -> *mut T {
 		self[0].as_mut_ptr()
 	}
 
-	pub fn as_ptr(&self) -> *const T {
-		self[0].as_ptr()
+	pub fn as_slice(&self) -> &[T] {
+		// SAFETY: arrays have the same alignment as T, nesting them
+		// should be equivalent to one contigious slice.
+		unsafe {
+			core::slice::from_raw_parts(
+				self.as_ptr(),
+				Self::NUM_ITEMS,
+			)
+		}
 	}
 
 	pub fn apply<F>(&mut self, f: F)

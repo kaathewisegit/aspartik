@@ -1,44 +1,40 @@
-use crate::{RowMatrix, Vector, lapack};
+use nalgebra::{Const, DMatrix, SymmetricEigen};
+
+use crate::{RowMatrix, Vector};
+
+type Nalg<const N: usize> = nalgebra::OMatrix<f64, Const<N>, Const<N>>;
 
 impl<const N: usize> RowMatrix<f64, N, N> {
-	/// Returns eigenvalues and matrices whose rows are right and left
-	/// eigenvectors, in that order.
-	pub fn eigen(
-		&self,
-	) -> (Vector<f64, N>, RowMatrix<f64, N, N>, RowMatrix<f64, N, N>) {
-		eigen(self, true, true)
+	pub fn eigen(&self) -> (RowMatrix<f64, N, N>, Vector<f64, N>) {
+		if !self.is_symmetric() {
+			unimplemented!();
+		}
+
+		let m: Nalg<N> = self.into();
+
+		// an ugly workaround because `SymmetricEigen` can't accept
+		// arbitrary Const<N>, only concrete ones.
+		let vec: Vec<f64> = m.into_iter().copied().collect();
+		let m = DMatrix::from_vec(N, N, vec);
+
+		let s = SymmetricEigen::new(m);
+
+		let slice = s.eigenvalues.as_slice();
+		let array: [f64; N] = slice.try_into().unwrap();
+
+		(s.eigenvectors.into(), array.into())
 	}
 
 	pub fn eigenvectors(&self) -> RowMatrix<f64, N, N> {
-		let (_, right, _) = eigen(self, true, false);
-		right
-	}
-
-	pub fn left_eigenvectors(&self) -> RowMatrix<f64, N, N> {
-		let (_, _, left) = eigen(self, false, true);
-		left
+		self.eigen().0
 	}
 
 	pub fn eigenvalues(&self) -> Vector<f64, N> {
-		let (values, _, _) = eigen(self, false, false);
-		values
+		self.eigen().1
 	}
 
 	pub fn inverse(&self) -> Self {
-		let (lu, ipiv) = lapack::dgetrf(self);
-		lapack::dgetri(&lu, &ipiv)
-	}
-}
-
-fn eigen<const N: usize>(
-	matrix: &RowMatrix<f64, N, N>,
-	left: bool,
-	right: bool,
-) -> (Vector<f64, N>, RowMatrix<f64, N, N>, RowMatrix<f64, N, N>) {
-	if matrix.is_symmetric() {
-		let (values, vectors) = lapack::dsyev(matrix, left || right);
-		(values, vectors, vectors)
-	} else {
-		lapack::dgeev(matrix, left, right)
+		let m: Nalg<N> = self.into();
+		m.try_inverse().unwrap().into()
 	}
 }

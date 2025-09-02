@@ -46,10 +46,11 @@ impl<const N: usize> Transitions<N> {
 			self.current = Box::new(substitution);
 			self.rate = rate;
 
-			self.diag = Box::new(RowMatrix::from_diagonal(
-				substitution.eigenvalues(),
-			));
-			self.p = Box::new(substitution.eigenvectors());
+			let (eigenvectors, eigenvalues) = substitution.eigen();
+
+			self.diag =
+				Box::new(RowMatrix::from_diagonal(eigenvalues));
+			self.p = Box::new(eigenvectors);
 			self.inv_p = Box::new(self.p.inverse());
 		}
 
@@ -77,7 +78,7 @@ impl<const N: usize> Transitions<N> {
 				.diag
 				.map_diagonal(|v| (v * distance).exp());
 
-			let transition = inv_p * diag * p;
+			let transition = p * diag * inv_p;
 
 			self.transitions.set(*edge, transition);
 		}

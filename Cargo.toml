@@ -33,9 +33,9 @@ crossbeam-channel = "0.5.15"
 cudarc = { version = "0.17.0", default-features = false }
 divan = "0.1.21"
 indoc = "2.0"
-lapack-sys = "0.15.0"
 log = "0.4.27"
 logos = "0.15.0"
+nalgebra = { version = "0.34.0", default-features = false }
 num-traits = "0.2.19"
 parking_lot = "0.12.4"
 petgraph = { version = "0.8.2", default-features = false }
