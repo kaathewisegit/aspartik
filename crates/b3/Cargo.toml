@@ -28,8 +28,5 @@ rand_distr = { workspace = true }
 rand_pcg = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 
-[features]
-cuda = []
-
 [lints]
 workspace = true

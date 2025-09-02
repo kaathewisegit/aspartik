@@ -18,6 +18,3 @@ math = { workspace = true }
 profiler = { workspace = true }
 rng = { workspace = true }
 stats = { workspace = true }
-
-[features]
-cuda = ["b3/cuda"]
