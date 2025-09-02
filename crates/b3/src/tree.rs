@@ -220,6 +220,8 @@ impl Tree {
 				walk.push_front(parent);
 			}
 		}
+
+		self.accept();
 	}
 
 	pub fn accept(&mut self) {
