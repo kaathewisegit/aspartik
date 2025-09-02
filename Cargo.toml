@@ -30,7 +30,7 @@ arbtest = "0.3.2"
 bincode = { version = "2.0", default-features = false }
 bytemuck = "1.23"
 crossbeam-channel = "0.5.15"
-cudarc = { version = "0.17.0", default-features = false }
+cudarc = { version = "0.17.1", default-features = false }
 divan = "0.1.21"
 indoc = "2.0"
 log = "0.4.27"

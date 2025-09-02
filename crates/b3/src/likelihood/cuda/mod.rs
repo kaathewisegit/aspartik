@@ -2,7 +2,7 @@ use anyhow::{Context, Result, anyhow, bail};
 use cudarc::{
 	driver::{
 		CudaContext, CudaFunction, CudaSlice, CudaStream, LaunchConfig,
-		PushKernelArg,
+		PushKernelArg, sys::is_culib_present,
 	},
 	nvrtc::Ptx,
 };
@@ -270,8 +270,14 @@ impl CudaLikelihood {
 		leaves: Vec<Vec<Row<4>>>,
 		cuda_device: usize,
 	) -> Result<Self> {
-		if cfg!(not(feature = "cuda")) {
-			bail!("b3 was built without CUDA support");
+		// SAFETY: since the function tries to link the library [0], it
+		// could theoratically be unsafe.  In practice, the resulting
+		// library is discarded.
+		//
+		// [0]: https://docs.rs/cudarc/0.17.3/src/cudarc/driver/sys/mod.rs.html#26256
+		let is_cuda_enabled = unsafe { is_culib_present() };
+		if !is_cuda_enabled {
+			bail!("CUDA library not found");
 		}
 
 		let num_sites = leaves.len();
