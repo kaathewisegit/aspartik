@@ -1,5 +1,3 @@
-#include "typedefs.h"
-
 typedef struct {
 	f64x4 a, c, g, t;
 } Transition;

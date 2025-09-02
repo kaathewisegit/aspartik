@@ -4,7 +4,7 @@ use cudarc::{
 		CudaContext, CudaFunction, CudaSlice, CudaStream, LaunchConfig,
 		PushKernelArg, sys::is_culib_present,
 	},
-	nvrtc::Ptx,
+	nvrtc::{CompileOptions, compile_ptx_with_opts},
 };
 
 use std::sync::Arc;
@@ -12,13 +12,8 @@ use std::sync::Arc;
 use super::{LikelihoodTrait, Row, Transition};
 use crate::util::transpose;
 
-/// This is somewhat of a hack.  The PTX assembly file is compiled in build.rs
-/// and the variable contains the path to it.  However, I didn't gate off this
-/// module behind the CUDA features because rust-analyzer would start warning
-/// about CUDA variables in super used here being unused.  So, instead the `new`
-/// constructor bails if the CUDA feature isn't enabled, so we never see the
-/// dummy empty file which is created when the CUDA feature isn't enabled.
-const PTX_SRC: &str = include_str!(env!("ASPARTIK_B3_PTX_SRC_PATH"));
+const CUDA_SRC: &str =
+	concat!(include_str!("typedefs.h"), include_str!("kernels.cu"),);
 
 pub struct CudaLikelihood {
 	stream: Arc<CudaStream>,
@@ -309,7 +304,12 @@ impl CudaLikelihood {
 		let scales_backup =
 			stream.alloc_zeros(num_edges * num_sites)?;
 
-		let ptx = Ptx::from_src(PTX_SRC);
+		let opts = CompileOptions {
+			include_paths: vec!["/usr/include".to_owned()],
+			..Default::default()
+		};
+		let ptx = compile_ptx_with_opts(CUDA_SRC, opts)?;
+
 		let module = context.load_module(ptx)?;
 		let propose_fn = module.load_function("propose")?;
 		let copy_projections_fn =
