@@ -137,6 +137,16 @@ impl DiscreteCDF for Geometric {
 		}
 	}
 
+	fn inverse_cdf(&self, probability: f64) -> u64 {
+		if probability == 1.0 || probability == 0.0 {
+			return 1;
+		}
+
+		let approx = (-probability).ln_1p() / (-self.p).ln_1p();
+
+		approx.round() as u64
+	}
+
 	/// Calculates the survival function for the geometric
 	/// distribution at `x`
 	///

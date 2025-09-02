@@ -177,11 +177,20 @@ fn test_inverse_cdf() {
 	let cases = [
 		(1.0, 0.0, 1),
 		(1.0, 1.0, 1),
-		#[cfg(not(target_os = "windows"))]
 		(0.2, 0.2, 1),
 		(0.004, 0.5, 173),
 	];
 	for (args, p, expected) in cases {
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
+	}
+}
+
+#[test]
+fn test_inverse_cdf_roundtrip() {
+	for p in [0.5, 0.1, 0.004] {
+		for x in 1..50u64 {
+			let d = new_dist(p);
+			assert_eq!(x, d.inverse_cdf(d.cdf(x)));
+		}
 	}
 }
