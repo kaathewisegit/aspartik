@@ -10,6 +10,7 @@ tracing.log.*
 # Python artifacts
 __pycache__/
 *.so
+*.pyd
 
 # Python virtual environment
 # TODO: commit the list of installed packages (i.e. maturin)
