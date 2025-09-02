@@ -106,7 +106,7 @@ def test(args: Namespace):
 
 def run():
     execute("maturin", "develop", "--release")
-    execute("python", "python/benches/primate.py")
+    execute("uv", "run", "python/benches/primate.py")
 
 
 ARTIFACTS = [

@@ -16,7 +16,8 @@ keywords = ["bioinformatics"]
 
 [project.optional-dependencies]
 dev = [
-	"maturin[patchelf]~=1.8",
+	"maturin[patchelf]~=1.8 ; sys_platform == 'linux'",
+	"maturin~=1.8 ; sys_platform == 'win32'",
 	"pyright~=1.1",
 	"pdoc~=15.0",
 	"pytest~=8.4",

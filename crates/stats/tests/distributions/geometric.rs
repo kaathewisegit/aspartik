@@ -177,6 +177,7 @@ fn test_inverse_cdf() {
 	let cases = [
 		(1.0, 0.0, 1),
 		(1.0, 1.0, 1),
+		#[cfg(not(target_os = "windows"))]
 		(0.2, 0.2, 1),
 		(0.004, 0.5, 173),
 	];

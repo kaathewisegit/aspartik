@@ -4,7 +4,12 @@ on: [push, pull_request]
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        platform: [windows-2022, ubuntu-24.04]
+
+    runs-on: ${{ matrix.platform }}
 
     steps:
       - name: Install Rust
@@ -44,7 +49,7 @@ jobs:
       - name: Download data files
         run: |
           mkdir -p crates/b3/data/
-          wget -P crates/b3/data/ https://gist.githubusercontent.com/kaathewisegit/f5cbc656c226175922c658ff2c4ab043/raw/293fd26a67396137ed8b7431586ef3049f1dc0af/primate-mdna-full.fasta
+          curl -O --output-dir crates/b3/data/ https://gist.githubusercontent.com/kaathewisegit/f5cbc656c226175922c658ff2c4ab043/raw/293fd26a67396137ed8b7431586ef3049f1dc0af/primate-mdna-full.fasta
 
       - name: Run the checks
         run: uv run -m python.toolkit check

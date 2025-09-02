@@ -2,6 +2,7 @@ export default {
 	tabWidth: 8,
 	useTabs: true,
 	semi: false,
+	endOfLine: "auto",
 
 	plugins: [
 		"prettier-plugin-astro",
