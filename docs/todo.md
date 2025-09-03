@@ -2,11 +2,14 @@
 
 ## `b3`
 
-- [ ] Partial likelihood scaling
+- [/] Partial likelihood scaling
 
-- [ ] Dated tree tips
+  Has performance issues because of full scale copies.  Needs partial
+  copies and a smarter change tracking algorithm (not a dump sum).
 
-  - [ ] Adjust all operators to respect (or check for) dated tips
+- [x] Dated tree tips
+
+  - [x] Adjust all operators to respect (or check for) dated tips
 
 - [ ] Deterministic tests with approximate tree comparisons
 
