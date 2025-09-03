@@ -25,15 +25,18 @@ pub struct CudaLikelihood {
 
 	/// Leaf likelihoods
 	///
-	/// Has the size of `num_sites * num_leaves`, stored in row-major order:
-	/// for each leaf all the sites go in one row.
+	/// Has the size of `num_sites * num_leaves`.
+	///
+	/// Values are grouped by leaves.  The slice is divided into rows of the
+	/// length `num_sites`.  `0` to `num_sites` is leaf 0, `num_sites` to `2
+	/// * num_sites` is leaf 1, and so on.
 	leaves: CudaSlice<Row<4>>,
 
 	/// A contiguous array which stores projection likelihoods
 	///
 	/// It has the length of `num_edges * num_sites`, with each likelihood
-	/// being associated with a particular edge.  It's row-major: each row
-	/// contains the values for a particular edge for all sites.
+	/// being associated with a particular edge.  Stored in the same way as
+	/// `leaves`, except grouped by edges.
 	projections: CudaSlice<Row<4>>,
 
 	/// A copy of `projections`
@@ -42,32 +45,50 @@ pub struct CudaLikelihood {
 	/// `num_sites`-long root likelihoods
 	likelihoods: CudaSlice<f64>,
 
-	/// A host storage for `likelihoods` to avoid repeating allocations
+	/// Host storage for `likelihoods` to avoid repeating allocations
 	host_likelihoods: Vec<f64>,
 
 	/// Edges updated in the current proposal
 	///
 	/// For each updated node this is the index of the edge leading to its
-	/// parent.
+	/// parent.  Has the length of `num_updated_nodes`.
 	edges: CudaSlice<u32>,
 
 	/// Transitions for each edge from `edges`
 	///
-	/// Same length as `edges`.
+	/// The length is `num_updated_nodes`.
 	transitions: CudaSlice<Transition<4>>,
 
 	/// Nodes updated in the current proposal
+	///
+	/// The length is `num_updated_nodes`.
 	nodes: CudaSlice<u32>,
 
 	scales: CudaSlice<u8>,
 	scales_backup: CudaSlice<u8>,
 
+	/// Total number of sites
+	///
+	/// Immutable, passed to the kernels.
 	num_sites: u32,
+
+	/// Total number of leaves
+	///
+	/// Immutable, passed to the kernels.
 	num_leaves: u32,
+
+	/// Number of nodes updated in the current proposal
+	///
+	/// Changes on each step.
 	num_updated_nodes: u32,
 }
 
 impl LikelihoodTrait<4> for CudaLikelihood {
+	/// Propose an edit to the tree
+	///
+	/// Asynchronous.  This method starts the GPU calculations and returns
+	/// right after.  The job synchronization is handled by the [shared
+	/// stream][Self::stream].
 	fn propose(
 		&mut self,
 		nodes: &[usize],
@@ -100,6 +121,11 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		Ok(())
 	}
 
+	/// Fetches the likelihoods calculated by [`update_likelihoods`]
+	///
+	/// Synchronous, blocks on the `self.likelihoods` buffer.
+	///
+	/// [`update_likelihoods`]: Self::update_likelihoods
 	fn likelihood(&mut self) -> Result<f64> {
 		self.stream.memcpy_dtoh(
 			&self.likelihoods,
@@ -119,6 +145,9 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 }
 
 impl CudaLikelihood {
+	/// Updates both leaves and internal nodes
+	///
+	/// Asynchronous.
 	fn update_all(
 		&self,
 		leaves_end: u32,
@@ -156,6 +185,9 @@ impl CudaLikelihood {
 		Ok(())
 	}
 
+	/// Update leaf-originating partial likelihoods
+	///
+	/// Asynchronous.
 	fn update_leaves(&self, leaves_end: u32) -> Result<()> {
 		let mut builder =
 			self.stream.launch_builder(&self.update_leaves_fn);
@@ -184,6 +216,9 @@ impl CudaLikelihood {
 		Ok(())
 	}
 
+	/// Calculates the root node likelihood from its two projections
+	///
+	/// Asynchronous.
 	fn update_likelihoods(&self, root: u32) -> Result<()> {
 		let mut builder =
 			self.stream.launch_builder(&self.update_likelihoods_fn);
@@ -201,7 +236,7 @@ impl CudaLikelihood {
 
 		builder.arg(&root);
 
-		// TODO: safety
+		// SAFETY: TODO
 		unsafe { builder.launch(cfg) }.with_context(|| {
 			anyhow!("update_likelihoods: {cfg:?}")
 		})?;
@@ -213,6 +248,8 @@ impl CudaLikelihood {
 	///
 	/// This is an abstraction which unifies `accept` and `reject`, since
 	/// they are basically the same.
+	///
+	/// Asynchronous.
 	fn copy_projections(&mut self, accept: bool) -> Result<()> {
 		if self.num_updated_nodes == 0 {
 			return Ok(());
@@ -241,7 +278,7 @@ impl CudaLikelihood {
 
 		builder.arg(&self.edges);
 
-		// TODO: safety
+		// SAFETY: TODO
 		unsafe { builder.launch(cfg) }.with_context(|| {
 			let op = if accept { "accept" } else { "reject" };
 			anyhow!("{op}: {cfg:#?}")
@@ -266,7 +303,7 @@ impl CudaLikelihood {
 		cuda_device: usize,
 	) -> Result<Self> {
 		// SAFETY: since the function tries to link the library [0], it
-		// could theoratically be unsafe.  In practice, the resulting
+		// could theoretically be unsafe.  In practice, the resulting
 		// library is discarded.
 		//
 		// [0]: https://docs.rs/cudarc/0.17.3/src/cudarc/driver/sys/mod.rs.html#26256
@@ -284,8 +321,8 @@ impl CudaLikelihood {
 		let context = CudaContext::new(cuda_device)?;
 		let stream = context.new_stream()?;
 
-		// SAFETY: CudaLikelihood only uses a single stream, so there's
-		// no need for cross-stream synchronization
+		// SAFETY: `CudaLikelihood` only uses a single stream, so
+		// there's no need for cross-stream synchronization
 		unsafe { context.disable_event_tracking() };
 
 		let leaves = stream.memcpy_stod(&transpose(leaves))?;
