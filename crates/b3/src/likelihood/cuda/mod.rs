@@ -97,10 +97,13 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		leaves_end: usize,
 		root: usize,
 	) -> Result<()> {
+		self.num_updated_nodes = nodes.len() as u32;
+		if self.num_updated_nodes == 0 {
+			return Ok(());
+		}
+
 		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
 		let edges: Vec<_> = edges.iter().map(|e| *e as u32).collect();
-
-		self.num_updated_nodes = nodes.len() as u32;
 
 		self.stream.memcpy_htod(&edges, &mut self.edges)?;
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
@@ -136,11 +139,25 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 	}
 
 	fn accept(&mut self) -> Result<()> {
-		self.copy_projections(true)
+		if self.num_updated_nodes == 0 {
+			return Ok(());
+		}
+
+		self.copy_projections(true)?;
+
+		self.num_updated_nodes = 0;
+		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		self.copy_projections(false)
+		if self.num_updated_nodes == 0 {
+			return Ok(());
+		}
+
+		self.copy_projections(false)?;
+
+		self.num_updated_nodes = 0;
+		Ok(())
 	}
 }
 
@@ -251,10 +268,6 @@ impl CudaLikelihood {
 	///
 	/// Asynchronous.
 	fn copy_projections(&mut self, accept: bool) -> Result<()> {
-		if self.num_updated_nodes == 0 {
-			return Ok(());
-		}
-
 		let cfg = self.cfg(128, self.num_updated_nodes);
 
 		let mut builder =
@@ -280,11 +293,8 @@ impl CudaLikelihood {
 
 		// SAFETY: TODO
 		unsafe { builder.launch(cfg) }.with_context(|| {
-			let op = if accept { "accept" } else { "reject" };
-			anyhow!("{op}: {cfg:#?}")
+			anyhow!("copy_projections({accept}): {cfg:#?}")
 		})?;
-
-		self.num_updated_nodes = 0;
 
 		Ok(())
 	}
