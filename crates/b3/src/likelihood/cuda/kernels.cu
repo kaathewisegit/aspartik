@@ -87,6 +87,7 @@ void propose(
 	const f64x4* restrict leaves,
 	f64* restrict projections,
 	u8* restrict scales,
+	u32* scale_sums,
 
 	const u32 num_updated_nodes,
 	const u32* restrict nodes,
@@ -108,6 +109,8 @@ void propose(
 		CALCULATE_LEAF_PROJECTION
 	}
 
+	u32 scale_sum = scale_sums[site];
+
 	for (u32 i = internals_start; i < num_updated_nodes; i++) {
 		u32 left_edge = (nodes[i] - num_leaves) * 2;
 		u32 right_edge = left_edge + 1;
@@ -121,6 +124,9 @@ void propose(
 		__syncthreads();
 
 		if (sub == 0) {
+			u32 scale_idx = idx(this_edge);
+			u32 old_scale = scales[scale_idx];
+
 			if (
 				s_likelihood[threadIdx.x * 4 + 0] < CUTOFF
 				&& s_likelihood[threadIdx.x * 4 + 1] < CUTOFF
@@ -131,15 +137,22 @@ void propose(
 				s_likelihood[threadIdx.x * 4 + 1] *= MULT;
 				s_likelihood[threadIdx.x * 4 + 2] *= MULT;
 				s_likelihood[threadIdx.x * 4 + 3] *= MULT;
-				scales[idx(this_edge)] = 40;
+
+				if (old_scale == 0) {
+					scale_sum += 40;
+					scales[scale_idx] = 1;
+				}
 			} else {
-				scales[idx(this_edge)] = 0;
+				if (old_scale == 1) {
+					scale_sum -= 40;
+					scales[scale_idx] = 0;
+				}
 			}
 		}
 
 		__syncthreads();
 
-		// rebuild the likelihood from the 4 neighbouring threads
+		// rebuild the likelihood from the 4 neighboring threads
 		auto likelihood = make_f64x4(
 			s_likelihood[threadIdx.x * 4 + 0],
 			s_likelihood[threadIdx.x * 4 + 1],
@@ -154,6 +167,8 @@ void propose(
 
 		projections[sidx(this_edge)] = projection;
 	}
+
+	if (sub == 0) scale_sums[site] = scale_sum;
 }
 
 entrypoint __launch_bounds__(32)
@@ -162,7 +177,6 @@ void update_likelihoods(
 	const u32 num_leaves,
 
 	const f64x4* restrict projections,
-	const u8* restrict scales,
 	f64* restrict likelihoods,
 
 	const u32* restrict edges,
@@ -173,12 +187,6 @@ void update_likelihoods(
 
 	u32 num_edges = (num_leaves - 1) * 2;
 
-	u32 scale = 0;
-	for (u32 i = 0; i < num_edges; i++) {
-		u8 edge_scale = scales[idx(i)];
-		scale += edge_scale;
-	}
-
 	u32 left_root_edge = (root - num_leaves) * 2;
 	u32 right_root_edge = left_root_edge + 1;
 
@@ -188,7 +196,7 @@ void update_likelihoods(
 	);
 
 	f64 sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
-	likelihoods[site] = log(sum) - scale;
+	likelihoods[site] = log(sum);
 }
 
 // Updates the backups or resets the working arrays

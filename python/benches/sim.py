@@ -12,6 +12,7 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.priors import Yule
 from aspartik.b3.substitutions import HKY
+from aspartik.b3.utils import print_operator_stats
 from aspartik.io.fasta import DNAReader
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Uniform
@@ -61,7 +62,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=20_000,
+    length=1_000_000,
     state=[birth_rate_y, tree],
     priors=priors,
     operators=operators,
@@ -71,3 +72,5 @@ mcmc = MCMC(
 )
 
 mcmc.run()
+
+print_operator_stats(mcmc)

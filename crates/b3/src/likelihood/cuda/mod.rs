@@ -66,6 +66,8 @@ pub struct CudaLikelihood {
 
 	scales: CudaSlice<u8>,
 	scales_backup: CudaSlice<u8>,
+	scale_sums: CudaSlice<u32>,
+	scale_sums_backup: Vec<u32>,
 
 	/// Total number of sites
 	///
@@ -135,13 +137,23 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 			&mut self.host_likelihoods,
 		)?;
 
-		Ok(self.host_likelihoods.iter().sum())
+		let scale_sums = self.stream.memcpy_dtov(&self.scale_sums)?;
+		let scale_sum: u32 = scale_sums.iter().sum();
+
+		let likelihood: f64 = self.host_likelihoods.iter().sum();
+
+		Ok(likelihood - f64::from(scale_sum))
 	}
 
 	fn accept(&mut self) -> Result<()> {
 		if self.num_updated_nodes == 0 {
 			return Ok(());
 		}
+
+		self.stream.memcpy_dtoh(
+			&self.scale_sums,
+			&mut self.scale_sums_backup,
+		)?;
 
 		self.copy_projections(true)?;
 
@@ -153,6 +165,11 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		if self.num_updated_nodes == 0 {
 			return Ok(());
 		}
+
+		self.stream.memcpy_htod(
+			&self.scale_sums_backup,
+			&mut self.scale_sums,
+		)?;
 
 		self.copy_projections(false)?;
 
@@ -186,6 +203,7 @@ impl CudaLikelihood {
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
 		builder.arg(&self.scales);
+		builder.arg(&self.scale_sums);
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.nodes);
@@ -246,7 +264,6 @@ impl CudaLikelihood {
 		builder.arg(&self.num_leaves);
 
 		builder.arg(&self.projections);
-		builder.arg(&self.scales);
 		builder.arg(&self.likelihoods);
 
 		builder.arg(&self.edges);
@@ -350,6 +367,8 @@ impl CudaLikelihood {
 		let scales = stream.alloc_zeros(num_edges * num_sites)?;
 		let scales_backup =
 			stream.alloc_zeros(num_edges * num_sites)?;
+		let scale_sums = stream.alloc_zeros(num_sites)?;
+		let scale_sums_backup = vec![0; num_sites];
 
 		let opts = CompileOptions {
 			include_paths: vec!["/usr/include".to_owned()],
@@ -381,8 +400,11 @@ impl CudaLikelihood {
 			edges,
 			transitions,
 			nodes,
+
 			scales,
 			scales_backup,
+			scale_sums,
+			scale_sums_backup,
 
 			num_sites: num_sites as u32,
 			num_leaves: num_leaves as u32,
