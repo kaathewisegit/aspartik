@@ -97,11 +97,12 @@ void propose(
 	const u32 leaves_end,
 	const u32 internals_start
 ) {
-	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
+	u32 site = (blockIdx.x * blockDim.x + threadIdx.x) / 4;
 	if (site >= num_sites) {
 		return;
 	}
-	u32 sub = threadIdx.y;
+	u32 sub = threadIdx.x % 4;
+	u32 tile = threadIdx.x / 4;
 
 	__shared__ f64 s_likelihood[BLOCK_SIZE * 4];
 
@@ -119,24 +120,24 @@ void propose(
 		// thread-local likelihood
 		f64 l_likelihood = projections[sidx(left_edge)] *
 			projections[sidx(right_edge)];
-		s_likelihood[threadIdx.x * 4 + sub] = l_likelihood;
+		s_likelihood[tile * 4 + sub] = l_likelihood;
 
-		__syncthreads();
+		__syncwarp();
 
 		if (sub == 0) {
 			u32 scale_idx = idx(this_edge);
 			u32 old_scale = scales[scale_idx];
 
 			if (
-				s_likelihood[threadIdx.x * 4 + 0] < CUTOFF
-				&& s_likelihood[threadIdx.x * 4 + 1] < CUTOFF
-				&& s_likelihood[threadIdx.x * 4 + 2] < CUTOFF
-				&& s_likelihood[threadIdx.x * 4 + 3] < CUTOFF
+				s_likelihood[tile * 4 + 0] < CUTOFF
+				&& s_likelihood[tile * 4 + 1] < CUTOFF
+				&& s_likelihood[tile * 4 + 2] < CUTOFF
+				&& s_likelihood[tile * 4 + 3] < CUTOFF
 			) {
-				s_likelihood[threadIdx.x * 4 + 0] *= MULT;
-				s_likelihood[threadIdx.x * 4 + 1] *= MULT;
-				s_likelihood[threadIdx.x * 4 + 2] *= MULT;
-				s_likelihood[threadIdx.x * 4 + 3] *= MULT;
+				s_likelihood[tile * 4 + 0] *= MULT;
+				s_likelihood[tile * 4 + 1] *= MULT;
+				s_likelihood[tile * 4 + 2] *= MULT;
+				s_likelihood[tile * 4 + 3] *= MULT;
 
 				if (old_scale == 0) {
 					scale_sum += 40;
@@ -150,14 +151,14 @@ void propose(
 			}
 		}
 
-		__syncthreads();
+		__syncwarp();
 
 		// rebuild the likelihood from the 4 neighboring threads
 		auto likelihood = make_f64x4(
-			s_likelihood[threadIdx.x * 4 + 0],
-			s_likelihood[threadIdx.x * 4 + 1],
-			s_likelihood[threadIdx.x * 4 + 2],
-			s_likelihood[threadIdx.x * 4 + 3]
+			s_likelihood[tile * 4 + 0],
+			s_likelihood[tile * 4 + 1],
+			s_likelihood[tile * 4 + 2],
+			s_likelihood[tile * 4 + 3]
 		);
 
 		f64 projection = dot(

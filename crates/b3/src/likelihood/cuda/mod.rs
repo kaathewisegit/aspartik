@@ -189,11 +189,11 @@ impl CudaLikelihood {
 	) -> Result<()> {
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
 
-		let block_size = 16;
-		let num_site_blocks = self.num_sites.div_ceil(block_size);
+		let block_size = 16 * 4;
+		let num_site_blocks = (self.num_sites * 4).div_ceil(block_size);
 		let cfg = LaunchConfig {
 			grid_dim: (num_site_blocks, 1, 1),
-			block_dim: (block_size, 4, 1),
+			block_dim: (block_size, 1, 1),
 			shared_mem_bytes: 0,
 		};
 
