@@ -121,14 +121,13 @@ void propose(
 		u32 left_edge = (nodes[i] - num_leaves) * 2;
 		u32 right_edge = left_edge + 1;
 		u32 this_edge = edges[i];
+		u32 scale_idx = idx(this_edge);
+		u32 old_scale = scales[scale_idx];
 
 		// thread-local likelihood
 		f64 l_likelihood = projections[sidx(left_edge)] *
 			projections[sidx(right_edge)];
 		s_likelihood[tile * 4 + sub] = l_likelihood;
-
-		u32 scale_idx = idx(this_edge);
-		u32 old_scale = scales[scale_idx];
 
 		g.sync();
 
@@ -138,12 +137,7 @@ void propose(
 			&& s_likelihood[tile * 4 + 3] < CUTOFF;
 
 		if (should_scale) {
-			if (sub == 0) {
-				s_likelihood[tile * 4 + 0] *= MULT;
-				s_likelihood[tile * 4 + 1] *= MULT;
-				s_likelihood[tile * 4 + 2] *= MULT;
-				s_likelihood[tile * 4 + 3] *= MULT;
-			}
+			s_likelihood[tile * 4 + sub] *= MULT;
 
 			g.sync();
 		}
