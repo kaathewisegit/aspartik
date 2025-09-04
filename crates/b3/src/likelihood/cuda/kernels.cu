@@ -1,3 +1,7 @@
+#include <cooperative_groups.h>
+
+using namespace cooperative_groups;
+
 typedef struct {
 	f64x4 a, c, g, t;
 } Transition;
@@ -101,7 +105,8 @@ void propose(
 	if (site >= num_sites) {
 		return;
 	}
-	u32 sub = threadIdx.x % 4;
+	auto g = tiled_partition<4>(this_thread_block());
+	u32 sub = g.thread_rank();
 	u32 tile = threadIdx.x / 4;
 
 	__shared__ f64 s_likelihood[BLOCK_SIZE];
@@ -122,23 +127,29 @@ void propose(
 			projections[sidx(right_edge)];
 		s_likelihood[tile * 4 + sub] = l_likelihood;
 
-		__syncwarp();
+		u32 scale_idx = idx(this_edge);
+		u32 old_scale = scales[scale_idx];
 
-		if (sub == 0) {
-			u32 scale_idx = idx(this_edge);
-			u32 old_scale = scales[scale_idx];
+		g.sync();
 
-			if (
-				s_likelihood[tile * 4 + 0] < CUTOFF
-				&& s_likelihood[tile * 4 + 1] < CUTOFF
-				&& s_likelihood[tile * 4 + 2] < CUTOFF
-				&& s_likelihood[tile * 4 + 3] < CUTOFF
-			) {
+		u32 should_scale = s_likelihood[tile * 4 + 0] < CUTOFF
+			&& s_likelihood[tile * 4 + 1] < CUTOFF
+			&& s_likelihood[tile * 4 + 2] < CUTOFF
+			&& s_likelihood[tile * 4 + 3] < CUTOFF;
+
+		if (should_scale) {
+			if (sub == 0) {
 				s_likelihood[tile * 4 + 0] *= MULT;
 				s_likelihood[tile * 4 + 1] *= MULT;
 				s_likelihood[tile * 4 + 2] *= MULT;
 				s_likelihood[tile * 4 + 3] *= MULT;
+			}
 
+			g.sync();
+		}
+
+		if (sub == 0) {
+			if (should_scale) {
 				if (old_scale == 0) {
 					scale_sum += 40;
 					scales[scale_idx] = 1;
@@ -150,8 +161,6 @@ void propose(
 				}
 			}
 		}
-
-		__syncwarp();
 
 		// rebuild the likelihood from the 4 neighboring threads
 		auto likelihood = make_f64x4(
