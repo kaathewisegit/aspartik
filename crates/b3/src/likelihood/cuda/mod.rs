@@ -371,7 +371,9 @@ impl CudaLikelihood {
 		let scale_sums_backup = vec![0; num_sites];
 
 		let opts = CompileOptions {
-			include_paths: vec!["/usr/include".to_owned()],
+			include_paths: vec![
+				"/usr/local/cuda/include/".to_owned()
+			],
 			..Default::default()
 		};
 		let ptx = compile_ptx_with_opts(CUDA_SRC, opts)?;

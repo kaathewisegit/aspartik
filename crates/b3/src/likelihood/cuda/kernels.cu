@@ -104,7 +104,7 @@ void propose(
 	u32 sub = threadIdx.x % 4;
 	u32 tile = threadIdx.x / 4;
 
-	__shared__ f64 s_likelihood[BLOCK_SIZE * 4];
+	__shared__ f64 s_likelihood[BLOCK_SIZE];
 
 	for (u32 i = 0; i < leaves_end; i++) {
 		CALCULATE_LEAF_PROJECTION
@@ -185,8 +185,6 @@ void update_likelihoods(
 	u32 root
 ) {
 	SITE_PRELUDE
-
-	u32 num_edges = (num_leaves - 1) * 2;
 
 	u32 left_root_edge = (root - num_leaves) * 2;
 	u32 right_root_edge = left_root_edge + 1;
