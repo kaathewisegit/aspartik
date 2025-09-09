@@ -4,9 +4,8 @@
 	"compilerOptions": {
 		"moduleDetection": "force",
 
-		// SolidJS
-		"jsx": "preserve",
-		"jsxImportSource": "solid-js",
+		"jsx": "react-jsx",
+		"jsxImportSource": "@kitajs/html",
 
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,

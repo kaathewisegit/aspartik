@@ -24,8 +24,10 @@ interface Props {
 }
 
 const { data: module } = Astro.props
+
+const renderedModule = Module(module)
 ---
 
 <Layout>
-	<Module {...module} />
+	<Fragment set:html={renderedModule} />
 </Layout>

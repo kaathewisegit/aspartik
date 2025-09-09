@@ -1,5 +1,4 @@
 import "./pdoc.css"
-import { For, type JSXElement } from "solid-js"
 import type {
 	ClassType,
 	FunctionType,
@@ -8,20 +7,20 @@ import type {
 } from "../schema"
 import highlight from "../utils/highlight"
 
-export function Module(props: ModuleType): JSXElement {
+export function Module(props: ModuleType): JSX.Element {
 	return (
 		<section class="mx-auto max-w-200" id={props.name}>
 			<h1>{props.fullname}</h1>
 			<Docstring docstring={props.docstring} />
 
-			<For each={props.classes}>
-				{(cls, _) => <Class {...cls} />}
-			</For>
+			{props.classes.map((cls) => (
+				<Class {...cls} />
+			))}
 		</section>
 	)
 }
 
-function Class(props: ClassType): JSXElement {
+function Class(props: ClassType): JSX.Element {
 	const title = (
 		<span class="title font-mono">
 			<span class="italic">class</span>{" "}
@@ -41,18 +40,18 @@ function Class(props: ClassType): JSXElement {
 			<div class="ml-4">
 				<Docstring docstring={props.docstring} />
 
-				<Variables {...props.class_variables} />
-				<Variables {...props.instance_variables} />
+				<Variables list={props.class_variables} />
+				<Variables list={props.instance_variables} />
 
-				<Funcs {...props.staticmethods} />
-				<Funcs {...props.classmethods} />
-				<Funcs {...props.methods} />
+				<Funcs list={props.staticmethods} />
+				<Funcs list={props.classmethods} />
+				<Funcs list={props.methods} />
 			</div>
 		</section>
 	)
 }
 
-function Variable(props: VariableType): JSXElement {
+function Variable(props: VariableType): JSX.Element {
 	let annotation = null
 	if (props.annotation) {
 		annotation = (
@@ -76,20 +75,21 @@ function Variable(props: VariableType): JSXElement {
 	)
 }
 
-function Variables(props: VariableType[]): JSXElement {
-	const varsArr = Array.from(props)
-	const vars = varsArr.filter(
+function Variables(props: { list: VariableType[] }): JSX.Element {
+	const vars = props.list.filter(
 		(variable) => !variable.name.startsWith("_"),
 	)
 
 	return (
-		<For each={vars}>
-			{(variable, _) => <Variable {...variable} />}
-		</For>
+		<>
+			{vars.map((variable) => (
+				<Variable {...variable} />
+			))}
+		</>
 	)
 }
 
-function Func(props: FunctionType): JSXElement {
+function Func(props: FunctionType): JSX.Element {
 	const title = (
 		<pre class="overflow-x-scroll font-mono">
 			<span class="italic">{props.def}</span> {props.name}
@@ -106,16 +106,19 @@ function Func(props: FunctionType): JSXElement {
 	)
 }
 
-function Funcs(props: FunctionType[]): JSXElement {
-	const varsArr = Array.from(props)
-	const vars = varsArr.filter(
-		(variable) => !variable.name.startsWith("_"),
-	)
+function Funcs(props: { list: FunctionType[] }): JSX.Element {
+	const funcs = props.list.filter((func) => !func.name.startsWith("_"))
 
-	return <For each={vars}>{(func, _) => <Func {...func} />}</For>
+	return (
+		<>
+			{funcs.map((func) => (
+				<Func {...func} />
+			))}
+		</>
+	)
 }
 
-function Ref(props: { qualname: string }): JSXElement {
+function Ref(props: { qualname: string }): JSX.Element {
 	return (
 		<a
 			class="absolute top-0 -left-8 h-8 w-8 text-center text-2xl opacity-0 transition duration-200 hover:opacity-100"
@@ -127,9 +130,9 @@ function Ref(props: { qualname: string }): JSXElement {
 }
 
 function Header(props: {
-	title: JSXElement
+	title: JSX.Element
 	object: VariableType | FunctionType | ClassType
-}): JSXElement {
+}): JSX.Element {
 	const obj = props.object
 	if (obj.source && obj.source_lines) {
 		return (
@@ -145,7 +148,7 @@ function Header(props: {
 	}
 }
 
-function HeaderBare(props: { title: JSXElement }): JSXElement {
+function HeaderBare(props: { title: JSX.Element }): JSX.Element {
 	return (
 		<h2 class="flex flex-row bg-gray-200 px-4 py-2">
 			{props.title}
@@ -154,11 +157,11 @@ function HeaderBare(props: { title: JSXElement }): JSXElement {
 }
 
 function HeaderCode(props: {
-	title: JSXElement
+	title: JSX.Element
 	qualname: string
 	source: string
 	source_lines: [number, number]
-}): JSXElement {
+}): JSX.Element {
 	const inputId = `${props.qualname}-view-source`
 
 	return (
@@ -190,24 +193,22 @@ function HeaderCode(props: {
 function Source(props: {
 	source: string
 	source_lines: [number, number]
-}): JSXElement {
+}): JSX.Element {
 	const code = highlight(props.source, "python")
 
 	return (
-		<pre
-			innerHTML={code}
-			class="overflow-x-scroll bg-gray-100 pl-2 font-mono peer-not-checked:hidden"
-		/>
+		<pre class="overflow-x-scroll bg-gray-100 pl-2 font-mono peer-not-checked:hidden">
+			{code}
+		</pre>
 	)
 }
 
-function Docstring(props: { docstring: string | null }): JSXElement | null {
+function Docstring(props: { docstring: string | null }): JSX.Element | null {
 	if (props.docstring) {
 		return (
-			<div
-				class="my-2 pl-2 text-base/7"
-				innerHTML={props.docstring}
-			></div>
+			<div class="my-2 pl-2 text-base/7">
+				{props.docstring}
+			</div>
 		)
 	} else {
 		return null

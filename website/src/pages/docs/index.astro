@@ -1,15 +1,11 @@
 ---
 import Layout from "../../layouts/Html.astro"
-import { Container } from "../../components/docs"
+import { CONTAINERS } from "../../components/docs"
 ---
 
 <Layout class="flex min-h-screen items-center justify-center">
 	<div
+		set:html={CONTAINERS}
 		class="flex w-full max-w-5xl flex-col gap-y-4 md:grid md:grid-cols-2 md:gap-x-8"
-	>
-		<Container title="Tutorials" href="./tutorials" />
-		<Container title="How-to guides" href="./howto" />
-		<Container title="Explanation" href="./explanation" />
-		<Container title="Reference" href="./reference" />
-	</div>
+	/>
 </Layout>
