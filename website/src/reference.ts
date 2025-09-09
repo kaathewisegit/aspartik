@@ -1,11 +1,9 @@
-import { defineCollection } from "astro:content"
 import fs from "node:fs/promises"
-import {
-	type ClassType,
-	type FunctionType,
-	type ModuleType,
-	moduleSchema,
-	type VariableType,
+import type {
+	ClassType,
+	FunctionType,
+	ModuleType,
+	VariableType,
 } from "./schema"
 import md2html from "./utils/md2html"
 
@@ -56,14 +54,8 @@ async function flattenModules(
 	return modules
 }
 
-const reference = defineCollection({
-	loader: async () => {
-		const text = await fs.readFile("../target/pdoc.json", "utf8")
-		const json = JSON.parse(text)
-		const modules = await flattenModules(json)
-		return modules
-	},
-	schema: moduleSchema,
-})
+const text = await fs.readFile("../target/pdoc.json", "utf8")
+const json = JSON.parse(text)
+const modules = (await flattenModules(json)) as ModuleType[]
 
-export const collections = { reference }
+export default modules

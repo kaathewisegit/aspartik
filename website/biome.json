@@ -8,6 +8,11 @@
 			"src/**/*.astro"
 		]
 	},
+	"javascript": {
+		"formatter": {
+			"semicolons": "asNeeded"
+		}
+	},
 	"linter": {
 		"rules": {
 			"suspicious": {

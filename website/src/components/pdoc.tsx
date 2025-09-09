@@ -1,4 +1,3 @@
-import "./pdoc.css"
 import type {
 	ClassType,
 	FunctionType,
@@ -23,16 +22,12 @@ export function Module(props: ModuleType): JSX.Element {
 function Class(props: ClassType): JSX.Element {
 	const title = (
 		<span class="title font-mono">
-			<span class="italic">class</span>{" "}
-			<span>{props.name}</span>:
+			<span class="italic">class</span> <span>{props.name}</span>:
 		</span>
 	)
 
 	return (
-		<section
-			class="relative mx-auto mb-6 max-w-200"
-			id={props.name}
-		>
+		<section class="relative mx-auto mb-6 max-w-200" id={props.name}>
 			<Header object={props} title={title} />
 
 			<Ref qualname={props.qualname} />
@@ -54,9 +49,7 @@ function Class(props: ClassType): JSX.Element {
 function Variable(props: VariableType): JSX.Element {
 	let annotation = null
 	if (props.annotation) {
-		annotation = (
-			<span class="text-gray-600">: {props.annotation}</span>
-		)
+		annotation = <span class="text-gray-600">: {props.annotation}</span>
 	}
 
 	const title = (
@@ -76,9 +69,7 @@ function Variable(props: VariableType): JSX.Element {
 }
 
 function Variables(props: { list: VariableType[] }): JSX.Element {
-	const vars = props.list.filter(
-		(variable) => !variable.name.startsWith("_"),
-	)
+	const vars = props.list.filter((variable) => !variable.name.startsWith("_"))
 
 	return (
 		<>
@@ -149,11 +140,7 @@ function Header(props: {
 }
 
 function HeaderBare(props: { title: JSX.Element }): JSX.Element {
-	return (
-		<h2 class="flex flex-row bg-gray-200 px-4 py-2">
-			{props.title}
-		</h2>
-	)
+	return <h2 class="flex flex-row bg-gray-200 px-4 py-2">{props.title}</h2>
 }
 
 function HeaderCode(props: {
@@ -166,11 +153,7 @@ function HeaderCode(props: {
 
 	return (
 		<>
-			<input
-				class="peer hidden"
-				id={inputId}
-				type="checkbox"
-			/>
+			<input class="peer hidden" id={inputId} type="checkbox" />
 			<h2 class="flex flex-row bg-gray-200 px-4 py-2">
 				{props.title}
 
@@ -182,10 +165,7 @@ function HeaderCode(props: {
 					View source
 				</label>
 			</h2>
-			<Source
-				source={props.source}
-				source_lines={props.source_lines}
-			/>
+			<Source source={props.source} source_lines={props.source_lines} />
 		</>
 	)
 }
@@ -205,11 +185,7 @@ function Source(props: {
 
 function Docstring(props: { docstring: string | null }): JSX.Element | null {
 	if (props.docstring) {
-		return (
-			<div class="my-2 pl-2 text-base/7">
-				{props.docstring}
-			</div>
-		)
+		return <div class="my-2 pl-2 text-base/7">{props.docstring}</div>
 	} else {
 		return null
 	}

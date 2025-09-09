@@ -1,6 +1,6 @@
 import "./highlight.css"
+import { classHighlighter, highlightCode } from "@lezer/highlight"
 import { parser } from "@lezer/python"
-import { highlightCode, classHighlighter } from "@lezer/highlight"
 
 export default function highlight(code: string, _lang: "python"): string {
 	let result = ""
@@ -16,13 +16,7 @@ export default function highlight(code: string, _lang: "python"): string {
 		result += "\n"
 	}
 
-	highlightCode(
-		code,
-		parser.parse(code),
-		classHighlighter,
-		emit,
-		emitBreak,
-	)
+	highlightCode(code, parser.parse(code), classHighlighter, emit, emitBreak)
 
 	return result
 }

@@ -1,4 +1,4 @@
-import { z } from "astro/zod"
+import { z } from "zod"
 
 const commonKeys = z.object({
 	type: z.string(),
@@ -8,10 +8,7 @@ const commonKeys = z.object({
 	docstring: z.string().nullable(),
 	source: z.string().nullable(),
 	source_lines: z
-		.tuple([
-			z.number().int().nonnegative(),
-			z.number().int().nonnegative(),
-		])
+		.tuple([z.number().int().nonnegative(), z.number().int().nonnegative()])
 		.nullable(),
 	source_file: z.string().nullable(),
 })
@@ -49,9 +46,7 @@ export const classSchema = commonKeys
 		z.object({
 			type: z.literal("class"),
 			decorators: z.array(z.string()),
-			bases: z.array(
-				z.tuple([z.string(), z.string(), z.string()]),
-			),
+			bases: z.array(z.tuple([z.string(), z.string(), z.string()])),
 			class_variables: z.array(variableSchema),
 			instance_variables: z.array(variableSchema),
 			classmethods: z.array(functionSchema),

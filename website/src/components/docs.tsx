@@ -7,13 +7,3 @@ export function Container(props: { title: string; href: string }): JSX.Element {
 		</div>
 	)
 }
-
-// TODO: moving away from Astro
-export const CONTAINERS = (
-	<>
-		<Container title="Tutorials" href="./tutorials" />
-		<Container title="How-to guides" href="./howto" />
-		<Container title="Explanation" href="./explanation" />
-		<Container title="Reference" href="./reference" />
-	</>
-)

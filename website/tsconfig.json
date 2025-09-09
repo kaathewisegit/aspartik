@@ -1,7 +1,8 @@
 {
-	// https://github.com/withastro/astro/blob/main/packages/astro/tsconfigs/base.json
-	"extends": "astro/tsconfigs/base",
 	"compilerOptions": {
+		"lib": ["ESNext"],
+		"target": "ESNext",
+		"module": "Preserve",
 		"moduleDetection": "force",
 
 		"jsx": "react-jsx",
@@ -11,6 +12,8 @@
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": true,
 		"noImplicitOverride": true,
+
+		"skipLibCheck": true,
 
 		// Biome handles that
 		"noUnusedLocals": false,
