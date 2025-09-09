@@ -178,6 +178,8 @@ class Tree(Stateful):
         """An iterator over all of the trees internal nodes"""
     def leaves(self) -> Iterator[Leaf]:
         """An iterator over all of the trees leaf nodes"""
+    def has_dated_tips(self) -> bool:
+        """Returns `True` if any of the leaves have non-0 height"""
     def validate(self) -> None:
         """Throws an exception if a tree is malformed
 

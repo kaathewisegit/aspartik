@@ -420,6 +420,16 @@ impl Tree {
 		}
 	}
 
+	pub(crate) fn has_dated_tips(&self) -> bool {
+		for leaf in self.leaves() {
+			if self.height_of(&leaf) != 0.0 {
+				return true;
+			}
+		}
+
+		false
+	}
+
 	pub fn validate(&self) -> Result<()> {
 		for (i, parent) in self.parents.iter().enumerate() {
 			ensure!(
@@ -904,6 +914,10 @@ impl PyTree {
 	/// Samples a random leaf node from a tree.
 	fn random_leaf(&self, rng: &PyRng) -> Leaf {
 		self.inner().random_leaf(&mut rng.inner())
+	}
+
+	fn has_dated_tips(&self) -> bool {
+		self.inner().has_dated_tips()
 	}
 
 	fn validate(&self) -> Result<()> {
