@@ -89,7 +89,7 @@ Markdown | Less | Pretty
 
 export default function () {
 	return (
-		<Html>
+		<Html title="Tutorials">
 			<Markdown raw={MD} class="prose mx-auto max-w-200" />
 		</Html>
 	)

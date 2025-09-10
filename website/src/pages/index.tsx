@@ -2,7 +2,7 @@ import Html from "../components/html"
 
 export default function () {
 	return (
-		<Html>
+		<Html title="Home">
 			<section class="flex min-h-screen min-w-screen flex-col items-center justify-center">
 				<h1 class="mx-auto max-w-fit text-5xl font-medium lg:text-9xl">
 					Aspartik b3

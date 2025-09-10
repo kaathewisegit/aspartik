@@ -29,7 +29,7 @@ export default function (props: any) {
 	}
 
 	return (
-		<Html>
+		<Html title={`${module.fullname} reference`}>
 			<style>{pdocCss}</style>
 			<Module {...module} />
 		</Html>

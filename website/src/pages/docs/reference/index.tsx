@@ -4,7 +4,7 @@ const REDIRECT = `window.location.href = "/docs/reference/aspartik"`
 
 export default function () {
 	return (
-		<Html>
+		<Html title="Reference">
 			<script>{REDIRECT}</script>
 		</Html>
 	)

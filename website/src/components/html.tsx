@@ -1,6 +1,9 @@
 import type { PropsWithChildren } from "@kitajs/html"
 
-export default function (props: PropsWithChildren<{ class?: string }>) {
+export default function (
+	props: PropsWithChildren<{ title?: string; class?: string }>,
+) {
+	const title = props.title ? `${props.title} | Aspartik` : "Aspartik"
 	return (
 		<>
 			{"<!DOCTYPE html>"}
@@ -9,7 +12,7 @@ export default function (props: PropsWithChildren<{ class?: string }>) {
 					<meta charset="UTF-8" />
 					<meta name="viewport" content="width=device-width" />
 					<link href="/style.css" rel="stylesheet" />
-					<title>Aspartik</title>
+					<title>{title}</title>
 				</head>
 				<body class={props.class}>{props.children}</body>
 			</html>

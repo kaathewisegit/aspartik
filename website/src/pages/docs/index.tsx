@@ -2,7 +2,10 @@ import Html from "../../components/html"
 
 export default function () {
 	return (
-		<Html class="flex min-h-screen items-center justify-center">
+		<Html
+			title="Documentation"
+			class="flex min-h-screen items-center justify-center"
+		>
 			<div class="flex w-full max-w-5xl flex-col gap-y-4 md:grid md:grid-cols-2 md:gap-x-8">
 				<Container
 					title="Tutorials"
