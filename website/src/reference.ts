@@ -5,15 +5,10 @@ import type {
 	ModuleType,
 	VariableType,
 } from "./schema"
-import md2html from "./utils/md2html"
 
 async function renderDocstrings(
 	value: ModuleType | ClassType | FunctionType | VariableType,
 ): Promise<void> {
-	if (value.docstring) {
-		value.docstring = await md2html(value.docstring)
-	}
-
 	if (value.type === "module") {
 		value.classes.forEach(renderDocstrings)
 		value.variables.forEach(renderDocstrings)

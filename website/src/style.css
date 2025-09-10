@@ -29,3 +29,188 @@ a {
 a:hover {
 	@apply font-semibold;
 }
+
+/* Typography */
+/* Adapted from https://github.com/tailwindlabs/tailwindcss.com/blob/main/src/app/typography.css */
+.prose {
+	--prose-color: var(--color-gray-700);
+	--prose-marker-color: var(--color-gray-400);
+	--prose-th-borders: var(--color-gray-300);
+	--prose-td-borders: var(--color-gray-200);
+	--prose-hr-color: color-mix(in oklab, var(--color-gray-950) 30%, transparent);
+	--prose-blockquote-border-color: var(--color-gray-300);
+
+	@media (prefers-color-scheme: dark) {
+		/* TODO */
+	}
+
+	color: var(--prose-color);
+	line-height: 2;
+
+	*:where(:not(.not-prose, .not-prose *))
+		+ *:where(:not(.not-prose, .not-prose *)) {
+		@apply mt-4;
+	}
+
+	h1 {
+		@apply text-xl font-semibold tracking-tight;
+	}
+
+	h2:where(:not(.not-prose, .not-prose *)) {
+		@apply text-lg font-semibold mt-10 tracking-tight;
+	}
+
+	h3:where(:not(.not-prose, .not-prose *)) {
+		@apply text-base font-semibold mt-8;
+	}
+
+	h4:where(:not(.not-prose, .not-prose *)) {
+		@apply text-sm font-semibold mt-6;
+	}
+
+	ol:where(:not(.not-prose, .not-prose *)) {
+		@apply pl-7 list-decimal;
+	}
+
+	ol li:where(:not(.not-prose, .not-prose *)) {
+		@apply pl-3;
+	}
+
+	ol li + li:where(:not(.not-prose, .not-prose *)) {
+		@apply mt-4;
+	}
+
+	ol li:where(:not(.not-prose, .not-prose *))::marker {
+		@apply font-semibold;
+	}
+
+	ul:where(:not(.not-prose, .not-prose *)) {
+		@apply pl-6 list-[square];
+	}
+
+	ul li:where(:not(.not-prose, .not-prose *)) {
+		@apply pl-3;
+	}
+
+	ul li + li:where(:not(.not-prose, .not-prose *)) {
+		@apply pl-4;
+	}
+
+	ul li:where(:not(.not-prose, .not-prose *))::marker {
+		color: var(--prose-marker-color);
+	}
+
+	strong:where(:not(.not-prose, .not-prose *)) {
+		@apply font-bold;
+	}
+
+	code:where(:not(.not-prose, .not-prose *)) {
+		@apply font-mono font-medium bg-gray-200;
+	}
+
+	:where(h2, h3, h4) code:where(:not(.not-prose, .not-prose *)) {
+		@apply font-semibold;
+	}
+
+	pre:where(:not(.not-prose, .not-prose *)) {
+		@apply mt-4 bg-gray-200 px-1;
+	}
+
+	pre code * + *:where(:not(.not-prose, .not-prose *)) {
+		@apply mt-0;
+	}
+
+	pre code:where(:not(.not-prose, .not-prose *)) {
+		@apply font-mono text-sm leading-1.5;
+	}
+
+	table:where(:not(.not-prose, .not-prose *)) {
+		@apply leading-1.5 w-full my-10 text-sm table-auto;
+	}
+
+	thead:where(:not(.not-prose, .not-prose *)) {
+		@apply border-b-1 border-b-(--prose-th-borders);
+	}
+
+	/* alignment */
+	th:where(:not(.not-prose, .not-prose *)),
+	td:where(:not(.not-prose, .not-prose *)) {
+		@apply text-start;
+		&[align="right"] {
+			@apply text-right;
+		}
+		&[align="center"] {
+			@apply text-center;
+		}
+	}
+
+	thead th:where(:not(.not-prose, .not-prose *)) {
+		@apply align-bottom pe-1 ps-1 pb-2;
+	}
+
+	thead th:first-child:where(:not(.not-prose, .not-prose *)) {
+		@apply ps-0;
+	}
+
+	thead th:last-child:where(:not(.not-prose, .not-prose *)) {
+		@apply pe-0;
+	}
+
+	tbody tr:where(:not(.not-prose, .not-prose *)) {
+		@apply border-b border-b-(--prose-td-borders);
+	}
+
+	tbody tr:last-child:where(:not(.not-prose, .not-prose *)) {
+		@apply border-b-[0];
+	}
+
+	tbody td:where(:not(.not-prose, .not-prose *)) {
+		@apply align-baseline;
+	}
+
+	tfoot:where(:not(.not-prose, .not-prose *)) {
+		@apply border-t border-t-(--prose-th-borders);
+	}
+
+	tfoot td:where(:not(.not-prose, .not-prose *)) {
+		@apply align-top;
+	}
+
+	tbody td:where(:not(.not-prose, .not-prose *)),
+	tfoot td:where(:not(.not-prose, .not-prose *)) {
+		@apply align-bottom py-3 py-1;
+	}
+
+	tbody td:first-child:where(:not(.not-prose, .not-prose *)),
+	tfoot td:first-child:where(:not(.not-prose, .not-prose *)) {
+		@apply ps-0;
+	}
+
+	tbody td:last-child:where(:not(.not-prose, .not-prose *)),
+	tfoot td:last-child:where(:not(.not-prose, .not-prose *)) {
+		@apply pe-0;
+	}
+
+	hr:where(:not(.not-prose, .not-prose *)) {
+		@apply my-6 border-(--prose-hr-color);
+	}
+
+	blockquote {
+		@apply italic border-s-5 border-(--prose-blockquote-border-color) ps-4;
+	}
+
+	figure:where(:not(.not-prose, .not-prose *)) {
+		figcaption:where(:not(.not-prose, .not-prose *)) {
+			@apply mt-3 text-center text-sm;
+			color: color-mix(in oklab, var(--prose-color) 75%, transparent);
+		}
+	}
+
+	:first-child:where(:not(.not-prose, .not-prose *)) {
+		@apply mt-0;
+	}
+
+	:last-child:where(:not(.not-prose, .not-prose *)) {
+		@apply mb-0;
+	}
+}

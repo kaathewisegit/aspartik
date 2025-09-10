@@ -5,8 +5,9 @@ import type {
 	VariableType,
 } from "../schema"
 import highlight from "../utils/highlight"
+import Markdown from "./markdown"
 
-export function Module(props: ModuleType): JSX.Element {
+export async function Module(props: ModuleType): Promise<string> {
 	return (
 		<section class="mx-auto max-w-200" id={props.name}>
 			<h1>{props.fullname}</h1>
@@ -19,7 +20,7 @@ export function Module(props: ModuleType): JSX.Element {
 	)
 }
 
-function Class(props: ClassType): JSX.Element {
+async function Class(props: ClassType): Promise<string> {
 	const title = (
 		<span class="title font-mono">
 			<span class="italic">class</span> <span>{props.name}</span>:
@@ -46,7 +47,7 @@ function Class(props: ClassType): JSX.Element {
 	)
 }
 
-function Variable(props: VariableType): JSX.Element {
+async function Variable(props: VariableType): Promise<string> {
 	let annotation = null
 	if (props.annotation) {
 		annotation = <span class="text-gray-600">: {props.annotation}</span>
@@ -80,7 +81,7 @@ function Variables(props: { list: VariableType[] }): JSX.Element {
 	)
 }
 
-function Func(props: FunctionType): JSX.Element {
+async function Func(props: FunctionType): Promise<string> {
 	const title = (
 		<pre class="overflow-x-scroll font-mono">
 			<span class="italic">{props.def}</span> {props.name}
@@ -183,10 +184,12 @@ function Source(props: {
 	)
 }
 
-function Docstring(props: { docstring: string | null }): JSX.Element | null {
+async function Docstring(props: { docstring: string | null }): Promise<string> {
 	if (props.docstring) {
-		return <div class="my-2 pl-2 text-base/7">{props.docstring}</div>
+		return (
+			<Markdown raw={props.docstring} class="prose my-2 pl-2 text-base/7" />
+		)
 	} else {
-		return null
+		return ""
 	}
 }
