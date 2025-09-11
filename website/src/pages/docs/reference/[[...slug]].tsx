@@ -57,7 +57,7 @@ async function Class(props: ClassType): Promise<string> {
 	)
 
 	return (
-		<section class="relative mx-auto mb-6 max-w-200" id={props.name}>
+		<section class="relative mx-auto mb-12 max-w-200" id={props.name}>
 			<Header object={props} title={title} />
 
 			<Ref qualname={props.qualname} />
@@ -119,7 +119,7 @@ async function Func(props: FunctionType): Promise<string> {
 	)
 
 	return (
-		<section id={props.qualname} class="relative my-2">
+		<section id={props.qualname} class="relative">
 			<Header object={props} title={title} />
 			<Ref qualname={props.qualname} />
 			<Docstring docstring={props.docstring} />
@@ -216,7 +216,10 @@ function Source(props: {
 async function Docstring(props: { docstring: string | null }): Promise<string> {
 	if (props.docstring) {
 		return (
-			<Markdown raw={props.docstring} class="prose my-2 pl-2 text-base/7" />
+			<Markdown
+				raw={props.docstring}
+				class="prose mt-2 mb-6 pl-2 text-base/7"
+			/>
 		)
 	} else {
 		return ""
