@@ -12,11 +12,11 @@
 		"check": "biome check && tsc --noEmit",
 		"format": "biome format --fix",
 		"fix": "biome check --fix --unsafe",
-		"dev": "bun run scripts/serve",
-		"build": "bun run scripts/build"
+		"dev": "ssg dev",
+		"build": "ssg build"
 	},
 	"dependencies": {
-		"@kaathewise/ssg": "0.3.1",
+		"@kaathewise/ssg": "0.4.1",
 		"@kitajs/html": "^4.2.9",
 		"@lezer/highlight": "^1.2.1",
 		"@lezer/python": "^1.1.18",
