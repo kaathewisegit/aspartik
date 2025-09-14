@@ -37,18 +37,29 @@ impl ConstantPopulation {
 	fn probability(&self, py: Python) -> Result<f64> {
 		let tree = self.tree.get().inner();
 		let pop = self.population.bind(py).extract::<f64>()?;
-		let mut nodes = Vec::with_capacity(tree.num_internals());
+		let mut nodes = Vec::with_capacity(tree.num_nodes());
 
-		for node in tree.internals() {
+		for node in tree.nodes() {
 			let height = tree.height_of(&node);
 			nodes.push((node, height));
 		}
+		// sort by height
 		nodes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
 		let mut out = 1.0;
 		let mut last_height = 0.0;
-		let mut num = tree.num_leaves();
-		for (_node, height) in nodes {
+		let mut num: usize = 0;
+
+		for (node, height) in nodes {
+			if tree.is_leaf(&node) {
+				// no transition event.  Increase the num for
+				// the new number of lineages which could merge
+				num += 1;
+				continue;
+			}
+
+			// the node is internal, merge event
+
 			let time_diff = height - last_height;
 
 			let binomial = num * (num - 1);
