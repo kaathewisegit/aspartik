@@ -620,6 +620,16 @@ impl Tree {
 		Leaf(i)
 	}
 
+	pub fn leaf_by_name(&self, name: &str) -> Option<Leaf> {
+		for (i, leaf_name) in self.names.iter().enumerate() {
+			if name == leaf_name {
+				return Some(Leaf(i));
+			}
+		}
+
+		None
+	}
+
 	pub fn nodes(&self) -> impl Iterator<Item = Node> + use<> {
 		(0..self.num_nodes()).map(Node)
 	}
@@ -914,6 +924,10 @@ impl PyTree {
 	/// Samples a random leaf node from a tree.
 	fn random_leaf(&self, rng: &PyRng) -> Leaf {
 		self.inner().random_leaf(&mut rng.inner())
+	}
+
+	fn leaf_by_name(&self, name: &str) -> Option<Leaf> {
+		self.inner().leaf_by_name(name)
 	}
 
 	fn has_dated_tips(&self) -> bool {

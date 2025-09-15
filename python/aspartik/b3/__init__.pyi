@@ -174,6 +174,8 @@ class Tree(Stateful):
 
         All of the `Leaf` nodes go before `Internal` ones.
         """
+    def leaf_by_name(self, name: str) -> Optional[Leaf]:
+        """Gets a named leaf or `None` if the name is not found"""
     def internals(self) -> Iterator[Internal]:
         """An iterator over all of the trees internal nodes"""
     def leaves(self) -> Iterator[Leaf]:
