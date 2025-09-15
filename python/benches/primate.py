@@ -11,7 +11,7 @@ from aspartik.b3.operators import (
     WideExchange,
     WilsonBalding,
 )
-from aspartik.b3.priors import ConstantPopulation, Distribution, Yule
+from aspartik.b3.priors import ConstantPopulation, Distribution, Monophyly, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
 from aspartik.io.fasta import DNAReader
@@ -64,7 +64,10 @@ params = [
 ]
 
 
-# TODO: limit priors
+homo, pan = tree.leaf_by_name("Homo_sapiens"), tree.leaf_by_name("Pan_troglodytes")
+assert homo != None
+assert pan != None
+
 priors = [
     Yule(tree, birth_rate_y),
     Distribution(birth_rate_y, Gamma(0.001, 1 / 1000.0)),
@@ -77,7 +80,7 @@ priors = [
     Distribution(kappa_2ndpos, LogNormal(1.0, 1.25)),
     Distribution(kappa_3rdpos, LogNormal(1.0, 1.25)),
     ConstantPopulation(tree, population),
-    # TODO: MRCA
+    Monophyly(tree, [homo, pan]),
 ]
 
 # TODO
