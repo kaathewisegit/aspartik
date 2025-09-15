@@ -1,18 +1,9 @@
 from dataclasses import dataclass
+from typing import Sequence, SupportsFloat
 
-from ..b3 import Operator, Parameter, Prior, Tree
+from ..b3 import Leaf, Operator, Parameter, Prior, Tree
 from ..rng import RNG
 from ..stats.distributions import Distribution
-
-class Yule(Prior):
-    """Uncalibrated Yule birth-rate model"""
-
-    def __init__(self, tree: Tree, birth_rate: Parameter): ...
-
-class ConstantPopulation(Prior):
-    """Constant population coalescent"""
-
-    def __init__(self, tree: Tree, population: Parameter): ...
 
 @dataclass
 class TreeScale(Operator):
@@ -56,3 +47,28 @@ class EpochScale(Operator):
     """Distribution from which the scale is sampled."""
     rng: RNG
     weight: float = 1
+
+@dataclass
+class ConstantPopulation(Prior):
+    """Constant population coalescent"""
+
+    tree: Tree
+    population: SupportsFloat
+
+@dataclass
+class Monophyly(Prior):
+    """
+    Ensures that a group of leaves form a monophyly
+
+    Returns a static probability if the specified leaves are monophyletic or
+    aborts the move otherwise.
+    """
+
+    tree: Tree
+    leaves: Sequence[Leaf]
+
+class Yule(Prior):
+    """Uncalibrated Yule birth-rate model"""
+
+    tree: Tree
+    birth_rate: SupportsFloat
