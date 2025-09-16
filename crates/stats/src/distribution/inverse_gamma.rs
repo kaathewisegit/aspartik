@@ -24,7 +24,7 @@ use crate::{
 /// use math::assert_almost_eq;
 ///
 /// let n = InverseGamma::new(1.1, 0.1).unwrap();
-/// assert_almost_eq!(n.mean().unwrap(), 1.0, 1e-14);
+/// assert_almost_eq!(n.mean().unwrap(), 1.0, epsilon = 1e-14);
 /// assert_eq!(n.pdf(1.0), 0.07554920138253064);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]

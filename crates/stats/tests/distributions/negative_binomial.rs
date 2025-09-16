@@ -39,7 +39,11 @@ fn test_mean() {
 	];
 	for (args, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.mean().unwrap(), expected, 1e-15);
+		assert_almost_eq!(
+			dist.mean().unwrap(),
+			expected,
+			epsilon = 1e-15,
+		);
 	}
 }
 
@@ -52,7 +56,11 @@ fn test_variance() {
 	];
 	for (args, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.variance().unwrap(), expected, 1e-12);
+		assert_almost_eq!(
+			dist.variance().unwrap(),
+			expected,
+			epsilon = 1e-12,
+		);
 	}
 }
 
@@ -65,7 +73,11 @@ fn test_skewness() {
 	];
 	for (args, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.skewness().unwrap(), expected, 1e-9);
+		assert_almost_eq!(
+			dist.skewness().unwrap(),
+			expected,
+			epsilon = 1e-9,
+		);
 	}
 }
 
@@ -126,7 +138,7 @@ fn test_pmf() {
 	];
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.pmf(p), expected, 1e-12);
+		assert_almost_eq!(dist.pmf(p), expected, epsilon = 1e-12);
 	}
 }
 
@@ -164,7 +176,7 @@ fn test_ln_pmf() {
 	];
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.ln_pmf(p), expected, 1e-8);
+		assert_almost_eq!(dist.ln_pmf(p), expected, epsilon = 1e-8);
 	}
 }
 
@@ -256,6 +268,6 @@ fn test_sample() {
 	let theoretical_mean = dist.mean().unwrap();
 	let theoretical_variance = dist.variance().unwrap();
 
-	assert_almost_eq!(sample_mean, theoretical_mean, tol);
-	assert_almost_eq!(sample_variance, theoretical_variance, tol);
+	assert_almost_eq!(sample_mean, theoretical_mean, epsilon = tol);
+	assert_almost_eq!(sample_variance, theoretical_variance, epsilon = tol);
 }

@@ -14,7 +14,7 @@ use crate::statistics::*;
 /// use math::assert_almost_eq;
 ///
 /// let n = Categorical::new(&[0.0, 1.0, 2.0]).unwrap();
-/// assert_almost_eq!(n.mean().unwrap(), 5.0 / 3.0, 1e-15);
+/// assert_almost_eq!(n.mean().unwrap(), 5.0 / 3.0, epsilon = 1e-15);
 /// assert_eq!(n.pmf(1), 1.0 / 3.0);
 /// ```
 #[derive(Clone, PartialEq, Debug)]

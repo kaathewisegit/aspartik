@@ -19,8 +19,8 @@ use crate::{
 ///
 /// let n = Hypergeometric::new(500, 50, 100).unwrap();
 /// assert_eq!(n.mean().unwrap(), 10.0);
-/// assert_almost_eq!(n.pmf(10), 0.14736784, 1e-8);
-/// assert_almost_eq!(n.pmf(25), 3.537e-7, 1e-10);
+/// assert_almost_eq!(n.pmf(10), 0.14736784, epsilon = 1e-8);
+/// assert_almost_eq!(n.pmf(25), 3.537e-7, epsilon = 1e-10);
 /// ```
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Hypergeometric {

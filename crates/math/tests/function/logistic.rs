@@ -19,7 +19,7 @@ fn test_logistic() {
 	];
 
 	for (input, expected, epsilon) in cases {
-		assert_almost_eq!(logistic(input), expected, epsilon);
+		assert_almost_eq!(logistic(input), expected, epsilon = epsilon);
 	}
 }
 
@@ -42,7 +42,11 @@ fn test_logit() {
 	];
 
 	for (input, expected, epsilon) in cases {
-		assert_almost_eq!(logit(input).unwrap(), expected, epsilon);
+		assert_almost_eq!(
+			logit(input).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 

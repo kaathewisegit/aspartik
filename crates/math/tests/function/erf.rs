@@ -33,7 +33,7 @@ fn test_erf() {
 	];
 
 	for (x, expected, epsilon) in cases {
-		assert_almost_eq!(erf(x), expected, epsilon)
+		assert_almost_eq!(erf(x), expected, epsilon = epsilon);
 	}
 }
 
@@ -71,7 +71,7 @@ fn test_erfc() {
 	];
 
 	for (x, expected, epsilon) in cases {
-		assert_almost_eq!(erfc(x), expected, epsilon)
+		assert_almost_eq!(erfc(x), expected, epsilon = epsilon);
 	}
 }
 
@@ -97,7 +97,7 @@ fn test_erf_inv() {
 	];
 
 	for (x, expected, epsilon) in cases {
-		assert_almost_eq!(erf_inv(x), expected, epsilon)
+		assert_almost_eq!(erf_inv(x), expected, epsilon = epsilon);
 	}
 }
 #[test]
@@ -122,6 +122,6 @@ fn test_erfc_inv() {
 	];
 
 	for (x, expected, epsilon) in cases {
-		assert_almost_eq!(erfc_inv(x), expected, epsilon)
+		assert_almost_eq!(erfc_inv(x), expected, epsilon = epsilon);
 	}
 }

@@ -40,7 +40,7 @@ fn test_gamma() {
 	];
 
 	for (input, expected, epsilon) in cases {
-		assert_almost_eq!(gamma(input), expected, epsilon);
+		assert_almost_eq!(gamma(input), expected, epsilon = epsilon);
 	}
 }
 
@@ -79,7 +79,7 @@ fn test_ln_gamma() {
 	];
 
 	for (input, expected, epsilon) in cases {
-		assert_almost_eq!(ln_gamma(input), expected, epsilon);
+		assert_almost_eq!(ln_gamma(input), expected, epsilon = epsilon);
 	}
 }
 
@@ -122,7 +122,11 @@ fn test_gamma_lr() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		assert_almost_eq!(gamma_lr(a, x).unwrap(), expected, epsilon);
+		assert_almost_eq!(
+			gamma_lr(a, x).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 
@@ -169,7 +173,11 @@ fn test_gamma_li() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		assert_almost_eq!(gamma_li(a, x).unwrap(), expected, epsilon);
+		assert_almost_eq!(
+			gamma_li(a, x).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 
@@ -233,7 +241,11 @@ fn test_gamma_ur() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		assert_almost_eq!(gamma_ur(a, x).unwrap(), expected, epsilon);
+		assert_almost_eq!(
+			gamma_ur(a, x).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 
@@ -280,7 +292,11 @@ fn test_gamma_ui() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		assert_almost_eq!(gamma_ui(a, x).unwrap(), expected, epsilon);
+		assert_almost_eq!(
+			gamma_ui(a, x).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 
@@ -332,7 +348,7 @@ fn test_digamma() {
 	];
 
 	for (x, expected, epsilon) in cases {
-		assert_almost_eq!(digamma(x), expected, epsilon);
+		assert_almost_eq!(digamma(x), expected, epsilon = epsilon);
 	}
 }
 
@@ -361,7 +377,7 @@ fn test_inv_digamma() {
 	];
 
 	for (x, expected, epsilon) in cases {
-		assert_almost_eq!(digamma_inv(x), expected, epsilon);
+		assert_almost_eq!(digamma_inv(x), expected, epsilon = epsilon);
 	}
 }
 

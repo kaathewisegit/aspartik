@@ -202,7 +202,7 @@ fn test_cdf() {
 	];
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.cdf(p), expected, 1e-12);
+		assert_almost_eq!(dist.cdf(p), expected, epsilon = 1e-12);
 	}
 }
 
@@ -247,7 +247,11 @@ fn test_inverse_cdf() {
 	];
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.inverse_cdf(p), expected, 1e-14);
+		assert_almost_eq!(
+			dist.inverse_cdf(p),
+			expected,
+			epsilon = 1e-14,
+		);
 	}
 }
 

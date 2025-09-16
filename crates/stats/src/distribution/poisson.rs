@@ -25,7 +25,7 @@ use crate::{
 ///
 /// let n = Poisson::new(1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0);
-/// assert_almost_eq!(n.pmf(1), 0.367879441171442, 1e-15);
+/// assert_almost_eq!(n.pmf(1), 0.367879441171442, epsilon = 1e-15);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(

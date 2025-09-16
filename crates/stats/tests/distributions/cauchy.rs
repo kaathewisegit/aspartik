@@ -281,7 +281,7 @@ fn test_inverse_cdf() {
 	];
 	for (args, p) in cases {
 		let d = new_dist(args);
-		assert_almost_eq!(d.inverse_cdf(d.cdf(p)), p, 1e-13);
+		assert_almost_eq!(d.inverse_cdf(d.cdf(p)), p, epsilon = 1e-13);
 	}
 }
 

@@ -14,7 +14,7 @@ use core::f64;
 ///
 /// let p = Pareto::new(1.0, 2.0).unwrap();
 /// assert_eq!(p.mean().unwrap(), 2.0);
-/// assert_almost_eq!(p.pdf(2.0), 0.25, 1e-15);
+/// assert_almost_eq!(p.pdf(2.0), 0.25, epsilon = 1e-15);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Pareto {

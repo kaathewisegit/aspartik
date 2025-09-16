@@ -17,7 +17,11 @@ fn test_ln_beta() {
 	];
 
 	for ((a, b), expected, epsilon) in cases {
-		assert_almost_eq!(ln_beta(a, b).unwrap(), expected, epsilon)
+		assert_almost_eq!(
+			ln_beta(a, b).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 
@@ -56,7 +60,11 @@ fn test_beta() {
 	];
 
 	for ((a, b), expected, epsilon) in cases {
-		assert_almost_eq!(beta(a, b).unwrap(), expected, epsilon)
+		assert_almost_eq!(
+			beta(a, b).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 
@@ -84,7 +92,11 @@ fn test_beta_inc() {
 	];
 
 	for ((a, b, x), expected, epsilon) in cases {
-		assert_almost_eq!(beta_inc(a, b, x).unwrap(), expected, epsilon)
+		assert_almost_eq!(
+			beta_inc(a, b, x).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 
@@ -132,7 +144,11 @@ fn test_beta_reg() {
 	];
 
 	for ((a, b, x), expected, epsilon) in cases {
-		assert_almost_eq!(beta_reg(a, b, x).unwrap(), expected, epsilon)
+		assert_almost_eq!(
+			beta_reg(a, b, x).unwrap(),
+			expected,
+			epsilon = epsilon,
+		);
 	}
 }
 

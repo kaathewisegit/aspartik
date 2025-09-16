@@ -16,7 +16,7 @@ use crate::statistics::*;
 ///
 /// let n = FisherSnedecor::new(3.0, 3.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
-/// assert_almost_eq!(n.pdf(1.0), 0.318309886183790671538, 1e-15);
+/// assert_almost_eq!(n.pdf(1.0), 0.318309886183790671538, epsilon = 1e-15);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct FisherSnedecor {

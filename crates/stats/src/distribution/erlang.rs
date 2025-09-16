@@ -16,7 +16,7 @@ use crate::statistics::*;
 ///
 /// let n = Erlang::new(3, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
-/// assert_almost_eq!(n.pdf(2.0), 0.270670566473225383788, 1e-15);
+/// assert_almost_eq!(n.pdf(2.0), 0.270670566473225383788, epsilon = 1e-15);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Erlang {

@@ -18,7 +18,7 @@ use core::f64;
 ///
 /// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 0.0);
-/// assert_almost_eq!(n.pdf(0.0), 0.353553390593274, 1e-15);
+/// assert_almost_eq!(n.pdf(0.0), 0.353553390593274, epsilon = 1e-15);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct StudentsT {

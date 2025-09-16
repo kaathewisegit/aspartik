@@ -28,10 +28,6 @@ macro_rules! almost_eq {
 
 		$a.is_close(&$b, c.epsilon, c.relative, c.ulps)
 	}};
-
-	($a:expr, $b:expr, $epsilon:expr) => {
-		almost_eq!($a, $b, epsilon = $epsilon)
-	};
 }
 
 #[macro_export]
@@ -46,10 +42,6 @@ macro_rules! assert_almost_eq {
 			);
 		}
 	}};
-
-	($a:expr, $b:expr, $epsilon:expr) => {
-		assert_almost_eq!($a, $b, epsilon = $epsilon)
-	};
 }
 
 #[macro_export]

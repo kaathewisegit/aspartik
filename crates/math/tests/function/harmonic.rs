@@ -12,7 +12,7 @@ fn test_harmonic() {
 		(16, 3.3807289932289932, 1e-14),
 	];
 	for (x, expected, epsilon) in cases {
-		assert_almost_eq!(harmonic(x), expected, epsilon);
+		assert_almost_eq!(harmonic(x), expected, epsilon = epsilon);
 	}
 }
 
@@ -49,7 +49,7 @@ fn test_generalized_harmonic() {
 		assert_almost_eq!(
 			generalized_harmonic(n, m),
 			expected,
-			epsilon
+			epsilon = epsilon,
 		);
 	}
 }
