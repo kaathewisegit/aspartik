@@ -1,5 +1,5 @@
-use approx::assert_relative_eq;
 use arbtest::arbtest;
+use math::assert_almost_eq;
 
 use linalg::{RowMatrix, arbitrary::symmetric};
 
@@ -16,8 +16,8 @@ fn roundtrip() {
 	let diag = RowMatrix::from_diagonal(eigenvectors);
 	let inverse = eigenvalues.inverse();
 
-	assert_relative_eq!(jc, eigenvalues * diag * inverse,);
-	assert_relative_eq!(jc * 0.1, eigenvalues * (diag * 0.1) * inverse,);
+	assert_almost_eq!(jc, eigenvalues * diag * inverse);
+	assert_almost_eq!(jc * 0.1, eigenvalues * (diag * 0.1) * inverse);
 }
 
 #[ignore]
@@ -30,11 +30,7 @@ fn symmetric_eigen_2() {
 		for i in 0..2 {
 			let lambda = eigenvectors[i];
 			let v = eigenvalues[i];
-			assert_relative_eq!(
-				m * v,
-				v * lambda,
-				max_relative = 1e-13,
-			);
+			assert_almost_eq!(m * v, v * lambda, relative = 1e-13,);
 		}
 
 		Ok(())
@@ -51,11 +47,11 @@ fn inverse_2() {
 		let diag = RowMatrix::from_diagonal(eigenvectors);
 		let inverse = eigenvalues.inverse();
 
-		assert_relative_eq!(
+		assert_almost_eq!(
 			m,
 			eigenvalues * diag * inverse,
 			// 0x98d8990800010000 for 1e-9
-			max_relative = 1e-8,
+			relative = 1e-8,
 		);
 
 		Ok(())

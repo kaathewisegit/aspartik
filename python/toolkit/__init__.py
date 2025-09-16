@@ -80,7 +80,7 @@ def lint(args: Namespace):
             "--workspace",
             "--tests",
             "--features",
-            "approx,arbitrary",
+            "arbitrary",
             "--",
             "-D",
             "warnings",
@@ -98,7 +98,7 @@ def lint(args: Namespace):
 
 def test(args: Namespace):
     if args.rust:
-        execute("cargo", "test", "--workspace", "--features", "approx,arbitrary")
+        execute("cargo", "test", "--workspace", "--features", "arbitrary")
 
     if args.python:
         execute("pytest")

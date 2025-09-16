@@ -1,5 +1,3 @@
-#[cfg(feature = "approx")]
-mod approx;
 #[cfg(feature = "arbitrary")]
 pub mod arbitrary;
 #[cfg(feature = "bytemuck")]
@@ -10,6 +8,7 @@ mod float;
 mod math;
 mod nalgebra;
 mod row_matrix;
+mod tolerance;
 mod vector;
 
 pub use row_matrix::RowMatrix;
