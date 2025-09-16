@@ -1,15 +1,20 @@
 use anyhow::{Context, Result, anyhow};
 
-use super::{FromChars, SeqMut};
+use super::{Character, FromChars, SeqMut};
 
 pub fn parse_append_str<S>(seq: &mut S, string: &str) -> Result<()>
 where
 	S: SeqMut,
 {
-	for (i, ch) in string.chars().enumerate() {
-		let character = ch
-			.try_into()
-			.with_context(|| highlight_error(string, i))?;
+	for (i, byte) in string.bytes().enumerate() {
+		let Some(character) = S::Character::from_byte(byte) else {
+			let ch = string[i..].chars().next().unwrap();
+			return Err(anyhow!(
+				"Encountered an invalid character '{ch}' in a FASTA character sequence"
+			)
+			.context(highlight_error(string, i)));
+		};
+
 		seq.push(character);
 	}
 	Ok(())

@@ -27,10 +27,15 @@ pub unsafe trait Character:
 	+ Copy
 	+ Eq
 {
+	fn from_byte(value: u8) -> Option<Self>;
 }
 
 // DnaNucleotide is `repr(u8)`.
-unsafe impl Character for DnaNucleotide {}
+unsafe impl Character for DnaNucleotide {
+	fn from_byte(value: u8) -> Option<Self> {
+		DnaNucleotide::from_byte(value)
+	}
+}
 
 pub trait Seq {
 	type Character: Character;

@@ -192,6 +192,34 @@ impl DnaNucleotide {
 		*self as u8
 	}
 
+	pub fn from_byte(value: u8) -> Option<Self> {
+		use DnaNucleotide::*;
+
+		Some(match value {
+			b'A' | b'a' => Adenine,
+			b'C' | b'c' => Cytosine,
+			b'G' | b'g' => Guanine,
+			b'T' | b't' => Thymine,
+
+			b'W' | b'w' => Weak,
+			b'S' | b's' => Strong,
+			b'M' | b'm' => Amino,
+			b'K' | b'k' => Ketone,
+			b'R' | b'r' => Purine,
+			b'Y' | b'y' => Pyrimidine,
+
+			b'B' | b'b' => NotAdenine,
+			b'D' | b'd' => NotCytosine,
+			b'H' | b'h' => NotGuanine,
+			b'V' | b'v' => NotThymine,
+
+			b'N' | b'n' => Any,
+			b'-' => Gap,
+
+			_ => return None,
+		})
+	}
+
 	pub fn complement(&self) -> Self {
 		use DnaNucleotide::*;
 		match self {
