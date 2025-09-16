@@ -9,7 +9,7 @@ use crate::vector::Vector;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
-pub struct RowMatrix<T: Copy, const N: usize, const M: usize> {
+pub struct RowMatrix<T, const N: usize, const M: usize> {
 	m: [Vector<T, N>; M],
 }
 
@@ -112,9 +112,7 @@ impl<T: Copy + Default, const N: usize, const M: usize> Default
 
 // Operators
 
-impl<T: Copy, const N: usize, const M: usize> Index<usize>
-	for RowMatrix<T, N, M>
-{
+impl<T, const N: usize, const M: usize> Index<usize> for RowMatrix<T, N, M> {
 	type Output = Vector<T, N>;
 
 	fn index(&self, i: usize) -> &Vector<T, N> {
@@ -122,15 +120,13 @@ impl<T: Copy, const N: usize, const M: usize> Index<usize>
 	}
 }
 
-impl<T: Copy, const N: usize, const M: usize> IndexMut<usize>
-	for RowMatrix<T, N, M>
-{
+impl<T, const N: usize, const M: usize> IndexMut<usize> for RowMatrix<T, N, M> {
 	fn index_mut(&mut self, i: usize) -> &mut Vector<T, N> {
 		&mut self.m[i]
 	}
 }
 
-impl<T: Copy, const N: usize, const M: usize> Index<(usize, usize)>
+impl<T, const N: usize, const M: usize> Index<(usize, usize)>
 	for RowMatrix<T, N, M>
 {
 	type Output = T;
@@ -140,7 +136,7 @@ impl<T: Copy, const N: usize, const M: usize> Index<(usize, usize)>
 	}
 }
 
-impl<T: Copy, const N: usize, const M: usize> IndexMut<(usize, usize)>
+impl<T, const N: usize, const M: usize> IndexMut<(usize, usize)>
 	for RowMatrix<T, N, M>
 {
 	fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut T {
@@ -263,7 +259,7 @@ where
 }
 
 // Type-agnostic implementations.
-impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
+impl<T, const N: usize, const M: usize> RowMatrix<T, N, M> {
 	pub const NUM_ROWS: usize = N;
 	pub const NUM_COLUMNS: usize = M;
 	pub const NUM_ITEMS: usize = N * M;
@@ -299,6 +295,7 @@ impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 
 	pub fn map<F, U>(&self, f: F) -> RowMatrix<U, N, M>
 	where
+		T: Copy,
 		U: Copy,
 		F: Fn(T) -> U,
 	{
@@ -307,6 +304,7 @@ impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 
 	pub fn map_diagonal<F>(&self, f: F) -> RowMatrix<T, N, M>
 	where
+		T: Copy,
 		F: Fn(T) -> T,
 	{
 		let mut out = *self;
@@ -320,7 +318,10 @@ impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 
 	pub fn truncate<const NX: usize, const MX: usize>(
 		&self,
-	) -> RowMatrix<T, NX, MX> {
+	) -> RowMatrix<T, NX, MX>
+	where
+		T: Copy,
+	{
 		assert!(NX < N, "New length must be smaller");
 		assert!(MX < M, "New length must be smaller");
 
@@ -332,7 +333,7 @@ impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 
 	pub fn transpose(&self) -> RowMatrix<T, M, N>
 	where
-		T: Default,
+		T: Copy + Default,
 	{
 		let mut out = RowMatrix::default();
 
@@ -347,7 +348,7 @@ impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 }
 
 // Numeric methods.
-impl<T: Copy, const N: usize> RowMatrix<T, N, N> {
+impl<T, const N: usize> RowMatrix<T, N, N> {
 	pub fn is_symmetric(&self) -> bool
 	where
 		T: PartialEq,
