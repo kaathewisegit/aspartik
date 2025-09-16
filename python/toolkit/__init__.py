@@ -36,7 +36,10 @@ def make_parser():
     add_langopts(fix)
 
     subparsers.add_parser("lint", help="validate with linters and formatters")
-    subparsers.add_parser("test", help="run tests")
+
+    test = subparsers.add_parser("test", help="run tests")
+    add_langopts(test)
+
     subparsers.add_parser("run", help="run a minimal `b3` simulation")
 
     check = subparsers.add_parser("check", help="run all checks")

@@ -1,8 +1,9 @@
-use approx::ulps_eq;
+use core::f64;
+
+use math::ulps_eq;
 
 use crate::distribution::{Discrete, DiscreteCDF};
 use crate::statistics::*;
-use core::f64;
 
 /// Implements the
 /// [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)

@@ -1,7 +1,5 @@
 use stats::distribution::{FisherSnedecor, FisherSnedecorError};
 
-use approx::assert_relative_eq;
-
 use crate::prelude::*;
 
 make_test_harness!(
@@ -84,7 +82,7 @@ fn test_variance() {
 	];
 	for (args, expected) in cases {
 		let variance = new_dist(args).variance().unwrap();
-		assert_relative_eq!(variance, expected, max_relative = 1e-14);
+		assert_almost_eq!(variance, expected, relative = 1e-14);
 	}
 }
 
@@ -105,7 +103,7 @@ fn test_skewness() {
 	];
 	for (args, expected) in cases {
 		let skewness = new_dist(args).skewness().unwrap();
-		assert_relative_eq!(skewness, expected, max_relative = 1e-14);
+		assert_almost_eq!(skewness, expected, relative = 1e-14);
 	}
 }
 
@@ -174,7 +172,7 @@ fn test_pdf() {
 	];
 	for (args, p, expected) in cases {
 		let pdf = new_dist(args).pdf(p);
-		assert_relative_eq!(pdf, expected, max_relative = 1e-13);
+		assert_almost_eq!(pdf, expected, relative = 1e-13);
 	}
 }
 
@@ -199,7 +197,7 @@ fn test_ln_pdf() {
 	];
 	for (args, p, expected) in cases {
 		let ln_pdf = new_dist(args).ln_pdf(p);
-		assert_relative_eq!(ln_pdf, expected, max_relative = 1e-13);
+		assert_almost_eq!(ln_pdf, expected, relative = 1e-13);
 	}
 }
 
@@ -221,7 +219,7 @@ fn test_cdf() {
 	];
 	for (args, p, expected) in cases {
 		let cdf = new_dist(args).cdf(p);
-		assert_relative_eq!(cdf, expected, max_relative = 1e-11);
+		assert_almost_eq!(cdf, expected, relative = 1e-11);
 	}
 }
 
@@ -251,7 +249,7 @@ fn test_sf() {
 	];
 	for (args, p, expected) in cases {
 		let sf = new_dist(args).sf(p);
-		assert_relative_eq!(sf, expected, max_relative = 1e-13);
+		assert_almost_eq!(sf, expected, relative = 1e-13);
 	}
 }
 
@@ -274,11 +272,7 @@ fn test_inverse_cdf() {
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
 		let inverse_cdf = dist.inverse_cdf(dist.cdf(p));
-		assert_relative_eq!(
-			inverse_cdf,
-			expected,
-			max_relative = 1e-12
-		);
+		assert_almost_eq!(inverse_cdf, expected, relative = 1e-12);
 	}
 }
 

@@ -88,7 +88,8 @@ macro_rules! make_test_harness {
 			let dist = new_dist(new_args);
 			let value = op(dist, op_args);
 
-			if approx::relative_eq!(expected, value, max_relative = ACCURACY) {
+
+			if almost_eq!(expected, value, relative = ACCURACY) {
 				return;
 			}
 
@@ -329,8 +330,7 @@ where
 }
 
 pub mod prelude {
-	pub use approx::{AbsDiffEq, abs_diff_eq};
-	pub use math::assert_almost_eq;
+	pub use math::{almost_eq, assert_almost_eq};
 	pub use num_traits::Float;
 	pub use stats::{
 		distribution::{

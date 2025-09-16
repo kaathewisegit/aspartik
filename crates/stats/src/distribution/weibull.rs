@@ -1,6 +1,4 @@
-use approx::ulps_eq;
-
-use math::{consts::EULER_MASCHERONI, function::gamma};
+use math::{consts::EULER_MASCHERONI, function::gamma, ulps_eq};
 use std::f64::consts::LN_2;
 
 use crate::distribution::{Continuous, ContinuousCDF};

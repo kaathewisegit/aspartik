@@ -1,9 +1,11 @@
-use approx::ulps_eq;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use thiserror::Error;
 
-use math::function::{beta, gamma};
+use math::{
+	function::{beta, gamma},
+	ulps_eq,
+};
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 

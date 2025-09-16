@@ -1,8 +1,7 @@
-use approx::ulps_eq;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-use math::function::gamma;
+use math::{function::gamma, ulps_eq};
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 

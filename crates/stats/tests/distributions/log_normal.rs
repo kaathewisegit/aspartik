@@ -1,8 +1,5 @@
 use stats::distribution::{LogNormal, LogNormalError};
 
-// TODO: precision
-use approx::assert_abs_diff_eq;
-
 use math::assert_almost_eq;
 
 use crate::prelude::*;
@@ -113,8 +110,7 @@ fn test_variance() {
 	];
 	for (args, expected, epsilon) in abs_cases {
 		let variance = new_dist(args).variance().unwrap();
-		assert_abs_diff_eq!(variance, expected, epsilon = epsilon);
-		// assert_almost_eq!(variance, expected, relative = 1e-15);
+		assert_almost_eq!(variance, expected, epsilon = epsilon);
 	}
 }
 
@@ -154,7 +150,7 @@ fn test_entropy() {
 	];
 	for (args, expected, epsilon) in abs_cases {
 		let entropy = new_dist(args).entropy().unwrap();
-		assert_abs_diff_eq!(entropy, expected, epsilon = epsilon)
+		assert_almost_eq!(entropy, expected, epsilon = epsilon)
 	}
 }
 
@@ -218,7 +214,7 @@ fn test_skewness() {
 	];
 	for (args, expected, epsilon) in abs_cases {
 		let skewness = new_dist(args).skewness().unwrap();
-		assert_abs_diff_eq!(skewness, expected, epsilon = epsilon)
+		assert_almost_eq!(skewness, expected, epsilon = epsilon)
 	}
 }
 
@@ -344,7 +340,7 @@ fn test_pdf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let pdf = new_dist(args).pdf(p);
-		assert_abs_diff_eq!(pdf, expected, epsilon = epsilon)
+		assert_almost_eq!(pdf, expected, epsilon = epsilon)
 	}
 }
 
@@ -388,7 +384,7 @@ fn test_ln_pdf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let ln_pdf = new_dist(args).ln_pdf(p);
-		assert_abs_diff_eq!(ln_pdf, expected, epsilon = epsilon)
+		assert_almost_eq!(ln_pdf, expected, epsilon = epsilon)
 	}
 }
 
@@ -430,7 +426,7 @@ fn test_cdf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let cdf = new_dist(args).cdf(p);
-		assert_abs_diff_eq!(cdf, expected, epsilon = epsilon)
+		assert_almost_eq!(cdf, expected, epsilon = epsilon)
 	}
 }
 
@@ -459,7 +455,7 @@ fn test_inverse_cdf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let inverse_cdf = new_dist(args).inverse_cdf(p);
-		assert_abs_diff_eq!(inverse_cdf, expected, epsilon = epsilon)
+		assert_almost_eq!(inverse_cdf, expected, epsilon = epsilon)
 	}
 }
 
@@ -480,7 +476,7 @@ fn test_sf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let sf = new_dist(args).sf(p);
-		assert_abs_diff_eq!(sf, expected, epsilon = epsilon)
+		assert_almost_eq!(sf, expected, epsilon = epsilon)
 	}
 }
 

@@ -1,8 +1,5 @@
 use stats::distribution::{StudentsT, StudentsTError};
 
-// TODO: precision
-use approx::assert_relative_eq;
-
 use crate::prelude::*;
 
 make_test_harness!(StudentsT(location: f64, scale: f64, freedom: f64), StudentsTError);
@@ -665,10 +662,10 @@ fn test_inverse_cdf() {
 	];
 	for ((p, freedom), expected) in cases {
 		let dist = new_dist((0.0, 1.0, freedom));
-		assert_relative_eq!(
+		assert_almost_eq!(
 			dist.inverse_cdf(p),
 			expected,
-			max_relative = 0.001
+			relative = 0.001,
 		);
 	}
 }

@@ -1,6 +1,7 @@
-use approx::ulps_eq;
-
-use math::function::{beta, factorial};
+use math::{
+	function::{beta, factorial},
+	ulps_eq,
+};
 
 use crate::distribution::{Discrete, DiscreteCDF};
 use crate::statistics::*;

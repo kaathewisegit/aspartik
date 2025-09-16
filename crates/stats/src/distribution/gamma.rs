@@ -1,9 +1,14 @@
-use approx::ulps_eq;
+use core::f64;
+
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use thiserror::Error;
 
-use math::{function::gamma, tolerance::ACCURACY};
+use math::{
+	function::gamma,
+	tolerance::{ACCURACY, Tolerance},
+	ulps_eq,
+};
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 
@@ -372,10 +377,10 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 	}
 }
 
-/// Compares two floats with `approx::relative_eq!` and `ACCURACY` relative
-/// precision.  Updates first argument to value of second argument
+/// Compares two floats with `ACCURACY` relative precision.  Updates first
+/// argument to value of second argument
 pub fn convergence(x: &mut f64, x_new: f64) -> bool {
-	let res = approx::relative_eq!(*x, x_new, max_relative = ACCURACY);
+	let res = x.is_close(&x_new, f64::EPSILON, ACCURACY, 0);
 	*x = x_new;
 	res
 }
