@@ -26,7 +26,7 @@ macro_rules! assert_almost_eq {
 
 		use ::math::tolerance::{is_close, Tolerance};
 
-		if !is_close($a, $b, c.epsilon, c.relative, c.ulps) {
+		if !$a.is_close(&$b, c.epsilon, c.relative, c.ulps) {
 			panic!(
 				"assert_almost_eq!({}, {}) failed:\n{}",
 				stringify!($a),
@@ -55,6 +55,22 @@ pub trait Tolerance {
 	///
 	/// [ulps]: https://en.wikipedia.org/wiki/Unit_in_the_last_place
 	fn ulps(&self, other: &Self) -> u64;
+
+	fn is_close(
+		&self,
+		other: &Self,
+		epsilon: Self::Diff,
+		relative: Self::Relative,
+		ulps: u64,
+	) -> bool
+	where
+		Self::Diff: PartialOrd,
+		Self::Relative: PartialOrd,
+	{
+		self.abs_diff(other) <= epsilon
+			|| self.relative(other) <= relative
+			|| self.ulps(other) <= ulps
+	}
 }
 
 impl Tolerance for f64 {
@@ -133,12 +149,7 @@ pub fn is_close(
 	relative: f64,
 	ulps: u64,
 ) -> bool {
-	let abs_diff = given.abs_diff(&expected);
-	let largest = given.abs().max(expected.abs());
-
-	abs_diff <= epsilon
-		|| abs_diff <= largest * relative
-		|| given.ulps(&expected) <= ulps
+	given.is_close(&expected, epsilon, relative, ulps)
 }
 
 #[doc(hidden)]
