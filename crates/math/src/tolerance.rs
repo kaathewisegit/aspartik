@@ -31,7 +31,7 @@ macro_rules! assert_almost_eq {
 				"assert_almost_eq!({}, {}) failed:\n{}",
 				stringify!($a),
 				stringify!($b),
-				::math::tolerance::report($a, $b),
+				::math::tolerance::report(&$a, &$b),
 			);
 		}
 	}};
@@ -45,22 +45,28 @@ macro_rules! assert_almost_eq {
 ///
 /// Used primarily for testing.
 pub trait Tolerance {
-	fn abs_diff(self, other: Self) -> Self;
-	fn relative(self, other: Self) -> Self;
+	type Diff;
+	type Relative;
+
+	fn abs_diff(&self, other: &Self) -> Self::Diff;
+	fn relative(&self, other: &Self) -> Self::Relative;
 
 	/// Calculates the difference in [units in last place][ulps].
 	///
 	/// [ulps]: https://en.wikipedia.org/wiki/Unit_in_the_last_place
-	fn ulps(self, other: Self) -> u64;
+	fn ulps(&self, other: &Self) -> u64;
 }
 
 impl Tolerance for f64 {
-	fn abs_diff(self, other: Self) -> Self {
+	type Diff = f64;
+	type Relative = f64;
+
+	fn abs_diff(&self, other: &Self) -> f64 {
 		(self - other).abs()
 	}
 
 	// XXX: is this a good algorithm?
-	fn relative(self, other: Self) -> Self {
+	fn relative(&self, other: &Self) -> f64 {
 		if self == other {
 			return 0.0;
 		}
@@ -80,7 +86,7 @@ impl Tolerance for f64 {
 	///
 	/// This function will return nonsense values if either of the operands
 	/// is infinite or NaN.
-	fn ulps(self, other: Self) -> u64 {
+	fn ulps(&self, other: &Self) -> u64 {
 		let self_bits = self.to_bits();
 		let other_bits = other.to_bits();
 
@@ -91,9 +97,12 @@ impl Tolerance for f64 {
 	}
 }
 
-pub fn report<T>(given: T, expected: T) -> String
+#[doc(hidden)]
+pub fn report<T>(given: &T, expected: &T) -> String
 where
 	T: Display + Copy + Tolerance,
+	T::Diff: Display,
+	T::Relative: Display,
 {
 	format!(
 		indoc!("
@@ -124,14 +133,15 @@ pub fn is_close(
 	relative: f64,
 	ulps: u64,
 ) -> bool {
-	let abs_diff = given.abs_diff(expected);
+	let abs_diff = given.abs_diff(&expected);
 	let largest = given.abs().max(expected.abs());
 
 	abs_diff <= epsilon
 		|| abs_diff <= largest * relative
-		|| given.ulps(expected) <= ulps
+		|| given.ulps(&expected) <= ulps
 }
 
+#[doc(hidden)]
 pub struct Comparator {
 	pub epsilon: f64,
 	pub relative: f64,

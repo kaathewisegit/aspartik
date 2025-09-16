@@ -237,10 +237,10 @@ pub fn gamma_lr(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 	let big = 4503599627370496.0;
 	let big_inv = 2.220446049250313e-16;
 
-	if s.abs_diff(0.0) <= DEFAULT_F64_ACC {
+	if s.abs_diff(&0.0) <= DEFAULT_F64_ACC {
 		return Ok(1.0);
 	}
-	if x.abs_diff(0.0) <= DEFAULT_F64_ACC {
+	if x.abs_diff(&0.0) <= DEFAULT_F64_ACC {
 		return Ok(0.0);
 	}
 
