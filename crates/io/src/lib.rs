@@ -1,7 +1,6 @@
 #[cfg(feature = "python")]
 mod fasta;
 pub mod newick;
-#[cfg(feature = "python")]
 pub mod rw;
 pub mod sam;
 

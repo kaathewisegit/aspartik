@@ -16,7 +16,6 @@ use data::{
 #[pyclass(name = "FastaReader", module = "aspartik.io", frozen)]
 pub struct PyFastaDnaReader {
 	parser: Mutex<FastaParser<Py<PyDnaSeq>>>,
-	// TODO: universal reader struct for IO
 	reader: Mutex<BufReader<AnyReader>>,
 }
 
@@ -32,19 +31,19 @@ macro_rules! bubble {
 #[pymethods]
 impl PyFastaDnaReader {
 	#[new]
-	fn new(obj: Py<PyAny>) -> Self {
-		let reader = AnyReader::from_python(obj);
+	fn new(obj: Bound<PyAny>) -> Result<Self> {
+		let reader = AnyReader::from_python(obj)?;
 		let buf_reader = BufReader::new(reader);
-		Self {
+		Ok(Self {
 			parser: Mutex::new(FastaParser::new()),
 			reader: Mutex::new(buf_reader),
-		}
+		})
 	}
 
 	#[classmethod]
 	fn from_file(_cls: Py<PyType>, path: &str) -> Result<Self> {
 		let file = File::open(path)?;
-		let reader = AnyReader::from_rust(file);
+		let reader = AnyReader::from_dynamic(file);
 		let buf_reader = BufReader::new(reader);
 		Ok(Self {
 			parser: Mutex::new(FastaParser::new()),
