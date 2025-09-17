@@ -1,30 +1,8 @@
-use anyhow::{Error, Result};
+use anyhow::{Error, Result, bail};
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
-use thiserror::Error;
 
 use std::fmt;
-
-#[derive(Debug, Clone, Error, PartialEq)]
-#[non_exhaustive]
-#[cfg_attr(
-	feature = "python",
-	pyclass(
-		name = "DNANucleotideError",
-		module = "aspartik.data",
-		frozen,
-		eq,
-		str,
-	)
-)]
-pub enum DnaNucleotideError {
-	#[error("'{0}' not a valid IUPAC nucleotide code character")]
-	InvalidChar(char),
-	#[error(
-		"{0:X} is not a valid Aspartik nucleotide binary representation"
-	)]
-	InvalidByte(u8),
-}
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -122,7 +100,9 @@ impl TryFrom<u8> for DnaNucleotide {
 
 			0b0000 => Self::Gap,
 
-			_ => Err(DnaNucleotideError::InvalidByte(value))?,
+			_ => bail!(
+				"{value:X} is not a valid Aspartik nucleotide binary representation"
+			),
 		})
 	}
 }
@@ -154,7 +134,9 @@ impl TryFrom<char> for DnaNucleotide {
 			'N' | 'n' => Any,
 			'-' => Gap,
 
-			_ => Err(DnaNucleotideError::InvalidChar(value))?,
+			_ => bail!(
+				"'{value}' not a valid IUPAC nucleotide code character"
+			),
 		})
 	}
 }

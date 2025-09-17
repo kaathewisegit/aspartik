@@ -5,7 +5,7 @@ mod phred;
 pub mod seq;
 
 pub use msa::{Msa, MsaView};
-pub use nucleotides::{DnaNucleotide, DnaNucleotideError};
+pub use nucleotides::DnaNucleotide;
 pub use phred::Phred;
 
 #[cfg(feature = "python")]
@@ -19,7 +19,6 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<fasta::python::PyFastaDnaRecord>()?;
 
 	m.add_class::<DnaNucleotide>()?;
-	m.add_class::<DnaNucleotideError>()?;
 
 	m.add_class::<Phred>()?;
 
