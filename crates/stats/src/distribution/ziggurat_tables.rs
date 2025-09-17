@@ -1,5 +1,6 @@
 #![expect(clippy::excessive_precision)]
-
+// TODO: find the original or some other source for them.  It'd make sense to
+// inline the script
 //! Generated ziggurat tables borrowed from
 //! `https://github.com/rust-lang-nursery/rand/blob/0.8/src/distributions/ziggurat_tables.rs`
 

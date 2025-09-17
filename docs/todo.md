@@ -74,3 +74,8 @@
 ## `skvec`
 
 - [ ] Unchecked indexing
+
+
+## `stats`
+
+- [ ] Find the Ziggurat generation script

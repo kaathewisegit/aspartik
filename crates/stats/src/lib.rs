@@ -1,9 +1,6 @@
-//! This crate aims to be a functional port of the Math.NET Numerics
-//! Distribution package and in doing so providing the Rust numerical computing
-//! community with a robust, well-tested statistical distribution package. This
-//! crate also ports over some of the special statistical functions from
-//! Math.NET in so far as they are used in the computation of distribution
-//! values. This crate depends on the `rand` crate to provide RNG.
+//! This crate aims is a fork of the [`statrs`][s] statistical utilities crate.
+//! Currently it only provides distributions with support for sampling, a number
+//! of statistics, and using all of those in Python.
 //!
 //! # Sampling
 //!
@@ -20,10 +17,7 @@
 //! print!("{}", n.sample(&mut r));
 //! ```
 //!
-//! # Introspecting distributions
-//!
-//! Statrs also comes with a number of useful utility traits for more detailed
-//! introspection of distributions.
+//! # Statistics
 //!
 //! ```
 //! use stats::distribution::{
@@ -42,24 +36,7 @@
 //! assert_eq!(n.pdf(1.0), 0.36787944117144233);
 //! ```
 //!
-//! # Utility functions
-//!
-//! As well as utility functions including `erf`, `gamma`, `ln_gamma`, `beta`,
-//! etc.
-//!
-//! ```
-//! use stats::distribution::FisherSnedecor;
-//! use stats::statistics::Distribution;
-//!
-//! let n = FisherSnedecor::new(1.0, 1.0).unwrap();
-//! assert!(n.variance().is_none());
-//! ```
-//!
-//! ## Distributions implemented
-//!
-//! Statrs comes with a number of commonly used distributions including Normal,
-//! Gamma, Student's T, Exponential, Weibull, etc. view all implemented in
-//! `distributions` module.
+//! [s]: https://lib.rs/crates/statrs
 
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
