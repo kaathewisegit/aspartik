@@ -72,12 +72,12 @@ a:hover {
 		@apply pl-7 list-decimal;
 	}
 
-	ol li:where(:not(.not-prose, .not-prose *)) {
-		@apply pl-3;
-	}
-
 	ol li + li:where(:not(.not-prose, .not-prose *)) {
 		@apply mt-4;
+	}
+
+	ol li:where(:not(.not-prose, .not-prose *)) {
+		@apply pl-3;
 	}
 
 	ol li:where(:not(.not-prose, .not-prose *))::marker {
@@ -88,12 +88,12 @@ a:hover {
 		@apply pl-6 list-[square];
 	}
 
-	ul li:where(:not(.not-prose, .not-prose *)) {
-		@apply pl-3;
-	}
-
 	ul li + li:where(:not(.not-prose, .not-prose *)) {
 		@apply pl-4;
+	}
+
+	ul li:where(:not(.not-prose, .not-prose *)) {
+		@apply pl-3;
 	}
 
 	ul li:where(:not(.not-prose, .not-prose *))::marker {
@@ -114,10 +114,6 @@ a:hover {
 
 	pre:where(:not(.not-prose, .not-prose *)) {
 		@apply mt-4 bg-gray-200 px-1;
-	}
-
-	pre code * + *:where(:not(.not-prose, .not-prose *)) {
-		@apply mt-0;
 	}
 
 	pre code:where(:not(.not-prose, .not-prose *)) {
