@@ -1,15 +1,15 @@
-use data::Phred;
+use data::{Phred, seq::Character};
 
 #[test]
-fn new() {
+fn from_ascii() {
 	for ch in 0..b'!' {
-		Phred::new(ch).unwrap_err();
+		assert_eq!(Phred::from_ascii(ch), None);
 	}
 	for ch in b'!'..=b'I' {
-		Phred::new(ch).unwrap();
+		Phred::from_ascii(ch).unwrap();
 	}
 	for ch in b'J'..=255 {
-		Phred::new(ch).unwrap_err();
+		assert_eq!(Phred::from_ascii(ch), None);
 	}
 }
 
@@ -30,7 +30,7 @@ fn try_from() {
 fn accuracy() {
 	let mut last = -1.0;
 	for ch in b'!'..=b'I' {
-		let phred = Phred::new(ch).unwrap();
+		let phred = Phred::from_ascii(ch).unwrap();
 		assert!(last < phred.accuracy());
 		last = phred.accuracy();
 	}
@@ -40,7 +40,7 @@ fn accuracy() {
 fn probability_incorrect() {
 	let mut last = f64::INFINITY;
 	for ch in b'!'..=b'I' {
-		let phred = Phred::new(ch).unwrap();
+		let phred = Phred::from_ascii(ch).unwrap();
 		println!("{last} < {}", phred.probability_incorrect());
 		assert!(last > phred.probability_incorrect());
 		last = phred.probability_incorrect();
