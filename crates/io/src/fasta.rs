@@ -7,68 +7,13 @@ use std::{
 	io::{BufRead, BufReader},
 };
 
-use super::{FastaParser, Record};
 use crate::rw::AnyReader;
-use data::seq::python::PyDnaSeq;
+use data::{
+	fasta::{FastaParser, python::PyFastaDnaRecord},
+	seq::python::PyDnaSeq,
+};
 
-#[pyclass(name = "DNARecord", module = "aspartik.io.fasta", frozen)]
-pub struct PyFastaDnaRecord(Record<Py<PyDnaSeq>>);
-
-#[pymethods]
-impl PyFastaDnaRecord {
-	#[new]
-	fn new(mut description: String, sequence: Py<PyDnaSeq>) -> Self {
-		if !description.starts_with('>') {
-			description.insert(0, '>');
-		}
-		let record = Record::new(description, sequence);
-		Self(record)
-	}
-
-	#[getter]
-	fn sequence(&self, py: Python) -> Py<PyDnaSeq> {
-		// TODO: perhaps there's a way to avoid cloning.  Probably by
-		// reimplementing `Seq`'s methods.
-		self.0.sequence().clone_ref(py)
-	}
-
-	#[getter]
-	fn raw_description(&self) -> String {
-		self.0.raw_description().to_owned()
-	}
-
-	#[getter]
-	fn description(&self) -> String {
-		self.0.description().to_owned()
-	}
-
-	#[getter]
-	fn id(&self) -> String {
-		self.0.id().to_string()
-	}
-
-	fn __eq__(&self, other: &Self) -> bool {
-		let self_seq = self.0.seq.get();
-		let other_seq = other.0.seq.get();
-
-		self.0.raw_description == other.0.raw_description
-			&& self_seq == other_seq
-	}
-
-	fn __str__(&self) -> String {
-		self.0.to_string()
-	}
-
-	fn __repr__(&self) -> String {
-		format!(
-			r#"DNARecord({:?}, DNASeq("{}"))"#,
-			self.0.raw_description(),
-			self.0.sequence(),
-		)
-	}
-}
-
-#[pyclass(name = "DNAReader", module = "aspartik.io.fasta", frozen)]
+#[pyclass(name = "FastaReader", module = "aspartik.io", frozen)]
 pub struct PyFastaDnaReader {
 	parser: Mutex<FastaParser<Py<PyDnaSeq>>>,
 	// TODO: universal reader struct for IO

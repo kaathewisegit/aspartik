@@ -12,14 +12,14 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.priors import Distribution, Yule
 from aspartik.b3.substitutions import HKY
-from aspartik.io.fasta import DNAReader
+from aspartik.io import FastaReader
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Uniform
 
 path = "crates/b3/data/8384-shrooms.fasta"
 sequences = []
 names = []
-for i, record in enumerate(DNAReader.from_file(path)):
+for i, record in enumerate(FastaReader.from_file(path)):
     # new hard limit with thread scaling
     if i == 1150:
         break

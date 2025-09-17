@@ -1,4 +1,5 @@
-pub mod fasta;
+#[cfg(feature = "python")]
+mod fasta;
 pub mod newick;
 #[cfg(feature = "python")]
 pub mod rw;
@@ -12,10 +13,10 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	use util::py_make_submodule;
 	let m = py_make_submodule!(py, "_io_rust_impl");
 
+	m.add_class::<fasta::PyFastaDnaReader>()?;
+
 	m.add_class::<newick::python::PyNode>()?;
 	m.add_class::<newick::python::PyTree>()?;
-	m.add_class::<fasta::python::PyFastaDnaRecord>()?;
-	m.add_class::<fasta::python::PyFastaDnaReader>()?;
 
 	Ok(m)
 }

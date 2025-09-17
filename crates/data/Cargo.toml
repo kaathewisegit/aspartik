@@ -1,5 +1,6 @@
 [package]
 name = "data"
+description = "Bioinformatics data structures and Sans IO parsing"
 
 version.workspace = true
 edition.workspace = true
@@ -10,12 +11,13 @@ authors.workspace = true
 util = { workspace = true }
 
 anyhow = { workspace = true }
-pyo3 = { workspace = true, optional = true, features = ["anyhow"] }
+parking_lot = { workspace = true, optional = true }
+pyo3 = { workspace = true, features = ["anyhow"], optional = true }
 thiserror = { workspace = true }
 
 [features]
 default = ["python"]
-python = ["dep:pyo3"]
+python = ["dep:pyo3", "dep:parking_lot"]
 
 [lints]
 workspace = true

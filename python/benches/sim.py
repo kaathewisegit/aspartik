@@ -13,14 +13,14 @@ from aspartik.b3.operators import (
 from aspartik.b3.priors import Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
-from aspartik.io.fasta import DNAReader
+from aspartik.io import FastaReader
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Uniform
 
 path = "crates/b3/data/sim.fasta"
 sequences = []
 names = []
-for i, record in enumerate(DNAReader.from_file(path)):
+for i, record in enumerate(FastaReader.from_file(path)):
     if i == 500:
         break
     sequences.append(record.sequence)

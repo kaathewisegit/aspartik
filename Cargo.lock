@@ -191,6 +191,7 @@ name = "data"
 version = "0.1.0-alpha.3"
 dependencies = [
  "anyhow",
+ "parking_lot",
  "pyo3",
  "thiserror",
  "util",

@@ -14,14 +14,14 @@ from aspartik.b3.operators import (
 from aspartik.b3.priors import ConstantPopulation, Distribution, Monophyly, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
-from aspartik.io.fasta import DNAReader
+from aspartik.io import FastaReader
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Exp, Gamma, LogNormal, Uniform
 
 path = "crates/b3/data/primate-mdna-full.fasta"
 sequences = []
 names = []
-for record in DNAReader.from_file(path):
+for record in FastaReader.from_file(path):
     sequences.append(record.sequence)
     names.append(record.id)
 

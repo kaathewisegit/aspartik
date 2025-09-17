@@ -2,7 +2,7 @@ use anyhow::{Context, Error, Result, anyhow};
 
 use std::{cmp::min, fmt, mem};
 
-use data::seq::{FromChars, Seq, parse_append_str};
+use crate::seq::{FromChars, Seq, parse_append_str};
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -76,7 +76,7 @@ impl<S: Seq> fmt::Display for Record<S> {
 }
 
 #[derive(Debug, Clone)]
-struct FastaParser<S: Seq> {
+pub struct FastaParser<S: Seq> {
 	/// Since sequence descriptions must start with a '>' character,
 	/// `description` being empty must mean that we haven't read the first
 	/// record yet.
@@ -85,7 +85,7 @@ struct FastaParser<S: Seq> {
 	line_idx: usize,
 }
 
-impl<S: FromChars> FastaParser<S> {
+impl<S: Seq> FastaParser<S> {
 	pub fn new() -> Self {
 		// XXX: Default trait?
 		Self {
@@ -96,7 +96,10 @@ impl<S: FromChars> FastaParser<S> {
 	}
 
 	/// Takes the values and turns them into a [`Record`]
-	fn make_record(&mut self) -> Option<Record<S>> {
+	fn make_record(&mut self) -> Option<Record<S>>
+	where
+		S: FromChars,
+	{
 		let description = mem::take(&mut self.description);
 
 		if description.is_empty() {
@@ -120,7 +123,10 @@ impl<S: FromChars> FastaParser<S> {
 	pub fn read_line(
 		&mut self,
 		line: Option<&str>,
-	) -> Result<Option<Record<S>>> {
+	) -> Result<Option<Record<S>>>
+	where
+		S: FromChars,
+	{
 		let Some(line) = line else {
 			return Ok(self.make_record());
 		};
@@ -151,6 +157,12 @@ impl<S: FromChars> FastaParser<S> {
 			.with_context(|| sequence_error(self))?;
 
 		Ok(None)
+	}
+}
+
+impl<S: Seq> Default for FastaParser<S> {
+	fn default() -> Self {
+		Self::new()
 	}
 }
 

@@ -1,3 +1,4 @@
+pub mod fasta;
 mod msa;
 mod nucleotides;
 mod phred;
@@ -14,6 +15,8 @@ use pyo3::prelude::*;
 pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	use util::py_make_submodule;
 	let m = py_make_submodule!(py, "_data_rust_impl");
+
+	m.add_class::<fasta::python::PyFastaDnaRecord>()?;
 
 	m.add_class::<DnaNucleotide>()?;
 	m.add_class::<DnaNucleotideError>()?;
