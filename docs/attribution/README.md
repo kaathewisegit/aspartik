@@ -131,12 +131,6 @@ macros.  And `#[pymethods]`, being a proc macro, doesn't support nested
 macros by example.
 
 
-### [`lapack-sys`](./lapack-sys-license)
-
-LAPACK C interface bindings.  I couldn't get the LAPACK source crate to
-work, so I might need to fork it in the future.
-
-
 ### [`libc`](./libc-license)
 
 Raw bindings to platform-specific C libraries.
@@ -173,12 +167,6 @@ SIMD-optimized string search, used by `nom` and `serde_json`.
 
 Provides `offset_of`, used in `pyo3`.  It's equivalent to `std`'s
 `offset_of`, but its MSRV is lower (`std`'s is 1.77).
-
-
-### [`nom`](./nom-license)
-
-Parser which is currently used by `io`.  I plan to replace it at some
-point in the future.
 
 
 ### [`num-traits`](./num-traits-license)
