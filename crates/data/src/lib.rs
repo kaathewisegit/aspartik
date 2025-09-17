@@ -1,7 +1,9 @@
+mod msa;
 mod nucleotides;
 mod phred;
 pub mod seq;
 
+pub use msa::{Msa, MsaView};
 pub use nucleotides::{DnaNucleotide, DnaNucleotideError};
 pub use phred::Phred;
 
