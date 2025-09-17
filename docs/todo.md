@@ -2,10 +2,7 @@
 
 ## `b3`
 
-- [/] Partial likelihood scaling
-
-  Has performance issues because of full scale copies.  Needs partial
-  copies and a smarter change tracking algorithm (not a dump sum).
+- [x] Partial likelihood scaling
 
 - [x] Dated tree tips
 
@@ -13,44 +10,65 @@
 
 - [ ] Deterministic tests with approximate tree comparisons
 
+- [ ] Custom population model functions
+
+- [ ] More birth-death models
+
+- [ ] Python calculator objects?
+
 
 ## `data`
 
-- [ ] A general tree type for `io`.  And perhaps it can be used in `b3`,
-  if copying is fast enough.
+- [ ] FASTA/FASTQ
 
-- [ ] Sequence alignment format (formats?)
+  - [ ] Python-friendly record types
+  - [ ] Faster per-line streaming parsing
+  - [ ] Fast parsing from whole slices?
+
+- [ ] A general tree type for use with Newick
+
+- [ ] Newick parser (Sans IO, non-recursive)
+
+- [ ] Variant call format
+
+  - [ ] Structures
+  - [ ] VCF parser
+  - [ ] BCF parser
+
+- [ ] General feature format
+
+  - [ ] Structure
+  - [ ] GFF/GTF parser
+
+- [ ] Multiple sequence alignment
+
+  - [x] Core data type format
+  - [ ] Parsing/constructors
+  - [/] Views
+
+- [ ] NEXUS
+
+  - [ ] Data structure (arbitrary blocks?)
+  - [ ] Parser
 
 
 ## `io`
 
-- [ ] Unified Python API sequence format?
+- [ ] Python reader/writer type (from `rw`)
 
-- [ ] Convert parsers to Sans IO implementations
-
-  - [x] Line-based Sans IO readers/writers which wrap Rust and Python
-    readers
-  - [ ] Token-based Sans IO generator?
-
-- [ ] Non-recursive Newick parser
-
-- [ ] Nexus parser
-
-- [ ] VCF parser
-
-- [ ] tskit conversion
+- [ ] A list of web APIs
 
 
 ## `linalg`
 
-- [ ] Custom solvers?
+- [ ] Heap-allocated vectors and matrices (storage types?)
 
-- [ ] Heap-allocated vectors and matrices (storage types)?
+- [ ] Standalone eigenvalue algorithms
 
 
 ## `math`
 
-- [x] Expose Harmonic and Logistic functions to Python
+- [ ] Tests for `float`
 
 
 ## `skvec`
