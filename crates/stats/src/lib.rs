@@ -38,8 +38,8 @@
 //! assert_eq!(n.variance(), Some(1.0));
 //! assert_eq!(n.entropy(), Some(1.0));
 //! assert_eq!(n.skewness(), Some(2.0));
-//! assert_eq!(n.cdf(1.0), 0.6321205588285576784045);
-//! assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
+//! assert_eq!(n.cdf(1.0), 0.6321205588285577);
+//! assert_eq!(n.pdf(1.0), 0.36787944117144233);
 //! ```
 //!
 //! # Utility functions
@@ -61,7 +61,6 @@
 //! Gamma, Student's T, Exponential, Weibull, etc. view all implemented in
 //! `distributions` module.
 
-#![expect(clippy::excessive_precision)]
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 

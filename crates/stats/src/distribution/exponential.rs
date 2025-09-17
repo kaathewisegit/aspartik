@@ -26,7 +26,7 @@ use crate::{
 ///
 /// let n = Exp::new(1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 1.0);
-/// assert_eq!(n.pdf(1.0), 0.3678794411714423215955);
+/// assert_eq!(n.pdf(1.0), 0.36787944117144233);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(

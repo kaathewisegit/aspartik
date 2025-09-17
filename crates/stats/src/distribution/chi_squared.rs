@@ -17,7 +17,7 @@ use core::f64;
 ///
 /// let n = ChiSquared::new(3.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), 3.0);
-/// assert_almost_eq!(n.pdf(4.0), 0.107981933026376103901, epsilon = 1e-15);
+/// assert_almost_eq!(n.pdf(4.0), 0.1079819330263761, epsilon = 1e-15);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct ChiSquared {

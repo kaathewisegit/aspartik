@@ -1,3 +1,5 @@
+#![expect(clippy::excessive_precision)]
+
 //! Generated ziggurat tables borrowed from
 //! `https://github.com/rust-lang-nursery/rand/blob/0.8/src/distributions/ziggurat_tables.rs`
 

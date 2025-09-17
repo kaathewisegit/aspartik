@@ -16,8 +16,8 @@ use crate::statistics::*;
 /// use math::assert_almost_eq;
 ///
 /// let n = Chi::new(2).unwrap();
-/// assert_almost_eq!(n.mean().unwrap(), 1.25331413731550025121, epsilon = 1e-14);
-/// assert_almost_eq!(n.pdf(1.0), 0.60653065971263342360, epsilon = 1e-15);
+/// assert_almost_eq!(n.mean().unwrap(), 1.2533141373155003, epsilon = 1e-14);
+/// assert_almost_eq!(n.pdf(1.0), 0.6065306597126334, epsilon = 1e-15);
 /// ```
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Chi {

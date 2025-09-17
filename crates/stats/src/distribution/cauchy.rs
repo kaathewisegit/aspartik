@@ -13,7 +13,7 @@ use core::f64;
 ///
 /// let n = Cauchy::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.mode().unwrap(), 0.0);
-/// assert_eq!(n.pdf(1.0), 0.1591549430918953357689);
+/// assert_eq!(n.pdf(1.0), 0.15915494309189535);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Cauchy {

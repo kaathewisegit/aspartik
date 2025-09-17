@@ -29,7 +29,7 @@ use crate::{
 ///
 /// let n = LogNormal::new(0.0, 1.0).unwrap();
 /// assert_eq!(n.mean().unwrap(), (0.5f64).exp());
-/// assert_almost_eq!(n.pdf(1.0), 0.3989422804014326779399, epsilon = 1e-16);
+/// assert_almost_eq!(n.pdf(1.0), 0.3989422804014327, epsilon = 1e-16);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(

@@ -251,8 +251,7 @@ impl Distribution for Levy {
 	/// ```
 	fn entropy(&self) -> Option<f64> {
 		/// CONSTANT_PART = 1.5 * EULER_MASCHERONI + 0.5 * (1.0 + LN_PI + 16.0_f64.ln())
-		const CONSTANT_PART: f64 =
-			3.32448280139688989720525569282472133636474609375;
+		const CONSTANT_PART: f64 = 3.32448280139689;
 		Some(CONSTANT_PART + self.c.ln())
 	}
 }

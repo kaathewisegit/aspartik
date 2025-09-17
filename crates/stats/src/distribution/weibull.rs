@@ -15,12 +15,8 @@ use crate::statistics::*;
 /// use math::assert_almost_eq;
 ///
 /// let n = Weibull::new(10.0, 1.0).unwrap();
-/// assert_almost_eq!(
-///     n.mean().unwrap(),
-///     0.95135076986687318362924871772654021925505786260884,
-///     epsilon = 1e-15,
-/// );
-/// assert_eq!(n.pdf(1.0), 3.6787944117144232159552377016146086744581113103177);
+/// assert_almost_eq!(n.mean().unwrap(), 0.9513507698668732, epsilon = 1e-15);
+/// assert_eq!(n.pdf(1.0), 3.6787944117144233);
 /// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Weibull {
