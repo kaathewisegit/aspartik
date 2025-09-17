@@ -4,6 +4,8 @@ use pyo3::prelude::*;
 
 use std::fmt;
 
+use crate::seq::Character;
+
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[cfg_attr(
@@ -68,138 +70,9 @@ impl fmt::Display for DnaNucleotide {
 	}
 }
 
-impl From<DnaNucleotide> for u8 {
-	fn from(value: DnaNucleotide) -> Self {
-		value as u8
-	}
-}
-
-impl TryFrom<u8> for DnaNucleotide {
-	type Error = Error;
-
-	fn try_from(value: u8) -> Result<Self, Self::Error> {
-		Ok(match value {
-			0b0001 => Self::Adenine,
-			0b0010 => Self::Cytosine,
-			0b0100 => Self::Guanine,
-			0b1000 => Self::Thymine,
-
-			0b1001 => Self::Weak,
-			0b0110 => Self::Strong,
-			0b1100 => Self::Amino,
-			0b0011 => Self::Ketone,
-			0b0101 => Self::Purine,
-			0b1010 => Self::Pyrimidine,
-
-			0b1110 => Self::NotAdenine,
-			0b1101 => Self::NotCytosine,
-			0b1011 => Self::NotGuanine,
-			0b0111 => Self::NotThymine,
-
-			0b1111 => Self::Any,
-
-			0b0000 => Self::Gap,
-
-			_ => bail!(
-				"{value:X} is not a valid Aspartik nucleotide binary representation"
-			),
-		})
-	}
-}
-
-impl TryFrom<char> for DnaNucleotide {
-	type Error = Error;
-
-	// https://genome.ucsc.edu/goldenPath/help/iupac.html
-	fn try_from(value: char) -> Result<Self, Self::Error> {
-		use DnaNucleotide::*;
-		Ok(match value {
-			'A' | 'a' => Adenine,
-			'C' | 'c' => Cytosine,
-			'G' | 'g' => Guanine,
-			'T' | 't' => Thymine,
-
-			'W' | 'w' => Weak,
-			'S' | 's' => Strong,
-			'M' | 'm' => Amino,
-			'K' | 'k' => Ketone,
-			'R' | 'r' => Purine,
-			'Y' | 'y' => Pyrimidine,
-
-			'B' | 'b' => NotAdenine,
-			'D' | 'd' => NotCytosine,
-			'H' | 'h' => NotGuanine,
-			'V' | 'v' => NotThymine,
-
-			'N' | 'n' => Any,
-			'-' => Gap,
-
-			_ => bail!(
-				"'{value}' not a valid IUPAC nucleotide code character"
-			),
-		})
-	}
-}
-
-// TODO: either switch the implementation to a ref or add a second one
-impl From<DnaNucleotide> for char {
-	fn from(value: DnaNucleotide) -> char {
-		use DnaNucleotide::*;
-		match value {
-			Adenine => 'A',
-			Cytosine => 'C',
-			Guanine => 'G',
-			Thymine => 'T',
-
-			Weak => 'W',
-			Strong => 'S',
-			Amino => 'M',
-			Ketone => 'K',
-			Purine => 'R',
-			Pyrimidine => 'Y',
-
-			NotAdenine => 'B',
-			NotCytosine => 'D',
-			NotGuanine => 'H',
-			NotThymine => 'V',
-
-			Any => 'N',
-			Gap => '-',
-		}
-	}
-}
-
 impl DnaNucleotide {
 	fn as_u8(&self) -> u8 {
 		*self as u8
-	}
-
-	pub fn from_byte(value: u8) -> Option<Self> {
-		use DnaNucleotide::*;
-
-		Some(match value {
-			b'A' | b'a' => Adenine,
-			b'C' | b'c' => Cytosine,
-			b'G' | b'g' => Guanine,
-			b'T' | b't' => Thymine,
-
-			b'W' | b'w' => Weak,
-			b'S' | b's' => Strong,
-			b'M' | b'm' => Amino,
-			b'K' | b'k' => Ketone,
-			b'R' | b'r' => Purine,
-			b'Y' | b'y' => Pyrimidine,
-
-			b'B' | b'b' => NotAdenine,
-			b'D' | b'd' => NotCytosine,
-			b'H' | b'h' => NotGuanine,
-			b'V' | b'v' => NotThymine,
-
-			b'N' | b'n' => Any,
-			b'-' => Gap,
-
-			_ => return None,
-		})
 	}
 
 	pub fn complement(&self) -> Self {
@@ -232,6 +105,126 @@ impl DnaNucleotide {
 	}
 }
 
+// SAFETY: DnaNucleotide is `repr(u8)`.
+unsafe impl Character for DnaNucleotide {
+	fn from_ascii(char: u8) -> Option<Self> {
+		use DnaNucleotide::*;
+
+		Some(match char {
+			b'A' | b'a' => Adenine,
+			b'C' | b'c' => Cytosine,
+			b'G' | b'g' => Guanine,
+			b'T' | b't' => Thymine,
+
+			b'W' | b'w' => Weak,
+			b'S' | b's' => Strong,
+			b'M' | b'm' => Amino,
+			b'K' | b'k' => Ketone,
+			b'R' | b'r' => Purine,
+			b'Y' | b'y' => Pyrimidine,
+
+			b'B' | b'b' => NotAdenine,
+			b'D' | b'd' => NotCytosine,
+			b'H' | b'h' => NotGuanine,
+			b'V' | b'v' => NotThymine,
+
+			b'N' | b'n' => Any,
+			b'-' => Gap,
+
+			_ => return None,
+		})
+	}
+
+	fn to_ascii(&self) -> u8 {
+		use DnaNucleotide::*;
+
+		match self {
+			Adenine => b'A',
+			Cytosine => b'C',
+			Guanine => b'G',
+			Thymine => b'T',
+
+			Weak => b'W',
+			Strong => b'S',
+			Amino => b'M',
+			Ketone => b'K',
+			Purine => b'R',
+			Pyrimidine => b'Y',
+
+			NotAdenine => b'B',
+			NotCytosine => b'D',
+			NotGuanine => b'H',
+			NotThymine => b'V',
+
+			Any => b'N',
+			Gap => b'-',
+		}
+	}
+
+	#[inline(never)]
+	fn from_byte(b: u8) -> Option<Self> {
+		use DnaNucleotide::*;
+
+		Some(match b {
+			0b0001 => Adenine,
+			0b0010 => Cytosine,
+			0b0100 => Guanine,
+			0b1000 => Thymine,
+
+			0b1001 => Weak,
+			0b0110 => Strong,
+			0b1100 => Amino,
+			0b0011 => Ketone,
+			0b0101 => Purine,
+			0b1010 => Pyrimidine,
+
+			0b1110 => NotAdenine,
+			0b1101 => NotCytosine,
+			0b1011 => NotGuanine,
+			0b0111 => NotThymine,
+
+			0b1111 => Any,
+
+			0b0000 => Gap,
+
+			_ => return None,
+		})
+	}
+
+	fn to_byte(&self) -> u8 {
+		*self as u8
+	}
+
+	fn into_byte(self) -> u8 {
+		self as u8
+	}
+}
+
+impl TryFrom<char> for DnaNucleotide {
+	type Error = Error;
+
+	fn try_from(value: char) -> Result<Self> {
+		let Ok(byte) = value.try_into() else {
+			let hex: u32 = value.into();
+			bail!(
+				"An IUPAC DNA character must be ASCII, got '{value}' ({hex:x})"
+			);
+		};
+
+		let Some(nucleotide) = DnaNucleotide::from_byte(byte) else {
+			bail!("'{value}' is not a valid IUPAC DNA character")
+		};
+
+		Ok(nucleotide)
+	}
+}
+
+impl From<DnaNucleotide> for char {
+	fn from(value: DnaNucleotide) -> char {
+		value.to_ascii() as char
+	}
+}
+
 #[cfg(feature = "python")]
 #[pymethods]
 impl DnaNucleotide {
@@ -241,30 +234,7 @@ impl DnaNucleotide {
 	}
 
 	fn __repr__(&self) -> String {
-		use DnaNucleotide::*;
-		let name = match self {
-			Thymine => "Thymine",
-			Guanine => "Guanine",
-			Cytosine => "Cytosine",
-			Adenine => "Adenine",
-
-			Strong => "Strong",
-			Weak => "Weak",
-			Ketone => "Ketone",
-			Amino => "Amino",
-			Pyrimidine => "Pyrimidine",
-			Purine => "Purine",
-
-			NotThymine => "NotThymine",
-			NotGuanine => "NotGuanine",
-			NotCytosine => "NotCytosine",
-			NotAdenine => "NotAdenine",
-
-			Any => "Any",
-			Gap => "Gap",
-		};
-
-		format!("DNANucleotide.{name}")
+		format!("DNANucleotide.{self}")
 	}
 
 	fn __contains__(&self, other: &Self) -> bool {

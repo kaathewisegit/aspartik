@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow, bail};
 
 use super::{Character, FromChars, SeqMut};
 
@@ -7,7 +7,7 @@ where
 	S: SeqMut,
 {
 	for (i, byte) in string.bytes().enumerate() {
-		let Some(character) = S::Character::from_byte(byte) else {
+		let Some(character) = S::Character::from_ascii(byte) else {
 			let ch = string[i..].chars().next().unwrap();
 			return Err(anyhow!(
 				"Encountered an invalid character '{ch}' in a FASTA character sequence"
@@ -25,9 +25,9 @@ where
 	S: SeqMut,
 {
 	for b in bytes.iter().copied() {
-		let character = b.try_into().with_context(|| {
-			anyhow!("Illegal byte encodign encountered: {:#x}", b)
-		})?;
+		let Some(character) = S::Character::from_byte(b) else {
+			bail!("Illegal byte encodign encountered: {:#x}", b);
+		};
 		seq.push(character);
 	}
 	Ok(())

@@ -1,5 +1,6 @@
 //! Kitchen sink utilities.
 use anyhow::{Result, bail};
+use data::seq::Character;
 use pyo3::prelude::*;
 use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 
@@ -12,8 +13,8 @@ use linalg::Vector;
 fn compare_seqs(a: &[DnaNucleotide], b: &[DnaNucleotide]) -> Ordering {
 	for (a, b) in a.iter().zip(b.iter()) {
 		if a != b {
-			let a_num: u8 = (*a).into();
-			let b_num: u8 = (*b).into();
+			let a_num = a.to_byte();
+			let b_num = b.to_byte();
 			return a_num.cmp(&b_num);
 		}
 	}

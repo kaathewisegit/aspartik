@@ -1,5 +1,3 @@
-use anyhow::Error;
-
 use std::fmt;
 
 use crate::nucleotides::DnaNucleotide;
@@ -19,22 +17,16 @@ pub use parse::{parse_append_bytes, parse_append_str, parse_bytes, parse_str};
 /// casted to `[u8]`.  In practice this means that the size of the type must be
 /// one byte and there are no alignment requirements (all types are 1-byte
 /// aligned).
-pub unsafe trait Character:
-	TryFrom<u8, Error = Error>
-	+ TryFrom<char, Error = Error>
-	+ Into<u8>
-	+ Into<char>
-	+ Copy
-	+ Eq
-{
-	fn from_byte(value: u8) -> Option<Self>;
-}
+pub unsafe trait Character: Copy + Eq {
+	fn from_ascii(char: u8) -> Option<Self>;
 
-// DnaNucleotide is `repr(u8)`.
-unsafe impl Character for DnaNucleotide {
-	fn from_byte(value: u8) -> Option<Self> {
-		DnaNucleotide::from_byte(value)
-	}
+	fn to_ascii(&self) -> u8;
+
+	fn from_byte(b: u8) -> Option<Self>;
+
+	fn to_byte(&self) -> u8;
+
+	fn into_byte(self) -> u8;
 }
 
 pub trait Seq {
@@ -45,16 +37,16 @@ pub trait Seq {
 	fn fmt_impl(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		use fmt::Write;
 
-		for character in self.as_slice().iter().copied() {
-			f.write_char(character.into())?;
+		for character in self.as_slice() {
+			f.write_char(character.to_ascii() as char)?;
 		}
 		Ok(())
 	}
 
 	fn to_string(&self) -> String {
 		let mut out = String::with_capacity(self.len());
-		for character in self.as_slice().iter().copied() {
-			out.push(character.into());
+		for character in self.as_slice() {
+			out.push(character.to_ascii() as char);
 		}
 		out
 	}

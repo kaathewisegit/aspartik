@@ -35,7 +35,7 @@ impl<C: Character> Msa<C> {
 		let mut hasher = DefaultHasher::new();
 		for i in (site..self.num_characters()).skip(self.num_sequences)
 		{
-			hasher.write_u8(self.data[i].into());
+			hasher.write_u8(self.data[i].to_byte());
 		}
 
 		hasher.finish()
