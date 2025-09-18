@@ -11,7 +11,9 @@ authors.workspace = true
 util = { workspace = true }
 
 anyhow = { workspace = true }
+logos = { workspace = true }
 parking_lot = { workspace = true, optional = true }
+petgraph = { workspace = true, default-features = false, features = ["stable_graph"] }
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
 thiserror = { workspace = true }
 

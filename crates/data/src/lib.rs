@@ -1,5 +1,6 @@
 pub mod fasta;
 mod msa;
+pub mod newick;
 mod nucleotides;
 mod phred;
 pub mod seq;
@@ -16,14 +17,21 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	use util::py_make_submodule;
 	let m = py_make_submodule!(py, "_data_rust_impl");
 
+	// fasta
 	m.add_class::<fasta::python::PyFastaDnaRecord>()?;
 
+	// newick
+	m.add_class::<newick::python::PyNode>()?;
+	m.add_class::<newick::python::PyTree>()?;
+
+	// nucleotides
 	m.add_class::<DnaNucleotide>()?;
 
+	// phred
 	m.add_class::<Phred>()?;
 
-	use seq::python::PyDnaSeq;
-	m.add_class::<PyDnaSeq>()?;
+	// seq
+	m.add_class::<seq::python::PyDnaSeq>()?;
 
 	Ok(m)
 }

@@ -1,4 +1,8 @@
+#![expect(dead_code)]
+
 use logos::{Lexer, Logos};
+
+use super::{Edge, Node};
 
 #[derive(Debug, PartialEq, Logos)]
 #[logos(skip r"[ \t\r\n]+")]
@@ -33,31 +37,25 @@ enum Token {
 	Comment,
 }
 
-use super::Node;
-
-#[allow(dead_code)]
 fn node(lexer: &mut Lexer<'_, Token>) -> Node {
-	let mut token = lexer.next().unwrap().unwrap();
+	let token = lexer.next().unwrap().unwrap();
 
 	let name = match token {
-		Token::Name(n) => {
-			token = lexer.next().unwrap().unwrap();
-			n
-		}
+		Token::Name(n) => n,
 		_ => String::new(),
 	};
 
-	if !matches!(token, Token::Colon) {
-		todo!("error expected colon");
-	}
+	Node::new(name, String::new())
+}
 
-	token = lexer.next().unwrap().unwrap();
+fn distance(lexer: &mut Lexer<'_, Token>) -> Edge {
+	let token = lexer.next().unwrap().unwrap();
 	let distance = match token {
 		Token::Number(distance) => Some(distance),
 		_ => None,
 	};
 
-	Node::new(name, distance, String::new())
+	Edge::new(distance, String::new())
 }
 
 #[cfg(test)]
@@ -68,16 +66,16 @@ mod test {
 	fn test_node() {
 		assert_eq!(
 			node(&mut Lexer::new("node:1.1")),
-			Node::new("node".to_owned(), Some(1.1), String::new())
+			Node::new("node".to_owned(), String::new())
 		);
 		assert_eq!(
 			node(&mut Lexer::new(":1.1")),
-			Node::new(String::new(), Some(1.1), String::new())
+			Node::new(String::new(), String::new())
 		);
 		assert_eq!(
 			// XXX: doesn't handle EOF
 			node(&mut Lexer::new("Name:,")),
-			Node::new("Name".to_owned(), None, String::new())
+			Node::new("Name".to_owned(), String::new())
 		);
 	}
 }

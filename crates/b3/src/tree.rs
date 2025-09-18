@@ -18,8 +18,9 @@ use std::{
 };
 
 use bitmap::Bitmap;
-use io::newick::{
-	Node as NewickNode, NodeIndex as NewickNodeIndex, Tree as NewickTree,
+use data::newick::{
+	Edge as NewickEdge, Node as NewickNode, NodeIndex as NewickNodeIndex,
+	Tree as NewickTree,
 };
 use rng::{PyRng, Rng};
 use skvec::{SkVec, skvec};
@@ -546,6 +547,11 @@ impl Tree {
 		self.heights[node.0]
 	}
 
+	pub fn parent_edge_len(&self, node: &Node) -> Option<f64> {
+		let parent = self.parent_of(node)?;
+		Some(self.height_of(&parent) - self.height_of(node))
+	}
+
 	pub fn children_of(&self, node: &Internal) -> (Node, Node) {
 		let index = node.0 - self.num_leaves();
 		let left = self.children[index * 2];
@@ -649,34 +655,31 @@ impl Tree {
 		let mut map: HashMap<Node, NewickNodeIndex> = HashMap::new();
 
 		for node in self.nodes() {
-			let distance;
-			if let Some(parent) = self.parent_of(&node) {
-				distance = self.height_of(&parent)
-					- self.height_of(&node);
-			} else {
-				distance = 0.0;
-			}
-
 			let name = if self.is_leaf(&node) {
 				self.names[node.0].clone()
 			} else {
 				String::new()
 			};
 
-			let newick_node = tree.add_node(NewickNode::new(
-				name,
-				Some(distance),
-				String::new(),
-			));
+			let newick_node = tree
+				.add_node(NewickNode::new(name, String::new()));
 
 			map.insert(node, newick_node);
 		}
 
 		for parent in self.internals() {
 			let (left, right) = self.children_of(&parent);
+			let (left_len, right_len) = (
+				self.parent_edge_len(&left),
+				self.parent_edge_len(&right),
+			);
+			let (left_edge, right_edge) = (
+				NewickEdge::new(left_len, String::new()),
+				NewickEdge::new(right_len, String::new()),
+			);
 
-			tree.add_edge(map[&parent], map[&left]);
-			tree.add_edge(map[&parent], map[&right]);
+			tree.add_edge(map[&parent], map[&left], left_edge);
+			tree.add_edge(map[&parent], map[&right], right_edge);
 
 			// set root
 			if self.parent_of(&parent).is_none() {
@@ -684,7 +687,7 @@ impl Tree {
 			}
 		}
 
-		tree.serialize()
+		tree.into_string()
 	}
 }
 

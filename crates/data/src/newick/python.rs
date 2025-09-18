@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use super::{Node, Tree};
 
 #[derive(Debug, Clone)]
-#[pyclass(name = "Node", module = "aspartik.io.newick", frozen)]
+#[pyclass(name = "Node", module = "aspartik.data.newick", frozen)]
 #[repr(transparent)]
 pub(crate) struct PyNode {
 	inner: Arc<Mutex<Node>>,
@@ -20,17 +20,9 @@ impl PyNode {
 #[pymethods]
 impl PyNode {
 	#[new]
-	#[pyo3(signature = (name, attributes = None, distance = None))]
-	fn new(
-		name: String,
-		attributes: Option<String>,
-		distance: Option<f64>,
-	) -> Self {
-		let node = Node::new(
-			name,
-			distance,
-			attributes.unwrap_or_default(),
-		);
+	#[pyo3(signature = (name, attributes = None))]
+	fn new(name: String, attributes: Option<String>) -> Self {
+		let node = Node::new(name, attributes.unwrap_or_default());
 		PyNode {
 			inner: Arc::new(Mutex::new(node)),
 		}
@@ -40,20 +32,16 @@ impl PyNode {
 	fn name(&self) -> String {
 		self.inner().name.clone()
 	}
-
-	#[getter]
-	fn distance(&self) -> Option<f64> {
-		self.inner().distance
-	}
 }
 
 #[derive(Debug, Clone)]
-#[pyclass(name = "Tree", module = "aspartik.io.newick", frozen)]
+#[pyclass(name = "Tree", module = "aspartik.data.newick", frozen)]
 #[repr(transparent)]
 pub(crate) struct PyTree {
 	inner: Arc<Mutex<Tree>>,
 }
 
+#[expect(unused)]
 impl PyTree {
 	fn inner(&self) -> MutexGuard<'_, Tree> {
 		self.inner.lock().expect("Mutex was poisoned")
@@ -70,6 +58,7 @@ impl PyTree {
 	}
 
 	fn __str__(&self) -> String {
-		self.inner().serialize()
+		todo!()
+		// self.inner().serialize()
 	}
 }
