@@ -21,7 +21,6 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<fasta::python::PyFastaDnaRecord>()?;
 
 	// newick
-	m.add_class::<newick::python::PyNode>()?;
 	m.add_class::<newick::python::PyTree>()?;
 
 	// nucleotides
