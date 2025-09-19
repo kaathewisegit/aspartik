@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from math import prod
 from typing import ClassVar, List, SupportsFloat, Tuple
 
+from aspartik.math import is_close
+
 
 def normalize(matrix: List[List[float]], coef: float) -> List[List[float]]:
     return [[element / coef for element in row] for row in matrix]
@@ -77,8 +79,7 @@ class HKY:
     _cached_kappa: float = field(default=0.0, init=False)
 
     def __post_init__(self):
-        # XXX: what delta should this use?
-        if abs(sum(self.frequencies)) < 0.01:
+        if not is_close(sum(self.frequencies), 1.0):
             s = sum(self.frequencies)
             raise ValueError(f"Sum of frequencies must be 1, got {s}")
 
