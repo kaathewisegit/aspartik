@@ -14,6 +14,7 @@ from typing import (
 
 from ..data import DNASeq
 from ..rng import RNG
+from .substitutions import Substitution
 from .tree import Internal, Leaf, Node
 
 class tree: ...
@@ -301,8 +302,8 @@ class Likelihood:
     def __init__(
         self,
         sequences: Sequence[DNASeq],
+        substitution: Substitution,
         # TODO: types
-        substitution: Any,
         clock: Any,
         tree: Tree,
         calculator: Literal["cpu", "thread", "cuda"] = "cpu",
