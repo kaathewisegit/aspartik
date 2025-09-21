@@ -1,5 +1,4 @@
 from math import exp, inf, isfinite, log
-from typing import Tuple
 
 from ...rng import RNG
 
@@ -36,7 +35,7 @@ def sample_range(low: float, high: float, distribution, rng: RNG) -> int | float
 
 def scale_on_range(
     low: float, high: float, distribution, rng: RNG
-) -> Tuple[int | float, float]:
+) -> tuple[int | float, float]:
     """Pick a point on a range.
 
     The BEAST2 calculates the ratio and scaling as follows:

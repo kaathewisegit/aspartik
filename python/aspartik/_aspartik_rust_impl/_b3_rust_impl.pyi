@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence, SupportsFloat
+from typing import SupportsFloat
 
 from ..b3 import Leaf, Operator, Parameter, Prior, Tree
 from ..rng import RNG

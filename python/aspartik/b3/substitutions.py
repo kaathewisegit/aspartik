@@ -1,13 +1,13 @@
 from dataclasses import dataclass, field
 from math import prod
-from typing import ClassVar, List, Protocol, SupportsFloat
+from typing import ClassVar, Protocol, SupportsFloat
 
 from aspartik.math import is_close
 
 type Float4 = tuple[float, float, float, float]
 type Float6 = tuple[float, float, float, float, float, float]
 # TODO: either a `linalg` type or something else static
-type Matrix = List[List[float]]
+type Matrix = list[list[float]]
 
 
 def normalize(matrix: Matrix, coef: float) -> Matrix:

@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import (
     Any,
-    List,
     Literal,
     Optional,
     Protocol,
-    Sequence,
-    Tuple,
     runtime_checkable,
 )
 
@@ -139,7 +136,7 @@ class Tree(Stateful):
 
         Height here means node's age in some unlabeled units.
         """
-    def children_of(self, node: Internal) -> Tuple[Node, Node]:
+    def children_of(self, node: Internal) -> tuple[Node, Node]:
         """Returns a tuple of the left and right children of `node`
 
         This function takes the `Internal` type as its input, so it is
@@ -418,22 +415,22 @@ class MCMC:
         Starts from 0, includes burn-in.
         """
     @property
-    def state(self) -> List[Stateful]:
+    def state(self) -> list[Stateful]:
         """
         All stateful objects tracked by this `MCMC` instance
         """
     @property
-    def priors(self) -> List[Prior]:
+    def priors(self) -> list[Prior]:
         """
         All priors
         """
     @property
-    def likelihoods(self) -> List[Likelihood]:
+    def likelihoods(self) -> list[Likelihood]:
         """
         All accounted for likelihoods
         """
     @property
-    def loggers(self) -> List[Logger]:
+    def loggers(self) -> list[Logger]:
         """
         All active loggers
         """
@@ -465,7 +462,7 @@ class MCMC:
         """
 
     @property
-    def operator_statistics(self) -> List[Tuple[Operator, int, int]]:
+    def operator_statistics(self) -> list[tuple[Operator, int, int]]:
         """
         Operator statistics for this run
 

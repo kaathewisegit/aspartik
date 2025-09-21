@@ -3,7 +3,6 @@ from pdoc.doc import Class, Doc, Function, Module, Variable
 import inspect
 import json
 from pathlib import Path
-from typing import Dict, List
 
 
 def dump_json(module_name: str):
@@ -13,11 +12,11 @@ def dump_json(module_name: str):
         file.write(json.dumps(module_to_obj(module), indent=4))
 
 
-def _vars(variables: List[Variable]) -> List[Dict]:
+def _vars(variables: list[Variable]) -> list[dict]:
     return [variable_to_obj(var) for var in variables]
 
 
-def _funcs(functions: List[Function]) -> List[Dict]:
+def _funcs(functions: list[Function]) -> list[dict]:
     return [function_to_obj(func) for func in functions]
 
 
