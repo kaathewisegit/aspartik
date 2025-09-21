@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import BinaryIO, TextIO
 
 from ..data.fasta import DNARecord

@@ -1,13 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from typing import (
-    Any,
-    Literal,
-    Optional,
-    Protocol,
-    runtime_checkable,
-)
+from typing import Any, ClassVar, Literal, Optional, Protocol, runtime_checkable
 
 from ..data import DNASeq
 from ..rng import RNG

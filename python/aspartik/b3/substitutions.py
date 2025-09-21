@@ -233,7 +233,7 @@ class GTR(Substitution):
     rate_gt: float = field(default=1)
 
     _cached_matrix: Matrix = field(default_factory=list, init=False)
-    _cached_rates: Float6 = field(default_factory=tuple, init=False)
+    _cached_rates: Float6 = field(default=(1, 1, 1, 1, 1, 1), init=False)
 
     def __post_init__(self):
         check_frequencies(self.frequencies)

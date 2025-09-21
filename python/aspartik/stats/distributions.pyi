@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Optional, Protocol
+from typing import Optional, Protocol, Self, TypeVar
 
 from ..rng import RNG
 
@@ -51,8 +49,8 @@ class Beta(ContinuousCDF, Continuous, Distribution, Sample):
     def shape_b(self) -> float: ...
 
 class BetaError:
-    InvalidAlpha: BetaError
-    InvalidBeta: BetaError
+    InvalidAlpha: Self
+    InvalidBeta: Self
 
 class Exp(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def __init__(self, rate: float): ...
@@ -60,7 +58,7 @@ class Exp(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def rate(self) -> float: ...
 
 class ExpError:
-    RateInvalid: ExpError
+    RateInvalid: Self
 
 class Gamma(ContinuousCDF, Continuous, Distribution, Sample):
     def __init__(self, shape: float, rate: float): ...
@@ -70,9 +68,9 @@ class Gamma(ContinuousCDF, Continuous, Distribution, Sample):
     def rate(self) -> float: ...
 
 class GammaError:
-    ShapeInvalid: GammaError
-    RateInvalid: GammaError
-    ShapeAndRateInfinite: GammaError
+    ShapeInvalid: Self
+    RateInvalid: Self
+    ShapeAndRateInfinite: Self
 
 class InverseGamma(ContinuousCDF, Continuous, Distribution, Sample):
     def __init__(self, shape: float, rate: float): ...
@@ -82,8 +80,8 @@ class InverseGamma(ContinuousCDF, Continuous, Distribution, Sample):
     def rate(self) -> float: ...
 
 class InverseGammaError:
-    ShapeInvalid: InverseGammaError
-    RateInvalid: InverseGammaError
+    ShapeInvalid: Self
+    RateInvalid: Self
 
 class Laplace(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def __init__(self, location: float, scale: float): ...
@@ -93,8 +91,8 @@ class Laplace(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def scale(self) -> float: ...
 
 class LaplaceError:
-    LocationInvalid: LaplaceError
-    ScaleInvalid: LaplaceError
+    LocationInvalid: Self
+    ScaleInvalid: Self
 
 class LogNormal(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def __init__(self, location: float, scale: float): ...
@@ -104,15 +102,15 @@ class LogNormal(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def scale(self) -> float: ...
 
 class LogNormalError:
-    LocationInvalid: LogNormalError
-    ScaleInvalid: LogNormalError
+    LocationInvalid: Self
+    ScaleInvalid: Self
 
 class Normal(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def __init__(self, mean: float, std_dev: float): ...
 
 class NormalError:
-    MeanInvalid: NormalError
-    StandardDeviationInvalid: NormalError
+    MeanInvalid: Self
+    StandardDeviationInvalid: Self
 
 class Poisson(DiscreteCDF, Discrete[float], Distribution, Sample[int]):
     def __init__(self, lambda_: float): ...
@@ -120,7 +118,7 @@ class Poisson(DiscreteCDF, Discrete[float], Distribution, Sample[int]):
     def lambda_(self) -> float: ...
 
 class PoissonError:
-    LambdaInvalid: PoissonError
+    LambdaInvalid: Self
 
 class Uniform(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def __init__(self, min: float, max: float): ...
@@ -130,6 +128,6 @@ class Uniform(ContinuousCDF, Continuous[float], Distribution, Sample[float]):
     def max(self) -> float: ...
 
 class UniformError:
-    MinInvalid: UniformError
-    MaxInvalid: UniformError
-    MaxNotGreaterThanMin: UniformError
+    MinInvalid: Self
+    MaxInvalid: Self
+    MaxNotGreaterThanMin: Self
