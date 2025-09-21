@@ -28,7 +28,7 @@ impl PyLogger {
 	}
 
 	pub fn should_log(&self, current_step: usize) -> bool {
-		current_step % self.every == 0
+		current_step.is_multiple_of(self.every)
 	}
 
 	pub fn log(&self, py: Python, mcmc: Py<Mcmc>) -> Result<()> {
