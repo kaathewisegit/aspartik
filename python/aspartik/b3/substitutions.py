@@ -209,8 +209,8 @@ class GTR(Substitution):
     A general version of a 4-dimensional DNA substitution model, which allows
     creating any symmetrical substitution matrix.
 
-    Lanave et al. 1984, A new method for calculating evolutionary substitution
-    rates, <https://doi.org/10.1007/BF02101990>.
+    Tavaré 1986, Some probabilistic and statistical problems in the analysis of
+    DNA sequences.
     """
 
     dimensions: ClassVar[int] = 4
