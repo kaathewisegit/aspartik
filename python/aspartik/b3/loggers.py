@@ -33,6 +33,10 @@ class TreeLogger(Logger):
         self._file.write(line)
         self._file.write("\n")
 
+    def __getstate__(self):
+        # None ignores __dict__ which contains the file handle
+        return (None, self.__slots__)
+
 
 @dataclass(slots=True)
 class PrintLogger(Logger):
@@ -76,3 +80,6 @@ class ValueLogger(Logger):
         entry_json = json.dumps(entry)
         self._file.write(entry_json)
         self._file.write("\n")
+
+    def __getstate__(self):
+        return (None, self.__slots__)
