@@ -5,7 +5,7 @@ mod nucleotides;
 mod phred;
 pub mod seq;
 
-pub use msa::{Msa, MsaView};
+pub use msa::Msa;
 pub use nucleotides::DnaNucleotide;
 pub use phred::Phred;
 
@@ -19,6 +19,9 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 
 	// fasta
 	m.add_class::<fasta::python::PyFastaDnaRecord>()?;
+
+	// msa
+	m.add_class::<msa::python::PyMsa>()?;
 
 	// newick
 	m.add_class::<newick::python::PyTree>()?;

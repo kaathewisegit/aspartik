@@ -4,7 +4,7 @@ use std::{
 	fmt,
 	marker::PhantomData,
 	mem,
-	ops::{Deref, DerefMut},
+	ops::{Deref, DerefMut, RangeBounds},
 	slice,
 };
 
@@ -138,6 +138,13 @@ impl<C: Character> Sequence<C> {
 
 	pub fn is_empty(&self) -> bool {
 		self.bytes.is_empty()
+	}
+
+	pub fn slice(&self, range: impl RangeBounds<usize>) -> Self {
+		Self {
+			bytes: self.bytes.slice(range),
+			marker: PhantomData,
+		}
 	}
 
 	/// Counts how many times the character `c` occurs in the sequence.
