@@ -7,10 +7,7 @@ use crate::{
 	Transitions, clock::PyClock, substitution::PySubstitution,
 	tree::PyTree, util::dna_to_rows,
 };
-use data::{
-	DnaNucleotide,
-	seq::{Seq, python::PyDnaSeq},
-};
+use data::{DnaNucleotide, seq::python::PyDnaSeq};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
@@ -264,9 +261,10 @@ impl PyLikelihood {
 		cuda_device: usize,
 		thread_split_size: usize,
 	) -> Result<Self> {
+		// TODO: replace with MSA
 		let sequences: Vec<Vec<DnaNucleotide>> = sequences
 			.iter()
-			.map(|seq| seq.as_slice().to_vec())
+			.map(|seq| seq.0.as_ref().to_vec())
 			.collect();
 		let sites = dna_to_rows(&sequences);
 

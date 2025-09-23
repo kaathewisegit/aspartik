@@ -1,13 +1,13 @@
 use anyhow::{Result, anyhow, bail};
 
-use super::{Character, FromChars, SeqMut};
+use super::{Character, SequenceMut};
 
-pub fn parse_append_str<S>(seq: &mut S, string: &str) -> Result<()>
-where
-	S: SeqMut,
-{
+pub fn parse_append_str<C: Character>(
+	seq: &mut SequenceMut<C>,
+	string: &str,
+) -> Result<()> {
 	for (i, byte) in string.bytes().enumerate() {
-		let Some(character) = S::Character::from_ascii(byte) else {
+		let Some(character) = C::from_ascii(byte) else {
 			let ch = string[i..].chars().next().unwrap();
 			return Err(anyhow!(
 				"Encountered an invalid character '{ch}' in a FASTA character sequence"
@@ -20,12 +20,12 @@ where
 	Ok(())
 }
 
-pub fn parse_append_bytes<S>(seq: &mut S, bytes: &[u8]) -> Result<()>
-where
-	S: SeqMut,
-{
+pub fn parse_append_bytes<C: Character>(
+	seq: &mut SequenceMut<C>,
+	bytes: &[u8],
+) -> Result<()> {
 	for b in bytes.iter().copied() {
-		let Some(character) = S::Character::from_byte(b) else {
+		let Some(character) = C::from_byte(b) else {
 			bail!("Illegal byte encodign encountered: {:#x}", b);
 		};
 		seq.push(character);
@@ -33,26 +33,20 @@ where
 	Ok(())
 }
 
-pub fn parse_str<S>(string: &str) -> Result<S>
-where
-	S: FromChars,
-{
-	let mut chars = Vec::with_capacity(string.len());
+pub fn parse_str<C: Character>(string: &str) -> Result<SequenceMut<C>> {
+	let mut seq = SequenceMut::with_capacity(string.len());
 
-	parse_append_str(&mut chars, string)?;
+	parse_append_str(&mut seq, string)?;
 
-	Ok(S::from_vec(chars))
+	Ok(seq)
 }
 
-pub fn parse_bytes<S>(bytes: &[u8]) -> Result<S>
-where
-	S: FromChars,
-{
-	let mut chars = Vec::with_capacity(bytes.len());
+pub fn parse_bytes<C: Character>(bytes: &[u8]) -> Result<SequenceMut<C>> {
+	let mut seq = SequenceMut::with_capacity(bytes.len());
 
-	parse_append_bytes(&mut chars, bytes)?;
+	parse_append_bytes(&mut seq, bytes)?;
 
-	Ok(S::from_vec(chars))
+	Ok(seq)
 }
 
 fn highlight_error(src: &str, index: usize) -> String {

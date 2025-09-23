@@ -9,13 +9,13 @@ use std::{
 
 use crate::rw::AnyReader;
 use data::{
+	DnaNucleotide,
 	fasta::{FastaParser, python::PyFastaDnaRecord},
-	seq::python::PyDnaSeq,
 };
 
 #[pyclass(name = "FastaReader", module = "aspartik.io", frozen)]
 pub struct PyFastaDnaReader {
-	parser: Mutex<FastaParser<Py<PyDnaSeq>>>,
+	parser: Mutex<FastaParser<DnaNucleotide>>,
 	reader: Mutex<BufReader<AnyReader>>,
 }
 

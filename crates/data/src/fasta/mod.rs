@@ -1,22 +1,26 @@
 use anyhow::{Context, Error, Result, anyhow};
 
-use std::{cmp::min, fmt, mem};
+use std::{
+	cmp::min,
+	fmt::{self, Pointer},
+	mem,
+};
 
-use crate::seq::{FromChars, Seq, parse_append_str};
+use crate::seq::{Character, Sequence, SequenceMut, parse_append_str};
 
 #[cfg(feature = "python")]
 pub mod python;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Record<S: Seq> {
+pub struct Record<C: Character> {
 	/// The sequence description.  Must start with a '>' character and have
 	/// an ID follow right after without a space.
 	raw_description: String,
-	seq: S,
+	seq: Sequence<C>,
 }
 
-impl<S: Seq> Record<S> {
-	pub fn new(raw_description: String, seq: S) -> Self {
+impl<C: Character> Record<C> {
+	pub fn new(raw_description: String, seq: Sequence<C>) -> Self {
 		Self {
 			raw_description,
 			seq,
@@ -48,16 +52,16 @@ impl<S: Seq> Record<S> {
 		&self.raw_description[1..end]
 	}
 
-	pub fn sequence(&self) -> &S {
+	pub fn sequence(&self) -> &Sequence<C> {
 		&self.seq
 	}
 
-	pub fn into_sequence(self) -> S {
+	pub fn into_sequence(self) -> Sequence<C> {
 		self.seq
 	}
 }
 
-impl<S: Seq> fmt::Display for Record<S> {
+impl<C: Character> fmt::Display for Record<C> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.write_str(self.raw_description())?;
 		f.write_str("\n")?;
@@ -67,39 +71,36 @@ impl<S: Seq> fmt::Display for Record<S> {
 		let num_lines = seq_len.div_ceil(LINE_LEN);
 		for i in 0..num_lines {
 			let end = min(seq_len, (i + 1) * LINE_LEN);
-			let slice = &self.seq.as_slice()[(i * LINE_LEN)..end];
-			slice.fmt_impl(f)?;
+			let slice = &self.seq.as_ref()[(i * LINE_LEN)..end];
+			slice.fmt(f)?;
 		}
 
 		Ok(())
 	}
 }
 
-#[derive(Debug, Clone)]
-pub struct FastaParser<S: Seq> {
+#[derive(Debug)]
+pub struct FastaParser<C: Character> {
 	/// Since sequence descriptions must start with a '>' character,
 	/// `description` being empty must mean that we haven't read the first
 	/// record yet.
 	description: String,
-	chars: Vec<S::Character>,
+	chars: SequenceMut<C>,
 	line_idx: usize,
 }
 
-impl<S: Seq> FastaParser<S> {
+impl<C: Character> FastaParser<C> {
 	pub fn new() -> Self {
 		// XXX: Default trait?
 		Self {
 			description: String::new(),
-			chars: Vec::new(),
+			chars: SequenceMut::new(),
 			line_idx: 0,
 		}
 	}
 
 	/// Takes the values and turns them into a [`Record`]
-	fn make_record(&mut self) -> Option<Record<S>>
-	where
-		S: FromChars,
-	{
+	fn make_record(&mut self) -> Option<Record<C>> {
 		let description = mem::take(&mut self.description);
 
 		if description.is_empty() {
@@ -108,11 +109,9 @@ impl<S: Seq> FastaParser<S> {
 
 		let chars = mem::take(&mut self.chars);
 
-		let seq = S::from_vec(chars);
-
 		Some(Record {
 			raw_description: description,
-			seq,
+			seq: chars.into_sequence(),
 		})
 	}
 
@@ -123,10 +122,7 @@ impl<S: Seq> FastaParser<S> {
 	pub fn read_line(
 		&mut self,
 		line: Option<&str>,
-	) -> Result<Option<Record<S>>>
-	where
-		S: FromChars,
-	{
+	) -> Result<Option<Record<C>>> {
 		let Some(line) = line else {
 			return Ok(self.make_record());
 		};
@@ -141,7 +137,7 @@ impl<S: Seq> FastaParser<S> {
 		if line.starts_with(">") {
 			let out = self.make_record();
 			self.description = line.to_owned();
-			self.chars = Vec::new();
+			self.chars = SequenceMut::new();
 			return Ok(out);
 		}
 
@@ -160,13 +156,13 @@ impl<S: Seq> FastaParser<S> {
 	}
 }
 
-impl<S: Seq> Default for FastaParser<S> {
+impl<C: Character> Default for FastaParser<C> {
 	fn default() -> Self {
 		Self::new()
 	}
 }
 
-fn sequence_error<S: Seq>(fasta: &FastaParser<S>) -> Error {
+fn sequence_error<C: Character>(fasta: &FastaParser<C>) -> Error {
 	let record = if fasta.description.is_empty() {
 		String::new()
 	} else {

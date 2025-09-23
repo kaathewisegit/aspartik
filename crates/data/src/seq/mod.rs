@@ -1,4 +1,12 @@
-use std::{fmt, sync::Arc};
+use bytes::{BufMut, Bytes, BytesMut};
+
+use std::{
+	fmt,
+	marker::PhantomData,
+	mem,
+	ops::{Deref, DerefMut},
+	slice,
+};
 
 use crate::nucleotides::DnaNucleotide;
 
@@ -29,54 +37,115 @@ pub unsafe trait Character: Copy + Eq {
 	fn into_byte(self) -> u8;
 }
 
-pub trait Seq {
-	type Character: Character;
+fn c2b<C: Character>(characters: &[C]) -> &[u8] {
+	let ptr = characters.as_ptr() as *const u8;
+	// SAFETY: characters must be equal in layout to `u8` bytes
+	unsafe { slice::from_raw_parts(ptr, characters.len()) }
+}
 
-	fn as_slice(&self) -> &[Self::Character];
+/// Cast a slice of bytes to a slice of characters
+///
+/// # Safety
+///
+/// All bytes in `bytes` must be valid characters.
+unsafe fn b2c<C: Character>(bytes: &[u8]) -> &[C] {
+	let ptr = bytes.as_ptr() as *const C;
+	// SAFETY: characters must be equal in layout to `u8` bytes
+	unsafe { slice::from_raw_parts(ptr, bytes.len()) }
+}
 
-	fn fmt_impl(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+/// Cast a mutable slice of bytes to a slice of characters
+///
+/// # Safety
+///
+/// All bytes in `bytes` must be valid characters.
+unsafe fn b2c_mut<C: Character>(bytes: &mut [u8]) -> &mut [C] {
+	let ptr = bytes.as_ptr() as *mut C;
+	// SAFETY: characters must be equal in layout to `u8` bytes
+	unsafe { slice::from_raw_parts_mut(ptr, bytes.len()) }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct Sequence<C: Character> {
+	/// SAFETY: `bytes` must always hold valid `C` characters
+	bytes: Bytes,
+	marker: PhantomData<C>,
+}
+
+impl<C: Character> Deref for Sequence<C> {
+	type Target = [C];
+
+	fn deref(&self) -> &[C] {
+		let bytes = self.bytes.as_ref();
+		// SAFETY: `self.bytes` must always hold valid characters.
+		unsafe { b2c(bytes) }
+	}
+}
+
+impl<C: Character> AsRef<[C]> for Sequence<C> {
+	fn as_ref(&self) -> &[C] {
+		self
+	}
+}
+
+impl<C: Character> fmt::Display for Sequence<C> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		use fmt::Write;
 
-		for character in self.as_slice() {
+		for character in self.as_ref() {
 			f.write_char(character.to_ascii() as char)?;
 		}
+
 		Ok(())
 	}
+}
 
-	fn to_string(&self) -> String {
-		let mut out = String::with_capacity(self.len());
-		for character in self.as_slice() {
-			out.push(character.to_ascii() as char);
-		}
-		out
-	}
+impl<C: Character> Sequence<C> {
+	pub fn copy_from_slice(data: &[C]) -> Self {
+		let bytes = Bytes::copy_from_slice(c2b(data));
 
-	fn as_bytes(&self) -> &[u8] {
-		let slice = self.as_slice();
-		// SAFETY: `Character` must be equivalent to a byte
-		unsafe {
-			std::mem::transmute::<&[Self::Character], &[u8]>(slice)
+		Self {
+			bytes,
+			marker: PhantomData,
 		}
 	}
 
-	fn iter(&self) -> std::slice::Iter<'_, Self::Character> {
-		self.as_slice().iter()
+	pub fn from_vec(mut data: Vec<C>) -> Self {
+		let ptr = data.as_mut_ptr() as *mut u8;
+		let length = data.len();
+		let capacity = data.capacity();
+		mem::forget(data);
+
+		// SAFETY: characters have the same layout as u8 bytes and the
+		// old vector has been forgotten without being dropped.
+		let bytes =
+			unsafe { Vec::from_raw_parts(ptr, length, capacity) };
+
+		Self {
+			bytes: Bytes::from_owner(bytes),
+			marker: PhantomData,
+		}
 	}
 
-	fn len(&self) -> usize {
-		self.as_slice().len()
+	pub fn as_bytes(&self) -> &[u8] {
+		&self.bytes
 	}
 
-	fn is_empty(&self) -> bool {
-		self.as_slice().is_empty()
+	pub fn len(&self) -> usize {
+		self.bytes.len()
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.bytes.is_empty()
 	}
 
 	/// Counts how many times the character `c` occurs in the sequence.
-	fn count(&self, c: Self::Character) -> usize {
+	pub fn count(&self, c: C) -> usize {
 		let mut out = 0;
 
-		for current in self.iter().copied() {
-			if current == c {
+		for current in self.as_ref() {
+			if *current == c {
 				out += 1
 			}
 		}
@@ -85,119 +154,119 @@ pub trait Seq {
 	}
 }
 
-pub trait FromChars: Seq {
-	fn from_vec(chars: Vec<Self::Character>) -> Self;
+impl Sequence<DnaNucleotide> {
+	pub fn complement(&self) -> Self {
+		let mut seq = SequenceMut::from_characters(self);
+		seq.complement();
+		seq.into_sequence()
+	}
 
-	fn from_slice(chars: &[Self::Character]) -> Self
-	where
-		Self: Sized,
-	{
-		Self::from_vec(chars.to_vec())
+	pub fn reverse_complement(&self) -> Self {
+		let mut seq = SequenceMut::from_characters(self);
+		seq.reverse_complement();
+		seq.into_sequence()
 	}
 }
 
-pub trait SeqMut: Seq + AsMut<[Self::Character]> {
-	fn push(&mut self, ch: Self::Character);
+#[derive(Debug)]
+pub struct SequenceMut<C: Character> {
+	bytes: BytesMut,
+	marker: PhantomData<C>,
+}
 
-	fn extend<S>(&mut self, other: &S)
-	where
-		S: Seq<Character = Self::Character>;
+impl<C: Character> Deref for SequenceMut<C> {
+	type Target = [C];
 
-	/// Reverses the characters in-place.
-	fn reverse(&mut self) {
-		self.as_mut().reverse();
+	fn deref(&self) -> &[C] {
+		// SAFETY: `self.bytes` must be valid characters
+		unsafe { b2c(self.bytes.as_ref()) }
 	}
 }
 
-impl<C: Character> Seq for &[C] {
-	type Character = C;
+impl<C: Character> DerefMut for SequenceMut<C> {
+	fn deref_mut(&mut self) -> &mut [C] {
+		// SAFETY: `self.bytes` must be valid characters
+		unsafe { b2c_mut(self.bytes.as_mut()) }
+	}
+}
 
-	fn as_slice(&self) -> &[C] {
+impl<C: Character> AsRef<[C]> for SequenceMut<C> {
+	fn as_ref(&self) -> &[C] {
 		self
 	}
 }
 
-impl<C: Character, const N: usize> Seq for [C; N] {
-	type Character = C;
-
-	fn as_slice(&self) -> &[C] {
-		self
+impl<C: Character> AsMut<[C]> for SequenceMut<C> {
+	fn as_mut(&mut self) -> &mut [C] {
+		// SAFETY: `self.bytes` must be valid characters
+		unsafe { b2c_mut(self.bytes.as_mut()) }
 	}
 }
 
-impl<C: Character> Seq for Vec<C> {
-	type Character = C;
-
-	fn as_slice(&self) -> &[C] {
-		self.as_slice()
-	}
-}
-
-impl<C: Character> FromChars for Vec<C> {
-	fn from_vec(chars: Vec<C>) -> Self {
-		chars
-	}
-}
-
-impl<C: Character> SeqMut for Vec<C> {
-	fn push(&mut self, ch: C) {
-		self.push(ch)
-	}
-
-	fn extend<S>(&mut self, other: &S)
-	where
-		S: Seq<Character = C>,
-	{
-		self.extend_from_slice(other.as_slice())
-	}
-}
-
-impl<C: Character> Seq for Box<[C]> {
-	type Character = C;
-
-	fn as_slice(&self) -> &[C] {
-		self
-	}
-}
-
-impl<C: Character> FromChars for Box<[C]> {
-	fn from_vec(chars: Vec<C>) -> Self {
-		chars.into_boxed_slice()
-	}
-}
-
-impl<C: Character> Seq for Arc<[C]> {
-	type Character = C;
-
-	fn as_slice(&self) -> &[C] {
-		self
-	}
-}
-
-impl<C: Character> FromChars for Arc<[C]> {
-	fn from_vec(chars: Vec<C>) -> Self {
-		chars.as_slice().to_vec().into()
-	}
-}
-
-pub trait DnaSeq: Seq<Character = DnaNucleotide> {
-	fn complement(&self) -> Vec<DnaNucleotide> {
-		let mut out = Vec::with_capacity(self.len());
-
-		for base in self.as_slice() {
-			out.push(base.complement());
+impl<C: Character> SequenceMut<C> {
+	pub fn new() -> Self {
+		Self {
+			bytes: BytesMut::new(),
+			marker: PhantomData,
 		}
-
-		out
 	}
 
-	fn reverse_complement(&self) -> Vec<DnaNucleotide> {
-		let mut out = self.complement();
-		out.reverse();
-		out
+	pub fn with_capacity(capacity: usize) -> Self {
+		Self {
+			bytes: BytesMut::with_capacity(capacity),
+			marker: PhantomData,
+		}
+	}
+
+	pub fn from_characters(characters: &[C]) -> Self {
+		Self {
+			bytes: BytesMut::from(c2b(characters)),
+			marker: PhantomData,
+		}
+	}
+
+	pub fn into_sequence(self) -> Sequence<C> {
+		Sequence {
+			bytes: self.bytes.freeze(),
+			marker: PhantomData,
+		}
+	}
+
+	pub fn reserve(&mut self, additional: usize) {
+		self.bytes.reserve(additional)
+	}
+
+	pub fn push(&mut self, character: C) {
+		self.bytes.put_u8(character.to_byte());
+	}
+
+	pub fn extend(&mut self, characters: &[C]) {
+		self.bytes.extend_from_slice(c2b(characters));
+	}
+
+	pub fn reverse(&mut self) {
+		self.bytes.reverse()
 	}
 }
 
-impl DnaSeq for &[DnaNucleotide] {}
-impl DnaSeq for Box<[DnaNucleotide]> {}
-impl DnaSeq for Vec<DnaNucleotide> {}
+impl SequenceMut<DnaNucleotide> {
+	pub fn complement(&mut self) {
+		for base in self.as_mut() {
+			*base = base.complement();
+		}
+	}
+
+	pub fn reverse_complement(&mut self) {
+		self.complement();
+		self.reverse();
+	}
+}
+
+impl<C: Character> Default for SequenceMut<C> {
+	fn default() -> Self {
+		Self {
+			bytes: BytesMut::default(),
+			marker: PhantomData,
+		}
+	}
+}

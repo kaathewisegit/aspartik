@@ -2,18 +2,10 @@ use anyhow::{Result, ensure};
 
 use std::cmp::min;
 
-use super::{Character, Seq};
+use super::Character;
 
-pub fn hamming<S1, S2, C>(a: S1, b: S2) -> Result<usize>
-where
-	S1: Seq<Character = C>,
-	S2: Seq<Character = C>,
-	C: Character,
-{
+pub fn hamming<C: Character>(a: &[C], b: &[C]) -> Result<usize> {
 	ensure!(a.len() == b.len(), "Sequences have different lengths");
-
-	let a = a.as_slice();
-	let b = b.as_slice();
 
 	let mut count = 0;
 
@@ -26,15 +18,7 @@ where
 	Ok(count)
 }
 
-pub fn levenshtein<S1, S2, C>(a: S1, b: S2) -> Result<usize>
-where
-	S1: Seq<Character = C>,
-	S2: Seq<Character = C>,
-	C: Character,
-{
-	let a = a.as_slice();
-	let b = b.as_slice();
-
+pub fn levenshtein<C: Character>(a: &[C], b: &[C]) -> Result<usize> {
 	let b_len = b.len();
 
 	let mut cache: Vec<usize> = (1..b_len + 1).collect();
