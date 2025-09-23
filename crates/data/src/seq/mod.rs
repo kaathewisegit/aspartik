@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, sync::Arc};
 
 use crate::nucleotides::DnaNucleotide;
 
@@ -163,6 +163,20 @@ impl<C: Character> Seq for Box<[C]> {
 impl<C: Character> FromChars for Box<[C]> {
 	fn from_vec(chars: Vec<C>) -> Self {
 		chars.into_boxed_slice()
+	}
+}
+
+impl<C: Character> Seq for Arc<[C]> {
+	type Character = C;
+
+	fn as_slice(&self) -> &[C] {
+		self
+	}
+}
+
+impl<C: Character> FromChars for Arc<[C]> {
+	fn from_vec(chars: Vec<C>) -> Self {
+		chars.as_slice().to_vec().into()
 	}
 }
 
