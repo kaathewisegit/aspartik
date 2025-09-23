@@ -94,12 +94,25 @@ macro_rules! nodes_2 {
 	($type:ty) => {
 		#[pymethods]
 		impl $type {
+			#[new]
+			fn new(idx: usize) -> Self {
+				// XXX: warning?
+				Self(idx)
+			}
+
 			fn __repr__(&self) -> String {
 				format!("{}({})", stringify!($type), self.0)
 			}
 
 			fn __eq__(&self, other: Node) -> bool {
 				self.0 == other.0
+			}
+
+			fn __getnewargs__<'py>(
+				&self,
+				py: Python<'py>,
+			) -> PyResult<Bound<'py, PyTuple>> {
+				(self.0,).into_pyobject(py)
 			}
 		}
 
