@@ -2,7 +2,7 @@ use anyhow::{Result, ensure};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use pyo3::{
-	exceptions::PyTypeError,
+	exceptions::{PyTypeError, PyValueError},
 	types::{PyAny, PyDict, PyTuple},
 };
 use rand::Rng as _;
@@ -573,6 +573,24 @@ impl Tree {
 		(Node(left), Node(right))
 	}
 
+	pub fn other_child(
+		&self,
+		parent: &Internal,
+		child: &Node,
+	) -> Result<Node> {
+		let (left, right) = self.children_of(parent);
+		if *child == left {
+			Ok(right)
+		} else if *child == right {
+			Ok(left)
+		} else {
+			py_bail!(
+				PyValueError,
+				"Node {child:?} is not a child of {parent:?}",
+			);
+		}
+	}
+
 	/// Index of the edge between `child` and its parent.
 	///
 	/// # Panics
@@ -880,6 +898,17 @@ impl PyTree {
 		);
 
 		Ok((left, right))
+	}
+
+	fn other_child<'py>(
+		&self,
+		py: Python<'py>,
+		parent: Internal,
+		child: Node,
+	) -> Result<Bound<'py, PyAny>> {
+		let inner = self.inner();
+		inner.other_child(&parent, &child)
+			.and_then(|n| n.into_pyobject(py, inner.num_leaves()))
 	}
 
 	fn edge_index(&self, child: Node) -> Result<usize> {

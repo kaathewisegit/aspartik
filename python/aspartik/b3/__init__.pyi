@@ -138,6 +138,11 @@ class Tree(Stateful):
         guaranteed to always return the children.  See `as_internal` for
         converting general nodes to internal ones.
         """
+    def other_child(self, parent: Internal, child: Node) -> Node:
+        """Returns the child of `parent` other than `child`
+
+        Throws an error if `child` isn't a child of `parent`.
+        """
     def edge_index(self, child: Node) -> int:
         """Returns the index of an edge from `child` to its parent"""
     def edge_distance(self, edge: int) -> float:
