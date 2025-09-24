@@ -14,7 +14,7 @@ impl PyDnaSeq {
 	#[new]
 	fn new(sequence: &str) -> Result<Self> {
 		let s = parse_str::<DnaNucleotide>(sequence)?;
-		Ok(PyDnaSeq(s.into_sequence()))
+		Ok(PyDnaSeq(s.into()))
 	}
 
 	fn __str__(&self) -> String {

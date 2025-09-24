@@ -165,13 +165,13 @@ impl Sequence<DnaNucleotide> {
 	pub fn complement(&self) -> Self {
 		let mut seq = SequenceMut::from_characters(self);
 		seq.complement();
-		seq.into_sequence()
+		seq.into()
 	}
 
 	pub fn reverse_complement(&self) -> Self {
 		let mut seq = SequenceMut::from_characters(self);
 		seq.reverse_complement();
-		seq.into_sequence()
+		seq.into()
 	}
 }
 
@@ -207,6 +207,12 @@ impl<C: Character> AsMut<[C]> for SequenceMut<C> {
 	fn as_mut(&mut self) -> &mut [C] {
 		// SAFETY: `self.bytes` must be valid characters
 		unsafe { b2c_mut(self.bytes.as_mut()) }
+	}
+}
+
+impl<C: Character> From<SequenceMut<C>> for Sequence<C> {
+	fn from(value: SequenceMut<C>) -> Self {
+		value.into_sequence()
 	}
 }
 
