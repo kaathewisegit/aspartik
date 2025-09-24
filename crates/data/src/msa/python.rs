@@ -2,7 +2,10 @@ use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::{prelude::*, types::PyType};
 
-use crate::{DnaNucleotide, Msa, fasta::python::PyFastaDnaRecord};
+use crate::{
+	DnaNucleotide, Msa, fasta::python::PyFastaDnaRecord,
+	seq::python::PyDnaSeq,
+};
 
 #[derive(Debug)]
 #[pyclass(name = "MSA", module = "aspartik.data.msa")]
@@ -39,6 +42,25 @@ impl PyMsa {
 	) -> Result<Self> {
 		let msa = Msa::from_fasta(records.into_iter())?;
 		Ok(Self::new(msa))
+	}
+
+	#[getter]
+	fn num_sites(&self) -> usize {
+		self.inner().num_sites()
+	}
+
+	#[getter]
+	fn num_sequences(&self) -> usize {
+		self.inner().num_sequences()
+	}
+
+	pub fn sequence_name(&self, index: usize) -> String {
+		self.inner().sequence_name(index).to_owned()
+	}
+
+	pub fn sequence(&self, index: usize) -> PyDnaSeq {
+		let seq = self.inner().sequence(index);
+		PyDnaSeq(seq)
 	}
 
 	fn deduplicate(&self) {
