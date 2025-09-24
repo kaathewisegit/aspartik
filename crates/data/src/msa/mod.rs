@@ -1,3 +1,5 @@
+use anyhow::{Result, ensure};
+
 use std::{
 	collections::HashMap,
 	hash::{DefaultHasher, Hasher},
@@ -6,7 +8,8 @@ use std::{
 
 use crate::{
 	DnaNucleotide,
-	seq::{Character, Sequence},
+	fasta::Record,
+	seq::{Character, Sequence, SequenceMut},
 };
 
 #[cfg(feature = "python")]
@@ -22,6 +25,58 @@ pub struct Msa<C: Character> {
 }
 
 impl<C: Character> Msa<C> {
+	pub fn new(
+		num_sequences: usize,
+		num_sites: usize,
+		names: Arc<[String]>,
+		data: Sequence<C>,
+	) -> Result<Self> {
+		ensure!(num_sequences * num_sites == data.len());
+		ensure!(names.len() == num_sequences);
+
+		Ok(Self {
+			num_sequences,
+			num_sites_total: num_sites,
+			sites: None,
+			names,
+			data,
+		})
+	}
+
+	pub fn from_fasta<I, R>(records: I) -> Result<Self>
+	where
+		I: IntoIterator<Item = R>,
+		R: AsRef<Record<C>>,
+	{
+		let mut num_sites = 0;
+		let mut num_sequences = 0;
+
+		let mut data = SequenceMut::new();
+		let mut names = Vec::new();
+
+		for record in records.into_iter() {
+			let record = record.as_ref();
+
+			if num_sites == 0 {
+				num_sites = record.sequence().len();
+			}
+
+			ensure!(num_sites == record.sequence().len());
+
+			data.extend(record.sequence());
+			names.push(record.id().to_owned());
+			num_sequences += 1;
+		}
+
+		Ok(Self {
+			num_sequences,
+			num_sites_total: num_sites,
+			sites: None,
+			names: names.into(),
+			data: data.into(),
+		})
+	}
+
 	pub fn num_sequences(&self) -> usize {
 		self.num_sequences
 	}

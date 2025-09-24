@@ -7,6 +7,12 @@ use crate::{DnaNucleotide, seq::python::PyDnaSeq};
 #[pyclass(name = "DNARecord", module = "aspartik.data.fasta", frozen, eq)]
 pub struct PyFastaDnaRecord(pub Record<DnaNucleotide>);
 
+impl AsRef<Record<DnaNucleotide>> for Py<PyFastaDnaRecord> {
+	fn as_ref(&self) -> &Record<DnaNucleotide> {
+		&self.get().0
+	}
+}
+
 #[pymethods]
 impl PyFastaDnaRecord {
 	#[new]
