@@ -1,5 +1,4 @@
 use anyhow::Result;
-use parking_lot::{Mutex, MutexGuard};
 use pyo3::{prelude::*, types::PyType};
 
 use crate::{
@@ -7,31 +6,10 @@ use crate::{
 	seq::python::PyDnaSeq,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[pyclass(name = "MSA", module = "aspartik.data.msa")]
 #[repr(transparent)]
-pub struct PyMsa {
-	inner: Mutex<Msa<DnaNucleotide>>,
-}
-
-impl PyMsa {
-	fn new(msa: Msa<DnaNucleotide>) -> Self {
-		PyMsa {
-			inner: Mutex::new(msa),
-		}
-	}
-
-	fn inner(&self) -> MutexGuard<'_, Msa<DnaNucleotide>> {
-		self.inner.lock()
-	}
-}
-
-impl Clone for PyMsa {
-	fn clone(&self) -> Self {
-		let msa = self.inner().clone();
-		Self::new(msa)
-	}
-}
+pub struct PyMsa(pub Msa<DnaNucleotide>);
 
 #[pymethods]
 impl PyMsa {
@@ -41,29 +19,32 @@ impl PyMsa {
 		records: Vec<Py<PyFastaDnaRecord>>,
 	) -> Result<Self> {
 		let msa = Msa::from_fasta(records.into_iter())?;
-		Ok(Self::new(msa))
+		Ok(Self(msa))
 	}
 
 	#[getter]
 	fn num_sites(&self) -> usize {
-		self.inner().num_sites()
+		self.0.num_sites()
 	}
 
 	#[getter]
 	fn num_sequences(&self) -> usize {
-		self.inner().num_sequences()
+		self.0.num_sequences()
 	}
 
-	pub fn sequence_name(&self, index: usize) -> String {
-		self.inner().sequence_name(index).to_owned()
+	fn sequence_name(&self, index: usize) -> String {
+		self.0.sequence_name(index).to_owned()
 	}
 
-	pub fn sequence(&self, index: usize) -> PyDnaSeq {
-		let seq = self.inner().sequence(index);
-		PyDnaSeq(seq)
+	fn sequence_names(&self) -> Vec<String> {
+		self.0.sequence_names().to_vec()
 	}
 
-	fn deduplicate(&self) {
-		self.inner().deduplicate()
+	fn sequence(&self, index: usize) -> PyDnaSeq {
+		PyDnaSeq(self.0.sequence(index))
+	}
+
+	fn deduplicate(&self) -> Self {
+		PyMsa(self.0.deduplicate())
 	}
 }

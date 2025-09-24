@@ -1,7 +1,8 @@
 use anyhow::Result;
+use data::{DnaNucleotide, Msa};
 
 use super::{LikelihoodTrait, Row, Transition};
-use crate::util::transpose;
+use crate::util::msa_to_likelihoods;
 use skvec::{SkVec, skvec};
 
 pub struct CpuLikelihood<const N: usize> {
@@ -163,14 +164,14 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 	}
 }
 
-impl<const N: usize> CpuLikelihood<N> {
-	pub fn new(leaves: Vec<Vec<Row<N>>>) -> Self {
-		let num_sites = leaves.len();
-		let num_leaves = leaves[0].len();
+impl CpuLikelihood<4> {
+	pub fn new(msa: Msa<DnaNucleotide>) -> Self {
+		let num_sites = msa.num_sites();
+		let num_leaves = msa.num_sequences();
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
 
-		let leaves = transpose(leaves);
+		let leaves = msa_to_likelihoods(msa);
 
 		let projections = skvec![Row::default(); num_edges * num_sites];
 		let scales = skvec![false; num_edges];

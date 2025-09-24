@@ -3,7 +3,8 @@ use crossbeam_channel::{Receiver, Sender, bounded};
 
 use std::{sync::Arc, thread};
 
-use super::{CpuLikelihood, LikelihoodTrait, Row, Transition};
+use super::{CpuLikelihood, LikelihoodTrait, Transition};
+use data::{DnaNucleotide, Msa};
 
 type Update<const N: usize> =
 	(Vec<usize>, Vec<usize>, Vec<Transition<N>>, usize, usize);
@@ -76,13 +77,13 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 	}
 }
 
-impl<const N: usize> ThreadedLikelihood<N> {
-	pub fn new(sites: Vec<Vec<Row<N>>>, thread_split_size: usize) -> Self {
+impl ThreadedLikelihood<4> {
+	pub fn new(msa: Msa<DnaNucleotide>, thread_split_size: usize) -> Self {
 		let mut update_senders = Vec::new();
 		let mut likelihoods_receivers = Vec::new();
 		let mut accept_senders = Vec::new();
 
-		let num_sites = sites.len();
+		let num_sites = msa.num_sites();
 		let num_threads = num_sites.div_ceil(thread_split_size);
 		let segment_len = num_sites / num_threads;
 
@@ -103,11 +104,11 @@ impl<const N: usize> ThreadedLikelihood<N> {
 			} else {
 				(i + 1) * segment_len
 			};
-			let sites = sites[start..end].to_owned();
+			let msa_subset = msa.slice(start..end);
 
 			thread::spawn(move || {
 				worker(
-					sites,
+					msa_subset,
 					update_receiver,
 					likelihood_sender,
 					accept_receiver,
@@ -125,13 +126,13 @@ impl<const N: usize> ThreadedLikelihood<N> {
 	}
 }
 
-fn worker<const N: usize>(
-	sites: Vec<Vec<Row<N>>>,
-	update_receiver: Receiver<Arc<Update<N>>>,
+fn worker(
+	msa: Msa<DnaNucleotide>,
+	update_receiver: Receiver<Arc<Update<4>>>,
 	likelihood_sender: Sender<f64>,
 	accept_receiver: Receiver<bool>,
 ) {
-	let mut cpu = CpuLikelihood::new(sites);
+	let mut cpu = CpuLikelihood::new(msa);
 
 	loop {
 		let Ok(update) = update_receiver.recv() else {

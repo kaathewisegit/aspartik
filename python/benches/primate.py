@@ -14,19 +14,14 @@ from aspartik.b3.operators import (
 from aspartik.b3.priors import ConstantPopulation, Distribution, Monophyly, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
-from aspartik.io import FastaReader
+from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Exp, Gamma, LogNormal, Uniform
 
-path = "crates/b3/data/primate-mdna-full.fasta"
-sequences = []
-names = []
-for record in FastaReader.from_file(path):
-    sequences.append(record.sequence)
-    names.append(record.id)
+msa = read_msa_from_fasta("crates/b3/data/primate-mdna-full.fasta").deduplicate()
 
 rng = RNG(4)
-tree = Tree(names, rng)
+tree = Tree(msa.sequence_names(), rng)
 tree.set_random_heights(rng)
 
 mutation_rate_noncoding = Real(1.0)
@@ -116,7 +111,7 @@ operators = [
 sub_model = HKY((0.25, 0.25, 0.25, 0.25), kappa_noncoding)
 clock_model = StrictClock(Real(1.0))
 likelihood = Likelihood(
-    sequences=sequences,
+    msa=msa,
     substitution=sub_model,
     clock=clock_model,
     tree=tree,

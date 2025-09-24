@@ -5,7 +5,7 @@ mod nucleotides;
 mod phred;
 pub mod seq;
 
-pub use msa::Msa;
+pub use msa::{Msa, python::PyMsa};
 pub use nucleotides::DnaNucleotide;
 pub use phred::Phred;
 

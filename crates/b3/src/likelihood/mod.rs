@@ -4,10 +4,9 @@ use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
 use crate::{
-	Transitions, clock::PyClock, substitution::PySubstitution,
-	tree::PyTree, util::dna_to_rows,
+	Transitions, clock::PyClock, substitution::PySubstitution, tree::PyTree,
 };
-use data::{DnaNucleotide, seq::python::PyDnaSeq};
+use data::{DnaNucleotide, Msa, PyMsa};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
@@ -59,26 +58,25 @@ impl GenericLikelihood<4> {
 	fn new(
 		substitution: PySubstitution<4>,
 		clock: PyClock,
-		sites: Vec<Vec<Vector<f64, 4>>>,
+		msa: Msa<DnaNucleotide>,
 		tree: Py<PyTree>,
 		calculator: String,
 
 		cuda_device: usize,
 		thread_split_size: usize,
 	) -> Result<Self> {
-		let num_internals = sites[0].len() - 1;
+		let num_internals = msa.num_sequences() - 1;
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
 		let calculator: DynCalculator<4> = match calculator.as_str() {
-			"cpu" => Box::new(CpuLikelihood::new(sites)),
+			"cpu" => Box::new(CpuLikelihood::new(msa)),
 			"thread" => Box::new(ThreadedLikelihood::new(
-				sites,
+				msa,
 				thread_split_size,
 			)),
-			"cuda" => Box::new(CudaLikelihood::new(
-				sites,
-				cuda_device,
-			)?),
+			"cuda" => {
+				Box::new(CudaLikelihood::new(msa, cuda_device)?)
+			}
 			_ => {
 				bail!("Unknown calculator type '{calculator}'");
 			}
@@ -245,14 +243,14 @@ impl PyLikelihood {
 impl PyLikelihood {
 	#[new]
 	#[pyo3(signature = (
-		sequences, substitution, clock, tree,
+		msa, substitution, clock, tree,
 		calculator = String::from("cpu"),
 		*,
 		cuda_device = 0,
 		thread_split_size = 400,
 	))]
 	fn new4(
-		sequences: Vec<PyDnaSeq>,
+		msa: PyMsa,
 		substitution: PySubstitution<4>,
 		clock: PyClock,
 		tree: Py<PyTree>,
@@ -261,17 +259,10 @@ impl PyLikelihood {
 		cuda_device: usize,
 		thread_split_size: usize,
 	) -> Result<Self> {
-		// TODO: replace with MSA
-		let sequences: Vec<Vec<DnaNucleotide>> = sequences
-			.iter()
-			.map(|seq| seq.0.as_ref().to_vec())
-			.collect();
-		let sites = dna_to_rows(&sequences);
-
 		let generic_likelihood = GenericLikelihood::new(
 			substitution,
 			clock,
-			sites,
+			msa.0,
 			tree,
 			calculator,
 			cuda_device,

@@ -12,22 +12,14 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.priors import Distribution, Yule
 from aspartik.b3.substitutions import HKY
-from aspartik.io import FastaReader
+from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Uniform
 
-path = "crates/b3/data/8384-shrooms.fasta"
-sequences = []
-names = []
-for i, record in enumerate(FastaReader.from_file(path)):
-    # new hard limit with thread scaling
-    if i == 1150:
-        break
-    sequences.append(record.sequence)
-    names.append(record.id)
+msa = read_msa_from_fasta("crates/b3/data/8384-shrooms.fasta").deduplicate()
 
 rng = RNG(4)
-tree = Tree(names, rng)
+tree = Tree(msa.sequence_names(), rng)
 tree.set_random_heights(rng)
 
 birth_rate_y = Real(2.0)
@@ -55,7 +47,7 @@ operators = [
 sub_model = HKY((0.25, 0.25, 0.25, 0.25), 2.0)
 clock_model = StrictClock(1.0)
 likelihood = Likelihood(
-    sequences=sequences,
+    msa=msa,
     substitution=sub_model,
     clock=clock_model,
     tree=tree,

@@ -1,64 +1,31 @@
 //! Kitchen sink utilities.
 use anyhow::{Result, bail};
-use data::seq::Character;
 use pyo3::prelude::*;
 use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 
-use std::cmp::Ordering;
-
 use crate::likelihood::Row;
-use data::DnaNucleotide;
-use linalg::Vector;
+use data::{DnaNucleotide, Msa};
 
-fn compare_seqs(a: &[DnaNucleotide], b: &[DnaNucleotide]) -> Ordering {
-	for (a, b) in a.iter().zip(b.iter()) {
-		if a != b {
-			let a_num = a.to_byte();
-			let b_num = b.to_byte();
-			return a_num.cmp(&b_num);
-		}
+// TODO: find a place for this
+fn character_to_likelihood(base: &DnaNucleotide) -> Row<4> {
+	match base {
+		DnaNucleotide::Adenine => [1.0, 0.0, 0.0, 0.0],
+		DnaNucleotide::Cytosine => [0.0, 1.0, 0.0, 0.0],
+		DnaNucleotide::Guanine => [0.0, 0.0, 1.0, 0.0],
+		DnaNucleotide::Thymine => [0.0, 0.0, 0.0, 1.0],
+
+		_ => [0.25, 0.25, 0.25, 0.25],
 	}
-	Ordering::Equal
+	.into()
 }
 
-pub fn dna_to_rows(seqs: &[Vec<DnaNucleotide>]) -> Vec<Vec<Row<4>>> {
-	let seq_len = seqs[0].len();
-	let num_seq = seqs.len();
+pub fn msa_to_likelihoods(msa: Msa<DnaNucleotide>) -> Vec<Row<4>> {
+	let mut out = Vec::with_capacity(msa.num_sequences() * msa.num_sites());
 
-	let mut transposed = vec![vec![]; seq_len];
-
-	#[expect(clippy::needless_range_loop)]
-	for nuc_idx in 0..seq_len {
-		for seq_idx in 0..num_seq {
-			transposed[nuc_idx].push(seqs[seq_idx][nuc_idx]);
-		}
-	}
-
-	// Deduplicate same rows
-	transposed.sort_by(|a, b| compare_seqs(a, b));
-	transposed.dedup();
-
-	let mut out = vec![
-		vec![Vector::default(); transposed[0].len()];
-		transposed.len()
-	];
-
-	// TODO: find a place for this
-	fn to_row(base: &DnaNucleotide) -> Vector<f64, 4> {
-		match base {
-			DnaNucleotide::Adenine => [1.0, 0.0, 0.0, 0.0],
-			DnaNucleotide::Cytosine => [0.0, 1.0, 0.0, 0.0],
-			DnaNucleotide::Guanine => [0.0, 0.0, 1.0, 0.0],
-			DnaNucleotide::Thymine => [0.0, 0.0, 0.0, 1.0],
-
-			_ => [0.25, 0.25, 0.25, 0.25],
-		}
-		.into()
-	}
-
-	for i in 0..transposed.len() {
-		for j in 0..transposed[0].len() {
-			out[i][j] = to_row(&transposed[i][j])
+	for seq in 0..msa.num_sequences() {
+		for site in msa.sites_iter() {
+			let char = msa.sequence(seq)[site];
+			out.push(character_to_likelihood(&char))
 		}
 	}
 
@@ -135,20 +102,4 @@ pub fn slices_iter(key: Bound<PyAny>, length: usize) -> Result<SlicesIter> {
 		slice_index: 0,
 		curr_index: start,
 	})
-}
-
-pub fn transpose<const N: usize>(leaves: Vec<Vec<Row<N>>>) -> Vec<Row<N>> {
-	let num_sites = leaves.len();
-	let num_leaves = leaves[0].len();
-
-	let mut out = Vec::with_capacity(num_sites * num_leaves);
-
-	for edge in 0..num_leaves {
-		#[expect(clippy::needless_range_loop)]
-		for site in 0..num_sites {
-			out.push(leaves[site][edge]);
-		}
-	}
-
-	out
 }

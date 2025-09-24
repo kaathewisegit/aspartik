@@ -6,11 +6,12 @@ use cudarc::{
 	},
 	nvrtc::{CompileOptions, compile_ptx_with_opts},
 };
+use data::{DnaNucleotide, Msa};
 
 use std::sync::Arc;
 
 use super::{LikelihoodTrait, Row, Transition};
-use crate::util::transpose;
+use crate::util::msa_to_likelihoods;
 
 const CUDA_SRC: &str =
 	concat!(include_str!("typedefs.h"), include_str!("kernels.cu"),);
@@ -326,7 +327,7 @@ impl CudaLikelihood {
 	}
 
 	pub fn new(
-		leaves: Vec<Vec<Row<4>>>,
+		msa: Msa<DnaNucleotide>,
 		cuda_device: usize,
 	) -> Result<Self> {
 		// SAFETY: since the function tries to link the library [0], it
@@ -339,8 +340,8 @@ impl CudaLikelihood {
 			bail!("CUDA library not found");
 		}
 
-		let num_sites = leaves.len();
-		let num_leaves = leaves[0].len();
+		let num_sites = msa.num_sites();
+		let num_leaves = msa.num_sequences();
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
 		let num_edges = num_internals * 2;
@@ -352,7 +353,7 @@ impl CudaLikelihood {
 		// there's no need for cross-stream synchronization
 		unsafe { context.disable_event_tracking() };
 
-		let leaves = stream.memcpy_stod(&transpose(leaves))?;
+		let leaves = stream.memcpy_stod(&msa_to_likelihoods(msa))?;
 		let projections: CudaSlice<Row<4>> =
 			stream.alloc_zeros(num_edges * num_sites)?;
 		let projections_backup: CudaSlice<Row<4>> =

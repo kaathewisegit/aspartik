@@ -28,13 +28,16 @@ class MSA:
     def sequence_name(self, index: int) -> str:
         """The name (or id) of the `index`'th sequence"""
 
+    def sequence_names(self) -> list[str]:
+        """A list of all sequence names in the alignment"""
+
     def sequence(self, index: int) -> DNASeq:
         """The `index`'th sequence in the alignment"""
 
-    def deduplicate(self) -> None:
+    def deduplicate(self) -> MSA:
         """
-        Remove identical sites
+        Create a new MSA without repeating sites
 
         For every set of sites with identical characters all but the first one
-        are dropped from the MSA.
+        are dropped.
         """

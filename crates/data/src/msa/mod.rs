@@ -1,8 +1,8 @@
 use anyhow::{Result, ensure};
 
 use std::{
-	collections::HashMap,
-	hash::{DefaultHasher, Hasher},
+	cmp::Ordering,
+	ops::{Bound, RangeBounds},
 	sync::Arc,
 };
 
@@ -96,6 +96,10 @@ impl<C: Character> Msa<C> {
 		&self.names[index]
 	}
 
+	pub fn sequence_names(&self) -> &[String] {
+		&self.names
+	}
+
 	pub fn sequence(&self, index: usize) -> Sequence<C> {
 		let start = index * self.num_sites_total;
 		let end = start + self.num_sites_total;
@@ -110,58 +114,54 @@ impl<C: Character> Msa<C> {
 		}
 	}
 
-	fn site_hash(&self, site: usize) -> u64 {
-		let mut hasher = DefaultHasher::new();
-		for i in (site..self.num_characters()).skip(self.num_sequences)
-		{
-			hasher.write_u8(self.data[i].to_byte());
-		}
+	pub fn slice(&self, range: impl RangeBounds<usize>) -> Self {
+		let mut out = self.clone();
 
-		hasher.finish()
+		let mut sites = match self.sites.as_ref() {
+			Some(sites) => sites.clone(),
+			None => (0..self.num_sites()).collect(),
+		};
+
+		let start = match range.start_bound() {
+			Bound::Included(i) => *i + 1,
+			Bound::Excluded(i) => *i,
+			Bound::Unbounded => sites.len(),
+		};
+		let end = match range.end_bound() {
+			Bound::Included(i) => *i + 1,
+			Bound::Excluded(i) => *i,
+			Bound::Unbounded => sites.len(),
+		};
+		let length = end - start;
+		sites.copy_within(range, 0);
+		sites.truncate(length);
+
+		out.sites = Some(sites);
+		out
 	}
 
-	fn is_same_site(&self, a: usize, b: usize) -> bool {
-		for i in 0..self.num_sequences {
-			if self.sequence(i)[a] != self.sequence(i)[b] {
-				return false;
+	fn compare_sites(&self, a: &usize, b: &usize) -> Ordering {
+		for seq in 0..self.num_sequences {
+			let seq = self.sequence(seq);
+			let a = seq[*a];
+			let b = seq[*b];
+
+			if a != b {
+				let (a_b, b_b) = (a.to_byte(), b.to_byte());
+				return a_b.cmp(&b_b);
 			}
 		}
-
-		true
+		Ordering::Equal
 	}
 
-	pub fn deduplicate(&mut self) {
-		// TODO: a bunch of nested vector allocations.  In general, feel
-		// that there should be a more elegant way to do that.
-		let mut map = HashMap::<u64, Vec<usize>>::new();
+	pub fn deduplicate(&self) -> Self {
+		let mut sites: Vec<_> = self.sites_iter().collect();
+		sites.sort_by(|a, b| self.compare_sites(a, b));
+		sites.dedup_by(|a, b| self.compare_sites(a, b).is_eq());
 
-		for site in self.sites_iter() {
-			let hash = self.site_hash(site);
-
-			let Some(other_sites) = map.get_mut(&hash) else {
-				// the hash is unique, meaning this site is also
-				// unique
-				map.insert(hash, vec![site]);
-				continue;
-			};
-
-			for other_site in other_sites.iter() {
-				if self.is_same_site(site, *other_site) {
-					// the sites are the same, skip current one
-					continue;
-				}
-			}
-
-			// the sites were different after all
-			other_sites.push(site);
-		}
-
-		let mut new_sites: Vec<usize> =
-			map.values().flat_map(|v| v.iter().copied()).collect();
-		// all indices are unique
-		new_sites.sort_unstable();
-
-		self.sites = Some(new_sites);
+		let mut out = self.clone();
+		out.sites = Some(sites);
+		out
 	}
 }
 
@@ -200,12 +200,13 @@ impl<'a> Iterator for SitesIter<'a> {
 		}
 
 		let out;
-
 		if let Some(sites) = self.sites {
 			out = sites[self.current];
 		} else {
 			out = self.current;
 		}
+
+		self.current += 1;
 
 		Some(out)
 	}

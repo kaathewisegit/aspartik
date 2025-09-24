@@ -4,6 +4,7 @@ from collections.abc import Iterator, Sequence
 from typing import Any, ClassVar, Literal, Optional, Protocol, runtime_checkable
 
 from ..data import DNASeq
+from ..data.msa import MSA
 from ..rng import RNG
 from .substitutions import Substitution
 from .tree import Internal, Leaf, Node
@@ -292,7 +293,7 @@ class Likelihood:
 
     def __init__(
         self,
-        sequences: Sequence[DNASeq],
+        msa: MSA,
         substitution: Substitution,
         # TODO: types
         clock: Any,
