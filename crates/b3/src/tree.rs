@@ -1,13 +1,15 @@
 use anyhow::{Result, ensure};
 use parking_lot::{Mutex, MutexGuard};
-use pyo3::prelude::*;
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
+	prelude::*,
 	types::{PyAny, PyDict, PyTuple},
 };
-use rand::Rng as _;
-use rand::distr::{Distribution, Uniform};
-use rand::seq::SliceRandom;
+use rand::{
+	Rng as _,
+	distr::{Distribution, Uniform},
+	seq::{IteratorRandom, SliceRandom},
+};
 use serde::{Deserialize, Serialize};
 
 use std::{
@@ -522,6 +524,10 @@ impl Tree {
 		self.num_internals() + 1
 	}
 
+	pub fn num_edges(&self) -> usize {
+		self.num_internals() * 2
+	}
+
 	pub fn is_internal(&self, node: &Node) -> bool {
 		node.0 >= self.num_leaves()
 	}
@@ -591,6 +597,21 @@ impl Tree {
 		}
 	}
 
+	/// Nodes whose parent edge intersects `height`
+	pub fn random_intersecting_edge(
+		&self,
+		height: f64,
+		rng: &mut Rng,
+	) -> Option<usize> {
+		(0..self.num_edges())
+			.filter(|edge| {
+				let (node, parent) = self.edge_nodes(*edge);
+				self.height_of(&node) < height
+					&& self.height_of(&parent) > height
+			})
+			.choose(rng)
+	}
+
 	/// Index of the edge between `child` and its parent.
 	///
 	/// # Panics
@@ -612,7 +633,7 @@ impl Tree {
 		self.height_of(&parent) - self.height_of(&child)
 	}
 
-	fn edge_nodes(&self, edge: usize) -> (Node, Internal) {
+	pub fn edge_nodes(&self, edge: usize) -> (Node, Internal) {
 		let parent = edge / 2 + self.num_leaves();
 		let child = self.children[edge];
 
@@ -911,12 +932,33 @@ impl PyTree {
 			.and_then(|n| n.into_pyobject(py, inner.num_leaves()))
 	}
 
+	fn random_intersecting_edge(
+		&self,
+		height: f64,
+		rng: &PyRng,
+	) -> Option<usize> {
+		self.inner()
+			.random_intersecting_edge(height, &mut rng.inner())
+	}
+
 	fn edge_index(&self, child: Node) -> Result<usize> {
 		Ok(self.inner().edge_index(&child))
 	}
 
 	fn edge_distance(&self, edge: usize) -> f64 {
 		self.inner().edge_distance(edge)
+	}
+
+	fn edge_nodes<'py>(
+		&self,
+		py: Python<'py>,
+		edge: usize,
+	) -> Result<(Bound<'py, PyAny>, Internal)> {
+		let inner = self.inner();
+		let (node, internal) = inner.edge_nodes(edge);
+		let node = node.into_pyobject(py, inner.num_leaves())?;
+
+		Ok((node, internal))
 	}
 
 	fn parent_of(&self, node: Node) -> Result<Option<Internal>> {

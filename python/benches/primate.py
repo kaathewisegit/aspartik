@@ -7,6 +7,7 @@ from aspartik.b3.operators import (
     NarrowExchange,
     NodeSlide,
     ParamScale,
+    SubtreePruneRegraft,
     TreeScale,
     WideExchange,
     WilsonBalding,
@@ -103,6 +104,7 @@ operators = [
         rng=rng,
         weight=2.0,
     ),
+    SubtreePruneRegraft(tree, rng, weight=3),
     ParamScale(birth_rate_y, 0.1, Uniform(0, 1), rng, weight=3),
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
 ]

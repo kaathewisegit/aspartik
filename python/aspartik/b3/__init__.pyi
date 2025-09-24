@@ -143,6 +143,15 @@ class Tree(Stateful):
 
         Throws an error if `child` isn't a child of `parent`.
         """
+    def random_intersecting_edge(self, height: float, rng: RNG) -> Optional[int]:
+        """Returns a random edge which intersects `height`
+
+        "Intersects" here means that the edge parent is higher than `height`
+        and the child is lower.  The comparisons are strict: if either node is
+        exactly at `height`, the edge won't be picked.
+
+        Returns `None` if there is no such node.
+        """
     def edge_index(self, child: Node) -> int:
         """Returns the index of an edge from `child` to its parent"""
     def edge_distance(self, edge: int) -> float:
@@ -151,6 +160,8 @@ class Tree(Stateful):
         The length is the distance between the parent and the child nodes of
         that edge.
         """
+    def edge_nodes(self, edge: int) -> tuple[Node, Internal]:
+        """Returns the `(child, parent)` tuple corresponding to an edge"""
     def parent_of(self, node: Node) -> Optional[Internal]:
         """Returns the parent of `node`, or `None` for the root node"""
     def is_grandparent(self, node: Internal) -> bool:
