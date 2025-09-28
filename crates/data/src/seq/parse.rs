@@ -1,6 +1,8 @@
-use anyhow::{Result, anyhow, bail};
+use anyhow::{Error, Result, anyhow, bail};
 
-use super::{Character, SequenceMut};
+use std::str::FromStr;
+
+use super::{Character, Sequence, SequenceMut};
 
 pub fn parse_append_str<C: Character>(
 	seq: &mut SequenceMut<C>,
@@ -82,5 +84,13 @@ fn highlight_error(src: &str, index: usize) -> String {
 			"Illegal character encountered in the sequence:\n> {}\n  {:index$}^",
 			src, "",
 		)
+	}
+}
+
+impl<C: Character> FromStr for Sequence<C> {
+	type Err = Error;
+
+	fn from_str(s: &str) -> Result<Self> {
+		Ok(parse_str(s)?.into())
 	}
 }

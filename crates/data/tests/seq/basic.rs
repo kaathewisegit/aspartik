@@ -2,14 +2,15 @@ use data::DnaNucleotide::{self, *};
 use data::seq::*;
 
 #[test]
-fn decode() {
+fn parse_err() {
 	parse_str::<DnaNucleotide>("ACTGxACTG").unwrap_err();
 }
 
 #[test]
 fn count() {
-	let s = "AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC";
-	let s = parse_str(s).unwrap().into_sequence();
+	let s = dna![
+		"AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC"
+	];
 
 	assert_eq!(s.count(Adenine), 20);
 	assert_eq!(s.count(Cytosine), 12);
@@ -19,19 +20,15 @@ fn count() {
 
 #[test]
 fn dna_complement() {
-	let s = parse_str("AAAACCCGGT").unwrap().into_sequence();
+	let s = dna!["AAAACCCGGT"];
 
 	assert_eq!(s.reverse_complement().to_string(), "ACCGGGTTTT");
 }
 
 #[test]
 fn hamming() {
-	let s1 = parse_str::<DnaNucleotide>("GAGCCTACTAACGGGAT")
-		.unwrap()
-		.into_sequence();
-	let s2 = parse_str::<DnaNucleotide>("CATCGTAATGACGGCCT")
-		.unwrap()
-		.into_sequence();
+	let s1 = dna!["GAGCCTACTAACGGGAT"];
+	let s2 = dna!["CATCGTAATGACGGCCT"];
 
 	assert_eq!(distance::hamming(&s1, &s2).unwrap(), 7);
 }

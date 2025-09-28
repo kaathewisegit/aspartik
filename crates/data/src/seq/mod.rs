@@ -283,3 +283,17 @@ impl<C: Character> Default for SequenceMut<C> {
 		}
 	}
 }
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! dna {
+	($seq:literal) => {
+		parse_str::<$crate::DnaNucleotide>($seq)
+			.expect("Invalid DNA sequence literal")
+			.into_sequence()
+	};
+}
+
+/// Create a new DNA sequence from a string literal
+#[doc(inline)]
+pub use crate::dna;
