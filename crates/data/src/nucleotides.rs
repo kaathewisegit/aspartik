@@ -5,6 +5,7 @@ use pyo3::prelude::*;
 use std::fmt;
 
 use crate::seq::Character;
+use linalg::Vector;
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -102,6 +103,38 @@ impl DnaNucleotide {
 
 	pub fn includes(&self, other: &Self) -> bool {
 		(self.as_u8() & other.as_u8()) == other.as_u8()
+	}
+
+	/// Probabilistic distribution of a base
+	///
+	/// Mixed bases such as `Weak` or `NotGuanine` are treated as if all of
+	/// their components have the same likelihood of occurring.  `Gap` is
+	/// treated same as `Any`.
+	pub fn base_frequencies(&self) -> Vector<f64, 4> {
+		const F1_3: f64 = 1.0 / 3.0;
+
+		use DnaNucleotide::*;
+		match self {
+			Adenine => [1.0, 0.0, 0.0, 0.0],
+			Cytosine => [0.0, 1.0, 0.0, 0.0],
+			Guanine => [0.0, 0.0, 1.0, 0.0],
+			Thymine => [0.0, 0.0, 0.0, 1.0],
+
+			Weak => [0.5, 0.0, 0.0, 0.5],
+			Strong => [0.0, 0.5, 0.5, 0.0],
+			Amino => [0.5, 0.5, 0.0, 0.0],
+			Ketone => [0.0, 0.0, 0.5, 0.5],
+			Purine => [0.0, 0.5, 0.0, 0.5],
+			Pyrimidine => [0.5, 0.0, 0.5, 0.0],
+
+			NotAdenine => [0.0, F1_3, F1_3, F1_3],
+			NotCytosine => [F1_3, 0.0, F1_3, F1_3],
+			NotGuanine => [F1_3, F1_3, 0.0, F1_3],
+			NotThymine => [F1_3, F1_3, F1_3, 0.0],
+
+			Any | Gap => [0.25, 0.25, 0.25, 0.25],
+		}
+		.into()
 	}
 }
 
