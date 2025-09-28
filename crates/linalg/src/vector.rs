@@ -20,6 +20,12 @@ impl<T, const N: usize> From<[T; N]> for Vector<T, N> {
 	}
 }
 
+impl<T, const N: usize> From<Vector<T, N>> for [T; N] {
+	fn from(value: Vector<T, N>) -> Self {
+		value.v
+	}
+}
+
 impl<T: Copy, const N: usize> Vector<T, N> {
 	fn from_element(value: T) -> Self {
 		[value; N].into()
