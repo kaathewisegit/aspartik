@@ -41,3 +41,9 @@ class MSA:
         For every set of sites with identical characters all but the first one
         are dropped.
         """
+
+    def base_frequencies(self) -> tuple[float, float, float, float]:
+        """
+        Base frequencies of Adenine, Cytosine, Guanine, and Thymine, in that
+        order
+        """

@@ -89,7 +89,7 @@ impl<C: Character> Msa<C> {
 	}
 
 	pub fn num_characters(&self) -> usize {
-		self.num_sequences + self.num_sites()
+		self.num_sequences * self.num_sites()
 	}
 
 	pub fn sequence_name(&self, index: usize) -> &str {
@@ -167,21 +167,40 @@ impl<C: Character> Msa<C> {
 
 impl Msa<DnaNucleotide> {
 	pub fn base_frequencies(&self) -> [f64; 4] {
-		let mut counts = [0usize; 4];
-		let num_chars: usize = 0;
+		let mut counts = [0f64; 4];
+		let num_chars = self.num_characters();
 
-		for ch in self.data.as_ref() {
-			match ch {
-				DnaNucleotide::Adenine => counts[0] += 1,
-				DnaNucleotide::Cytosine => counts[1] += 1,
-				DnaNucleotide::Guanine => counts[2] += 1,
-				DnaNucleotide::Thymine => counts[3] += 1,
+		for seq in 0..self.num_sequences {
+			let seq = self.sequence(seq);
 
-				_ => continue,
+			for site in self.sites_iter() {
+				match seq[site] {
+					DnaNucleotide::Adenine => {
+						counts[0] += 1.0;
+					}
+					DnaNucleotide::Cytosine => {
+						counts[1] += 1.0;
+					}
+					DnaNucleotide::Guanine => {
+						counts[2] += 1.0;
+					}
+					DnaNucleotide::Thymine => {
+						counts[3] += 1.0;
+					}
+					DnaNucleotide::Gap
+					| DnaNucleotide::Any => {
+						counts[0] += 0.25;
+						counts[1] += 0.25;
+						counts[2] += 0.25;
+						counts[3] += 0.25;
+					}
+
+					_ => continue,
+				}
 			}
 		}
 
-		counts.map(|count| count as f64 / num_chars as f64)
+		counts.map(|count| count / num_chars as f64)
 	}
 }
 
