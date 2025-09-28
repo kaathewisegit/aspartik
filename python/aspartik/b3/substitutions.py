@@ -128,7 +128,7 @@ class F81(Substitution):
     dimensions: ClassVar[int] = 4
     frequencies: Float4
     """A tuple of frequencies in order `(A, C, G, T)`"""
-    _matrix: Matrix
+    _cached_matrix: Matrix = field(default_factory=list, init=False)
 
     def __post_init__(self):
         check_frequencies(self.frequencies)
@@ -141,10 +141,10 @@ class F81(Substitution):
             [a, c, g - 1, t],
             [a, c, g, t - 1],
         ]
-        self._matrix = normalize(s, 1 - a**2 - c**2 - g**2 - t**2)
+        self._cached_matrix = normalize(s, 1 - a**2 - c**2 - g**2 - t**2)
 
     def get_matrix(self) -> Matrix:
-        return self._matrix
+        return self._cached_matrix
 
 
 @dataclass(slots=True)
