@@ -35,10 +35,12 @@ class Stateful(Protocol):
 class Tree(Stateful):
     """A phylogenetic tree
 
-    Unlike in BEAST2, `Tree` is a self-contained typed which all of the
-    topological data.  What this means is that node types (`Internal` and
-    `Leaf`) are simply indexes into the `Tree`.  So, all operations, like
-    getting parents of node heights have to go through `Tree`'s methods.
+    Unlike BEAST2, where the tree is implemented as a collection of nodes
+    pointing to each other, in `b3` `Tree` is a self-contained data structure
+    which holds all of the topology and heights.  This means that nodes
+    (`Internal` and `Leaf`) are identifiers of nodes in a given `Tree` object,
+    much like indices of an array.  This means that all operations, such as
+    getting parents of node heights, have to go through `Tree`'s methods.
 
     The current implementation of `Tree` only supports bifurcating topologies.
     """
