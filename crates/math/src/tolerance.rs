@@ -16,7 +16,7 @@ pub const DEFAULT_F64_ACC: f64 = F64_PREC * 10.0;
 #[macro_export]
 macro_rules! almost_eq {
 	($a:expr, $b:expr $(, $opt:ident = $val:expr)* $(,)?) => {{
-		let mut c = ::math::tolerance::Comparator {
+		let mut c = $crate::tolerance::Comparator {
 			epsilon: f64::EPSILON,
 			relative: 1e-16,
 			ulps: 4,
@@ -24,7 +24,7 @@ macro_rules! almost_eq {
 
 		$(c.$opt = $val;)*
 
-		use ::math::tolerance::{is_close, Tolerance};
+		use $crate::tolerance::{is_close, Tolerance};
 
 		$a.is_close(&$b, c.epsilon, c.relative, c.ulps)
 	}};
@@ -33,12 +33,12 @@ macro_rules! almost_eq {
 #[macro_export]
 macro_rules! assert_almost_eq {
 	($a:expr, $b:expr $(, $opt:ident = $val:expr)* $(,)?) => {{
-		if !::math::almost_eq!($a, $b, $($opt = $val),*) {
+		if !$crate::almost_eq!($a, $b, $($opt = $val),*) {
 			panic!(
 				"assert_almost_eq!({}, {}) failed:\n{}",
 				stringify!($a),
 				stringify!($b),
-				::math::tolerance::report(&$a, &$b),
+				$crate::tolerance::report(&$a, &$b),
 			);
 		}
 	}};
@@ -47,7 +47,7 @@ macro_rules! assert_almost_eq {
 #[macro_export]
 macro_rules! ulps_eq {
 	($a:expr, $b:expr, ulps = $ulps:expr) => {{
-		use ::math::tolerance::Tolerance;
+		use $crate::tolerance::Tolerance;
 		$a.ulps(&$b) <= $ulps
 	}};
 	($a:expr, $b:expr) => {

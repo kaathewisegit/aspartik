@@ -76,17 +76,17 @@ macro_rules! profile {
 		$($key:ident = $value:expr),*;
 		$action:expr
 	) => {{
-		if !::profiler::PROFILER.enabled() {
+		if !$crate::PROFILER.enabled() {
 			$action
 		} else {
 			use std::io::Write;
 
-			::profiler::PROFILER.start();
+			$crate::PROFILER.start();
 			let out = $action;
-			let duration = ::profiler::PROFILER.stop();
+			let duration = $crate::PROFILER.stop();
 
 			writeln!(
-				&mut ::profiler::PROFILER.writer(),
+				&mut $crate::PROFILER.writer(),
 				concat!(
 					"{{",
 					r#""target":{:?},"#,
