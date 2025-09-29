@@ -244,7 +244,7 @@ impl TryFrom<char> for DnaNucleotide {
 			);
 		};
 
-		let Some(nucleotide) = DnaNucleotide::from_byte(byte) else {
+		let Some(nucleotide) = DnaNucleotide::from_ascii(byte) else {
 			bail!("'{value}' is not a valid IUPAC DNA character")
 		};
 

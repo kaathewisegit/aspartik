@@ -1,8 +1,31 @@
 from __future__ import annotations
 
+from typing import Self
+
 class DNANucleotide:
-    # TODO
-    ...
+    Adenine: Self
+    Cytosine: Self
+    Guanine: Self
+    Thymine: Self
+
+    Weak: Self
+    Strong: Self
+    Amino: Self
+    Ketone: Self
+    Purine: Self
+    Pyrimidine: Self
+
+    NotAdenine: Self
+    NotCytosine: Self
+    NotGuanine: Self
+    NotThymine: Self
+
+    Any: Self
+    Gap: Self
+
+    def __init__(self, char: str): ...
+    def __contains__(self, other: Self) -> bool: ...
+    def complement(self) -> Self: ...
 
 class DNASeq:
     def __init__(self, sequence: str | None): ...
