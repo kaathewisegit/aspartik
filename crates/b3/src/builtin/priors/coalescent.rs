@@ -1,13 +1,77 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use crate::tree::PyTree;
+use crate::tree::{Node, PyTree, Tree};
+
+/// All nodes (leaves and internals) of a tree sorted by height
+fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
+	let mut nodes = Vec::with_capacity(tree.num_nodes());
+
+	for node in tree.nodes() {
+		let height = tree.height_of(&node);
+		nodes.push((node, height));
+	}
+
+	// sort by height
+	nodes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+
+	nodes
+}
+
+trait Coalescent {
+	fn population_size_at(&self, py: Python, point: f64) -> Result<f64>;
+	fn integral(&self, py: Python, start: f64, end: f64) -> Result<f64>;
+}
+
+fn calculate<C>(py: Python, tree: &Tree, coalescent: &C) -> Result<f64>
+where
+	C: Coalescent,
+{
+	let nodes = sorted_nodes(tree);
+
+	let mut out = 1.0; // log-likelihood
+	let mut last_height = 0.0;
+	let mut num: usize = 0; // number of active lineages
+
+	for (node, height) in nodes {
+		if tree.is_leaf(&node) {
+			// not a transition event.  Increase the num for the new
+			// number of lineages which could merge.  `last_height`
+			// doesn't get updated, so the next merge event will
+			// have the correct length
+			num += 1;
+			continue;
+		} // else the node is internal, merge event
+
+		let binomial = (num * (num - 1)) as f64;
+
+		let area = coalescent.integral(py, last_height, height)?;
+		let pop = coalescent.population_size_at(py, height)?;
+
+		out -= binomial * area + pop.ln();
+
+		num -= 1;
+		last_height = height;
+	}
+
+	Ok(out)
+}
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ConstantPopulation {
 	tree: Py<PyTree>,
 	population: Py<PyAny>,
+}
+
+impl Coalescent for ConstantPopulation {
+	fn population_size_at(&self, py: Python, _point: f64) -> Result<f64> {
+		Ok(self.population_size(py).extract(py)?)
+	}
+
+	fn integral(&self, _py: Python, start: f64, end: f64) -> Result<f64> {
+		Ok(end - start)
+	}
 }
 
 #[pymethods]
@@ -23,12 +87,12 @@ impl ConstantPopulation {
 	}
 
 	#[getter]
-	fn population(&self, py: Python) -> Py<PyAny> {
+	fn population_size(&self, py: Python) -> Py<PyAny> {
 		self.population.clone_ref(py)
 	}
 
 	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
-		let tuple = (self.tree(py), self.population(py))
+		let tuple = (self.tree(py), self.population_size(py))
 			.into_pyobject(py)?;
 
 		Ok(tuple.into_any().unbind())
@@ -36,41 +100,85 @@ impl ConstantPopulation {
 
 	fn probability(&self, py: Python) -> Result<f64> {
 		let tree = self.tree.get().inner();
-		let pop = self.population.bind(py).extract::<f64>()?;
-		let mut nodes = Vec::with_capacity(tree.num_nodes());
+		calculate(py, &tree, self)
+	}
+}
 
-		for node in tree.nodes() {
-			let height = tree.height_of(&node);
-			nodes.push((node, height));
-		}
-		// sort by height
-		nodes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+#[derive(Debug)]
+#[pyclass(module = "aspartik.b3.priors", frozen)]
+pub struct ExponentialGrowth {
+	tree: Py<PyTree>,
+	population_size: Py<PyAny>,
+	growth_rate: Py<PyAny>,
+}
 
-		let mut out = 1.0;
-		let mut last_height = 0.0;
-		let mut num: usize = 0;
+impl Coalescent for ExponentialGrowth {
+	fn population_size_at(&self, py: Python, point: f64) -> Result<f64> {
+		let gr: f64 = self.growth_rate(py).extract(py)?;
+		let pop: f64 = self.population_size(py).extract(py)?;
 
-		for (node, height) in nodes {
-			if tree.is_leaf(&node) {
-				// no transition event.  Increase the num for
-				// the new number of lineages which could merge
-				num += 1;
-				continue;
-			}
+		let out = pop * (-point * gr).exp();
+		Ok(out)
+	}
 
-			// the node is internal, merge event
+	fn integral(&self, py: Python, start: f64, end: f64) -> Result<f64> {
+		let gr: f64 = self.growth_rate(py).extract(py)?;
+		let pop: f64 = self.population_size(py).extract(py)?;
 
-			let time_diff = height - last_height;
-
-			let binomial = num * (num - 1);
-			let mult = binomial as f64 / pop;
-
-			out += mult * (-mult * time_diff).exp();
-
-			num -= 1;
-			last_height = height;
-		}
+		let out = if gr == 0.0 {
+			(end - start) / pop
+		} else {
+			((end * gr).exp() - (start * gr).exp()) / pop / gr
+		};
 
 		Ok(out)
+	}
+}
+
+#[pymethods]
+impl ExponentialGrowth {
+	#[new]
+	fn new(
+		tree: Py<PyTree>,
+		population_size: Py<PyAny>,
+		growth_rate: Py<PyAny>,
+	) -> Self {
+		// TODO: validation
+		Self {
+			tree,
+			population_size,
+			growth_rate,
+		}
+	}
+
+	#[getter]
+	fn tree(&self, py: Python) -> Py<PyTree> {
+		self.tree.clone_ref(py)
+	}
+
+	#[getter]
+	fn population_size(&self, py: Python) -> Py<PyAny> {
+		self.population_size.clone_ref(py)
+	}
+
+	#[getter]
+	fn growth_rate(&self, py: Python) -> Py<PyAny> {
+		self.growth_rate.clone_ref(py)
+	}
+
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
+		let tuple = (
+			self.tree(py),
+			self.population_size(py),
+			self.growth_rate(py),
+		)
+			.into_pyobject(py)?;
+
+		Ok(tuple.into_any().unbind())
+	}
+
+	fn probability(&self, py: Python) -> Result<f64> {
+		let tree = self.tree.get().inner();
+		calculate(py, &tree, self)
 	}
 }

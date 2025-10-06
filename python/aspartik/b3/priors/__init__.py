@@ -4,6 +4,7 @@ from ._distribution import Distribution as Distribution
 
 Yule = _b3_rust_impl.Yule
 ConstantPopulation = _b3_rust_impl.ConstantPopulation
+ExponentialGrowth = _b3_rust_impl.ExponentialGrowth
 Monophyly = _b3_rust_impl.Monophyly
 
 

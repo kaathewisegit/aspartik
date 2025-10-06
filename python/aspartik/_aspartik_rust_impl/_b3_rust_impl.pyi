@@ -58,6 +58,12 @@ class ConstantPopulation(Prior):
     population: SupportsFloat
 
 @dataclass
+class ExponentialGrowth(Prior):
+    tree: Tree
+    population: SupportsFloat
+    growth_rate: SupportsFloat
+
+@dataclass
 class Monophyly(Prior):
     """
     Ensures that a group of leaves form a monophyly
