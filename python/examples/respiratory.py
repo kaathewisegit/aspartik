@@ -10,8 +10,8 @@ from datetime import datetime
 from aspartik.b3 import MCMC, Likelihood, Real, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
-from aspartik.b3.operators import ParamScale, SubtreePruneRegraft
-from aspartik.b3.priors import Distribution, ExponentialGrowth, Yule
+from aspartik.b3.operators import ParamScale, RandomWalk, SubtreePruneRegraft
+from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
@@ -51,21 +51,24 @@ params = [
 ]
 
 priors = [
-    Distribution(kappa, LogNormal(1.0, 1.25)),
     # ctmcScalePrior on the clock rate
+    Bound(clock_rate, upper=1.0),
+    Bound(growth_rate),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     Distribution(growth_rate, Laplace(0.0, 100.0)),
+    Distribution(clock_rate, Laplace(0.0, 100.0)),
+    Distribution(kappa, LogNormal(1.0, 1.25)),
     ExponentialGrowth(tree, population_size, growth_rate),
 ]
 
 operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
+    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     # up/down clock rate vs internal node heights
     # subtree leap
     SubtreePruneRegraft(tree, rng, weight=97.6),
-    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
-    # random walk for growth rate
+    RandomWalk(growth_rate, window=1.0, rng=rng, weight=3),
 ]
 
 
