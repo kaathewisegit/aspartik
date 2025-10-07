@@ -10,7 +10,7 @@ from datetime import datetime
 from aspartik.b3 import MCMC, Likelihood, Real, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
-from aspartik.b3.operators import ParamScale, RandomWalk, SubtreePruneRegraft
+from aspartik.b3.operators import NodeSlide, ParamScale, RandomWalk, SubtreePruneRegraft
 from aspartik.b3.priors import CTMCS, Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.io.msa import read_msa_from_fasta
@@ -36,7 +36,6 @@ for i, leaf in enumerate(tree.leaves()):
     diff = most_recent - dates[i]
     tree.set_height(leaf, diff.days / 365)
 
-
 tree.set_random_heights(rng)
 
 population_size = Real(1.0)
@@ -52,7 +51,6 @@ params = [
 
 priors = [
     Bound(clock_rate, upper=1.0),
-    Bound(growth_rate),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     Distribution(growth_rate, Laplace(0.0, 100.0)),
     Distribution(kappa, LogNormal(1.0, 1.25)),
@@ -65,13 +63,12 @@ operators = [
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     # up/down clock rate vs internal node heights
-    # subtree leap
-    SubtreePruneRegraft(tree, rng, weight=97.6),
+    NodeSlide(tree, Uniform(0, 1), rng, weight=1000),  # subtree leap instead
+    SubtreePruneRegraft(tree, rng, weight=100),
     RandomWalk(growth_rate, window=1.0, rng=rng, weight=3),
 ]
 
 
-# TODO: MSA frequencies
 sub_model = HKY((0.25, 0.25, 0.25, 0.25), kappa)
 clock_model = StrictClock(1.0)
 likelihood = Likelihood(
@@ -91,6 +88,12 @@ loggers = [
             "growth_rate": growth_rate,
             "clock_rate": clock_rate,
             "kappa": kappa,
+            "prior.population_size": priors[-5],
+            "prior.growth_rate": priors[-4],
+            "prior.kappa": priors[-3],
+            "prior.clock_rate": priors[-2],
+            "prior.coalescent": priors[-1],
+            "tree.height": lambda: tree.height_of(tree.root()),
         },
         path="target/b3.log",
         every=1_000,
