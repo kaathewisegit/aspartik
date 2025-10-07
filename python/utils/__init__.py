@@ -17,7 +17,6 @@ def random_integer(lower: int, upper: int, num: int = 100) -> list[int]:
 def check_tree_operator(factory: Callable[[Tree], Operator]) -> None:
     rng = RNG(4)
     tree = Tree([str(i) for i in range(100)], rng)
-    tree.set_random_heights(rng)
 
     operator = factory(tree)
 

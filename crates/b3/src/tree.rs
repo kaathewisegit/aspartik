@@ -144,6 +144,27 @@ impl Tree {
 		let num_leaves = names.len();
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
+
+		let mut out = Self {
+			names,
+
+			children: skvec![ROOT; num_internals * 2],
+			parents: skvec![ROOT; num_nodes],
+			heights: skvec![0.0; num_nodes],
+
+			updated_edges: Vec::new(),
+			updated_nodes: Bitmap::new(num_nodes),
+		};
+
+		out.set_random_topology(rng);
+		out.set_random_heights(rng);
+		out
+	}
+
+	pub fn set_random_topology(&mut self, rng: &mut Rng) {
+		let num_leaves = self.num_leaves();
+		let num_internals = self.num_internals();
+		let num_nodes = self.num_nodes();
 		// Here we create a Prüfer sequence, which encodes a binary tree
 		// with the root in the last node with the ID `2l - 2`.  To do
 		// that we create a sequence in which all internal nodes appear
@@ -189,16 +210,8 @@ impl Tree {
 		parents[child] = root;
 		children[(root - num_leaves) * 2 + 1] = child;
 
-		Self {
-			names,
-
-			children: children.into(),
-			parents: parents.into(),
-			heights: skvec![0.0; num_nodes],
-
-			updated_edges: Vec::new(),
-			updated_nodes: Bitmap::new(num_nodes),
-		}
+		self.parents = parents.into();
+		self.children = children.into();
 	}
 
 	pub fn set_leaf_heights(&mut self, heights: Vec<f64>) {
@@ -837,6 +850,10 @@ impl PyTree {
 			inner: Mutex::new(tree),
 		};
 		Ok(tree)
+	}
+
+	fn set_random_topology(&self, rng: Py<PyRng>) {
+		self.inner().set_random_topology(&mut rng.get().inner());
 	}
 
 	fn set_leaf_heights(&self, heights: Vec<f64>) {

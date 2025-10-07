@@ -36,7 +36,6 @@ for i, leaf in enumerate(tree.leaves()):
     diff = most_recent - dates[i]
     tree.set_height(leaf, diff.days / 365)
 
-tree.set_random_heights(rng)
 
 population_size = Real(1.0)
 growth_rate = Real(0.0)

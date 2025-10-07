@@ -55,6 +55,9 @@ class Tree(Stateful):
         nodes.
         """
 
+    def set_random_topology(self, rng: RNG):
+        """TODO"""
+
     def set_leaf_heights(self, heights: Sequence[float]):
         """
         Set the tip dates.

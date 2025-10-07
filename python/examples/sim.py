@@ -21,7 +21,6 @@ msa = read_msa_from_fasta("crates/b3/data/sim.fasta").deduplicate()
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
-tree.set_random_heights(rng)
 
 birth_rate_y = Real(2.0)
 

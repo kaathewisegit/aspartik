@@ -23,7 +23,6 @@ msa = read_msa_from_fasta("crates/b3/data/primate-mdna-full.fasta").deduplicate(
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
-tree.set_random_heights(rng)
 
 mutation_rate = Real(1.0)
 gamma_shape = Real(1.0)
