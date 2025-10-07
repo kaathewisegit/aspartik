@@ -898,6 +898,7 @@ impl PyTree {
 		self.inner().as_leaf(&node)
 	}
 
+	#[getter]
 	fn root(&self) -> Internal {
 		self.inner().root()
 	}

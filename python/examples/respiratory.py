@@ -93,7 +93,7 @@ loggers = [
             "prior.kappa": priors[-3],
             "prior.clock_rate": priors[-2],
             "prior.coalescent": priors[-1],
-            "tree.height": lambda: tree.height_of(tree.root()),
+            "tree.height": lambda: tree.height_of(tree.root),
         },
         path="target/b3.log",
         every=1_000,

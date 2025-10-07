@@ -84,7 +84,7 @@ class WideExchange(Operator):
     def propose(self) -> Proposal:
         tree = self.tree
 
-        root = tree.root()
+        root = tree.root
 
         i = tree.random_node(self.rng)
         while i == root:

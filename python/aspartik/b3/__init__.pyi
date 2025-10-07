@@ -121,6 +121,7 @@ class Tree(Stateful):
         Converts `node` to the type `Leaf` if it is a leaf, or returns
         `None` otherwise
         """
+    @property
     def root(self) -> Internal:
         """Returns the root node of the tree
 

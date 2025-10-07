@@ -14,7 +14,7 @@ class CTMCS(Prior):
     parameter: Real
 
     def probability(self) -> float:
-        tree_length = self.tree.height_of(self.tree.root())
+        tree_length = self.tree.height_of(self.tree.root)
         out = 0.0
 
         for value in self.parameter:

@@ -20,7 +20,7 @@ class SubtreePruneRegraft(Operator):
     def propose(self) -> Proposal:
         tree = self.tree
         rng = self.rng
-        root = tree.root()
+        root = tree.root
 
         node = tree.random_internal(rng)
         while node == root or tree.parent_of(node) == root:

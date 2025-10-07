@@ -33,7 +33,7 @@ def test_other_child():
 
     n1 = tree.leaf_by_name("1")
     n2 = tree.leaf_by_name("2")
-    root = tree.root()
+    root = tree.root
     assert n1 is not None
     assert n2 is not None
 
