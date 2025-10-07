@@ -46,12 +46,13 @@ impl<const N: usize> Transitions<N> {
 			self.current = Box::new(substitution);
 			self.rate = rate;
 
-			let (eigenvectors, eigenvalues) = substitution.eigen();
+			let (eigenvalues, r_eigenvectors, l_eigenvectors) =
+				substitution.decompose();
 
 			self.diag =
 				Box::new(RowMatrix::from_diagonal(eigenvalues));
-			self.p = Box::new(eigenvectors);
-			self.inv_p = Box::new(self.p.inverse());
+			self.p = Box::new(r_eigenvectors);
+			self.inv_p = Box::new(l_eigenvectors);
 		}
 
 		let edges: Vec<usize> = if full_update {
