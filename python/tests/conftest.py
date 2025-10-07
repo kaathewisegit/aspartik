@@ -6,6 +6,8 @@ _rng = RNG(4)
 
 
 def pytest_report_teststatus(report: TestReport, config: Config):
+    global _rng
+
     if report.outcome != "passed" or report.when != "call":
         return None  # handled by pytest
 

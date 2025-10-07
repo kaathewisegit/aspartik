@@ -4,16 +4,14 @@ from aspartik.b3 import Tree
 from aspartik.rng import RNG
 
 
-def test_pickle_roundtrip():
-    old = Tree([str(i) for i in range(10)], RNG(4))
+def test_pickle_roundtrip(rng):
+    old = Tree([str(i) for i in range(10)], rng)
     new = pickle.loads(pickle.dumps(old))
 
     assert old.newick() == new.newick()
 
 
-def test_pickle_state():
-    rng = RNG(4)
-
+def test_pickle_state(rng):
     old = Tree([str(i) for i in range(10)], rng)
     internal = old.random_internal(rng)
     old.set_height(internal, 100)
@@ -26,9 +24,7 @@ def test_pickle_state():
     assert old.newick() == new.newick()
 
 
-def test_other_child():
-    rng = RNG(4)
-
+def test_other_child(rng):
     tree = Tree(["1", "2"], rng)
 
     n1 = tree.leaf_by_name("1")
