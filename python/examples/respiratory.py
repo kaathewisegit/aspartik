@@ -57,7 +57,6 @@ params = [
 ]
 
 priors = [
-    Bound(clock_rate, upper=1.0),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     Distribution(growth_rate, Laplace(0.0, 100.0)),
     Distribution(kappa, LogNormal(1.0, 1.25)),
@@ -77,7 +76,7 @@ operators = [
 
 
 sub_model = HKY((0.25, 0.25, 0.25, 0.25), kappa)
-clock_model = StrictClock(1.0)
+clock_model = StrictClock(clock_rate)
 likelihood = Likelihood(
     msa=msa,
     substitution=sub_model,
