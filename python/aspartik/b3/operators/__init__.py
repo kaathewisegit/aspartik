@@ -1,5 +1,6 @@
 from ..._aspartik_rust_impl import _b3_rust_impl
 from ._delta_exchange import DeltaExchange as DeltaExchange
+from ._leap import SubtreeLeap as SubtreeLeap
 from ._node_slide import NodeSlide as NodeSlide
 from ._param_scale import ParamScale as ParamScale
 from ._random_walk import RandomWalk as RandomWalk

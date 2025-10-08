@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, Tree
-from ._util import scale_on_range
+from ._util import family, scale_on_range
 
 
 @dataclass(slots=True)
@@ -20,19 +20,8 @@ class SubtreePruneRegraft(Operator):
     def propose(self) -> Proposal:
         tree = self.tree
         rng = self.rng
-        root = tree.root
 
-        node = tree.random_internal(rng)
-        while node == root or tree.parent_of(node) == root:
-            node = tree.random_internal(rng)
-
-        parent = tree.parent_of(node)
-        assert parent is not None  # checked in the loop
-
-        grandparent = tree.parent_of(parent)
-        assert grandparent is not None  # checked in the loop
-
-        sibling = tree.other_child(parent, node)
+        node, sibling, parent, grandparent = family(tree, rng)
 
         parent_height = tree.height_of(parent)
 

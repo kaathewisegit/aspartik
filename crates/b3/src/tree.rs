@@ -83,12 +83,12 @@ impl<'py> FromPyObject<'py> for Node {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[pyclass(frozen, module = "aspartik.b3.tree")]
+#[pyclass(module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
 pub struct Internal(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[pyclass(frozen, module = "aspartik.b3.tree")]
+#[pyclass(module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
 pub struct Leaf(usize);
 
@@ -104,10 +104,6 @@ macro_rules! nodes_2 {
 
 			fn __repr__(&self) -> String {
 				format!("{}({})", stringify!($type), self.0)
-			}
-
-			fn __eq__(&self, other: Node) -> bool {
-				self.0 == other.0
 			}
 
 			fn __getnewargs__<'py>(

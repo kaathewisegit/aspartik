@@ -10,7 +10,12 @@ from datetime import datetime
 from aspartik.b3 import MCMC, Likelihood, Real, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
-from aspartik.b3.operators import NodeSlide, ParamScale, RandomWalk, SubtreePruneRegraft
+from aspartik.b3.operators import (
+    ParamScale,
+    RandomWalk,
+    SubtreeLeap,
+    SubtreePruneRegraft,
+)
 from aspartik.b3.priors import CTMCS, Bound, ConstantPopulation, Distribution, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.io.msa import read_msa_from_fasta
@@ -61,7 +66,7 @@ operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
-    NodeSlide(tree, Uniform(0, 1), rng, weight=1000),  # subtree leap instead
+    SubtreeLeap(tree, Uniform(0, 1), rng, weight=1000),
     SubtreePruneRegraft(tree, rng, weight=100),
 ]
 
@@ -97,7 +102,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=200_000,
+    length=5_000_000,
     state=params + [tree],
     priors=priors,
     operators=operators,

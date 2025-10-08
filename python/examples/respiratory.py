@@ -10,9 +10,15 @@ from datetime import datetime
 from aspartik.b3 import MCMC, Likelihood, Real, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
-from aspartik.b3.operators import NodeSlide, ParamScale, RandomWalk, SubtreePruneRegraft
+from aspartik.b3.operators import (
+    ParamScale,
+    RandomWalk,
+    SubtreeLeap,
+    SubtreePruneRegraft,
+)
 from aspartik.b3.priors import CTMCS, Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import HKY
+from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
@@ -35,6 +41,8 @@ most_recent = max(dates)
 for i, leaf in enumerate(tree.leaves()):
     diff = most_recent - dates[i]
     tree.set_height(leaf, diff.days / 365)
+tree.set_random_heights(rng)
+tree.accept()
 
 
 population_size = Real(1.0)
@@ -62,7 +70,7 @@ operators = [
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     # up/down clock rate vs internal node heights
-    NodeSlide(tree, Uniform(0, 1), rng, weight=1000),  # subtree leap instead
+    SubtreeLeap(tree, Uniform(0, 1), rng, weight=1000),
     SubtreePruneRegraft(tree, rng, weight=100),
     RandomWalk(growth_rate, window=1.0, rng=rng, weight=3),
 ]
@@ -111,3 +119,4 @@ mcmc = MCMC(
 )
 
 mcmc.run()
+print_operator_stats(mcmc)

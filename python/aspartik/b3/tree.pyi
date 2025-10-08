@@ -6,11 +6,15 @@ class Leaf:
     subject to change in the future.
     """
 
+    def __hash__(self) -> int: ...
+
 class Internal:
     """Internal anonymous node of the phylogenetic tree.
 
     Internals are the unnamed ancestors which form the tree.
     """
+
+    def __hash__(self) -> int: ...
 
 Node = Leaf | Internal
 """Any node of the phylogenetic tree
