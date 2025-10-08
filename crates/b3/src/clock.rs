@@ -1,5 +1,4 @@
 use anyhow::Result;
-use linalg::RowMatrix;
 use log::debug;
 use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
@@ -10,8 +9,6 @@ use util::{py_bail, py_call_method, py_check_method};
 pub struct PyClock {
 	inner: Py<PyAny>,
 }
-
-pub type Substitution = RowMatrix<f64, 4, 4>;
 
 impl<'py> FromPyObject<'py> for PyClock {
 	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
