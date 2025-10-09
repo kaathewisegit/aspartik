@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, Tree
-from ._util import scale_on_range
+from ._util import sample_range
 
 
 @dataclass(slots=True)
@@ -49,10 +49,8 @@ class NodeSlide(Operator):
         oldest = tree.height_of(parent)
         youngest = max(tree.height_of(left), tree.height_of(right))
 
-        (new_height, ratio) = scale_on_range(
-            youngest, oldest, self.distribution, self.rng
-        )
+        new_height = sample_range(youngest, oldest, self.distribution, self.rng)
 
         tree.set_height(node, new_height)
 
-        return Proposal.Hastings(ratio)
+        return Proposal.Hastings(0.0)
