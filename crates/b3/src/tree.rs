@@ -136,7 +136,13 @@ nodes_2!(Leaf);
 nodes_2!(Internal);
 
 impl Tree {
-	pub fn new(names: Vec<String>, rng: &mut Rng) -> Self {
+	pub fn new(names: Vec<String>, rng: &mut Rng) -> Result<Self> {
+		ensure!(
+			names.len() >= 2,
+			"Expected at least 2 nodes, got {}",
+			names.len()
+		);
+
 		let num_leaves = names.len();
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
@@ -154,7 +160,7 @@ impl Tree {
 
 		out.set_random_topology(rng);
 		out.set_random_heights(rng);
-		out
+		Ok(out)
 	}
 
 	pub fn set_random_topology(&mut self, rng: &mut Rng) {
@@ -841,7 +847,7 @@ impl PyTree {
 impl PyTree {
 	#[new]
 	fn new(names: Vec<String>, rng: Py<PyRng>) -> Result<Self> {
-		let tree = Tree::new(names, &mut rng.get().inner());
+		let tree = Tree::new(names, &mut rng.get().inner())?;
 		let tree = Self {
 			inner: Mutex::new(tree),
 		};
