@@ -58,33 +58,21 @@ class ValueLogger(Logger):
     path: str
     every: int
 
-    _params: dict[str, Parameter] = field(default_factory=dict, init=False)
-    _priors: dict[str, Prior] = field(default_factory=dict, init=False)
-    _functions: dict[str, Callable] = field(default_factory=dict, init=False)
     _file: TextIOBase = field(init=False)
 
     def __post_init__(self):
         self._file = open(self.path, "w")
 
-        for key, item in self.map.items():
-            if isinstance(item, Parameter):
-                self._params[key] = item
-            if isinstance(item, Prior):
-                self._priors[key] = item
-            if callable(item):
-                self._functions[key] = item
-
     def log(self, mcmc: MCMC):
         entry = {}
 
-        for key, item in self._params.items():
-            entry[key] = item[0]
-
-        for key, item in self._priors.items():
-            entry[key] = item.probability()
-
-        for key, item in self._functions.items():
-            entry[key] = item()
+        for key, item in self.map.items():
+            if isinstance(item, Parameter):
+                entry[key] = item[0]
+            if isinstance(item, Prior):
+                entry[key] = item.probability()
+            if callable(item):
+                entry[key] = item()
 
         entry_json = json.dumps(entry)
         self._file.write(entry_json)
