@@ -4,6 +4,7 @@ from ._leap import SubtreeLeap as SubtreeLeap
 from ._node_slide import NodeSlide as NodeSlide
 from ._param_scale import ParamScale as ParamScale
 from ._random_walk import RandomWalk as RandomWalk
+from ._root import RootSlide as RootSlide
 from ._spr import SubtreePruneRegraft as SubtreePruneRegraft
 from ._tree_exchange import (
     NarrowExchange as NarrowExchange,
@@ -17,11 +18,16 @@ EpochScale = _b3_rust_impl.EpochScale
 
 __all__ = [
     "DeltaExchange",
-    "EpochScale",
-    "NarrowExchange",
+    "SubtreeLeap",
     "NodeSlide",
     "ParamScale",
-    "TreeScale",
-    "WideExchange",
     "RandomWalk",
+    "RootSlide",
+    "SubtreePruneRegraft",
+    "NarrowExchange",
+    "WideExchange",
+    "WilsonBalding",
+    # Rust
+    "TreeScale",
+    "EpochScale",
 ]
