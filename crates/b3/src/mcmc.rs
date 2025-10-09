@@ -122,9 +122,6 @@ impl Mcmc {
 		let self_ = this.get();
 		loop {
 			let current_step = *self_.current_step.lock();
-			if current_step == self_.length {
-				break;
-			}
 
 			self_.step(py).with_context(|| {
 				anyhow!("Failed on step {current_step}")
@@ -138,6 +135,9 @@ impl Mcmc {
 				)?;
 			}
 
+			if current_step == self_.length {
+				break;
+			}
 			*self_.current_step.lock() += 1;
 		}
 
