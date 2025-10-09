@@ -24,3 +24,21 @@ def check_tree_operator(factory: Callable[[Tree], Operator]) -> None:
         operator.propose()
         tree.validate()
         tree.accept()
+
+
+type Frequencies = tuple[float, float, float, float]
+
+
+def random_frequencies(rng: RNG) -> Frequencies:
+    out = [rng.random_float() for _ in range(4)]
+    total = sum(out)
+    out = [el / total for el in out]
+    out = tuple(out)
+    assert len(out) == 4
+    return out
+
+
+def random_frequencies_many(num: int = 1000) -> list[Frequencies]:
+    rng = RNG(4)
+
+    return [random_frequencies(rng) for _ in range(num)]

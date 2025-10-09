@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from math import prod
 from typing import ClassVar, Protocol, SupportsFloat
@@ -164,41 +166,15 @@ class HKY(Substitution):
     """A tuple of frequencies in order `(A, C, G, T)`"""
     kappa: SupportsFloat
     """Transition rate divided transversion rate"""
-    _cached_matrix: Matrix = field(default_factory=list, init=False)
-    _cached_kappa: float = field(default=0.0, init=False)
+    _gtr: GTR = field(init=False)
 
     def __post_init__(self):
-        check_frequencies(self.frequencies)
+        self._gtr = GTR(self.frequencies, rate_ag=self.kappa, rate_ct=self.kappa)
 
-        self._update_matrix()
-
-    def _update_matrix(self) -> None:
-        k = float(self.kappa)
-
-        a, c, g, t = self.frequencies
-        s = [
-            [0, c, k * g, t],
-            [a, 0, g, k * t],
-            [k * a, c, 0, t],
-            [a, k * c, g, 0],
-        ]
-
-        for i in range(4):
-            s[i][i] = -sum(s[i])
-
-        purine = a + g
-        pyrimidine = c + t
-        scale = 1.0 / (2.0 * (purine * pyrimidine + k * prod(self.frequencies)))
-        s = normalize(s, scale)
-
-        self._cached_matrix = s
-        self._cached_kappa = k
+        self._gtr._update_matrix()
 
     def get_matrix(self) -> Matrix:
-        if float(self.kappa) != self._cached_kappa:
-            self._update_matrix()
-
-        return self._cached_matrix
+        return self._gtr.get_matrix()
 
 
 @dataclass(slots=True)
@@ -226,11 +202,11 @@ class GTR(Substitution):
     It's symmetrical (A -> C, C -> A), same as all of the following rate
     arguments.
     """
-    rate_ag: float = field(default=1)
-    rate_at: float = field(default=1)
-    rate_cg: float = field(default=1)
-    rate_ct: float = field(default=1)
-    rate_gt: float = field(default=1)
+    rate_ag: SupportsFloat = field(default=1)
+    rate_at: SupportsFloat = field(default=1)
+    rate_cg: SupportsFloat = field(default=1)
+    rate_ct: SupportsFloat = field(default=1)
+    rate_gt: SupportsFloat = field(default=1)
 
     _cached_matrix: Matrix = field(default_factory=list, init=False)
     _cached_rates: Float6 = field(default=(1, 1, 1, 1, 1, 1), init=False)
@@ -254,17 +230,18 @@ class GTR(Substitution):
         a, c, g, t = self.frequencies
         rate_ac, rate_ag, rate_at, rate_cg, rate_ct, rate_gt = self._get_rates()
 
+        # fmt: off
         s = [
-            [0, rate_ac * c, rate_ag * g, rate_at * t],
-            [rate_ac * a, 0, rate_cg * g, rate_ct * t],
-            [rate_ag * a, rate_cg * c, 0, rate_ct * t],
-            [rate_at * a, rate_ct * c, rate_gt * g, 0],
+            [0          , rate_ac * c, rate_ag * g, rate_at * t],
+            [rate_ac * a, 0          , rate_cg * g, rate_ct * t],
+            [rate_ag * a, rate_cg * c, 0          , rate_gt * t],
+            [rate_at * a, rate_ct * c, rate_gt * g, 0          ],
         ]
 
         for i in range(4):
             s[i][i] = -sum(s[i])
 
-        mult = (
+        scale = 2.0 * (
             rate_ac * a * c
             + rate_ag * a * g
             + rate_at * a * t
@@ -273,7 +250,6 @@ class GTR(Substitution):
             + rate_gt * g * t
         )
 
-        scale = 1.0 / (2.0 * mult)
         s = normalize(s, scale)
 
         self._cached_matrix = s

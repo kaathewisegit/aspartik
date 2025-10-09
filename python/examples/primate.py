@@ -33,7 +33,7 @@ priors = [
     Distribution(kappa, LogNormal(1.0, 1.25)),
     Distribution(yule_birth_rate, LogNormal(1.0, 1.25)),
     Yule(tree, yule_birth_rate),
-    Bound(kappa, 0, 50),  # TODO: runaway parameter
+    # Bound(kappa, 0, 50),  # TODO: runaway parameter
 ]
 
 operators = [
