@@ -6,6 +6,7 @@ from ._param_scale import ParamScale as ParamScale
 from ._random_walk import RandomWalk as RandomWalk
 from ._root import RootSlide as RootSlide
 from ._spr import SubtreePruneRegraft as SubtreePruneRegraft
+from ._subtree_slide import SubtreeSlide as SubtreeSlide
 from ._tree_exchange import (
     NarrowExchange as NarrowExchange,
     WideExchange as WideExchange,
@@ -24,6 +25,7 @@ __all__ = [
     "RandomWalk",
     "RootSlide",
     "SubtreePruneRegraft",
+    "SubtreeSlide",
     "NarrowExchange",
     "WideExchange",
     "WilsonBalding",

@@ -10,6 +10,7 @@ from aspartik.b3.operators import (
     NodeSlide,
     ParamScale,
     RootSlide,
+    SubtreeSlide,
     TreeScale,
     WideExchange,
     WilsonBalding,
@@ -39,7 +40,7 @@ priors = [
 operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
-    NodeSlide(tree, Normal(0, 1), rng, weight=30),
+    SubtreeSlide(tree, Normal(0, 1), rng, weight=30),
     NarrowExchange(tree, rng, weight=30),
     WideExchange(tree, rng, weight=3),
     WilsonBalding(tree, rng, weight=3),
@@ -59,7 +60,7 @@ likelihood = Likelihood(
 )
 
 loggers = [
-    TreeLogger(tree=tree, path="target/primate.trees", every=1_000),
+    TreeLogger(tree=tree, path="target/primate.trees", every=1),
     PrintLogger(every=10_000),
     ValueLogger(
         {
