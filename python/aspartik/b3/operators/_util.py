@@ -68,18 +68,17 @@ def scale_on_range(
     return (new_point, log(scale))
 
 
-def family(tree: Tree, rng: RNG) -> tuple[Node, Node, Internal, Internal]:
+def family(tree: Tree, rng: RNG) -> tuple[Node, Node, Internal, Internal | None]:
     root = tree.root
 
     node = tree.random_internal(rng)
-    while node == root or tree.parent_of(node) == root:
+    while node == root:
         node = tree.random_internal(rng)
 
     parent = tree.parent_of(node)
     assert parent is not None  # checked in the loop
 
     grandparent = tree.parent_of(parent)
-    assert grandparent is not None  # checked in the loop
 
     sibling = tree.other_child(parent, node)
 

@@ -22,6 +22,8 @@ class SubtreePruneRegraft(Operator):
         rng = self.rng
 
         node, sibling, parent, grandparent = family(tree, rng)
+        while grandparent is None:
+            node, sibling, parent, grandparent = family(tree, rng)
 
         parent_height = tree.height_of(parent)
 
