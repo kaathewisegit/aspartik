@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, Tree
-from ._util import sample_range
+from ._util import assert_two_internals, sample_range
 
 
 @dataclass(slots=True)
@@ -25,17 +25,11 @@ class NodeSlide(Operator):
     rng: RNG
     weight: float = 1
 
+    def __post_init__(self):
+        assert_two_internals(self)
+
     def propose(self) -> Proposal:
-        """
-        If there are no non-root internal nodes, the operator will bail with
-        `Proposal.Reject`.
-        """
-
         tree = self.tree
-
-        # automatically fail on trees without non-root internal nodes
-        if tree.num_internals == 1:
-            return Proposal.Reject()
 
         # Pick a non-root internal node
         node = tree.random_internal(self.rng)

@@ -83,3 +83,10 @@ def family(tree: Tree, rng: RNG) -> tuple[Node, Node, Internal, Internal | None]
     sibling = tree.other_child(parent, node)
 
     return node, sibling, parent, grandparent
+
+
+def assert_two_internals(operator) -> None:
+    if operator.tree.num_internals < 2:
+        raise ValueError(
+            f"`{operator.__class__.__name__}` requires the tree to have at least 2 internal nodes"
+        )

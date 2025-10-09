@@ -4,6 +4,7 @@ from math import log
 from ...rng import RNG
 from .. import Operator, Proposal, Tree
 from ..tree import Internal, Node
+from ._util import assert_two_internals
 
 
 @dataclass(slots=True)
@@ -21,11 +22,11 @@ class NarrowExchange(Operator):
     rng: RNG
     weight: float = 1
 
+    def __post_init__(self):
+        assert_two_internals(self)
+
     def propose(self) -> Proposal:
         tree = self.tree
-
-        if tree.num_internals < 2:
-            return Proposal.Reject()
 
         num_grandparents_before = tree.num_grandparents()
         if num_grandparents_before == 0:

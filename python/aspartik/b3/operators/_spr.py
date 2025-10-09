@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, Tree
-from ._util import family, scale_on_range
+from ._util import assert_two_internals, family, scale_on_range
 
 
 @dataclass(slots=True)
@@ -16,6 +16,9 @@ class SubtreePruneRegraft(Operator):
     """The tree to edit."""
     rng: RNG
     weight: float = 1
+
+    def __post_init__(self):
+        assert_two_internals(self)
 
     def propose(self) -> Proposal:
         tree = self.tree
