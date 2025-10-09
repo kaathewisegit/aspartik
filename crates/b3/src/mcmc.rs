@@ -5,6 +5,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use rand::Rng as _;
 
+use std::time::Instant;
+
 use crate::{
 	PyLogger, PyPrior,
 	likelihood::PyLikelihood,
@@ -181,21 +183,29 @@ impl Mcmc {
 impl Mcmc {
 	fn step(&self, py: Python) -> Result<()> {
 		let rng = self.rng.get();
-		let operator = self.scheduler.select_operator(&mut rng.inner());
+		let operator_index =
+			self.scheduler.random_operator_index(&mut rng.inner());
+		let operator = self.scheduler.get_operator(operator_index);
 
+		let propose_start = Instant::now();
 		let proposal = operator.propose(py).with_context(|| {
 			anyhow!(
 				"Operator {} failed while generating a proposal",
 				operator.repr(py).unwrap()
 			)
 		})?;
+		self.scheduler.record_propose_duration(
+			operator_index,
+			Instant::now() - propose_start,
+		);
+
 		let hastings = match proposal {
 			Proposal::Accept() => {
-				self.accept(py)?;
+				self.accept(py, operator_index)?;
 				return Ok(());
 			}
 			Proposal::Reject() => {
-				self.reject(py)?;
+				self.reject(py, operator_index)?;
 				return Ok(());
 			}
 			Proposal::Hastings(ratio) => ratio,
@@ -204,14 +214,21 @@ impl Mcmc {
 		let prior = self.prior(py)?;
 		// The proposal will be rejected regardless of likelihood
 		if prior == f64::NEG_INFINITY {
-			self.reject(py)?;
+			self.reject(py, operator_index)?;
 			return Ok(());
 		}
+
+		let likelihood_start = Instant::now();
 
 		// Update likelihoods.
 		for py_likelihood in &self.likelihoods {
 			py_likelihood.get().inner().propose(py)?;
 		}
+
+		self.scheduler.record_likelihood_duration(
+			operator_index,
+			Instant::now() - likelihood_start,
+		);
 
 		// Collect the resulting likelihoods.  This is done separately
 		// from proposing to allow launching parallel workloads.  A user
@@ -241,18 +258,18 @@ impl Mcmc {
 		if ratio > random_0_1.ln() {
 			*self.posterior.lock() = new_posterior;
 
-			self.accept(py)?;
+			self.accept(py, operator_index)?;
 		} else {
-			self.reject(py)?;
+			self.reject(py, operator_index)?;
 		}
 
 		Ok(())
 	}
 
-	fn accept(&self, py: Python) -> Result<()> {
+	fn accept(&self, py: Python, operator_index: usize) -> Result<()> {
 		trace!(target: "b3::mcmc", "accept");
 
-		self.scheduler.accept();
+		self.scheduler.accept(py, operator_index)?;
 
 		for likelihood in &self.likelihoods {
 			likelihood.get().inner().accept()?;
@@ -265,10 +282,10 @@ impl Mcmc {
 		Ok(())
 	}
 
-	fn reject(&self, py: Python) -> Result<()> {
+	fn reject(&self, py: Python, operator_index: usize) -> Result<()> {
 		trace!(target: "b3::mcmc", "reject");
 
-		self.scheduler.reject();
+		self.scheduler.reject(py, operator_index)?;
 
 		for likelihood in &self.likelihoods {
 			likelihood.get().inner().reject()?;

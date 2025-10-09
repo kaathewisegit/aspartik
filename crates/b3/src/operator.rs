@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Result;
 use log::{debug, trace};
 use parking_lot::Mutex;
@@ -54,8 +56,6 @@ impl Proposal {
 #[derive(Debug)]
 pub struct PyOperator {
 	inner: Py<PyAny>,
-	accepts: Mutex<usize>,
-	rejects: Mutex<usize>,
 }
 
 impl<'py> FromPyObject<'py> for PyOperator {
@@ -65,8 +65,6 @@ impl<'py> FromPyObject<'py> for PyOperator {
 
 		let out = Self {
 			inner: obj.clone().unbind(),
-			accepts: Mutex::new(0),
-			rejects: Mutex::new(0),
 		};
 		debug!(
 			target: "b3::operator::extract_bound",
@@ -105,12 +103,12 @@ impl PyOperator {
 		Ok(self.inner.bind(py).get_type().name()?.to_string())
 	}
 
-	pub fn accept(&self) {
-		*self.accepts.lock() += 1;
+	pub fn accept(&self, _py: Python) -> Result<()> {
+		Ok(())
 	}
 
-	pub fn reject(&self) {
-		*self.rejects.lock() += 1;
+	pub fn reject(&self, _py: Python) -> Result<()> {
+		Ok(())
 	}
 }
 
@@ -118,12 +116,33 @@ impl PyOperator {
 pub struct WeightedScheduler {
 	operators: Vec<PyOperator>,
 	weights: Vec<f64>,
-	current: Mutex<usize>,
+	statistics: Mutex<Statistics>,
+}
+
+#[derive(Debug)]
+struct Statistics {
+	accepts: Vec<usize>,
+	rejects: Vec<usize>,
+	propose: Vec<Duration>,
+	likelihood: Vec<Duration>,
+}
+
+impl Statistics {
+	fn new(len: usize) -> Self {
+		Self {
+			accepts: vec![0; len],
+			rejects: vec![0; len],
+			propose: vec![Duration::default(); len],
+			likelihood: vec![Duration::default(); len],
+		}
+	}
 }
 
 impl WeightedScheduler {
 	pub fn new(py: Python, operators: Vec<PyOperator>) -> Result<Self> {
-		let mut weights = vec![];
+		let num_operators = operators.len();
+
+		let mut weights = Vec::with_capacity(num_operators);
 		for operator in &operators {
 			// tries don't need context because they are already
 			// checked by PyOperator's `extract_bound`
@@ -144,44 +163,66 @@ impl WeightedScheduler {
 		Ok(Self {
 			operators,
 			weights,
-			current: Mutex::new(0),
+			statistics: Statistics::new(num_operators).into(),
 		})
 	}
 
-	pub fn select_operator(&self, rng: &mut Rng) -> &PyOperator {
-		// error handling or validation in `new`
-		let dist = WeightedIndex::new(&self.weights).unwrap();
-
-		let index = dist.sample(rng);
-		*self.current.lock() = index;
-
-		trace!(
-			target: "b3::operators::select_operator",
-			index;
-			""
-		);
-
+	pub fn get_operator(&self, index: usize) -> &PyOperator {
 		&self.operators[index]
 	}
 
-	pub fn accept(&self) {
-		self.operators[*self.current.lock()].accept();
+	pub fn random_operator_index(&self, rng: &mut Rng) -> usize {
+		let dist = WeightedIndex::new(&self.weights).unwrap();
+		dist.sample(rng)
 	}
 
-	pub fn reject(&self) {
-		self.operators[*self.current.lock()].reject();
+	pub fn accept(&self, py: Python, index: usize) -> Result<()> {
+		self.operators[index].accept(py)?;
+		let mut statistics = self.statistics.lock();
+		statistics.accepts[index] += 1;
+		Ok(())
+	}
+
+	pub fn reject(&self, py: Python, index: usize) -> Result<()> {
+		self.operators[index].reject(py)?;
+		let mut statistics = self.statistics.lock();
+		statistics.rejects[index] += 1;
+		Ok(())
+	}
+
+	pub fn record_propose_duration(
+		&self,
+		index: usize,
+		duration: Duration,
+	) {
+		let mut statistics = self.statistics.lock();
+		statistics.propose[index] += duration;
+	}
+
+	pub fn record_likelihood_duration(
+		&self,
+		index: usize,
+		duration: Duration,
+	) {
+		let mut statistics = self.statistics.lock();
+		statistics.likelihood[index] += duration;
 	}
 
 	pub fn statistics(&self, py: Python) -> Result<Py<PyList>> {
+		let statistics = self.statistics.lock();
+
 		let out = PyList::empty(py);
 
-		for operator in &self.operators {
-			let copy = operator.inner.clone_ref(py);
-			let accepts = *operator.accepts.lock();
-			let rejects = *operator.rejects.lock();
+		for i in 0..self.operators.len() {
+			let copy = self.operators[i].inner.clone_ref(py);
+			let accepts = statistics.accepts[i];
+			let rejects = statistics.rejects[i];
+			let propose = statistics.propose[i];
+			let likelihood = statistics.likelihood[i];
 
 			let tuple =
-				(copy, accepts, rejects).into_pyobject(py)?;
+				(copy, accepts, rejects, propose, likelihood)
+					.into_pyobject(py)?;
 
 			out.append(tuple)?;
 		}

@@ -60,7 +60,7 @@ likelihood = Likelihood(
 )
 
 loggers = [
-    TreeLogger(tree=tree, path="target/primate.trees", every=1),
+    TreeLogger(tree=tree, path="target/primate.trees", every=1_000),
     PrintLogger(every=10_000),
     ValueLogger(
         {

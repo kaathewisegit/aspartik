@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
+from datetime import timedelta
 from typing import Any, ClassVar, Literal, Optional, Protocol, runtime_checkable
 
 from ..data import DNASeq
@@ -479,14 +480,19 @@ class MCMC:
         """
 
     @property
-    def operator_statistics(self) -> list[tuple[Operator, int, int]]:
+    def operator_statistics(
+        self,
+    ) -> list[tuple[Operator, int, int, timedelta, timedelta]]:
         """
         Operator statistics for this run
 
-        Returns a list of `(operator, accepts, rejects)` tuple, where `accepts`
-        is the number of times operator's proposals have been accepted and
-        `rejects` is the number of times they have been rejected.  `operator`
-        is the reference to the original operator object.
+        Returns a list of `(operator, accepts, rejects, propose, likelihood)`
+        tuples, where `accepts` is the number of times operator's proposals
+        have been accepted and `rejects` is the number of times they have been
+        rejected.  `propose` and `likelihood` records the total time the MCMC
+        spent waiting for the operator to generate a proposal and calculate it
+        respectively.  Finally, `operator` is the reference to the original
+        operator object.
         """
 
     def run(self) -> None:
