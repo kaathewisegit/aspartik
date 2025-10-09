@@ -12,6 +12,8 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -32,8 +34,6 @@ jobs:
 
       - name: Install Biome
         uses: biomejs/setup-biome@v2
-
-      - uses: actions/checkout@v4
 
       - name: Install Python dependencies
         run: |
