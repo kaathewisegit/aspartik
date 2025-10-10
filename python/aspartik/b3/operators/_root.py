@@ -11,7 +11,11 @@ from ._util import scale_on_range
 @dataclass(slots=True)
 class RootSlide(Operator):
     """
-    TODO
+    Scales the height of the root node
+
+    The height will be scaled between `factor` and `1 / factor` sampled with
+    `distribution`.  If the move will put the root below one of its children
+    the operation gets rejected.
     """
 
     tree: Tree

@@ -11,7 +11,13 @@ from ._util import family, scale_on_range
 @dataclass(slots=True)
 class SubtreeLeap(Operator):
     """
-    TODO
+    Moves a node a distance, changing the topology randomly
+
+    First, a distance delta is sampled from the distribution.  The operator
+    selects a random node and all edges `delta` away from that node (down if
+    the delta is negative or up and down if it's positive).  One of those edges
+    is randomly selected and the node is spliced into it.  If the delta is
+    above the root, the node will become the new root.
     """
 
     tree: Tree

@@ -9,7 +9,13 @@ from ._util import scale_on_range
 @dataclass(slots=True)
 class RandomWalk(Operator):
     """
-    TODO
+    Adds or subtracts values to a parameter irrespective of its value
+
+    The delta is sampled uniformly from `[0, window)` and is negated half of
+    the time.
+
+    This parameter doesn't have bounds.  Use the `Bound` prior to restrict
+    parameter values.
     """
 
     param: Real
