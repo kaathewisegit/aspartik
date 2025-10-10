@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 
-from ...stats import distributions
+from ...stats.distributions import Continuous, Discrete
 from .. import Integer, Prior, Real
 
 
@@ -17,15 +18,23 @@ class Distribution(Prior):
     Parameter to estimate.  Can be either `Real` or `Integer` for discrete
     distributions.
     """
-    distribution: distributions.Distribution
+    distribution: Continuous | Discrete
     """Distribution against which the parameter prior is calculated."""
+    _distr_prob: Callable = field(init=False)
 
     def __post_init__(self):
-        # TODO: check that param type fits the distr type
-        if hasattr(self.distribution, "pdf"):
-            self.distr_prob = self.distribution.ln_pdf  # type: ignore
-        elif hasattr(self.distribution, "pmf"):
-            self.distr_prob = self.distribution.ln_pmf  # type: ignore
+        if isinstance(self.distribution, Continuous):
+            self._distr_prob = self.distribution.ln_pdf
+            if not isinstance(self.param, Real):
+                raise TypeError(
+                    "Expected the parameter to be `Real` because the distribution is continuous"
+                )
+        elif isinstance(self.distribution, Discrete):
+            if not isinstance(self.param, Integer):
+                raise TypeError(
+                    "Expected the parameter to be `Integer` because the distribution is discrete"
+                )
+            self._distr_prob = self.distribution.ln_pmf
         else:
             raise Exception("not a distribution")
 
@@ -38,6 +47,6 @@ class Distribution(Prior):
         out = 0
 
         for i in range(len(self.param)):
-            out += self.distr_prob(self.param[i])
+            out += self._distr_prob(self.param[i])
 
         return out
