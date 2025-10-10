@@ -218,9 +218,8 @@ impl ContinuousCDF for StudentsT {
 		}
 	}
 
-	/// Calculates the cumulative distribution function for the student's
-	/// t-distribution
-	/// at `x`
+	/// Calculates the survival function for the student's t-distribution at
+	/// `x`.
 	///
 	/// # Formula
 	///

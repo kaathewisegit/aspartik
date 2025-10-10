@@ -85,10 +85,12 @@ fn test_variance_none() {
 	}
 }
 
-// TODO: valid skewness tests
 #[test]
-fn test_skewness_freedom_lte_3() {
-	assert!(new_dist((1.0, 1.0, 1.0)).mean().is_none());
+fn test_skewness() {
+	assert!(new_dist((1.0, 1.0, 1.0)).skewness().is_none());
+	assert!(new_dist((1.0, 1.0, 3.0)).skewness().is_none());
+	// boundary
+	assert_eq!(new_dist((1.0, 1.0, 4.0)).skewness().unwrap(), 0.0);
 }
 
 #[test]
@@ -213,9 +215,8 @@ fn test_cdf() {
 		((0.0, 1.0, 2.0), 2.0, 0.908248290463863),
 		((0.0, 1.0, 2.0), -2.0, 0.091751709536137),
 		((0.0, 1.0, f64::INFINITY), 0.0, 0.5),
-		// TODO: these are curiously low accuracy and should be re-examined
-		((0.0, 1.0, f64::INFINITY), 1.0, 0.841344746068543),
-		((0.0, 1.0, f64::INFINITY), 2.0, 0.977249868051821),
+		((0.0, 1.0, f64::INFINITY), 1.0, 0.8413447460685429),
+		((0.0, 1.0, f64::INFINITY), 2.0, 0.9772498680518208),
 	];
 	for (args, p, expected) in cases {
 		assert_close(args, p, |d, p| d.cdf(p), expected);
@@ -236,9 +237,8 @@ fn test_sf() {
 		((0.0, 1.0, 2.0), 2.0, 0.091751709536137),
 		((0.0, 1.0, 2.0), -2.0, 0.908248290463862),
 		((0.0, 1.0, f64::INFINITY), 0.0, 0.5),
-		// TODO: these are curiously low accuracy and should be re-examined
-		((0.0, 1.0, f64::INFINITY), 1.0, 0.158655253945057),
-		((0.0, 1.0, f64::INFINITY), 2.0, 0.022750131947162),
+		((0.0, 1.0, f64::INFINITY), 1.0, 0.15865525393145705),
+		((0.0, 1.0, f64::INFINITY), 2.0, 0.02275013194817921),
 	];
 	for (args, p, expected) in cases {
 		assert_close(args, p, |d, p| d.sf(p), expected);
