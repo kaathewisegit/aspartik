@@ -89,6 +89,11 @@ impl Mcmc {
 	}
 
 	#[getter]
+	fn operators(&self, py: Python) -> Vec<Py<PyAny>> {
+		self.scheduler.operators(py)
+	}
+
+	#[getter]
 	fn likelihoods(&self, py: Python) -> Vec<Py<PyLikelihood>> {
 		self.likelihoods.iter().map(|l| l.clone_ref(py)).collect()
 	}
@@ -109,7 +114,7 @@ impl Mcmc {
 			self.length,
 			self.state(py),
 			self.priors(py),
-			// TODO: operators
+			self.operators(py),
 			PyList::empty(py),
 			self.likelihoods(py),
 			self.loggers(py),

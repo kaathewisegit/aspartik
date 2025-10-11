@@ -443,6 +443,11 @@ class MCMC:
         All priors
         """
     @property
+    def operators(self) -> list[Operator]:
+        """
+        A list of all operator objects
+        """
+    @property
     def likelihoods(self) -> list[Likelihood]:
         """
         All accounted for likelihoods

@@ -103,6 +103,10 @@ impl PyOperator {
 		Ok(self.inner.bind(py).get_type().name()?.to_string())
 	}
 
+	pub fn clone_inner(&self, py: Python) -> Py<PyAny> {
+		self.inner.clone_ref(py)
+	}
+
 	pub fn accept(&self, _py: Python) -> Result<()> {
 		Ok(())
 	}
@@ -169,6 +173,10 @@ impl WeightedScheduler {
 
 	pub fn get_operator(&self, index: usize) -> &PyOperator {
 		&self.operators[index]
+	}
+
+	pub fn operators(&self, py: Python) -> Vec<Py<PyAny>> {
+		self.operators.iter().map(|p| p.clone_inner(py)).collect()
 	}
 
 	pub fn random_operator_index(&self, rng: &mut Rng) -> usize {
