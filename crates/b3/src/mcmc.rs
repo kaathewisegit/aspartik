@@ -115,7 +115,6 @@ impl Mcmc {
 			self.state(py),
 			self.priors(py),
 			self.operators(py),
-			PyList::empty(py),
 			self.likelihoods(py),
 			self.callbacks(py),
 			self.rng(py),
