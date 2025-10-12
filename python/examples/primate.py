@@ -44,7 +44,11 @@ operators = [
     WideExchange(tree, rng, weight=3),
     WilsonBalding(tree, rng, weight=3),
     RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
-    # Uniform scale?
+    # BEAST's `UniformOperator` picks one of the parameter dimensions moves it
+    # randomly within bounds.  Using it on `nodeHeights` is equivalent to
+    # selecting a random node and moving it uniformly between it's maximum and
+    # minimum heights, which is what `NodeSlide` with `Uniform` does.
+    NodeSlide(tree, Uniform(0, 1), rng, weight=30),
     ParamScale(yule_birth_rate, 0.75, Uniform(0, 1), rng, weight=3),
 ]
 
