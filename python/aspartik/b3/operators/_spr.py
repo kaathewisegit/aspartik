@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, Tree
-from ._util import assert_two_internals, family, scale_on_range
+from ._util import assert_two_internals, family
 
 
 @dataclass(slots=True)

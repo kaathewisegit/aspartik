@@ -78,16 +78,16 @@ impl EpochScale {
 			py,
 			intern!(py, "aspartik.b3.operators._util"),
 		)?;
-		let func = py_get_attr!(module, "scale_on_range")?;
+		let func = py_get_attr!(module, "sample_range")?;
 
-		let (scale, ratio) = func
+		let scale = func
 			.call1((
 				low,
 				high,
 				self.distribution(py),
 				self.rng(py),
 			))?
-			.extract::<(f64, f64)>()?;
+			.extract::<f64>()?;
 
 		let mut rng = self.rng.get().inner();
 
@@ -101,7 +101,7 @@ impl EpochScale {
 		let move_to = lower + scale * (upper - lower);
 		let delta = move_to - upper;
 
-		let mut num_scaled = 0;
+		let mut num_scaled: u32 = 0;
 
 		for node in tree.internals() {
 			let height = tree.height_of(&node);
@@ -124,6 +124,7 @@ impl EpochScale {
 			return Ok(Proposal::Reject());
 		}
 
+		let ratio = scale.ln() * f64::from(num_scaled);
 		Ok(Proposal::Hastings(ratio))
 	}
 }
