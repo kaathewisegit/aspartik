@@ -31,14 +31,13 @@ kappa = Real(2.0)
 yule_birth_rate = Real(1.0)
 
 priors = [
-    # Distribution(kappa, LogNormal(1.0, 1.25)),
+    Distribution(kappa, LogNormal(1.0, 1.25)),
     Distribution(yule_birth_rate, LogNormal(1.0, 1.25)),
     Yule(tree, yule_birth_rate),
-    # Bound(kappa, 0, 50),  # TODO: runaway parameter
 ]
 
 operators = [
-    # ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
+    ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
     SubtreeSlide(tree, Normal(0, 1), rng, weight=30),
     NarrowExchange(tree, rng, weight=30),
@@ -51,8 +50,7 @@ operators = [
 
 likelihood = Likelihood(
     msa=msa,
-    # substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
-    substitution=JC(),
+    substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
     clock=StrictClock(1.0),
     tree=tree,
     calculator="cpu",

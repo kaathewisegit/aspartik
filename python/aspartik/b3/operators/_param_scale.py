@@ -67,12 +67,7 @@ class ParamScale(Operator):
                         self.param[i] *= scale
                         num_scaled += 1
 
-                # XXX: BEAST2 claims that the Hastings ratio is (num_dimensions
-                # - 1) bigger than the 1-parameter case.  The proof should be
-                # in a certain Alexei/Nicholes article.  I'll have to
-                # investigate, as it's unclear what's supposed to happen when
-                # there are only two dimensions (or only two-non zero values).
-                ratio = num_scaled * log(scale)
+                ratio = (num_scaled - 2) * log(scale)
                 return Proposal.Hastings(ratio)
             case "independent":
                 ratio = 0
