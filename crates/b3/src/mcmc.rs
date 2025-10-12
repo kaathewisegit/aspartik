@@ -8,7 +8,7 @@ use rand::Rng as _;
 use std::time::Instant;
 
 use crate::{
-	PyLogger, PyPrior,
+	PyCallback, PyPrior,
 	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
 };
@@ -27,7 +27,7 @@ pub struct Mcmc {
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
 	likelihoods: Vec<Py<PyLikelihood>>,
-	loggers: Vec<PyLogger>,
+	callbacks: Vec<PyCallback>,
 	rng: Py<PyRng>,
 }
 
@@ -40,7 +40,7 @@ impl Mcmc {
 	#[new]
 	#[pyo3(signature = (
 		burnin, length,
-		state, priors, operators, likelihoods, loggers, rng,
+		state, priors, operators, likelihoods, callbacks, rng,
 	))]
 	fn new(
 		py: Python,
@@ -52,7 +52,7 @@ impl Mcmc {
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
 		likelihoods: Vec<Py<PyLikelihood>>,
-		loggers: Vec<PyLogger>,
+		callbacks: Vec<PyCallback>,
 		rng: Py<PyRng>,
 	) -> Result<Mcmc> {
 		let scheduler = WeightedScheduler::new(py, operators)?;
@@ -68,7 +68,7 @@ impl Mcmc {
 			priors,
 			scheduler,
 			likelihoods,
-			loggers,
+			callbacks,
 			rng,
 		})
 	}
@@ -99,8 +99,8 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn loggers(&self, py: Python) -> Vec<Py<PyAny>> {
-		self.loggers.iter().map(|l| l.clone_ref(py)).collect()
+	fn callbacks(&self, py: Python) -> Vec<Py<PyAny>> {
+		self.callbacks.iter().map(|l| l.clone_ref(py)).collect()
 	}
 
 	#[getter]
@@ -117,7 +117,7 @@ impl Mcmc {
 			self.operators(py),
 			PyList::empty(py),
 			self.likelihoods(py),
-			self.loggers(py),
+			self.callbacks(py),
 			self.rng(py),
 		)
 			.into_pyobject(py)?;
@@ -135,7 +135,7 @@ impl Mcmc {
 			})?;
 
 			if current_step >= self_.burnin {
-				Self::log(
+				Self::call_callbacks(
 					this.clone_ref(py),
 					py,
 					current_step,
@@ -303,15 +303,19 @@ impl Mcmc {
 		Ok(())
 	}
 
-	fn log(this: Py<Self>, py: Python, current_step: usize) -> Result<()> {
+	fn call_callbacks(
+		this: Py<Self>,
+		py: Python,
+		current_step: usize,
+	) -> Result<()> {
 		let self_ = this.get();
 
-		for logger in &self_.loggers {
-			if !logger.should_log(current_step) {
+		for callback in &self_.callbacks {
+			if !callback.should_call(current_step) {
 				continue;
 			}
 
-			let result = logger.log(py, this.clone_ref(py));
+			let result = callback.call(py, this.clone_ref(py));
 			result.with_context(|| {
 				anyhow!("Failed to log on step {current_step}")
 			})?;

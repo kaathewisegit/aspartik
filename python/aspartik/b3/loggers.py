@@ -1,7 +1,7 @@
 """Classes which record the state of the simulation.
 
-All classes here adhere to the `Logger` protocol and can be passed to the `run`
-function.
+All classes here adhere to the `Callback` protocol and should be passed as
+such.
 """
 
 import json
@@ -10,11 +10,11 @@ from dataclasses import dataclass, field
 from io import TextIOBase
 from typing import Any
 
-from . import MCMC, Logger, Parameter, Prior, Tree
+from . import MCMC, Callback, Parameter, Prior, Tree
 
 
 @dataclass(slots=True)
-class TreeLogger(Logger):
+class TreeLogger(Callback):
     """Records the topology of the tree into a `.trees` file."""
 
     tree: Tree
@@ -40,7 +40,7 @@ class TreeLogger(Logger):
 
 
 @dataclass(slots=True)
-class PrintLogger(Logger):
+class PrintLogger(Callback):
     every: int
 
     def __post_init__(self):
@@ -53,7 +53,7 @@ class PrintLogger(Logger):
 
 
 @dataclass(slots=True)
-class ValueLogger(Logger):
+class ValueLogger(Callback):
     map: Mapping[str, Any]
     path: str
     every: int

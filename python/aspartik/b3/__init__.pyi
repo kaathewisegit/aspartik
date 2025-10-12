@@ -378,31 +378,33 @@ class Operator(Protocol):
         cached value will still be used.
         """
 
-class Logger(Protocol):
+class Callback(Protocol):
     """
-    Custom state loggers
+    Custom callbacks
 
-    `b3` supports arbitrary logging via this protocol.  The `log` function is
-    passed a reference to the main `MCMC` object, so the logger can either take
-    state variables in the constructor of fetch them via the `MCMC` attributes.
+    `b3` supports arbitrary logging and checks via this protocol.  The `call`
+    function is passed a reference to the main `MCMC` object, so the callback
+    can either take state variables in the constructor of fetch them via the
+    `MCMC` attributes.
 
-    The `log` function won't be called after each step for efficiency.  See
-    [`every`](#Logger.every) for configuring how often the logger will be
+    The `call` function won't be called after each step for efficiency.  See
+    [`every`](#Callback.every) for configuring how often the callback will be
     invoked.
     """
 
     every: int
-    """How often a logger should be called
+    """How often this callback should be called
 
-    The `MCMC` will call each logger when `index % every` is 0.  This value
-    is read once when MCMC is created, so if it's changed during execution,
-    the old `every` value will continue to be used.
+    The `MCMC` will call each callback object when `index % every` is 0.  This
+    value is read once when MCMC is created, so if it's changed during
+    execution, the old `every` value will continue to be used.
     """
 
-    def log(self, mcmc: MCMC) -> None:
-        """Logging step
+    def call(self, mcmc: MCMC) -> None:
+        """
+        A custom operation
 
-        Allows the logger to perform arbitrary actions.
+        Used by loggers and other periodic actions.
         """
 
 class MCMC:
@@ -418,7 +420,7 @@ class MCMC:
         priors: Sequence[Prior],
         operators: Sequence[Operator],
         likelihoods: Sequence[Likelihood],
-        loggers: Sequence[Logger],
+        callbacks: Sequence[Callback],
         rng: RNG,
         *,
         validate: bool = False,
@@ -453,9 +455,9 @@ class MCMC:
         All accounted for likelihoods
         """
     @property
-    def loggers(self) -> list[Logger]:
+    def callbacks(self) -> list[Callback]:
         """
-        All active loggers
+        All active callbacks
         """
     @property
     def rng(self) -> RNG:

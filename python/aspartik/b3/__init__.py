@@ -25,10 +25,10 @@ class Operator(Protocol):
 
 
 @runtime_checkable
-class Logger(Protocol):
+class Callback(Protocol):
     every: int
 
-    def log(self, mcmc, index): ...
+    def call(self, mcmc, index): ...
 
 
 @runtime_checkable

@@ -106,7 +106,7 @@ mcmc = MCMC(
     priors=priors,
     operators=operators,
     likelihoods=[likelihood],
-    loggers=loggers,
+    callbacks=loggers,
     rng=rng,
 )
 

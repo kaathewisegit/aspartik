@@ -1,7 +1,7 @@
 mod builtin;
+pub mod callback;
 pub mod clock;
 pub mod likelihood;
-pub mod log;
 pub mod mcmc;
 pub mod operator;
 pub mod parameter;
@@ -11,7 +11,7 @@ mod transitions;
 mod tree;
 pub mod util;
 
-pub use log::PyLogger;
+pub use callback::PyCallback;
 pub use prior::PyPrior;
 pub use transitions::Transitions;
 pub use tree::Tree;

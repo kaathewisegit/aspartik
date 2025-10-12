@@ -36,7 +36,7 @@ def test_mcmc():
         priors=[prior_a],
         operators=[op_param_scale, op_tree_scale],
         likelihoods=[likelihood],
-        loggers=[],
+        callbacks=[],
         rng=rng,
     )
 
