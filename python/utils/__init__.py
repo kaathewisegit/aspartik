@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from aspartik.b3 import Operator, Tree
+from aspartik.b3 import Operator, Proposal, Tree
 from aspartik.rng import RNG
 
 
@@ -21,9 +21,14 @@ def check_tree_operator(factory: Callable[[Tree], Operator]) -> None:
     operator = factory(tree)
 
     for _ in range(1000):
-        operator.propose()
+        proposal = operator.propose()
+        if proposal == Proposal.Reject():
+            tree.reject()
+        else:
+            print(proposal)
+            tree.accept()
+
         tree.validate()
-        tree.accept()
 
 
 type Frequencies = tuple[float, float, float, float]

@@ -15,7 +15,7 @@ use rng::Rng;
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-#[pyclass(module = "aspartik.b3", frozen)]
+#[pyclass(module = "aspartik.b3", frozen, eq)]
 pub enum Proposal {
 	Reject(),
 	Hastings(f64),

@@ -17,7 +17,8 @@ def _is_on_range(distribution) -> bool:
 def _sample_rescale(low, high, distribution, rng: RNG):
     x = distribution.sample(rng)
     ratio = (x - distribution.lower) / (distribution.upper - distribution.lower)
-    return interval_to_range(ratio, low, high)
+    # `ratio` is in [0, 1]
+    return low + (high - low) * ratio
 
 
 def sample_range(low: float, high: float, distribution, rng: RNG) -> int | float:

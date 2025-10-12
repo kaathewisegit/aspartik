@@ -16,7 +16,7 @@ from aspartik.b3.operators import (
     WilsonBalding,
 )
 from aspartik.b3.priors import Bound, Distribution, Yule
-from aspartik.b3.substitutions import HKY
+from aspartik.b3.substitutions import HKY, JC
 from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
@@ -31,14 +31,14 @@ kappa = Real(2.0)
 yule_birth_rate = Real(1.0)
 
 priors = [
-    Distribution(kappa, LogNormal(1.0, 1.25)),
+    # Distribution(kappa, LogNormal(1.0, 1.25)),
     Distribution(yule_birth_rate, LogNormal(1.0, 1.25)),
     Yule(tree, yule_birth_rate),
     # Bound(kappa, 0, 50),  # TODO: runaway parameter
 ]
 
 operators = [
-    ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
+    # ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
     SubtreeSlide(tree, Normal(0, 1), rng, weight=30),
     NarrowExchange(tree, rng, weight=30),
@@ -49,11 +49,10 @@ operators = [
     ParamScale(yule_birth_rate, 0.75, Uniform(0, 1), rng, weight=3),
 ]
 
-# TODO: frequencies from alignment
-sub_model = HKY((0.25, 0.25, 0.25, 0.25), kappa)
 likelihood = Likelihood(
     msa=msa,
-    substitution=sub_model,
+    # substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
+    substitution=JC(),
     clock=StrictClock(1.0),
     tree=tree,
     calculator="cpu",
@@ -69,7 +68,6 @@ loggers = [
             "prior": lambda: mcmc.prior,
             "likelihood": lambda: mcmc.likelihood,
             "tree:root_height": lambda: tree.height_of(tree.root),
-            "prior:kappa": priors[0],
             "kappa": kappa,
             "yule_birth_rate": yule_birth_rate,
         },
