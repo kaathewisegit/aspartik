@@ -30,7 +30,7 @@ trait LikelihoodTrait<const N: usize> {
 		root: usize,
 	) -> Result<()>;
 
-	fn likelihood(&mut self) -> Result<f64>;
+	fn likelihood(&mut self, weights: &[f64]) -> Result<f64>;
 
 	fn accept(&mut self) -> Result<()>;
 
@@ -45,6 +45,7 @@ pub struct GenericLikelihood<const N: usize> {
 	clock: PyClock,
 	transitions: Transitions<N>,
 	calculator: DynCalculator<N>,
+	weights: Vec<f64>,
 	/// Last accepted likelihood
 	cache: f64,
 	/// Last calculated likelihood.  It's different from the cache, because
@@ -68,6 +69,8 @@ impl GenericLikelihood<4> {
 		let num_internals = msa.num_sequences() - 1;
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
+		let weights = vec![1.0; msa.num_sites()];
+
 		let calculator: DynCalculator<4> = match calculator.as_str() {
 			"cpu" => Box::new(CpuLikelihood::new(msa)),
 			"thread" => Box::new(ThreadedLikelihood::new(
@@ -87,6 +90,7 @@ impl GenericLikelihood<4> {
 			clock,
 			transitions,
 			calculator,
+			weights,
 			cache: f64::NAN,
 			last: f64::NAN,
 			launched_update: false,
@@ -153,7 +157,7 @@ impl<const N: usize> GenericLikelihood<N> {
 			return Ok(self.cache);
 		}
 
-		let likelihood = self.calculator.likelihood()?;
+		let likelihood = self.calculator.likelihood(&self.weights)?;
 		trace!(
 			target: "b3::likelihood::likelihood",
 			likelihood;

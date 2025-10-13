@@ -132,18 +132,26 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 	/// Synchronous, blocks on the `self.likelihoods` buffer.
 	///
 	/// [`update_likelihoods`]: Self::update_likelihoods
-	fn likelihood(&mut self) -> Result<f64> {
+	fn likelihood(&mut self, weights: &[f64]) -> Result<f64> {
 		self.stream.memcpy_dtoh(
 			&self.likelihoods,
 			&mut self.host_likelihoods,
 		)?;
 
+		let mut out: f64 = 0.0;
+
+		for (likelihood, weight) in
+			self.host_likelihoods.iter().zip(weights)
+		{
+			out += likelihood * weight;
+		}
+
 		let scale_sums = self.stream.memcpy_dtov(&self.scale_sums)?;
 		let scale_sum: u32 = scale_sums.iter().sum();
 
-		let likelihood: f64 = self.host_likelihoods.iter().sum();
+		out -= f64::from(scale_sum);
 
-		Ok(likelihood - f64::from(scale_sum))
+		Ok(out)
 	}
 
 	fn accept(&mut self) -> Result<()> {

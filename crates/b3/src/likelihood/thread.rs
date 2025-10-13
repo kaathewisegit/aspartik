@@ -11,6 +11,7 @@ type Update<const N: usize> =
 
 pub struct ThreadedLikelihood<const N: usize> {
 	updates: Vec<Sender<Arc<Update<N>>>>,
+	weights: Vec<Sender<Arc<[f64]>>>,
 	likelihoods: Vec<Receiver<f64>>,
 	accepts: Vec<Sender<bool>>,
 
@@ -45,7 +46,13 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<f64> {
+	fn likelihood(&mut self, weights: &[f64]) -> Result<f64> {
+		let weights: Arc<[f64]> = weights.into();
+
+		for sender in &mut self.weights {
+			sender.send(weights.clone())?;
+		}
+
 		let mut out = 0.0;
 		for receiver in &self.likelihoods {
 			out += receiver.recv()?;
@@ -80,6 +87,7 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 impl ThreadedLikelihood<4> {
 	pub fn new(msa: Msa<DnaNucleotide>, thread_split_size: usize) -> Self {
 		let mut update_senders = Vec::new();
+		let mut weights_senders = Vec::new();
 		let mut likelihoods_receivers = Vec::new();
 		let mut accept_senders = Vec::new();
 
@@ -90,6 +98,9 @@ impl ThreadedLikelihood<4> {
 		for i in 0..num_threads {
 			let (update_sender, update_receiver) = bounded(1);
 			update_senders.push(update_sender);
+
+			let (weights_sender, weights_reciever) = bounded(1);
+			weights_senders.push(weights_sender);
 
 			let (likelihood_sender, likelihood_receiver) =
 				bounded(1);
@@ -110,6 +121,7 @@ impl ThreadedLikelihood<4> {
 				worker(
 					msa_subset,
 					update_receiver,
+					weights_reciever,
 					likelihood_sender,
 					accept_receiver,
 				);
@@ -118,6 +130,7 @@ impl ThreadedLikelihood<4> {
 
 		Self {
 			updates: update_senders,
+			weights: weights_senders,
 			likelihoods: likelihoods_receivers,
 			accepts: accept_senders,
 
@@ -129,6 +142,7 @@ impl ThreadedLikelihood<4> {
 fn worker(
 	msa: Msa<DnaNucleotide>,
 	update_receiver: Receiver<Arc<Update<4>>>,
+	weights_reciever: Receiver<Arc<[f64]>>,
 	likelihood_sender: Sender<f64>,
 	accept_receiver: Receiver<bool>,
 ) {
@@ -144,7 +158,8 @@ fn worker(
 			&update.0, &update.1, &update.2, update.3, update.4,
 		)
 		.unwrap();
-		let likelihood = cpu.likelihood().unwrap();
+		let weights = weights_reciever.recv().unwrap();
+		let likelihood = cpu.likelihood(&weights).unwrap();
 		likelihood_sender.send(likelihood).unwrap();
 
 		let accept = accept_receiver.recv().unwrap();

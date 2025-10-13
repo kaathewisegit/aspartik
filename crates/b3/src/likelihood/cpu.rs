@@ -14,8 +14,7 @@ pub struct CpuLikelihood<const N: usize> {
 	num_leaves: usize,
 
 	updated_edges: Vec<usize>,
-
-	likelihood: f64,
+	likelihoods: Vec<f64>,
 }
 
 const SCALE: f64 = 1e-30;
@@ -102,8 +101,7 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		}
 
 		let num_leaves = self.num_leaves;
-
-		let mut out_likelihood = 0.0;
+		let num_sites = self.num_sites;
 
 		let root_left_edge = (root - num_leaves) * 2;
 		let root_right_edge = root_left_edge + 1;
@@ -116,16 +114,20 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 			let right = self.projections[root_right_idx + site];
 			let likelihood = left * right;
 			let log_sum = likelihood.sum().ln();
-			out_likelihood += log_sum;
-		}
 
-		self.likelihood = out_likelihood;
+			self.likelihoods[site] = log_sum;
+		}
 
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<f64> {
-		let mut out = self.likelihood;
+	fn likelihood(&mut self, weights: &[f64]) -> Result<f64> {
+		let mut out = 0.0;
+
+		for (likelihood, weight) in self.likelihoods.iter().zip(weights)
+		{
+			out += likelihood * weight;
+		}
 
 		for scaled in &self.scales {
 			if *scaled {
@@ -185,8 +187,7 @@ impl CpuLikelihood<4> {
 			num_leaves,
 
 			updated_edges: Vec::new(),
-
-			likelihood: f64::NAN,
+			likelihoods: vec![f64::NAN; num_sites],
 		}
 	}
 }
