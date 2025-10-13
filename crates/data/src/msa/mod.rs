@@ -44,6 +44,10 @@ impl<C: Character> Msa<C> {
 		})
 	}
 
+	pub fn set_sites(&mut self, sites: Vec<usize>) {
+		self.sites = Some(sites);
+	}
+
 	pub fn from_fasta<I, R>(records: I) -> Result<Self>
 	where
 		I: IntoIterator<Item = R>,

@@ -3,10 +3,12 @@ use log::trace;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
+use std::{collections::HashMap, slice};
+
 use crate::{
 	Transitions, clock::PyClock, substitution::PySubstitution, tree::PyTree,
 };
-use data::{DnaNucleotide, Msa, PyMsa};
+use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
 use linalg::{RowMatrix, Vector};
 
 mod cpu;
@@ -69,7 +71,7 @@ impl GenericLikelihood<4> {
 		let num_internals = msa.num_sequences() - 1;
 		let transitions = Transitions::<4>::new(num_internals * 2);
 
-		let weights = vec![1.0; msa.num_sites()];
+		let (msa, weights) = deduplicate(msa);
 
 		let calculator: DynCalculator<4> = match calculator.as_str() {
 			"cpu" => Box::new(CpuLikelihood::new(msa)),
@@ -105,6 +107,44 @@ impl GenericLikelihood<4> {
 		out.accept()?;
 		Ok(out)
 	}
+}
+
+fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
+	let mut hashes =
+		Vec::<(usize, blake3::Hash)>::with_capacity(msa.num_sites());
+
+	let mut hasher = blake3::Hasher::new();
+	for site in 0..msa.num_sites() {
+		for seq in 0..msa.num_sequences() {
+			let byte = msa.sequence(seq)[site].to_byte();
+			hasher.update(slice::from_ref(&byte));
+		}
+
+		hashes.push((site, hasher.finalize()));
+		hasher.reset();
+	}
+
+	// hash -> (index, count)
+	let mut map = HashMap::<blake3::Hash, (usize, f64)>::new();
+
+	for (index, hash) in &hashes {
+		if let Some((_, count)) = map.get_mut(hash) {
+			// there's an earlier site with the same contents
+			*count += 1.0;
+		} else {
+			map.insert(*hash, (*index, 1.0));
+		}
+	}
+
+	let mut pairs: Vec<_> = map.values().collect();
+	pairs.sort_by_key(|(index, _)| index);
+
+	let (indices, weights): (Vec<_>, Vec<_>) =
+		pairs.iter().copied().copied().unzip();
+
+	msa.set_sites(indices);
+
+	(msa, weights)
 }
 
 impl<const N: usize> GenericLikelihood<N> {
