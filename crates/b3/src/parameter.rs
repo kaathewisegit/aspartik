@@ -272,6 +272,16 @@ impl PyReal {
 		);
 		Ok(inner.0[0])
 	}
+
+	fn scale(&self, factor: f64) -> usize {
+		let inner = &mut *self.inner.lock();
+
+		for i in 0..inner.len() {
+			inner.0.set(i, inner.0[i] * factor);
+		}
+
+		inner.len()
+	}
 }
 
 #[pymethods]

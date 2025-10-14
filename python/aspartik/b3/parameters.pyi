@@ -1,6 +1,15 @@
+from typing import Protocol, runtime_checkable
+
 from . import Stateful
 
-class Real(Stateful):
+@runtime_checkable
+class Scalable(Protocol):
+    def scale(factor: float) -> int:
+        """
+        Scales all values of a parameter and returns the number of dimensions.
+        """
+
+class Real(Stateful, Scalable):
     """
     Real multidimensional parameter
 
