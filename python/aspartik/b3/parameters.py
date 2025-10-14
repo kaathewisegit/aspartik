@@ -13,7 +13,12 @@ Parameter = Real | Integer | Boolean
 
 @runtime_checkable
 class Scalable(Protocol):
-    def scale(self, factor: float) -> int: ...
+    def scale(self, factor: float) -> int:
+        """
+        Scales all values of a parameter and returns the number of dimensions.
+        """
+
+        ...
 
 
 @dataclass
