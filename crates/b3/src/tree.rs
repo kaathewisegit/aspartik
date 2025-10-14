@@ -461,6 +461,20 @@ impl Tree {
 		false
 	}
 
+	pub fn total_length(&self) -> f64 {
+		let mut out = 0.0;
+
+		for node in self.nodes() {
+			if node == *self.root() {
+				continue;
+			}
+			let edge = self.edge_index(&node);
+			out += self.edge_length(edge);
+		}
+
+		out
+	}
+
 	pub fn validate(&self) -> Result<()> {
 		for (i, parent) in self.parents.iter().enumerate() {
 			ensure!(
@@ -642,7 +656,7 @@ impl Tree {
 		}
 	}
 
-	pub fn edge_distance(&self, edge: usize) -> f64 {
+	pub fn edge_length(&self, edge: usize) -> f64 {
 		let (child, parent) = self.edge_nodes(edge);
 
 		self.height_of(&parent) - self.height_of(&child)
@@ -965,8 +979,8 @@ impl PyTree {
 		Ok(self.inner().edge_index(&child))
 	}
 
-	fn edge_distance(&self, edge: usize) -> f64 {
-		self.inner().edge_distance(edge)
+	fn edge_length(&self, edge: usize) -> f64 {
+		self.inner().edge_length(edge)
 	}
 
 	fn edge_nodes<'py>(
@@ -1039,6 +1053,10 @@ impl PyTree {
 
 	fn has_dated_tips(&self) -> bool {
 		self.inner().has_dated_tips()
+	}
+
+	fn total_length(&self) -> f64 {
+		self.inner().total_length()
 	}
 
 	fn validate(&self) -> Result<()> {

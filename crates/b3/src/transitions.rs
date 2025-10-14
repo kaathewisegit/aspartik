@@ -63,7 +63,7 @@ impl<const N: usize> Transitions<N> {
 		let distances: Vec<f64> = edges
 			.iter()
 			.copied()
-			.map(|e| tree.edge_distance(e) * rate)
+			.map(|e| tree.edge_length(e) * rate)
 			.collect();
 
 		self.update_edges(&edges, &distances);

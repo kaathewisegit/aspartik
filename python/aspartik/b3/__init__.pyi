@@ -161,7 +161,7 @@ class Tree(Stateful):
         """
     def edge_index(self, child: Node) -> int:
         """Returns the index of an edge from `child` to its parent"""
-    def edge_distance(self, edge: int) -> float:
+    def edge_length(self, edge: int) -> float:
         """Returns the length of `edge`
 
         The length is the distance between the parent and the child nodes of
@@ -198,6 +198,8 @@ class Tree(Stateful):
         """An iterator over all of the trees leaf nodes"""
     def has_dated_tips(self) -> bool:
         """Returns `True` if any of the leaves have non-0 height"""
+    def total_length(self) -> float:
+        """The total length of all tree edges"""
     def validate(self) -> None:
         """Throws an exception if a tree is malformed
 
