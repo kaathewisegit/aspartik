@@ -23,7 +23,7 @@ from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
+from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
 msa = read_msa_from_fasta("crates/b3/data/influenza.fasta")
 
@@ -66,12 +66,11 @@ operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
     # TODO: up/down
-    SubtreeLeap(tree, Uniform(0, 1), rng, weight=50),
+    SubtreeLeap(tree, Normal(0, 1), rng, weight=50),
     SubtreePruneRegraft(tree, rng, weight=5),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     RandomWalk(growth_rate, window=1, rng=rng, weight=3),
 ]
-
 
 likelihood = Likelihood(
     msa=msa,

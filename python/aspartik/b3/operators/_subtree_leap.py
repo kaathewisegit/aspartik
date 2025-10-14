@@ -33,7 +33,7 @@ class SubtreeLeap(Operator):
         root = tree.root
 
         node = tree.random_internal(rng)
-        while node == root or tree.parent_of(node) == root:
+        while node == root:
             node = tree.random_internal(rng)
 
         parent = tree.parent_of(node)
@@ -41,7 +41,6 @@ class SubtreeLeap(Operator):
         parent_height = tree.height_of(parent)
 
         grandparent = tree.parent_of(parent)
-        assert grandparent is not None  # checked in the loop
 
         sibling = tree.other_child(parent, node)
 
@@ -59,12 +58,12 @@ class SubtreeLeap(Operator):
             pass
         else:
             parent_to_sibling_edge = tree.edge_index(sibling)
-            grandparent_to_parent = tree.edge_index(parent)
 
             if grandparent is None:
                 tree.set_root(sibling)
             else:
                 # grandparent -> sibling
+                grandparent_to_parent = tree.edge_index(parent)
                 tree.update_edge(grandparent_to_parent, sibling)
 
             if destination_parent is None:

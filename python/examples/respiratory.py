@@ -22,7 +22,7 @@ from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
+from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
 msa = read_msa_from_fasta("crates/b3/data/b.1.1.7.fasta")
 
@@ -70,7 +70,7 @@ operators = [
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     # up/down clock rate vs internal node heights
-    SubtreeLeap(tree, Uniform(0, 1), rng, weight=1000),
+    SubtreeLeap(tree, Normal(0, 1), rng, weight=1000),
     SubtreePruneRegraft(tree, rng, weight=100),
     RandomWalk(growth_rate, window=1.0, rng=rng, weight=3),
 ]
