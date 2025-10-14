@@ -11,6 +11,7 @@ from ._tree_exchange import (
     NarrowExchange as NarrowExchange,
     WideExchange as WideExchange,
 )
+from ._updown import UpDown
 from ._wilson_balding import WilsonBalding as WilsonBalding
 
 TreeScale = _b3_rust_impl.TreeScale
@@ -28,6 +29,7 @@ __all__ = [
     "SubtreeSlide",
     "NarrowExchange",
     "WideExchange",
+    "UpDown",
     "WilsonBalding",
     # Rust
     "TreeScale",

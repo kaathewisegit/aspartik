@@ -15,6 +15,7 @@ from aspartik.b3.operators import (
     RandomWalk,
     SubtreeLeap,
     SubtreePruneRegraft,
+    UpDown,
 )
 from aspartik.b3.priors import CTMCS, Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import HKY
