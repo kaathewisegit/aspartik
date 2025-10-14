@@ -76,6 +76,15 @@ class Tree(Stateful):
         the highest of its children.
         """
 
+    def scale(self, scale: float):
+        """
+        Multiplies the heights of all internal nodes by `scale`
+
+        This function doesn't check the validity of the internal nodes (i.e.
+        that they are strictly above their children) and might put the tree
+        into an invalid state.
+        """
+
     def update_edge(self, edge: int, new_child: Node) -> None:
         """Sets the **child** of `edge` to `new_child`
 
@@ -196,10 +205,17 @@ class Tree(Stateful):
         """An iterator over all of the trees internal nodes"""
     def leaves(self) -> Iterator[Leaf]:
         """An iterator over all of the trees leaf nodes"""
-    def has_dated_tips(self) -> bool:
-        """Returns `True` if any of the leaves have non-0 height"""
     def total_length(self) -> float:
         """The total length of all tree edges"""
+    def has_dated_tips(self) -> bool:
+        """Returns `True` if any of the leaves have non-0 height"""
+    def is_height_valid(self) -> bool:
+        """
+        Returns `True` if all node heights are valid
+
+        "Valid" here means that each internal node is above both of its
+        children.
+        """
     def validate(self) -> None:
         """Throws an exception if a tree is malformed
 

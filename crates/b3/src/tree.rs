@@ -255,6 +255,13 @@ impl Tree {
 		self.accept();
 	}
 
+	pub fn scale(&mut self, scale: f64) {
+		for node in self.internals() {
+			let new_height = self.height_of(&node) * scale;
+			self.set_height(&node, new_height);
+		}
+	}
+
 	pub fn accept(&mut self) {
 		self.children.accept();
 		self.parents.accept();
@@ -459,6 +466,24 @@ impl Tree {
 		}
 
 		false
+	}
+
+	pub fn is_height_valid(&self) -> bool {
+		let root: Node = *self.root();
+
+		for node in self.nodes() {
+			if node == root {
+				continue;
+			}
+			let edge = self.edge_index(&node);
+			let length = self.edge_length(edge);
+
+			if length <= 0.0 {
+				return false;
+			}
+		}
+
+		true
 	}
 
 	pub fn total_length(&self) -> f64 {
@@ -880,6 +905,10 @@ impl PyTree {
 		self.inner().set_random_heights(&mut rng.get().inner());
 	}
 
+	fn scale(&self, scale: f64) {
+		self.inner().scale(scale)
+	}
+
 	fn update_edge(&self, edge: usize, new_child: Node) -> Result<()> {
 		self.inner().update_edge(edge, &new_child);
 		Ok(())
@@ -1051,12 +1080,16 @@ impl PyTree {
 		self.inner().leaf_by_name(name)
 	}
 
+	fn total_length(&self) -> f64 {
+		self.inner().total_length()
+	}
+
 	fn has_dated_tips(&self) -> bool {
 		self.inner().has_dated_tips()
 	}
 
-	fn total_length(&self) -> f64 {
-		self.inner().total_length()
+	fn is_height_valid(&self) -> bool {
+		self.inner().is_height_valid()
 	}
 
 	fn validate(&self) -> Result<()> {
