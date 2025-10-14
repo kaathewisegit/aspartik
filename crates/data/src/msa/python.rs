@@ -44,10 +44,6 @@ impl PyMsa {
 		PyDnaSeq(self.0.sequence(index))
 	}
 
-	fn deduplicate(&self) -> Self {
-		PyMsa(self.0.deduplicate())
-	}
-
 	fn base_frequencies(&self) -> (f64, f64, f64, f64) {
 		self.0.base_frequencies().into()
 	}

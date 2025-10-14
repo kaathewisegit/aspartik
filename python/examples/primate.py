@@ -57,7 +57,7 @@ likelihood = Likelihood(
     substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
     clock=StrictClock(1.0),
     tree=tree,
-    calculator="thread",
+    calculator="cpu",
 )
 
 loggers = [

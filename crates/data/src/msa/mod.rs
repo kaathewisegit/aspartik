@@ -145,7 +145,7 @@ impl<C: Character> Msa<C> {
 		out
 	}
 
-	fn compare_sites(&self, a: &usize, b: &usize) -> Ordering {
+	pub fn compare_sites(&self, a: &usize, b: &usize) -> Ordering {
 		for seq in 0..self.num_sequences {
 			let seq = self.sequence(seq);
 			let a = seq[*a];
@@ -157,16 +157,6 @@ impl<C: Character> Msa<C> {
 			}
 		}
 		Ordering::Equal
-	}
-
-	pub fn deduplicate(&self) -> Self {
-		let mut sites: Vec<_> = self.sites_iter().collect();
-		sites.sort_by(|a, b| self.compare_sites(a, b));
-		sites.dedup_by(|a, b| self.compare_sites(a, b).is_eq());
-
-		let mut out = self.clone();
-		out.sites = Some(sites);
-		out
 	}
 }
 

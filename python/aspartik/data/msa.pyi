@@ -18,7 +18,8 @@ class MSA:
         Number of sites in the alignment
 
         Some alignments might be partial, that is, they might reference fewer
-        sites than their backing buffer has.  This can happen after slicing or calling methods like `deduplicate`.
+        sites than their backing buffer has.  This can happen after slicing or
+        some methods.
         """
 
     @property
@@ -33,14 +34,6 @@ class MSA:
 
     def sequence(self, index: int) -> DNASeq:
         """The `index`'th sequence in the alignment"""
-
-    def deduplicate(self) -> MSA:
-        """
-        Create a new MSA without repeating sites
-
-        For every set of sites with identical characters all but the first one
-        are dropped.
-        """
 
     def base_frequencies(self) -> tuple[float, float, float, float]:
         """

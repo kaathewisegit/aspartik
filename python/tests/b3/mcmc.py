@@ -9,7 +9,7 @@ from aspartik.stats.distributions import Uniform
 
 
 def test_mcmc():
-    msa = read_msa_from_fasta("crates/b3/data/primate.fasta").deduplicate()
+    msa = read_msa_from_fasta("crates/b3/data/primate.fasta")
 
     rng = RNG(4)
     tree = Tree(msa.sequence_names(), rng)
