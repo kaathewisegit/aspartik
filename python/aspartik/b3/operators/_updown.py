@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from math import log
-from typing import SupportsFloat
 
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal
-from ..parameters import Real
+from ..parameters import Real, Scalable
 from ._util import sample_range
 
 
@@ -15,9 +14,9 @@ class UpDown(Operator):
     TODO
     """
 
-    up: SupportsFloat
+    up: Scalable
     """The parameter to scale up."""
-    down: SupportsFloat
+    down: Scalable
     """The parameter to scale down."""
     factor: float
     """
@@ -38,18 +37,8 @@ class UpDown(Operator):
         low, high = self.factor, 1 / self.factor
         scale = sample_range(low, high, self.distribution, self.rng)
 
-        num_scaling_up = 0
-        num_scaling_down = 0
-
-        if isinstance(self.up, Real):
-            for i in range(len(self.up)):
-                self.up[i] *= scale
-                num_scaling_up += 1
-
-        if isinstance(self.down, Real):
-            for i in range(len(self.down)):
-                self.down[i] *= scale
-                num_scaling_down += 1
+        num_scaling_up = self.up.scale(scale)
+        num_scaling_down = self.down.scale(1 / scale)
 
         ratio = log(scale) * (num_scaling_up - num_scaling_down - 2)
         return Proposal.Hastings(ratio)

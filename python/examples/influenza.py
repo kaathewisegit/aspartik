@@ -17,7 +17,7 @@ from aspartik.b3.operators import (
     SubtreePruneRegraft,
     UpDown,
 )
-from aspartik.b3.parameters import Real
+from aspartik.b3.parameters import Internals, Real
 from aspartik.b3.priors import CTMCS, Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
@@ -65,7 +65,7 @@ priors = [
 operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
-    # TODO: up/down
+    UpDown(Internals(tree), clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=50),
     SubtreePruneRegraft(tree, rng, weight=5),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
