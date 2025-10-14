@@ -2,7 +2,7 @@ import pytest
 
 import pickle
 
-from aspartik.b3 import Boolean, Integer, Parameter, Real
+from aspartik.b3.parameters import Boolean, Integer, Parameter, Real
 
 
 def pickle_roundtrip(obj):

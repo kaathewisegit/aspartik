@@ -10,7 +10,8 @@ from dataclasses import dataclass, field
 from io import TextIOBase
 from typing import Any
 
-from . import MCMC, Callback, Parameter, Prior, Tree
+from . import MCMC, Callback, Prior, Tree
+from .parameters import Parameter
 
 
 @dataclass(slots=True)

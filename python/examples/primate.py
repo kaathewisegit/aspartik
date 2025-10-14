@@ -2,7 +2,7 @@
 <https://beast.community/first_tutorial>
 """
 
-from aspartik.b3 import MCMC, Likelihood, Real, Tree
+from aspartik.b3 import MCMC, Likelihood, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
@@ -15,6 +15,7 @@ from aspartik.b3.operators import (
     WideExchange,
     WilsonBalding,
 )
+from aspartik.b3.parameters import Real
 from aspartik.b3.priors import Bound, Distribution, Yule
 from aspartik.b3.substitutions import HKY, JC
 from aspartik.b3.utils import print_operator_stats

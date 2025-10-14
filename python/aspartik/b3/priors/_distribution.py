@@ -2,7 +2,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from ...stats.distributions import Continuous, Discrete
-from .. import Integer, Prior, Real
+from .. import Prior
+from ..parameters import Integer, Real
 
 
 @dataclass(slots=True)

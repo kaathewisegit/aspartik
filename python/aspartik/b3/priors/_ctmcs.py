@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from math import log
 
-from .. import Prior, Real, Tree
+from .. import Prior, Tree
+from ..parameters import Real
 
 
 @dataclass(slots=True)

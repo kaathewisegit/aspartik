@@ -1,6 +1,6 @@
 import pytest
 
-from aspartik.b3 import Integer, Real
+from aspartik.b3.parameters import Integer, Real
 from aspartik.b3.priors import Distribution
 from aspartik.stats.distributions import Normal, Poisson
 

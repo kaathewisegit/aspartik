@@ -2,11 +2,8 @@ from typing import Protocol, runtime_checkable
 
 from .._aspartik_rust_impl._b3_rust_impl import (
     MCMC as MCMC,
-    Boolean as Boolean,
-    Integer as Integer,
     Likelihood as Likelihood,
     Proposal as Proposal,
-    Real as Real,
     Tree as Tree,
     tree as tree,
 )
@@ -35,6 +32,3 @@ class Callback(Protocol):
 class Stateful(Protocol):
     def accept(self) -> None: ...
     def reject(self) -> None: ...
-
-
-Parameter = Real | Integer | Boolean

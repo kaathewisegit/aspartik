@@ -4,7 +4,8 @@ from typing import Literal
 
 from ...rng import RNG
 from ...stats.distributions import Distribution
-from .. import Operator, Proposal, Real
+from .. import Operator, Proposal
+from ..parameters import Real
 from ._util import sample_range
 
 

@@ -1,6 +1,7 @@
-from aspartik.b3 import MCMC, Integer, Likelihood, Real, Tree
+from aspartik.b3 import MCMC, Likelihood, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.operators import ParamScale, TreeScale
+from aspartik.b3.parameters import Integer, Real
 from aspartik.b3.priors import Bound
 from aspartik.b3.substitutions import JC
 from aspartik.io.msa import read_msa_from_fasta

@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from math import inf
 
-from .. import Prior, Real
+from .. import Prior
+from ..parameters import Real
 
 
 @dataclass(slots=True)

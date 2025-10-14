@@ -84,19 +84,29 @@ impl Display for Parameter<bool> {
 }
 
 #[derive(Debug)]
-#[pyclass(name = "Real", module = "aspartik.b3", sequence, frozen)]
+#[pyclass(name = "Real", module = "aspartik.b3.parameters", sequence, frozen)]
 pub struct PyReal {
 	inner: Mutex<Parameter<f64>>,
 }
 
 #[derive(Debug)]
-#[pyclass(name = "Integer", module = "aspartik.b3", sequence, frozen)]
+#[pyclass(
+	name = "Integer",
+	module = "aspartik.b3.parameters",
+	sequence,
+	frozen
+)]
 pub struct PyInteger {
 	inner: Mutex<Parameter<i64>>,
 }
 
 #[derive(Debug)]
-#[pyclass(name = "Boolean", module = "aspartik.b3", sequence, frozen)]
+#[pyclass(
+	name = "Boolean",
+	module = "aspartik.b3.parameters",
+	sequence,
+	frozen
+)]
 pub struct PyBoolean {
 	inner: Mutex<Parameter<bool>>,
 }
@@ -106,12 +116,13 @@ macro_rules! pymethod_impl {
 ($class:ident, $name:literal, $type:ty, $pytype:literal) => {
 	#[pymethods]
 	impl $class {
-		#[new]
-		#[pyo3(signature = (*values))]
-		fn new(values: &Bound<PyTuple>) -> Result<Self> {
-			check_empty(values)?;
 
-			let values: Vec<$type> = extract(values)?;
+	#[new]
+	#[pyo3(signature = (*values))]
+	fn new(values: &Bound<PyTuple>) -> Result<Self> {
+		check_empty(values)?;
+
+		let values: Vec<$type> = extract(values)?;
 		let parameter = Parameter(values.into());
 		Ok(Self {
 			inner: Mutex::new(parameter),
@@ -206,7 +217,8 @@ macro_rules! pymethod_impl {
 
 		PyTuple::new(py, &inner.0)
 	}
-}
+
+	}
 };
 }
 

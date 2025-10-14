@@ -2,7 +2,8 @@ from dataclasses import dataclass, field
 
 from ...rng import RNG
 from ...stats.distributions import Uniform
-from .. import Operator, Proposal, Real, Tree
+from .. import Operator, Proposal, Tree
+from ..parameters import Real
 from ._util import sample_range
 
 

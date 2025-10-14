@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
 from ...rng import RNG
-from .. import Operator, Proposal, Real
+from .. import Operator, Proposal
+from ..parameters import Real
 
 
 @dataclass(slots=True)
