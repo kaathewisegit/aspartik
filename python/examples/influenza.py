@@ -16,66 +16,65 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     SubtreePruneRegraft,
 )
-from aspartik.b3.priors import CTMCS, Bound, ConstantPopulation, Distribution, Yule
+from aspartik.b3.priors import CTMCS, Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import HKY
+from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
 
-msa = read_msa_from_fasta("crates/b3/data/yfv.fasta")
+msa = read_msa_from_fasta("crates/b3/data/influenza.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
 
-dates = []  # tip dates
+times = []
 for name in msa.sequence_names():
     node = tree.leaf_by_name(name)
     assert node is not None
 
-    date = name.split("_")[0]
-    date = datetime.strptime(date, "%Y").date()
-    dates.append(date)
+    time = name.split(".")[-1]
+    times.append(int(time))
 
-most_recent = max(dates)
-for i, leaf in enumerate(tree.leaves()):
-    diff = most_recent - dates[i]
-    tree.set_height(leaf, diff.days / 365)
+max_time = max(times)
+
+for leaf, time in zip(tree.leaves(), times):
+    scaled_time = (max_time - time) * 0.001
+    tree.set_height(leaf, scaled_time)
 
 tree.set_random_heights(rng)
 tree.accept()
 
 
-population_size = Real(1.0)
-clock_rate = Real(0.001)
 kappa = Real(2.0)
-params = [
-    population_size,
-    clock_rate,
-    kappa,
-]
+population_size = Real(1.0)
+growth_rate = Real(0)
+clock_rate = Real(0.001)
+params = [kappa, population_size, growth_rate, clock_rate]
 
 priors = [
-    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     Distribution(kappa, LogNormal(1.0, 1.25)),
     CTMCS(tree, clock_rate),
-    ConstantPopulation(tree, population_size),
+    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
+    Distribution(growth_rate, Laplace(0, 100)),
+    ExponentialGrowth(tree, population_size, growth_rate),
 ]
 
 operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
+    # TODO: up/down
+    SubtreeLeap(tree, Uniform(0, 1), rng, weight=50),
+    SubtreePruneRegraft(tree, rng, weight=5),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
-    SubtreeLeap(tree, Uniform(0, 1), rng, weight=1000),
-    SubtreePruneRegraft(tree, rng, weight=100),
+    RandomWalk(growth_rate, window=1, rng=rng, weight=3),
 ]
 
 
-sub_model = HKY((0.25, 0.25, 0.25, 0.25), kappa)
-clock_model = StrictClock(clock_rate)
 likelihood = Likelihood(
     msa=msa,
-    substitution=sub_model,
-    clock=clock_model,
+    substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
+    clock=StrictClock(clock_rate),
     tree=tree,
     calculator="thread",
 )
@@ -85,13 +84,15 @@ loggers = [
     PrintLogger(every=1_000),
     ValueLogger(
         {
-            "population_size": population_size,
-            "clock_rate": clock_rate,
             "kappa": kappa,
-            "prior.population_size": priors[-4],
-            "prior.kappa": priors[-3],
-            "prior.clock_rate": priors[-2],
-            "prior.coalescent": priors[-1],
+            "population_size": population_size,
+            "growth_rate": growth_rate,
+            "clock_rate": clock_rate,
+            "prior.kappa": priors[0],
+            "prior.clock_rate": priors[1],
+            "prior.population_size": priors[2],
+            "prior.growth_rate": priors[3],
+            "prior.coalescent": priors[4],
             "tree.height": lambda: tree.height_of(tree.root),
         },
         path="target/b3.log",
@@ -101,7 +102,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=5_000_000,
+    length=1_000_000,
     state=params + [tree],
     priors=priors,
     operators=operators,
@@ -111,3 +112,5 @@ mcmc = MCMC(
 )
 
 mcmc.run()
+
+print_operator_stats(mcmc)
