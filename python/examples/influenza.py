@@ -35,7 +35,7 @@ for name in msa.sequence_names():
     node = tree.leaf_by_name(name)
     assert node is not None
 
-    time = name.split(".")[-1]
+    time = name.split("_")[-2]
     times.append(int(time))
 
 max_time = max(times)
