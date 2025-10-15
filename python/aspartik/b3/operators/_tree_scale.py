@@ -38,11 +38,10 @@ class TreeScale(Operator):
         low, high = self.factor, 1 / self.factor
         scale = sample_range(low, high, self.distribution, rng)
 
-        tree.scale(scale)
-
-        if tree.has_dated_tips():
-            if not tree.is_height_valid():
-                return Proposal.Reject()
+        try:
+            tree.scale(scale)
+        except:
+            return Proposal.Reject()
 
         ratio = log(scale) * (tree.num_internals - 2)
         return Proposal.Hastings(ratio)

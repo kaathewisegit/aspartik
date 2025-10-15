@@ -37,8 +37,11 @@ class UpDown(Operator):
         low, high = self.factor, 1 / self.factor
         scale = sample_range(low, high, self.distribution, self.rng)
 
-        num_scaling_up = self.up.scale(scale)
-        num_scaling_down = self.down.scale(1 / scale)
+        try:
+            num_scaling_up = self.up.scale(scale)
+            num_scaling_down = self.down.scale(1 / scale)
+        except:
+            return Proposal.Reject()
 
         ratio = log(scale) * (num_scaling_up - num_scaling_down - 2)
         return Proposal.Hastings(ratio)

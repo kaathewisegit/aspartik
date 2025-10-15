@@ -80,9 +80,11 @@ class Tree(Stateful):
         """
         Multiplies the heights of all internal nodes by `scale`
 
-        This function doesn't check the validity of the internal nodes (i.e.
-        that they are strictly above their children) and might put the tree
-        into an invalid state.
+
+        ### Exceptions
+
+        Throws a `RuntimeError` if any of the internal nodes would be moved
+        below either of its children.
         """
 
     def update_edge(self, edge: int, new_child: Node) -> None:
@@ -209,13 +211,6 @@ class Tree(Stateful):
         """The total length of all tree edges"""
     def has_dated_tips(self) -> bool:
         """Returns `True` if any of the leaves have non-0 height"""
-    def is_height_valid(self) -> bool:
-        """
-        Returns `True` if all node heights are valid
-
-        "Valid" here means that each internal node is above both of its
-        children.
-        """
     def validate(self) -> None:
         """Throws an exception if a tree is malformed
 
