@@ -8,17 +8,20 @@ from ..parameters import Real
 @dataclass(slots=True)
 class CTMCS(Prior):
     """
-    A rough analog of BEAST's `ctmcsScalePrior`
+    A rough analogue of BEAST's `ctmcsScalePrior`
     """
 
     tree: Tree
     parameter: Real
 
     def probability(self) -> float:
-        tree_length = self.tree.height_of(self.tree.root)
         out = 0.0
 
+        tree_length = self.tree.total_length()
+        # TODO: tree length normalization via the sub model
+        norm = 0.5 * log(tree_length)
+
         for value in self.parameter:
-            out -= log(value * tree_length)
+            out += norm - 0.5 * log(value) - value * tree_length
 
         return out
