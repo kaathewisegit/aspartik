@@ -4,6 +4,8 @@ from math import log
 from .. import Prior, Tree
 from ..parameters import Real
 
+LN_GAMMA_1_2 = 0.5723649429247001
+
 
 @dataclass(slots=True)
 class CTMCS(Prior):
@@ -17,9 +19,9 @@ class CTMCS(Prior):
     def probability(self) -> float:
         out = 0.0
 
-        tree_length = self.tree.total_length()
         # TODO: tree length normalization via the sub model
-        norm = 0.5 * log(tree_length)
+        tree_length = self.tree.total_length()
+        norm = 0.5 * log(tree_length) - LN_GAMMA_1_2
 
         for value in self.parameter:
             out += norm - 0.5 * log(value) - value * tree_length
