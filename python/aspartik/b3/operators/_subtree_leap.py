@@ -45,8 +45,6 @@ class SubtreeLeap(Operator):
         sibling = tree.other_child(parent, node)
 
         delta = abs(self.distribution.sample(rng))
-        above = parent_height + delta
-        below = parent_height - delta
 
         destinations = walk_tree(tree, node, sibling, parent, delta)
 
@@ -78,13 +76,11 @@ class SubtreeLeap(Operator):
         new_height = destinations[destination]
         tree.set_height(parent, new_height)
 
-        tree.validate()
-
         reverse_destinations = walk_tree(
             tree, node, tree.other_child(parent, node), parent, delta
         )
 
-        ratio = log(len(destinations) / len(reverse_destinations))
+        ratio = log(len(destinations)) - log(len(reverse_destinations))
         return Proposal.Hastings(ratio)
 
 
@@ -121,7 +117,7 @@ def walk_tree(
             destinations[up_node] = above
             break
 
-        # up_node is below the distance
+        # up_node is closer than delta
 
         up_node_height = tree.height_of(up_node)
         diff = above - up_node_height
