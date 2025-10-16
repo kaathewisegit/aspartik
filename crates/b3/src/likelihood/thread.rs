@@ -120,6 +120,8 @@ impl ThreadedLikelihood<4> {
 			thread::spawn(move || {
 				worker(
 					msa_subset,
+					i,
+					segment_len,
 					update_receiver,
 					weights_reciever,
 					likelihood_sender,
@@ -141,11 +143,15 @@ impl ThreadedLikelihood<4> {
 
 fn worker(
 	msa: Msa<DnaNucleotide>,
+	index: usize,
+	segment_len: usize,
 	update_receiver: Receiver<Arc<Update<4>>>,
 	weights_reciever: Receiver<Arc<[f64]>>,
 	likelihood_sender: Sender<f64>,
 	accept_receiver: Receiver<bool>,
 ) {
+	let start = index * segment_len;
+
 	let mut cpu = CpuLikelihood::new(msa);
 
 	loop {
@@ -158,8 +164,10 @@ fn worker(
 			&update.0, &update.1, &update.2, update.3, update.4,
 		)
 		.unwrap();
+
 		let weights = weights_reciever.recv().unwrap();
-		let likelihood = cpu.likelihood(&weights).unwrap();
+		let weights = &weights[start..];
+		let likelihood = cpu.likelihood(weights).unwrap();
 		likelihood_sender.send(likelihood).unwrap();
 
 		let accept = accept_receiver.recv().unwrap();
