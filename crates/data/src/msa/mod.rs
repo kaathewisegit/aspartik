@@ -1,10 +1,6 @@
 use anyhow::{Result, ensure};
 
-use std::{
-	cmp::Ordering,
-	ops::{Bound, RangeBounds},
-	sync::Arc,
-};
+use std::{cmp::Ordering, ops::RangeBounds, sync::Arc};
 
 use crate::{
 	DnaNucleotide,
@@ -127,19 +123,7 @@ impl<C: Character> Msa<C> {
 			None => (0..self.num_sites()).collect(),
 		};
 
-		let start = match range.start_bound() {
-			Bound::Included(i) => *i + 1,
-			Bound::Excluded(i) => *i,
-			Bound::Unbounded => sites.len(),
-		};
-		let end = match range.end_bound() {
-			Bound::Included(i) => *i + 1,
-			Bound::Excluded(i) => *i,
-			Bound::Unbounded => sites.len(),
-		};
-		let length = end - start;
-		sites.copy_within(range, 0);
-		sites.truncate(length);
+		sites = sites.drain(range).collect();
 
 		out.sites = Some(sites);
 		out
