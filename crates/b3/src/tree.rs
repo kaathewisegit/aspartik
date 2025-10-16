@@ -744,7 +744,7 @@ impl Tree {
 		(0..self.num_leaves()).map(Leaf)
 	}
 
-	pub fn to_newick(&self) -> String {
+	pub fn to_newick(&self, internal_ids: bool) -> String {
 		let mut tree = NewickTree::new();
 
 		use std::collections::HashMap;
@@ -753,6 +753,8 @@ impl Tree {
 		for node in self.nodes() {
 			let name = if self.is_leaf(&node) {
 				self.names[node.0].clone()
+			} else if internal_ids {
+				node.0.to_string()
 			} else {
 				String::new()
 			};
@@ -1090,8 +1092,9 @@ impl PyTree {
 		self.inner().reject()
 	}
 
-	fn newick(&self) -> String {
-		self.inner().to_newick()
+	#[pyo3(signature = (internal_ids = false))]
+	fn newick(&self, internal_ids: bool) -> String {
+		self.inner().to_newick(internal_ids)
 	}
 
 	// protocols

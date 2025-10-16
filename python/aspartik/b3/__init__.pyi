@@ -224,7 +224,7 @@ class Tree(Stateful):
         - The tree is a tree, meaning that topologically it has no cycles and
           is connected.
         """
-    def newick(self) -> str:
+    def newick(self, internal_ids=False) -> str:
         """Returns the tree topology in the Newick format
 
         Leaf nodes will be labeled with the names passed to the constructor
