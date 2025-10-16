@@ -1,4 +1,6 @@
+import math
 from dataclasses import dataclass, field
+from typing import Literal
 
 from ...rng import RNG
 from ...stats.distributions import Uniform
@@ -22,16 +24,45 @@ class RandomWalk(Operator):
     param: Real
     window: float
     rng: RNG
+    lower: float = 0
+    upper: float = math.inf
+    boundary: Literal["reflect"] = "reflect"
     weight: float = 1
 
     _dist: Uniform = field(default_factory=lambda: Uniform(0, 1), init=False)
 
     def propose(self) -> Proposal:
-        diff = sample_range(0, self.window, self._dist, self.rng)
-        if self.rng.random_bool():
+        lower, upper = self.lower, self.upper
+        rng = self.rng
+        param = self.param
+
+        diff = sample_range(0, self.window, self._dist, rng)
+        if rng.random_bool():
             diff *= -1
 
-        # TODO: multidimensional parameters
-        self.param[0] = self.param[0] + diff
+        dim = rng.random_int(0, len(param))
+
+        new_value = param[dim] + diff
+
+        if new_value < self.lower:
+            match self.boundary:
+                case "reflect":
+                    if self.upper == math.inf:
+                        new_value = lower + (lower - new_value)
+                    else:
+                        # TODO: ping-pong reflection
+                        pass
+
+        if new_value > self.upper:
+            # TODO
+            if self.lower == math.inf:
+                new_value = upper + (upper - new_value)
+            else:
+                pass
+
+        self.param[dim] = new_value
+
+        if self.param[0] < 0:
+            print(self.param[0])
 
         return Proposal.Hastings(0.0)
