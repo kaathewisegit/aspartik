@@ -274,6 +274,8 @@ class Likelihood:
         clock: Any,
         tree: Tree,
         calculator: Literal["cpu", "thread", "cuda"] = "cpu",
+        cuda_device: int = 0,
+        thread_split_size: int = 400,
     ): ...
 
 @runtime_checkable
@@ -374,10 +376,6 @@ class MCMC:
         likelihoods: Sequence[Likelihood],
         callbacks: Sequence[Callback],
         rng: RNG,
-        *,
-        validate: bool = False,
-        cuda_device: int = 0,
-        thread_split_size: int = 400,
     ): ...
     @property
     def current_step(self) -> int:
