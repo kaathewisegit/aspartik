@@ -29,28 +29,28 @@ where
 {
 	let nodes = sorted_nodes(tree);
 
-	let mut out = 1.0; // log-likelihood
+	let mut out = 0.0; // log-likelihood
 	let mut last_height = 0.0;
 	let mut num: usize = 0; // number of active lineages
 
 	for (node, height) in nodes {
 		if tree.is_leaf(&node) {
 			// not a transition event.  Increase the num for the new
-			// number of lineages which could merge.  `last_height`
-			// doesn't get updated, so the next merge event will
-			// have the correct length
+			// number of lineages which could merge.
 			num += 1;
-			continue;
-		} // else the node is internal, merge event
+		}
 
 		let binomial = (num * (num - 1)) as f64;
-
 		let area = coalescent.integral(py, last_height, height)?;
-		let pop = coalescent.population_size_at(py, height)?;
+		out -= binomial * area;
 
-		out -= binomial * area + pop.ln();
+		if tree.is_internal(&node) {
+			// merge event
+			let pop = coalescent.population_size_at(py, height)?;
+			out -= pop.ln();
+			num -= 1;
+		}
 
-		num -= 1;
 		last_height = height;
 	}
 
