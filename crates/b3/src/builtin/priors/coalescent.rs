@@ -30,17 +30,17 @@ where
 	let nodes = sorted_nodes(tree);
 
 	let mut out = 0.0; // log-likelihood
-	let mut last_height = 0.0;
-	let mut num: usize = 0; // number of active lineages
+	let mut last_height = nodes[0].1;
+	let mut num: usize = 1; // number of active lineages
 
-	for (node, height) in nodes {
+	for (node, height) in nodes.into_iter().skip(1) {
 		if tree.is_leaf(&node) {
 			// not a transition event.  Increase the num for the new
 			// number of lineages which could merge.
 			num += 1;
 		}
 
-		let binomial = (num * (num - 1)) as f64;
+		let binomial = (num * (num - 1) / 2) as f64;
 		let area = coalescent.integral(py, last_height, height)?;
 		out -= binomial * area;
 
