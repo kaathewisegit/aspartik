@@ -39,7 +39,7 @@ impl Yule {
 		let rate = self.birth_rate.bind(py).extract::<f64>()?;
 		let root = tree.root();
 
-		let mut out = (tree.num_leaves() - 1) as f64 * rate.ln();
+		let mut out = (tree.num_internals() - 1) as f64 * rate.ln();
 
 		for internal in tree.internals() {
 			let diff = -rate * tree.height_of(&internal);
