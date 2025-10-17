@@ -8,6 +8,8 @@ from ._spr import SubtreePruneRegraft as SubtreePruneRegraft
 from ._subtree_leap import SubtreeLeap as SubtreeLeap
 from ._subtree_slide import SubtreeSlide as SubtreeSlide
 from ._tree_exchange import (
+    BeastNarrowExchange as BeastNarrowExchange,
+    BeastWideExchange as BeastWideExchange,
     NarrowExchange as NarrowExchange,
     WideExchange as WideExchange,
 )
@@ -27,6 +29,8 @@ __all__ = [
     "SubtreePruneRegraft",
     "SubtreeLeap",
     "SubtreeSlide",
+    "BeastNarrowExchange",
+    "BeastWideExchange",
     "NarrowExchange",
     "WideExchange",
     "TreeScale",

@@ -116,3 +116,76 @@ class WideExchange(Operator):
             return Proposal.Hastings(0.0)
         else:
             return Proposal.Reject()
+
+
+@dataclass(slots=True)
+class BeastNarrowExchange(Operator):
+    """
+    Narrow exchange operator compatible with BEASTs `narrowExchange`
+    """
+
+    tree: Tree
+    rng: RNG
+    weight: float = 1
+
+    def propose(self):
+        rng = self.rng
+        tree = self.tree
+        root = tree.root
+
+        node = tree.random_node(rng)
+        while node == root or tree.parent_of(node) == root:
+            node = tree.random_node(rng)
+
+        parent = tree.parent_of(node)
+        assert parent is not None
+        grandparent = tree.parent_of(parent)
+        assert grandparent is not None
+        uncle = tree.other_child(grandparent, parent)
+
+        if tree.height_of(uncle) < tree.height_of(parent):
+            tree.swap_parents(node, uncle)
+            return Proposal.Hastings(0.0)
+        else:
+            return Proposal.Reject()
+
+
+@dataclass(slots=True)
+class BeastWideExchange(Operator):
+    """
+    Wide exchange operator compatible with BEASTs `wideExchange`
+    """
+
+    tree: Tree
+    rng: RNG
+    weight: float = 1
+
+    def propose(self):
+        rng = self.rng
+        tree = self.tree
+        root = tree.root
+
+        node_a = tree.random_node(rng)
+        while node_a == root:
+            node_a = tree.random_node(rng)
+
+        node_b = tree.random_node(rng)
+        while node_b == root or node_b == node_a:
+            node_b = tree.random_node(rng)
+
+        node_a_parent = tree.parent_of(node_a)
+        node_b_parent = tree.parent_of(node_b)
+        assert node_a_parent is not None
+        assert node_b_parent is not None
+
+        if (
+            node_a_parent != node_b_parent
+            and node_a != node_b_parent
+            and node_b != node_a_parent
+            and tree.height_of(node_a) < tree.height_of(node_b_parent)
+            and tree.height_of(node_b) < tree.height_of(node_a_parent)
+        ):
+            tree.swap_parents(node_a, node_b)
+            return Proposal.Hastings(0.0)
+        else:
+            return Proposal.Reject()
