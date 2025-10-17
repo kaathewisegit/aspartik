@@ -69,8 +69,9 @@ impl Coalescent for ConstantPopulation {
 		Ok(self.population_size(py).extract(py)?)
 	}
 
-	fn integral(&self, _py: Python, start: f64, end: f64) -> Result<f64> {
-		Ok(end - start)
+	fn integral(&self, py: Python, start: f64, end: f64) -> Result<f64> {
+		let pop: f64 = self.population_size(py).extract(py)?;
+		Ok((end - start) / pop)
 	}
 }
 
