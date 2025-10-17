@@ -38,11 +38,11 @@ class RootSlide(Operator):
         scale = sample_range(low, high, self.distribution, rng)
 
         old_height = tree.height_of(root)
-        new_height = old_height * scale
 
         left, right = tree.children_of(root)
-        if new_height < max(tree.height_of(left), tree.height_of(right)):
-            return Proposal.Reject()
+        lower_height = max(tree.height_of(left), tree.height_of(right))
+
+        new_height = (old_height - lower_height) * scale + lower_height
 
         tree.set_height(root, new_height)
 
