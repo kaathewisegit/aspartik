@@ -5,7 +5,7 @@ from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal
 from ..parameters import Real, Scalable
-from ._util import sample_range
+from ._util import assert_factor, sample_range
 
 
 @dataclass(slots=True)
@@ -30,8 +30,7 @@ class UpDown(Operator):
     weight: float = 1
 
     def __post_init__(self):
-        if not 0 < self.factor < 1:
-            raise ValueError(f"factor must be between 0 and 1, got {self.factor}")
+        assert_factor(self)
 
     def propose(self) -> Proposal:
         low, high = self.factor, 1 / self.factor

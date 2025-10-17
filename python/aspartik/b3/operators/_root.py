@@ -5,7 +5,7 @@ from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, Tree
 from ..tree import Internal, Node
-from ._util import sample_range
+from ._util import assert_factor, sample_range
 
 
 @dataclass(slots=True)
@@ -25,6 +25,9 @@ class RootSlide(Operator):
     """The distribution to draw the height move distance from"""
     rng: RNG
     weight: float = 1
+
+    def __post_init__(self):
+        assert_factor(self)
 
     def propose(self) -> Proposal:
         tree = self.tree

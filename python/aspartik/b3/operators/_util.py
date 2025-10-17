@@ -58,3 +58,8 @@ def assert_two_internals(operator) -> None:
         raise ValueError(
             f"`{operator.__class__.__name__}` requires the tree to have at least 2 internal nodes"
         )
+
+
+def assert_factor(operator) -> None:
+    if not (0.0 < operator.factor < 1.0):
+        raise ValueError(f"Factor must be in range (0, 1), got {operator.factor}")
