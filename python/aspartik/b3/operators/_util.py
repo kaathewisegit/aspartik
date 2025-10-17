@@ -39,7 +39,7 @@ def sample_range(low: float, high: float, distribution, rng: RNG) -> int | float
 def family(tree: Tree, rng: RNG) -> tuple[Node, Node, Internal, Internal | None]:
     root = tree.root
 
-    node = tree.random_internal(rng)
+    node = tree.random_node(rng)
     while node == root:
         node = tree.random_internal(rng)
 
