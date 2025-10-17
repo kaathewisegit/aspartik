@@ -28,25 +28,17 @@ msa = read_msa_from_fasta("crates/b3/data/primate.fasta")
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
 
-root = tree.root
 
 kappa = Real(2.0)
 yule_birth_rate = Real(2.0)
 population = Real(100)
 
 
-class Dist:
-    dist = LogNormal(1.0, 1.5)
-
-    def probability(self):
-        return self.dist.ln_pdf(float(Root(tree)))
-
-
 priors = [
     Distribution(kappa, LogNormal(1.0, 1.25)),
     Distribution(yule_birth_rate, LogNormal(1.0, 1.5)),
     # ConstantPopulation(tree, population),
-    Dist(),
+    Distribution(Root(tree), LogNormal(1.0, 1.5)),
 ]
 
 operators = [
