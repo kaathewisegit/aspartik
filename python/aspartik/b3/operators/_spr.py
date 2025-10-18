@@ -21,12 +21,21 @@ class SubtreePruneRegraft(Operator):
         assert_two_internals(self)
 
     def propose(self) -> Proposal:
-        tree = self.tree
         rng = self.rng
+        tree = self.tree
+        root = tree.root
 
-        node, sibling, parent, grandparent = family(tree, rng)
-        while grandparent is None:
-            node, sibling, parent, grandparent = family(tree, rng)
+        node = tree.random_node(rng)
+        parent = tree.parent_of(node)
+        while node == root or parent == root:
+            node = tree.random_node(rng)
+            parent = tree.parent_of(node)
+
+        assert parent is not None
+        grandparent = tree.parent_of(parent)
+        assert grandparent is not None
+
+        sibling = tree.other_child(parent, node)
 
         parent_height = tree.height_of(parent)
 

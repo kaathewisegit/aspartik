@@ -5,7 +5,6 @@ from ...rng import RNG
 from ...stats.distributions import Sample
 from .. import Operator, Proposal, Tree
 from ..tree import Internal, Node
-from ._util import family
 
 
 @dataclass(slots=True)
@@ -32,9 +31,9 @@ class SubtreeLeap(Operator):
         rng = self.rng
         root = tree.root
 
-        node = tree.random_internal(rng)
+        node = tree.random_node(rng)
         while node == root:
-            node = tree.random_internal(rng)
+            node = tree.random_node(rng)
 
         parent = tree.parent_of(node)
         assert parent is not None  # checked in the loop

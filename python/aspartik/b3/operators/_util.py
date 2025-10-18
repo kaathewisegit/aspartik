@@ -41,7 +41,7 @@ def family(tree: Tree, rng: RNG) -> tuple[Node, Node, Internal, Internal | None]
 
     node = tree.random_node(rng)
     while node == root:
-        node = tree.random_internal(rng)
+        node = tree.random_node(rng)
 
     parent = tree.parent_of(node)
     assert parent is not None  # checked in the loop
