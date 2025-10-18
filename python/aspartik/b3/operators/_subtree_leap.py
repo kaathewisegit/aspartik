@@ -37,10 +37,8 @@ class SubtreeLeap(Operator):
 
         parent = tree.parent_of(node)
         assert parent is not None  # checked in the loop
-        parent_height = tree.height_of(parent)
 
         grandparent = tree.parent_of(parent)
-
         sibling = tree.other_child(parent, node)
 
         delta = abs(self.distribution.sample(rng))
@@ -51,7 +49,7 @@ class SubtreeLeap(Operator):
         destination = list(destinations.keys())[random_idx]
         destination_parent = tree.parent_of(destination)
 
-        if destination == parent or destination_parent == parent:
+        if parent == destination or parent == destination_parent:
             pass
         else:
             parent_to_sibling_edge = tree.edge_index(sibling)
@@ -111,22 +109,22 @@ def walk_tree(
             destinations[up_node] = above
             break
 
-        if tree.height_of(up_parent) > above:
+        up_parent_height = tree.height_of(up_parent)
+
+        if up_parent_height > above:
             # up_parent is above the line, `up_node` is a valid destination
             destinations[up_node] = above
             break
 
         # up_node is closer than delta
 
-        up_node_height = tree.height_of(up_node)
-        diff = above - up_node_height
         # new distance which accounts for our climb
-        new_below = up_node_height - diff
+        new_below = up_parent_height - (above - up_parent_height)
 
-        other = tree.other_child(up_parent, up_node)
+        up_sibling = tree.other_child(up_parent, up_node)
 
         if node_height < new_below:
-            intersections(destinations, tree, other, new_below)
+            intersections(destinations, tree, up_sibling, new_below)
 
         up_node = up_parent
 
