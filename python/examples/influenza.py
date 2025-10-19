@@ -7,6 +7,7 @@ tutorial][l].
 
 from datetime import datetime
 
+from aspartik._aspartik_rust_impl import _b3_rust_impl
 from aspartik.b3 import MCMC, Likelihood, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
@@ -35,14 +36,14 @@ for name in msa.sequence_names():
     node = tree.leaf_by_name(name)
     assert node is not None
 
-    time = name.split("_")[-2]
-    times.append(int(time))
+    time = name.split("_")[-1]
+    times.append(float(time))
 
 max_time = max(times)
 
 for leaf, time in zip(tree.leaves(), times):
-    scaled_time = (max_time - time) * 0.001
-    tree.set_height(leaf, scaled_time)
+    height = max_time - time
+    tree.set_height(leaf, height)
 
 tree.set_random_heights(rng)
 tree.accept()
@@ -56,11 +57,12 @@ params = [kappa, population_size, growth_rate, clock_rate]
 
 priors = [
     Distribution(kappa, LogNormal(1.0, 1.25)),
-    CTMCS(tree, clock_rate),
+    Distribution(clock_rate, Laplace(0, 0.5)),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     Distribution(growth_rate, Laplace(0, 100)),
     ExponentialGrowth(tree, population_size, growth_rate),
 ]
+
 
 operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
@@ -82,9 +84,13 @@ likelihood = Likelihood(
 
 loggers = [
     TreeLogger(tree=tree, path="target/b3.trees", every=1_000),
-    PrintLogger(every=1_000),
+    PrintLogger(every=10_000),
     ValueLogger(
         {
+            "step": lambda: mcmc.current_step,
+            "joint": lambda: mcmc.prior + mcmc.likelihood,
+            "prior": lambda: mcmc.prior,
+            "likelihood": lambda: mcmc.likelihood,
             "kappa": kappa,
             "population_size": population_size,
             "growth_rate": growth_rate,
@@ -104,7 +110,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=1_000_000,
+    length=10_000_000,
     state=params + [tree],
     priors=priors,
     operators=operators,
