@@ -393,7 +393,7 @@ impl Tree {
 	/// `new_child` changes are recorded, it is presumed that the operator
 	/// will call another method for the old child and `new_child`'s parent
 	/// edge.
-	fn update_edge(&mut self, edge: usize, new_child: &Node) {
+	pub fn update_edge(&mut self, edge: usize, new_child: &Node) {
 		let (_, parent) = self.edge_nodes(edge);
 
 		self.children.set(edge, new_child.0);

@@ -5,7 +5,6 @@ from ._param_scale import ParamScale as ParamScale
 from ._random_walk import RandomWalk as RandomWalk
 from ._root import RootSlide as RootSlide
 from ._spr import SubtreePruneRegraft as SubtreePruneRegraft
-from ._subtree_leap import SubtreeLeap as SubtreeLeap
 from ._subtree_slide import SubtreeSlide as SubtreeSlide
 from ._tree_exchange import (
     BeastNarrowExchange as BeastNarrowExchange,
@@ -18,6 +17,7 @@ from ._updown import UpDown
 from ._wilson_balding import WilsonBalding as WilsonBalding
 
 EpochScale = _b3_rust_impl.EpochScale
+SubtreeLeap = _b3_rust_impl.SubtreeLeap
 
 
 __all__ = [
@@ -27,7 +27,6 @@ __all__ = [
     "RandomWalk",
     "RootSlide",
     "SubtreePruneRegraft",
-    "SubtreeLeap",
     "SubtreeSlide",
     "BeastNarrowExchange",
     "BeastWideExchange",
@@ -38,4 +37,5 @@ __all__ = [
     "WilsonBalding",
     # Rust
     "EpochScale",
+    "SubtreeLeap",
 ]

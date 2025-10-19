@@ -33,6 +33,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<tree::PyTree>()?;
 
 	m.add_class::<builtin::operators::EpochScale>()?;
+	m.add_class::<builtin::operators::SubtreeLeap>()?;
 	m.add_class::<builtin::priors::ConstantPopulation>()?;
 	m.add_class::<builtin::priors::ExponentialGrowth>()?;
 	m.add_class::<builtin::priors::Monophyly>()?;
