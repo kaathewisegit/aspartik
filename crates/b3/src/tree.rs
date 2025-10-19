@@ -298,14 +298,14 @@ impl Tree {
 
 		// For each updated node go upwards in the tree until root and
 		// mark nodes as updated
-		for node in (0..self.num_nodes()).map(Node) {
-			if self.updated_nodes.at(node.0) {
+		for node in self.nodes() {
+			if self.is_updated(&node) {
 				let mut curr = node;
 				while let Some(parent) = self.parent_of(&curr) {
 					// return early when we find an already
-					// visited node to avoid wasting time on
-					// already checked paths
-					if self.updated_nodes.at(parent.0) {
+					// visited node to avoid wasting time
+					// on already checked paths
+					if self.is_updated(&parent) {
 						break;
 					}
 					self.mark_updated(&parent);
@@ -315,46 +315,34 @@ impl Tree {
 		}
 
 		// Updated leaves, in order
-		for i in 0..self.num_leaves() {
-			if self.updated_nodes.at(i) {
-				nodes.push(Node(i));
+		for leaf in self.leaves() {
+			if self.is_updated(&leaf) {
+				nodes.push(*leaf);
 			}
 		}
 		let num_updated_leaves = nodes.len();
 
-		// current rank
-		let mut current = Vec::from([self.root()]);
-		// next rank
-		let mut next = Vec::<Internal>::new();
-		// collects nodes for output
+		let mut queue = VecDeque::from([self.root()]);
 		let mut internals = Vec::<Node>::new();
 
-		while !current.is_empty() {
-			// For each rank we fill out the next rank with internal
-			// nodes.  When there are no more ranks the updated
-			// `current` will be empty and the iteration will stop
-			for node in current.iter() {
-				let (left, right) = self.children_of(node);
+		while let Some(node) = queue.pop_front() {
+			let (left, right) = self.children_of(&node);
 
-				if let Some(left) = self.as_internal(&left)
-					&& self.updated_nodes.at(left.0)
-				{
-					next.push(left);
-				}
-				if let Some(right) = self.as_internal(&right)
-					&& self.updated_nodes.at(right.0)
-				{
-					next.push(right);
-				}
+			if let Some(left) = self.as_internal(&left)
+				&& self.is_updated(&left)
+			{
+				internals.push(*left);
+				queue.push_back(left);
 			}
-			internals.extend(current
-				.iter()
-				.map(|n| -> Node { *n.deref() }));
-			current = std::mem::take(&mut next);
+			if let Some(right) = self.as_internal(&right)
+				&& self.is_updated(&right)
+			{
+				internals.push(*right);
+				queue.push_back(right);
+			}
 		}
 
 		internals.reverse();
-		internals.pop(); // remove root
 		nodes.append(&mut internals);
 
 		(nodes, num_updated_leaves)
@@ -375,7 +363,7 @@ impl Tree {
 
 		let num_nodes = nodes.len();
 		let mut out_nodes = Vec::with_capacity(num_nodes);
-		let mut edges = Vec::with_capacity(num_nodes * 2);
+		let mut edges = Vec::with_capacity(num_nodes);
 
 		for node in nodes {
 			out_nodes.push(node.0);
@@ -387,6 +375,10 @@ impl Tree {
 
 	fn mark_updated(&mut self, node: &Node) {
 		self.updated_nodes.set_on(node.0);
+	}
+
+	fn is_updated(&self, node: &Node) -> bool {
+		self.updated_nodes.at(node.0)
 	}
 
 	/// Overwrites the child of `edge` with `new_child`.  Only `edge` and
