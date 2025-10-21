@@ -147,9 +147,9 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		}
 
 		let scale_sums = self.stream.memcpy_dtov(&self.scale_sums)?;
-		let scale_sum: u32 = scale_sums.iter().sum();
-
-		out -= f64::from(scale_sum);
+		for (scale, weight) in scale_sums.iter().zip(weights) {
+			out -= f64::from(*scale) * weight;
+		}
 
 		Ok(out)
 	}
