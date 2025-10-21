@@ -43,7 +43,7 @@ most_recent = max(dates)
 for leaf, date in zip(tree.leaves(), dates):
     diff = most_recent - date
     tree.set_height(leaf, diff.days / 365)
-tree.set_random_heights(rng)
+tree.set_random_heights(0.001, rng)
 tree.accept()
 
 

@@ -68,12 +68,12 @@ class Tree(Stateful):
         equal `num_leaves`.
         """
 
-    def set_random_heights(self, rng: RNG):
+    def set_random_heights(self, diff, rng: RNG):
         """
         Randomizes the heights of internal nodes
 
-        Each internal node gets a height distributed between 0.2 and 0.3 from
-        the highest of its children.
+        Each internal node gets a height distributed uniformly between `diff`
+        and `2 * diff` plus the height of the highest of its children.
         """
 
     def scale(self, scale: float):

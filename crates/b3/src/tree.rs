@@ -159,7 +159,7 @@ impl Tree {
 		};
 
 		out.set_random_topology(rng);
-		out.set_random_heights(rng);
+		out.set_random_heights(0.01, rng);
 		Ok(out)
 	}
 
@@ -228,9 +228,7 @@ impl Tree {
 
 	// Sets the heights of internal nodes by walking upwards breadth-first
 	// starting with all of the leaves
-	pub fn set_random_heights(&mut self, rng: &mut Rng) {
-		const DIFF: f64 = 0.1;
-
+	pub fn set_random_heights(&mut self, diff: f64, rng: &mut Rng) {
 		let mut walk = VecDeque::new();
 		for leaf in self.leaves() {
 			// All leaves have a parent
@@ -244,8 +242,8 @@ impl Tree {
 				self.height_of(&right),
 			);
 
-			let diff = DIFF * (2.0 + rng.random::<f64>());
-			self.set_height(&internal, max + diff);
+			let node_diff = diff * (1.0 + rng.random::<f64>());
+			self.set_height(&internal, max + node_diff);
 
 			if let Some(parent) = self.parent_of(&internal) {
 				walk.push_front(parent);
@@ -885,8 +883,9 @@ impl PyTree {
 		self.inner().set_leaf_heights(heights);
 	}
 
-	fn set_random_heights(&self, rng: Py<PyRng>) {
-		self.inner().set_random_heights(&mut rng.get().inner());
+	fn set_random_heights(&self, diff: f64, rng: Py<PyRng>) {
+		self.inner()
+			.set_random_heights(diff, &mut rng.get().inner());
 	}
 
 	fn scale(&self, scale: f64) -> Result<()> {

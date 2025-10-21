@@ -45,7 +45,7 @@ for leaf, time in zip(tree.leaves(), times):
     height = max_time - time
     tree.set_height(leaf, height)
 
-tree.set_random_heights(rng)
+tree.set_random_heights(0.1, rng)
 tree.accept()
 
 
