@@ -31,13 +31,7 @@ class NodeSlide(Operator):
     def propose(self) -> Proposal:
         tree = self.tree
 
-        # Pick a non-root internal node
-        node = tree.random_internal(self.rng)
-        parent = tree.parent_of(node)
-        while parent is None:
-            node = tree.random_internal(self.rng)
-            parent = tree.parent_of(node)
-
+        node, parent = tree.random_nonroot_internal(self.rng)
         left, right = tree.children_of(node)
 
         oldest = tree.height_of(parent)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
 from datetime import timedelta
-from typing import Any, ClassVar, Literal, Optional, Protocol, runtime_checkable
+from typing import Any, ClassVar, Literal, Optional, Protocol, Tuple, runtime_checkable
 
 from ..data import DNASeq
 from ..data.msa import MSA
@@ -192,8 +192,12 @@ class Tree(Stateful):
         It can be both an internal node or a leaf.  See `random_internal` and
         `random_leaf` for getting a random node of a specific kind.
         """
+    def random_nonroot_node(self, rng: RNG) -> Tuple[Internal, Internal]:
+        """Returns a random non-root node and its parent"""
     def random_internal(self, rng: RNG) -> Internal:
         """Returns a random internal node"""
+    def random_nonroot_internal(self, rng: RNG) -> Tuple[Internal, Internal]:
+        """Returns a random non-root internal and its parent"""
     def random_leaf(self, rng: RNG) -> Leaf:
         """Returns a random leaf node"""
     def nodes(self) -> Iterator[Node]:

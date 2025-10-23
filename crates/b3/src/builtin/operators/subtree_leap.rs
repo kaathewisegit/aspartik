@@ -53,7 +53,6 @@ impl SubtreeLeap {
 
 	fn propose(&self, py: Python) -> Result<Proposal> {
 		let tree = &mut *self.tree.get().inner();
-		let root = tree.root();
 
 		let delta: f64 = py_call_method!(
 			py,
@@ -66,13 +65,7 @@ impl SubtreeLeap {
 
 		let rng = &mut *self.rng.get().inner();
 
-		let mut node = tree.random_node(rng);
-		while node == *root {
-			node = tree.random_node(rng);
-		}
-
-		let parent =
-			tree.parent_of(&node).expect("Checked in the loop");
+		let (node, parent) = tree.random_nonroot_node(rng);
 		let grandparent = tree.parent_of(&parent);
 		let sibling = tree.other_child(&parent, &node)?;
 

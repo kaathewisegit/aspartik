@@ -699,11 +699,32 @@ impl Tree {
 		Node(i)
 	}
 
+	pub fn random_nonroot_node(&self, rng: &mut Rng) -> (Node, Internal) {
+		loop {
+			let node = self.random_node(rng);
+			if let Some(parent) = self.parent_of(&node) {
+				return (node, parent);
+			}
+		}
+	}
+
 	pub fn random_internal(&self, rng: &mut Rng) -> Internal {
 		let range = Uniform::new(self.num_leaves(), self.num_nodes())
 			.unwrap();
 		let i = range.sample(rng);
 		Internal(i)
+	}
+
+	pub fn random_nonroot_internal(
+		&self,
+		rng: &mut Rng,
+	) -> (Internal, Internal) {
+		loop {
+			let node = self.random_internal(rng);
+			if let Some(parent) = self.parent_of(&node) {
+				return (node, parent);
+			}
+		}
 	}
 
 	pub fn random_leaf(&self, rng: &mut Rng) -> Leaf {
@@ -1049,9 +1070,26 @@ impl PyTree {
 		node.into_pyobject(py, self.num_leaves())
 	}
 
+	fn random_nonroot_node(
+		&self,
+		py: Python,
+		rng: &PyRng,
+	) -> Result<(Py<PyAny>, Internal)> {
+		let (node, parent) =
+			self.inner().random_nonroot_node(&mut rng.inner());
+
+		let node = node.into_pyobject(py, self.num_leaves())?;
+
+		Ok((node.unbind(), parent))
+	}
+
 	/// Samples a random internal node from a tree.
 	fn random_internal(&self, rng: &PyRng) -> Internal {
 		self.inner().random_internal(&mut rng.inner())
+	}
+
+	fn random_nonroot_internal(&self, rng: &PyRng) -> (Internal, Internal) {
+		self.inner().random_nonroot_internal(&mut rng.inner())
 	}
 
 	/// Samples a random leaf node from a tree.

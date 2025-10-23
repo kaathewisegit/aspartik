@@ -11,10 +11,14 @@ from aspartik.b3 import MCMC, Likelihood, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
+    BeastNarrowExchange,
+    NodeSlide,
     ParamScale,
     RandomWalk,
+    RootSlide,
     SubtreeLeap,
     SubtreePruneRegraft,
+    SubtreeSlide,
     UpDown,
 )
 from aspartik.b3.parameters import Internals, Real
@@ -65,10 +69,14 @@ operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
     ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
     UpDown(Internals(tree), clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
-    SubtreeLeap(tree, Normal(0, 1), rng, weight=1000),
-    SubtreePruneRegraft(tree, rng, weight=100),
+    SubtreeLeap(tree, Normal(0, 1), rng, weight=30),
+    SubtreePruneRegraft(tree, rng, weight=30),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     RandomWalk(growth_rate, window=1.0, rng=rng, weight=3),
+    #
+    BeastNarrowExchange(tree, rng, weight=30),
+    RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
+    NodeSlide(tree, Uniform(0, 1), rng, weight=30),
 ]
 
 
@@ -78,6 +86,7 @@ likelihood = Likelihood(
     clock=StrictClock(clock_rate),
     tree=tree,
     calculator="cuda",
+    cuda_device=1,
 )
 
 loggers = [
@@ -117,6 +126,10 @@ mcmc = MCMC(
     rng=rng,
 )
 
-mcmc.run()
+
+try:
+    mcmc.run()
+except:
+    pass
 
 print_operator_stats(mcmc)
