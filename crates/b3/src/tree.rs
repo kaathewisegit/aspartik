@@ -467,17 +467,7 @@ impl Tree {
 	}
 
 	pub fn total_length(&self) -> f64 {
-		let mut out = 0.0;
-
-		for node in self.nodes() {
-			if node == *self.root() {
-				continue;
-			}
-			let edge = self.edge_index(&node);
-			out += self.edge_length(edge);
-		}
-
-		out
+		self.edges().map(|edge| self.edge_length(edge)).sum()
 	}
 
 	pub fn validate(&self) -> Result<()> {
@@ -753,6 +743,10 @@ impl Tree {
 
 	pub fn leaves(&self) -> impl Iterator<Item = Leaf> + use<> {
 		(0..self.num_leaves()).map(Leaf)
+	}
+
+	pub fn edges(&self) -> impl Iterator<Item = usize> {
+		0..self.num_edges()
 	}
 
 	pub fn to_newick(&self, internal_ids: bool) -> String {

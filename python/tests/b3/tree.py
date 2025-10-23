@@ -38,3 +38,10 @@ def test_other_child(rng):
 
     other = tree.other_child(root, n2)
     assert other == n1
+
+
+def test_total_length(rng):
+    tree = Tree(["1", "2"], rng)
+    tree.set_height(tree.root, 10)
+
+    assert tree.total_length() == 20
