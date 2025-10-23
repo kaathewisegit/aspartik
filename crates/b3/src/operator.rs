@@ -15,15 +15,35 @@ use rng::Rng;
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-#[pyclass(module = "aspartik.b3", frozen, eq)]
 pub enum Proposal {
 	Reject(),
 	Hastings(f64),
 	Accept(),
 }
 
+impl<'py> FromPyObject<'py> for Proposal {
+	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+		let py_proposal = obj.extract::<PyProposal>()?;
+		Ok(py_proposal.0)
+	}
+}
+
+impl<'py> IntoPyObject<'py> for Proposal {
+	type Target = PyProposal;
+	type Output = Bound<'py, PyProposal>;
+	type Error = PyErr;
+
+	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
+		Bound::new(py, PyProposal(self))
+	}
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[pyclass(module = "aspartik.b3", name = "Proposal", frozen, eq)]
+pub struct PyProposal(Proposal);
+
 #[pymethods]
-impl Proposal {
+impl PyProposal {
 	#[classmethod]
 	#[pyo3(name = "Reject")]
 	fn reject(_cls: Py<PyType>) -> Proposal {
@@ -43,7 +63,7 @@ impl Proposal {
 	}
 
 	fn __repr__(&self) -> String {
-		match self {
+		match self.0 {
 			Proposal::Reject() => "Proposal.Reject()".to_owned(),
 			Proposal::Hastings(r) => {
 				format!("Proposal.Hastings({r})")
