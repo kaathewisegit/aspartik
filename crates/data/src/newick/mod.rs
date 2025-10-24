@@ -17,8 +17,24 @@ pub struct Node {
 }
 
 impl Node {
-	pub fn new(name: String, attributes: String) -> Node {
+	pub const fn new(name: String, attributes: String) -> Node {
 		Node { name, attributes }
+	}
+
+	pub fn named<S>(name: S) -> Node
+	where
+		S: AsRef<str>,
+	{
+		Node::new(name.as_ref().to_owned(), String::new())
+	}
+
+	pub const fn unnamed() -> Node {
+		Node::new(String::new(), String::new())
+	}
+
+	pub fn with_attributes(mut self, attributes: String) -> Node {
+		self.attributes = attributes;
+		self
 	}
 
 	pub fn name(&self) -> &str {
@@ -42,6 +58,10 @@ impl Edge {
 			distance,
 			attributes,
 		}
+	}
+
+	pub const fn from_distance(distance: f64) -> Edge {
+		Edge::new(Some(distance), String::new())
 	}
 
 	pub fn distance(&self) -> Option<f64> {
