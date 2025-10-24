@@ -76,6 +76,15 @@ class Tree(Stateful):
         and `2 * diff` plus the height of the highest of its children.
         """
 
+    @property
+    def names(self) -> list[str]:
+        """
+        A list of all leaf names.
+
+        The order is the same as leaf indices: the first name is that of
+        `Leaf(0)`, the second one is `Leaf(1)`, and so on.
+        """
+
     def scale(self, scale: float):
         """
         Multiplies the heights of all internal nodes by `scale`

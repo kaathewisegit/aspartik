@@ -45,3 +45,12 @@ def test_total_length(rng):
     tree.set_height(tree.root, 10)
 
     assert tree.total_length() == 20
+
+
+def test_names(rng):
+    tree = Tree(["1", "2"], rng)
+    assert tree.names == ["1", "2"]
+
+    names = [str(rng.random_int(0, 2**32)) for _ in range(1000)]
+    tree = Tree(names, rng)
+    assert tree.names == names

@@ -106,6 +106,10 @@ macro_rules! nodes_2 {
 				format!("{}({})", stringify!($type), self.0)
 			}
 
+			fn __int__(&self) -> usize {
+				self.0
+			}
+
 			fn __getnewargs__<'py>(
 				&self,
 				py: Python<'py>,
@@ -251,6 +255,10 @@ impl Tree {
 		}
 
 		self.accept();
+	}
+
+	pub fn names(&self) -> Vec<String> {
+		self.names.clone()
 	}
 
 	pub fn scale(&mut self, scale: f64) -> Result<()> {
@@ -901,6 +909,11 @@ impl PyTree {
 	fn set_random_heights(&self, diff: f64, rng: Py<PyRng>) {
 		self.inner()
 			.set_random_heights(diff, &mut rng.get().inner());
+	}
+
+	#[getter]
+	fn names(&self) -> Vec<String> {
+		self.inner().names()
 	}
 
 	fn scale(&self, scale: f64) -> Result<()> {
