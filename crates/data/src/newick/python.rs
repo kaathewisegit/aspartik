@@ -1,7 +1,8 @@
+use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
-use super::Tree;
+use super::{Tree, parse};
 
 #[derive(Debug)]
 #[pyclass(name = "Tree", module = "aspartik.data.newick", frozen)]
@@ -20,15 +21,15 @@ impl PyTree {
 impl PyTree {
 	#[new]
 	#[pyo3(signature = (newick = None))]
-	fn new(newick: Option<&str>) -> Self {
+	fn new(newick: Option<&str>) -> Result<Self> {
 		let tree = match newick {
 			None => Tree::new(),
-			Some(_) => todo!("parse the tree"),
+			Some(input) => parse(input)?,
 		};
 
-		PyTree {
+		Ok(PyTree {
 			inner: Mutex::new(tree),
-		}
+		})
 	}
 
 	fn __str__(&self) -> String {
