@@ -36,3 +36,11 @@ impl PyTree {
 		self.inner().into_string()
 	}
 }
+
+impl<'py> FromPyObject<'py> for Tree {
+	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+		let py_tree = obj.downcast::<PyTree>()?.get();
+
+		Ok(py_tree.inner().clone())
+	}
+}

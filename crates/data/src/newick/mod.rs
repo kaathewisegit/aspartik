@@ -1,5 +1,5 @@
 use petgraph::{
-	Directed,
+	Directed, Direction,
 	stable_graph::{Edges, Neighbors, StableDiGraph},
 };
 
@@ -112,5 +112,16 @@ impl Tree {
 
 	pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex, edge: Edge) {
 		self.graph.add_edge(from, to, edge);
+	}
+
+	pub fn edge_to_parent(&self, node: NodeIndex) -> Option<Edge> {
+		self.graph
+			.edges_directed(node, Direction::Incoming)
+			.next()
+			.map(|e| e.weight().clone())
+	}
+
+	pub fn num_nodes(&self) -> usize {
+		self.graph.node_count()
 	}
 }

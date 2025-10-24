@@ -6,6 +6,7 @@ from typing import Any, ClassVar, Literal, Optional, Protocol, Tuple, runtime_ch
 
 from ..data import DNASeq
 from ..data.msa import MSA
+from ..data.newick import Tree as NewickTree
 from ..rng import RNG
 from .substitutions import Substitution
 from .tree import Internal, Leaf, Node
@@ -54,6 +55,15 @@ class Tree(Stateful):
         All heights are initially set to 0.  Use `set_leaf_heights` for dated
         tips and `set_random_heights` to randomize the positions of internal
         nodes.
+        """
+
+    @classmethod
+    def from_newick(_cls, newick: NewickTree) -> Tree:
+        """
+        Initializes the tree from a Newick object.
+
+        The Newick tree must be strictly bifurcating and all of its edges must
+        have a defined length.
         """
 
     def set_random_topology(self, rng: RNG):

@@ -5,10 +5,9 @@ tutorial:
 <https://beast.community/workshop_respiratory_virus_phylodynamics>
 """
 
-from Bio import Phylo
-
 from collections import deque
 from datetime import datetime
+from pathlib import Path
 
 from aspartik.b3 import MCMC, Likelihood, Tree
 from aspartik.b3.clocks import StrictClock
@@ -29,6 +28,7 @@ from aspartik.b3.priors import Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.tree import Internal
 from aspartik.b3.utils import print_operator_stats
+from aspartik.data import newick
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
@@ -38,82 +38,9 @@ msa = read_msa_from_fasta("crates/b3/data/b.1.1.7.fasta")
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
 
-dates = []  # tip dates
-for name in msa.sequence_names():
-    node = tree.leaf_by_name(name)
-    assert node is not None
-
-    date = name.split("|")[-1]
-    date = datetime.strptime(date, "%Y-%m-%d").date()
-    dates.append(date)
-
-most_recent = max(dates)
-for leaf, date in zip(tree.leaves(), dates):
-    diff = most_recent - date
-    tree.set_height(leaf, diff.days / 365)
-
-starting = Phylo.read("crates/b3/data/respiratory-starting.tree", "newick")  # type: ignore
-
-# BEAST sorts leaves by name
-leaf_names = sorted(msa.sequence_names())
-leaves = [tree.leaf_by_name(name) for name in leaf_names]
-
-nodes = {}
-for clade in starting.get_terminals():
-    id = int(clade.name) - 1
-    nodes[clade] = leaves[id]
-
-for clade, internal in zip(starting.get_nonterminals(), tree.internals()):
-    nodes[clade] = internal
-
-r_nodes = {node: clade for clade, node in nodes.items()}
-
-for clade in starting.get_nonterminals():  # topology
-    internal = nodes[clade]
-    left, right = nodes[clade.clades[0]], nodes[clade.clades[1]]
-    left_edge = (int(internal) - tree.num_leaves) * 2
-    right_edge = left_edge + 1
-
-    tree.update_edge(left_edge, left)
-    tree.update_edge(right_edge, right)
-
-    if clade.branch_length is None:
-        tree.set_root(internal)
-
-tree.set_height(tree.root, 0.3337404335234966)
-
-stack = [tree.root]
-while stack:
-    current = stack.pop()
-
-    if parent := tree.parent_of(current):
-        current_clade = r_nodes[current]
-        branch_length = current_clade.branch_length
-
-        parent_height = tree.height_of(parent)
-        tree.set_height(current, parent_height - branch_length)
-
-    if isinstance(current, Internal):
-        stack.extend(tree.children_of(current))  # type: ignore
-
-
-for node in stack[::-1]:
-    left, right = tree.children_of(node)
-    left_clade = r_nodes[left]
-    left_branch_length = left_clade.branch_length
-    left_height = tree.height_of(left)
-
-    right_clade = r_nodes[right]
-    right_branch_length = right_clade.branch_length
-    right_height = tree.height_of(right)
-
-    node_clade = r_nodes[node]
-    assert node == nodes[node_clade.root]
-
-    tree.set_height(node, left_height + left_branch_length)
-
+starting = newick.Tree(Path("crates/b3/data/respiratory-starting.tree").read_text())
+tree = Tree.from_newick(starting)
 tree.validate()
-tree.accept()
 
 
 kappa = Real(2.0)

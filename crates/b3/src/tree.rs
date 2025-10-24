@@ -1,9 +1,9 @@
-use anyhow::{Result, ensure};
+use anyhow::{Result, bail, ensure};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
 	prelude::*,
-	types::{PyAny, PyDict, PyTuple},
+	types::{PyAny, PyDict, PyTuple, PyType},
 };
 use rand::{
 	Rng as _,
@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use std::{
 	cmp::Reverse,
+	collections::HashMap,
 	collections::{BinaryHeap, VecDeque},
 	mem,
 	ops::Deref,
@@ -165,6 +166,123 @@ impl Tree {
 		out.set_random_topology(rng);
 		out.set_random_heights(0.01, rng);
 		Ok(out)
+	}
+
+	pub fn from_newick(newick: &NewickTree) -> Result<Self> {
+		let num_nodes = newick.num_nodes();
+		let num_internals = (num_nodes - 1) / 2;
+		let num_leaves = num_nodes.div_ceil(2);
+
+		let mut children = vec![ROOT; num_internals * 2];
+		let mut parents = vec![ROOT; num_nodes];
+		let mut heights = vec![0.0; num_nodes];
+		let mut names = Vec::with_capacity(num_leaves);
+
+		let mut current_leaf: usize = 0;
+		let mut current_internal = num_leaves;
+
+		let Some(root) = newick.root() else {
+			bail!("The Newick tree must be rooted");
+		};
+
+		let mut mapping = HashMap::<NewickNodeIndex, usize>::new();
+
+		let mut stack = Vec::from([*root]);
+
+		while let Some(node) = stack.pop() {
+			let mut children = newick.children_of(node);
+			let Some(left) = children.next() else {
+				// child
+				mapping.insert(node, current_leaf);
+				current_leaf += 1;
+				continue;
+			};
+			let Some(right) = children.next() else {
+				bail!(
+					"Encountered an internal node with only one child"
+				);
+			};
+			if children.next().is_some() {
+				bail!(
+					"Encountered an internal node with more than two children.  b3 tree must be strictly bifurcating."
+				);
+			}
+
+			mapping.insert(node, current_internal);
+			current_internal += 1;
+
+			stack.push(left);
+			stack.push(right);
+		}
+
+		stack.push(*root);
+
+		while let Some(node_idx) = stack.pop() {
+			let node = newick.get_node(node_idx);
+			let mut node_children = newick.children_of(node_idx);
+
+			let current = mapping[&node_idx];
+
+			if let Some(left) = node_children.next() {
+				// parent
+
+				// PANIC: checked when iterating over stack1
+				let right = node_children.next().unwrap();
+				stack.push(left);
+				stack.push(right);
+
+				let left = mapping[&left];
+				let right = mapping[&right];
+
+				let offset = (current - num_leaves) * 2;
+				children[offset] = left;
+				children[offset + 1] = right;
+
+				parents[left] = current;
+				parents[right] = current;
+			} else {
+				// child
+				names.push(node.name().to_owned());
+			}
+
+			// update height
+			let Some(edge_to_parent) =
+				newick.edge_to_parent(node_idx)
+			else {
+				continue; // ignore root
+			};
+
+			let Some(edge_length) = edge_to_parent.distance()
+			else {
+				bail!("Encountered an edge without length");
+			};
+
+			let parent_height = heights[parents[current]];
+			let node_height = parent_height - edge_length;
+			heights[current] = node_height;
+		}
+
+		let mut min_height: f64 = 0.0;
+		for height in heights.iter().copied() {
+			if height < min_height {
+				min_height = height;
+			}
+		}
+
+		for height in &mut heights {
+			*height += min_height;
+		}
+
+		Ok(Self {
+			names,
+
+			children: children.into(),
+			parents: parents.into(),
+			heights: heights.into(),
+
+			updated_edges: Vec::new(),
+			updated_nodes: Bitmap::new(num_nodes),
+		})
 	}
 
 	pub fn set_random_topology(&mut self, rng: &mut Rng) {
@@ -892,6 +1010,15 @@ impl PyTree {
 	#[new]
 	fn new(names: Vec<String>, rng: Py<PyRng>) -> Result<Self> {
 		let tree = Tree::new(names, &mut rng.get().inner())?;
+		let tree = Self {
+			inner: Mutex::new(tree),
+		};
+		Ok(tree)
+	}
+
+	#[classmethod]
+	fn from_newick(_cls: Py<PyType>, newick: NewickTree) -> Result<Self> {
+		let tree = Tree::from_newick(&newick)?;
 		let tree = Self {
 			inner: Mutex::new(tree),
 		};
