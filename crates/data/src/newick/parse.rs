@@ -18,7 +18,7 @@ peg::parser! {grammar newick_parser() for str {
 			"-"?
 			("0" / (['0'..='9']+ ['0'..='9']*))
 			("." ['0'..='9']+)?
-			([eE] ("-" / "+")? ['0'..='9']+)?
+			(['e' | 'E'] ("-" / "+")? ['0'..='9']+)?
 		) { f64::from_str(number).unwrap() }
 
 	rule name() -> String =
@@ -62,7 +62,7 @@ fn add_subtree(tree: &mut Tree, subtree: Subtree) -> NodeIndex {
 pub fn parse(input: &str) -> Result<Tree> {
 	let mut tree = Tree::new();
 
-	let root = newick_parser::tree(input)?;
+	let root = newick_parser::tree(input.trim())?;
 	let root_ref = add_subtree(&mut tree, root);
 	tree.set_root(root_ref);
 
@@ -76,6 +76,13 @@ mod test {
 	#[test]
 	fn basic() {
 		let s = "(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);";
+		let tree = parse(s).unwrap();
+		assert_eq!(tree.into_string(), s);
+	}
+
+	#[test]
+	fn number_names() {
+		let s = "(1:0.1,2:0.2);";
 		let tree = parse(s).unwrap();
 		assert_eq!(tree.into_string(), s);
 	}
