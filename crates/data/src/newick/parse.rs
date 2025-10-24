@@ -1,61 +1,72 @@
-#![expect(dead_code)]
+use anyhow::Result;
 
-use logos::{Lexer, Logos};
+use std::str::FromStr;
 
-use super::{Edge, Node};
+use super::{Edge, Node, NodeIndex, Tree};
 
-#[derive(Debug, PartialEq, Logos)]
-#[logos(skip r"[ \t\r\n]+")]
-enum Token {
-	#[token("(")]
-	ParenOpen,
-	#[token(")")]
-	ParenClose,
-	#[token(":")]
-	Colon,
-	#[token(",")]
-	Comma,
-	#[token(";")]
-	Semi,
+type PNode = (Option<String>, Option<f64>);
 
-	#[regex(
-		r"-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?",
-		|lex| lex.slice().parse::<f64>().unwrap(),
-		priority = 3,
-	)]
-	Number(f64),
-
-	// TODO: alphanum
-	#[regex(
-		r#"[0-9a-zA-Z_-]+|"([^"]|\")*""#,
-		|lex| lex.slice().to_owned(),
-		priority = 2,
-	)]
-	Name(String),
-
-	#[regex(r"\[[^]]*\]")]
-	Comment,
+#[derive(Debug, Clone)]
+struct Subtree {
+	parsed: PNode,
+	children: Vec<Subtree>,
 }
 
-fn node(lexer: &mut Lexer<'_, Token>) -> Node {
-	let token = lexer.next().unwrap().unwrap();
+peg::parser! {grammar newick_parser() for str {
+	rule number() -> f64 =
+		number:$(
+			"-"?
+			("0" / (['0'..='9']+ ['0'..='9']*))
+			("." ['0'..='9']+)?
+			([eE] ("-" / "+")? ['0'..='9']+)?
+		) { f64::from_str(number).unwrap() }
 
-	let name = match token {
-		Token::Name(n) => n,
-		_ => String::new(),
-	};
+	rule name() -> String =
+		name:$(['a'..='z' | 'A'..='Z' | '0'..='9']+)
+		{ String::from(name) }
 
-	Node::new(name, String::new())
+	pub rule node() -> PNode =
+		name:name()? ":" length:number()? { (name, length) }
+		/ { (None, None) }
+
+	rule subtree() -> Subtree =
+		"(" children:(subtree() ++ ",") ")" parsed:node()
+		{ Subtree { parsed, children } }
+		/
+		node:node()
+		{ Subtree { parsed: node, children: Vec::new() } }
+
+	pub rule tree() -> Subtree =
+		subtree:subtree() ";" { subtree }
+}}
+
+fn add_subtree(tree: &mut Tree, subtree: Subtree) -> NodeIndex {
+	let node =
+		Node::new(subtree.parsed.0.unwrap_or_default(), String::new());
+
+	let node_ref = tree.add_node(node);
+
+	for child in subtree.children {
+		let edge_length = child.parsed.1;
+		let child_ref = add_subtree(tree, child);
+		tree.add_edge(
+			node_ref,
+			child_ref,
+			Edge::new(edge_length, String::new()),
+		);
+	}
+
+	node_ref
 }
 
-fn distance(lexer: &mut Lexer<'_, Token>) -> Edge {
-	let token = lexer.next().unwrap().unwrap();
-	let distance = match token {
-		Token::Number(distance) => Some(distance),
-		_ => None,
-	};
+pub fn parse(input: &str) -> Result<Tree> {
+	let mut tree = Tree::new();
 
-	Edge::new(distance, String::new())
+	let root = newick_parser::tree(input)?;
+	let root_ref = add_subtree(&mut tree, root);
+	tree.set_root(root_ref);
+
+	Ok(tree)
 }
 
 #[cfg(test)]
@@ -63,19 +74,9 @@ mod test {
 	use super::*;
 
 	#[test]
-	fn test_node() {
-		assert_eq!(
-			node(&mut Lexer::new("node:1.1")),
-			Node::new("node".to_owned(), String::new())
-		);
-		assert_eq!(
-			node(&mut Lexer::new(":1.1")),
-			Node::new(String::new(), String::new())
-		);
-		assert_eq!(
-			// XXX: doesn't handle EOF
-			node(&mut Lexer::new("Name:,")),
-			Node::new("Name".to_owned(), String::new())
-		);
+	fn basic() {
+		let s = "(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);";
+		let tree = parse(s).unwrap();
+		assert_eq!(tree.into_string(), s);
 	}
 }

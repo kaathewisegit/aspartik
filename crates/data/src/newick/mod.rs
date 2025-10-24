@@ -8,6 +8,8 @@ mod parse;
 pub(crate) mod python;
 mod serialize;
 
+pub use parse::parse;
+
 pub use petgraph::stable_graph::NodeIndex;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
