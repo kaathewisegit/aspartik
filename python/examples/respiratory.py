@@ -87,9 +87,9 @@ loggers = [
     ValueLogger(
         {
             "step": lambda: mcmc.current_step,
-            "joint": lambda: mcmc.prior + mcmc.likelihood,
+            "joint": lambda: mcmc.prior + mcmc.cached_likelihood,
             "prior": lambda: mcmc.prior,
-            "likelihood": lambda: mcmc.likelihood,
+            "likelihood": lambda: mcmc.cached_likelihood,
             "population_size": population_size,
             "growth_rate": growth_rate,
             "clock_rate": clock_rate,

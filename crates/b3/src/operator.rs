@@ -1,6 +1,6 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
-use anyhow::Result;
+use anyhow::{Context, Result, anyhow};
 use log::{debug, trace};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
@@ -218,13 +218,25 @@ impl WeightedScheduler {
 		Ok(())
 	}
 
-	pub fn record_propose_duration(
+	pub fn make_proposal(
 		&self,
+		py: Python,
 		index: usize,
-		duration: Duration,
-	) {
+	) -> Result<Proposal> {
+		let operator = &self.operators[index];
+		let propose_start = Instant::now();
+		let proposal = operator.propose(py).with_context(|| {
+			anyhow!(
+				"Operator {} failed while generating a proposal",
+				operator.repr(py).unwrap()
+			)
+		})?;
+		let propose_end = Instant::now();
+
 		let mut statistics = self.statistics.lock();
-		statistics.propose[index] += duration;
+		statistics.propose[index] += propose_end - propose_start;
+
+		Ok(proposal)
 	}
 
 	pub fn record_likelihood_duration(

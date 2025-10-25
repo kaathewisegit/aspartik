@@ -447,7 +447,7 @@ class MCMC:
         """Posterior probability for the last accepted step"""
 
     @property
-    def likelihood(self) -> float:
+    def cached_likelihood(self) -> float:
         """Total likelihood for the last accepted step"""
 
     @property

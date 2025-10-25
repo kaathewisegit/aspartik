@@ -156,7 +156,7 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn likelihood(&self) -> f64 {
+	fn cached_likelihood(&self) -> f64 {
 		let mut out = 0.0;
 		for likelihood in &self.likelihoods {
 			out += likelihood.get().inner().cached_likelihood();
@@ -185,23 +185,36 @@ impl Mcmc {
 }
 
 impl Mcmc {
-	fn step(&self, py: Python) -> Result<()> {
-		let rng = self.rng.get();
-		let operator_index =
-			self.scheduler.random_operator_index(&mut rng.inner());
-		let operator = self.scheduler.get_operator(operator_index);
+	/// Triggers likelihood recalculation
+	///
+	/// The calculations might be asynchronous and done in parallel.
+	/// Calling `calculate_likelihood` will await the results.
+	fn propose(&self, py: Python) -> Result<()> {
+		for likelihood in &self.likelihoods {
+			likelihood.get().inner().propose(py)?;
+		}
+		Ok(())
+	}
 
-		let propose_start = Instant::now();
-		let proposal = operator.propose(py).with_context(|| {
-			anyhow!(
-				"Operator {} failed while generating a proposal",
-				operator.repr(py).unwrap()
-			)
-		})?;
-		self.scheduler.record_propose_duration(
-			operator_index,
-			Instant::now() - propose_start,
-		);
+	/// Await the calculations of all likelihoods
+	///
+	/// This must be called after the `propose` method.  Calling it without
+	/// calling `propose` or calling it will lead to a deadlock (`thread`
+	/// calculator) or an incorrect value.
+	fn calculate_likelihood(&self) -> Result<f64> {
+		self.likelihoods
+			.iter()
+			.map(|likelihood| likelihood.get().inner().likelihood())
+			.sum()
+	}
+
+	fn step(&self, py: Python) -> Result<()> {
+		let operator_index = self
+			.scheduler
+			.random_operator_index(&mut self.rng.get().inner());
+
+		let proposal =
+			self.scheduler.make_proposal(py, operator_index)?;
 
 		let hastings = match proposal {
 			Proposal::Accept() => {
@@ -223,40 +236,20 @@ impl Mcmc {
 		}
 
 		let likelihood_start = Instant::now();
-
-		// Update likelihoods.
-		for py_likelihood in &self.likelihoods {
-			py_likelihood.get().inner().propose(py)?;
-		}
+		self.propose(py)?;
 
 		self.scheduler.record_likelihood_duration(
 			operator_index,
 			Instant::now() - likelihood_start,
 		);
 
-		// Collect the resulting likelihoods.  This is done separately
-		// from proposing to allow launching parallel workloads.  A user
-		// might, for example, use two CUDA devices.  Then `propose`
-		// will queue both of them asynchronously and `likelihood` will
-		// wait for completion of both.
-		let mut likelihood = 0.0;
-		for py_likelihood in &self.likelihoods {
-			likelihood +=
-				py_likelihood.get().inner().likelihood()?;
-		}
+		let likelihood = self.calculate_likelihood()?;
 
 		let new_posterior = likelihood + prior;
 
 		let old_posterior = *self.posterior.lock();
 
 		let ratio = new_posterior - old_posterior + hastings;
-
-		trace!(
-			target: "b3::mcmc::step",
-			likelihood, prior, hastings,
-			new_posterior, old_posterior, ratio;
-			""
-		);
 
 		let random_0_1 = self.rng.get().inner().random::<f64>();
 		if ratio > random_0_1.ln() {

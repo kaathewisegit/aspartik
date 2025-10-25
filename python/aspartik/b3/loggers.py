@@ -49,7 +49,7 @@ class PrintLogger(Callback):
 
     def log(self, mcmc: MCMC):
         print(
-            f"{mcmc.current_step:>16}{mcmc.posterior:>16.2f}{mcmc.likelihood:>16.2f}{mcmc.prior:>16.2f}"
+            f"{mcmc.current_step:>16}{mcmc.posterior:>16.2f}{mcmc.cached_likelihood:>16.2f}{mcmc.prior:>16.2f}"
         )
 
 
