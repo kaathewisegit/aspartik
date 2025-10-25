@@ -1,5 +1,4 @@
 use anyhow::{Context, Result, anyhow};
-use log::trace;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
@@ -183,6 +182,34 @@ impl Mcmc {
 	}
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum StepResult {
+	/// Operator returned `Proposal::Reject`
+	UnconditionalAccept = 0,
+	/// Operator returned `Proposal::Accept`
+	UnconditionalReject,
+	/// A prior returned negative infinity
+	PriorReject,
+	/// Regular MCMC accept
+	Accept,
+	/// Regular MCMC reject
+	Reject,
+}
+
+impl StepResult {
+	pub fn is_accept(&self) -> bool {
+		matches!(self, Self::UnconditionalAccept | Self::Accept)
+	}
+
+	pub fn is_reject(&self) -> bool {
+		!self.is_accept()
+	}
+
+	pub fn index(&self) -> usize {
+		*self as usize
+	}
+}
+
 impl Mcmc {
 	/// Triggers likelihood recalculation
 	///
@@ -208,6 +235,8 @@ impl Mcmc {
 	}
 
 	fn step(&self, py: Python) -> Result<()> {
+		use StepResult::*;
+
 		let operator_index = self
 			.scheduler
 			.random_operator_index(&mut self.rng.get().inner());
@@ -217,12 +246,18 @@ impl Mcmc {
 
 		let hastings = match proposal {
 			Proposal::Accept() => {
-				self.accept(py, operator_index)?;
-				return Ok(());
+				return self.finalize(
+					py,
+					operator_index,
+					UnconditionalAccept,
+				);
 			}
 			Proposal::Reject() => {
-				self.reject(py, operator_index)?;
-				return Ok(());
+				return self.finalize(
+					py,
+					operator_index,
+					UnconditionalReject,
+				);
 			}
 			Proposal::Hastings(ratio) => ratio,
 		};
@@ -230,7 +265,7 @@ impl Mcmc {
 		let prior = self.prior(py)?;
 		// The proposal will be rejected regardless of likelihood
 		if prior == f64::NEG_INFINITY {
-			self.reject(py, operator_index)?;
+			self.finalize(py, operator_index, PriorReject)?;
 			return Ok(());
 		}
 
@@ -252,41 +287,38 @@ impl Mcmc {
 		if ratio > random_0_1.ln() {
 			*self.posterior.lock() = new_posterior;
 
-			self.accept(py, operator_index)?;
+			self.finalize(py, operator_index, Accept)?;
 		} else {
-			self.reject(py, operator_index)?;
+			self.finalize(py, operator_index, Reject)?;
 		}
 
 		Ok(())
 	}
 
-	fn accept(&self, py: Python, operator_index: usize) -> Result<()> {
-		trace!(target: "b3::mcmc", "accept");
+	fn finalize(
+		&self,
+		py: Python,
+		operator_index: usize,
+		status: StepResult,
+	) -> Result<()> {
+		self.scheduler.finalize(py, operator_index, status)?;
 
-		self.scheduler.accept(py, operator_index)?;
+		if status.is_accept() {
+			for likelihood in &self.likelihoods {
+				likelihood.get().inner().accept()?;
+			}
 
-		for likelihood in &self.likelihoods {
-			likelihood.get().inner().accept()?;
-		}
+			for parameter in &self.state {
+				py_call_method!(py, parameter, "accept")?;
+			}
+		} else {
+			for likelihood in &self.likelihoods {
+				likelihood.get().inner().reject()?;
+			}
 
-		for parameter in &self.state {
-			py_call_method!(py, parameter, "accept")?;
-		}
-
-		Ok(())
-	}
-
-	fn reject(&self, py: Python, operator_index: usize) -> Result<()> {
-		trace!(target: "b3::mcmc", "reject");
-
-		self.scheduler.reject(py, operator_index)?;
-
-		for likelihood in &self.likelihoods {
-			likelihood.get().inner().reject()?;
-		}
-
-		for parameter in &self.state {
-			py_call_method!(py, parameter, "reject")?;
+			for parameter in &self.state {
+				py_call_method!(py, parameter, "reject")?;
+			}
 		}
 
 		Ok(())

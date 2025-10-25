@@ -462,17 +462,15 @@ class MCMC:
     @property
     def operator_statistics(
         self,
-    ) -> list[tuple[Operator, int, int, timedelta, timedelta]]:
+    ) -> list[tuple[Operator, list[int], timedelta, timedelta]]:
         """
         Operator statistics for this run
 
-        Returns a list of `(operator, accepts, rejects, propose, likelihood)`
-        tuples, where `accepts` is the number of times operator's proposals
-        have been accepted and `rejects` is the number of times they have been
-        rejected.  `propose` and `likelihood` records the total time the MCMC
-        spent waiting for the operator to generate a proposal and calculate it
-        respectively.  Finally, `operator` is the reference to the original
-        operator object.
+        Returns a list of `(operator, results, propose, likelihood)` tuples for
+        each operator.  `propose` and `likelihood` records the total time the
+        MCMC spent waiting for the operator to generate a proposal and
+        calculate it respectively.  `operator` is the reference to the original
+        operator object.  And `results` is a list of step results.
         """
 
     def run(self) -> None:

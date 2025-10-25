@@ -10,8 +10,8 @@ use pyo3::{
 };
 use rand::distr::{Distribution, weighted::WeightedIndex};
 
-use profiler::profile;
-use profiler::time;
+use crate::mcmc::StepResult;
+use profiler::{profile, time};
 use rng::Rng;
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
@@ -144,10 +144,12 @@ pub struct WeightedScheduler {
 	statistics: Mutex<Statistics>,
 }
 
+type ResultStatistic = [usize; 5];
+const EMPTY_RESULT_STATISTIC: ResultStatistic = [0; 5];
+
 #[derive(Debug)]
 struct Statistics {
-	accepts: Vec<usize>,
-	rejects: Vec<usize>,
+	results: Vec<ResultStatistic>,
 	propose: Vec<Duration>,
 	likelihood: Vec<Duration>,
 }
@@ -155,8 +157,7 @@ struct Statistics {
 impl Statistics {
 	fn new(len: usize) -> Self {
 		Self {
-			accepts: vec![0; len],
-			rejects: vec![0; len],
+			results: vec![EMPTY_RESULT_STATISTIC; len],
 			propose: vec![Duration::default(); len],
 			likelihood: vec![Duration::default(); len],
 		}
@@ -205,17 +206,21 @@ impl WeightedScheduler {
 		dist.sample(rng)
 	}
 
-	pub fn accept(&self, py: Python, index: usize) -> Result<()> {
-		self.operators[index].accept(py)?;
-		let mut statistics = self.statistics.lock();
-		statistics.accepts[index] += 1;
-		Ok(())
-	}
+	pub fn finalize(
+		&self,
+		py: Python,
+		index: usize,
+		result: StepResult,
+	) -> Result<()> {
+		if result.is_accept() {
+			self.operators[index].accept(py)?;
+		} else {
+			self.operators[index].reject(py)?;
+		}
 
-	pub fn reject(&self, py: Python, index: usize) -> Result<()> {
-		self.operators[index].reject(py)?;
 		let mut statistics = self.statistics.lock();
-		statistics.rejects[index] += 1;
+		statistics.results[index][result.index()] += 1;
+
 		Ok(())
 	}
 
@@ -257,14 +262,12 @@ impl WeightedScheduler {
 
 		for i in 0..self.operators.len() {
 			let copy = self.operators[i].inner.clone_ref(py);
-			let accepts = statistics.accepts[i];
-			let rejects = statistics.rejects[i];
+			let results = statistics.results[i];
 			let propose = statistics.propose[i];
 			let likelihood = statistics.likelihood[i];
 
-			let tuple =
-				(copy, accepts, rejects, propose, likelihood)
-					.into_pyobject(py)?;
+			let tuple = (copy, results, propose, likelihood)
+				.into_pyobject(py)?;
 
 			out.append(tuple)?;
 		}
