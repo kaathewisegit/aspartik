@@ -24,6 +24,9 @@ peg::parser! {grammar newick_parser() for str {
 	rule name() -> String =
 		name:$(['a'..='z' | 'A'..='Z' | '0'..='9']+)
 		{ String::from(name) }
+		/
+		"\"" name:$([^'"']+) "\""
+		{ String::from(name) }
 
 	pub rule node() -> PNode =
 		name:name()? ":" length:number()? { (name, length) }
@@ -85,5 +88,11 @@ mod test {
 		let s = "(1:0.1,2:0.2);";
 		let tree = parse(s).unwrap();
 		assert_eq!(tree.into_string(), s);
+	}
+
+	#[test]
+	fn quoted() {
+		let s = r#"("with quotes!":0.1,"another ' one":0.2);"#;
+		parse(s).unwrap();
 	}
 }
