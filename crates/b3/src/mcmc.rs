@@ -5,13 +5,12 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use rand::Rng as _;
 
-use std::time::Instant;
-
 use crate::{
 	PyCallback, PyPrior,
 	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
 };
+use profiler::time;
 use rng::PyRng;
 use util::py_call_method;
 
@@ -235,15 +234,13 @@ impl Mcmc {
 			return Ok(());
 		}
 
-		let likelihood_start = Instant::now();
-		self.propose(py)?;
+		let (likelihood, time) = time! {{
+			self.propose(py)?;
+			self.calculate_likelihood()?
+		}};
 
-		self.scheduler.record_likelihood_duration(
-			operator_index,
-			Instant::now() - likelihood_start,
-		);
-
-		let likelihood = self.calculate_likelihood()?;
+		self.scheduler
+			.record_likelihood_duration(operator_index, time);
 
 		let new_posterior = likelihood + prior;
 

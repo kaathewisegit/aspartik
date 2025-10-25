@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
 use log::{debug, trace};
@@ -11,6 +11,7 @@ use pyo3::{
 use rand::distr::{Distribution, weighted::WeightedIndex};
 
 use profiler::profile;
+use profiler::time;
 use rng::Rng;
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
 
@@ -224,17 +225,18 @@ impl WeightedScheduler {
 		index: usize,
 	) -> Result<Proposal> {
 		let operator = &self.operators[index];
-		let propose_start = Instant::now();
-		let proposal = operator.propose(py).with_context(|| {
-			anyhow!(
-				"Operator {} failed while generating a proposal",
-				operator.repr(py).unwrap()
-			)
-		})?;
-		let propose_end = Instant::now();
+
+		let (proposal, time) = time! {
+			operator.propose(py).with_context(|| {
+				anyhow!(
+					"Operator {} failed while generating a proposal",
+					operator.repr(py).unwrap()
+				)
+			})?
+		};
 
 		let mut statistics = self.statistics.lock();
-		statistics.propose[index] += propose_end - propose_start;
+		statistics.propose[index] += time;
 
 		Ok(proposal)
 	}
