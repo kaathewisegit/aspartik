@@ -479,3 +479,6 @@ class MCMC:
         This yields flow control to the Rust core until the simulation is done.
         Press Ctrl+C to interrupt and stop the execution.
         """
+
+    def measure_operator(self, operator_index: int, length: int) -> list[int]:
+        """TODO"""

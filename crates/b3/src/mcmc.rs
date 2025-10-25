@@ -127,9 +127,18 @@ impl Mcmc {
 		loop {
 			let current_step = *self_.current_step.lock();
 
-			self_.step(py).with_context(|| {
-				anyhow!("Failed on step {current_step}")
-			})?;
+			let operator_index =
+				self_.scheduler.random_operator_index(
+					&mut self_.rng.get().inner(),
+				);
+
+			let result = self_
+				.step(py, operator_index)
+				.with_context(|| {
+					anyhow!("Failed on step {current_step}")
+				})?;
+
+			self_.finalize(py, operator_index, result)?;
 
 			if current_step >= self_.burnin {
 				Self::call_callbacks(
@@ -146,6 +155,23 @@ impl Mcmc {
 		}
 
 		Ok(())
+	}
+
+	fn measure_operator(
+		&self,
+		py: Python,
+		operator_index: usize,
+		length: usize,
+	) -> Result<[usize; 5]> {
+		let mut out = [0; 5];
+
+		for _ in 0..length {
+			let result = self.step(py, operator_index)?;
+			self.finalize(py, operator_index, StepResult::Reject)?;
+			out[result.index()] += 1;
+		}
+
+		Ok(out)
 	}
 
 	#[getter]
@@ -234,30 +260,22 @@ impl Mcmc {
 			.sum()
 	}
 
-	fn step(&self, py: Python) -> Result<()> {
+	fn step(
+		&self,
+		py: Python,
+		operator_index: usize,
+	) -> Result<StepResult> {
 		use StepResult::*;
-
-		let operator_index = self
-			.scheduler
-			.random_operator_index(&mut self.rng.get().inner());
 
 		let proposal =
 			self.scheduler.make_proposal(py, operator_index)?;
 
 		let hastings = match proposal {
 			Proposal::Accept() => {
-				return self.finalize(
-					py,
-					operator_index,
-					UnconditionalAccept,
-				);
+				return Ok(UnconditionalAccept);
 			}
 			Proposal::Reject() => {
-				return self.finalize(
-					py,
-					operator_index,
-					UnconditionalReject,
-				);
+				return Ok(UnconditionalAccept);
 			}
 			Proposal::Hastings(ratio) => ratio,
 		};
@@ -265,8 +283,7 @@ impl Mcmc {
 		let prior = self.prior(py)?;
 		// The proposal will be rejected regardless of likelihood
 		if prior == f64::NEG_INFINITY {
-			self.finalize(py, operator_index, PriorReject)?;
-			return Ok(());
+			return Ok(PriorReject);
 		}
 
 		let (likelihood, time) = time! {{
@@ -287,12 +304,10 @@ impl Mcmc {
 		if ratio > random_0_1.ln() {
 			*self.posterior.lock() = new_posterior;
 
-			self.finalize(py, operator_index, Accept)?;
+			Ok(Accept)
 		} else {
-			self.finalize(py, operator_index, Reject)?;
+			Ok(Reject)
 		}
-
-		Ok(())
 	}
 
 	fn finalize(
