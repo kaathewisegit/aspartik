@@ -9,7 +9,14 @@ from ._util import assert_two_internals, family
 @dataclass(slots=True)
 class SubtreePruneRegraft(Operator):
     """
-    TODO
+    Fixed height subtree and regraft move.
+
+    This operator was described in [Hoehna et al 2008][l], section 3.2.7.  The
+    move selects a random node `i` and its parent `i_parent`.  It then selects
+    a random edge whose height overlaps with the height of `i_parent`.
+    `i_parent` is spliced into the middle of this edge.
+
+    [l]: https://alexeidrummond.org/assets/publications/2008-hoehna-evalution.pdf
     """
 
     tree: Tree
