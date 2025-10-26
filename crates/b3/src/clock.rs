@@ -10,12 +10,14 @@ pub struct PyClock {
 	inner: Py<PyAny>,
 }
 
-impl<'py> FromPyObject<'py> for PyClock {
-	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'py> FromPyObject<'_, 'py> for PyClock {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		py_check_method!(obj, "get_rate");
 
 		let out = Self {
-			inner: obj.clone().unbind(),
+			inner: obj.to_owned().unbind(),
 		};
 		debug!(
 			target: "b3::clock::extract_bound",

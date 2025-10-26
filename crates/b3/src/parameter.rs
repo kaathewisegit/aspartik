@@ -3,7 +3,6 @@ use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
 	class::basic::CompareOp,
-	conversion::FromPyObjectBound,
 	exceptions::{PyIndexError, PyTypeError, PyValueError},
 	types::PyTuple,
 };
@@ -169,7 +168,7 @@ macro_rules! pymethod_impl {
 	) -> Result<bool> {
 		let inner = &*self.inner.lock();
 
-		if let Ok(other) = other.downcast::<Self>() {
+		if let Ok(other) = other.cast::<Self>() {
 			let other = &*other.get().inner.lock();
 
 			if inner.0.len() != other.0.len() {
@@ -337,7 +336,7 @@ fn check_empty(values: &Bound<PyTuple>) -> Result<()> {
 	}
 }
 
-fn extract<T: for<'a> FromPyObjectBound<'a, 'a>>(
+fn extract<T: for<'a> FromPyObject<'a, 'a, Error = PyErr>>(
 	tuple: &Bound<PyTuple>,
 ) -> Result<Vec<T>> {
 	Ok(tuple.into_iter()

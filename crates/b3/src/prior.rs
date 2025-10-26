@@ -32,12 +32,14 @@ impl PyPrior {
 	}
 }
 
-impl<'py> FromPyObject<'py> for PyPrior {
-	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'py> FromPyObject<'_, 'py> for PyPrior {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		py_check_method!(obj, "probability");
 
 		let out = Self {
-			inner: obj.clone().unbind(),
+			inner: obj.to_owned().unbind(),
 		};
 		debug!(
 			target: "b3::prior::extract_bound",

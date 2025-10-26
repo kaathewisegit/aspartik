@@ -58,11 +58,10 @@ fn py_read(obj: &mut Py<PyAny>, buf: &mut [u8]) -> IoResult<usize> {
 
 	Python::attach(|py| {
 		let result = py_call_method!(py, obj, "read", len)?;
-		let bytes = if let Ok(bytes) =
-			result.downcast_bound::<PyBytes>(py)
+		let bytes = if let Ok(bytes) = result.cast_bound::<PyBytes>(py)
 		{
 			bytes.as_bytes()
-		} else if let Ok(s) = result.downcast_bound::<PyString>(py) {
+		} else if let Ok(s) = result.cast_bound::<PyString>(py) {
 			s.to_str()?.as_bytes()
 		} else {
 			py_bail!(

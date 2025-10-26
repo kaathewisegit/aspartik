@@ -67,11 +67,13 @@ impl Node {
 	}
 }
 
-impl<'py> FromPyObject<'py> for Node {
-	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Node> {
-		if let Ok(internal) = obj.downcast::<Internal>() {
+impl<'py> FromPyObject<'_, 'py> for Node {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Node> {
+		if let Ok(internal) = obj.cast::<Internal>() {
 			Ok(Node(internal.get().0))
-		} else if let Ok(leaf) = obj.downcast::<Leaf>() {
+		} else if let Ok(leaf) = obj.cast::<Leaf>() {
 			Ok(Node(leaf.get().0))
 		} else {
 			py_bail!(

@@ -9,14 +9,16 @@ pub struct PyCallback {
 	every: usize,
 }
 
-impl<'py> FromPyObject<'py> for PyCallback {
-	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'py> FromPyObject<'_, 'py> for PyCallback {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		py_check_method!(obj, "call");
 
 		let every = py_extract_attr!(obj, "every", usize)?;
 
 		Ok(PyCallback {
-			inner: obj.clone().unbind(),
+			inner: obj.to_owned().unbind(),
 			every,
 		})
 	}

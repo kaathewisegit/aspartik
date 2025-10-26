@@ -66,12 +66,12 @@ pub fn slices_iter(key: Bound<PyAny>, length: usize) -> Result<SlicesIter> {
 	let mut slices = Vec::new();
 	let length = length as isize;
 
-	if let Ok(slice) = key.downcast::<PySlice>() {
+	if let Ok(slice) = key.cast::<PySlice>() {
 		let slice = slice.indices(length)?;
 		slices.push(slice);
-	} else if let Ok(tuple) = key.downcast::<PyTuple>() {
+	} else if let Ok(tuple) = key.cast::<PyTuple>() {
 		for item in tuple.into_iter() {
-			let Ok(slice) = item.downcast::<PySlice>() else {
+			let Ok(slice) = item.cast::<PySlice>() else {
 				bail!(
 					"Expected tuple members to be slices, got {}",
 					item.get_type().name()?

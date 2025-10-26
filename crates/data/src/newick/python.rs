@@ -37,9 +37,12 @@ impl PyTree {
 	}
 }
 
-impl<'py> FromPyObject<'py> for Tree {
-	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
-		let py_tree = obj.downcast::<PyTree>()?.get();
+impl<'py> FromPyObject<'_, 'py> for Tree {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+		let py_tree = obj.cast::<PyTree>()?;
+		let py_tree = py_tree.get();
 
 		Ok(py_tree.inner().clone())
 	}

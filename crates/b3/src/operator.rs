@@ -22,8 +22,10 @@ pub enum Proposal {
 	Accept(),
 }
 
-impl<'py> FromPyObject<'py> for Proposal {
-	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'py> FromPyObject<'_, 'py> for Proposal {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		let py_proposal = obj.extract::<PyProposal>()?;
 		Ok(py_proposal.0)
 	}
@@ -79,13 +81,15 @@ pub struct PyOperator {
 	inner: Py<PyAny>,
 }
 
-impl<'py> FromPyObject<'py> for PyOperator {
-	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'py> FromPyObject<'_, 'py> for PyOperator {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		py_check_method!(obj, "propose");
 		py_extract_attr!(obj, "weight", f64)?;
 
 		let out = Self {
-			inner: obj.clone().unbind(),
+			inner: obj.to_owned().unbind(),
 		};
 		debug!(
 			target: "b3::operator::extract_bound",

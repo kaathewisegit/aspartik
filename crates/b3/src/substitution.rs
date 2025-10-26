@@ -12,8 +12,10 @@ pub struct PySubstitution<const N: usize> {
 
 pub type Substitution<const N: usize> = RowMatrix<f64, N, N>;
 
-impl<'py, const N: usize> FromPyObject<'py> for PySubstitution<N> {
-	fn extract_bound(obj: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'py, const N: usize> FromPyObject<'_, 'py> for PySubstitution<N> {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		py_check_method!(obj, "get_matrix");
 
 		let dimensions = py_extract_attr!(obj, "dimensions", usize)?;
@@ -25,7 +27,7 @@ impl<'py, const N: usize> FromPyObject<'py> for PySubstitution<N> {
 		}
 
 		let out = Self {
-			inner: obj.clone().unbind(),
+			inner: obj.to_owned().unbind(),
 		};
 		debug!(
 			target: "b3::substitution::extract_bound",
