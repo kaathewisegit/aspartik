@@ -272,7 +272,7 @@ impl Tree {
 		}
 
 		for height in &mut heights {
-			*height += min_height;
+			*height -= min_height;
 		}
 
 		Ok(Self {
