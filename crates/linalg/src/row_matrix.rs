@@ -10,23 +10,23 @@ use crate::vector::Vector;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct RowMatrix<T, const N: usize, const M: usize> {
-	m: [Vector<T, N>; M],
+	m: [Vector<T, M>; N],
 }
 
 // Constructors
-impl<T: Copy, const N: usize, const M: usize> From<[Vector<T, N>; M]>
+impl<T: Copy, const N: usize, const M: usize> From<[Vector<T, M>; N]>
 	for RowMatrix<T, N, M>
 {
-	fn from(value: [Vector<T, N>; M]) -> Self {
+	fn from(value: [Vector<T, M>; N]) -> Self {
 		RowMatrix { m: value }
 	}
 }
 
-impl<T: Copy, const N: usize, const M: usize> From<[[T; N]; M]>
+impl<T: Copy, const N: usize, const M: usize> From<[[T; M]; N]>
 	for RowMatrix<T, N, M>
 {
-	fn from(value: [[T; N]; M]) -> Self {
-		value.map(|row| -> Vector<T, N> { row.into() }).into()
+	fn from(value: [[T; M]; N]) -> Self {
+		value.map(|row| -> Vector<T, M> { row.into() }).into()
 	}
 }
 
@@ -98,7 +98,7 @@ impl<T: Copy + Num, const N: usize> RowMatrix<T, N, N> {
 impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 	/// Creates a new matrix with all of it's elements set to `value`.
 	pub fn from_element(value: T) -> Self {
-		[Vector::from([value; N]); M].into()
+		[Vector::from([value; M]); N].into()
 	}
 }
 
@@ -113,15 +113,15 @@ impl<T: Copy + Default, const N: usize, const M: usize> Default
 // Operators
 
 impl<T, const N: usize, const M: usize> Index<usize> for RowMatrix<T, N, M> {
-	type Output = Vector<T, N>;
+	type Output = Vector<T, M>;
 
-	fn index(&self, i: usize) -> &Vector<T, N> {
+	fn index(&self, i: usize) -> &Vector<T, M> {
 		&self.m[i]
 	}
 }
 
 impl<T, const N: usize, const M: usize> IndexMut<usize> for RowMatrix<T, N, M> {
-	fn index_mut(&mut self, i: usize) -> &mut Vector<T, N> {
+	fn index_mut(&mut self, i: usize) -> &mut Vector<T, M> {
 		&mut self.m[i]
 	}
 }
@@ -182,7 +182,7 @@ impl<T: Copy + MulAssign, const N: usize, const M: usize> RowMatrix<T, N, M> {
 	}
 }
 
-impl<T: Copy + AddAssign, const N: usize, const M: usize> RowMatrix<T, N, M> {
+impl<T: Copy + AddAssign, const N: usize> RowMatrix<T, N, N> {
 	pub fn trace(&self) -> T {
 		let mut out = self[(0, 0)];
 		for i in 1..N {
@@ -192,17 +192,17 @@ impl<T: Copy + AddAssign, const N: usize, const M: usize> RowMatrix<T, N, M> {
 	}
 }
 
-impl<T, const N: usize, const M: usize> Mul<Vector<T, N>> for RowMatrix<T, N, M>
+impl<T, const N: usize, const M: usize> Mul<Vector<T, M>> for RowMatrix<T, N, M>
 where
 	T: Copy + NumAssign + Default,
 {
 	type Output = Vector<T, M>;
 
-	fn mul(self, rhs: Vector<T, N>) -> Vector<T, M> {
+	fn mul(self, rhs: Vector<T, M>) -> Vector<T, M> {
 		// TODO: uninitialized
 		let mut out = Vector::default();
 
-		for i in 0..M {
+		for i in 0..N {
 			out[i] = self[i].dot_product(&rhs);
 		}
 
@@ -325,7 +325,7 @@ impl<T, const N: usize, const M: usize> RowMatrix<T, N, M> {
 		assert!(NX < N, "New length must be smaller");
 		assert!(MX < M, "New length must be smaller");
 
-		let subslice: &[Vector<T, N>; MX] =
+		let subslice: &[Vector<T, M>; NX] =
 			self.m.first_chunk().unwrap();
 
 		subslice.map(|v| v.truncate()).into()
