@@ -7,6 +7,7 @@ from typing import ClassVar, Protocol, SupportsFloat
 from .._aspartik_rust_impl import _b3_rust_impl
 from ..math import is_close
 
+JC = _b3_rust_impl.JC
 K80 = _b3_rust_impl.K80
 
 type Float4 = tuple[float, float, float, float]
@@ -54,32 +55,6 @@ class Substitution(Protocol):
         symmetrical.
         """
         ...
-
-
-@dataclass(slots=True)
-class JC(Substitution):
-    """
-    Jukes-Cantor
-
-    A simple model with equal state transition rates.
-
-    Jukes and Cantor 1969, Evolution of Protein Molecules,
-    <https://doi.org/10.1016/b978-1-4832-3211-9.50009-7>.
-    """
-
-    dimensions: ClassVar[int] = 4
-    matrix: ClassVar[Matrix] = normalize(
-        [
-            [-3, 1, 1, 1],
-            [1, -3, 1, 1],
-            [1, 1, -3, 1],
-            [1, 1, 1, -3],
-        ],
-        3,
-    )
-
-    def get_matrix(self) -> Matrix:
-        return self.matrix
 
 
 @dataclass(slots=True)

@@ -157,3 +157,14 @@ class K80:
     """
     A transition is taken to be kappa times more likely than a transversion.
     """
+
+@dataclass
+class JC:
+    """
+    Jukes-Cantor
+
+    A simple model with equal state transition rates.
+
+    Jukes and Cantor 1969, Evolution of Protein Molecules,
+    <https://doi.org/10.1016/b978-1-4832-3211-9.50009-7>.
+    """

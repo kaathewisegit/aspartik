@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, anyhow};
 use linalg::RowMatrix;
 use log::debug;
-use pyo3::prelude::*;
+use pyo3::{PyTypeCheck, prelude::*};
 use pyo3::{conversion::FromPyObject, exceptions::PyValueError};
 
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
@@ -85,12 +85,55 @@ impl<'py> FromPyObject<'_, 'py> for SubstitutionModel<4> {
 	type Error = PyErr;
 
 	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> Result<Self, Self::Error> {
-		let k80 = obj.cast::<K80>()?;
-		let k80 = k80.get().clone(obj.py());
+		if JC::type_check(&obj) {
+			let jc = obj.cast::<JC>()?;
+			let jc = *jc.get();
 
-		Ok(Self {
-			inner: Box::new(k80),
-		})
+			Ok(Self {
+				inner: Box::new(jc),
+			})
+		} else if K80::type_check(&obj) {
+			let k80 = obj.cast::<K80>()?;
+			let k80 = k80.get().clone(obj.py());
+
+			Ok(Self {
+				inner: Box::new(k80),
+			})
+		} else {
+			todo!("Type error")
+		}
+	}
+}
+
+#[derive(Debug, Clone, Copy)]
+#[pyclass(module = "aspartik.b3.substitutions", frozen)]
+pub struct JC;
+
+impl SubstitutionTrait<4> for JC {
+	fn update(&mut self, _py: Python) -> Result<bool> {
+		Ok(false)
+	}
+
+	fn get_transition(&self, distance: f64) -> Substitution<4> {
+		let exp = (-4.0 / 3.0 * distance).exp();
+
+		let diagonal = 0.25 + 0.75 * exp;
+		let other = 0.25 - 0.25 * exp;
+
+		RowMatrix::from([
+			[diagonal, other, other, other],
+			[other, diagonal, other, other],
+			[other, other, diagonal, other],
+			[other, other, other, diagonal],
+		])
+	}
+}
+
+#[pymethods]
+impl JC {
+	#[new]
+	fn new() -> Self {
+		Self
 	}
 }
 
