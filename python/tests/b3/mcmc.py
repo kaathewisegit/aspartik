@@ -3,7 +3,7 @@ from aspartik.b3.clocks import StrictClock
 from aspartik.b3.operators import ParamScale, TreeScale
 from aspartik.b3.parameters import Integer, Real
 from aspartik.b3.priors import Bound
-from aspartik.b3.substitutions import JC
+from aspartik.b3.substitutions import K80
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Uniform
@@ -24,7 +24,7 @@ def test_mcmc():
 
     likelihood = Likelihood(
         msa=msa,
-        substitution=JC(),
+        substitution=K80(1.0),
         clock=StrictClock(1.0),
         tree=tree,
         calculator="cpu",

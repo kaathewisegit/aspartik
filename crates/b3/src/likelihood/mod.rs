@@ -6,7 +6,8 @@ use pyo3::prelude::*;
 use std::{collections::HashMap, slice};
 
 use crate::{
-	Transitions, clock::PyClock, substitution::PySubstitution, tree::PyTree,
+	Transitions, clock::PyClock, substitution::SubstitutionModel,
+	tree::PyTree,
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
 use linalg::{RowMatrix, Vector};
@@ -43,7 +44,7 @@ type DynCalculator<const N: usize> =
 	Box<dyn LikelihoodTrait<N> + Send + Sync + 'static>;
 
 pub struct GenericLikelihood<const N: usize> {
-	substitution: PySubstitution<N>,
+	substitution: SubstitutionModel<N>,
 	clock: PyClock,
 	transitions: Transitions<N>,
 	calculator: DynCalculator<N>,
@@ -59,7 +60,7 @@ pub struct GenericLikelihood<const N: usize> {
 
 impl GenericLikelihood<4> {
 	fn new(
-		substitution: PySubstitution<4>,
+		substitution: SubstitutionModel<4>,
 		clock: PyClock,
 		msa: Msa<DnaNucleotide>,
 		tree: Py<PyTree>,
@@ -150,13 +151,13 @@ fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
 impl<const N: usize> GenericLikelihood<N> {
 	fn propose(&mut self, py: Python) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
-		let substitution_matrix = self.substitution.get_matrix(py)?;
 		let rate = self.clock.get_rate(py)?;
 		let full_update = self.transitions.update(
-			substitution_matrix,
+			py,
+			&mut self.substitution,
 			rate,
 			tree,
-		);
+		)?;
 		let (nodes, leaves_end) = if full_update {
 			tree.full_update()
 		} else {
@@ -295,7 +296,7 @@ impl PyLikelihood {
 	))]
 	fn new4(
 		msa: PyMsa,
-		substitution: PySubstitution<4>,
+		substitution: SubstitutionModel<4>,
 		clock: PyClock,
 		tree: Py<PyTree>,
 		calculator: String,

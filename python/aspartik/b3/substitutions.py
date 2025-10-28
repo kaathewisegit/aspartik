@@ -4,7 +4,10 @@ from dataclasses import dataclass, field
 from math import prod
 from typing import ClassVar, Protocol, SupportsFloat
 
-from aspartik.math import is_close
+from .._aspartik_rust_impl import _b3_rust_impl
+from ..math import is_close
+
+K80 = _b3_rust_impl.K80
 
 type Float4 = tuple[float, float, float, float]
 type Float6 = tuple[float, float, float, float, float, float]
@@ -77,42 +80,6 @@ class JC(Substitution):
 
     def get_matrix(self) -> Matrix:
         return self.matrix
-
-
-@dataclass(slots=True)
-class K80(Substitution):
-    """Kimura 80
-
-    Equal base frequencies (A/C/G/T) with different transition (keeps
-    purines/pyrimidines) and transversion (purine to pyrimidine and visa
-    versa).
-
-    Kimura 1980, A simple method for estimating evolutionary rates of base
-    substitutions through comparative studies of nucleotide sequences,
-    <https://doi.org/10.1007/BF01731581>.
-    """
-
-    dimensions: ClassVar[int] = 4
-    kappa: SupportsFloat
-    """
-    A transition is taken to be kappa times more likely than a transversion.
-    """
-
-    def __post_init__(self):
-        # TODO: check that kappa is a single-dimensional real
-        pass
-
-    def get_matrix(self) -> Matrix:
-        k = float(self.kappa)
-        s = [
-            [-2 - k, 1, k, 1],
-            [1, -2 - k, 1, k],
-            [k, 1, -2 - k, 1],
-            [1, k, 1, -2 - k],
-        ]
-        s = normalize(s, 2 + k)
-
-        return s
 
 
 @dataclass(slots=True)

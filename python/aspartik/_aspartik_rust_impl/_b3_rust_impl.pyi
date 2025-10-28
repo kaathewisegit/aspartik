@@ -139,3 +139,21 @@ class Boolean(Stateful):
     def __ge__(self, other: bool | Boolean) -> bool: ...
 
 Parameter = Real | Integer | Boolean
+
+@dataclass
+class K80:
+    """Kimura 80
+
+    Equal base frequencies (A/C/G/T) with different transition (keeps
+    purines/pyrimidines) and transversion (purine to pyrimidine and visa
+    versa).
+
+    Kimura 1980, A simple method for estimating evolutionary rates of base
+    substitutions through comparative studies of nucleotide sequences,
+    <https://doi.org/10.1007/BF01731581>.
+    """
+
+    kappa: SupportsFloat
+    """
+    A transition is taken to be kappa times more likely than a transversion.
+    """

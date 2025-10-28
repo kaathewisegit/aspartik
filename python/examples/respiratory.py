@@ -25,7 +25,7 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.parameters import Internals, Real
 from aspartik.b3.priors import Distribution, ExponentialGrowth
-from aspartik.b3.substitutions import HKY
+from aspartik.b3.substitutions import K80
 from aspartik.b3.tree import Internal
 from aspartik.b3.utils import print_operator_stats
 from aspartik.data import newick
@@ -74,7 +74,7 @@ operators = [
 
 likelihood = Likelihood(
     msa=msa,
-    substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
+    substitution=K80(kappa),
     clock=StrictClock(clock_rate),
     tree=tree,
     calculator="cuda",

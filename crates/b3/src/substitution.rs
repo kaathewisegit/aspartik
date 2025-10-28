@@ -60,3 +60,97 @@ impl<const N: usize> PySubstitution<N> {
 		Ok(matrix)
 	}
 }
+
+trait SubstitutionTrait<const N: usize> {
+	fn update(&mut self, py: Python) -> Result<bool>;
+
+	fn get_transition(&self, distance: f64) -> Substitution<N>;
+}
+
+pub struct SubstitutionModel<const N: usize> {
+	inner: Box<dyn SubstitutionTrait<N> + Send>,
+}
+
+impl<const N: usize> SubstitutionModel<N> {
+	pub fn update(&mut self, py: Python) -> Result<bool> {
+		self.inner.update(py)
+	}
+
+	pub fn get_transition(&self, distance: f64) -> Substitution<N> {
+		self.inner.get_transition(distance)
+	}
+}
+
+impl<'py> FromPyObject<'_, 'py> for SubstitutionModel<4> {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> Result<Self, Self::Error> {
+		let k80 = obj.cast::<K80>()?;
+		let k80 = k80.get().clone(obj.py());
+
+		Ok(Self {
+			inner: Box::new(k80),
+		})
+	}
+}
+
+#[derive(Debug)]
+#[pyclass(module = "aspartik.b3.substitutions", frozen)]
+pub struct K80 {
+	kappa: Py<PyAny>,
+	cached_kappa: f64,
+}
+
+impl K80 {
+	fn clone(&self, py: Python) -> Self {
+		Self {
+			kappa: self.kappa.clone_ref(py),
+			cached_kappa: self.cached_kappa,
+		}
+	}
+}
+
+impl SubstitutionTrait<4> for K80 {
+	fn update(&mut self, py: Python) -> Result<bool> {
+		let kappa = self.kappa.extract(py)?;
+
+		if kappa != self.cached_kappa {
+			self.cached_kappa = kappa;
+			Ok(true)
+		} else {
+			Ok(false)
+		}
+	}
+
+	fn get_transition(&self, distance: f64) -> Substitution<4> {
+		let kappa = self.cached_kappa;
+
+		let frac1 = -4.0 / (kappa + 2.0);
+		let frac2 = -(2.0 * kappa + 2.0) / (kappa + 2.0);
+
+		let arg1 = 0.25 * (distance * frac1).exp();
+		let arg2 = 0.5 * (distance * frac2).exp();
+
+		let diagonal = 0.25 + arg1 + arg2;
+		let transition = 0.25 + arg1 - arg2;
+		let transversion = 0.25 - arg1;
+
+		RowMatrix::from([
+			[diagonal, transversion, transition, transversion],
+			[transversion, diagonal, transversion, transition],
+			[transition, transversion, diagonal, transversion],
+			[transversion, transition, transversion, diagonal],
+		])
+	}
+}
+
+#[pymethods]
+impl K80 {
+	#[new]
+	pub fn new(kappa: Py<PyAny>) -> Self {
+		Self {
+			kappa,
+			cached_kappa: f64::NAN,
+		}
+	}
+}

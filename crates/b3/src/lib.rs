@@ -39,5 +39,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<builtin::priors::Monophyly>()?;
 	m.add_class::<builtin::priors::Yule>()?;
 
+	m.add_class::<substitution::K80>()?;
+
 	Ok(m)
 }
