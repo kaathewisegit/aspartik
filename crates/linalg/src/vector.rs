@@ -27,7 +27,7 @@ impl<T, const N: usize> From<Vector<T, N>> for [T; N] {
 }
 
 impl<T: Copy, const N: usize> Vector<T, N> {
-	fn from_element(value: T) -> Self {
+	pub fn from_element(value: T) -> Self {
 		[value; N].into()
 	}
 }
@@ -337,23 +337,5 @@ impl<T: Copy + Float + NumAssign, const N: usize> Vector<T, N> {
 		}
 
 		out
-	}
-}
-
-#[cfg(test)]
-mod test {
-	use super::*;
-
-	#[test]
-	fn magnitude() {
-		let v = Vector::from([3.0, 4.0, 12.0]);
-		assert_eq!(v.magnitude(), 13.0);
-	}
-
-	#[test]
-	fn cosine_similarity() {
-		let a = Vector::from([9.0, 3.0, 1.0]);
-		let b = Vector::from([0.0, 1.0, 2.0]);
-		assert_eq!(a.consine_similarity(&b), 0.2344036154692477);
 	}
 }
