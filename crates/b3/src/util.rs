@@ -6,26 +6,13 @@ use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 use crate::likelihood::Row;
 use data::{DnaNucleotide, Msa};
 
-// TODO: find a place for this
-fn character_to_likelihood(base: &DnaNucleotide) -> Row<4> {
-	match base {
-		DnaNucleotide::Adenine => [1.0, 0.0, 0.0, 0.0],
-		DnaNucleotide::Cytosine => [0.0, 1.0, 0.0, 0.0],
-		DnaNucleotide::Guanine => [0.0, 0.0, 1.0, 0.0],
-		DnaNucleotide::Thymine => [0.0, 0.0, 0.0, 1.0],
-
-		_ => [0.25, 0.25, 0.25, 0.25],
-	}
-	.into()
-}
-
 pub fn msa_to_likelihoods(msa: Msa<DnaNucleotide>) -> Vec<Row<4>> {
 	let mut out = Vec::with_capacity(msa.num_sequences() * msa.num_sites());
 
 	for seq in 0..msa.num_sequences() {
 		for site in msa.sites_iter() {
 			let char = msa.sequence(seq)[site];
-			out.push(character_to_likelihood(&char))
+			out.push(char.base_frequencies())
 		}
 	}
 
