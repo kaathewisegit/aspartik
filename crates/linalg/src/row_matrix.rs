@@ -203,7 +203,7 @@ where
 		let mut out = Vector::default();
 
 		for i in 0..M {
-			out[i] = (self[i] * rhs).sum();
+			out[i] = self[i].dot_product(&rhs);
 		}
 
 		out

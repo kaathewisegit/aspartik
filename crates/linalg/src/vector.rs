@@ -155,9 +155,7 @@ impl<T: Copy + MulAssign, const N: usize> Mul<T> for Vector<T, N> {
 	type Output = Self;
 
 	fn mul(mut self, rhs: T) -> Self::Output {
-		for i in 0..N {
-			self[i] *= rhs;
-		}
+		self *= rhs;
 		self
 	}
 }
@@ -191,9 +189,7 @@ impl<T: Copy + DivAssign, const N: usize> Div<T> for Vector<T, N> {
 	type Output = Self;
 
 	fn div(mut self, rhs: T) -> Self::Output {
-		for i in 0..N {
-			self[i] /= rhs;
-		}
+		self /= rhs;
 		self
 	}
 }
