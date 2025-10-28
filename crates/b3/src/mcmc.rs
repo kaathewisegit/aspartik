@@ -275,7 +275,7 @@ impl Mcmc {
 				return Ok(UnconditionalAccept);
 			}
 			Proposal::Reject() => {
-				return Ok(UnconditionalAccept);
+				return Ok(UnconditionalReject);
 			}
 			Proposal::Hastings(ratio) => ratio,
 		};
