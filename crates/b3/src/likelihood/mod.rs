@@ -56,6 +56,8 @@ pub struct GenericLikelihood<const N: usize> {
 	last: f64,
 	launched_update: bool,
 	tree: Py<PyTree>,
+
+	unconstrained: f64,
 }
 
 impl GenericLikelihood<4> {
@@ -88,6 +90,8 @@ impl GenericLikelihood<4> {
 			}
 		};
 
+		let unconstrained = unconstrained(&weights);
+
 		let mut out = Self {
 			substitution,
 			clock,
@@ -98,6 +102,7 @@ impl GenericLikelihood<4> {
 			last: f64::NAN,
 			launched_update: false,
 			tree,
+			unconstrained,
 		};
 		Python::attach(|py| out.propose(py))?;
 		// This cannot be removed: the likelihood must be run to
@@ -146,6 +151,18 @@ fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
 	msa.set_sites(indices);
 
 	(msa, weights)
+}
+
+fn unconstrained(weights: &[f64]) -> f64 {
+	let num_sites = weights.iter().sum::<f64>();
+
+	let mut out = -num_sites.ln() * num_sites;
+
+	for weight in weights {
+		out += weight.ln() * weight;
+	}
+
+	out
 }
 
 impl<const N: usize> GenericLikelihood<N> {
@@ -198,7 +215,8 @@ impl<const N: usize> GenericLikelihood<N> {
 			return Ok(self.cache);
 		}
 
-		let likelihood = self.calculator.likelihood(&self.weights)?;
+		let likelihood = self.calculator.likelihood(&self.weights)?
+			+ self.unconstrained;
 		trace!(
 			target: "b3::likelihood::likelihood",
 			likelihood;
