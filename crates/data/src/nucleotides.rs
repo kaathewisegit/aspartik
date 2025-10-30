@@ -132,7 +132,8 @@ impl DnaNucleotide {
 			NotGuanine => [F1_3, F1_3, 0.0, F1_3],
 			NotThymine => [F1_3, F1_3, F1_3, 0.0],
 
-			Any | Gap => [0.25, 0.25, 0.25, 0.25],
+			Any => [0.25, 0.25, 0.25, 0.25],
+			Gap => [1.0, 1.0, 1.0, 1.0],
 		}
 		.into()
 	}
