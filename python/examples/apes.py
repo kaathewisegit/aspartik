@@ -14,31 +14,26 @@ from aspartik.b3.operators import (
     SubtreeSlide,
     TreeScale,
 )
-from aspartik.b3.parameters import Real, Root
-from aspartik.b3.priors import Bound, ConstantPopulation, Distribution, Yule
+from aspartik.b3.parameters import Real
+from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
 from aspartik.b3.substitutions import K80
 from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, LogNormal, Normal, Uniform
+from aspartik.stats.distributions import LogNormal, Uniform
 
-msa = read_msa_from_fasta("crates/b3/data/primate.fasta")
-
+msa = read_msa_from_fasta("crates/b3/data/apes.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
 
-
 kappa = Real(2.0)
-yule_birth_rate = Real(2.0)
-population = Real(100)
-
+population_size = Real(2.0)
 
 priors = [
     Distribution(kappa, LogNormal(1.0, 1.25)),
-    Distribution(yule_birth_rate, LogNormal(1.0, 1.5)),
-    # ConstantPopulation(tree, population),
-    Distribution(Root(tree), LogNormal(1.0, 1.5)),
+    Distribution(population_size, LogNormal(1.0, 1.5)),
+    ConstantPopulation(tree, population_size),
 ]
 
 operators = [
@@ -53,7 +48,7 @@ operators = [
     # selecting a random node and moving it uniformly between it's maximum and
     # minimum heights, which is what `NodeSlide` with `Uniform` does.
     NodeSlide(tree, Uniform(0, 1), rng, weight=30),
-    # ParamScale(yule_birth_rate, 0.75, Uniform(0, 1), rng, weight=3),
+    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
 ]
 
 likelihood = Likelihood(
@@ -65,7 +60,7 @@ likelihood = Likelihood(
 )
 
 loggers = [
-    TreeLogger(tree=tree, path="target/primate.trees", every=1_000),
+    TreeLogger(tree=tree, path="target/apes.trees", every=1_000),
     PrintLogger(every=10_000),
     ValueLogger(
         {
@@ -73,15 +68,15 @@ loggers = [
             "joint": lambda: mcmc.prior + mcmc.cached_likelihood,
             "prior": lambda: mcmc.prior,
             "likelihood": lambda: mcmc.cached_likelihood,
-            "tree:root_height": lambda: tree.height_of(tree.root),
+            "tree:height": lambda: tree.height_of(tree.root),
             "tree:length": lambda: tree.total_length(),
             "kappa": kappa,
-            "yule_birth_rate": yule_birth_rate,
+            "population_size": population_size,
             "prior:kappa": priors[0],
-            "prior:yule_birth_rate": priors[1],
-            "prior:root": priors[2],
+            "prior:population_size": priors[1],
+            "prior:coalescent": priors[2],
         },
-        path="target/primate.log",
+        path="target/apes.log",
         every=1_000,
     ),
 ]
@@ -89,7 +84,7 @@ loggers = [
 mcmc = MCMC(
     burnin=0,
     length=100_000,
-    state=[kappa, yule_birth_rate, tree],
+    state=[kappa, population_size, tree],
     priors=priors,
     operators=operators,
     likelihoods=[likelihood],
