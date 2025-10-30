@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, anyhow};
-use linalg::RowMatrix;
+use linalg::{RowMatrix, Vector};
 use log::debug;
 use pyo3::{PyTypeCheck, prelude::*};
 use pyo3::{conversion::FromPyObject, exceptions::PyValueError};
@@ -65,6 +65,8 @@ trait SubstitutionTrait<const N: usize> {
 	fn update(&mut self, py: Python) -> Result<bool>;
 
 	fn get_transition(&self, distance: f64) -> Substitution<N>;
+
+	fn get_frequencies(&self) -> Vector<f64, N>;
 }
 
 pub struct SubstitutionModel<const N: usize> {
@@ -78,6 +80,10 @@ impl<const N: usize> SubstitutionModel<N> {
 
 	pub fn get_transition(&self, distance: f64) -> Substitution<N> {
 		self.inner.get_transition(distance)
+	}
+
+	pub fn get_frequencies(&self) -> Vector<f64, N> {
+		self.inner.get_frequencies()
 	}
 }
 
@@ -126,6 +132,10 @@ impl SubstitutionTrait<4> for JC {
 			[other, other, diagonal, other],
 			[other, other, other, diagonal],
 		])
+	}
+
+	fn get_frequencies(&self) -> Vector<f64, 4> {
+		Vector::from_element(0.25)
 	}
 }
 
@@ -184,6 +194,10 @@ impl SubstitutionTrait<4> for K80 {
 			[transition, transversion, diagonal, transversion],
 			[transversion, transition, transversion, diagonal],
 		])
+	}
+
+	fn get_frequencies(&self) -> Vector<f64, 4> {
+		Vector::from_element(0.25)
 	}
 }
 
