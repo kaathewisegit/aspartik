@@ -61,7 +61,7 @@ impl<const N: usize> PySubstitution<N> {
 	}
 }
 
-trait SubstitutionTrait<const N: usize> {
+pub trait SubstitutionTrait<const N: usize> {
 	fn update(&mut self, py: Python) -> Result<bool>;
 
 	fn get_transition(&self, distance: f64) -> Substitution<N>;
@@ -69,23 +69,8 @@ trait SubstitutionTrait<const N: usize> {
 	fn get_frequencies(&self) -> Vector<f64, N>;
 }
 
-pub struct SubstitutionModel<const N: usize> {
-	inner: Box<dyn SubstitutionTrait<N> + Send>,
-}
-
-impl<const N: usize> SubstitutionModel<N> {
-	pub fn update(&mut self, py: Python) -> Result<bool> {
-		self.inner.update(py)
-	}
-
-	pub fn get_transition(&self, distance: f64) -> Substitution<N> {
-		self.inner.get_transition(distance)
-	}
-
-	pub fn get_frequencies(&self) -> Vector<f64, N> {
-		self.inner.get_frequencies()
-	}
-}
+pub type SubstitutionModel<const N: usize> =
+	Box<dyn SubstitutionTrait<N> + Send>;
 
 impl<'py> FromPyObject<'_, 'py> for SubstitutionModel<4> {
 	type Error = PyErr;
@@ -95,23 +80,17 @@ impl<'py> FromPyObject<'_, 'py> for SubstitutionModel<4> {
 			let jc = obj.cast::<JC>()?;
 			let jc = *jc.get();
 
-			Ok(Self {
-				inner: Box::new(jc),
-			})
+			Ok(Box::new(jc))
 		} else if K80::type_check(&obj) {
 			let k80 = obj.cast::<K80>()?;
 			let k80 = k80.get().clone(obj.py());
 
-			Ok(Self {
-				inner: Box::new(k80),
-			})
+			Ok(Box::new(k80))
 		} else if HKY::type_check(&obj) {
 			let hky = obj.cast::<HKY>()?;
 			let hky = hky.get().clone(obj.py());
 
-			Ok(Self {
-				inner: Box::new(hky),
-			})
+			Ok(Box::new(hky))
 		} else {
 			todo!("Type error")
 		}

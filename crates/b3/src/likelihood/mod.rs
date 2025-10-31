@@ -153,25 +153,13 @@ fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
 	(msa, weights)
 }
 
-fn unconstrained(weights: &[f64]) -> f64 {
-	let num_sites = weights.iter().sum::<f64>();
-
-	let mut out = -num_sites.ln() * num_sites;
-
-	for weight in weights {
-		out += weight.ln() * weight;
-	}
-
-	out
-}
-
 impl<const N: usize> GenericLikelihood<N> {
 	fn propose(&mut self, py: Python) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
 		let rate = self.clock.get_rate(py)?;
 		let full_update = self.transitions.update(
 			py,
-			&mut self.substitution,
+			self.substitution.as_mut(),
 			rate,
 			tree,
 		)?;

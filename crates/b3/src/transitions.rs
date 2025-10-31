@@ -1,7 +1,7 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use crate::{substitution::SubstitutionModel, tree::Tree};
+use crate::{substitution::SubstitutionTrait, tree::Tree};
 use linalg::RowMatrix;
 use skvec::SkVec;
 
@@ -26,7 +26,7 @@ impl<const N: usize> Transitions<N> {
 	pub fn update(
 		&mut self,
 		py: Python,
-		substitution: &mut SubstitutionModel<N>,
+		substitution: &mut dyn SubstitutionTrait<N>,
 		rate: f64,
 		tree: &Tree,
 	) -> Result<bool> {
@@ -52,7 +52,7 @@ impl<const N: usize> Transitions<N> {
 		&mut self,
 		edges: &[usize],
 		distances: &[f64],
-		substitution: &SubstitutionModel<N>,
+		substitution: &dyn SubstitutionTrait<N>,
 	) {
 		for (edge, distance) in edges.iter().zip(distances) {
 			let transition = substitution.get_transition(*distance);
