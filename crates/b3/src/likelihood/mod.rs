@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use std::{collections::HashMap, slice};
 
 use crate::{
-	Transitions, clock::PyClock, substitution::SubstitutionModel,
+	Transitions, clock::PyClock, substitution::BoxedSubstitutionModel,
 	tree::PyTree,
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
@@ -44,7 +44,7 @@ type DynCalculator<const N: usize> =
 	Box<dyn LikelihoodTrait<N> + Send + Sync + 'static>;
 
 pub struct GenericLikelihood<const N: usize> {
-	substitution: SubstitutionModel<N>,
+	substitution: BoxedSubstitutionModel<N>,
 	clock: PyClock,
 	transitions: Transitions<N>,
 	calculator: DynCalculator<N>,
@@ -62,7 +62,7 @@ pub struct GenericLikelihood<const N: usize> {
 
 impl GenericLikelihood<4> {
 	fn new(
-		substitution: SubstitutionModel<4>,
+		substitution: BoxedSubstitutionModel<4>,
 		clock: PyClock,
 		msa: Msa<DnaNucleotide>,
 		tree: Py<PyTree>,
@@ -302,7 +302,7 @@ impl PyLikelihood {
 	))]
 	fn new4(
 		msa: PyMsa,
-		substitution: SubstitutionModel<4>,
+		substitution: BoxedSubstitutionModel<4>,
 		clock: PyClock,
 		tree: Py<PyTree>,
 		calculator: String,

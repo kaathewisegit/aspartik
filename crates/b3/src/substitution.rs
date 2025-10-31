@@ -1,78 +1,20 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::Result;
 use linalg::{RowMatrix, Vector};
-use log::debug;
+use pyo3::conversion::FromPyObject;
 use pyo3::{PyTypeCheck, prelude::*};
-use pyo3::{conversion::FromPyObject, exceptions::PyValueError};
 
-use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
-
-pub struct PySubstitution<const N: usize> {
-	inner: Py<PyAny>,
-}
-
-pub type Substitution<const N: usize> = RowMatrix<f64, N, N>;
-
-impl<'py, const N: usize> FromPyObject<'_, 'py> for PySubstitution<N> {
-	type Error = PyErr;
-
-	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
-		py_check_method!(obj, "get_matrix");
-
-		let dimensions = py_extract_attr!(obj, "dimensions", usize)?;
-		if dimensions != N {
-			py_bail!(
-				PyValueError,
-				"Expected the substitution model to have {N} dimensions, got {dimensions}"
-			);
-		}
-
-		let out = Self {
-			inner: obj.to_owned().unbind(),
-		};
-		debug!(
-			target: "b3::substitution::extract_bound",
-			repr:% = obj.repr()?, id = out.id();
-			""
-		);
-		Ok(out)
-	}
-}
-
-impl<const N: usize> PySubstitution<N> {
-	pub fn id(&self) -> usize {
-		self.inner.as_ptr() as usize
-	}
-
-	pub fn get_matrix(&self, py: Python) -> Result<Substitution<N>> {
-		let matrix = py_call_method!(py, self.inner, "get_matrix")?;
-
-		type Matrix<const N: usize> = [[f64; N]; N];
-
-		let matrix =
-			matrix.extract::<Matrix<N>>(py).with_context(|| {
-				anyhow!(
-					"Expected the substitution model to return a matrix {0}x{0}.",
-					N
-				)
-			})?;
-		let matrix = RowMatrix::from(matrix);
-
-		Ok(matrix)
-	}
-}
-
-pub trait SubstitutionTrait<const N: usize> {
+pub trait SubstitutionModel<const N: usize> {
 	fn update(&mut self, py: Python) -> Result<bool>;
 
-	fn get_transition(&self, distance: f64) -> Substitution<N>;
+	fn get_transition(&self, distance: f64) -> RowMatrix<f64, N, N>;
 
 	fn get_frequencies(&self) -> Vector<f64, N>;
 }
 
-pub type SubstitutionModel<const N: usize> =
-	Box<dyn SubstitutionTrait<N> + Send>;
+pub type BoxedSubstitutionModel<const N: usize> =
+	Box<dyn SubstitutionModel<N> + Send>;
 
-impl<'py> FromPyObject<'_, 'py> for SubstitutionModel<4> {
+impl<'py> FromPyObject<'_, 'py> for BoxedSubstitutionModel<4> {
 	type Error = PyErr;
 
 	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> Result<Self, Self::Error> {
@@ -101,12 +43,12 @@ impl<'py> FromPyObject<'_, 'py> for SubstitutionModel<4> {
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct JC;
 
-impl SubstitutionTrait<4> for JC {
+impl SubstitutionModel<4> for JC {
 	fn update(&mut self, _py: Python) -> Result<bool> {
 		Ok(false)
 	}
 
-	fn get_transition(&self, distance: f64) -> Substitution<4> {
+	fn get_transition(&self, distance: f64) -> RowMatrix<f64, 4, 4> {
 		let exp = (-4.0 / 3.0 * distance).exp();
 
 		let diagonal = 0.25 + 0.75 * exp;
@@ -149,7 +91,7 @@ impl K80 {
 	}
 }
 
-impl SubstitutionTrait<4> for K80 {
+impl SubstitutionModel<4> for K80 {
 	fn update(&mut self, py: Python) -> Result<bool> {
 		let kappa = self.kappa.extract(py)?;
 
@@ -161,7 +103,7 @@ impl SubstitutionTrait<4> for K80 {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> Substitution<4> {
+	fn get_transition(&self, distance: f64) -> RowMatrix<f64, 4, 4> {
 		let kappa = self.cached_kappa;
 
 		let frac1 = -4.0 / (kappa + 2.0);
@@ -252,7 +194,7 @@ impl HKY {
 	}
 }
 
-impl SubstitutionTrait<4> for HKY {
+impl SubstitutionModel<4> for HKY {
 	fn update(&mut self, py: Python) -> Result<bool> {
 		let frequencies =
 			self.frequencies.extract::<(f64, f64, f64, f64)>(py)?;
@@ -270,7 +212,7 @@ impl SubstitutionTrait<4> for HKY {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> Substitution<4> {
+	fn get_transition(&self, distance: f64) -> RowMatrix<f64, 4, 4> {
 		let diag = RowMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);

@@ -8,7 +8,7 @@ from ..data import DNASeq
 from ..data.msa import MSA
 from ..data.newick import Tree as NewickTree
 from ..rng import RNG
-from .substitutions import Substitution
+from .substitutions import HKY, JC, K80
 from .tree import Internal, Leaf, Node
 
 class tree: ...
@@ -292,7 +292,7 @@ class Likelihood:
     def __init__(
         self,
         msa: MSA,
-        substitution: Substitution,
+        substitution: JC | K80 | HKY,
         # TODO: types
         clock: Any,
         tree: Tree,
