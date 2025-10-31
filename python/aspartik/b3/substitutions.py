@@ -9,6 +9,7 @@ from ..math import is_close
 
 JC = _b3_rust_impl.JC
 K80 = _b3_rust_impl.K80
+HKY = _b3_rust_impl.HKY
 
 type Float4 = tuple[float, float, float, float]
 type Float6 = tuple[float, float, float, float, float, float]
@@ -89,34 +90,6 @@ class F81(Substitution):
 
     def get_matrix(self) -> Matrix:
         return self._cached_matrix
-
-
-@dataclass(slots=True)
-class HKY(Substitution):
-    """
-    Hasegawa et al. 1985
-
-    A model which can be thought of as a combination of K80 and F81: both base
-    rates and transition/transversion ratio are configurable.
-
-    Hasegawa et al. 1985, Dating of the human-ape splitting by a molecular
-    clock of mitochondrial DNA, <https://doi.org/10.1007/BF02101694>.
-    """
-
-    dimensions: ClassVar[int] = 4
-    frequencies: Float4
-    """A tuple of frequencies in order `(A, C, G, T)`"""
-    kappa: SupportsFloat
-    """Transition rate divided transversion rate"""
-    _gtr: GTR = field(init=False)
-
-    def __post_init__(self):
-        self._gtr = GTR(self.frequencies, rate_ag=self.kappa, rate_ct=self.kappa)
-
-        self._gtr._update_matrix()
-
-    def get_matrix(self) -> Matrix:
-        return self._gtr.get_matrix()
 
 
 @dataclass(slots=True)

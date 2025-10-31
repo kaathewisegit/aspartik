@@ -16,7 +16,7 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.parameters import Real
 from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
-from aspartik.b3.substitutions import K80
+from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
@@ -53,7 +53,7 @@ operators = [
 
 likelihood = Likelihood(
     msa=msa,
-    substitution=K80(kappa),
+    substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
     clock=StrictClock(1.0),
     tree=tree,
     calculator="cpu",

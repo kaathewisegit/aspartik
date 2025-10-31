@@ -1,7 +1,7 @@
 import pytest
 from utils import random_float, random_frequencies_many
 
-from aspartik.b3.substitutions import F81, GTR, HKY, Matrix
+from aspartik.b3.substitutions import F81, GTR, Matrix
 from aspartik.math import is_close
 
 
@@ -16,14 +16,6 @@ def assert_normalized(frequencies, matrix: Matrix) -> None:
 @pytest.mark.parametrize("frequencies", random_frequencies_many())
 def test_f81_normalization(frequencies):
     model = F81(frequencies)
-    assert_normalized(frequencies, model.get_matrix())
-
-
-@pytest.mark.parametrize(
-    "frequencies,kappa", zip(random_frequencies_many(), random_float(0, 10, num=1000))
-)
-def test_hky_normalization(frequencies, kappa: float):
-    model = HKY(frequencies, kappa)
     assert_normalized(frequencies, model.get_matrix())
 
 

@@ -41,6 +41,7 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 
 	m.add_class::<substitution::JC>()?;
 	m.add_class::<substitution::K80>()?;
+	m.add_class::<substitution::HKY>()?;
 
 	Ok(m)
 }

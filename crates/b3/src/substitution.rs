@@ -105,6 +105,13 @@ impl<'py> FromPyObject<'_, 'py> for SubstitutionModel<4> {
 			Ok(Self {
 				inner: Box::new(k80),
 			})
+		} else if HKY::type_check(&obj) {
+			let hky = obj.cast::<HKY>()?;
+			let hky = hky.get().clone(obj.py());
+
+			Ok(Self {
+				inner: Box::new(hky),
+			})
 		} else {
 			todo!("Type error")
 		}
@@ -208,6 +215,115 @@ impl K80 {
 		Self {
 			kappa,
 			cached_kappa: f64::NAN,
+		}
+	}
+}
+
+#[derive(Debug)]
+#[pyclass(module = "aspartik.b3.substitutions", frozen)]
+pub struct HKY {
+	frequencies: Py<PyAny>,
+	kappa: Py<PyAny>,
+
+	cached_kappa: f64,
+	cached_frequencies: (f64, f64, f64, f64),
+
+	p: RowMatrix<f64, 4, 4>,
+	inv_p: RowMatrix<f64, 4, 4>,
+	diag: Vector<f64, 4>,
+}
+
+impl HKY {
+	fn update_matrices(&mut self) {
+		let kappa = self.cached_kappa;
+		let (a, c, g, t) = self.cached_frequencies;
+		let r = a + g;
+		let y = c + t;
+
+		self.p = RowMatrix::from([
+			[1.0, -y / r, -g / a, 0.0],
+			[1.0, 1.0, 0.0, -t / c],
+			[1.0, -y / r, 1.0, 0.0],
+			[1.0, 1.0, 0.0, 1.0],
+		]);
+
+		self.diag = [
+			0.0,
+			-1.0,
+			-a * kappa - c - g * kappa - t,
+			-a - c * kappa - g - t * kappa,
+		]
+		.into();
+
+		self.inv_p = RowMatrix::from([
+			[a, c, g, t],
+			[-a, c * r / y, -g, t * r / y],
+			[-a / r, 0.0, a / r, 0.0],
+			[0.0, -c / y, 0.0, c / y],
+		]);
+	}
+
+	fn clone(&self, py: Python) -> Self {
+		Self {
+			frequencies: self.frequencies.clone_ref(py),
+			kappa: self.kappa.clone_ref(py),
+
+			..*self
+		}
+	}
+}
+
+impl SubstitutionTrait<4> for HKY {
+	fn update(&mut self, py: Python) -> Result<bool> {
+		let frequencies =
+			self.frequencies.extract::<(f64, f64, f64, f64)>(py)?;
+		let kappa = self.kappa.extract::<f64>(py)?;
+
+		if kappa != self.cached_kappa
+			|| frequencies != self.cached_frequencies
+		{
+			self.cached_frequencies = frequencies;
+			self.cached_kappa = kappa;
+			self.update_matrices();
+			Ok(true)
+		} else {
+			Ok(false)
+		}
+	}
+
+	fn get_transition(&self, distance: f64) -> Substitution<4> {
+		let diag = RowMatrix::from_diagonal(
+			self.diag.map(|v| (v * distance).exp()),
+		);
+
+		self.p * diag * self.inv_p
+	}
+
+	fn get_frequencies(&self) -> Vector<f64, 4> {
+		let array: [f64; 4] = self.cached_frequencies.into();
+		array.into()
+	}
+}
+
+#[pymethods]
+impl HKY {
+	#[new]
+	pub fn new(frequencies: Py<PyAny>, kappa: Py<PyAny>) -> Self {
+		Self {
+			kappa,
+			frequencies,
+
+			cached_kappa: f64::NAN,
+			cached_frequencies: (
+				f64::NAN,
+				f64::NAN,
+				f64::NAN,
+				f64::NAN,
+			),
+
+			p: RowMatrix::default(),
+			inv_p: RowMatrix::default(),
+			diag: Vector::default(),
 		}
 	}
 }

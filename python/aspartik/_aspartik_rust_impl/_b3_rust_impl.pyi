@@ -141,6 +141,17 @@ class Boolean(Stateful):
 Parameter = Real | Integer | Boolean
 
 @dataclass
+class JC:
+    """
+    Jukes-Cantor
+
+    A simple model with equal state transition rates.
+
+    Jukes and Cantor 1969, Evolution of Protein Molecules,
+    <https://doi.org/10.1016/b978-1-4832-3211-9.50009-7>.
+    """
+
+@dataclass
 class K80:
     """Kimura 80
 
@@ -159,12 +170,16 @@ class K80:
     """
 
 @dataclass
-class JC:
+class HKY:
     """
-    Jukes-Cantor
+    Hasegawa et al. 1985
 
-    A simple model with equal state transition rates.
+    A model which can be thought of as a combination of K80 and F81: both base
+    rates and transition/transversion ratio are configurable.
 
-    Jukes and Cantor 1969, Evolution of Protein Molecules,
-    <https://doi.org/10.1016/b978-1-4832-3211-9.50009-7>.
+    Hasegawa et al. 1985, Dating of the human-ape splitting by a molecular
+    clock of mitochondrial DNA, <https://doi.org/10.1007/BF02101694>.
     """
+
+    frequencies: Sequence[float]
+    kappa: SupportsFloat
