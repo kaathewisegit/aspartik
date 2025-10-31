@@ -1,13 +1,20 @@
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, bounded};
+use linalg::Vector;
 
 use std::{sync::Arc, thread};
 
-use super::{CpuLikelihood, LikelihoodTrait, Transition};
+use super::{CpuLikelihood, LikelihoodTrait, Row, Transition};
 use data::{DnaNucleotide, Msa};
 
-type Update<const N: usize> =
-	(Vec<usize>, Vec<usize>, Vec<Transition<N>>, usize, usize);
+type Update<const N: usize> = (
+	Vec<usize>,
+	Vec<usize>,
+	Vec<Transition<N>>,
+	usize,
+	usize,
+	Row<N>,
+);
 
 pub struct ThreadedLikelihood<const N: usize> {
 	updates: Vec<Sender<Arc<Update<N>>>>,
@@ -29,6 +36,7 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 		transitions: &[Transition<N>],
 		leaves_end: usize,
 		root: usize,
+		frequencies: Vector<f64, N>,
 	) -> Result<()> {
 		let update = Arc::new((
 			nodes.to_owned(),
@@ -36,6 +44,7 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 			transitions.to_owned(),
 			leaves_end,
 			root,
+			frequencies,
 		));
 		for sender in &self.updates {
 			sender.send(update.clone())?;
@@ -162,6 +171,7 @@ fn worker(
 		};
 		cpu.propose(
 			&update.0, &update.1, &update.2, update.3, update.4,
+			update.5,
 		)
 		.unwrap();
 

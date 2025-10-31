@@ -27,6 +27,7 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		transitions: &[Transition<N>],
 		leaves_end: usize,
 		root: usize,
+		frequencies: Row<N>,
 	) -> Result<()> {
 		assert_eq!(nodes.len(), edges.len());
 		assert_eq!(nodes.len(), transitions.len());
@@ -113,6 +114,7 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 			let left = self.projections[root_left_idx + site];
 			let right = self.projections[root_right_idx + site];
 			let likelihood = left * right;
+			let likelihood = likelihood * frequencies;
 			let log_sum = likelihood.sum().ln();
 
 			self.likelihoods[site] = log_sum;

@@ -31,6 +31,7 @@ trait LikelihoodTrait<const N: usize> {
 		transitions: &[Transition<N>],
 		leaves_end: usize,
 		root: usize,
+		frequencies: Vector<f64, N>,
 	) -> Result<()>;
 
 	fn likelihood(&mut self, weights: &[f64]) -> Result<f64>;
@@ -56,8 +57,6 @@ pub struct GenericLikelihood<const N: usize> {
 	last: f64,
 	launched_update: bool,
 	tree: Py<PyTree>,
-
-	unconstrained: f64,
 }
 
 impl GenericLikelihood<4> {
@@ -90,8 +89,6 @@ impl GenericLikelihood<4> {
 			}
 		};
 
-		let unconstrained = unconstrained(&weights);
-
 		let mut out = Self {
 			substitution,
 			clock,
@@ -102,7 +99,6 @@ impl GenericLikelihood<4> {
 			last: f64::NAN,
 			launched_update: false,
 			tree,
-			unconstrained,
 		};
 		Python::attach(|py| out.propose(py))?;
 		// This cannot be removed: the likelihood must be run to
@@ -185,12 +181,15 @@ impl<const N: usize> GenericLikelihood<N> {
 
 		let transitions = self.transitions.matrices(&edges);
 
+		let frequencies = self.substitution.get_frequencies();
+
 		self.calculator.propose(
 			&nodes,
 			&edges,
 			&transitions,
 			leaves_end,
 			root,
+			frequencies,
 		)?;
 		self.launched_update = true;
 
@@ -203,8 +202,7 @@ impl<const N: usize> GenericLikelihood<N> {
 			return Ok(self.cache);
 		}
 
-		let likelihood = self.calculator.likelihood(&self.weights)?
-			+ self.unconstrained;
+		let likelihood = self.calculator.likelihood(&self.weights)?;
 		trace!(
 			target: "b3::likelihood::likelihood",
 			likelihood;
@@ -326,5 +324,21 @@ impl PyLikelihood {
 		Ok(PyLikelihood {
 			inner: Mutex::new(erased_likelihood),
 		})
+	}
+
+	fn propose(&self, py: Python) -> Result<()> {
+		self.inner().propose(py)
+	}
+
+	fn likelihood(&self) -> Result<f64> {
+		self.inner().likelihood()
+	}
+
+	fn accept(&self) -> Result<()> {
+		self.inner().accept()
+	}
+
+	fn reject(&self) -> Result<()> {
+		self.inner().reject()
 	}
 }

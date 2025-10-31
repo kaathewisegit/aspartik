@@ -99,6 +99,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		transitions: &[Transition<4>],
 		leaves_end: usize,
 		root: usize,
+		_frequencies: Row<4>,
 	) -> Result<()> {
 		self.num_updated_nodes = nodes.len() as u32;
 		if self.num_updated_nodes == 0 {
@@ -122,6 +123,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		}
 		self.update_all(leaves_end, internals_start)?;
 
+		// TODO: frequencies
 		self.update_likelihoods(root as u32)?;
 
 		Ok(())
