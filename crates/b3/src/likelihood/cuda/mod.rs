@@ -99,7 +99,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		transitions: &[Transition<4>],
 		leaves_end: usize,
 		root: usize,
-		_frequencies: Row<4>,
+		frequencies: Row<4>,
 	) -> Result<()> {
 		self.num_updated_nodes = nodes.len() as u32;
 		if self.num_updated_nodes == 0 {
@@ -124,7 +124,7 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		self.update_all(leaves_end, internals_start)?;
 
 		// TODO: frequencies
-		self.update_likelihoods(root as u32)?;
+		self.update_likelihoods(root as u32, frequencies)?;
 
 		Ok(())
 	}
@@ -265,7 +265,11 @@ impl CudaLikelihood {
 	/// Calculates the root node likelihood from its two projections
 	///
 	/// Asynchronous.
-	fn update_likelihoods(&self, root: u32) -> Result<()> {
+	fn update_likelihoods(
+		&self,
+		root: u32,
+		frequencies: Row<4>,
+	) -> Result<()> {
 		let mut builder =
 			self.stream.launch_builder(&self.update_likelihoods_fn);
 
@@ -280,6 +284,7 @@ impl CudaLikelihood {
 		builder.arg(&self.edges);
 
 		builder.arg(&root);
+		builder.arg(&frequencies);
 
 		// SAFETY: TODO
 		unsafe { builder.launch(cfg) }.with_context(|| {

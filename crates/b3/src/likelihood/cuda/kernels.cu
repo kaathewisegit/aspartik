@@ -185,16 +185,21 @@ void update_likelihoods(
 
 	const u32* restrict edges,
 
-	u32 root
+	u32 root,
+	f64x4 frequencies
 ) {
 	SITE_PRELUDE
 
 	u32 left_root_edge = (root - num_leaves) * 2;
 	u32 right_root_edge = left_root_edge + 1;
 
-	f64x4 likelihood = hadamard(
+	f64x4 pre_likelihood = hadamard(
 		projections[idx(left_root_edge)],
 		projections[idx(right_root_edge)]
+	);
+	f64x4 likelihood = hadamard(
+		pre_likelihood,
+		frequencies
 	);
 
 	f64 sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
