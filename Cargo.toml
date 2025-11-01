@@ -36,7 +36,6 @@ divan = "0.1.21"
 indoc = "2.0"
 log = "0.4.28"
 logos = "0.15.1"
-nalgebra = { version = "0.34.1", default-features = false }
 num-traits = "0.2.19"
 parking_lot = "0.12.5"
 peg = "0.8.5"

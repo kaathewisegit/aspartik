@@ -12,7 +12,6 @@ math = { workspace = true }
 arbitrary = { workspace = true, optional = true }
 bytemuck = { workspace = true, optional = true }
 cudarc = { workspace = true, optional = true }
-nalgebra = { workspace = true, features = ["std"] }
 num-traits = { workspace = true }
 
 [dev-dependencies]
