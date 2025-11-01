@@ -168,11 +168,15 @@ impl HKY {
 			[1.0, 1.0, 0.0, 1.0],
 		]);
 
+		let div = 2.0
+			* (g * t + a * c
+				+ a * t + c * g + kappa * (a * g + c * t));
+
 		self.diag = [
 			0.0,
-			-1.0,
-			-a * kappa - c - g * kappa - t,
-			-a - c * kappa - g - t * kappa,
+			-1.0 / div,
+			-(y + r * kappa) / div,
+			-(r + y * kappa) / div,
 		]
 		.into();
 
