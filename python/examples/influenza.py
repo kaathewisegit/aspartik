@@ -19,7 +19,7 @@ from aspartik.b3.operators import (
     UpDown,
 )
 from aspartik.b3.parameters import Internals, Real
-from aspartik.b3.priors import CTMCS, Bound, Distribution, ExponentialGrowth, Yule
+from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import K80
 from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
