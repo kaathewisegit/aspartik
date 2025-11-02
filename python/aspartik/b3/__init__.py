@@ -2,11 +2,14 @@ from typing import Protocol, runtime_checkable
 
 from .._aspartik_rust_impl._b3_rust_impl import (
     MCMC as MCMC,
+    Internal as Internal,
+    Leaf as Leaf,
     Likelihood as Likelihood,
     Proposal as Proposal,
     Tree as Tree,
-    tree as tree,
 )
+
+Node = Leaf | Internal
 
 
 @runtime_checkable

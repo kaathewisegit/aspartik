@@ -3,7 +3,7 @@ use parking_lot::{Mutex, MutexGuard};
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
 	prelude::*,
-	types::{PyAny, PyDict, PyTuple, PyType},
+	types::{PyAny, PyTuple, PyType},
 };
 use rand::{
 	Rng as _,
@@ -1279,16 +1279,3 @@ impl PyTree {
 }
 
 py_pickle_state_impl!(PyTree, _tree_pickle_impl);
-
-pub fn submodule(py: Python<'_>) -> PyResult<Bound<'_, PyModule>> {
-	let m = PyModule::new(py, "tree")?;
-
-	m.add_class::<Leaf>()?;
-	m.add_class::<Internal>()?;
-
-	let locals = PyDict::new(py);
-	locals.set_item("m", &m)?;
-	py.run(c"m.Node = m.Leaf | m.Internal", None, Some(&locals))?;
-
-	Ok(m)
-}

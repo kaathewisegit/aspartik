@@ -3,8 +3,7 @@ from math import log
 
 from ...rng import RNG
 from ...stats.distributions import Sample
-from .. import Operator, Proposal, Tree
-from ..tree import Internal, Node
+from .. import Internal, Node, Operator, Proposal, Tree
 from ._util import family
 
 

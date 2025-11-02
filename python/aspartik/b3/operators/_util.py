@@ -1,8 +1,7 @@
 from math import exp, inf, isfinite, log
 
 from ...rng import RNG
-from .. import Tree
-from ..tree import Internal, Node
+from .. import Internal, Node, Tree
 
 
 # x must be in [0, inf)

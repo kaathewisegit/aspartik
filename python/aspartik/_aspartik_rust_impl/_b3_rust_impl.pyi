@@ -2,9 +2,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import SupportsFloat
 
-from ..b3 import Operator, Prior, Stateful, Tree
+from ..b3 import Leaf, Operator, Prior, Stateful, Tree
 from ..b3.parameters import Scalable
-from ..b3.tree import Leaf
 from ..rng import RNG
 from ..stats.distributions import Distribution, Sample
 

@@ -9,7 +9,7 @@ from collections import deque
 from datetime import datetime
 from pathlib import Path
 
-from aspartik.b3 import MCMC, Likelihood, Tree
+from aspartik.b3 import MCMC, Internal, Likelihood, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
@@ -26,7 +26,6 @@ from aspartik.b3.operators import (
 from aspartik.b3.parameters import Internals, Real
 from aspartik.b3.priors import Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import K80
-from aspartik.b3.tree import Internal
 from aspartik.b3.utils import print_operator_stats
 from aspartik.data import newick
 from aspartik.io.msa import read_msa_from_fasta
