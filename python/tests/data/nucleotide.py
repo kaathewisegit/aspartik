@@ -57,4 +57,4 @@ def test_contains():
 
     assert DNANucleotide.Strong in DNANucleotide.NotThymine
     assert DNANucleotide.Ketone in DNANucleotide.NotThymine
-    assert DNANucleotide.Purine in DNANucleotide.NotThymine
+    assert DNANucleotide.Pyrimidine in DNANucleotide.NotThymine

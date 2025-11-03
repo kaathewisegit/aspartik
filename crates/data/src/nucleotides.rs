@@ -29,8 +29,8 @@ pub enum DnaNucleotide {
 	Strong = 0b0110,
 	Amino = 0b1100,
 	Ketone = 0b0011,
-	Purine = 0b0101,
-	Pyrimidine = 0b1010,
+	Purine = 0b1010,
+	Pyrimidine = 0b0101,
 
 	NotAdenine = 0b1110,
 	NotCytosine = 0b1101,
@@ -124,16 +124,40 @@ impl DnaNucleotide {
 			Strong => [0.0, 0.5, 0.5, 0.0],
 			Amino => [0.5, 0.5, 0.0, 0.0],
 			Ketone => [0.0, 0.0, 0.5, 0.5],
-			Purine => [0.0, 0.5, 0.0, 0.5],
-			Pyrimidine => [0.5, 0.0, 0.5, 0.0],
+			Purine => [0.5, 0.0, 0.5, 0.0],
+			Pyrimidine => [0.0, 0.5, 0.0, 0.5],
 
 			NotAdenine => [0.0, F1_3, F1_3, F1_3],
 			NotCytosine => [F1_3, 0.0, F1_3, F1_3],
 			NotGuanine => [F1_3, F1_3, 0.0, F1_3],
 			NotThymine => [F1_3, F1_3, F1_3, 0.0],
 
-			Any => [0.25, 0.25, 0.25, 0.25],
-			Gap => [1.0, 1.0, 1.0, 1.0],
+			Any | Gap => [0.25, 0.25, 0.25, 0.25],
+		}
+		.into()
+	}
+
+	pub fn base_frequencies_denormalized(&self) -> Vector<f64, 4> {
+		use DnaNucleotide::*;
+		match self {
+			Adenine => [1.0, 0.0, 0.0, 0.0],
+			Cytosine => [0.0, 1.0, 0.0, 0.0],
+			Guanine => [0.0, 0.0, 1.0, 0.0],
+			Thymine => [0.0, 0.0, 0.0, 1.0],
+
+			Weak => [1.0, 0.0, 0.0, 1.0],
+			Strong => [0.0, 1.0, 1.0, 0.0],
+			Amino => [1.0, 1.0, 0.0, 0.0],
+			Ketone => [0.0, 0.0, 1.0, 1.0],
+			Purine => [1.0, 0.0, 1.0, 0.0],
+			Pyrimidine => [0.0, 1.0, 0.0, 1.0],
+
+			NotAdenine => [0.0, 1.0, 1.0, 1.0],
+			NotCytosine => [1.0, 0.0, 1.0, 1.0],
+			NotGuanine => [1.0, 1.0, 0.0, 1.0],
+			NotThymine => [1.0, 1.0, 1.0, 0.0],
+
+			Any | Gap => [1.0, 1.0, 1.0, 1.0],
 		}
 		.into()
 	}
@@ -209,8 +233,8 @@ unsafe impl Character for DnaNucleotide {
 			0b0110 => Strong,
 			0b1100 => Amino,
 			0b0011 => Ketone,
-			0b0101 => Purine,
-			0b1010 => Pyrimidine,
+			0b1010 => Purine,
+			0b0101 => Pyrimidine,
 
 			0b1110 => NotAdenine,
 			0b1101 => NotCytosine,
