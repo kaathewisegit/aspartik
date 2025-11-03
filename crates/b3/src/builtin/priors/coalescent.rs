@@ -19,14 +19,21 @@ fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
 }
 
 trait Coalescent {
-	fn population_size_at(&self, py: Python, point: f64) -> Result<f64>;
-	fn integral(&self, py: Python, start: f64, end: f64) -> Result<f64>;
+	type State: Copy;
+
+	fn fetch_state(&self, py: Python) -> Result<Self::State>;
+
+	fn population_size_at(&self, point: f64, state: Self::State) -> f64;
+
+	fn integral(&self, start: f64, end: f64, state: Self::State) -> f64;
 }
 
 fn calculate<C>(py: Python, tree: &Tree, coalescent: &C) -> Result<f64>
 where
 	C: Coalescent,
 {
+	let state = coalescent.fetch_state(py)?;
+
 	let nodes = sorted_nodes(tree);
 
 	let mut out = 0.0; // log-likelihood
@@ -35,12 +42,12 @@ where
 
 	for (node, height) in nodes.into_iter().skip(1) {
 		let binomial = (num * (num - 1) / 2) as f64;
-		let area = coalescent.integral(py, last_height, height)?;
+		let area = coalescent.integral(last_height, height, state);
 		out -= binomial * area;
 
 		if tree.is_internal(&node) {
 			// merge event
-			let pop = coalescent.population_size_at(py, height)?;
+			let pop = coalescent.population_size_at(height, state);
 			out -= pop.ln();
 			num -= 1;
 		} else {
@@ -58,25 +65,33 @@ where
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ConstantPopulation {
 	tree: Py<PyTree>,
-	population: Py<PyAny>,
+	population_size: Py<PyAny>,
 }
 
 impl Coalescent for ConstantPopulation {
-	fn population_size_at(&self, py: Python, _point: f64) -> Result<f64> {
-		Ok(self.population_size(py).extract(py)?)
+	type State = f64;
+
+	fn fetch_state(&self, py: Python) -> Result<f64> {
+		Ok(self.population_size.extract(py)?)
 	}
 
-	fn integral(&self, py: Python, start: f64, end: f64) -> Result<f64> {
-		let pop: f64 = self.population_size(py).extract(py)?;
-		Ok((end - start) / pop)
+	fn population_size_at(&self, _point: f64, pop: f64) -> f64 {
+		pop
+	}
+
+	fn integral(&self, start: f64, end: f64, pop: f64) -> f64 {
+		(end - start) / pop
 	}
 }
 
 #[pymethods]
 impl ConstantPopulation {
 	#[new]
-	fn new(tree: Py<PyTree>, population: Py<PyAny>) -> Self {
-		Self { tree, population }
+	fn new(tree: Py<PyTree>, population_size: Py<PyAny>) -> Self {
+		Self {
+			tree,
+			population_size,
+		}
 	}
 
 	#[getter]
@@ -86,7 +101,7 @@ impl ConstantPopulation {
 
 	#[getter]
 	fn population_size(&self, py: Python) -> Py<PyAny> {
-		self.population.clone_ref(py)
+		self.population_size.clone_ref(py)
 	}
 
 	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
@@ -111,25 +126,25 @@ pub struct ExponentialGrowth {
 }
 
 impl Coalescent for ExponentialGrowth {
-	fn population_size_at(&self, py: Python, point: f64) -> Result<f64> {
-		let gr: f64 = self.growth_rate(py).extract(py)?;
-		let pop: f64 = self.population_size(py).extract(py)?;
+	type State = (f64, f64);
 
-		let out = pop * (-point * gr).exp();
-		Ok(out)
+	fn fetch_state(&self, py: Python) -> Result<Self::State> {
+		let pop: f64 = self.population_size(py).extract(py)?;
+		let gr: f64 = self.growth_rate(py).extract(py)?;
+
+		Ok((pop, gr))
 	}
 
-	fn integral(&self, py: Python, start: f64, end: f64) -> Result<f64> {
-		let gr: f64 = self.growth_rate(py).extract(py)?;
-		let pop: f64 = self.population_size(py).extract(py)?;
+	fn population_size_at(&self, point: f64, (pop, gr): (f64, f64)) -> f64 {
+		pop * (-point * gr).exp()
+	}
 
-		let out = if gr == 0.0 {
+	fn integral(&self, start: f64, end: f64, (pop, gr): (f64, f64)) -> f64 {
+		if gr == 0.0 {
 			(end - start) / pop
 		} else {
 			((end * gr).exp() - (start * gr).exp()) / pop / gr
-		};
-
-		Ok(out)
+		}
 	}
 }
 
