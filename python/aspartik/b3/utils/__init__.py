@@ -24,7 +24,7 @@ def print_operator_stats(mcmc: MCMC) -> None:
 
 def print_operator_timings(mcmc: MCMC) -> None:
     print(
-        f"{'Operator': <20}{'%Aborts': >20}{'propose avg μs': >20}{'likelihood avg μs': >20}{'total μs': >20}"
+        f"{'Operator': <20}{'propose avg μs': >20}{'likelihood avg μs': >20}{'total μs': >20}"
     )
     print("-" * 80)
 
