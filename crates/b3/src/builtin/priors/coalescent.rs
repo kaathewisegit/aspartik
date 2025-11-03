@@ -34,12 +34,6 @@ where
 	let mut num: usize = 1; // number of active lineages
 
 	for (node, height) in nodes.into_iter().skip(1) {
-		if tree.is_leaf(&node) {
-			// not a transition event.  Increase the num for the new
-			// number of lineages which could merge.
-			num += 1;
-		}
-
 		let binomial = (num * (num - 1) / 2) as f64;
 		let area = coalescent.integral(py, last_height, height)?;
 		out -= binomial * area;
@@ -49,6 +43,9 @@ where
 			let pop = coalescent.population_size_at(py, height)?;
 			out -= pop.ln();
 			num -= 1;
+		} else {
+			// the node is a leaf, increase the number of linages
+			num += 1;
 		}
 
 		last_height = height;
