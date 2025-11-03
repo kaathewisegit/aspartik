@@ -16,7 +16,7 @@ impl<const N: usize> Transitions<N> {
 		let transitions = SkVec::repeat(RowMatrix::default(), length);
 
 		Self {
-			rate: 1.0,
+			rate: f64::NAN,
 
 			transitions,
 		}
@@ -31,6 +31,9 @@ impl<const N: usize> Transitions<N> {
 		tree: &Tree,
 	) -> Result<bool> {
 		let full_update = substitution.update(py)? || rate != self.rate;
+		if full_update {
+			self.rate = rate;
+		}
 
 		let edges: Vec<usize> = if full_update {
 			(0..(tree.num_internals() * 2)).collect()
@@ -40,7 +43,7 @@ impl<const N: usize> Transitions<N> {
 		let distances: Vec<f64> = edges
 			.iter()
 			.copied()
-			.map(|e| tree.edge_length(e) * rate)
+			.map(|e| tree.edge_length(e) * self.rate)
 			.collect();
 
 		self.update_edges(&edges, &distances, substitution);
