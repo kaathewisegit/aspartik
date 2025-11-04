@@ -30,4 +30,4 @@ class Bound(Prior):
         if not (self.lower <= self.param < self.upper):
             return -inf
         else:
-            return 1
+            return 0
