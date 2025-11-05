@@ -27,10 +27,10 @@ pub enum DnaNucleotide {
 
 	Weak = 0b1001,
 	Strong = 0b0110,
-	Amino = 0b1100,
-	Ketone = 0b0011,
-	Purine = 0b1010,
-	Pyrimidine = 0b0101,
+	Amino = 0b0011,
+	Ketone = 0b1100,
+	Purine = 0b0101,
+	Pyrimidine = 0b1010,
 
 	NotAdenine = 0b1110,
 	NotCytosine = 0b1101,
@@ -231,10 +231,10 @@ unsafe impl Character for DnaNucleotide {
 
 			0b1001 => Weak,
 			0b0110 => Strong,
-			0b1100 => Amino,
-			0b0011 => Ketone,
-			0b1010 => Purine,
-			0b0101 => Pyrimidine,
+			0b0011 => Amino,
+			0b1100 => Ketone,
+			0b0101 => Purine,
+			0b1010 => Pyrimidine,
 
 			0b1110 => NotAdenine,
 			0b1101 => NotCytosine,

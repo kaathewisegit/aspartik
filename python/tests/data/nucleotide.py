@@ -46,15 +46,51 @@ def test_complement():
 
 
 def test_contains():
-    assert DNANucleotide.Adenine in DNANucleotide.Adenine
-    assert DNANucleotide.NotAdenine not in DNANucleotide.Adenine
-    assert DNANucleotide.NotThymine not in DNANucleotide.Adenine
+    # Weak
+    assert DNANucleotide.Adenine in DNANucleotide.Weak
+    assert DNANucleotide.Cytosine not in DNANucleotide.Weak
+    assert DNANucleotide.Guanine not in DNANucleotide.Weak
+    assert DNANucleotide.Thymine in DNANucleotide.Weak
 
+    # Strong
+    assert DNANucleotide.Adenine not in DNANucleotide.Strong
     assert DNANucleotide.Cytosine in DNANucleotide.Strong
     assert DNANucleotide.Guanine in DNANucleotide.Strong
-    assert DNANucleotide.Adenine not in DNANucleotide.Strong
     assert DNANucleotide.Thymine not in DNANucleotide.Strong
 
-    assert DNANucleotide.Strong in DNANucleotide.NotThymine
-    assert DNANucleotide.Ketone in DNANucleotide.NotThymine
-    assert DNANucleotide.Pyrimidine in DNANucleotide.NotThymine
+    # Amino
+    assert DNANucleotide.Adenine in DNANucleotide.Amino
+    assert DNANucleotide.Cytosine in DNANucleotide.Amino
+    assert DNANucleotide.Guanine not in DNANucleotide.Amino
+    assert DNANucleotide.Thymine not in DNANucleotide.Amino
+
+    # Ketone
+    assert DNANucleotide.Adenine not in DNANucleotide.Ketone
+    assert DNANucleotide.Cytosine not in DNANucleotide.Ketone
+    assert DNANucleotide.Guanine in DNANucleotide.Ketone
+    assert DNANucleotide.Thymine in DNANucleotide.Ketone
+
+    # Purine
+    assert DNANucleotide.Adenine in DNANucleotide.Purine
+    assert DNANucleotide.Cytosine not in DNANucleotide.Purine
+    assert DNANucleotide.Guanine in DNANucleotide.Purine
+    assert DNANucleotide.Thymine not in DNANucleotide.Purine
+
+    # Pyrimidine
+    assert DNANucleotide.Adenine not in DNANucleotide.Pyrimidine
+    assert DNANucleotide.Cytosine in DNANucleotide.Pyrimidine
+    assert DNANucleotide.Guanine not in DNANucleotide.Pyrimidine
+    assert DNANucleotide.Thymine in DNANucleotide.Pyrimidine
+
+    # Not adenine
+    assert DNANucleotide.Adenine not in DNANucleotide.NotAdenine
+    assert DNANucleotide.Cytosine in DNANucleotide.NotAdenine
+    assert DNANucleotide.Guanine in DNANucleotide.NotAdenine
+    assert DNANucleotide.Thymine in DNANucleotide.NotAdenine
+
+    assert DNANucleotide.Weak not in DNANucleotide.NotAdenine
+    assert DNANucleotide.Strong in DNANucleotide.NotAdenine
+    assert DNANucleotide.Amino not in DNANucleotide.NotAdenine
+    assert DNANucleotide.Ketone in DNANucleotide.NotAdenine
+    assert DNANucleotide.Purine not in DNANucleotide.NotAdenine
+    assert DNANucleotide.Pyrimidine in DNANucleotide.NotAdenine
