@@ -53,9 +53,23 @@ class PrintLogger(Callback):
         )
 
 
+def _serialize(item):
+    if isinstance(item, Parameter):
+        if len(item) == 1:
+            return item[0]
+        else:
+            return list(item)
+
+    elif isinstance(item, Prior):
+        return item.probability()
+
+    elif callable(item):
+        return item()
+
+
 @dataclass(slots=True)
 class ValueLogger(Callback):
-    map: Mapping[str, Any]
+    items: Mapping[str, Any]
     path: str
     every: int
 
@@ -65,17 +79,7 @@ class ValueLogger(Callback):
         self._file = open(self.path, "w")
 
     def log(self, mcmc: MCMC):
-        entry = {}
-
-        for key, item in self.map.items():
-            if isinstance(item, Parameter):
-                entry[key] = item[0]
-            if isinstance(item, Prior):
-                entry[key] = item.probability()
-            if callable(item):
-                entry[key] = item()
-
-        entry_json = json.dumps(entry)
+        entry_json = json.dumps(self.items, default=_serialize)
         self._file.write(entry_json)
         self._file.write("\n")
         self._file.flush()
