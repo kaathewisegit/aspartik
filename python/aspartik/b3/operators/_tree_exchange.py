@@ -93,7 +93,7 @@ class WideExchange(Operator):
         j = None
         while j is None or j == i or j == root:
             j = tree.random_node(self.rng)
-        assert isinstance(j, Node)
+        assert j is not None
 
         i_parent = tree.parent_of(i)
         if i_parent is None:
