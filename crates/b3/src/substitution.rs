@@ -200,8 +200,13 @@ impl HKY {
 
 impl SubstitutionModel<4> for HKY {
 	fn update(&mut self, py: Python) -> Result<bool> {
-		let frequencies =
-			self.frequencies.extract::<(f64, f64, f64, f64)>(py)?;
+		let bf = self.frequencies.bind(py);
+		let frequencies = (
+			bf.get_item(0)?.extract::<f64>()?,
+			bf.get_item(1)?.extract::<f64>()?,
+			bf.get_item(2)?.extract::<f64>()?,
+			bf.get_item(3)?.extract::<f64>()?,
+		);
 		let kappa = self.kappa.extract::<f64>(py)?;
 
 		if kappa != self.cached_kappa
