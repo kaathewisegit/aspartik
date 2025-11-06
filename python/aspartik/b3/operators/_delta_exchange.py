@@ -1,3 +1,4 @@
+from collections.abc import MutableSequence
 from dataclasses import dataclass
 
 from ...rng import RNG
@@ -9,22 +10,16 @@ from ..parameters import Real
 class DeltaExchange(Operator):
     """Scales a multidimensional parameter without changing its sum
 
-    This operator is analogous to BEAST2's `DeltaExchangeOperator`.  It picks
-    two random dimensions from a set list of parameters, a random delta, and
-    increments one of them by delta and decrements the other one.  The ratio of
-    the decrement can be controlled with the `weights` vector: the value of the
-    decrement is `delta * weights[inc_param] / weights[dec_param]`.
+    This operator is analogous to BEAST's `DeltaExchangeOperator`.  It picks
+    two random dimensions from a parameter, samples a random delta from
+    `distribution`, and increments one of them by delta and decrements the
+    other one.
     """
 
-    params: list[Real]
+    param: MutableSequence[float]
     """
-    A list of parameters to edit.  Two random ones will be sampled for each
-    proposal.
-    """
-    weights: list[float]
-    """
-    The weights which define the sum relations between parameters.  Must have
-    the same length as the `params` list.
+    The multidimensional parameter to edit.  Two random dimensions ones will be
+    changed for each proposal.
     """
     factor: float
     """
@@ -34,41 +29,21 @@ class DeltaExchange(Operator):
     weight: float = 1
 
     def __post_init__(self):
-        if len(self.params) != len(self.weights):
-            raise ValueError(
-                f"Length of `params` and `weight` must be the same.  Got {len(self.params)} and {len(self.weights)}"
-            )
-
-        self.dimensions = []
-        for param_i, param in enumerate(self.params):
-            for dim_i in range(len(param)):
-                self.dimensions.append((param_i, dim_i))
-
-        self.num_dimensions = 0
-        for param in self.params:
-            self.num_dimensions += len(param)
+        if len(self.param) <= 1:
+            raise ValueError(f"`param` must have at least two dimensions")
 
     def propose(self) -> Proposal:
-        # TODO: zero weights
+        rng = self.rng
 
-        delta = self.rng.random_float() * self.factor
+        delta = rng.random_float() * self.factor
 
-        dim_1 = self.rng.random_int(0, len(self.dimensions))
-        dim_2 = self.rng.random_int(0, len(self.dimensions) - 1)
-        # dim_1 and dim_2 must be different.
-        if dim_1 == dim_2:
-            # If we hit the same dimension, we increment the first one.  We can
-            # do the increment safely because if dim_1 is the last one then it
-            # doesn't equal dim_2
-            dim_1 += 1
+        dim_1 = rng.random_int(0, len(self.param))
+        dim_2 = dim_1
+        while dim_2 == dim_1:
+            dim_1 = rng.random_int(0, len(self.param))
 
-        (param_1, dim_1) = self.dimensions[dim_1]
-        (param_2, dim_2) = self.dimensions[dim_2]
-
-        self.params[param_1][dim_1] -= delta
-        self.params[param_2][dim_2] += delta * (
-            self.weights[param_1] / self.weights[param_2]
-        )
+        self.param[dim_1] -= delta
+        self.param[dim_2] += delta
 
         # The move is symmetrical, so the Hastings ratio is 0
         return Proposal.Hastings(0)
