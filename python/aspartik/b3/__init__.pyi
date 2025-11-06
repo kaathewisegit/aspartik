@@ -416,7 +416,7 @@ class MCMC:
         state: Sequence[Stateful],
         priors: Sequence[Prior],
         operators: Sequence[Operator],
-        likelihoods: Sequence[Likelihood],
+        likelihood: Likelihood,
         callbacks: Sequence[Callback],
         rng: RNG,
     ): ...
@@ -443,10 +443,7 @@ class MCMC:
         A list of all operator objects
         """
     @property
-    def likelihoods(self) -> list[Likelihood]:
-        """
-        All accounted for likelihoods
-        """
+    def likelihood(self) -> Likelihood: ...
     @property
     def callbacks(self) -> list[Callback]:
         """

@@ -87,7 +87,7 @@ mcmc = MCMC(
     state=[kappa, population_size, tree],
     priors=priors,
     operators=operators,
-    likelihoods=[likelihood],
+    likelihood=likelihood,
     callbacks=loggers,
     rng=rng,
 )

@@ -125,7 +125,7 @@ mcmc = MCMC(
     state=params + [tree],
     priors=priors,
     operators=operators,
-    likelihoods=[likelihood],
+    likelihood=likelihood,
     callbacks=loggers,
     rng=rng,
 )

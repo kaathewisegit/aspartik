@@ -36,7 +36,7 @@ def test_mcmc():
         state=[a, tree],
         priors=[prior_a],
         operators=[op_param_scale, op_tree_scale],
-        likelihoods=[likelihood],
+        likelihood=likelihood,
         callbacks=[],
         rng=rng,
     )
@@ -45,7 +45,7 @@ def test_mcmc():
 
     assert mcmc.priors == [prior_a]
     assert mcmc.operators == [op_param_scale, op_tree_scale]
-    assert mcmc.likelihoods == [likelihood]
+    assert mcmc.likelihood == likelihood
     assert mcmc.rng == rng
 
     assert mcmc.current_step == 4

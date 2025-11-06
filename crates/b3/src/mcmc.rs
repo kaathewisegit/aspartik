@@ -24,7 +24,7 @@ pub struct Mcmc {
 	state: Vec<Py<PyAny>>,
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
-	likelihoods: Vec<Py<PyLikelihood>>,
+	likelihood: Py<PyLikelihood>,
 	callbacks: Vec<PyCallback>,
 	rng: Py<PyRng>,
 }
@@ -38,7 +38,7 @@ impl Mcmc {
 	#[new]
 	#[pyo3(signature = (
 		burnin, length,
-		state, priors, operators, likelihoods, callbacks, rng,
+		state, priors, operators, likelihood, callbacks, rng,
 	))]
 	fn new(
 		py: Python,
@@ -49,7 +49,7 @@ impl Mcmc {
 		state: Vec<Py<PyAny>>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
-		likelihoods: Vec<Py<PyLikelihood>>,
+		likelihood: Py<PyLikelihood>,
 		callbacks: Vec<PyCallback>,
 		rng: Py<PyRng>,
 	) -> Result<Mcmc> {
@@ -65,7 +65,7 @@ impl Mcmc {
 			state,
 			priors,
 			scheduler,
-			likelihoods,
+			likelihood,
 			callbacks,
 			rng,
 		})
@@ -92,8 +92,8 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn likelihoods(&self, py: Python) -> Vec<Py<PyLikelihood>> {
-		self.likelihoods.iter().map(|l| l.clone_ref(py)).collect()
+	fn likelihood(&self, py: Python) -> Py<PyLikelihood> {
+		self.likelihood.clone_ref(py)
 	}
 
 	#[getter]
@@ -113,7 +113,7 @@ impl Mcmc {
 			self.state(py),
 			self.priors(py),
 			self.operators(py),
-			self.likelihoods(py),
+			self.likelihood(py),
 			self.callbacks(py),
 			self.rng(py),
 		)
@@ -181,11 +181,7 @@ impl Mcmc {
 
 	#[getter]
 	fn cached_likelihood(&self) -> f64 {
-		let mut out = 0.0;
-		for likelihood in &self.likelihoods {
-			out += likelihood.get().inner().cached_likelihood();
-		}
-		out
+		self.likelihood.get().inner().cached_likelihood()
 	}
 
 	#[getter]
@@ -242,10 +238,7 @@ impl Mcmc {
 	/// The calculations might be asynchronous and done in parallel.
 	/// Calling `calculate_likelihood` will await the results.
 	fn propose(&self, py: Python) -> Result<()> {
-		for likelihood in &self.likelihoods {
-			likelihood.get().inner().propose(py)?;
-		}
-		Ok(())
+		self.likelihood.get().inner().propose(py)
 	}
 
 	/// Await the calculations of all likelihoods
@@ -254,10 +247,7 @@ impl Mcmc {
 	/// calling `propose` or calling it will lead to a deadlock (`thread`
 	/// calculator) or an incorrect value.
 	fn calculate_likelihood(&self) -> Result<f64> {
-		self.likelihoods
-			.iter()
-			.map(|likelihood| likelihood.get().inner().likelihood())
-			.sum()
+		self.likelihood.get().inner().likelihood()
 	}
 
 	fn step(
@@ -319,17 +309,13 @@ impl Mcmc {
 		self.scheduler.finalize(py, operator_index, status)?;
 
 		if status.is_accept() {
-			for likelihood in &self.likelihoods {
-				likelihood.get().inner().accept()?;
-			}
+			self.likelihood.get().inner().accept()?;
 
 			for parameter in &self.state {
 				py_call_method!(py, parameter, "accept")?;
 			}
 		} else {
-			for likelihood in &self.likelihoods {
-				likelihood.get().inner().reject()?;
-			}
+			self.likelihood.get().inner().reject()?;
 
 			for parameter in &self.state {
 				py_call_method!(py, parameter, "reject")?;

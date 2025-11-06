@@ -12,6 +12,7 @@ from aspartik.b3 import MCMC, Likelihood, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
+    DeltaExchange,
     ParamScale,
     RandomWalk,
     SubtreeLeap,
@@ -53,12 +54,14 @@ kappa = Real(2.0)
 population_size = Real(1.0)
 growth_rate = Real(0)
 clock_rate = Real(0.001)
-params = [kappa, population_size, growth_rate, clock_rate]
+frequencies = Real(0.25, 0.25, 0.25, 0.25)
+params = [kappa, population_size, growth_rate, clock_rate, frequencies]
 
 priors = [
     Bound(kappa),
     Bound(population_size),
     Bound(clock_rate),
+    Bound(frequencies),
     Distribution(kappa, LogNormal(1.0, 1.25)),
     Distribution(clock_rate, Laplace(0, 0.5)),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
@@ -75,18 +78,19 @@ operators = [
     SubtreePruneRegraft(tree, rng, weight=5),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     RandomWalk(growth_rate, window=1, rng=rng, weight=3),
+    DeltaExchange(frequencies, 0.01, rng, weight=3),
 ]
 
 likelihood = Likelihood(
     msa=msa,
-    substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
+    substitution=HKY(frequencies, kappa),
     clock=StrictClock(clock_rate),
     tree=tree,
     calculator="cuda",
 )
 
 loggers = [
-    TreeLogger(tree=tree, path="target/b3.trees", every=1_000),
+    TreeLogger(tree=tree, path="target/influenza.trees", every=1_000),
     PrintLogger(every=10_000),
     ValueLogger(
         {
@@ -98,26 +102,27 @@ loggers = [
             "population_size": population_size,
             "growth_rate": growth_rate,
             "clock_rate": clock_rate,
+            "frequencies": frequencies,
             "tree:height": lambda: tree.height_of(tree.root),
             "tree:length": lambda: tree.total_length(),
-            "prior:kappa": priors[3],
-            "prior:clock_rate": priors[4],
-            "prior:population_size": priors[5],
-            "prior:growth_rate": priors[6],
-            "prior:coalescent": priors[7],
+            "prior:kappa": priors[4],
+            "prior:clock_rate": priors[5],
+            "prior:population_size": priors[6],
+            "prior:growth_rate": priors[7],
+            "prior:coalescent": priors[8],
         },
-        path="target/b3.log",
+        path="target/influenza.log",
         every=1_000,
     ),
 ]
 
 mcmc = MCMC(
     burnin=0,
-    length=10_000_000,
+    length=100_000_000,
     state=params + [tree],
     priors=priors,
     operators=operators,
-    likelihoods=[likelihood],
+    likelihood=likelihood,
     callbacks=loggers,
     rng=rng,
 )
