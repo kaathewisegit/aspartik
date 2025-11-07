@@ -24,7 +24,7 @@ pub struct Mcmc {
 	state: Vec<Py<PyAny>>,
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
-	likelihood: Py<PyLikelihood>,
+	likelihood: PyLikelihood,
 	callbacks: Vec<PyCallback>,
 	rng: Py<PyRng>,
 }
@@ -49,7 +49,7 @@ impl Mcmc {
 		state: Vec<Py<PyAny>>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
-		likelihood: Py<PyLikelihood>,
+		likelihood: PyLikelihood,
 		callbacks: Vec<PyCallback>,
 		rng: Py<PyRng>,
 	) -> Result<Mcmc> {
@@ -92,7 +92,7 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn likelihood(&self, py: Python) -> Py<PyLikelihood> {
+	fn likelihood(&self, py: Python) -> Py<PyAny> {
 		self.likelihood.clone_ref(py)
 	}
 
@@ -180,8 +180,8 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn cached_likelihood(&self) -> f64 {
-		self.likelihood.get().inner().cached_likelihood()
+	fn cached_likelihood(&self, py: Python) -> Result<f64> {
+		self.likelihood.cached_likelihood(py)
 	}
 
 	#[getter]
@@ -238,7 +238,7 @@ impl Mcmc {
 	/// The calculations might be asynchronous and done in parallel.
 	/// Calling `calculate_likelihood` will await the results.
 	fn propose(&self, py: Python) -> Result<()> {
-		self.likelihood.get().inner().propose(py)
+		self.likelihood.propose(py)
 	}
 
 	/// Await the calculations of all likelihoods
@@ -246,8 +246,8 @@ impl Mcmc {
 	/// This must be called after the `propose` method.  Calling it without
 	/// calling `propose` or calling it will lead to a deadlock (`thread`
 	/// calculator) or an incorrect value.
-	fn calculate_likelihood(&self) -> Result<f64> {
-		self.likelihood.get().inner().likelihood()
+	fn calculate_likelihood(&self, py: Python) -> Result<f64> {
+		self.likelihood.likelihood(py)
 	}
 
 	fn step(
@@ -278,7 +278,7 @@ impl Mcmc {
 
 		let (likelihood, time) = time! {{
 			self.propose(py)?;
-			self.calculate_likelihood()?
+			self.calculate_likelihood(py)?
 		}};
 
 		self.scheduler
@@ -309,13 +309,13 @@ impl Mcmc {
 		self.scheduler.finalize(py, operator_index, status)?;
 
 		if status.is_accept() {
-			self.likelihood.get().inner().accept()?;
+			self.likelihood.accept(py)?;
 
 			for parameter in &self.state {
 				py_call_method!(py, parameter, "accept")?;
 			}
 		} else {
-			self.likelihood.get().inner().reject()?;
+			self.likelihood.reject(py)?;
 
 			for parameter in &self.state {
 				py_call_method!(py, parameter, "reject")?;

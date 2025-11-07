@@ -87,6 +87,98 @@ pub struct CudaLikelihood {
 }
 
 impl LikelihoodTrait<4> for CudaLikelihood {
+	type Arguments = (usize,);
+
+	fn new(
+		msa: Msa<DnaNucleotide>,
+		(cuda_device,): Self::Arguments,
+	) -> Result<Self> {
+		// SAFETY: since the function tries to link the library [0], it
+		// could theoretically be unsafe.  In practice, the resulting
+		// library is discarded.
+		//
+		// [0]: https://docs.rs/cudarc/0.17.3/src/cudarc/driver/sys/mod.rs.html#26256
+		let is_cuda_enabled = unsafe { is_culib_present() };
+		if !is_cuda_enabled {
+			bail!("CUDA library not found");
+		}
+
+		let num_sites = msa.num_sites();
+		let num_leaves = msa.num_sequences();
+		let num_internals = num_leaves - 1;
+		let num_nodes = num_leaves + num_internals;
+		let num_edges = num_internals * 2;
+
+		let context = CudaContext::new(cuda_device)?;
+		let stream = context.new_stream()?;
+
+		// SAFETY: `CudaLikelihood` only uses a single stream, so
+		// there's no need for cross-stream synchronization
+		unsafe { context.disable_event_tracking() };
+
+		let leaves = stream.memcpy_stod(&msa_to_likelihoods(msa))?;
+		let projections: CudaSlice<Row<4>> =
+			stream.alloc_zeros(num_edges * num_sites)?;
+		let projections_backup: CudaSlice<Row<4>> =
+			stream.alloc_zeros(num_edges * num_sites)?;
+
+		let likelihoods: CudaSlice<f64> =
+			stream.alloc_zeros(num_sites)?;
+		let edges = stream.alloc_zeros(num_edges)?;
+		let transitions = stream.alloc_zeros(num_edges)?;
+		let nodes = stream.alloc_zeros(num_nodes)?;
+
+		let scales = stream.alloc_zeros(num_edges * num_sites)?;
+		let scales_backup =
+			stream.alloc_zeros(num_edges * num_sites)?;
+		let scale_sums = stream.alloc_zeros(num_sites)?;
+		let scale_sums_backup = vec![0; num_sites];
+
+		let opts = CompileOptions {
+			include_paths: vec![
+				"/usr/local/cuda/include/".to_owned()
+			],
+			..Default::default()
+		};
+		let ptx = compile_ptx_with_opts(CUDA_SRC, opts)?;
+
+		let module = context.load_module(ptx)?;
+		let propose_fn = module.load_function("propose")?;
+		let copy_projections_fn =
+			module.load_function("copy_projections")?;
+		let update_leaves_fn = module.load_function("update_leaves")?;
+		let update_likelihoods_fn =
+			module.load_function("update_likelihoods")?;
+
+		Ok(Self {
+			stream,
+
+			propose_fn,
+			copy_projections_fn,
+			update_leaves_fn,
+			update_likelihoods_fn,
+
+			leaves,
+			projections,
+			projections_backup,
+			likelihoods,
+			host_likelihoods: vec![0.0; num_sites],
+			edges,
+			transitions,
+			nodes,
+
+			scales,
+			scales_backup,
+			scale_sums,
+			scale_sums_backup,
+
+			num_sites: num_sites as u32,
+			num_leaves: num_leaves as u32,
+
+			num_updated_nodes: 0,
+		})
+	}
+
 	/// Propose an edit to the tree
 	///
 	/// Asynchronous.  This method starts the GPU calculations and returns
@@ -339,95 +431,5 @@ impl CudaLikelihood {
 			block_dim: (block_size, 1, 1),
 			shared_mem_bytes: 0,
 		}
-	}
-
-	pub fn new(
-		msa: Msa<DnaNucleotide>,
-		cuda_device: usize,
-	) -> Result<Self> {
-		// SAFETY: since the function tries to link the library [0], it
-		// could theoretically be unsafe.  In practice, the resulting
-		// library is discarded.
-		//
-		// [0]: https://docs.rs/cudarc/0.17.3/src/cudarc/driver/sys/mod.rs.html#26256
-		let is_cuda_enabled = unsafe { is_culib_present() };
-		if !is_cuda_enabled {
-			bail!("CUDA library not found");
-		}
-
-		let num_sites = msa.num_sites();
-		let num_leaves = msa.num_sequences();
-		let num_internals = num_leaves - 1;
-		let num_nodes = num_leaves + num_internals;
-		let num_edges = num_internals * 2;
-
-		let context = CudaContext::new(cuda_device)?;
-		let stream = context.new_stream()?;
-
-		// SAFETY: `CudaLikelihood` only uses a single stream, so
-		// there's no need for cross-stream synchronization
-		unsafe { context.disable_event_tracking() };
-
-		let leaves = stream.memcpy_stod(&msa_to_likelihoods(msa))?;
-		let projections: CudaSlice<Row<4>> =
-			stream.alloc_zeros(num_edges * num_sites)?;
-		let projections_backup: CudaSlice<Row<4>> =
-			stream.alloc_zeros(num_edges * num_sites)?;
-
-		let likelihoods: CudaSlice<f64> =
-			stream.alloc_zeros(num_sites)?;
-		let edges = stream.alloc_zeros(num_edges)?;
-		let transitions = stream.alloc_zeros(num_edges)?;
-		let nodes = stream.alloc_zeros(num_nodes)?;
-
-		let scales = stream.alloc_zeros(num_edges * num_sites)?;
-		let scales_backup =
-			stream.alloc_zeros(num_edges * num_sites)?;
-		let scale_sums = stream.alloc_zeros(num_sites)?;
-		let scale_sums_backup = vec![0; num_sites];
-
-		let opts = CompileOptions {
-			include_paths: vec![
-				"/usr/local/cuda/include/".to_owned()
-			],
-			..Default::default()
-		};
-		let ptx = compile_ptx_with_opts(CUDA_SRC, opts)?;
-
-		let module = context.load_module(ptx)?;
-		let propose_fn = module.load_function("propose")?;
-		let copy_projections_fn =
-			module.load_function("copy_projections")?;
-		let update_leaves_fn = module.load_function("update_leaves")?;
-		let update_likelihoods_fn =
-			module.load_function("update_likelihoods")?;
-
-		Ok(Self {
-			stream,
-
-			propose_fn,
-			copy_projections_fn,
-			update_leaves_fn,
-			update_likelihoods_fn,
-
-			leaves,
-			projections,
-			projections_backup,
-			likelihoods,
-			host_likelihoods: vec![0.0; num_sites],
-			edges,
-			transitions,
-			nodes,
-
-			scales,
-			scales_backup,
-			scale_sums,
-			scale_sums_backup,
-
-			num_sites: num_sites as u32,
-			num_leaves: num_leaves as u32,
-
-			num_updated_nodes: 0,
-		})
 	}
 }

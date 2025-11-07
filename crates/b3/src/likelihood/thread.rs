@@ -28,15 +28,75 @@ pub struct ThreadedLikelihood<const N: usize> {
 	has_proposed: bool,
 }
 
-impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
+impl LikelihoodTrait<4> for ThreadedLikelihood<4> {
+	type Arguments = (usize,);
+
+	fn new(
+		msa: Msa<DnaNucleotide>,
+		(thread_split_size,): Self::Arguments,
+	) -> Result<Self> {
+		let mut update_senders = Vec::new();
+		let mut weights_senders = Vec::new();
+		let mut likelihoods_receivers = Vec::new();
+		let mut accept_senders = Vec::new();
+
+		let num_sites = msa.num_sites();
+		let num_threads = num_sites.div_ceil(thread_split_size);
+		let segment_len = num_sites / num_threads;
+
+		for i in 0..num_threads {
+			let (update_sender, update_receiver) = bounded(1);
+			update_senders.push(update_sender);
+
+			let (weights_sender, weights_reciever) = bounded(1);
+			weights_senders.push(weights_sender);
+
+			let (likelihood_sender, likelihood_receiver) =
+				bounded(1);
+			likelihoods_receivers.push(likelihood_receiver);
+
+			let (accept_sender, accept_receiver) = bounded(1);
+			accept_senders.push(accept_sender);
+
+			let start = i * segment_len;
+			let end = if i == num_threads - 1 {
+				num_sites
+			} else {
+				(i + 1) * segment_len
+			};
+			let msa_subset = msa.slice(start..end);
+
+			thread::spawn(move || {
+				worker(
+					msa_subset,
+					i,
+					segment_len,
+					update_receiver,
+					weights_reciever,
+					likelihood_sender,
+					accept_receiver,
+				);
+			});
+		}
+
+		Ok(Self {
+			updates: update_senders,
+			weights: weights_senders,
+			likelihoods: likelihoods_receivers,
+			accepts: accept_senders,
+
+			has_proposed: false,
+		})
+	}
+
 	fn propose(
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[Transition<N>],
+		transitions: &[Transition<4>],
 		leaves_end: usize,
 		root: usize,
-		frequencies: Vector<f64, N>,
+		frequencies: Vector<f64, 4>,
 	) -> Result<()> {
 		let update = Arc::new((
 			nodes.to_owned(),
@@ -93,63 +153,6 @@ impl<const N: usize> LikelihoodTrait<N> for ThreadedLikelihood<N> {
 	}
 }
 
-impl ThreadedLikelihood<4> {
-	pub fn new(msa: Msa<DnaNucleotide>, thread_split_size: usize) -> Self {
-		let mut update_senders = Vec::new();
-		let mut weights_senders = Vec::new();
-		let mut likelihoods_receivers = Vec::new();
-		let mut accept_senders = Vec::new();
-
-		let num_sites = msa.num_sites();
-		let num_threads = num_sites.div_ceil(thread_split_size);
-		let segment_len = num_sites / num_threads;
-
-		for i in 0..num_threads {
-			let (update_sender, update_receiver) = bounded(1);
-			update_senders.push(update_sender);
-
-			let (weights_sender, weights_reciever) = bounded(1);
-			weights_senders.push(weights_sender);
-
-			let (likelihood_sender, likelihood_receiver) =
-				bounded(1);
-			likelihoods_receivers.push(likelihood_receiver);
-
-			let (accept_sender, accept_receiver) = bounded(1);
-			accept_senders.push(accept_sender);
-
-			let start = i * segment_len;
-			let end = if i == num_threads - 1 {
-				num_sites
-			} else {
-				(i + 1) * segment_len
-			};
-			let msa_subset = msa.slice(start..end);
-
-			thread::spawn(move || {
-				worker(
-					msa_subset,
-					i,
-					segment_len,
-					update_receiver,
-					weights_reciever,
-					likelihood_sender,
-					accept_receiver,
-				);
-			});
-		}
-
-		Self {
-			updates: update_senders,
-			weights: weights_senders,
-			likelihoods: likelihoods_receivers,
-			accepts: accept_senders,
-
-			has_proposed: false,
-		}
-	}
-}
-
 fn worker(
 	msa: Msa<DnaNucleotide>,
 	index: usize,
@@ -161,7 +164,7 @@ fn worker(
 ) {
 	let start = index * segment_len;
 
-	let mut cpu = CpuLikelihood::new(msa);
+	let mut cpu = CpuLikelihood::new(msa, ()).unwrap();
 
 	loop {
 		let Ok(update) = update_receiver.recv() else {

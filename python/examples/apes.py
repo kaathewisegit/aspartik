@@ -2,8 +2,9 @@
 <https://beast.community/first_tutorial>
 """
 
-from aspartik.b3 import MCMC, Likelihood, Tree
+from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
+from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     BeastNarrowExchange,
@@ -51,12 +52,11 @@ operators = [
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
 ]
 
-likelihood = Likelihood(
+likelihood = CPU4Likelihood(
     msa=msa,
     substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
     clock=StrictClock(1.0),
     tree=tree,
-    calculator="cpu",
 )
 
 loggers = [

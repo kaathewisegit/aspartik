@@ -7,9 +7,9 @@ tutorial][l].
 
 from datetime import datetime
 
-from aspartik._aspartik_rust_impl import _b3_rust_impl
-from aspartik.b3 import MCMC, Likelihood, Tree
+from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
+from aspartik.b3.likelihoods import CUDALikelihood, Thread4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -81,12 +81,11 @@ operators = [
     DeltaExchange(frequencies, 0.01, rng, weight=3),
 ]
 
-likelihood = Likelihood(
+likelihood = Thread4Likelihood(
     msa=msa,
     substitution=HKY(frequencies, kappa),
     clock=StrictClock(clock_rate),
     tree=tree,
-    calculator="thread",
 )
 
 loggers = [

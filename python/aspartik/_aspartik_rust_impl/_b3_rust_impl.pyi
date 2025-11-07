@@ -6,6 +6,7 @@ from datetime import timedelta
 from typing import Any, Literal, Optional, Protocol, SupportsFloat
 
 from ..b3 import Callback, Leaf, Node, Operator, Prior, Stateful, Tree
+from ..b3.likelihoods import Likelihood
 from ..b3.parameters import Scalable
 from ..b3.substitutions import HKY, JC, K80
 from ..data.msa import MSA
@@ -261,17 +262,7 @@ class Proposal:
     def Accept(cls) -> Proposal:
         """Accepts the move unconditionally"""
 
-class Likelihood:
-    """
-    Tree likelihood calculator
-
-    This object calculates the likelihood of a tree given the sequence data
-    using Felsenstein's tree pruning algorithm.
-
-    There are several implementations, each with its own options (**TODO**
-    docs).
-    """
-
+class CPU4Likelihood(Likelihood):
     def __init__(
         self,
         msa: MSA,
@@ -279,9 +270,30 @@ class Likelihood:
         # TODO: types
         clock: Any,
         tree: Tree,
-        calculator: Literal["cpu", "thread", "cuda"] = "cpu",
-        cuda_device: int = 0,
+    ): ...
+
+class Thread4Likelihood(Likelihood):
+    def __init__(
+        self,
+        msa: MSA,
+        substitution: JC | K80 | HKY,
+        # TODO: types
+        clock: Any,
+        tree: Tree,
+        *,
         thread_split_size: int = 400,
+    ): ...
+
+class CUDALikelihood(Likelihood):
+    def __init__(
+        self,
+        msa: MSA,
+        substitution: JC | K80 | HKY,
+        # TODO: types
+        clock: Any,
+        tree: Tree,
+        *,
+        cuda_device: int = 0,
     ): ...
 
 class MCMC:

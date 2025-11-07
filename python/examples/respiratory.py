@@ -9,8 +9,9 @@ from collections import deque
 from datetime import datetime
 from pathlib import Path
 
-from aspartik.b3 import MCMC, Internal, Likelihood, Tree
+from aspartik.b3 import MCMC, Internal, Tree
 from aspartik.b3.clocks import StrictClock
+from aspartik.b3.likelihoods import CUDALikelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -83,7 +84,7 @@ operators = [
 ]
 
 
-likelihood = Likelihood(
+likelihood = CUDALikelihood(
     msa=msa,
     substitution=HKY(frequencies, kappa),
     clock=StrictClock(clock_rate),

@@ -19,15 +19,41 @@ pub struct CpuLikelihood<const N: usize> {
 
 const SCALE: f64 = 1e-30;
 
-impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
+impl LikelihoodTrait<4> for CpuLikelihood<4> {
+	type Arguments = ();
+
+	fn new(msa: Msa<DnaNucleotide>, _: ()) -> Result<Self> {
+		let num_sites = msa.num_sites();
+		let num_leaves = msa.num_sequences();
+		let num_internals = num_leaves - 1;
+		let num_edges = num_internals * 2;
+
+		let leaves = msa_to_likelihoods(msa);
+
+		let projections = skvec![Row::default(); num_edges * num_sites];
+		let scales = skvec![false; num_edges];
+
+		Ok(Self {
+			leaves,
+			projections,
+			scales,
+
+			num_sites,
+			num_leaves,
+
+			updated_edges: Vec::new(),
+			likelihoods: vec![f64::NAN; num_sites],
+		})
+	}
+
 	fn propose(
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[Transition<N>],
+		transitions: &[Transition<4>],
 		leaves_end: usize,
 		root: usize,
-		frequencies: Row<N>,
+		frequencies: Row<4>,
 	) -> Result<()> {
 		assert_eq!(nodes.len(), edges.len());
 		assert_eq!(nodes.len(), transitions.len());
@@ -165,31 +191,5 @@ impl<const N: usize> LikelihoodTrait<N> for CpuLikelihood<N> {
 		self.scales.reject();
 
 		Ok(())
-	}
-}
-
-impl CpuLikelihood<4> {
-	pub fn new(msa: Msa<DnaNucleotide>) -> Self {
-		let num_sites = msa.num_sites();
-		let num_leaves = msa.num_sequences();
-		let num_internals = num_leaves - 1;
-		let num_edges = num_internals * 2;
-
-		let leaves = msa_to_likelihoods(msa);
-
-		let projections = skvec![Row::default(); num_edges * num_sites];
-		let scales = skvec![false; num_edges];
-
-		Self {
-			leaves,
-			projections,
-			scales,
-
-			num_sites,
-			num_leaves,
-
-			updated_edges: Vec::new(),
-			likelihoods: vec![f64::NAN; num_sites],
-		}
 	}
 }

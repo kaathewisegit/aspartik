@@ -21,7 +21,9 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	use ::util::py_make_submodule;
 	let m = py_make_submodule!(py, "_b3_rust_impl");
 
-	m.add_class::<likelihood::PyLikelihood>()?;
+	m.add_class::<likelihood::PyCpu4Likelihood>()?;
+	m.add_class::<likelihood::PyThread4Likelihood>()?;
+	m.add_class::<likelihood::PyCudaLikelihood>()?;
 	m.add_class::<mcmc::Mcmc>()?;
 	m.add_class::<operator::PyProposal>()?;
 	m.add_class::<tree::PyTree>()?;

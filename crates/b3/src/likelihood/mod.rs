@@ -1,6 +1,6 @@
-use anyhow::{Result, bail};
+use anyhow::Result;
 use log::trace;
-use parking_lot::{Mutex, MutexGuard};
+use parking_lot::Mutex;
 use pyo3::prelude::*;
 
 use std::{collections::HashMap, slice};
@@ -11,6 +11,7 @@ use crate::{
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
 use linalg::{RowMatrix, Vector};
+use util::{py_bail, py_call_method, py_check_method};
 
 mod cpu;
 mod cuda;
@@ -23,7 +24,13 @@ use thread::ThreadedLikelihood;
 pub type Row<const N: usize> = Vector<f64, N>;
 type Transition<const N: usize> = RowMatrix<f64, N, N>;
 
-trait LikelihoodTrait<const N: usize> {
+pub trait LikelihoodTrait<const N: usize> {
+	type Arguments;
+
+	fn new(msa: Msa<DnaNucleotide>, args: Self::Arguments) -> Result<Self>
+	where
+		Self: Sized;
+
 	fn propose(
 		&mut self,
 		nodes: &[usize],
@@ -41,12 +48,9 @@ trait LikelihoodTrait<const N: usize> {
 	fn reject(&mut self) -> Result<()>;
 }
 
-type DynCalculator<const N: usize> =
-	Box<dyn LikelihoodTrait<N> + Send + Sync + 'static>;
-
-pub struct GenericLikelihood<const N: usize> {
+pub struct GenericLikelihood<const N: usize, L: LikelihoodTrait<N>> {
 	transitions: Transitions<N>,
-	calculator: DynCalculator<N>,
+	calculator: L,
 	weights: Vec<f64>,
 	/// Last accepted likelihood
 	cache: f64,
@@ -57,16 +61,17 @@ pub struct GenericLikelihood<const N: usize> {
 	tree: Py<PyTree>,
 }
 
-impl GenericLikelihood<4> {
+impl<L> GenericLikelihood<4, L>
+where
+	L: LikelihoodTrait<4>,
+{
 	fn new(
 		substitution: BoxedSubstitutionModel<4>,
 		clock: PyClock,
 		msa: Msa<DnaNucleotide>,
 		tree: Py<PyTree>,
-		calculator: String,
 
-		cuda_device: usize,
-		thread_split_size: usize,
+		arguments: L::Arguments,
 	) -> Result<Self> {
 		let num_internals = msa.num_sequences() - 1;
 		let transitions = Transitions::<4>::new(
@@ -77,19 +82,7 @@ impl GenericLikelihood<4> {
 
 		let (msa, weights) = deduplicate(msa);
 
-		let calculator: DynCalculator<4> = match calculator.as_str() {
-			"cpu" => Box::new(CpuLikelihood::new(msa)),
-			"thread" => Box::new(ThreadedLikelihood::new(
-				msa,
-				thread_split_size,
-			)),
-			"cuda" => {
-				Box::new(CudaLikelihood::new(msa, cuda_device)?)
-			}
-			_ => {
-				bail!("Unknown calculator type '{calculator}'");
-			}
-		};
+		let calculator = L::new(msa, arguments)?;
 
 		let mut out = Self {
 			transitions,
@@ -149,7 +142,7 @@ fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
 	(msa, weights)
 }
 
-impl<const N: usize> GenericLikelihood<N> {
+impl<const N: usize, L: LikelihoodTrait<N>> GenericLikelihood<N, L> {
 	fn propose(&mut self, py: Python) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
 		let full_update = self.transitions.update(py, tree)?;
@@ -220,119 +213,188 @@ impl<const N: usize> GenericLikelihood<N> {
 	}
 }
 
-pub enum ErasedLikelihood {
-	Nucleotide4(GenericLikelihood<4>),
-	Nucleotide5(GenericLikelihood<5>),
-	// TODO: amino: 20 standard, 2 special, stop codon
-	Codon(GenericLikelihood<64>),
-}
-
-impl ErasedLikelihood {
-	pub fn propose(&mut self, py: Python) -> Result<()> {
-		match self {
-			ErasedLikelihood::Nucleotide4(inner) => {
-				inner.propose(py)
+macro_rules! likelihood_methods {
+	($type:ty) => {
+		#[pymethods]
+		impl $type {
+			fn propose(&self, py: Python) -> Result<()> {
+				self.inner.lock().propose(py)
 			}
-			_ => todo!(),
-		}
-	}
 
-	pub fn likelihood(&mut self) -> Result<f64> {
-		match self {
-			ErasedLikelihood::Nucleotide4(inner) => {
-				inner.likelihood()
+			fn likelihood(&self) -> Result<f64> {
+				self.inner.lock().likelihood()
 			}
-			_ => todo!(),
-		}
-	}
 
-	pub fn accept(&mut self) -> Result<()> {
-		match self {
-			ErasedLikelihood::Nucleotide4(inner) => inner.accept(),
-			ErasedLikelihood::Nucleotide5(inner) => inner.accept(),
-			ErasedLikelihood::Codon(inner) => inner.accept(),
-		}
-	}
+			fn cached_likelihood(&self) -> Result<f64> {
+				Ok(self.inner.lock().cache)
+			}
 
-	pub fn reject(&mut self) -> Result<()> {
-		match self {
-			ErasedLikelihood::Nucleotide4(inner) => inner.reject(),
-			ErasedLikelihood::Nucleotide5(inner) => inner.reject(),
-			ErasedLikelihood::Codon(inner) => inner.reject(),
-		}
-	}
+			fn accept(&self) -> Result<()> {
+				self.inner.lock().accept()
+			}
 
-	pub fn cached_likelihood(&self) -> f64 {
-		match self {
-			ErasedLikelihood::Nucleotide4(inner) => inner.cache,
-			ErasedLikelihood::Nucleotide5(inner) => inner.cache,
-			ErasedLikelihood::Codon(inner) => inner.cache,
+			fn reject(&self) -> Result<()> {
+				self.inner.lock().reject()
+			}
 		}
-	}
+	};
 }
 
-#[pyclass(name = "Likelihood", module = "aspartik.b3", frozen)]
-pub struct PyLikelihood {
-	inner: Mutex<ErasedLikelihood>,
-}
-
-impl PyLikelihood {
-	pub fn inner(&self) -> MutexGuard<'_, ErasedLikelihood> {
-		self.inner.lock()
-	}
+#[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
+pub struct PyCpu4Likelihood {
+	inner: Mutex<GenericLikelihood<4, CpuLikelihood<4>>>,
 }
 
 #[pymethods]
-impl PyLikelihood {
+impl PyCpu4Likelihood {
 	#[new]
-	#[pyo3(signature = (
-		msa, substitution, clock, tree,
-		calculator = String::from("cpu"),
-		*,
-		cuda_device = 0,
-		thread_split_size = 400,
-	))]
-	fn new4(
+	fn new(
 		msa: PyMsa,
 		substitution: BoxedSubstitutionModel<4>,
 		clock: PyClock,
 		tree: Py<PyTree>,
-		calculator: String,
-
-		cuda_device: usize,
-		thread_split_size: usize,
 	) -> Result<Self> {
-		let generic_likelihood = GenericLikelihood::new(
+		let generic = GenericLikelihood::new(
 			substitution,
 			clock,
 			msa.0,
 			tree,
-			calculator,
-			cuda_device,
-			thread_split_size,
+			(),
 		)?;
 
-		let erased_likelihood =
-			ErasedLikelihood::Nucleotide4(generic_likelihood);
-
-		Ok(PyLikelihood {
-			inner: Mutex::new(erased_likelihood),
+		Ok(Self {
+			inner: Mutex::new(generic),
 		})
 	}
+}
 
-	fn propose(&self, py: Python) -> Result<()> {
-		self.inner().propose(py)
+likelihood_methods!(PyCpu4Likelihood);
+
+#[pyclass(
+	name = "Thread4Likelihood",
+	module = "aspartik.b3.likelihoods",
+	frozen
+)]
+pub struct PyThread4Likelihood {
+	inner: Mutex<GenericLikelihood<4, ThreadedLikelihood<4>>>,
+}
+
+#[pymethods]
+impl PyThread4Likelihood {
+	#[new]
+	#[pyo3(signature = (
+		msa, substitution, clock, tree,
+		*,
+		thread_split_size = 400,
+	))]
+	fn new(
+		msa: PyMsa,
+		substitution: BoxedSubstitutionModel<4>,
+		clock: PyClock,
+		tree: Py<PyTree>,
+		thread_split_size: usize,
+	) -> Result<Self> {
+		let generic = GenericLikelihood::new(
+			substitution,
+			clock,
+			msa.0,
+			tree,
+			(thread_split_size,),
+		)?;
+
+		Ok(Self {
+			inner: Mutex::new(generic),
+		})
+	}
+}
+
+likelihood_methods!(PyThread4Likelihood);
+
+#[pyclass(name = "CUDALikelihood", module = "aspartik.b3.likelihoods", frozen)]
+pub struct PyCudaLikelihood {
+	inner: Mutex<GenericLikelihood<4, CudaLikelihood>>,
+}
+
+#[pymethods]
+impl PyCudaLikelihood {
+	#[new]
+	#[pyo3(signature = (
+		msa, substitution, clock, tree,
+		*,
+		cuda_device= 0,
+	))]
+	fn new(
+		msa: PyMsa,
+		substitution: BoxedSubstitutionModel<4>,
+		clock: PyClock,
+		tree: Py<PyTree>,
+		cuda_device: usize,
+	) -> Result<Self> {
+		let generic = GenericLikelihood::new(
+			substitution,
+			clock,
+			msa.0,
+			tree,
+			(cuda_device,),
+		)?;
+
+		Ok(Self {
+			inner: Mutex::new(generic),
+		})
+	}
+}
+
+likelihood_methods!(PyCudaLikelihood);
+
+pub struct PyLikelihood {
+	inner: Py<PyAny>,
+}
+
+impl<'py> FromPyObject<'_, 'py> for PyLikelihood {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+		py_check_method!(obj, "propose");
+		py_check_method!(obj, "likelihood");
+		py_check_method!(obj, "cached_likelihood");
+		py_check_method!(obj, "accept");
+		py_check_method!(obj, "reject");
+
+		Ok(PyLikelihood {
+			inner: obj.to_owned().unbind(),
+		})
+	}
+}
+
+impl PyLikelihood {
+	pub fn propose(&self, py: Python) -> Result<()> {
+		py_call_method!(py, self.inner, "propose")?;
+		Ok(())
 	}
 
-	fn likelihood(&self) -> Result<f64> {
-		self.inner().likelihood()
+	pub fn likelihood(&self, py: Python) -> Result<f64> {
+		let out = py_call_method!(py, self.inner, "likelihood")?
+			.extract(py)?;
+		Ok(out)
 	}
 
-	fn accept(&self) -> Result<()> {
-		self.inner().accept()
+	pub fn cached_likelihood(&self, py: Python) -> Result<f64> {
+		let out = py_call_method!(py, self.inner, "cached_likelihood")?
+			.extract(py)?;
+		Ok(out)
 	}
 
-	fn reject(&self) -> Result<()> {
-		self.inner().reject()
+	pub fn accept(&self, py: Python) -> Result<()> {
+		py_call_method!(py, self.inner, "accept")?;
+		Ok(())
+	}
+
+	pub fn reject(&self, py: Python) -> Result<()> {
+		py_call_method!(py, self.inner, "reject")?;
+		Ok(())
+	}
+
+	pub fn clone_ref(&self, py: Python) -> Py<PyAny> {
+		self.inner.clone_ref(py)
 	}
 }
