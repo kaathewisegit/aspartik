@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import SupportsFloat
+from typing import Any, SupportsFloat
 
 @dataclass
 class JC:
@@ -43,5 +43,6 @@ class HKY:
     clock of mitochondrial DNA, <https://doi.org/10.1007/BF02101694>.
     """
 
-    frequencies: Sequence[float]
+    # TODO
+    frequencies: Any
     kappa: SupportsFloat

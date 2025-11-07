@@ -20,7 +20,7 @@ from aspartik.b3.operators import (
     SubtreePruneRegraft,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real
+from aspartik.b3.parameters import Internals, Real, Weights
 from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats, print_operator_timings
@@ -57,7 +57,7 @@ kappa = Real(2.0)
 population_size = Real(1.0)
 growth_rate = Real(0.0)
 clock_rate = Real(0.001)
-frequencies = Real(0.25, 0.25, 0.25, 0.25)
+frequencies = Weights(0.25, 0.25, 0.25, 0.25)
 params = [kappa, population_size, growth_rate, clock_rate]
 
 priors = [

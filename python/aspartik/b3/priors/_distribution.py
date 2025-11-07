@@ -3,7 +3,7 @@ from typing import SupportsFloat
 
 from ...stats.distributions import Continuous, Discrete
 from .. import Prior
-from ..parameters import Integer, Real
+from ..parameters import Real
 
 
 @dataclass(slots=True)

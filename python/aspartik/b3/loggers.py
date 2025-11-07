@@ -11,7 +11,7 @@ from io import TextIOBase
 from typing import Any
 
 from . import MCMC, Callback, Prior, Tree
-from .parameters import Parameter
+from .parameters import Real, Weights
 
 
 @dataclass(slots=True)
@@ -54,11 +54,11 @@ class PrintLogger(Callback):
 
 
 def _serialize(item):
-    if isinstance(item, Parameter):
-        if len(item) == 1:
-            return item[0]
-        else:
-            return list(item)
+    if isinstance(item, Real):
+        return float(item)
+
+    elif isinstance(item, Weights):
+        return list(item)
 
     elif isinstance(item, Prior):
         return item.probability()

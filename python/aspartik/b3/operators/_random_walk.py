@@ -40,9 +40,7 @@ class RandomWalk(Operator):
         if rng.random_bool():
             diff *= -1
 
-        dim = rng.random_int(0, len(param))
-
-        new_value = param[dim] + diff
+        new_value = float(param) + diff
 
         if new_value < self.lower:
             match self.boundary:
@@ -60,9 +58,6 @@ class RandomWalk(Operator):
             else:
                 pass
 
-        self.param[dim] = new_value
-
-        if self.param[0] < 0:
-            print(self.param[0])
+        self.param.set(new_value)
 
         return Proposal.Hastings(0.0)

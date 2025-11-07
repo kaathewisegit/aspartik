@@ -4,7 +4,6 @@ pub mod clock;
 pub mod likelihood;
 pub mod mcmc;
 pub mod operator;
-pub mod parameter;
 pub mod prior;
 pub mod substitution;
 mod transitions;
@@ -25,9 +24,6 @@ pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
 	m.add_class::<likelihood::PyLikelihood>()?;
 	m.add_class::<mcmc::Mcmc>()?;
 	m.add_class::<operator::PyProposal>()?;
-	m.add_class::<parameter::PyBoolean>()?;
-	m.add_class::<parameter::PyInteger>()?;
-	m.add_class::<parameter::PyReal>()?;
 	m.add_class::<tree::PyTree>()?;
 	m.add_class::<tree::Leaf>()?;
 	m.add_class::<tree::Internal>()?;
