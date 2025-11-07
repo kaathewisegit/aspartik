@@ -45,8 +45,6 @@ type DynCalculator<const N: usize> =
 	Box<dyn LikelihoodTrait<N> + Send + Sync + 'static>;
 
 pub struct GenericLikelihood<const N: usize> {
-	substitution: BoxedSubstitutionModel<N>,
-	clock: PyClock,
 	transitions: Transitions<N>,
 	calculator: DynCalculator<N>,
 	weights: Vec<f64>,
@@ -71,7 +69,11 @@ impl GenericLikelihood<4> {
 		thread_split_size: usize,
 	) -> Result<Self> {
 		let num_internals = msa.num_sequences() - 1;
-		let transitions = Transitions::<4>::new(num_internals * 2);
+		let transitions = Transitions::<4>::new(
+			num_internals * 2,
+			substitution,
+			clock,
+		);
 
 		let (msa, weights) = deduplicate(msa);
 
@@ -90,8 +92,6 @@ impl GenericLikelihood<4> {
 		};
 
 		let mut out = Self {
-			substitution,
-			clock,
 			transitions,
 			calculator,
 			weights,
@@ -152,13 +152,7 @@ fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
 impl<const N: usize> GenericLikelihood<N> {
 	fn propose(&mut self, py: Python) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
-		let rate = self.clock.get_rate(py)?;
-		let full_update = self.transitions.update(
-			py,
-			self.substitution.as_mut(),
-			rate,
-			tree,
-		)?;
+		let full_update = self.transitions.update(py, tree)?;
 		let (nodes, leaves_end) = if full_update {
 			tree.full_update()
 		} else {
@@ -181,7 +175,7 @@ impl<const N: usize> GenericLikelihood<N> {
 
 		let transitions = self.transitions.matrices(&edges);
 
-		let frequencies = self.substitution.get_frequencies();
+		let frequencies = self.transitions.frequencies();
 
 		self.calculator.propose(
 			&nodes,
