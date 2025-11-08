@@ -136,6 +136,18 @@ class Weights(Stateful, Scalable):
                 return False
         return True
 
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Weights):
+            return self._value == other._value
+        else:
+            return False
+
+    def __ne__(self, other: object) -> bool:
+        if isinstance(other, Weights):
+            return self._value != other._value
+        else:
+            return False
+
     def __ge__(self, other: SupportsFloat) -> bool:
         other = float(other)
         for item in self:

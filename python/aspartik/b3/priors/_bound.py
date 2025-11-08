@@ -2,13 +2,9 @@ from dataclasses import dataclass
 from math import inf
 from typing import Protocol
 
+from ...utils.typing import Comparable
 from .. import Prior
 from ..parameters import Real
-
-
-class IntervalComparable(Protocol):
-    def __lt__(self, other: float) -> bool: ...
-    def __ge__(self, other: float) -> bool: ...
 
 
 @dataclass(slots=True)
@@ -25,7 +21,7 @@ class Bound(Prior):
     the bounds aren't satisfied.
     """
 
-    param: IntervalComparable
+    param: Comparable
     """The parameter to be constrained."""
     lower: float = 0
     """Minimum possible value of the parameter, inclusive."""

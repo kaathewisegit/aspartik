@@ -2,14 +2,9 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from ...rng import RNG
+from ...utils.typing import SimpleSequence
 from .. import Operator, Proposal
 from ..parameters import Real
-
-
-class GetSetItem(Protocol):
-    def __len__(self) -> int: ...
-    def __getitem__(self, i: int) -> float: ...
-    def __setitem__(self, i: int, value: float) -> None: ...
 
 
 @dataclass(slots=True)
@@ -22,7 +17,7 @@ class DeltaExchange(Operator):
     other one.
     """
 
-    param: GetSetItem
+    param: SimpleSequence[float]
     """
     The multidimensional parameter to edit.  Two random dimensions ones will be
     changed for each proposal.
