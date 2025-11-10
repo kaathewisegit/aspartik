@@ -65,9 +65,9 @@ loggers = [
     ValueLogger(
         {
             "step": lambda: mcmc.current_step,
-            "joint": lambda: mcmc.prior + mcmc.cached_likelihood,
+            "joint": lambda: mcmc.prior + mcmc.likelihood.likelihood(),
             "prior": lambda: mcmc.prior,
-            "likelihood": lambda: mcmc.cached_likelihood,
+            "likelihood": lambda: mcmc.likelihood.likelihood(),
             "tree:height": lambda: tree.height_of(tree.root),
             "tree:length": lambda: tree.total_length(),
             "kappa": kappa,

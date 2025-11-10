@@ -201,12 +201,14 @@ impl<const N: usize, L: LikelihoodTrait<N>> GenericLikelihood<N, L> {
 
 	fn accept(&mut self) -> Result<()> {
 		self.cache = self.last;
+		self.launched_update = false;
 		self.calculator.accept()?;
 		self.transitions.accept();
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
+		self.launched_update = false;
 		self.calculator.reject()?;
 		self.transitions.reject();
 		Ok(())
@@ -223,10 +225,6 @@ macro_rules! likelihood_methods {
 
 			fn likelihood(&self) -> Result<f64> {
 				self.inner.lock().likelihood()
-			}
-
-			fn cached_likelihood(&self) -> Result<f64> {
-				Ok(self.inner.lock().cache)
 			}
 
 			fn accept(&self) -> Result<()> {
@@ -356,7 +354,6 @@ impl<'py> FromPyObject<'_, 'py> for PyLikelihood {
 	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		py_check_method!(obj, "propose");
 		py_check_method!(obj, "likelihood");
-		py_check_method!(obj, "cached_likelihood");
 		py_check_method!(obj, "accept");
 		py_check_method!(obj, "reject");
 
@@ -374,12 +371,6 @@ impl PyLikelihood {
 
 	pub fn likelihood(&self, py: Python) -> Result<f64> {
 		let out = py_call_method!(py, self.inner, "likelihood")?
-			.extract(py)?;
-		Ok(out)
-	}
-
-	pub fn cached_likelihood(&self, py: Python) -> Result<f64> {
-		let out = py_call_method!(py, self.inner, "cached_likelihood")?
 			.extract(py)?;
 		Ok(out)
 	}

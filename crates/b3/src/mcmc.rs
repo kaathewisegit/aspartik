@@ -180,11 +180,6 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn cached_likelihood(&self, py: Python) -> Result<f64> {
-		self.likelihood.cached_likelihood(py)
-	}
-
-	#[getter]
 	fn prior(&self, py: Python) -> Result<f64> {
 		let mut out = 0.0;
 		for py_prior in &self.priors {
@@ -233,21 +228,8 @@ impl StepResult {
 }
 
 impl Mcmc {
-	/// Triggers likelihood recalculation
-	///
-	/// The calculations might be asynchronous and done in parallel.
-	/// Calling `calculate_likelihood` will await the results.
 	fn propose(&self, py: Python) -> Result<()> {
 		self.likelihood.propose(py)
-	}
-
-	/// Await the calculations of all likelihoods
-	///
-	/// This must be called after the `propose` method.  Calling it without
-	/// calling `propose` or calling it will lead to a deadlock (`thread`
-	/// calculator) or an incorrect value.
-	fn calculate_likelihood(&self, py: Python) -> Result<f64> {
-		self.likelihood.likelihood(py)
 	}
 
 	fn step(
@@ -278,7 +260,7 @@ impl Mcmc {
 
 		let (likelihood, time) = time! {{
 			self.propose(py)?;
-			self.calculate_likelihood(py)?
+			self.likelihood.likelihood(py)?
 		}};
 
 		self.scheduler

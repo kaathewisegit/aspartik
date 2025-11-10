@@ -89,7 +89,6 @@ likelihood = CUDALikelihood(
     substitution=HKY(frequencies, kappa),
     clock=StrictClock(clock_rate),
     tree=tree,
-    calculator="cuda",
     cuda_device=1,
 )
 
@@ -99,9 +98,9 @@ loggers = [
     ValueLogger(
         {
             "step": lambda: mcmc.current_step,
-            "joint": lambda: mcmc.prior + mcmc.cached_likelihood,
+            "joint": lambda: mcmc.prior + mcmc.likelihood.likelihood(),
             "prior": lambda: mcmc.prior,
-            "likelihood": lambda: mcmc.cached_likelihood,
+            "likelihood": lambda: mcmc.likelihood.likelihood(),
             "kappa": kappa,
             "population_size": population_size,
             "growth_rate": growth_rate,

@@ -22,7 +22,6 @@ class Likelihood(Stateful):
 
     def propose(self) -> None: ...
     def likelihood(self) -> float: ...
-    def cached_likelihood(self) -> float: ...
 
 
 @dataclass(slots=True)
@@ -32,9 +31,6 @@ class CompoundLikelihood(Likelihood):
     def propose(self) -> None:
         for likelihood in self.likelihoods:
             likelihood.propose()
-
-    def cached_likelihood(self) -> float:
-        return sum(l.cached_likelihood() for l in self.likelihoods)
 
     def likelihood(self) -> float:
         return sum(l.likelihood() for l in self.likelihoods)
@@ -61,12 +57,6 @@ class WeightedLikelihood(Likelihood):
         out = 0
         for likelihood, weight in zip(self.likelihoods, self.weights):
             out += likelihood.likelihood() * weight
-        return out
-
-    def cached_likelihood(self) -> float:
-        out = 0
-        for likelihood, weight in zip(self.likelihoods, self.weights):
-            out += likelihood.cached_likelihood() * weight
         return out
 
     def accept(self) -> None:

@@ -48,8 +48,9 @@ class PrintLogger(Callback):
         print(f"{'step':>16}{'posterior':>16}{'likelihood':>16}{'prior':>16}")
 
     def log(self, mcmc: MCMC):
+        likelihood = mcmc.likelihood.likelihood()
         print(
-            f"{mcmc.current_step:>16}{mcmc.posterior:>16.2f}{mcmc.cached_likelihood:>16.2f}{mcmc.prior:>16.2f}"
+            f"{mcmc.current_step:>16}{mcmc.posterior:>16.2f}{likelihood:>16.2f}{mcmc.prior:>16.2f}"
         )
 
 
