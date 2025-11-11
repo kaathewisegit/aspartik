@@ -11,7 +11,7 @@ use data::{DnaNucleotide, Msa};
 use std::sync::Arc;
 
 use super::{LikelihoodTrait, Row, Transition};
-use crate::util::msa_to_likelihoods;
+use crate::{tree::Internal, util::msa_to_likelihoods};
 
 const CUDA_SRC: &str =
 	concat!(include_str!("typedefs.h"), include_str!("kernels.cu"),);
@@ -215,7 +215,6 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		}
 		self.update_all(leaves_end, internals_start)?;
 
-		// TODO: frequencies
 		self.update_likelihoods(root as u32, frequencies)?;
 
 		Ok(())
@@ -431,5 +430,17 @@ impl CudaLikelihood {
 			block_dim: (block_size, 1, 1),
 			shared_mem_bytes: 0,
 		}
+	}
+
+	pub fn pattern_likelihoods(
+		&self,
+		root: Internal,
+		frequencies: Row<4>,
+	) -> Result<Vec<f64>> {
+		self.update_likelihoods(root.index() as u32, frequencies)?;
+
+		let likelihoods = self.stream.memcpy_dtov(&self.likelihoods)?;
+
+		Ok(likelihoods)
 	}
 }

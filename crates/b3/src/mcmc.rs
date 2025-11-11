@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
@@ -262,6 +262,10 @@ impl Mcmc {
 			self.propose(py)?;
 			self.likelihood.likelihood(py)?
 		}};
+
+		if likelihood == f64::NEG_INFINITY {
+			bail!("Tree likelihood underflowed");
+		}
 
 		self.scheduler
 			.record_likelihood_duration(operator_index, time);

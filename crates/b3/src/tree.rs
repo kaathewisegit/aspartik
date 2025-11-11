@@ -97,6 +97,12 @@ pub struct Leaf(usize);
 
 macro_rules! nodes_2 {
 	($type:ty) => {
+		impl $type {
+			pub fn index(&self) -> usize {
+				self.0
+			}
+		}
+
 		#[pymethods]
 		impl $type {
 			#[new]
@@ -1087,7 +1093,7 @@ impl PyTree {
 	}
 
 	#[getter]
-	fn root(&self) -> Internal {
+	pub fn root(&self) -> Internal {
 		self.inner().root()
 	}
 

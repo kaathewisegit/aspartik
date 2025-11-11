@@ -340,6 +340,18 @@ impl PyCudaLikelihood {
 			inner: Mutex::new(generic),
 		})
 	}
+
+	fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
+		let generic = &mut *self.inner.lock();
+		let root = generic.tree.get().root();
+		let frequencies = generic.transitions.frequencies();
+
+		let likelihoods = generic
+			.calculator
+			.pattern_likelihoods(root, frequencies)?;
+
+		Ok(likelihoods)
+	}
 }
 
 likelihood_methods!(PyCudaLikelihood);
