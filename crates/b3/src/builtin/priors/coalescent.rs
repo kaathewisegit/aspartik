@@ -2,6 +2,7 @@ use anyhow::Result;
 use pyo3::prelude::*;
 
 use crate::tree::{Node, PyTree, Tree};
+use util::py_check_supports_float;
 
 /// All nodes (leaves and internals) of a tree sorted by height
 fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
@@ -87,11 +88,16 @@ impl Coalescent for ConstantPopulation {
 #[pymethods]
 impl ConstantPopulation {
 	#[new]
-	fn new(tree: Py<PyTree>, population_size: Py<PyAny>) -> Self {
-		Self {
+	fn new(
+		tree: Py<PyTree>,
+		population_size: Bound<PyAny>,
+	) -> Result<Self> {
+		py_check_supports_float!(population_size);
+
+		Ok(Self {
 			tree,
-			population_size,
-		}
+			population_size: population_size.unbind(),
+		})
 	}
 
 	#[getter]
@@ -153,15 +159,17 @@ impl ExponentialGrowth {
 	#[new]
 	fn new(
 		tree: Py<PyTree>,
-		population_size: Py<PyAny>,
-		growth_rate: Py<PyAny>,
-	) -> Self {
-		// TODO: validation
-		Self {
+		population_size: Bound<PyAny>,
+		growth_rate: Bound<PyAny>,
+	) -> Result<Self> {
+		py_check_supports_float!(population_size);
+		py_check_supports_float!(growth_rate);
+
+		Ok(Self {
 			tree,
-			population_size,
-			growth_rate,
-		}
+			population_size: population_size.unbind(),
+			growth_rate: growth_rate.unbind(),
+		})
 	}
 
 	#[getter]

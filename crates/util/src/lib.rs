@@ -151,3 +151,23 @@ macro_rules! py_check_method {
 		}
 	}};
 }
+
+#[macro_export]
+macro_rules! py_check_supports_float {
+	($obj:expr, $name:expr) => {{
+		use ::pyo3::{
+			conversion::FromPyObject, exceptions::PyTypeError,
+		};
+
+		if $obj.extract::<f64>().is_err() {
+			$crate::py_bail!(
+				PyTypeError,
+				"`{}` must implement the `SupportsFloat` protocol",
+				$name,
+			);
+		}
+	}};
+	($obj:ident) => {
+		$crate::py_check_supports_float!($obj, "literal");
+	};
+}
