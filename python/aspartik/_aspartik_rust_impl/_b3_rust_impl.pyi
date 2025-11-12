@@ -3,16 +3,17 @@ from __future__ import annotations
 from collections.abc import Hashable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any, Literal, Optional, Protocol, SupportsFloat
+from typing import Optional, SupportsFloat
 
-from ..b3 import Callback, Leaf, Node, Operator, Prior, Stateful, Tree
+from ..b3 import Callback, Internal, Leaf, Node, Operator, Prior, Stateful, Tree
+from ..b3.clocks import Clock
 from ..b3.likelihoods import Likelihood
-from ..b3.parameters import Scalable
-from ..b3.substitutions import HKY, JC, K80
+from ..b3.parameters import Scalable, Weights
+from ..b3.substitutions import Substiution4
 from ..data.msa import MSA
 from ..data.newick import Tree as NewickTree
 from ..rng import RNG
-from ..stats.distributions import Distribution, Sample
+from ..stats.distributions import Sample
 
 class Tree(Stateful):
     """A phylogenetic tree
@@ -274,9 +275,8 @@ class CPU4Likelihood(Likelihood):
     def __init__(
         self,
         msa: MSA,
-        substitution: JC | K80 | HKY,
-        # TODO: types
-        clock: Any,
+        substitution: Substiution4,
+        clock: Clock,
         tree: Tree,
     ): ...
 
@@ -284,9 +284,8 @@ class Thread4Likelihood(Likelihood):
     def __init__(
         self,
         msa: MSA,
-        substitution: JC | K80 | HKY,
-        # TODO: types
-        clock: Any,
+        substitution: Substiution4,
+        clock: Clock,
         tree: Tree,
         *,
         thread_split_size: int = 400,
@@ -296,9 +295,8 @@ class CUDALikelihood(Likelihood):
     def __init__(
         self,
         msa: MSA,
-        substitution: JC | K80 | HKY,
-        # TODO: types
-        clock: Any,
+        substitution: Substiution4,
+        clock: Clock,
         tree: Tree,
         *,
         cuda_device: int = 0,
@@ -412,7 +410,7 @@ class EpochScale(Operator):
     factor must be between 0 and 1 and the smaller it is the larger the steps
     will be.
     """
-    distribution: Distribution
+    distribution: Sample[float]
     """Distribution from which the scale is sampled."""
     rng: RNG
     weight: float = 1
@@ -461,6 +459,7 @@ class Monophyly(Prior):
     tree: Tree
     leaves: Sequence[Leaf]
 
+@dataclass
 class Yule(Prior):
     """Uncalibrated Yule birth-rate model"""
 
@@ -525,3 +524,58 @@ class Boolean(Stateful):
     def __ne__(self, other) -> bool: ...
     def __gt__(self, other: bool | Boolean) -> bool: ...
     def __ge__(self, other: bool | Boolean) -> bool: ...
+
+@dataclass
+class JC:
+    """
+    Jukes-Cantor
+
+    A simple model with equal state transition rates.
+
+    Jukes and Cantor 1969, Evolution of Protein Molecules,
+    <https://doi.org/10.1016/b978-1-4832-3211-9.50009-7>.
+    """
+
+@dataclass
+class K80:
+    """
+    Kimura 80
+
+    Equal base frequencies (A/C/G/T) with different transition (keeps
+    purines/pyrimidines) and transversion (purine to pyrimidine and visa
+    versa).
+
+    Kimura 1980, A simple method for estimating evolutionary rates of base
+    substitutions through comparative studies of nucleotide sequences,
+    <https://doi.org/10.1007/BF01731581>.
+    """
+
+    kappa: SupportsFloat
+    """
+    A transition is taken to be kappa times more likely than a transversion.
+    """
+
+@dataclass
+class HKY:
+    """
+    Hasegawa et al. 1985
+
+    A model which can be thought of as a combination of K80 and F81: both base
+    rates and transition/transversion ratio are configurable.
+
+    Hasegawa et al. 1985, Dating of the human-ape splitting by a molecular
+    clock of mitochondrial DNA, <https://doi.org/10.1007/BF02101694>.
+    """
+
+    frequencies: Weights
+    """
+    DNA nucleotide frequencies
+
+    Must have the length of 4, with each element corresponding to Adenine,
+    Cytosine, Guanine, and Thymine respectively.
+    """
+
+    kappa: SupportsFloat
+    """
+    Transition/transversion ratio
+    """
