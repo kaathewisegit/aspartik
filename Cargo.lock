@@ -78,6 +78,7 @@ dependencies = [
  "parking_lot",
  "profiler",
  "pyo3",
+ "pyutil",
  "rand",
  "rand_distr",
  "rand_pcg",
@@ -668,6 +669,14 @@ dependencies = [
  "pyo3-build-config",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "pyutil"
+version = "0.1.0-alpha.3"
+dependencies = [
+ "pyo3",
+ "util",
 ]
 
 [[package]]

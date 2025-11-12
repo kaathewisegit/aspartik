@@ -2,18 +2,19 @@ use anyhow::Result;
 use pyo3::prelude::*;
 
 use crate::tree::PyTree;
+use pyutil::SupportsFloat;
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct Yule {
 	tree: Py<PyTree>,
-	birth_rate: Py<PyAny>,
+	birth_rate: SupportsFloat,
 }
 
 #[pymethods]
 impl Yule {
 	#[new]
-	fn new(tree: Py<PyTree>, birth_rate: Py<PyAny>) -> Self {
+	fn new(tree: Py<PyTree>, birth_rate: SupportsFloat) -> Self {
 		Self { tree, birth_rate }
 	}
 
@@ -23,7 +24,7 @@ impl Yule {
 	}
 
 	#[getter]
-	fn birth_rate(&self, py: Python) -> Py<PyAny> {
+	fn birth_rate(&self, py: Python) -> SupportsFloat {
 		self.birth_rate.clone_ref(py)
 	}
 
@@ -36,7 +37,7 @@ impl Yule {
 
 	fn probability(&self, py: Python) -> Result<f64> {
 		let tree = self.tree.get().inner();
-		let rate = self.birth_rate.bind(py).extract::<f64>()?;
+		let rate = self.birth_rate.extract(py)?;
 		let root = tree.root();
 
 		let mut out = (tree.num_internals() - 1) as f64 * rate.ln();

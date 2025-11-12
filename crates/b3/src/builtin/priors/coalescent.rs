@@ -2,7 +2,7 @@ use anyhow::Result;
 use pyo3::prelude::*;
 
 use crate::tree::{Node, PyTree, Tree};
-use util::py_check_supports_float;
+use pyutil::SupportsFloat;
 
 /// All nodes (leaves and internals) of a tree sorted by height
 fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
@@ -66,7 +66,7 @@ where
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ConstantPopulation {
 	tree: Py<PyTree>,
-	population_size: Py<PyAny>,
+	population_size: SupportsFloat,
 }
 
 impl Coalescent for ConstantPopulation {
@@ -90,13 +90,11 @@ impl ConstantPopulation {
 	#[new]
 	fn new(
 		tree: Py<PyTree>,
-		population_size: Bound<PyAny>,
+		population_size: SupportsFloat,
 	) -> Result<Self> {
-		py_check_supports_float!(population_size);
-
 		Ok(Self {
 			tree,
-			population_size: population_size.unbind(),
+			population_size,
 		})
 	}
 
@@ -106,7 +104,7 @@ impl ConstantPopulation {
 	}
 
 	#[getter]
-	fn population_size(&self, py: Python) -> Py<PyAny> {
+	fn population_size(&self, py: Python) -> SupportsFloat {
 		self.population_size.clone_ref(py)
 	}
 
@@ -127,16 +125,16 @@ impl ConstantPopulation {
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ExponentialGrowth {
 	tree: Py<PyTree>,
-	population_size: Py<PyAny>,
-	growth_rate: Py<PyAny>,
+	population_size: SupportsFloat,
+	growth_rate: SupportsFloat,
 }
 
 impl Coalescent for ExponentialGrowth {
 	type State = (f64, f64);
 
 	fn fetch_state(&self, py: Python) -> Result<Self::State> {
-		let pop: f64 = self.population_size(py).extract(py)?;
-		let gr: f64 = self.growth_rate(py).extract(py)?;
+		let pop = self.population_size(py).extract(py)?;
+		let gr = self.growth_rate(py).extract(py)?;
 
 		Ok((pop, gr))
 	}
@@ -159,16 +157,13 @@ impl ExponentialGrowth {
 	#[new]
 	fn new(
 		tree: Py<PyTree>,
-		population_size: Bound<PyAny>,
-		growth_rate: Bound<PyAny>,
+		population_size: SupportsFloat,
+		growth_rate: SupportsFloat,
 	) -> Result<Self> {
-		py_check_supports_float!(population_size);
-		py_check_supports_float!(growth_rate);
-
 		Ok(Self {
 			tree,
-			population_size: population_size.unbind(),
-			growth_rate: growth_rate.unbind(),
+			population_size,
+			growth_rate,
 		})
 	}
 
@@ -178,12 +173,12 @@ impl ExponentialGrowth {
 	}
 
 	#[getter]
-	fn population_size(&self, py: Python) -> Py<PyAny> {
+	fn population_size(&self, py: Python) -> SupportsFloat {
 		self.population_size.clone_ref(py)
 	}
 
 	#[getter]
-	fn growth_rate(&self, py: Python) -> Py<PyAny> {
+	fn growth_rate(&self, py: Python) -> SupportsFloat {
 		self.growth_rate.clone_ref(py)
 	}
 

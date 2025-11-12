@@ -136,12 +136,19 @@ macro_rules! py_extract_attr {
 }
 
 #[macro_export]
-macro_rules! py_check_method {
-	($obj:expr, $name:literal) => {{
-		use ::pyo3::{exceptions::PyTypeError, intern};
-
+macro_rules! py_has_method {
+	($obj:expr, $name:expr) => {{
 		let method = $crate::py_get_attr!($obj, $name);
-		if !method.is_ok_and(|m| m.is_callable()) {
+		method.is_ok_and(|m| m.is_callable())
+	}};
+}
+
+#[macro_export]
+macro_rules! py_check_method {
+	($obj:expr, $name:expr) => {{
+		use ::pyo3::exceptions::PyTypeError;
+
+		if !$crate::py_has_method!($obj, $name) {
 			$crate::py_bail!(
 				PyTypeError,
 				"method {} not found in {}",
@@ -150,24 +157,4 @@ macro_rules! py_check_method {
 			);
 		}
 	}};
-}
-
-#[macro_export]
-macro_rules! py_check_supports_float {
-	($obj:expr, $name:expr) => {{
-		use ::pyo3::{
-			conversion::FromPyObject, exceptions::PyTypeError,
-		};
-
-		if $obj.extract::<f64>().is_err() {
-			$crate::py_bail!(
-				PyTypeError,
-				"`{}` must implement the `SupportsFloat` protocol",
-				$name,
-			);
-		}
-	}};
-	($obj:ident) => {
-		$crate::py_check_supports_float!($obj, "literal");
-	};
 }
