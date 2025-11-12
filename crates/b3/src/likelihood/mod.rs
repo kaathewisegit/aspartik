@@ -11,7 +11,7 @@ use crate::{
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
 use linalg::{RowMatrix, Vector};
-use util::{py_bail, py_call_method, py_check_method};
+use util::{py_call_method, py_check_method};
 
 mod cpu;
 mod cuda;

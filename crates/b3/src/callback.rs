@@ -2,7 +2,7 @@ use anyhow::Result;
 use pyo3::prelude::*;
 
 use crate::mcmc::Mcmc;
-use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
+use util::{py_call_method, py_check_method, py_extract_attr};
 
 pub struct PyCallback {
 	inner: Py<PyAny>,

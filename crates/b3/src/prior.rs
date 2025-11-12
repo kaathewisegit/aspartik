@@ -4,7 +4,7 @@ use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
 
 use profiler::profile;
-use util::{py_bail, py_call_method, py_check_method};
+use util::{py_call_method, py_check_method};
 
 pub struct PyPrior {
 	/// INVARIANT: the type has a `probability` method
