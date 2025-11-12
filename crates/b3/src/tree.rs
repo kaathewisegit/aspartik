@@ -171,7 +171,7 @@ impl Tree {
 			updated_nodes: Bitmap::new(num_nodes),
 		};
 
-		out.set_random_topology(rng);
+		out.set_random_edges(rng);
 		out.set_random_heights(0.01, rng);
 		Ok(out)
 	}
@@ -293,7 +293,7 @@ impl Tree {
 		})
 	}
 
-	pub fn set_random_topology(&mut self, rng: &mut Rng) {
+	pub fn set_random_edges(&mut self, rng: &mut Rng) {
 		let num_leaves = self.num_leaves();
 		let num_internals = self.num_internals();
 		let num_nodes = self.num_nodes();
@@ -1024,7 +1024,7 @@ impl PyTree {
 	}
 
 	fn set_random_topology(&self, rng: Py<PyRng>) {
-		self.inner().set_random_topology(&mut rng.get().inner());
+		self.inner().set_random_edges(&mut rng.get().inner());
 	}
 
 	fn set_random_heights(&self, diff: f64, rng: Py<PyRng>) {

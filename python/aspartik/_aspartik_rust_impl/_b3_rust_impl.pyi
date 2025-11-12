@@ -45,8 +45,16 @@ class Tree(Stateful):
         have a defined length.
         """
 
-    def set_random_topology(self, rng: RNG):
-        """TODO"""
+    def set_random_edges(self, rng: RNG):
+        """
+        Randomly sets edges between the nodes
+
+        This methods creates a random [Prüfer sequence][wiki] and rearranges
+        the graph according to it.  Note that it will always the internal node
+        with the largest index (`num_nodes - 1`) the root.
+
+        [wiki]: https://en.wikipedia.org/wiki/Pr%C3%BCfer_sequence
+        """
 
     def set_random_heights(self, diff, rng: RNG):
         """
