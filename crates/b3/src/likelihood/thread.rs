@@ -18,7 +18,6 @@ type Update<const N: usize> = (
 
 pub struct ThreadedLikelihood<const N: usize> {
 	updates: Vec<Sender<Arc<Update<N>>>>,
-	weights: Vec<Sender<Arc<[f64]>>>,
 	likelihoods: Vec<Receiver<f64>>,
 	accepts: Vec<Sender<bool>>,
 
@@ -29,66 +28,6 @@ pub struct ThreadedLikelihood<const N: usize> {
 }
 
 impl LikelihoodTrait<4> for ThreadedLikelihood<4> {
-	type Arguments = (usize,);
-
-	fn new(
-		msa: Msa<DnaNucleotide>,
-		(thread_split_size,): Self::Arguments,
-	) -> Result<Self> {
-		let mut update_senders = Vec::new();
-		let mut weights_senders = Vec::new();
-		let mut likelihoods_receivers = Vec::new();
-		let mut accept_senders = Vec::new();
-
-		let num_sites = msa.num_sites();
-		let num_threads = num_sites.div_ceil(thread_split_size);
-		let segment_len = num_sites / num_threads;
-
-		for i in 0..num_threads {
-			let (update_sender, update_receiver) = bounded(1);
-			update_senders.push(update_sender);
-
-			let (weights_sender, weights_reciever) = bounded(1);
-			weights_senders.push(weights_sender);
-
-			let (likelihood_sender, likelihood_receiver) =
-				bounded(1);
-			likelihoods_receivers.push(likelihood_receiver);
-
-			let (accept_sender, accept_receiver) = bounded(1);
-			accept_senders.push(accept_sender);
-
-			let start = i * segment_len;
-			let end = if i == num_threads - 1 {
-				num_sites
-			} else {
-				(i + 1) * segment_len
-			};
-			let msa_subset = msa.slice(start..end);
-
-			thread::spawn(move || {
-				worker(
-					msa_subset,
-					i,
-					segment_len,
-					update_receiver,
-					weights_reciever,
-					likelihood_sender,
-					accept_receiver,
-				);
-			});
-		}
-
-		Ok(Self {
-			updates: update_senders,
-			weights: weights_senders,
-			likelihoods: likelihoods_receivers,
-			accepts: accept_senders,
-
-			has_proposed: false,
-		})
-	}
-
 	fn propose(
 		&mut self,
 		nodes: &[usize],
@@ -115,13 +54,7 @@ impl LikelihoodTrait<4> for ThreadedLikelihood<4> {
 		Ok(())
 	}
 
-	fn likelihood(&mut self, weights: &[f64]) -> Result<f64> {
-		let weights: Arc<[f64]> = weights.into();
-
-		for sender in &mut self.weights {
-			sender.send(weights.clone())?;
-		}
-
+	fn likelihood(&mut self) -> Result<f64> {
 		let mut out = 0.0;
 		for receiver in &self.likelihoods {
 			out += receiver.recv()?;
@@ -153,18 +86,62 @@ impl LikelihoodTrait<4> for ThreadedLikelihood<4> {
 	}
 }
 
+impl ThreadedLikelihood<4> {
+	pub fn new(msa: Msa<DnaNucleotide>, thread_split_size: usize) -> Self {
+		let mut update_senders = Vec::new();
+		let mut likelihoods_receivers = Vec::new();
+		let mut accept_senders = Vec::new();
+
+		let num_sites = msa.num_sites();
+		let num_threads = num_sites.div_ceil(thread_split_size);
+		let segment_len = num_sites / num_threads;
+
+		for i in 0..num_threads {
+			let (update_sender, update_receiver) = bounded(1);
+			update_senders.push(update_sender);
+
+			let (likelihood_sender, likelihood_receiver) =
+				bounded(1);
+			likelihoods_receivers.push(likelihood_receiver);
+
+			let (accept_sender, accept_receiver) = bounded(1);
+			accept_senders.push(accept_sender);
+
+			let start = i * segment_len;
+			let end = if i == num_threads - 1 {
+				num_sites
+			} else {
+				(i + 1) * segment_len
+			};
+			let msa_subset = msa.slice(start..end);
+
+			thread::spawn(move || {
+				worker(
+					msa_subset,
+					update_receiver,
+					likelihood_sender,
+					accept_receiver,
+				);
+			});
+		}
+
+		Self {
+			updates: update_senders,
+			likelihoods: likelihoods_receivers,
+			accepts: accept_senders,
+
+			has_proposed: false,
+		}
+	}
+}
+
 fn worker(
 	msa: Msa<DnaNucleotide>,
-	index: usize,
-	segment_len: usize,
 	update_receiver: Receiver<Arc<Update<4>>>,
-	weights_reciever: Receiver<Arc<[f64]>>,
 	likelihood_sender: Sender<f64>,
 	accept_receiver: Receiver<bool>,
 ) {
-	let start = index * segment_len;
-
-	let mut cpu = CpuLikelihood::new(msa, ()).unwrap();
+	let mut cpu = CpuLikelihood::new(msa);
 
 	loop {
 		let Ok(update) = update_receiver.recv() else {
@@ -178,9 +155,7 @@ fn worker(
 		)
 		.unwrap();
 
-		let weights = weights_reciever.recv().unwrap();
-		let weights = &weights[start..];
-		let likelihood = cpu.likelihood(weights).unwrap();
+		let likelihood = cpu.likelihood().unwrap();
 		likelihood_sender.send(likelihood).unwrap();
 
 		let accept = accept_receiver.recv().unwrap();

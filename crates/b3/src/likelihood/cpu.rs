@@ -2,13 +2,16 @@ use anyhow::Result;
 use data::{DnaNucleotide, Msa};
 
 use super::{LikelihoodTrait, Row, Transition};
-use crate::util::msa_to_likelihoods;
+use crate::{likelihood::deduplicate, util::msa_to_likelihoods};
 use skvec::{SkVec, skvec};
 
 pub struct CpuLikelihood<const N: usize> {
 	leaves: Vec<Row<N>>,
 	projections: SkVec<Row<N>>,
 	scales: SkVec<bool>,
+
+	/// Pattern weights
+	weights: Vec<f64>,
 
 	num_sites: usize,
 	num_leaves: usize,
@@ -20,32 +23,6 @@ pub struct CpuLikelihood<const N: usize> {
 const SCALE: f64 = 1e-30;
 
 impl LikelihoodTrait<4> for CpuLikelihood<4> {
-	type Arguments = ();
-
-	fn new(msa: Msa<DnaNucleotide>, _: ()) -> Result<Self> {
-		let num_sites = msa.num_sites();
-		let num_leaves = msa.num_sequences();
-		let num_internals = num_leaves - 1;
-		let num_edges = num_internals * 2;
-
-		let leaves = msa_to_likelihoods(msa);
-
-		let projections = skvec![Row::default(); num_edges * num_sites];
-		let scales = skvec![false; num_edges];
-
-		Ok(Self {
-			leaves,
-			projections,
-			scales,
-
-			num_sites,
-			num_leaves,
-
-			updated_edges: Vec::new(),
-			likelihoods: vec![f64::NAN; num_sites],
-		})
-	}
-
 	fn propose(
 		&mut self,
 		nodes: &[usize],
@@ -149,10 +126,11 @@ impl LikelihoodTrait<4> for CpuLikelihood<4> {
 		Ok(())
 	}
 
-	fn likelihood(&mut self, weights: &[f64]) -> Result<f64> {
+	fn likelihood(&mut self) -> Result<f64> {
 		let mut out = 0.0;
 
-		for (likelihood, weight) in self.likelihoods.iter().zip(weights)
+		for (likelihood, weight) in
+			self.likelihoods.iter().zip(&self.weights)
 		{
 			out += likelihood * weight;
 		}
@@ -191,5 +169,35 @@ impl LikelihoodTrait<4> for CpuLikelihood<4> {
 		self.scales.reject();
 
 		Ok(())
+	}
+}
+
+impl CpuLikelihood<4> {
+	pub fn new(msa: Msa<DnaNucleotide>) -> Self {
+		let (msa, weights) = deduplicate(msa);
+
+		let num_sites = msa.num_sites();
+		let num_leaves = msa.num_sequences();
+		let num_internals = num_leaves - 1;
+		let num_edges = num_internals * 2;
+
+		let leaves = msa_to_likelihoods(msa);
+
+		let projections = skvec![Row::default(); num_edges * num_sites];
+		let scales = skvec![false; num_edges];
+
+		Self {
+			leaves,
+			projections,
+			scales,
+
+			num_sites,
+			num_leaves,
+
+			weights,
+
+			updated_edges: Vec::new(),
+			likelihoods: vec![f64::NAN; num_sites],
+		}
 	}
 }

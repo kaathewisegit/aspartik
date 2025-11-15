@@ -25,12 +25,6 @@ pub type Row<const N: usize> = Vector<f64, N>;
 type Transition<const N: usize> = RowMatrix<f64, N, N>;
 
 pub trait LikelihoodTrait<const N: usize> {
-	type Arguments;
-
-	fn new(msa: Msa<DnaNucleotide>, args: Self::Arguments) -> Result<Self>
-	where
-		Self: Sized;
-
 	fn propose(
 		&mut self,
 		nodes: &[usize],
@@ -41,7 +35,7 @@ pub trait LikelihoodTrait<const N: usize> {
 		frequencies: Vector<f64, N>,
 	) -> Result<()>;
 
-	fn likelihood(&mut self, weights: &[f64]) -> Result<f64>;
+	fn likelihood(&mut self) -> Result<f64>;
 
 	fn accept(&mut self) -> Result<()>;
 
@@ -49,9 +43,8 @@ pub trait LikelihoodTrait<const N: usize> {
 }
 
 pub struct GenericLikelihood<const N: usize, L: LikelihoodTrait<N>> {
-	transitions: Transitions<N>,
 	calculator: L,
-	weights: Vec<f64>,
+	transitions: Transitions<N>,
 	/// Last accepted likelihood
 	cache: f64,
 	/// Last calculated likelihood.  It's different from the cache, because
@@ -66,28 +59,20 @@ where
 	L: LikelihoodTrait<4>,
 {
 	fn new(
+		calculator: L,
 		substitution: BoxedSubstitutionModel<4>,
 		clock: PyClock,
-		msa: Msa<DnaNucleotide>,
 		tree: Py<PyTree>,
-
-		arguments: L::Arguments,
 	) -> Result<Self> {
-		let num_internals = msa.num_sequences() - 1;
 		let transitions = Transitions::<4>::new(
-			num_internals * 2,
+			tree.get().num_edges(),
 			substitution,
 			clock,
 		);
 
-		let (msa, weights) = deduplicate(msa);
-
-		let calculator = L::new(msa, arguments)?;
-
 		let mut out = Self {
-			transitions,
 			calculator,
-			weights,
+			transitions,
 			cache: f64::NAN,
 			last: f64::NAN,
 			launched_update: false,
@@ -189,7 +174,7 @@ impl<const N: usize, L: LikelihoodTrait<N>> GenericLikelihood<N, L> {
 			return Ok(self.cache);
 		}
 
-		let likelihood = self.calculator.likelihood(&self.weights)?;
+		let likelihood = self.calculator.likelihood()?;
 		trace!(
 			target: "b3::likelihood::likelihood",
 			likelihood;
@@ -252,12 +237,12 @@ impl PyCpu4Likelihood {
 		clock: PyClock,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
+		let calculator = CpuLikelihood::new(msa.0);
 		let generic = GenericLikelihood::new(
+			calculator,
 			substitution,
 			clock,
-			msa.0,
 			tree,
-			(),
 		)?;
 
 		Ok(Self {
@@ -292,12 +277,13 @@ impl PyThread4Likelihood {
 		tree: Py<PyTree>,
 		thread_split_size: usize,
 	) -> Result<Self> {
+		let calculator =
+			ThreadedLikelihood::new(msa.0, thread_split_size);
 		let generic = GenericLikelihood::new(
+			calculator,
 			substitution,
 			clock,
-			msa.0,
 			tree,
-			(thread_split_size,),
 		)?;
 
 		Ok(Self {
@@ -328,12 +314,12 @@ impl PyCudaLikelihood {
 		tree: Py<PyTree>,
 		cuda_device: usize,
 	) -> Result<Self> {
+		let calculator = CudaLikelihood::new(msa.0, cuda_device)?;
 		let generic = GenericLikelihood::new(
+			calculator,
 			substitution,
 			clock,
-			msa.0,
 			tree,
-			(cuda_device,),
 		)?;
 
 		Ok(Self {

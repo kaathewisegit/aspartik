@@ -1067,13 +1067,18 @@ impl PyTree {
 	}
 
 	#[getter]
-	fn num_internals(&self) -> usize {
+	pub fn num_internals(&self) -> usize {
 		self.inner().num_internals()
 	}
 
 	#[getter]
 	fn num_leaves(&self) -> usize {
 		self.inner().num_leaves()
+	}
+
+	#[getter]
+	pub fn num_edges(&self) -> usize {
+		self.inner().num_edges()
 	}
 
 	fn is_internal(&self, node: Node) -> Result<bool> {

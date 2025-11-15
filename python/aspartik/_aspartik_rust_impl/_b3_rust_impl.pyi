@@ -120,6 +120,9 @@ class Tree(Stateful):
     @property
     def num_leaves(self) -> int:
         """The number of leaf nodes"""
+    @property
+    def num_edges(self) -> int:
+        """Total number of edges"""
     def is_internal(self, node: Node) -> bool:
         """Returns `True` if the node is internal"""
     def is_leaf(self, node: Node) -> bool:

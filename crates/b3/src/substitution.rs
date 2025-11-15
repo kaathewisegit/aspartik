@@ -3,6 +3,8 @@ use linalg::{RowMatrix, Vector};
 use pyo3::conversion::FromPyObject;
 use pyo3::{PyTypeCheck, prelude::*};
 
+use pyutil::SupportsFloat;
+
 pub trait SubstitutionModel<const N: usize> {
 	fn update(&mut self, py: Python) -> Result<bool>;
 
@@ -78,7 +80,7 @@ impl JC {
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct K80 {
-	kappa: Py<PyAny>,
+	kappa: SupportsFloat,
 	cached_kappa: f64,
 }
 
@@ -132,7 +134,7 @@ impl SubstitutionModel<4> for K80 {
 #[pymethods]
 impl K80 {
 	#[new]
-	pub fn new(kappa: Py<PyAny>) -> Self {
+	pub fn new(kappa: SupportsFloat) -> Self {
 		Self {
 			kappa,
 			cached_kappa: f64::NAN,
@@ -144,7 +146,7 @@ impl K80 {
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct HKY {
 	frequencies: Py<PyAny>,
-	kappa: Py<PyAny>,
+	kappa: SupportsFloat,
 
 	cached_kappa: f64,
 	cached_frequencies: (f64, f64, f64, f64),
@@ -207,7 +209,7 @@ impl SubstitutionModel<4> for HKY {
 			bf.get_item(2)?.extract::<f64>()?,
 			bf.get_item(3)?.extract::<f64>()?,
 		);
-		let kappa = self.kappa.extract::<f64>(py)?;
+		let kappa = self.kappa.extract(py)?;
 
 		if kappa != self.cached_kappa
 			|| frequencies != self.cached_frequencies
@@ -238,7 +240,7 @@ impl SubstitutionModel<4> for HKY {
 #[pymethods]
 impl HKY {
 	#[new]
-	pub fn new(frequencies: Py<PyAny>, kappa: Py<PyAny>) -> Self {
+	pub fn new(frequencies: Py<PyAny>, kappa: SupportsFloat) -> Self {
 		Self {
 			kappa,
 			frequencies,
