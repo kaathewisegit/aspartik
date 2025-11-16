@@ -10,10 +10,15 @@ use data::{DnaNucleotide, Msa};
 
 use std::sync::Arc;
 
-use super::{LikelihoodTrait, Row, Transition};
+use super::LikelihoodTrait;
 use crate::{
-	likelihood::deduplicate, tree::Internal, util::msa_to_likelihoods,
+	likelihood::{Linalg4, Space, deduplicate},
+	tree::Internal,
+	util::msa_to_likelihoods,
 };
+
+type Row = <Linalg4 as Space>::Vector;
+type Transition = <Linalg4 as Space>::Matrix;
 
 const CUDA_SRC: &str =
 	concat!(include_str!("typedefs.h"), include_str!("kernels.cu"),);
@@ -36,17 +41,17 @@ pub struct CudaLikelihood {
 	/// Values are grouped by leaves.  The slice is divided into rows of the
 	/// length `num_sites`.  `0` to `num_sites` is leaf 0, `num_sites` to `2
 	/// * num_sites` is leaf 1, and so on.
-	leaves: CudaSlice<Row<4>>,
+	leaves: CudaSlice<Row>,
 
 	/// A contiguous array which stores projection likelihoods
 	///
 	/// It has the length of `num_edges * num_sites`, with each likelihood
 	/// being associated with a particular edge.  Stored in the same way as
 	/// `leaves`, except grouped by edges.
-	projections: CudaSlice<Row<4>>,
+	projections: CudaSlice<Row>,
 
 	/// A copy of `projections`
-	projections_backup: CudaSlice<Row<4>>,
+	projections_backup: CudaSlice<Row>,
 
 	/// `num_sites`-long root likelihoods
 	likelihoods: CudaSlice<f64>,
@@ -63,7 +68,7 @@ pub struct CudaLikelihood {
 	/// Transitions for each edge from `edges`
 	///
 	/// The length is `num_updated_nodes`.
-	transitions: CudaSlice<Transition<4>>,
+	transitions: CudaSlice<Transition>,
 
 	/// Nodes updated in the current proposal
 	///
@@ -91,7 +96,9 @@ pub struct CudaLikelihood {
 	num_updated_nodes: u32,
 }
 
-impl LikelihoodTrait<4> for CudaLikelihood {
+impl LikelihoodTrait for CudaLikelihood {
+	type S = Linalg4;
+
 	/// Propose an edit to the tree
 	///
 	/// Asynchronous.  This method starts the GPU calculations and returns
@@ -101,10 +108,10 @@ impl LikelihoodTrait<4> for CudaLikelihood {
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[Transition<4>],
+		transitions: &[Transition],
 		leaves_end: usize,
 		root: usize,
-		frequencies: Row<4>,
+		frequencies: Row,
 	) -> Result<()> {
 		self.num_updated_nodes = nodes.len() as u32;
 		if self.num_updated_nodes == 0 {
@@ -272,7 +279,7 @@ impl CudaLikelihood {
 	fn update_likelihoods(
 		&self,
 		root: u32,
-		frequencies: Row<4>,
+		frequencies: Row,
 	) -> Result<()> {
 		let mut builder =
 			self.stream.launch_builder(&self.update_likelihoods_fn);
@@ -348,7 +355,7 @@ impl CudaLikelihood {
 	pub fn pattern_likelihoods(
 		&self,
 		root: Internal,
-		frequencies: Row<4>,
+		frequencies: Row,
 	) -> Result<Vec<f64>> {
 		self.update_likelihoods(root.index() as u32, frequencies)?;
 
@@ -387,9 +394,9 @@ impl CudaLikelihood {
 		unsafe { context.disable_event_tracking() };
 
 		let leaves = stream.memcpy_stod(&msa_to_likelihoods(msa))?;
-		let projections: CudaSlice<Row<4>> =
+		let projections: CudaSlice<Row> =
 			stream.alloc_zeros(num_edges * num_sites)?;
-		let projections_backup: CudaSlice<Row<4>> =
+		let projections_backup: CudaSlice<Row> =
 			stream.alloc_zeros(num_edges * num_sites)?;
 
 		let likelihoods: CudaSlice<f64> =

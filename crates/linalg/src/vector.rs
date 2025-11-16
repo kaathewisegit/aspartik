@@ -1,6 +1,7 @@
 use num_traits::{Float, Num, NumAssign};
 
 use std::{
+	cmp::Ordering,
 	fmt::{self, Debug, Display},
 	ops::{
 		Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign,
@@ -194,6 +195,17 @@ impl<T: Copy + DivAssign, const N: usize> Div<T> for Vector<T, N> {
 	}
 }
 
+impl<T: Copy + PartialEq, const N: usize> PartialEq<T> for Vector<T, N> {
+	fn eq(&self, other: &T) -> bool {
+		for i in 0..N {
+			if self[i] != *other {
+				return false;
+			}
+		}
+		true
+	}
+}
+
 impl<T: Copy + PartialEq, const N: usize> PartialEq<[T; N]> for Vector<T, N> {
 	fn eq(&self, other: &[T; N]) -> bool {
 		for i in 0..N {
@@ -208,6 +220,21 @@ impl<T: Copy + PartialEq, const N: usize> PartialEq<[T; N]> for Vector<T, N> {
 impl<T: Copy + PartialEq, const N: usize> PartialEq<Vector<T, N>> for [T; N] {
 	fn eq(&self, other: &Vector<T, N>) -> bool {
 		other == self
+	}
+}
+
+impl<T: Copy + PartialOrd, const N: usize> PartialOrd<T> for Vector<T, N> {
+	fn partial_cmp(&self, _other: &T) -> Option<Ordering> {
+		todo!()
+	}
+
+	fn lt(&self, other: &T) -> bool {
+		for i in 0..N {
+			if self[i] != *other {
+				return false;
+			}
+		}
+		true
 	}
 }
 

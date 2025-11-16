@@ -1,24 +1,24 @@
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, bounded};
-use linalg::Vector;
+use num_traits::Zero;
 
 use std::{sync::Arc, thread};
 
-use super::{CpuLikelihood, LikelihoodTrait, Row, Transition};
+use super::{CpuLikelihood, LikelihoodTrait, Linalg4, Space};
 use data::{DnaNucleotide, Msa};
 
-type Update<const N: usize> = (
+type Update<S> = (
 	Vec<usize>,
 	Vec<usize>,
-	Vec<Transition<N>>,
+	Vec<<S as Space>::Matrix>,
 	usize,
 	usize,
-	Row<N>,
+	<S as Space>::Vector,
 );
 
-pub struct ThreadedLikelihood<const N: usize> {
-	updates: Vec<Sender<Arc<Update<N>>>>,
-	likelihoods: Vec<Receiver<f64>>,
+pub struct ThreadedLikelihood<S: Space> {
+	updates: Vec<Sender<Arc<Update<S>>>>,
+	likelihoods: Vec<Receiver<S::Scalar>>,
 	accepts: Vec<Sender<bool>>,
 
 	/// The MCMC might call `accept` or `reject` without calling `propose`.
@@ -27,15 +27,17 @@ pub struct ThreadedLikelihood<const N: usize> {
 	has_proposed: bool,
 }
 
-impl LikelihoodTrait<4> for ThreadedLikelihood<4> {
+impl<S: Space> LikelihoodTrait for ThreadedLikelihood<S> {
+	type S = S;
+
 	fn propose(
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[Transition<4>],
+		transitions: &[S::Matrix],
 		leaves_end: usize,
 		root: usize,
-		frequencies: Vector<f64, 4>,
+		frequencies: S::Vector,
 	) -> Result<()> {
 		let update = Arc::new((
 			nodes.to_owned(),
@@ -54,8 +56,8 @@ impl LikelihoodTrait<4> for ThreadedLikelihood<4> {
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<f64> {
-		let mut out = 0.0;
+	fn likelihood(&mut self) -> Result<S::Scalar> {
+		let mut out = S::Scalar::zero();
 		for receiver in &self.likelihoods {
 			out += receiver.recv()?;
 		}
@@ -86,7 +88,7 @@ impl LikelihoodTrait<4> for ThreadedLikelihood<4> {
 	}
 }
 
-impl ThreadedLikelihood<4> {
+impl ThreadedLikelihood<Linalg4> {
 	pub fn new(msa: Msa<DnaNucleotide>, thread_split_size: usize) -> Self {
 		let mut update_senders = Vec::new();
 		let mut likelihoods_receivers = Vec::new();
@@ -137,7 +139,7 @@ impl ThreadedLikelihood<4> {
 
 fn worker(
 	msa: Msa<DnaNucleotide>,
-	update_receiver: Receiver<Arc<Update<4>>>,
+	update_receiver: Receiver<Arc<Update<Linalg4>>>,
 	likelihood_sender: Sender<f64>,
 	accept_receiver: Receiver<bool>,
 ) {

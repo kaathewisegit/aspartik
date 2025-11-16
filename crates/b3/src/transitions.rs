@@ -1,26 +1,28 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use crate::{clock::PyClock, substitution::BoxedSubstitutionModel, tree::Tree};
-use linalg::{RowMatrix, Vector};
+use crate::{
+	clock::PyClock, likelihood::Space,
+	substitution::BoxedSubstitutionModel, tree::Tree,
+};
 use skvec::SkVec;
 
-pub struct Transitions<const N: usize> {
-	substitution: BoxedSubstitutionModel<N>,
+pub struct Transitions<S: Space> {
+	substitution: BoxedSubstitutionModel<S>,
 	clock: PyClock,
 
 	rate: f64,
 
-	transitions: SkVec<RowMatrix<f64, N, N>>,
+	transitions: SkVec<S::Matrix>,
 }
 
-impl<const N: usize> Transitions<N> {
+impl<S: Space> Transitions<S> {
 	pub fn new(
 		length: usize,
-		substitution: BoxedSubstitutionModel<N>,
+		substitution: BoxedSubstitutionModel<S>,
 		clock: PyClock,
 	) -> Self {
-		let transitions = SkVec::repeat(RowMatrix::default(), length);
+		let transitions = SkVec::repeat(S::Matrix::default(), length);
 
 		Self {
 			substitution,
@@ -47,10 +49,14 @@ impl<const N: usize> Transitions<N> {
 		} else {
 			tree.edges_to_update()
 		};
-		let distances: Vec<f64> = edges
+		let distances: Vec<S::Scalar> = edges
 			.iter()
 			.copied()
-			.map(|e| tree.edge_length(e) * self.rate)
+			.map(|e| -> S::Scalar {
+				let distance_f64 =
+					tree.edge_length(e) * self.rate;
+				distance_f64.into()
+			})
 			.collect();
 
 		self.update_edges(&edges, &distances);
@@ -58,7 +64,7 @@ impl<const N: usize> Transitions<N> {
 		Ok(full_update)
 	}
 
-	fn update_edges(&mut self, edges: &[usize], distances: &[f64]) {
+	fn update_edges(&mut self, edges: &[usize], distances: &[S::Scalar]) {
 		for (edge, distance) in edges.iter().zip(distances) {
 			let transition =
 				self.substitution.get_transition(*distance);
@@ -75,7 +81,7 @@ impl<const N: usize> Transitions<N> {
 		self.transitions.reject();
 	}
 
-	pub fn matrices(&self, edges: &[usize]) -> Vec<RowMatrix<f64, N, N>> {
+	pub fn matrices(&self, edges: &[usize]) -> Vec<S::Matrix> {
 		let mut out = Vec::with_capacity(edges.len());
 
 		for edge in edges {
@@ -85,7 +91,7 @@ impl<const N: usize> Transitions<N> {
 		out
 	}
 
-	pub fn frequencies(&self) -> Vector<f64, N> {
+	pub fn frequencies(&self) -> S::Vector {
 		self.substitution.get_frequencies()
 	}
 }

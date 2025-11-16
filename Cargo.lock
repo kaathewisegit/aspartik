@@ -75,6 +75,7 @@ dependencies = [
  "io",
  "linalg",
  "log",
+ "num-traits",
  "parking_lot",
  "profiler",
  "pyo3",

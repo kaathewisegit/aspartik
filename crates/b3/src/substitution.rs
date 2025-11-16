@@ -3,20 +3,27 @@ use linalg::{RowMatrix, Vector};
 use pyo3::conversion::FromPyObject;
 use pyo3::{PyTypeCheck, prelude::*};
 
+use crate::likelihood::{Linalg4, Space};
 use pyutil::SupportsFloat;
 
-pub trait SubstitutionModel<const N: usize> {
+pub trait SubstitutionModel {
+	type S: Space;
+
 	fn update(&mut self, py: Python) -> Result<bool>;
 
-	fn get_transition(&self, distance: f64) -> RowMatrix<f64, N, N>;
+	fn get_transition(
+		&self,
+		distance: <Self::S as Space>::Scalar,
+	) -> <Self::S as Space>::Matrix;
 
-	fn get_frequencies(&self) -> Vector<f64, N>;
+	fn get_frequencies(&self) -> <Self::S as Space>::Vector;
 }
 
-pub type BoxedSubstitutionModel<const N: usize> =
-	Box<dyn SubstitutionModel<N> + Send>;
+pub type BoxedSubstitutionModel<S> = Box<dyn SubstitutionModel<S = S> + Send>;
 
-impl<'py> FromPyObject<'_, 'py> for BoxedSubstitutionModel<4> {
+pub type Substitution4 = BoxedSubstitutionModel<Linalg4>;
+
+impl<'py> FromPyObject<'_, 'py> for Substitution4 {
 	type Error = PyErr;
 
 	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> Result<Self, Self::Error> {
@@ -45,7 +52,9 @@ impl<'py> FromPyObject<'_, 'py> for BoxedSubstitutionModel<4> {
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct JC;
 
-impl SubstitutionModel<4> for JC {
+impl SubstitutionModel for JC {
+	type S = Linalg4;
+
 	fn update(&mut self, _py: Python) -> Result<bool> {
 		Ok(false)
 	}
@@ -93,7 +102,9 @@ impl K80 {
 	}
 }
 
-impl SubstitutionModel<4> for K80 {
+impl SubstitutionModel for K80 {
+	type S = Linalg4;
+
 	fn update(&mut self, py: Python) -> Result<bool> {
 		let kappa = self.kappa.extract(py)?;
 
@@ -200,7 +211,9 @@ impl HKY {
 	}
 }
 
-impl SubstitutionModel<4> for HKY {
+impl SubstitutionModel for HKY {
+	type S = Linalg4;
+
 	fn update(&mut self, py: Python) -> Result<bool> {
 		let bf = self.frequencies.bind(py);
 		let frequencies = (

@@ -1,12 +1,19 @@
 use anyhow::Result;
 use log::trace;
+use num_traits::{Float, NumAssignOps, NumCast};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use std::{collections::HashMap, slice};
+use std::{
+	collections::HashMap,
+	ops::{DivAssign, Mul},
+	slice,
+};
 
 use crate::{
-	Transitions, clock::PyClock, substitution::BoxedSubstitutionModel,
+	Transitions,
+	clock::PyClock,
+	substitution::{BoxedSubstitutionModel, Substitution4},
 	tree::PyTree,
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
@@ -21,50 +28,85 @@ use cpu::CpuLikelihood;
 use cuda::CudaLikelihood;
 use thread::ThreadedLikelihood;
 
-pub type Row<const N: usize> = Vector<f64, N>;
-type Transition<const N: usize> = RowMatrix<f64, N, N>;
+pub trait Space {
+	type Scalar: Float + NumAssignOps + NumCast + From<f64>;
+	type Vector: Mul<Output = Self::Vector>
+		+ DivAssign<Self::Scalar>
+		+ PartialOrd<Self::Scalar>
+		+ DivAssign
+		+ Copy
+		+ Sync
+		+ Send
+		+ 'static;
+	type Matrix: Mul<Self::Vector, Output = Self::Vector>
+		+ Copy
+		+ Default
+		+ Sync
+		+ Send
+		+ 'static;
 
-pub trait LikelihoodTrait<const N: usize> {
+	fn sum(v: Self::Vector) -> Self::Scalar;
+}
+
+pub struct Linalg4;
+impl Space for Linalg4 {
+	type Scalar = f64;
+	type Vector = Vector<f64, 4>;
+	type Matrix = RowMatrix<f64, 4, 4>;
+
+	fn sum(v: Self::Vector) -> Self::Scalar {
+		v.sum()
+	}
+}
+
+pub trait LikelihoodTrait {
+	type S: Space;
+
 	fn propose(
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[Transition<N>],
+		transitions: &[<Self::S as Space>::Matrix],
 		leaves_end: usize,
 		root: usize,
-		frequencies: Vector<f64, N>,
+		frequencies: <Self::S as Space>::Vector,
 	) -> Result<()>;
 
-	fn likelihood(&mut self) -> Result<f64>;
+	fn likelihood(&mut self) -> Result<<Self::S as Space>::Scalar>;
 
 	fn accept(&mut self) -> Result<()>;
 
 	fn reject(&mut self) -> Result<()>;
 }
 
-pub struct GenericLikelihood<const N: usize, L: LikelihoodTrait<N>> {
+pub struct GenericLikelihood<S, L>
+where
+	S: Space,
+	L: LikelihoodTrait<S = S>,
+{
 	calculator: L,
-	transitions: Transitions<N>,
+	transitions: Transitions<S>,
 	/// Last accepted likelihood
-	cache: f64,
+	cache: S::Scalar,
 	/// Last calculated likelihood.  It's different from the cache, because
 	/// it might get rejected.
-	last: f64,
+	last: S::Scalar,
 	launched_update: bool,
 	tree: Py<PyTree>,
 }
 
-impl<L> GenericLikelihood<4, L>
+impl<S, L> GenericLikelihood<S, L>
 where
-	L: LikelihoodTrait<4>,
+	S: Space,
+	L: LikelihoodTrait<S = S>,
 {
 	fn new(
 		calculator: L,
-		substitution: BoxedSubstitutionModel<4>,
+		substitution: BoxedSubstitutionModel<S>,
 		clock: PyClock,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
-		let transitions = Transitions::<4>::new(
+		let transitions = Transitions::new(
 			tree.get().num_edges(),
 			substitution,
 			clock,
@@ -73,8 +115,8 @@ where
 		let mut out = Self {
 			calculator,
 			transitions,
-			cache: f64::NAN,
-			last: f64::NAN,
+			cache: f64::NAN.into(),
+			last: f64::NAN.into(),
 			launched_update: false,
 			tree,
 		};
@@ -86,6 +128,72 @@ where
 		// cache nor last will be NaN.
 		out.accept()?;
 		Ok(out)
+	}
+
+	fn propose(&mut self, py: Python) -> Result<()> {
+		let tree = &mut self.tree.get().inner();
+		let full_update = self.transitions.update(py, tree)?;
+		let (nodes, leaves_end) = if full_update {
+			tree.full_update()
+		} else {
+			tree.nodes_to_update()
+		};
+		trace!(
+			target: "b3::likelihood::propose",
+			num_nodes_to_update = nodes.len(),
+			full_update;
+			""
+		);
+
+		// no tree update, return the cache
+		if nodes.is_empty() {
+			self.launched_update = false;
+			return Ok(());
+		}
+
+		let (nodes, edges, root) = tree.to_lists(&nodes);
+
+		let transitions = self.transitions.matrices(&edges);
+
+		let frequencies = self.transitions.frequencies();
+
+		self.calculator.propose(
+			&nodes,
+			&edges,
+			&transitions,
+			leaves_end,
+			root,
+			frequencies,
+		)?;
+		self.launched_update = true;
+
+		Ok(())
+	}
+
+	fn likelihood(&mut self) -> Result<S::Scalar> {
+		if !self.launched_update {
+			self.last = self.cache;
+			return Ok(self.cache);
+		}
+
+		let likelihood = self.calculator.likelihood()?;
+		self.last = likelihood;
+		Ok(likelihood)
+	}
+
+	fn accept(&mut self) -> Result<()> {
+		self.cache = self.last;
+		self.launched_update = false;
+		self.calculator.accept()?;
+		self.transitions.accept();
+		Ok(())
+	}
+
+	fn reject(&mut self) -> Result<()> {
+		self.launched_update = false;
+		self.calculator.reject()?;
+		self.transitions.reject();
+		Ok(())
 	}
 }
 
@@ -127,79 +235,6 @@ fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
 	(msa, weights)
 }
 
-impl<const N: usize, L: LikelihoodTrait<N>> GenericLikelihood<N, L> {
-	fn propose(&mut self, py: Python) -> Result<()> {
-		let tree = &mut self.tree.get().inner();
-		let full_update = self.transitions.update(py, tree)?;
-		let (nodes, leaves_end) = if full_update {
-			tree.full_update()
-		} else {
-			tree.nodes_to_update()
-		};
-		trace!(
-			target: "b3::likelihood::propose",
-			num_nodes_to_update = nodes.len(),
-			full_update;
-			""
-		);
-
-		// no tree update, return the cache
-		if nodes.is_empty() {
-			self.launched_update = false;
-			return Ok(());
-		}
-
-		let (nodes, edges, root) = tree.to_lists(&nodes);
-
-		let transitions = self.transitions.matrices(&edges);
-
-		let frequencies = self.transitions.frequencies();
-
-		self.calculator.propose(
-			&nodes,
-			&edges,
-			&transitions,
-			leaves_end,
-			root,
-			frequencies,
-		)?;
-		self.launched_update = true;
-
-		Ok(())
-	}
-
-	fn likelihood(&mut self) -> Result<f64> {
-		if !self.launched_update {
-			self.last = self.cache;
-			return Ok(self.cache);
-		}
-
-		let likelihood = self.calculator.likelihood()?;
-		trace!(
-			target: "b3::likelihood::likelihood",
-			likelihood;
-			""
-		);
-		self.last = likelihood;
-		Ok(likelihood)
-	}
-
-	fn accept(&mut self) -> Result<()> {
-		self.cache = self.last;
-		self.launched_update = false;
-		self.calculator.accept()?;
-		self.transitions.accept();
-		Ok(())
-	}
-
-	fn reject(&mut self) -> Result<()> {
-		self.launched_update = false;
-		self.calculator.reject()?;
-		self.transitions.reject();
-		Ok(())
-	}
-}
-
 macro_rules! likelihood_methods {
 	($type:ty) => {
 		#[pymethods]
@@ -225,7 +260,7 @@ macro_rules! likelihood_methods {
 
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
-	inner: Mutex<GenericLikelihood<4, CpuLikelihood<4>>>,
+	inner: Mutex<GenericLikelihood<Linalg4, CpuLikelihood<Linalg4>>>,
 }
 
 #[pymethods]
@@ -233,7 +268,7 @@ impl PyCpu4Likelihood {
 	#[new]
 	fn new(
 		msa: PyMsa,
-		substitution: BoxedSubstitutionModel<4>,
+		substitution: Substitution4,
 		clock: PyClock,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
@@ -259,7 +294,7 @@ likelihood_methods!(PyCpu4Likelihood);
 	frozen
 )]
 pub struct PyThread4Likelihood {
-	inner: Mutex<GenericLikelihood<4, ThreadedLikelihood<4>>>,
+	inner: Mutex<GenericLikelihood<Linalg4, ThreadedLikelihood<Linalg4>>>,
 }
 
 #[pymethods]
@@ -272,7 +307,7 @@ impl PyThread4Likelihood {
 	))]
 	fn new(
 		msa: PyMsa,
-		substitution: BoxedSubstitutionModel<4>,
+		substitution: Substitution4,
 		clock: PyClock,
 		tree: Py<PyTree>,
 		thread_split_size: usize,
@@ -296,7 +331,7 @@ likelihood_methods!(PyThread4Likelihood);
 
 #[pyclass(name = "CUDALikelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCudaLikelihood {
-	inner: Mutex<GenericLikelihood<4, CudaLikelihood>>,
+	inner: Mutex<GenericLikelihood<Linalg4, CudaLikelihood>>,
 }
 
 #[pymethods]
@@ -309,7 +344,7 @@ impl PyCudaLikelihood {
 	))]
 	fn new(
 		msa: PyMsa,
-		substitution: BoxedSubstitutionModel<4>,
+		substitution: Substitution4,
 		clock: PyClock,
 		tree: Py<PyTree>,
 		cuda_device: usize,

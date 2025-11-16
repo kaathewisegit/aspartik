@@ -18,11 +18,12 @@ skvec = { workspace = true, features = ["serde"] }
 util = { workspace = true }
 
 anyhow = { workspace = true }
-blake3 = { workspace = true }
 bincode = { workspace = true, features = ["serde", "alloc"] }
+blake3 = { workspace = true }
 crossbeam-channel = { workspace = true }
 cudarc = { workspace = true, features = ["driver", "dynamic-loading", "cuda-12000", "std"] }
 log = { workspace = true, features = ["kv"] }
+num-traits = { workspace = true }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }

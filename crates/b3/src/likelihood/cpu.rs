@@ -1,37 +1,50 @@
 use anyhow::Result;
 use data::{DnaNucleotide, Msa};
+use linalg::Vector;
+use num_traits::{Float, NumCast, Zero};
 
-use super::{LikelihoodTrait, Row, Transition};
-use crate::{likelihood::deduplicate, util::msa_to_likelihoods};
+use super::{LikelihoodTrait, Space};
+use crate::{
+	likelihood::{Linalg4, deduplicate},
+	util::msa_to_likelihoods,
+};
 use skvec::{SkVec, skvec};
 
-pub struct CpuLikelihood<const N: usize> {
-	leaves: Vec<Row<N>>,
-	projections: SkVec<Row<N>>,
+pub struct CpuLikelihood<S>
+where
+	S: Space,
+{
+	leaves: Vec<S::Vector>,
+	projections: SkVec<S::Vector>,
 	scales: SkVec<bool>,
 
 	/// Pattern weights
-	weights: Vec<f64>,
+	weights: Vec<S::Scalar>,
 
 	num_sites: usize,
 	num_leaves: usize,
 
 	updated_edges: Vec<usize>,
-	likelihoods: Vec<f64>,
+	likelihoods: Vec<S::Scalar>,
 }
 
 const SCALE: f64 = 1e-30;
 
-impl LikelihoodTrait<4> for CpuLikelihood<4> {
+impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
+	type S = S;
+
 	fn propose(
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[Transition<4>],
+		transitions: &[S::Matrix],
 		leaves_end: usize,
 		root: usize,
-		frequencies: Row<4>,
+		frequencies: S::Vector,
 	) -> Result<()> {
+		// TODO: verify this got constant folded
+		let scale = <S::Scalar as NumCast>::from(SCALE).unwrap();
+
 		assert_eq!(nodes.len(), edges.len());
 		assert_eq!(nodes.len(), transitions.len());
 
@@ -79,10 +92,7 @@ impl LikelihoodTrait<4> for CpuLikelihood<4> {
 
 				let likelihood = left * right;
 				let projection = transition * likelihood;
-				should_scale &= projection[0] < SCALE;
-				should_scale &= projection[1] < SCALE;
-				should_scale &= projection[2] < SCALE;
-				should_scale &= projection[3] < SCALE;
+				should_scale = projection < scale;
 
 				self.projections
 					.set(edge_idx + site, projection);
@@ -92,7 +102,7 @@ impl LikelihoodTrait<4> for CpuLikelihood<4> {
 				for site in 0..num_sites {
 					let mut projection = self.projections
 						[edge_idx + site];
-					projection /= SCALE;
+					projection /= scale;
 					self.projections.set(
 						edge_idx + site,
 						projection,
@@ -118,7 +128,7 @@ impl LikelihoodTrait<4> for CpuLikelihood<4> {
 			let right = self.projections[root_right_idx + site];
 			let likelihood = left * right;
 			let likelihood = likelihood * frequencies;
-			let log_sum = likelihood.sum().ln();
+			let log_sum = S::sum(likelihood).ln();
 
 			self.likelihoods[site] = log_sum;
 		}
@@ -126,18 +136,23 @@ impl LikelihoodTrait<4> for CpuLikelihood<4> {
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<f64> {
-		let mut out = 0.0;
+	fn likelihood(&mut self) -> Result<S::Scalar> {
+		let ln_scale =
+			<S::Scalar as NumCast>::from(SCALE).unwrap().ln();
+
+		let mut out = S::Scalar::zero();
 
 		for (likelihood, weight) in
 			self.likelihoods.iter().zip(&self.weights)
 		{
-			out += likelihood * weight;
+			out += *likelihood * *weight;
 		}
 
+		let num_sites =
+			<S::Scalar as NumCast>::from(self.num_sites).unwrap();
 		for scaled in &self.scales {
 			if *scaled {
-				out += SCALE.ln() * self.num_sites as f64;
+				out += ln_scale * num_sites;
 			}
 		}
 
@@ -172,7 +187,7 @@ impl LikelihoodTrait<4> for CpuLikelihood<4> {
 	}
 }
 
-impl CpuLikelihood<4> {
+impl CpuLikelihood<Linalg4> {
 	pub fn new(msa: Msa<DnaNucleotide>) -> Self {
 		let (msa, weights) = deduplicate(msa);
 
@@ -183,7 +198,8 @@ impl CpuLikelihood<4> {
 
 		let leaves = msa_to_likelihoods(msa);
 
-		let projections = skvec![Row::default(); num_edges * num_sites];
+		let projections =
+			skvec![Vector::default(); num_edges * num_sites];
 		let scales = skvec![false; num_edges];
 
 		Self {
