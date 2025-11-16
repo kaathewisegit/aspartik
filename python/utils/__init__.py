@@ -47,3 +47,14 @@ def random_frequencies_many(num: int = 1000) -> list[Frequencies]:
     rng = RNG(4)
 
     return [random_frequencies(rng) for _ in range(num)]
+
+
+def random_tree(rng, lower: int, upper: int):
+    len = rng.random_int(lower, upper)
+    return Tree([str(i) for i in range(len)], rng)
+
+
+def random_trees(lower: int, upper: int, num: int = 1000):
+    rng = RNG(4)
+
+    return [random_tree(rng, lower, upper) for _ in range(num)]

@@ -107,9 +107,9 @@ class Tree(Stateful):
     def swap_parents(self, a: Node, b: Node) -> None:
         """Swaps the parents of nodes `a` and `b`
 
-        `a` and `b` must not be a child/parent and neither of them can be a
-        root node.  If `a` and `b` share the same parent, they switch polarity
-        (left child becomes the right child and visa versa).
+        `a` and `b` must not be a descendant/ancestors and neither of them can
+        be a root node.  If `a` and `b` share the same parent, they switch
+        polarity (left child becomes the right child and visa versa).
         """
     @property
     def num_nodes(self) -> int:

@@ -1,3 +1,6 @@
+import pytest
+from utils import random_trees
+
 import pickle
 
 from aspartik.b3 import Tree
@@ -54,3 +57,24 @@ def test_names(rng):
     names = [str(rng.random_int(0, 2**32)) for _ in range(1000)]
     tree = Tree(names, rng)
     assert tree.names == names
+
+
+@pytest.mark.parametrize("tree", random_trees(10, 20, num=15))
+def test_swap_parents(tree, rng):
+    a, a_parent = tree.random_nonroot_node(rng)
+    b, b_parent = tree.random_nonroot_node(rng)
+
+    a_invalid = not tree.height_of(a) < tree.height_of(b_parent)
+    b_invalid = not tree.height_of(b) < tree.height_of(a_parent)
+
+    if a_invalid or b_invalid:
+        with pytest.raises(RuntimeError):
+            tree.swap_parents(a, b)
+        return
+    else:
+        tree.swap_parents(a, b)
+
+    new_a_parent, new_b_parent = tree.parent_of(a), tree.parent_of(b)
+
+    assert a_parent == new_b_parent
+    assert b_parent == new_a_parent

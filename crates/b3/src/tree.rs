@@ -551,33 +551,39 @@ impl Tree {
 		self.update_edge(edge, replacement);
 	}
 
-	// TODO: invariants (a can't be a parent of b)
-	pub fn swap_parents(&mut self, a: &Node, b: &Node) {
-		assert!(self.parent_of(a).is_some(), "a must not be root");
-		assert!(self.parent_of(b).is_some(), "b must not be root");
+	pub fn swap_parents(&mut self, a: &Node, b: &Node) -> Result<()> {
+		ensure!(self.parent_of(a).is_some(), "a must not be root");
+		ensure!(self.parent_of(b).is_some(), "b must not be root");
 
 		let edge_a = self.edge_index(a);
 		let edge_b = self.edge_index(b);
 
 		self.update_edge(edge_a, b);
 		self.update_edge(edge_b, a);
+
+		ensure!(self.is_node_height_valid(a));
+		ensure!(self.is_node_height_valid(b));
+
+		Ok(())
 	}
 
 	pub(crate) fn is_node_height_valid(&self, node: &Node) -> bool {
 		let height = self.height_of(node);
 
-		if let Some(leaf) = self.as_leaf(node) {
-			let parent = self.parent_of(&leaf).unwrap();
-			height < self.height_of(&parent)
-		} else if let Some(internal) = self.as_internal(node) {
-			let (left, right) = self.children_of(&internal);
-			let (left_height, right_height) =
-				(self.height_of(&left), self.height_of(&right));
-
-			height > left_height && height > right_height
-		} else {
-			unreachable!()
+		if let Some(parent) = self.parent_of(node)
+			&& height >= self.height_of(&parent)
+		{
+			return false;
 		}
+
+		let Some(internal) = self.as_internal(node) else {
+			return true;
+		};
+
+		let (left, right) = self.children_of(&internal);
+
+		height > self.height_of(&left)
+			&& height > self.height_of(&right)
 	}
 
 	pub(crate) fn has_dated_tips(&self) -> bool {
@@ -1057,8 +1063,7 @@ impl PyTree {
 	}
 
 	fn swap_parents(&self, a: Node, b: Node) -> Result<()> {
-		self.inner().swap_parents(&a, &b);
-		Ok(())
+		self.inner().swap_parents(&a, &b)
 	}
 
 	#[getter]
