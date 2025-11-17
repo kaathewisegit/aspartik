@@ -159,7 +159,7 @@ impl LikelihoodTrait for CudaLikelihood {
 			out += likelihood * weight;
 		}
 
-		let scale_sums = self.stream.memcpy_dtov(&self.scale_sums)?;
+		let scale_sums = self.stream.clone_dtoh(&self.scale_sums)?;
 		for (scale, weight) in scale_sums.iter().zip(&self.weights) {
 			out -= f64::from(*scale) * weight;
 		}
@@ -359,7 +359,7 @@ impl CudaLikelihood {
 	) -> Result<Vec<f64>> {
 		self.update_likelihoods(root.index() as u32, frequencies)?;
 
-		let likelihoods = self.stream.memcpy_dtov(&self.likelihoods)?;
+		let likelihoods = self.stream.clone_dtoh(&self.likelihoods)?;
 
 		Ok(likelihoods)
 	}
@@ -393,7 +393,7 @@ impl CudaLikelihood {
 		// there's no need for cross-stream synchronization
 		unsafe { context.disable_event_tracking() };
 
-		let leaves = stream.memcpy_stod(&msa_to_likelihoods(msa))?;
+		let leaves = stream.clone_htod(&msa_to_likelihoods(msa))?;
 		let projections: CudaSlice<Row> =
 			stream.alloc_zeros(num_edges * num_sites)?;
 		let projections_backup: CudaSlice<Row> =
