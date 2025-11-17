@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Protocol
 
 from .._aspartik_rust_impl._b3_rust_impl import (
     CPU4Likelihood as CPU4Likelihood,
@@ -9,7 +10,7 @@ from . import Stateful
 from .parameters import Weights
 
 
-class Likelihood(Stateful):
+class Likelihood(Stateful, Protocol):
     """
     Tree likelihood calculator
 

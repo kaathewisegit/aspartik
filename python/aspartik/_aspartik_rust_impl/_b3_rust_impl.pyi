@@ -570,7 +570,7 @@ class HKY:
     clock of mitochondrial DNA, <https://doi.org/10.1007/BF02101694>.
     """
 
-    frequencies: Weights
+    frequencies: Weights | tuple[float, float, float, float]
     """
     DNA nucleotide frequencies
 
