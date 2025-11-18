@@ -10,10 +10,8 @@ name: PyPI wheels
 
 on:
   push:
-    branches:
-      - trunk
     tags:
-      - '*'
+      - 'v*'
 
 permissions:
   contents: read
