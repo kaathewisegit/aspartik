@@ -13,27 +13,32 @@ pub use phred::Phred;
 use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
-pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	use util::py_make_submodule;
-	let m = py_make_submodule!(py, "_data_rust_impl");
+#[pymodule(name = "_data_rust_impl")]
+pub mod pymodule {
+	use super::*;
 
-	// fasta
-	m.add_class::<fasta::python::PyFastaDnaRecord>()?;
+	#[pymodule_export]
+	use fasta::python::PyFastaDnaRecord;
 
-	// msa
-	m.add_class::<msa::python::PyMsa>()?;
+	#[pymodule_export]
+	use msa::python::PyMsa;
 
-	// newick
-	m.add_class::<newick::python::PyTree>()?;
+	#[pymodule_export]
+	use newick::python::PyTree;
 
-	// nucleotides
-	m.add_class::<DnaNucleotide>()?;
+	#[pymodule_export]
+	use DnaNucleotide;
 
-	// phred
-	m.add_class::<Phred>()?;
+	#[pymodule_export]
+	use Phred;
 
-	// seq
-	m.add_class::<seq::python::PyDnaSeq>()?;
+	#[pymodule_export]
+	use seq::python::PyDnaSeq;
 
-	Ok(m)
+	#[pymodule_init]
+	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
+		::util::py_patch_module!(m);
+
+		Ok(())
+	}
 }

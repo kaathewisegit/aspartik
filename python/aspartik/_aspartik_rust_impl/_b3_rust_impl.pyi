@@ -275,13 +275,6 @@ class Proposal:
         """Accepts the move unconditionally"""
 
 class CPU4Likelihood(Likelihood):
-    """
-    4-state DNA likelihood calculator.
-
-    It's synchronous.  `Thread4Likelihood` and `CUDALikelihood` should be used
-    for parallel calculations for alingments larger than 100Kb.
-    """
-
     def __init__(
         self,
         msa: MSA,
@@ -291,10 +284,6 @@ class CPU4Likelihood(Likelihood):
     ): ...
 
 class Thread4Likelihood(Likelihood):
-    """
-    Several `CPU4Likelihood`s in a trenchcoat.
-    """
-
     def __init__(
         self,
         msa: MSA,
@@ -306,14 +295,6 @@ class Thread4Likelihood(Likelihood):
     ): ...
 
 class CUDALikelihood(Likelihood):
-    """
-    Likelihood calculations on NVIDIA graphics cards.
-
-    Only supports 4-state DNA models.
-
-    `cuda_device` allows selecting the device index.
-    """
-
     def __init__(
         self,
         msa: MSA,
@@ -325,10 +306,6 @@ class CUDALikelihood(Likelihood):
     ): ...
 
 class MCMC:
-    """
-    The main object which runs the analysis
-    """
-
     def __init__(
         self,
         burnin: int,

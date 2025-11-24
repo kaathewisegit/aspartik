@@ -13,6 +13,7 @@ use profiler::time;
 use rng::PyRng;
 use util::py_call_method;
 
+/// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
 pub struct Mcmc {
 	posterior: Mutex<f64>,

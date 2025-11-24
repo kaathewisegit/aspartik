@@ -1,13 +1,17 @@
 use pyo3::prelude::*;
 
 #[pymodule(name = "_aspartik_rust_impl")]
-fn aspartik(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
-	m.add_submodule(&b3::pymodule(py)?)?;
-	m.add_submodule(&data::pymodule(py)?)?;
-	m.add_submodule(&io::pymodule(py)?)?;
-	m.add_submodule(&math::pymodule(py)?)?;
-	m.add_submodule(&rng::pymodule(py)?)?;
-	m.add_submodule(&stats::pymodule(py)?)?;
-
-	Ok(())
+pub mod pymodule {
+	#[pymodule_export]
+	use b3::pymodule as b3;
+	#[pymodule_export]
+	use data::pymodule as data;
+	#[pymodule_export]
+	use io::pymodule as io;
+	#[pymodule_export]
+	use math::pymodule as math;
+	#[pymodule_export]
+	use rng::pymodule as rng;
+	#[pymodule_export]
+	use stats::pymodule as stats;
 }

@@ -317,28 +317,45 @@ where
 use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
-pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	let m = PyModule::new(py, "distributions")?;
+#[pymodule(name = "distributions")]
+pub mod pymodule {
+	use super::*;
 
-	m.add_class::<Beta>()?;
-	m.add_class::<Exp>()?;
-	m.add_class::<Gamma>()?;
-	m.add_class::<InverseGamma>()?;
-	m.add_class::<Laplace>()?;
-	m.add_class::<LogNormal>()?;
-	m.add_class::<Normal>()?;
-	m.add_class::<Poisson>()?;
-	m.add_class::<Uniform>()?;
+	#[pymodule_export]
+	use Beta;
+	#[pymodule_export]
+	use Exp;
+	#[pymodule_export]
+	use Gamma;
+	#[pymodule_export]
+	use InverseGamma;
+	#[pymodule_export]
+	use Laplace;
+	#[pymodule_export]
+	use LogNormal;
+	#[pymodule_export]
+	use Normal;
+	#[pymodule_export]
+	use Poisson;
+	#[pymodule_export]
+	use Uniform;
 
-	m.add_class::<BetaError>()?;
-	m.add_class::<ExpError>()?;
-	m.add_class::<GammaError>()?;
-	m.add_class::<InverseGammaError>()?;
-	m.add_class::<LaplaceError>()?;
-	m.add_class::<LogNormalError>()?;
-	m.add_class::<NormalError>()?;
-	m.add_class::<PoissonError>()?;
-	m.add_class::<UniformError>()?;
-
-	Ok(m)
+	#[pymodule_export]
+	use BetaError;
+	#[pymodule_export]
+	use ExpError;
+	#[pymodule_export]
+	use GammaError;
+	#[pymodule_export]
+	use InverseGammaError;
+	#[pymodule_export]
+	use LaplaceError;
+	#[pymodule_export]
+	use LogNormalError;
+	#[pymodule_export]
+	use NormalError;
+	#[pymodule_export]
+	use PoissonError;
+	#[pymodule_export]
+	use UniformError;
 }

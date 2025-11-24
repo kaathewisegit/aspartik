@@ -258,6 +258,10 @@ macro_rules! likelihood_methods {
 	};
 }
 
+/// 4-state DNA likelihood calculator.
+///
+/// It's synchronous.  `Thread4Likelihood` and `CUDALikelihood` should be used
+/// for parallel calculations for alingments larger than 100Kb.
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
 	inner: Mutex<GenericLikelihood<Linalg4, CpuLikelihood<Linalg4>>>,
@@ -288,6 +292,7 @@ impl PyCpu4Likelihood {
 
 likelihood_methods!(PyCpu4Likelihood);
 
+/// Several `CPU4Likelihood`s in a trenchcoat.
 #[pyclass(
 	name = "Thread4Likelihood",
 	module = "aspartik.b3.likelihoods",
@@ -329,6 +334,10 @@ impl PyThread4Likelihood {
 
 likelihood_methods!(PyThread4Likelihood);
 
+/// Likelihood calculations on NVIDIA graphics cards.
+///
+/// Only supports 4-state DNA models.  `cuda_device` allows selecting the device
+/// index.
 #[pyclass(name = "CUDALikelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCudaLikelihood {
 	inner: Mutex<GenericLikelihood<Linalg4, CudaLikelihood>>,

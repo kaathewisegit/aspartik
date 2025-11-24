@@ -51,11 +51,17 @@ pub mod statistics;
 use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
-pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	use util::py_make_submodule;
-	let m = py_make_submodule!(py, "_stats_rust_impl");
+#[pymodule(name = "_stats_rust_impl")]
+pub mod pymodule {
+	use super::*;
 
-	m.add_submodule(&distribution::pymodule(py)?)?;
+	#[pymodule_export]
+	use distribution::pymodule;
 
-	Ok(m)
+	#[pymodule_init]
+	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
+		::util::py_patch_module!(m);
+
+		Ok(())
+	}
 }

@@ -99,25 +99,18 @@ macro_rules! impl_pyerr {
 }
 
 #[macro_export]
-macro_rules! py_make_submodule {
-	($py:expr, $name:literal) => {{
-		let m = ::pyo3::types::PyModule::new(
-			$py,
-			concat!("aspartik._aspartik_rust_impl.", $name),
-		)?;
-
+macro_rules! py_patch_module {
+	($m:ident) => {
 		// https://github.com/PyO3/pyo3/issues/1517#issuecomment-808664021
 		::pyo3::py_run!(
-			$py,
-			m,
+			$m.py(),
+			$m,
 			&format!(
 				"import sys; sys.modules['aspartik._aspartik_rust_impl.{}'] = m",
-				$name,
+				$m.name()?,
 			)
 		);
-
-		m
-	}};
+	}
 }
 
 #[macro_export]

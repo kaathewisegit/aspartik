@@ -9,51 +9,76 @@ pub mod tolerance;
 use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
-pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	use util::py_make_submodule;
-	let m = py_make_submodule!(py, "_math_rust_impl");
+#[pymodule(name = "_math_rust_impl")]
+pub mod pymodule {
+	use super::*;
 
-	use function::erf::*;
-	m.add_function(wrap_pyfunction!(erf, &m)?)?;
-	m.add_function(wrap_pyfunction!(erf_inv, &m)?)?;
-	m.add_function(wrap_pyfunction!(erfc, &m)?)?;
-	m.add_function(wrap_pyfunction!(erfc_inv, &m)?)?;
+	#[pymodule_export]
+	use function::erf::erf;
+	#[pymodule_export]
+	use function::erf::erf_inv;
+	#[pymodule_export]
+	use function::erf::erfc;
+	#[pymodule_export]
+	use function::erf::erfc_inv;
 
-	use function::exponential::*;
-	m.add_function(wrap_pyfunction!(ei, &m)?)?;
+	#[pymodule_export]
+	use function::exponential::ei;
 
-	use function::factorial::*;
-	m.add_function(wrap_pyfunction!(factorial, &m)?)?;
-	m.add_function(wrap_pyfunction!(ln_factorial, &m)?)?;
-	m.add_function(wrap_pyfunction!(binomial, &m)?)?;
-	m.add_function(wrap_pyfunction!(ln_binomial, &m)?)?;
+	#[pymodule_export]
+	use function::factorial::binomial;
+	#[pymodule_export]
+	use function::factorial::factorial;
+	#[pymodule_export]
+	use function::factorial::ln_binomial;
+	#[pymodule_export]
+	use function::factorial::ln_factorial;
 
-	use function::gamma::*;
-	m.add_function(wrap_pyfunction!(gamma, &m)?)?;
-	m.add_function(wrap_pyfunction!(ln_gamma, &m)?)?;
-	m.add_function(wrap_pyfunction!(gamma_ui, &m)?)?;
-	m.add_function(wrap_pyfunction!(gamma_li, &m)?)?;
-	m.add_function(wrap_pyfunction!(gamma_ur, &m)?)?;
-	m.add_function(wrap_pyfunction!(gamma_lr, &m)?)?;
-	m.add_function(wrap_pyfunction!(digamma, &m)?)?;
-	m.add_function(wrap_pyfunction!(digamma_inv, &m)?)?;
+	#[pymodule_export]
+	use function::gamma::digamma;
+	#[pymodule_export]
+	use function::gamma::digamma_inv;
+	#[pymodule_export]
+	use function::gamma::gamma;
+	#[pymodule_export]
+	use function::gamma::gamma_li;
+	#[pymodule_export]
+	use function::gamma::gamma_lr;
+	#[pymodule_export]
+	use function::gamma::gamma_ui;
+	#[pymodule_export]
+	use function::gamma::gamma_ur;
+	#[pymodule_export]
+	use function::gamma::ln_gamma;
 
-	use function::harmonic::*;
-	m.add_function(wrap_pyfunction!(harmonic, &m)?)?;
-	m.add_function(wrap_pyfunction!(generalized_harmonic, &m)?)?;
+	#[pymodule_export]
+	use function::harmonic::generalized_harmonic;
+	#[pymodule_export]
+	use function::harmonic::harmonic;
 
-	use function::logistic::*;
-	m.add_function(wrap_pyfunction!(logistic, &m)?)?;
-	m.add_function(wrap_pyfunction!(logit, &m)?)?;
+	#[pymodule_export]
+	use function::logistic::logistic;
+	#[pymodule_export]
+	use function::logistic::logit;
 
-	m.add_function(wrap_pyfunction!(tolerance::is_close, &m)?)?;
+	#[pymodule_export]
+	use tolerance::is_close;
 
-	use float::*;
-	m.add_function(wrap_pyfunction!(sign, &m)?)?;
-	m.add_function(wrap_pyfunction!(exponent, &m)?)?;
-	m.add_function(wrap_pyfunction!(exponent_bits, &m)?)?;
-	m.add_function(wrap_pyfunction!(mantissa, &m)?)?;
-	m.add_function(wrap_pyfunction!(mantissa_bits, &m)?)?;
+	#[pymodule_export]
+	use float::exponent;
+	#[pymodule_export]
+	use float::exponent_bits;
+	#[pymodule_export]
+	use float::mantissa;
+	#[pymodule_export]
+	use float::mantissa_bits;
+	#[pymodule_export]
+	use float::sign;
 
-	Ok(m)
+	#[pymodule_init]
+	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
+		::util::py_patch_module!(m);
+
+		Ok(())
+	}
 }

@@ -6,12 +6,17 @@ pub mod sam;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-#[cfg(feature = "python")]
-pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	use util::py_make_submodule;
-	let m = py_make_submodule!(py, "_io_rust_impl");
+#[pymodule(name = "_io_rust_impl")]
+pub mod pymodule {
+	use super::*;
 
-	m.add_class::<fasta::PyFastaDnaReader>()?;
+	#[pymodule_export]
+	use fasta::PyFastaDnaReader;
 
-	Ok(m)
+	#[pymodule_init]
+	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
+		::util::py_patch_module!(m);
+
+		Ok(())
+	}
 }

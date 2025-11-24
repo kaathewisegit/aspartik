@@ -17,29 +17,52 @@ pub use tree::Tree;
 
 use pyo3::prelude::*;
 
-pub fn pymodule(py: Python) -> PyResult<Bound<PyModule>> {
-	use ::util::py_make_submodule;
-	let m = py_make_submodule!(py, "_b3_rust_impl");
+#[pymodule(name = "_b3_rust_impl")]
+pub mod pymodule {
+	use super::*;
 
-	m.add_class::<likelihood::PyCpu4Likelihood>()?;
-	m.add_class::<likelihood::PyThread4Likelihood>()?;
-	m.add_class::<likelihood::PyCudaLikelihood>()?;
-	m.add_class::<mcmc::Mcmc>()?;
-	m.add_class::<operator::PyProposal>()?;
-	m.add_class::<tree::PyTree>()?;
-	m.add_class::<tree::Leaf>()?;
-	m.add_class::<tree::Internal>()?;
+	#[pymodule_export]
+	use likelihood::PyCpu4Likelihood;
+	#[pymodule_export]
+	use likelihood::PyCudaLikelihood;
+	#[pymodule_export]
+	use likelihood::PyThread4Likelihood;
 
-	m.add_class::<builtin::operators::EpochScale>()?;
-	m.add_class::<builtin::operators::SubtreeLeap>()?;
-	m.add_class::<builtin::priors::ConstantPopulation>()?;
-	m.add_class::<builtin::priors::ExponentialGrowth>()?;
-	m.add_class::<builtin::priors::Monophyly>()?;
-	m.add_class::<builtin::priors::Yule>()?;
+	#[pymodule_export]
+	use mcmc::Mcmc;
+	#[pymodule_export]
+	use operator::PyProposal;
+	#[pymodule_export]
+	use tree::Internal;
+	#[pymodule_export]
+	use tree::Leaf;
+	#[pymodule_export]
+	use tree::PyTree;
 
-	m.add_class::<substitution::JC>()?;
-	m.add_class::<substitution::K80>()?;
-	m.add_class::<substitution::HKY>()?;
+	#[pymodule_export]
+	use builtin::operators::EpochScale;
+	#[pymodule_export]
+	use builtin::operators::SubtreeLeap;
+	#[pymodule_export]
+	use builtin::priors::ConstantPopulation;
+	#[pymodule_export]
+	use builtin::priors::ExponentialGrowth;
+	#[pymodule_export]
+	use builtin::priors::Monophyly;
+	#[pymodule_export]
+	use builtin::priors::Yule;
 
-	Ok(m)
+	#[pymodule_export]
+	use substitution::HKY;
+	#[pymodule_export]
+	use substitution::JC;
+	#[pymodule_export]
+	use substitution::K80;
+
+	#[pymodule_init]
+	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
+		::util::py_patch_module!(m);
+
+		Ok(())
+	}
 }
