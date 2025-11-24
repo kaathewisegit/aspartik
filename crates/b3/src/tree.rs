@@ -1159,18 +1159,6 @@ impl PyTree {
 		Ok(self.inner().is_leaf(&node))
 	}
 
-	/// Converts `node` to the type `Internal` if it is internal, or
-	/// returns `None` otherwise
-	fn as_internal(&self, node: Node) -> Option<Internal> {
-		self.inner().as_internal(&node)
-	}
-
-	/// Converts `node` to the type `Leaf` if it is a leaf, or returns
-	/// `None` otherwise
-	fn as_leaf(&self, node: Node) -> Option<Leaf> {
-		self.inner().as_leaf(&node)
-	}
-
 	/// Returns the root node of the tree
 	///
 	/// Note that the root node might change after tree has been edited, so
