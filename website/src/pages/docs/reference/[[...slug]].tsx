@@ -65,12 +65,7 @@ function moduleUrl(module: { fullname: string }): string {
 
 function Topbar(): JSX.Element {
 	return (
-		<header
-			class="
-			flex flex-row items-center lg:hidden peer
-			z-10 sticky top-0
-			h-8 pl-2 bg-gray-300"
-		>
+		<header class="peer sticky top-0 z-10 flex h-8 flex-row items-center bg-gray-300 pl-2 lg:hidden">
 			<input type="checkbox" id="sidebar-toggle" hidden />
 			<label for="sidebar-toggle">
 				<BurgerIcon />
@@ -116,13 +111,7 @@ function Sidebar(props: ModuleType): JSX.Element {
 	}
 
 	return (
-		<nav
-			class="
-			hidden peer-has-[input:checked]:block
-			fixed overflow-y-auto
-			h-screen w-screen lg:w-64
-			pl-4 bg-white shadow-md z-10 w-screen"
-		>
+		<nav class="fixed z-10 hidden h-screen w-screen w-screen overflow-y-auto bg-white pl-4 shadow-md peer-has-[input:checked]:block lg:w-64">
 			<Refs />
 		</nav>
 	)
@@ -147,15 +136,15 @@ export function RefList<T extends { name: string }>(props: {
 
 	return (
 		<>
-			<h3 class="font-bold text-xl mb-1">{props.name}</h3>
-			<ul class="space-y-2 mb-6">{props.values.map((obj) => Ref(obj))}</ul>
+			<h3 class="mb-1 font-bold text-xl">{props.name}</h3>
+			<ul class="mb-6 space-y-2">{props.values.map((obj) => Ref(obj))}</ul>
 		</>
 	)
 }
 
 export async function Body(props: ModuleType): Promise<string> {
 	return (
-		<article id={props.name} class="mx-auto p-4 max-w-200">
+		<article id={props.name} class="mx-auto max-w-200 p-4">
 			<ModuleHeading {...props} />
 			<Docstring docstring={props.docstring} />
 
@@ -179,7 +168,7 @@ function ModuleHeading(props: ModuleType): JSX.Element {
 	}
 
 	return (
-		<h1 class="font-bold font-mono text-lg lg:text-4xl mb-4">
+		<h1 class="mb-4 font-bold font-mono text-lg lg:text-4xl">
 			{modules.map((module) => (
 				<>
 					<a href={moduleUrl(module)}>{module.name}</a>.
@@ -284,7 +273,7 @@ function Funcs(props: { list: FunctionType[] }): JSX.Element {
 function Ref(props: { qualname: string }): JSX.Element {
 	return (
 		<a
-			class="absolute top-0 -left-8 h-8 w-8 text-center text-2xl opacity-0 transition duration-200 hover:opacity-100"
+			class="-left-8 absolute top-0 h-8 w-8 text-center text-2xl opacity-0 transition duration-200 hover:opacity-100"
 			href={`#${props.qualname}`}
 		>
 			#

@@ -38,13 +38,13 @@ export function Container(props: {
 	desc: string
 }): JSX.Element {
 	return (
-		<div class="flex flex-col h-48 items-center text-center justify-center border lg:w-128">
+		<div class="flex h-48 flex-col items-center justify-center border text-center lg:w-128">
 			<h2 class="text-xl lg:text-3xl">
 				<a class="" href={props.href}>
 					{props.title}
 				</a>
 			</h2>
-			<p class="lg:text-xl mt-4">{props.desc}</p>
+			<p class="mt-4 lg:text-xl">{props.desc}</p>
 		</div>
 	)
 }

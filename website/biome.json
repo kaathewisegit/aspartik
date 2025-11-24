@@ -18,6 +18,9 @@
 			"suspicious": {
 				"noExplicitAny": "off",
 				"noUnknownAtRules": "off"
+			},
+			"nursery": {
+				"useSortedClasses": "error"
 			}
 		}
 	},

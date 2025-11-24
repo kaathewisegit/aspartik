@@ -4,10 +4,10 @@ export default function () {
 	return (
 		<Html title="Home">
 			<section class="flex min-h-screen min-w-screen flex-col items-center justify-center">
-				<h1 class="mx-auto max-w-fit text-5xl font-medium lg:text-9xl">
+				<h1 class="mx-auto max-w-fit font-medium text-5xl lg:text-9xl">
 					Aspartik b3
 				</h1>
-				<p class="mt-8 text-center text-xl font-light lg:text-4xl">
+				<p class="mt-8 text-center font-light text-xl lg:text-4xl">
 					<span class="casl italic">Fast</span> and{" "}
 					<span class="casl italic">efficient</span> Bayesian phylogenetic
 					analysis
