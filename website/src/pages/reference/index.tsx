@@ -1,6 +1,6 @@
-import Html from "../../../components/html"
+import Html from "../../components/html"
 
-const REDIRECT = `window.location.href = "/docs/reference/aspartik"`
+const REDIRECT = `window.location.href = "/reference/aspartik"`
 
 export default function () {
 	return (

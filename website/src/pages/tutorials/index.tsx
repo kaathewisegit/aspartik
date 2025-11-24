@@ -1,5 +1,5 @@
-import Html from "../../../components/html"
-import Markdown from "../../../components/markdown"
+import Html from "../../components/html"
+import Markdown from "../../components/markdown"
 
 const MD = `
 # H1 heading

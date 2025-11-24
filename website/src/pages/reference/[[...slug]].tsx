@@ -1,15 +1,15 @@
-import Html from "../../../components/html"
-import Markdown from "../../../components/markdown"
+import Html from "../../components/html"
+import Markdown from "../../components/markdown"
 import type {
 	ClassType,
 	CommonType,
 	FunctionType,
 	ModuleType,
 	VariableType,
-} from "../../../content/reference"
-import modules from "../../../content/reference"
-import { convertCSS } from "../../../utils/css"
-import highlight from "../../../utils/highlight"
+} from "../../content/reference"
+import modules from "../../content/reference"
+import { convertCSS } from "../../utils/css"
+import highlight from "../../utils/highlight"
 
 export async function getStaticParams() {
 	const out = []
@@ -29,7 +29,7 @@ export default function (props: { slug: string }) {
 		throw new Error("No such module")
 	}
 
-	const css = convertCSS("src/pages/docs/reference/pdoc.css")
+	const css = convertCSS("src/pages/reference/pdoc.css")
 
 	return (
 		<Html title={`${module.fullname} reference`}>
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
 `
 
 function moduleUrl(module: { fullname: string }): string {
-	return `/docs/reference/${module.fullname.replaceAll(".", "/")}`
+	return `/reference/${module.fullname.replaceAll(".", "/")}`
 }
 
 function Topbar(): JSX.Element {
@@ -111,7 +111,7 @@ function Sidebar(props: ModuleType): JSX.Element {
 	}
 
 	return (
-		<nav class="fixed z-10 hidden h-screen w-screen w-screen overflow-y-auto bg-white pl-4 shadow-md peer-has-[input:checked]:block lg:w-64">
+		<nav class="fixed z-10 hidden h-screen w-screen w-screen overflow-y-auto bg-white pl-4 peer-has-[input:checked]:block lg:mt-6 lg:block lg:w-64">
 			<Refs />
 		</nav>
 	)

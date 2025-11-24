@@ -14,7 +14,7 @@ export default function () {
 				</p>
 
 				<nav class="absolute right-0 bottom-0 m-4 flex flex-col space-y-2 text-right lg:m-16 lg:space-y-4 lg:text-3xl">
-					<a href="/docs/">Documentation</a>
+					<a href="/docs">Documentation</a>
 					<a href="https://github.com/kaathewisegit/aspartik/">Source code</a>
 				</nav>
 			</section>
