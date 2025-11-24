@@ -22,7 +22,7 @@ export async function getStaticParams() {
 	return out
 }
 
-export default function (props: any) {
+export default function (props: { slug: string }) {
 	const moduleName = props.slug.replace(/\/index$/, "").replaceAll("/", ".")
 	const module = modules.find((mod) => mod.fullname === moduleName)
 	if (!module) {
@@ -47,14 +47,52 @@ function moduleUrl(module: { fullname: string }): string {
 export function Nav(props: ModuleType): JSX.Element {
 	const LocalRef = (local: CommonType) => `#${local.name}`
 
-	return (
-		<nav class="fixed top-0 left-0 h-screen w-64 overflow-y-auto pl-4">
-			<RefList name="Classes" values={props.classes} href={LocalRef} />
-			<RefList name="Functions" values={props.functions} href={LocalRef} />
-			<RefList name="Variables" values={props.variables} href={LocalRef} />
+	function Refs(): JSX.Element {
+		return (
+			<>
+				<RefList name="Classes" values={props.classes} href={LocalRef} />
+				<RefList name="Functions" values={props.functions} href={LocalRef} />
+				<RefList name="Variables" values={props.variables} href={LocalRef} />
 
-			<RefList name="Submodules" values={props.submodules} href={moduleUrl} />
-		</nav>
+				<RefList name="Submodules" values={props.submodules} href={moduleUrl} />
+			</>
+		)
+	}
+
+	function DesktopNav(): JSX.Element {
+		return (
+			<nav
+				class="
+				hidden lg:block
+				fixed left-0
+				mb-8 pl-4 w-64 h-screen"
+			>
+				<Refs />
+			</nav>
+		)
+	}
+
+	function MobileNav(): JSX.Element {
+		return (
+			<nav
+				class="
+				lg:hidden
+				overflow-y-auto
+				fixed pl-4 bg-white shadow-md z-10 w-screen"
+			>
+				<details>
+					<summary>Navigation</summary>
+					<Refs />
+				</details>
+			</nav>
+		)
+	}
+
+	return (
+		<>
+			<DesktopNav />
+			<MobileNav />
+		</>
 	)
 }
 
@@ -77,15 +115,15 @@ export function RefList<T extends { name: string }>(props: {
 
 	return (
 		<>
-			<h3 class="font-bold text-xl mt-6 mb-1">{props.name}</h3>
-			<ul class="space-y-2">{props.values.map((obj) => Ref(obj))}</ul>
+			<h3 class="font-bold text-xl mb-1">{props.name}</h3>
+			<ul class="space-y-2 mb-6">{props.values.map((obj) => Ref(obj))}</ul>
 		</>
 	)
 }
 
 export async function Body(props: ModuleType): Promise<string> {
 	return (
-		<section class="mx-auto max-w-200" id={props.name}>
+		<article class="mx-auto p-4 max-w-200" id={props.name}>
 			<ModuleHeading {...props} />
 			<Docstring docstring={props.docstring} />
 
@@ -94,7 +132,7 @@ export async function Body(props: ModuleType): Promise<string> {
 			))}
 			<Variables list={props.variables} />
 			<Funcs list={props.functions} />
-		</section>
+		</article>
 	)
 }
 
@@ -109,7 +147,7 @@ function ModuleHeading(props: ModuleType): JSX.Element {
 	}
 
 	return (
-		<h1 class="font-bold font-mono text-4xl my-4">
+		<h1 class="font-bold font-mono text-lg lg:text-4xl my-4">
 			{modules.map((module) => (
 				<>
 					<a href={moduleUrl(module)}>{module.name}</a>.
