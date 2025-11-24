@@ -48,6 +48,12 @@ impl<'py> FromPyObject<'_, 'py> for Substitution4 {
 	}
 }
 
+/// Jukes-Cantor
+///
+/// A simple model with equal state transition rates.
+///
+/// Jukes and Cantor 1969, Evolution of Protein Molecules,
+/// <https://doi.org/10.1016/b978-1-4832-3211-9.50009-7>.
 #[derive(Debug, Clone, Copy)]
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct JC;
@@ -86,9 +92,19 @@ impl JC {
 	}
 }
 
+/// Kimura 80
+///
+/// Equal base frequencies (A/C/G/T) with different transition (keeps
+/// purines/pyrimidines) and transversion (purine to pyrimidine and visa versa).
+///
+/// Kimura 1980, A simple method for estimating evolutionary rates of base
+/// substitutions through comparative studies of nucleotide sequences,
+/// <https://doi.org/10.1007/BF01731581>.
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct K80 {
+	/// A transition is taken to be kappa times more likely than a
+	/// transversion.
 	kappa: SupportsFloat,
 	cached_kappa: f64,
 }
@@ -153,10 +169,23 @@ impl K80 {
 	}
 }
 
+/// Hasegawa et al. 1985
+///
+/// A model which can be thought of as a combination of K80 and F81: both base
+/// rates and transition/transversion ratio are configurable.
+///
+/// Hasegawa et al. 1985, Dating of the human-ape splitting by a molecular clock
+/// of mitochondrial DNA, <https://doi.org/10.1007/BF02101694>.
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct HKY {
+	/// DNA nucleotide frequencies
+	///
+	/// Must have the length of 4, with each element corresponding to
+	/// Adenine, Cytosine, Guanine, and Thymine respectively.
+	#[pyo3(get)]
 	frequencies: Py<PyAny>,
+	/// Transition/transversion ratio
 	kappa: SupportsFloat,
 
 	cached_kappa: f64,

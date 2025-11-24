@@ -5,12 +5,23 @@ use crate::{operator::Proposal, tree::PyTree};
 use rng::PyRng;
 use util::py_get_attr;
 
+/// Scales a random epoch in a tree
+///
+/// This parameter is analogous to BEAST2's `ScaleOperator` when it's used on a
+/// tree.  It will scale the full tree (so, for now, only its internal nodes,
+/// since leaves all have the height of 0).
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.operators", frozen)]
 pub struct EpochScale {
 	tree: Py<PyTree>,
+
+	/// The scaling ratio will be sampled from `(factor, 1 / factor)`.  So,
+	/// the factor must be between 0 and 1 and the smaller it is the larger
+	/// the steps will be.
 	#[pyo3(get)]
 	factor: f64,
+
+	/// Distribution from which the scale is sampled.
 	distribution: Py<PyAny>,
 	rng: Py<PyRng>,
 	#[pyo3(get)]

@@ -72,36 +72,50 @@ impl Mcmc {
 		})
 	}
 
+	/// Index of the current MCMC step
+	///
+	/// Starts from 0, includes burn-in.
 	#[getter]
 	fn current_step(&self) -> usize {
 		*self.current_step.lock()
 	}
 
+	/// All stateful objects tracked by this `MCMC` instance
 	#[getter]
 	fn state(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.state.iter().map(|s| s.clone_ref(py)).collect()
 	}
 
+	/// All priors
 	#[getter]
 	fn priors(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.priors.iter().map(|p| p.clone_ref(py)).collect()
 	}
 
+	/// A list of active operators
 	#[getter]
 	fn operators(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.scheduler.operators(py)
 	}
 
+	/// Likelihood calculator object
 	#[getter]
 	fn likelihood(&self, py: Python) -> Py<PyAny> {
 		self.likelihood.clone_ref(py)
 	}
 
+	/// A list of callbacks
 	#[getter]
 	fn callbacks(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.callbacks.iter().map(|l| l.clone_ref(py)).collect()
 	}
 
+	/// Randomness source of this analysis
+	///
+	/// This objects is used for internal randomness generation (such as
+	/// picking the operator on each step).  Since the underlying object is
+	/// shared, using it will outside of MCMC might alter the rest of the
+	/// analysis.
 	#[getter]
 	fn rng(&self, py: Python) -> Py<PyRng> {
 		self.rng.clone_ref(py)
@@ -123,6 +137,10 @@ impl Mcmc {
 		Ok(tuple.into_any().unbind())
 	}
 
+	/// Start the simulation
+	///
+	/// This yields flow control to the Rust core until the simulation is
+	/// done.  Press Ctrl+C to interrupt and stop the execution.
 	fn run(this: Py<Self>, py: Python) -> Result<()> {
 		let self_ = this.get();
 		loop {
@@ -158,6 +176,7 @@ impl Mcmc {
 		Ok(())
 	}
 
+	/// TODO: refine and document
 	fn measure_operator(
 		&self,
 		py: Python,
@@ -175,11 +194,17 @@ impl Mcmc {
 		Ok(out)
 	}
 
+	/// Posterior probability for the last accepted step
 	#[getter]
 	fn posterior(&self) -> f64 {
 		*self.posterior.lock()
 	}
 
+	/// Prior likelihood for the current step
+	///
+	/// Note that unlike [`posterior`](#MCMC.posterior) and
+	/// [`Likelihood`](#MCMC.Likelihood), this property isn't cached.  It
+	/// will trigger a recalculation on all priors on each access.
 	#[getter]
 	fn prior(&self, py: Python) -> Result<f64> {
 		let mut out = 0.0;
@@ -194,6 +219,13 @@ impl Mcmc {
 		Ok(out)
 	}
 
+	/// Operator statistics for this run
+	///
+	/// Returns a list of `(operator, results, propose, likelihood)` tuples
+	/// for each operator.  `propose` and `likelihood` records the total
+	/// time the MCMC spent waiting for the operator to generate a proposal
+	/// and calculate it respectively.  `operator` is the reference to the
+	/// original operator object.  And `results` is a list of step results.
 	#[getter]
 	fn operator_statistics(&self, py: Python) -> Result<Py<PyList>> {
 		self.scheduler.statistics(py)

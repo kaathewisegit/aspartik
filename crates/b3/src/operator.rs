@@ -41,24 +41,36 @@ impl<'py> IntoPyObject<'py> for Proposal {
 	}
 }
 
+/// A result of the move proposed by an operator
+///
+/// While the operators edit the tree directly, they need to communicate the
+/// status of their move to `MCMC`.  This is the class used for that.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 #[pyclass(module = "aspartik.b3", name = "Proposal", frozen, eq)]
 pub struct PyProposal(Proposal);
 
 #[pymethods]
 impl PyProposal {
+	/// Aborts the move unconditionally
+	///
+	/// All of the trees and parameters are rolled back.  This is relatively
+	/// fast, as it typically skips recalculating the likelihoods.
 	#[classmethod]
 	#[pyo3(name = "Reject")]
 	fn reject(_cls: Py<PyType>) -> Proposal {
 		Proposal::Reject()
 	}
 
+	/// Proposes the move with the `ratio`
+	///
+	/// This is the ratio from the Metropolis–Hastings algorithm.
 	#[classmethod]
 	#[pyo3(name = "Hastings")]
 	fn hastings(_cls: Py<PyType>, ratio: f64) -> Proposal {
 		Proposal::Hastings(ratio)
 	}
 
+	/// Accepts the move unconditionally
 	#[classmethod]
 	#[pyo3(name = "Accept")]
 	fn accept(_cls: Py<PyType>) -> Proposal {

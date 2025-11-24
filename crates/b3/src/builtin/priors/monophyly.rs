@@ -5,10 +5,19 @@ use pyo3::prelude::*;
 
 use crate::tree::{Internal, Leaf, PyTree, Tree};
 
+/// Ensures that a group of leaves form a monophyly
+///
+/// Returns a static probability if the specified leaves are monophyletic or
+/// aborts the move otherwise.
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct Monophyly {
 	tree: Py<PyTree>,
+
+	/// The leaves which must be [monophyletic][w]
+	///
+	/// [w]: https://en.wikipedia.org/wiki/Monophyly
+	#[pyo3(get)]
 	leaves: Vec<Leaf>,
 }
 

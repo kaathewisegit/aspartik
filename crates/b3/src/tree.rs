@@ -85,11 +85,18 @@ impl<'py> FromPyObject<'_, 'py> for Node {
 	}
 }
 
+/// Internal anonymous node of the phylogenetic tree.
+///
+/// Internals are the unnamed nodes which represent most recent common ancestors
+/// of leaves and other internals.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[pyclass(module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
 pub struct Internal(usize);
 
+/// Leaf node of the phylogenetic tree
+///
+/// Every leaf node is associated with a concrete sequence.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[pyclass(module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
@@ -995,10 +1002,16 @@ impl NodesIter {
 
 #[derive(Debug)]
 #[pyclass(name = "Tree", module = "aspartik.b3", frozen)]
-/// A phylogenetic bifurcating tree.
+/// A phylogenetic tree
 ///
-/// The leaf nodes are derived from the data samples.  Anonymous internal nodes
-/// are created automatically.
+/// Unlike BEAST2, where the tree is implemented as a collection of nodes
+/// pointing to each other, in `b3` `Tree` is a self-contained data structure
+/// which holds all of the topology and heights.  This means that nodes
+/// (`Internal` and `Leaf`) are identifiers of nodes in a given `Tree` object,
+/// much like indices of an array.  This means that all operations, such as
+/// getting parents of node heights, have to go through `Tree`'s methods.
+///
+/// The current implementation only supports bifurcating trees.
 pub struct PyTree {
 	inner: Mutex<Tree>,
 }
@@ -1020,6 +1033,10 @@ impl PyTree {
 		Ok(tree)
 	}
 
+	/// Initializes the tree from a Newick object.
+	///
+	/// The Newick tree must be strictly bifurcating and all of its edges
+	/// must have a defined length.
 	#[classmethod]
 	fn from_newick(_cls: Py<PyType>, newick: NewickTree) -> Result<Self> {
 		let tree = Tree::from_newick(&newick)?;
@@ -1029,88 +1046,153 @@ impl PyTree {
 		Ok(tree)
 	}
 
-	fn set_random_topology(&self, rng: Py<PyRng>) {
+	/// Randomizes the tree structure
+	///
+	/// This methods creates a random [Prüfer sequence][wiki] and
+	/// rearranges the graph according to it.  Note that it will always the
+	/// internal node with the largest index (`num_nodes - 1`) the root.
+	///
+	/// [wiki]: https://en.wikipedia.org/wiki/Pr%C3%BCfer_sequence
+	fn set_random_edges(&self, rng: Py<PyRng>) {
 		self.inner().set_random_edges(&mut rng.get().inner());
 	}
 
+	/// Randomizes the heights of internal nodes
+	///
+	/// Each internal node gets a height distributed uniformly between
+	/// `diff` and `2 * diff` plus the height of the highest of its
+	/// children.
 	fn set_random_heights(&self, diff: f64, rng: Py<PyRng>) {
 		self.inner()
 			.set_random_heights(diff, &mut rng.get().inner());
 	}
 
+	/// A list of all leaf names.
+	///
+	/// The order is the same as leaf indices: the first name is that of
+	/// `Leaf(0)`, the second one is `Leaf(1)`, and so on.
 	#[getter]
 	fn names(&self) -> Vec<String> {
 		self.inner().names()
 	}
 
+	/// Multiplies the heights of all internal nodes by `scale`
+	///
+	/// ### Exceptions
+	///
+	/// Throws a `RuntimeError` if any of the internal nodes would be moved
+	/// below either of its children.
 	fn scale(&self, scale: f64) -> Result<()> {
 		self.inner().scale(scale)
 	}
 
+	/// Sets the **child** of `edge` to `new_child`
+	///
+	/// This will only change the child, so the parent (internal node from
+	/// which `edge` comes out) will now have `node` as a child.
+	///
+	/// This function doesn't do any validation, it's up to the operator to
+	/// preserve the validity of the tree.
 	fn update_edge(&self, edge: usize, new_child: Node) -> Result<()> {
 		self.inner().update_edge(edge, &new_child);
 		Ok(())
 	}
 
+	/// Sets the height of `node` to `height`
 	fn set_height(&self, node: Node, height: f64) -> Result<()> {
 		self.inner().set_height(&node, height);
 		Ok(())
 	}
 
+	/// Makes `node` the root of the tree
+	///
+	/// As the topology can be temporarily broken while the edges are being
+	/// swapped, `Tree` can't automatically figure out which node is the
+	/// root one.  So, operators which change the root of the tree have to
+	/// update it manually.
 	fn set_root(&self, node: Node) -> Result<()> {
 		self.inner().set_root(&node);
 		Ok(())
 	}
 
+	/// Swaps the parents of nodes `a` and `b`
+	///
+	/// `a` and `b` must not be a descendant/ancestors and neither of them
+	/// can be a root node.  If `a` and `b` share the same parent, they
+	/// switch polarity (left child becomes the right child and visa
+	/// versa).
 	fn swap_parents(&self, a: Node, b: Node) -> Result<()> {
 		self.inner().swap_parents(&a, &b)
 	}
 
+	/// Total number of nodes in the tree
 	#[getter]
 	fn num_nodes(&self) -> usize {
 		self.inner().num_nodes()
 	}
 
+	/// Number of internal nodes (those with children)
 	#[getter]
 	pub fn num_internals(&self) -> usize {
 		self.inner().num_internals()
 	}
 
+	/// Number of leaf nodes
 	#[getter]
 	fn num_leaves(&self) -> usize {
 		self.inner().num_leaves()
 	}
 
+	/// Total number of edges
 	#[getter]
 	pub fn num_edges(&self) -> usize {
 		self.inner().num_edges()
 	}
 
+	/// Returns `True` if the node is internal
 	fn is_internal(&self, node: Node) -> Result<bool> {
 		Ok(self.inner().is_internal(&node))
 	}
 
+	/// Returns `True` if the node is a leaf
 	fn is_leaf(&self, node: Node) -> Result<bool> {
 		Ok(self.inner().is_leaf(&node))
 	}
 
+	/// Converts `node` to the type `Internal` if it is internal, or
+	/// returns `None` otherwise
 	fn as_internal(&self, node: Node) -> Option<Internal> {
 		self.inner().as_internal(&node)
 	}
 
+	/// Converts `node` to the type `Leaf` if it is a leaf, or returns
+	/// `None` otherwise
 	fn as_leaf(&self, node: Node) -> Option<Leaf> {
 		self.inner().as_leaf(&node)
 	}
 
+	/// Returns the root node of the tree
+	///
+	/// Note that the root node might change after tree has been edited, so
+	/// the returned node is only guaranteed to be root as long as the tree
+	/// hasn't been edited.
 	#[getter]
 	pub fn root(&self) -> Internal {
 		self.inner().root()
 	}
 
+	/// Returns the height of `node`
+	///
+	/// Height here means node's age in some unlabeled units.
 	fn height_of(&self, node: Node) -> Result<f64> {
 		Ok(self.inner().height_of(&node))
 	}
 
+	/// Returns a tuple of the left and right children of `node`
+	///
+	/// This function takes the `Internal` type as its input, so it is
+	/// guaranteed to always return the children.  See `as_internal` for
+	/// converting general nodes to internal ones.
 	fn children_of<'py>(
 		&self,
 		py: Python<'py>,
@@ -1126,6 +1208,9 @@ impl PyTree {
 		Ok((left, right))
 	}
 
+	/// Returns the child of `parent` other than `child`
+	///
+	/// Throws an error if `child` isn't a child of `parent`.
 	fn other_child<'py>(
 		&self,
 		py: Python<'py>,
@@ -1137,6 +1222,13 @@ impl PyTree {
 			.and_then(|n| n.into_pyobject(py, inner.num_leaves()))
 	}
 
+	/// Returns a random edge which intersects `height`
+	///
+	/// "Intersects" here means that the edge parent is higher than
+	/// `height` and the child is lower.  The comparisons are strict: if
+	/// either node is exactly at `height`, the edge won't be picked.
+	///
+	/// Returns `None` if there is no such node.
 	fn random_intersecting_edge(
 		&self,
 		height: f64,
@@ -1146,14 +1238,20 @@ impl PyTree {
 			.random_intersecting_edge(height, &mut rng.inner())
 	}
 
+	/// Returns the index of an edge from `child` to its parent
 	fn edge_index(&self, child: Node) -> Result<usize> {
 		Ok(self.inner().edge_index(&child))
 	}
 
+	/// Returns the length of `edge`
+	///
+	/// The length is the distance between the parent and the child nodes
+	/// of that edge
 	fn edge_length(&self, edge: usize) -> f64 {
 		self.inner().edge_length(edge)
 	}
 
+	/// Returns the `(child, parent)` tuple corresponding to an edge
 	fn edge_nodes<'py>(
 		&self,
 		py: Python<'py>,
@@ -1166,18 +1264,24 @@ impl PyTree {
 		Ok((node, internal))
 	}
 
+	/// Returns the parent of `node`, or `None` for the root node
 	fn parent_of(&self, node: Node) -> Result<Option<Internal>> {
 		Ok(self.inner().parent_of(&node))
 	}
 
+	/// Returns `True` if both children of this node are also internal
 	fn is_grandparent(&self, node: &Internal) -> bool {
 		self.inner().is_grandparent(node)
 	}
 
+	/// Number of nodes for whom `is_grandparent` returns `True`
 	fn num_grandparents(&self) -> usize {
 		self.inner().num_grandparents()
 	}
 
+	/// An iterator over all of trees nodes
+	///
+	/// All of the `Leaf` nodes go before `Internal` ones.
 	fn nodes(&self) -> NodesIter {
 		NodesIter {
 			current: 0,
@@ -1208,6 +1312,7 @@ impl PyTree {
 		node.into_pyobject(py, self.num_leaves())
 	}
 
+	/// Samples a random non-root node
 	fn random_nonroot_node(
 		&self,
 		py: Python,
@@ -1221,11 +1326,12 @@ impl PyTree {
 		Ok((node.unbind(), parent))
 	}
 
-	/// Samples a random internal node from a tree.
+	/// Samples a random internal node
 	fn random_internal(&self, rng: &PyRng) -> Internal {
 		self.inner().random_internal(&mut rng.inner())
 	}
 
+	/// Samples a random non-root internal node
 	fn random_nonroot_internal(&self, rng: &PyRng) -> (Internal, Internal) {
 		self.inner().random_nonroot_internal(&mut rng.inner())
 	}
@@ -1235,22 +1341,48 @@ impl PyTree {
 		self.inner().random_leaf(&mut rng.inner())
 	}
 
+	/// Gets a named leaf or `None` if the name is not found
 	fn leaf_by_name(&self, name: &str) -> Option<Leaf> {
 		self.inner().leaf_by_name(name)
 	}
 
+	/// The total length of all tree edges
 	fn total_length(&self) -> f64 {
 		self.inner().total_length()
 	}
 
+	/// Returns true if any of the leaves have a non-0 height
 	fn has_dated_tips(&self) -> bool {
 		self.inner().has_dated_tips()
 	}
 
+	/// Throws an exception if a tree is malformed
+	///
+	/// This function ensures that:
+	///
+	/// - No leaf has become anyone's parent.
+	/// - All parent nodes are older than their children.
+	/// - Parents match their children (mismatches can happen when
+	///   `update_edge` is used incorrectly).
+	/// - There's only one root (two or more can be set with `set_root`).
+	/// - The tree is a tree, meaning that topologically it has no cycles
+	///   and is connected.
 	fn validate(&self) -> Result<()> {
 		self.inner().validate()
 	}
 
+	/// Returns the tree topology in the Newick format
+	///
+	/// Leaf nodes will be labeled with the names passed to the constructor
+	/// while the internal nodes are unlabeled.
+	#[pyo3(signature = (internal_ids = false))]
+	fn newick(&self, internal_ids: bool) -> String {
+		self.inner().to_newick(internal_ids)
+	}
+
+	// protocols
+
+	// Stateful
 	fn accept(&self) {
 		self.inner().accept()
 	}
@@ -1258,13 +1390,6 @@ impl PyTree {
 	fn reject(&self) {
 		self.inner().reject()
 	}
-
-	#[pyo3(signature = (internal_ids = false))]
-	fn newick(&self, internal_ids: bool) -> String {
-		self.inner().to_newick(internal_ids)
-	}
-
-	// protocols
 
 	// pickle
 	fn __getnewargs__<'py>(

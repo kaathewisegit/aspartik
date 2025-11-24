@@ -62,6 +62,7 @@ where
 	Ok(out)
 }
 
+/// Constant population coalescent
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ConstantPopulation {

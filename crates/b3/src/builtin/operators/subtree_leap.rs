@@ -9,12 +9,21 @@ use crate::{
 use rng::PyRng;
 use util::py_call_method;
 
+/// Moves a node a distance, changing the topology randomly
+///
+/// First, a distance delta is sampled from the distribution.  The operator
+/// selects a random node and all edges `delta` away from that node (down if the
+/// delta is negative or up and down if it's positive).  One of those edges is
+/// randomly selected and the node is spliced into it.  If the delta is above
+/// the root, the node will become the new root.
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.operators", frozen)]
 pub struct SubtreeLeap {
+	/// The tree to edit.
 	#[pyo3(get)]
 	tree: Py<PyTree>,
 	#[pyo3(get)]
+	/// The distribution to draw the height move distance from
 	distribution: Py<PyAny>,
 	#[pyo3(get)]
 	rng: Py<PyRng>,

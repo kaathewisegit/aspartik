@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 use crate::tree::PyTree;
 use pyutil::SupportsFloat;
 
+/// Uncalibrated Yule birth-rate model
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct Yule {
