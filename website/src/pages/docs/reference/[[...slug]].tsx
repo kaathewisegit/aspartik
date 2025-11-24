@@ -34,65 +34,97 @@ export default function (props: { slug: string }) {
 	return (
 		<Html title={`${module.fullname} reference`}>
 			<style>{css}</style>
-			<Nav {...module} />
+			<Topbar />
+			<Sidebar {...module} />
 			<Body {...module} />
+
+			<script type="module">{CHECKBOX_SCRIPT}</script>
 		</Html>
 	)
 }
+
+const CHECKBOX_SCRIPT = `
+document.addEventListener("DOMContentLoaded", function () {
+	const toggleCheckbox = document.getElementById("sidebar-toggle")
+
+	const navLinks = document.querySelectorAll("nav a")
+
+	navLinks.forEach((link) => {
+		link.addEventListener("click", function () {
+			if (toggleCheckbox) {
+				toggleCheckbox.checked = false
+			}
+		})
+	})
+})
+`
 
 function moduleUrl(module: { fullname: string }): string {
 	return `/docs/reference/${module.fullname.replaceAll(".", "/")}`
 }
 
-export function Nav(props: ModuleType): JSX.Element {
+function Topbar(): JSX.Element {
+	return (
+		<header
+			class="
+			flex flex-row items-center lg:hidden peer
+			z-10 sticky top-0
+			h-8 pl-2 bg-gray-300"
+		>
+			<input type="checkbox" id="sidebar-toggle" hidden />
+			<label for="sidebar-toggle">
+				<BurgerIcon />
+			</label>
+		</header>
+	)
+}
+
+// TODO: a proper icon library (or a helper module)
+function BurgerIcon(): JSX.Element {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.5"
+			stroke-linecap="square"
+			aria-hidden="true"
+		>
+			<path d="M4 6l16 0" />
+			<path d="M4 12l16 0" />
+			<path d="M4 18l16 0" />
+		</svg>
+	)
+}
+
+function Sidebar(props: ModuleType): JSX.Element {
 	const LocalRef = (local: CommonType) => `#${local.name}`
 
 	function Refs(): JSX.Element {
 		return (
-			<>
+			<div>
 				<RefList name="Classes" values={props.classes} href={LocalRef} />
 				<RefList name="Functions" values={props.functions} href={LocalRef} />
 				<RefList name="Variables" values={props.variables} href={LocalRef} />
 
 				<RefList name="Submodules" values={props.submodules} href={moduleUrl} />
-			</>
-		)
-	}
-
-	function DesktopNav(): JSX.Element {
-		return (
-			<nav
-				class="
-				hidden lg:block
-				fixed left-0
-				mb-8 pl-4 w-64 h-screen"
-			>
-				<Refs />
-			</nav>
-		)
-	}
-
-	function MobileNav(): JSX.Element {
-		return (
-			<nav
-				class="
-				lg:hidden
-				overflow-y-auto
-				fixed pl-4 bg-white shadow-md z-10 w-screen"
-			>
-				<details>
-					<summary>Navigation</summary>
-					<Refs />
-				</details>
-			</nav>
+			</div>
 		)
 	}
 
 	return (
-		<>
-			<DesktopNav />
-			<MobileNav />
-		</>
+		<nav
+			class="
+			hidden peer-has-[input:checked]:block
+			fixed overflow-y-auto
+			h-screen w-screen lg:w-64
+			pl-4 bg-white shadow-md z-10 w-screen"
+		>
+			<Refs />
+		</nav>
 	)
 }
 
@@ -147,7 +179,7 @@ function ModuleHeading(props: ModuleType): JSX.Element {
 	}
 
 	return (
-		<h1 class="font-bold font-mono text-lg lg:text-4xl my-4">
+		<h1 class="font-bold font-mono text-lg lg:text-4xl mb-4">
 			{modules.map((module) => (
 				<>
 					<a href={moduleUrl(module)}>{module.name}</a>.

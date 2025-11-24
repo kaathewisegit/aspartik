@@ -7,6 +7,10 @@ input:checked + h2 span.triangle {
 	@apply rotate-90;
 }
 
+*[id] {
+	@apply scroll-m-10;
+}
+
 section:target > h2 > span.title {
 	@apply font-bold;
 }
