@@ -2,6 +2,7 @@ import Html from "../../../components/html"
 import Markdown from "../../../components/markdown"
 import type {
 	ClassType,
+	CommonType,
 	FunctionType,
 	ModuleType,
 	VariableType,
@@ -33,21 +34,90 @@ export default function (props: any) {
 	return (
 		<Html title={`${module.fullname} reference`}>
 			<style>{css}</style>
-			<Module {...module} />
+			<Nav {...module} />
+			<Body {...module} />
 		</Html>
 	)
 }
 
-export async function Module(props: ModuleType): Promise<string> {
+function moduleUrl(module: { fullname: string }): string {
+	return `/docs/reference/${module.fullname.replaceAll(".", "/")}`
+}
+
+export function Nav(props: ModuleType): JSX.Element {
+	const LocalRef = (local: CommonType) => `#${local.name}`
+
+	return (
+		<nav class="fixed top-0 left-0 h-screen w-64 overflow-y-auto pl-4">
+			<RefList name="Classes" values={props.classes} href={LocalRef} />
+			<RefList name="Functions" values={props.functions} href={LocalRef} />
+			<RefList name="Variables" values={props.variables} href={LocalRef} />
+
+			<RefList name="Submodules" values={props.submodules} href={moduleUrl} />
+		</nav>
+	)
+}
+
+export function RefList<T extends { name: string }>(props: {
+	name: string
+	values: T[]
+	href: (obj: T) => string
+}): JSX.Element {
+	if (props.values.length === 0) {
+		return ""
+	}
+
+	function Ref(obj: T): JSX.Element {
+		return (
+			<li>
+				<a href={props.href(obj)}>{obj.name}</a>
+			</li>
+		)
+	}
+
+	return (
+		<>
+			<h3 class="font-bold text-xl mt-6 mb-1">{props.name}</h3>
+			<ul class="space-y-2">{props.values.map((obj) => Ref(obj))}</ul>
+		</>
+	)
+}
+
+export async function Body(props: ModuleType): Promise<string> {
 	return (
 		<section class="mx-auto max-w-200" id={props.name}>
-			<h1>{props.fullname}</h1>
+			<ModuleHeading {...props} />
 			<Docstring docstring={props.docstring} />
 
 			{props.classes.map((cls) => (
 				<Class {...cls} />
 			))}
+			<Variables list={props.variables} />
+			<Funcs list={props.functions} />
 		</section>
+	)
+}
+
+function ModuleHeading(props: ModuleType): JSX.Element {
+	const fullname = props.fullname
+	const modules = []
+	const moduleNames = fullname.split(".")
+	for (let i = 0; i < moduleNames.length - 1; i += 1) {
+		const fullname = moduleNames.slice(0, i + 1).join(".")
+		const name = moduleNames[i]
+		modules.push({ fullname, name })
+	}
+
+	return (
+		<h1 class="font-bold font-mono text-4xl my-4">
+			{modules.map((module) => (
+				<>
+					<a href={moduleUrl(module)}>{module.name}</a>.
+				</>
+			))}
+
+			{props.name}
+		</h1>
 	)
 }
 

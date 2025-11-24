@@ -27,7 +27,7 @@ a {
 }
 
 a:hover {
-	@apply font-semibold;
+	@apply font-semibold decoration-2;
 }
 
 /* Typography */

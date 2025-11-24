@@ -14,6 +14,8 @@ const commonKeys = z.object({
 	source_file: z.string().nullable(),
 })
 
+export type CommonType = z.infer<typeof commonKeys>
+
 export const variableSchema = commonKeys.and(
 	z.object({
 		type: z.literal("variable"),
@@ -53,16 +55,18 @@ export const classSchema = commonKeys.and(
 
 export type ClassType = z.infer<typeof classSchema>
 
+export const SubmoduleSchema = z.object({
+	fullname: z.string(),
+	name: z.string(),
+})
+
+export type SubmoduleType = z.infer<typeof SubmoduleSchema>
+
 export const moduleSchema = commonKeys.and(
 	z.object({
 		type: z.literal("module"),
 		id: z.string(),
-		submodules: z.array(
-			z.object({
-				fullname: z.string(),
-				name: z.string(),
-			}),
-		),
+		submodules: z.array(SubmoduleSchema),
 		classes: z.array(classSchema),
 		functions: z.array(functionSchema),
 		variables: z.array(variableSchema),
