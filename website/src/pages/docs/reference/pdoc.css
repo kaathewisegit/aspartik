@@ -21,3 +21,7 @@ section:target > h2::before {
 	@apply me-1 font-bold;
 	content: "> ";
 }
+
+pre:has(> code) {
+	@apply overflow-x-scroll;
+}

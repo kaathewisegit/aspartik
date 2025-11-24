@@ -155,7 +155,7 @@ export function RefList<T extends { name: string }>(props: {
 
 export async function Body(props: ModuleType): Promise<string> {
 	return (
-		<article class="mx-auto p-4 max-w-200" id={props.name}>
+		<article id={props.name} class="mx-auto p-4 max-w-200">
 			<ModuleHeading {...props} />
 			<Docstring docstring={props.docstring} />
 
