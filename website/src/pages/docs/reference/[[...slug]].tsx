@@ -7,8 +7,8 @@ import type {
 	VariableType,
 } from "../../../content/reference"
 import modules from "../../../content/reference"
+import { convertCSS } from "../../../utils/css"
 import highlight from "../../../utils/highlight"
-import pdocCss from "./pdoc.css"
 
 export async function getStaticParams() {
 	const out = []
@@ -28,9 +28,11 @@ export default function (props: any) {
 		throw new Error("No such module")
 	}
 
+	const css = convertCSS("src/pages/docs/reference/pdoc.css")
+
 	return (
 		<Html title={`${module.fullname} reference`}>
-			<style>{pdocCss}</style>
+			<style>{css}</style>
 			<Module {...module} />
 		</Html>
 	)

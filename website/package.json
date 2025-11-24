@@ -16,11 +16,11 @@
 		"build": "ssg build"
 	},
 	"dependencies": {
-		"@kaathewise/ssg": "0.4.1",
+		"@kaathewise/ssg": "^0.5.2",
 		"@kitajs/html": "^4.2.9",
 		"@lezer/highlight": "^1.2.1",
 		"@lezer/python": "^1.1.18",
-		"@tailwindcss/postcss": "^4.1.13",
+		"@tailwindcss/postcss": "^4.1.17",
 		"rehype-stringify": "^10.0.1",
 		"remark-gfm": "^4.0.1",
 		"remark-parse": "^11.0.0",
