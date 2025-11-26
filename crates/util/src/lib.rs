@@ -162,11 +162,11 @@ macro_rules! py_check_method {
 #[macro_export]
 macro_rules! time {
 	($e:expr) => {{
-		use std::time::Instant;
-		let start = Instant::now();
-		let out = $e;
-		let time = Instant::now() - start;
+		use ::std::time::Instant;
+		let __start = Instant::now();
+		let __out = $e;
+		let __time = Instant::now() - __start;
 
-		(out, time)
+		(__out, __time)
 	}};
 }
