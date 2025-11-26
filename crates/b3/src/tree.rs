@@ -415,7 +415,7 @@ impl Tree {
 
 	fn clear_updated(&mut self) {
 		self.updated_edges.clear();
-		self.updated_nodes.clear();
+		self.updated_nodes.set_all_off();
 	}
 
 	pub fn edges_to_update(&self) -> Vec<usize> {
