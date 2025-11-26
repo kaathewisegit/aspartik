@@ -7,6 +7,7 @@ members = [
 	"crates/data",
 	"crates/io",
 	"crates/linalg",
+	"crates/logger",
 	"crates/math",
 	"crates/pyutil",
 	"crates/rng",
@@ -34,7 +35,7 @@ crossbeam-channel = "0.5.15"
 cudarc = { version = "0.18.0", default-features = false }
 divan = "0.1.21"
 indoc = "2.0"
-log = "0.4.28"
+libc = "0.2.177"
 num-traits = "0.2.19"
 parking_lot = "0.12.5"
 peg = "0.8.5"
@@ -47,13 +48,14 @@ serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0"
 
-pyutil = { version = "0.1.0-alpha.4", path = "crates/pyutil" }
 b3 = { version = "0.1.0-alpha.4", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.4", path = "crates/bitmap" }
 data = { version = "0.1.0-alpha.4", path = "crates/data" }
 io = { version = "0.1.0-alpha.4", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.4", path = "crates/linalg" }
+logger = { version = "0.1.0-alpha.4", path = "crates/logger" }
 math = { version = "0.1.0-alpha.4", path = "crates/math" }
+pyutil = { version = "0.1.0-alpha.4", path = "crates/pyutil" }
 rng = { version = "0.1.0-alpha.4", path = "crates/rng" }
 skvec = { version = "0.1.0-alpha.4", path = "crates/skvec" }
 stats = { version = "0.1.0-alpha.4", path = "crates/stats" }

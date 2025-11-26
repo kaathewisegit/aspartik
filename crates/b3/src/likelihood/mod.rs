@@ -1,5 +1,4 @@
 use anyhow::Result;
-use log::trace;
 use num_traits::{Float, NumAssignOps, NumCast};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
@@ -18,6 +17,7 @@ use crate::{
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
 use linalg::{RowMatrix, Vector};
+use logger::trace;
 use util::{py_call_method, py_check_method};
 
 mod cpu;
@@ -141,8 +141,7 @@ where
 		trace!(
 			target: "b3::likelihood::propose",
 			num_nodes_to_update = nodes.len(),
-			full_update;
-			""
+			full_update = full_update
 		);
 
 		// no tree update, return the cache

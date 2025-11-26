@@ -1,8 +1,8 @@
 use anyhow::Result;
-use log::debug;
 use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
 
+use logger::debug;
 use util::{py_call_method, py_check_method};
 
 pub struct PyClock {
@@ -18,10 +18,10 @@ impl<'py> FromPyObject<'_, 'py> for PyClock {
 		let out = Self {
 			inner: obj.to_owned().unbind(),
 		};
+		let repr = obj.repr()?;
 		debug!(
 			target: "b3::clock::extract_bound",
-			repr:% = obj.repr()?, id = out.id();
-			""
+			repr = repr.to_str()?, id = out.id()
 		);
 		Ok(out)
 	}

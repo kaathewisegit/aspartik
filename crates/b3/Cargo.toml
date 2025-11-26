@@ -11,6 +11,7 @@ bitmap = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
 linalg = { workspace = true, features = ["bytemuck", "cuda"] }
+logger = { workspace = true }
 pyutil = { workspace = true }
 rng = { workspace = true }
 skvec = { workspace = true, features = ["serde"] }
@@ -21,7 +22,6 @@ bincode = { workspace = true, features = ["serde", "alloc"] }
 blake3 = { workspace = true }
 crossbeam-channel = { workspace = true }
 cudarc = { workspace = true, features = ["driver", "nvrtc", "dynamic-loading", "cuda-12000", "std"] }
-log = { workspace = true, features = ["kv"] }
 num-traits = { workspace = true }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }

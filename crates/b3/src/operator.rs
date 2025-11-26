@@ -1,7 +1,4 @@
-use std::time::Duration;
-
 use anyhow::{Context, Result, anyhow};
-use log::{debug, trace};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
@@ -9,12 +6,16 @@ use pyo3::{
 	types::{PyList, PyString, PyType},
 };
 use rand::distr::{Distribution, weighted::WeightedIndex};
+use serde::Serialize;
+
+use std::time::Duration;
 
 use crate::mcmc::StepResult;
+use logger::{debug, trace};
 use rng::Rng;
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr, time};
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize)]
 pub enum Proposal {
 	Reject(),
 	Hastings(f64),
@@ -102,10 +103,10 @@ impl<'py> FromPyObject<'_, 'py> for PyOperator {
 		let out = Self {
 			inner: obj.to_owned().unbind(),
 		};
+		let repr = obj.repr()?;
 		debug!(
 			target: "b3::operator::extract_bound",
-			repr:% = obj.repr()?, id = out.id();
-			""
+			repr = repr.to_str()?, id = out.id()
 		);
 		Ok(out)
 	}
@@ -119,7 +120,7 @@ impl PyOperator {
 	pub fn propose(&self, py: Python) -> Result<Proposal> {
 		let proposal = py_call_method!(py, self.inner, "propose")?;
 		let proposal = proposal.extract::<Proposal>(py)?;
-		trace!(target: "b3::operator", propose:? = proposal; "");
+		trace!(target: "b3::operator", propose = proposal);
 
 		Ok(proposal)
 	}

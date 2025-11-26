@@ -2,6 +2,8 @@ use pyo3::prelude::*;
 
 #[pymodule(name = "_aspartik_rust_impl")]
 pub mod pymodule {
+	use super::*;
+
 	#[pymodule_export]
 	use b3::pymodule as b3;
 	#[pymodule_export]
@@ -14,4 +16,9 @@ pub mod pymodule {
 	use rng::pymodule as rng;
 	#[pymodule_export]
 	use stats::pymodule as stats;
+
+	#[pymodule_init]
+	fn init(_: &Bound<'_, PyModule>) -> PyResult<()> {
+		Ok(())
+	}
 }
