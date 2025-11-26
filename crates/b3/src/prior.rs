@@ -3,7 +3,6 @@ use log::{debug, trace};
 use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
 
-use profiler::profile;
 use util::{py_call_method, py_check_method};
 
 pub struct PyPrior {
@@ -21,11 +20,7 @@ impl PyPrior {
 	}
 
 	pub fn probability(&self, py: Python) -> Result<f64> {
-		let out = profile!(
-			target: "b3::prior::probability"
-			id = self.id();
-			py_call_method!(py, self.inner, "probability")?
-		);
+		let out = py_call_method!(py, self.inner, "probability")?;
 		let out = out.extract::<f64>(py)?;
 		trace!(target: "b3::prior", probability = out; "");
 		Ok(out)

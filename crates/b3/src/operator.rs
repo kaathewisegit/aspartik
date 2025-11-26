@@ -11,7 +11,6 @@ use pyo3::{
 use rand::distr::{Distribution, weighted::WeightedIndex};
 
 use crate::mcmc::StepResult;
-use profiler::profile;
 use rng::Rng;
 use util::{py_bail, py_call_method, py_check_method, py_extract_attr, time};
 
@@ -118,11 +117,7 @@ impl PyOperator {
 	}
 
 	pub fn propose(&self, py: Python) -> Result<Proposal> {
-		let proposal = profile!(
-			target: "b3::operator::propose"
-			id = self.id();
-			py_call_method!(py, self.inner, "propose")?
-		);
+		let proposal = py_call_method!(py, self.inner, "propose")?;
 		let proposal = proposal.extract::<Proposal>(py)?;
 		trace!(target: "b3::operator", propose:? = proposal; "");
 

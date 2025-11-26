@@ -3,7 +3,6 @@ use log::debug;
 use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
 
-use profiler::profile;
 use util::{py_call_method, py_check_method};
 
 pub struct PyClock {
@@ -34,11 +33,7 @@ impl PyClock {
 	}
 
 	pub fn get_rate(&self, py: Python) -> Result<f64> {
-		let rate = profile!(
-			target: "b3::operator::propose",
-			id = self.id();
-			py_call_method!(py, self.inner, "get_rate")?
-		);
+		let rate = py_call_method!(py, self.inner, "get_rate")?;
 		let rate = rate.extract::<f64>(py)?;
 
 		Ok(rate)

@@ -15,6 +15,5 @@ b3 = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
 math = { workspace = true }
-profiler = { workspace = true }
 rng = { workspace = true }
 stats = { workspace = true }

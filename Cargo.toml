@@ -8,7 +8,6 @@ members = [
 	"crates/io",
 	"crates/linalg",
 	"crates/math",
-	"crates/profiler",
 	"crates/pyutil",
 	"crates/rng",
 	"crates/skvec",
@@ -55,7 +54,6 @@ data = { version = "0.1.0-alpha.4", path = "crates/data" }
 io = { version = "0.1.0-alpha.4", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.4", path = "crates/linalg" }
 math = { version = "0.1.0-alpha.4", path = "crates/math" }
-profiler = { version = "0.1.0-alpha.4", path = "crates/profiler" }
 rng = { version = "0.1.0-alpha.4", path = "crates/rng" }
 skvec = { version = "0.1.0-alpha.4", path = "crates/skvec" }
 stats = { version = "0.1.0-alpha.4", path = "crates/stats" }
