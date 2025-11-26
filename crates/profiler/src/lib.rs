@@ -108,15 +108,3 @@ macro_rules! profile {
 		}
 	}};
 }
-
-#[macro_export]
-macro_rules! time {
-	($block:expr) => {{
-		use std::time::Instant;
-		let __start = Instant::now();
-		let __output = $block;
-		let __time = Instant::now() - __start;
-
-		(__output, __time)
-	}};
-}

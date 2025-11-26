@@ -151,3 +151,22 @@ macro_rules! py_check_method {
 		}
 	}};
 }
+
+/// Times an operation
+///
+/// This macro executes `$e` and returns an `(out, time)` tuple, where `out` is
+/// the output of the `$e` expression and `time` is the [`Duration`][d] of
+/// `$e`'s execution.
+///
+/// [d]: std::time::Duration
+#[macro_export]
+macro_rules! time {
+	($e:expr) => {{
+		use std::time::Instant;
+		let start = Instant::now();
+		let out = $e;
+		let time = Instant::now() - start;
+
+		(out, time)
+	}};
+}

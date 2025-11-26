@@ -11,9 +11,9 @@ use pyo3::{
 use rand::distr::{Distribution, weighted::WeightedIndex};
 
 use crate::mcmc::StepResult;
-use profiler::{profile, time};
+use profiler::profile;
 use rng::Rng;
-use util::{py_bail, py_call_method, py_check_method, py_extract_attr};
+use util::{py_bail, py_call_method, py_check_method, py_extract_attr, time};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Proposal {

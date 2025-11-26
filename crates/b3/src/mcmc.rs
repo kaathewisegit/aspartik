@@ -9,9 +9,8 @@ use crate::{
 	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
 };
-use profiler::time;
 use rng::PyRng;
-use util::py_call_method;
+use util::{py_call_method, time};
 
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
