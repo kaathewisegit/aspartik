@@ -24,7 +24,9 @@ from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import LogNormal, Uniform
 
-logger.Logger().to_file("target/apes.trace").with_level(logger.Level.Debug).init()
+logger.Logger().to_file("target/apes.trace").with_level(
+    logger.Level.Debug
+).with_targets(["b3::operator"]).init()
 
 msa = read_msa_from_fasta("crates/b3/data/apes.fasta")
 

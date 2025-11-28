@@ -34,6 +34,7 @@ pub enum Level {
 
 pub struct Logger {
 	sink: Mutex<BufWriter<Box<dyn Write + Send + Sync>>>,
+	targets: Vec<String>,
 	min_level: Level,
 }
 
@@ -57,6 +58,7 @@ impl Default for Logger {
 
 		Self {
 			min_level: Level::Error,
+			targets: vec![],
 			sink,
 		}
 	}
@@ -78,6 +80,11 @@ impl Logger {
 		self
 	}
 
+	pub fn with_targets(mut self, mut targets: Vec<String>) -> Self {
+		self.targets.append(&mut targets);
+		self
+	}
+
 	pub fn init(self) {
 		// SAFETY: TODO
 		unsafe { libc::atexit(cleanup) };
@@ -85,15 +92,23 @@ impl Logger {
 		LOGGER.set(self).unwrap();
 	}
 
-	fn enabled(&self, level: &Level) -> bool {
-		*level >= self.min_level
+	fn enabled(&self, level: Level, target: &'static str) -> bool {
+		if level < self.min_level {
+			return false;
+		}
+
+		if self.targets.is_empty() {
+			true
+		} else {
+			self.targets.iter().any(|t| target.starts_with(t))
+		}
 	}
 
-	pub fn log<T>(&self, level: &Level, kv: &T)
+	pub fn log<T>(&self, kv: &T)
 	where
-		T: Serialize,
+		T: Kv,
 	{
-		if !self.enabled(level) {
+		if !self.enabled(kv.level(), kv.target()) {
 			return;
 		}
 
@@ -118,4 +133,10 @@ extern "C" fn cleanup() {
 #[doc(hidden)]
 pub fn one<T>(_: &T) -> usize {
 	1
+}
+
+#[doc(hidden)]
+pub trait Kv: Serialize {
+	fn target(&self) -> &'static str;
+	fn level(&self) -> Level;
 }

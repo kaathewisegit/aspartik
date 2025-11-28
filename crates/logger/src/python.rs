@@ -50,6 +50,7 @@ impl PyLogger {
 
 		Logger::default()
 			.with_level(self.min_level)
+			.with_targets(self.targets.clone())
 			.to_file(path)?
 			.init();
 

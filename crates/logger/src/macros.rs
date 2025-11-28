@@ -44,6 +44,19 @@ macro_rules! log {
 			}
 		}
 
+		#[allow(non_camel_case_types)]
+		impl<$($key),*> $crate::Kv for Tmp<$($key),*>
+		where
+			$($key: Serialize),*
+		{
+			fn target(&self) -> &'static str {
+				self.target
+			}
+			fn level(&self) -> Level {
+				self.level
+			}
+		}
+
 		let tmp = Tmp {
 			target: $target,
 			level: $level,
@@ -55,7 +68,7 @@ macro_rules! log {
 			break 'scope;
 		};
 
-		logger.log(&$level, &tmp);
+		logger.log(&tmp);
 	}};
 
 	($level:expr, $($key:ident = $value:expr),*) => {
