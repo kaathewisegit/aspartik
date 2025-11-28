@@ -1,6 +1,13 @@
 mod macros;
+#[cfg(feature = "python")]
+mod python;
+
+#[cfg(feature = "python")]
+pub use python::pymodule;
 
 use parking_lot::Mutex;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 use serde::Serialize;
 
 use std::{
@@ -16,6 +23,7 @@ pub use serde;
 pub static LOGGER: OnceLock<Logger> = OnceLock::new();
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[cfg_attr(feature = "python", pyclass(module = "aspartik.logger"))]
 pub enum Level {
 	Trace,
 	Debug,

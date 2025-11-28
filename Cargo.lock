@@ -421,10 +421,13 @@ dependencies = [
 name = "logger"
 version = "0.1.0-alpha.4"
 dependencies = [
+ "anyhow",
  "libc",
  "parking_lot",
+ "pyo3",
  "serde",
  "serde_json",
+ "util",
 ]
 
 [[package]]

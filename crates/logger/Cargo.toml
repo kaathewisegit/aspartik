@@ -7,10 +7,17 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+anyhow = { workspace = true, optional = true }
 libc = { workspace = true }
 parking_lot = { workspace = true }
+pyo3 = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+util = { workspace = true }
+
+[features]
+default = ["python"]
+python = ["dep:pyo3", "dep:anyhow"]
 
 [lints]
 workspace = true

@@ -2,6 +2,7 @@
 <https://beast.community/first_tutorial>
 """
 
+from aspartik import logger
 from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
 from aspartik.b3.likelihoods import CPU4Likelihood
@@ -22,6 +23,8 @@ from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import LogNormal, Uniform
+
+logger.Logger().to_file("target/apes.trace").with_level(logger.Level.Debug).init()
 
 msa = read_msa_from_fasta("crates/b3/data/apes.fasta")
 
