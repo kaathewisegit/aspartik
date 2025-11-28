@@ -48,7 +48,7 @@ impl PyLogger {
 			None => PathBuf::from("b3.log"),
 		};
 
-		Logger::default()
+		Logger::new()
 			.with_level(self.min_level)
 			.with_targets(self.targets.clone())
 			.to_file(path)?

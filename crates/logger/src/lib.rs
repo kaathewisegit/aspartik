@@ -22,6 +22,10 @@ pub use serde;
 
 pub static LOGGER: OnceLock<Logger> = OnceLock::new();
 
+pub fn logger() -> &'static Logger {
+	LOGGER.get_or_init(Logger::default)
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[cfg_attr(feature = "python", pyclass(module = "aspartik.logger"))]
 pub enum Level {
@@ -33,14 +37,17 @@ pub enum Level {
 }
 
 pub struct Logger {
-	sink: Mutex<BufWriter<Box<dyn Write + Send + Sync>>>,
+	destination: Mutex<BufWriter<Box<dyn Write + Send + Sync>>>,
 	targets: Vec<String>,
 	min_level: Level,
 }
 
 impl Debug for Logger {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		f.write_str("Logger")
+		f.debug_struct("Logger")
+			.field("targets", &self.targets)
+			.field("min_level", &self.min_level)
+			.finish()
 	}
 }
 
@@ -59,18 +66,22 @@ impl Default for Logger {
 		Self {
 			min_level: Level::Error,
 			targets: vec![],
-			sink,
+			destination: sink,
 		}
 	}
 }
 
 impl Logger {
+	pub fn new() -> Self {
+		Self::default()
+	}
+
 	pub fn to_file<P: AsRef<Path>>(mut self, path: P) -> IoResult<Self> {
 		let sink = OpenOptions::new()
 			.create(true)
 			.append(true)
 			.open(path)?;
-		self.sink = sink_to_field(sink);
+		self.destination = sink_to_field(sink);
 
 		Ok(self)
 	}
@@ -112,13 +123,13 @@ impl Logger {
 			return;
 		}
 
-		let mut sink = self.sink.lock();
+		let mut sink = self.destination.lock();
 		serde_json::to_writer(&mut *sink, &kv).unwrap();
 		sink.write_all(b"\n").unwrap();
 	}
 
 	pub fn flush(&self) {
-		self.sink.lock().flush().unwrap();
+		self.destination.lock().flush().unwrap();
 	}
 }
 

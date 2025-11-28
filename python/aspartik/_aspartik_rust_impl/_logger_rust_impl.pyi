@@ -8,3 +8,10 @@ class Logger:
     def with_targets(self, targets: Sequence[str]) -> Logger: ...
     def to_file(self, path: str) -> PathLike: ...
     def init(self) -> None: ...
+
+class Level:
+    Trace: Level
+    Debug: Level
+    Info: Level
+    Warn: Level
+    Error: Level

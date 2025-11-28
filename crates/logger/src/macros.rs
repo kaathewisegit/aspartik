@@ -3,7 +3,7 @@ macro_rules! log {
 	(
 		target: $target:expr, $level:expr,
 		$($key:ident = $value:expr),*
-	) => {'scope: {
+	) => {{
 		use $crate::serde::{Serialize, ser::{SerializeStruct, Serializer}};
 		use $crate::Level;
 
@@ -64,11 +64,7 @@ macro_rules! log {
 			$($key: &$value),*
 		};
 
-		let Some(logger) = $crate::LOGGER.get() else {
-			break 'scope;
-		};
-
-		logger.log(&tmp);
+		$crate::logger().log(&tmp);
 	}};
 
 	($level:expr, $($key:ident = $value:expr),*) => {
