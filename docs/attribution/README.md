@@ -17,9 +17,9 @@ instead of reusing the generic functions from the library.
 
 ## Dependencies
 
-### [`allocator-api2`](./allocator-api2-license)
+### [`anstyle`](./anstyle-license)
 
-Stable version of Rust's unstable `allocator_api` used by `hashbrown`.
+Interoperable ANSI style escape codes definitions, used by `clap`.
 
 
 ### [`anyhow`](./anyhow-license)
@@ -29,10 +29,28 @@ APIs and non-recoverable errors, because the Rust code can attach layers
 of context which are more friendly than backtraces.
 
 
-### [`approx`](./approx-license)
+### [`arbitrary`](./arbitrary-license)
 
-Approximate floating point comparison library, which is used by `stats`
-and by `linalg` in tests.
+Entropy-based object generation library, designed for fuzzing.  I use it
+for randomized tests.
+
+
+### [`arbtest`](./arbtest-license)
+
+Simple `arbitrary`-based utility for random tests.  It has automatic
+minimization, which simplifies failed tests to the smallest values
+`arbitrary`-supporting types can generate which still fail.
+
+
+### [`arrayref`](./arrayref-license)
+
+Macros for taking array references to sub-slices.  Used by `blake3`.
+
+
+### [`arrayvec`](./arrayvec-license)
+
+`Vec`-like structure backed by an array without spilling.  Used by
+`blake3`.
 
 
 ### [`autocfg`](./autocfg-license)
@@ -48,10 +66,37 @@ has one dependency (`unty`) managed by the developers themselves, so I
 use it for pickling.
 
 
+### [`bitflags`](./bitflags-license)
+
+Macro which generates a bit flag structure with an enum-like interface.
+Only used in one of `divan`'s transitive dependencies.
+
+
+### [`blake3`](./blake3-license)
+
+Implementation of a fast BLAKE3 hash function I use to uniquely identify
+alignment columns.
+
+
 ### [`bytemuck`](./bytemuck-license)
 
 Byte casting, which I was using for the old Vulkan calculator.  It's no
 longer used anywhere, but I decided to keep it around in `linalg`.
+
+
+### [`bytes`](./bytes-license)
+
+Bytes container type I use for DNA sequences.
+
+
+### [`cc`](./cc-license)
+
+C compiler invocation utility for build scripts, used by `blake3`.
+
+
+### [`clap`, `clap_builder`, `clap_lex`](./clap-license)
+
+Command-line parser, used by `divan`.
 
 
 ### [`cfg-if`](./cfg-if-license)
