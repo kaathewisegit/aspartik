@@ -30,7 +30,7 @@ from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
-msa = read_msa_from_fasta("crates/b3/data/b.1.1.7.fasta")
+msa = read_msa_from_fasta("data/alignments/respiratory.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)

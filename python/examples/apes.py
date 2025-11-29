@@ -26,7 +26,7 @@ from aspartik.stats.distributions import LogNormal, Uniform
 
 logger.Logger().to_file("target/apes.trace").with_level(logger.Level.Debug).init()
 
-msa = read_msa_from_fasta("crates/b3/data/apes.fasta")
+msa = read_msa_from_fasta("data/alignments/apes.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)

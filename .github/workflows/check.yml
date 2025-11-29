@@ -13,6 +13,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: "true"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -46,12 +48,6 @@ jobs:
           cd website/
           bun install
           bun x astro sync
-
-      # TODO: remove it when I come up with a better way to include test data
-      - name: Download data files
-        run: |
-          mkdir -p crates/b3/data/
-          curl -L -o apes.fasta --output-dir crates/b3/data/ https://gist.github.com/kaathewisegit/0d4230442129d6780c669245be3491af/raw/primate.fasta
 
       - name: Run the checks
         run: uv run -m python.toolkit check
