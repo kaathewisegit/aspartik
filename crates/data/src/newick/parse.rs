@@ -22,7 +22,7 @@ peg::parser! {grammar newick_parser() for str {
 		) { f64::from_str(number).unwrap() }
 
 	rule name() -> String =
-		name:$(['a'..='z' | 'A'..='Z' | '0'..='9']+)
+		name:$(['a'..='z' | 'A'..='Z' | '0'..='9' | '/' | '_' | '-' | '.']+)
 		{ String::from(name) }
 		/
 		"\"" name:$([^'"']+) "\""
