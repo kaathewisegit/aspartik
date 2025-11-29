@@ -10,11 +10,9 @@
 
 - [ ] Deterministic tests with approximate tree comparisons
 
-- [ ] Custom population model functions
-
 - [ ] More birth-death models
 
-- [ ] Python calculator objects?
+- [x] Python calculator objects
 
 
 ## `data`
