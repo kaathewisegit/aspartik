@@ -2,6 +2,8 @@
 <https://beast.community/first_tutorial>
 """
 
+import sys
+
 from aspartik import logger
 from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
@@ -10,13 +12,14 @@ from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     BeastNarrowExchange,
     BeastWideExchange,
+    DeltaExchange,
     NodeSlide,
     ParamScale,
     RootSlide,
     SubtreeSlide,
     TreeScale,
 )
-from aspartik.b3.parameters import Real
+from aspartik.b3.parameters import Real, Weights
 from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
@@ -33,6 +36,7 @@ tree = Tree(msa.sequence_names(), rng)
 
 kappa = Real(2.0)
 population_size = Real(2.0)
+frequencies = Weights(0.25, 0.25, 0.25, 0.25)
 
 priors = [
     Distribution(kappa, LogNormal(1.0, 1.25)),
@@ -53,11 +57,12 @@ operators = [
     # minimum heights, which is what `NodeSlide` with `Uniform` does.
     NodeSlide(tree, Uniform(0, 1), rng, weight=30),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
+    DeltaExchange(frequencies, factor=0.75, rng=rng),
 ]
 
 likelihood = CPU4Likelihood(
     msa=msa,
-    substitution=HKY((0.25, 0.25, 0.25, 0.25), kappa),
+    substitution=HKY(frequencies, kappa),
     clock=StrictClock(1.0),
     tree=tree,
 )
@@ -75,6 +80,7 @@ loggers = [
             "tree:length": lambda: tree.total_length(),
             "kappa": kappa,
             "population_size": population_size,
+            "frequencies": frequencies,
             "prior:kappa": priors[0],
             "prior:population_size": priors[1],
             "prior:coalescent": priors[2],
@@ -84,10 +90,15 @@ loggers = [
     ),
 ]
 
+if len(sys.argv) > 1:
+    length = int(sys.argv[1])
+else:
+    length = 100_000
+
 mcmc = MCMC(
     burnin=0,
-    length=100_000,
-    state=[kappa, population_size, tree],
+    length=length,
+    state=[kappa, population_size, frequencies, tree],
     priors=priors,
     operators=operators,
     likelihood=likelihood,
