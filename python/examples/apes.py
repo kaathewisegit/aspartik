@@ -57,7 +57,7 @@ operators = [
     # minimum heights, which is what `NodeSlide` with `Uniform` does.
     NodeSlide(tree, Uniform(0, 1), rng, weight=30),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
-    DeltaExchange(frequencies, factor=0.75, rng=rng),
+    DeltaExchange(frequencies, factor=0.01, rng=rng, weight=3),
 ]
 
 likelihood = CPU4Likelihood(
