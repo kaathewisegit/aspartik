@@ -25,7 +25,7 @@ from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import print_operator_stats
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import LogNormal, Uniform
+from aspartik.stats.distributions import Gamma, LogNormal, Uniform
 
 logger.Logger().to_file("target/apes.trace").with_level(logger.Level.Debug).init()
 
@@ -40,12 +40,13 @@ frequencies = Weights(0.25, 0.25, 0.25, 0.25)
 
 priors = [
     Distribution(kappa, LogNormal(1.0, 1.25)),
-    Distribution(population_size, LogNormal(1.0, 1.5)),
+    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     ConstantPopulation(tree, population_size),
 ]
 
 operators = [
     ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
+    DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
     TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
     SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
     BeastNarrowExchange(tree, rng, weight=30),
@@ -57,7 +58,6 @@ operators = [
     # minimum heights, which is what `NodeSlide` with `Uniform` does.
     NodeSlide(tree, Uniform(0, 1), rng, weight=30),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
-    DeltaExchange(frequencies, factor=0.01, rng=rng, weight=3),
 ]
 
 likelihood = CPU4Likelihood(
