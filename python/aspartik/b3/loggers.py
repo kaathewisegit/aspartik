@@ -5,10 +5,11 @@ such.
 """
 
 import json
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from io import TextIOBase
-from typing import Any
+from typing import Any, Optional
 
 from . import MCMC, Callback, Prior, Tree
 from .parameters import Real, Weights
@@ -44,14 +45,31 @@ class TreeLogger(Callback):
 class PrintLogger(Callback):
     every: int
 
+    _last_time: Optional[float] = field(init=False, default=None)
+
     def __post_init__(self):
-        print(f"{'step':>16}{'posterior':>16}{'likelihood':>16}{'prior':>16}")
+        print(
+            f"{'Step':>10}{'Posterior':>15}{'Likelihood':>15}{'Prior':>15}{'Speed t/m':>15}"
+        )
 
     def log(self, mcmc: MCMC):
+        current_time = time.perf_counter()
+        if self._last_time:
+            # in seconds
+            speed = (current_time - self._last_time) / self.every * 1_000_000
+            if speed >= 60:
+                speed = f"{speed / 60:.1f}min"
+            else:
+                speed = f"{speed:.1f}sec"
+        else:
+            speed = "-"
+
         likelihood = mcmc.likelihood.likelihood()
         print(
-            f"{mcmc.current_step:>16}{mcmc.posterior:>16.2f}{likelihood:>16.2f}{mcmc.prior:>16.2f}"
+            f"{mcmc.current_step:>10}{mcmc.posterior:>15.2f}{likelihood:>15.2f}{mcmc.prior:>15.2f}{speed:>15}"
         )
+
+        self._last_time = current_time
 
 
 def _serialize(item):
