@@ -18,11 +18,10 @@ def run_mcmc(
     kind: Literal["cpu", "thread", "cuda"],
 ) -> float:
     print(f"\n# {msa.num_sequences}")
-    mcmc = default_b3_config(msa, RNG(4), 1_000_000_000, kind)
 
     (receiver, sender) = multiprocessing.Pipe(duplex=False)
 
-    proc = multiprocessing.Process(target=worker, args=(mcmc, sender))
+    proc = multiprocessing.Process(target=worker, args=(msa, kind, sender))
     start_time = time.perf_counter()
     proc.start()
     time.sleep(duration)
@@ -36,15 +35,16 @@ def run_mcmc(
     return speed
 
 
-def worker(mcmc, sender):
+def worker(msa, kind, sender):
     def termination_handler(signum, frame):
         sender.send(mcmc.current_step)
         sys.exit(1)
 
     signal.signal(signal.SIGTERM, termination_handler)
 
+    mcmc = default_b3_config(msa, RNG(4), 1_000_000_000, kind)
+
     try:
-        print("mcmc.run")
         mcmc.run()
     except:
         # silence the exception
