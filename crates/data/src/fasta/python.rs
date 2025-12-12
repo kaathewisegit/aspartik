@@ -44,6 +44,10 @@ impl PyFastaDnaRecord {
 		self.0.id().to_string()
 	}
 
+	fn __len__(&self) -> usize {
+		self.0.seq.len()
+	}
+
 	fn __str__(&self) -> String {
 		self.0.to_string()
 	}

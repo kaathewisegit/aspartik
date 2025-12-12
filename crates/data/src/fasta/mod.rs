@@ -59,6 +59,14 @@ impl<C: Character> Record<C> {
 	pub fn into_sequence(self) -> Sequence<C> {
 		self.seq
 	}
+
+	pub fn len(&self) -> usize {
+		self.seq.len()
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.seq.is_empty()
+	}
 }
 
 impl<C: Character> fmt::Display for Record<C> {
