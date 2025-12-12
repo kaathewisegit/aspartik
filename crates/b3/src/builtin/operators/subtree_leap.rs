@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pyo3::{intern, prelude::*};
+use pyo3::prelude::*;
 use rand::seq::IndexedRandom;
 
 use crate::{
