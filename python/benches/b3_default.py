@@ -13,18 +13,11 @@ from aspartik.rng import RNG
 
 
 def run_mcmc(
-    data_path: str,
+    msa: MSA,
     duration: float,  # in seconds
     kind: Literal["cpu", "thread", "cuda"],
-    num_sequences: int,
 ) -> float:
-    print(f"\n# {num_sequences}")
-
-    records = list(FastaReader.from_file(data_path))
-    if num_sequences > len(records):
-        raise Exception("Not enough sequences: the alignment only has {len(records)}")
-
-    msa = MSA.from_fasta(records[:num_sequences])
+    print(f"\n# {msa.num_sequences}")
     mcmc = default_b3_config(msa, RNG(4), 1_000_000_000, kind)
 
     (receiver, sender) = multiprocessing.Pipe(duplex=False)
@@ -51,6 +44,7 @@ def worker(mcmc, sender):
     signal.signal(signal.SIGTERM, termination_handler)
 
     try:
+        print("mcmc.run")
         mcmc.run()
     except:
         # silence the exception
@@ -72,9 +66,13 @@ def parse_cli_args():
 def main():
     args = parse_cli_args()
 
+    records = list(FastaReader.from_file(args.file_path))
+    if 2**args.magnitude > len(records):
+        raise Exception(f"Not enough sequences: the alignment only has {len(records)}")
+
     seqs = [2**i for i in range(3, args.magnitude + 1)]
     speeds = [
-        run_mcmc(args.file_path, args.time, args.kind, num_sequences)
+        run_mcmc(MSA.from_fasta(records[:num_sequences]), args.time, args.kind)
         for num_sequences in seqs
     ]
 
