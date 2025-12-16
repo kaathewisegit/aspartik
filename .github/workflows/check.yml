@@ -42,12 +42,12 @@ jobs:
           uv sync --extra dev
           uv pip install gmpy2
 
-      - name: Initialize Astro
+      - name: Website tests
         run: |
           uv run -m python.toolkit pdoc
           cd website/
-          bun install
-          bun x astro sync
+          bun ci
+          bun check
 
-      - name: Run the checks
+      - name: Library tests
         run: uv run -m python.toolkit check
