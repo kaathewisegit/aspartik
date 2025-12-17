@@ -14,22 +14,27 @@ import highlight from "../../utils/highlight"
 export async function getStaticParams() {
 	const out = []
 	for (const module of modules) {
-		const modulePath = module.id.replaceAll(".", "/")
+		const modulePath = module.id.split(".")
+		modulePath.push("index")
 		out.push({
-			slug: `${modulePath}/index`,
+			slug: modulePath,
 		})
 	}
 	return out
 }
 
-export default function (props: { slug: string }) {
-	const moduleName = props.slug.replace(/\/index$/, "").replaceAll("/", ".")
+export default function (props: { slug: string[] }) {
+	let slug = props.slug
+	if (slug.at(-1) === "index") {
+		slug = slug.slice(0, -1)
+	}
+	const moduleName = slug.join(".")
 	const module = modules.find((mod) => mod.fullname === moduleName)
 	if (!module) {
 		throw new Error("No such module")
 	}
 
-	const css = convertCSS("src/pages/reference/pdoc.css")
+	const css = convertCSS("src/pdoc.css")
 
 	return (
 		<Html title={`${module.fullname} reference`}>
@@ -273,7 +278,7 @@ function Funcs(props: { list: FunctionType[] }): JSX.Element {
 function Ref(props: { qualname: string }): JSX.Element {
 	return (
 		<a
-			class="-left-8 absolute top-0 h-8 w-8 text-center text-2xl opacity-0 transition duration-200 hover:opacity-100"
+			class="absolute top-0 -left-8 h-8 w-8 text-center text-2xl opacity-0 transition duration-200 hover:opacity-100"
 			href={`#${props.qualname}`}
 		>
 			#

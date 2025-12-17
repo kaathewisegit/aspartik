@@ -1,4 +1,3 @@
-import "./highlight.css"
 import { classHighlighter, highlightCode } from "@lezer/highlight"
 import { parser } from "@lezer/python"
 

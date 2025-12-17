@@ -31,8 +31,10 @@ jobs:
         with:
           version: "0.7.21"
 
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Install Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
 
       - name: Install Biome
         uses: biomejs/setup-biome@v2
@@ -42,12 +44,11 @@ jobs:
           uv sync --extra dev
           uv pip install gmpy2
 
-      - name: Website tests
+      - name: Setup website dependencies
         run: |
           uv run -m python.toolkit pdoc
           cd website/
-          bun ci
-          bun check
+          deno install --lock
 
-      - name: Library tests
+      - name: Tests
         run: uv run -m python.toolkit check

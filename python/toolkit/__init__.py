@@ -71,7 +71,7 @@ def fix(args: Namespace):
         execute("ruff", "check", "--fix")
 
     if args.website:
-        execute("bun", "run", "--cwd", "website/", "fix")
+        execute("deno", "task", "--cwd", "website/", "fix")
 
 
 def lint(args: Namespace):
@@ -96,7 +96,7 @@ def lint(args: Namespace):
         execute("pyright")
 
     if args.website:
-        execute("bun", "run", "--cwd", "website/", "check")
+        execute("deno", "task", "--cwd", "website/", "check")
 
 
 def test(args: Namespace):
