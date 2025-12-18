@@ -64,6 +64,10 @@ def parse_cli_args():
 
 
 def main():
+    # was changed to "spawn" in 3.14, breaking `run_mcmc`, as MSA doesn't
+    # support pickling
+    multiprocessing.set_start_method("fork")
+
     args = parse_cli_args()
 
     records = list(FastaReader.from_file(args.file_path))
