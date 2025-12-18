@@ -16,7 +16,7 @@ def run_mcmc(
     msa: MSA,
     duration: float,  # in seconds
     kind: Literal["cpu", "thread", "cuda"],
-) -> float:
+) -> Optional[float]:
     print(f"\n# {msa.num_sequences}")
 
     (receiver, sender) = multiprocessing.Pipe(duplex=False)
@@ -30,6 +30,8 @@ def run_mcmc(
 
     duration = end_time - start_time
     num_steps = receiver.recv()
+    if num_steps == 0:
+        return None
     speed = duration / num_steps * 1_000_000
 
     return speed
@@ -37,7 +39,6 @@ def run_mcmc(
 
 def worker(msa, kind, sender):
     def termination_handler(signum, frame):
-        sender.send(mcmc.current_step)
         sys.exit(1)
 
     signal.signal(signal.SIGTERM, termination_handler)
@@ -47,8 +48,7 @@ def worker(msa, kind, sender):
     try:
         mcmc.run()
     except:
-        # silence the exception
-        pass
+        sender.send(mcmc.current_step)
 
 
 def parse_cli_args():
