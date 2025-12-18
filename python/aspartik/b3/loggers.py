@@ -47,12 +47,12 @@ class PrintLogger(Callback):
 
     _last_time: Optional[float] = field(init=False, default=None)
 
-    def __post_init__(self):
-        print(
-            f"{'Step':>10}{'Posterior':>15}{'Likelihood':>15}{'Prior':>15}{'Speed t/m':>15}"
-        )
-
     def log(self, mcmc: MCMC):
+        if mcmc.current_step == 0:
+            print(
+                f"{'Step':>10}{'Posterior':>15}{'Likelihood':>15}{'Prior':>15}{'Speed t/m':>15}"
+            )
+
         current_time = time.perf_counter()
         if self._last_time:
             # in seconds
