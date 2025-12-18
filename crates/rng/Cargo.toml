@@ -10,7 +10,7 @@ authors.workspace = true
 util = { workspace = true }
 
 anyhow = { workspace = true }
-bincode = { workspace = true, features = ["alloc", "serde"] }
+rmp-serde = { workspace = true }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow", "multiple-pymethods"] }
 rand = { workspace = true, features = ["os_rng"] }

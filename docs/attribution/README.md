@@ -59,13 +59,6 @@ A build dependency used by `parking_lot`, `num-traits`, and `memoffset`,
 which detects Rust compiler feature support in build scripts.
 
 
-### [`bincode`](./bincode-license)
-
-Binary encoder and decoder.  It's serde-compatible, compact, and only
-has one dependency (`unty`) managed by the developers themselves, so I
-use it for pickling.
-
-
 ### [`bitflags`](./bitflags-license)
 
 Macro which generates a bit flag structure with an enum-like interface.
@@ -82,6 +75,11 @@ alignment columns.
 
 Byte casting, which I was using for the old Vulkan calculator.  It's no
 longer used anywhere, but I decided to keep it around in `linalg`.
+
+
+### [`byteorder`](./byteorder-license)
+
+A library for endian-aware number encoding used by `rmp`.
 
 
 ### [`bytes`](./bytes-license)
@@ -233,6 +231,11 @@ non-poisoning `Mutex` for interior mutability in pyclasses.
 ### [`parking_lot_core`](./parking_lot-license)
 
 
+### [`paste`](./paste-license)
+
+**UNMAINTAINED**.  A proc macro which can create new identifiers.
+
+
 ### [`petgraph`](./petgraph-license)
 
 The graph library, which will probably power the generic tree API from
@@ -274,6 +277,12 @@ See `proc-macro2`.
 
 Randomness crates used by both `b3` and `stats`.  The PCG generator
 powers the `rng` module because it's serializable.
+
+
+### [`rmp`/`rmp-serde`](./rmp-license)
+
+MessagePack implementation I use to implement pickling for Rust-based
+classes.
 
 
 ### [`scopeguard`](./scopeguard-license)
@@ -320,11 +329,6 @@ Unicode-aware identifiers check, used by `serde_derive`.
 ### [`unindent`](./indoc-license)
 
 Runtime version of `indoc`.
-
-
-### [`unty`](./unty-license)
-
-Tiny (100 lines) type cast library used in `bincode`.
 
 
 ### [`zerocopy`](./zerocopy-license)
