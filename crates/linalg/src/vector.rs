@@ -224,13 +224,20 @@ impl<T: Copy + PartialEq, const N: usize> PartialEq<Vector<T, N>> for [T; N] {
 }
 
 impl<T: Copy + PartialOrd, const N: usize> PartialOrd<T> for Vector<T, N> {
-	fn partial_cmp(&self, _other: &T) -> Option<Ordering> {
-		todo!()
+	fn partial_cmp(&self, other: &T) -> Option<Ordering> {
+		let result = self[0].partial_cmp(other)?;
+		for i in 1..N {
+			let new_result = self[i].partial_cmp(other)?;
+			if new_result != result {
+				return None;
+			}
+		}
+		Some(result)
 	}
 
 	fn lt(&self, other: &T) -> bool {
 		for i in 0..N {
-			if self[i] != *other {
+			if self[i] >= *other {
 				return false;
 			}
 		}
