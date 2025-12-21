@@ -9,7 +9,7 @@ from datetime import datetime
 
 from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
-from aspartik.b3.likelihoods import Thread4Likelihood, WeightedLikelihood
+from aspartik.b3.likelihoods import CPU4Likelihood, WeightedLikelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -87,7 +87,7 @@ operators = [
 likelihood = WeightedLikelihood(
     weights=likelihood_weights,
     likelihoods=[
-        Thread4Likelihood(
+        CPU4Likelihood(
             msa=msa,
             substitution=HKY(freq, kappa),
             clock=StrictClock(clock_rate),

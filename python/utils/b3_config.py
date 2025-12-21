@@ -2,7 +2,7 @@ from typing import Literal
 
 from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
-from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood, Thread4Likelihood
+from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -20,7 +20,7 @@ from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
-type Calculator = Literal["cpu", "thread", "cuda"]
+type Calculator = Literal["cpu", "parallel", "cuda"]
 
 
 def default(msa: MSA, rng: RNG, length: int, kind: Calculator) -> MCMC:
@@ -65,8 +65,8 @@ def default(msa: MSA, rng: RNG, length: int, kind: Calculator) -> MCMC:
     match kind:
         case "cpu":
             calculator = CPU4Likelihood
-        case "thread":
-            calculator = Thread4Likelihood
+        case "parallel":
+            calculator = Parallel4Likelihood
         case "cuda":
             calculator = CUDALikelihood
 

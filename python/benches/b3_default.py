@@ -15,7 +15,7 @@ from aspartik.rng import RNG
 def run_mcmc(
     msa: MSA,
     duration: float,  # in seconds
-    kind: Literal["cpu", "thread", "cuda"],
+    kind: Literal["cpu", "parallel", "cuda"],
 ) -> Optional[float]:
     print(f"\n# {msa.num_sequences}")
 
@@ -56,7 +56,7 @@ def parse_cli_args():
 
     parser.add_argument("file_path", type=str)
 
-    parser.add_argument("--kind", choices=["cpu", "thread", "cuda"], required=True)
+    parser.add_argument("--kind", choices=["cpu", "parallel", "cuda"], required=True)
     parser.add_argument("--magnitude", type=int, default=9)
     parser.add_argument("--time", type=int, default=60, help="In seconds")
 

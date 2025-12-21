@@ -24,12 +24,10 @@ use util::{py_call_method, py_check_method};
 mod cpu;
 mod cuda;
 mod parallel;
-mod thread;
 
 use cpu::CpuLikelihood;
 use cuda::CudaLikelihood;
 use parallel::ParallelLikelihood;
-use thread::ThreadedLikelihood;
 
 pub trait Space {
 	type Scalar: Float
@@ -271,8 +269,8 @@ macro_rules! likelihood_methods {
 
 /// 4-state DNA likelihood calculator.
 ///
-/// It's synchronous.  `Thread4Likelihood` and `CUDALikelihood` should be used
-/// for parallel calculations for alingments larger than 100Kb.
+/// It's synchronous.  `CUDALikelihood` should be used for parallel calculations
+/// for alingments larger than 100Kb.
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
 	inner: Mutex<GenericLikelihood<Linalg4, CpuLikelihood<Linalg4>>>,
@@ -302,48 +300,6 @@ impl PyCpu4Likelihood {
 }
 
 likelihood_methods!(PyCpu4Likelihood);
-
-/// Several `CPU4Likelihood`s in a trenchcoat.
-#[pyclass(
-	name = "Thread4Likelihood",
-	module = "aspartik.b3.likelihoods",
-	frozen
-)]
-pub struct PyThread4Likelihood {
-	inner: Mutex<GenericLikelihood<Linalg4, ThreadedLikelihood<Linalg4>>>,
-}
-
-#[pymethods]
-impl PyThread4Likelihood {
-	#[new]
-	#[pyo3(signature = (
-		msa, substitution, clock, tree,
-		*,
-		thread_split_size = 400,
-	))]
-	fn new(
-		msa: PyMsa,
-		substitution: Substitution4,
-		clock: PyClock,
-		tree: Py<PyTree>,
-		thread_split_size: usize,
-	) -> Result<Self> {
-		let calculator =
-			ThreadedLikelihood::new(msa.0, thread_split_size);
-		let generic = GenericLikelihood::new(
-			calculator,
-			substitution,
-			clock,
-			tree,
-		)?;
-
-		Ok(Self {
-			inner: Mutex::new(generic),
-		})
-	}
-}
-
-likelihood_methods!(PyThread4Likelihood);
 
 #[pyclass(
 	name = "Parallel4Likelihood",
