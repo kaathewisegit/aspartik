@@ -205,16 +205,36 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 	}
 
 	fn accept(&mut self) -> Result<()> {
-		self.projections_backup.copy_from_slice(&self.projections);
-		self.scales_backup.copy_from_slice(&self.scales);
+		let num_sites = self.num_sites;
+
+		for edge in &self.updated_edges {
+			let start = edge * num_sites;
+			let end = (edge + 1) * num_sites;
+			self.projections_backup[start..end]
+				.copy_from_slice(&self.projections[start..end]);
+			self.scales_backup[start..end]
+				.copy_from_slice(&self.scales[start..end]);
+		}
+
 		self.scale_sums_backup.copy_from_slice(&self.scale_sums);
 
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		self.projections.copy_from_slice(&self.projections_backup);
-		self.scales.copy_from_slice(&self.scales_backup);
+		let num_sites = self.num_sites;
+
+		for edge in &self.updated_edges {
+			let start = edge * num_sites;
+			let end = (edge + 1) * num_sites;
+			self.projections[start..end].copy_from_slice(
+				&self.projections_backup[start..end],
+			);
+			self.scales[start..end].copy_from_slice(
+				&self.scales_backup[start..end],
+			);
+		}
+
 		self.scale_sums.copy_from_slice(&self.scale_sums_backup);
 
 		Ok(())

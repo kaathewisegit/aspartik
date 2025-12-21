@@ -11,7 +11,7 @@ from pathlib import Path
 
 from aspartik.b3 import MCMC, Internal, Tree
 from aspartik.b3.clocks import StrictClock
-from aspartik.b3.likelihoods import CUDALikelihood
+from aspartik.b3.likelihoods import CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -84,13 +84,21 @@ operators = [
 ]
 
 
-likelihood = CUDALikelihood(
-    msa=msa,
-    substitution=HKY(frequencies, kappa),
-    clock=StrictClock(clock_rate),
-    tree=tree,
-    cuda_device=1,
-)
+try:
+    likelihood = CUDALikelihood(
+        msa=msa,
+        substitution=HKY(frequencies, kappa),
+        clock=StrictClock(clock_rate),
+        tree=tree,
+    )
+except:
+    likelihood = Parallel4Likelihood(
+        msa=msa,
+        substitution=HKY(frequencies, kappa),
+        clock=StrictClock(clock_rate),
+        tree=tree,
+        num_threads=6,
+    )
 
 loggers = [
     TreeLogger(tree=tree, path="target/respiratory.trees", every=1_000),
@@ -121,7 +129,7 @@ loggers = [
 
 mcmc = MCMC(
     burnin=0,
-    length=1_000_000_000,
+    length=100_000,
     state=params + [tree],
     priors=priors,
     operators=operators,
