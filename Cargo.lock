@@ -71,6 +71,7 @@ dependencies = [
  "crossbeam-channel",
  "cudarc",
  "data",
+ "fork_union",
  "io",
  "linalg",
  "logger",
@@ -305,6 +306,15 @@ name = "foldhash"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
+
+[[package]]
+name = "fork_union"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c40fb7410fd36762bd95648b599277884b3adf613f01a90b00e6069714d6d9e"
+dependencies = [
+ "cc",
+]
 
 [[package]]
 name = "getrandom"

@@ -33,6 +33,7 @@ bytes = "1.11"
 crossbeam-channel = "0.5.15"
 cudarc = { version = "0.18.2", default-features = false }
 divan = "0.1.21"
+fork_union = "2.3"
 indoc = "2.0"
 libc = "0.2.178"
 num-traits = "0.2.19"

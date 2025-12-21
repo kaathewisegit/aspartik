@@ -95,6 +95,16 @@ class Thread4Likelihood(Likelihood):
         thread_split_size: int = 400,
     ): ...
 
+class Parallel4Likelihood(Likelihood):
+    def __init__(
+        self,
+        msa: MSA,
+        substitution: Substiution4,
+        clock: Clock,
+        tree: Tree,
+        num_threads: int,
+    ): ...
+
 class CUDALikelihood(Likelihood):
     def __init__(
         self,

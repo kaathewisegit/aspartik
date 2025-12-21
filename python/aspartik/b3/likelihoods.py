@@ -8,6 +8,7 @@ from typing import Protocol
 from .._aspartik_rust_impl._b3_rust_impl import (
     CPU4Likelihood as CPU4Likelihood,
     CUDALikelihood as CUDALikelihood,
+    Parallel4Likelihood as Parallel4Likelihood,
     Thread4Likelihood as Thread4Likelihood,
 )
 from . import Stateful

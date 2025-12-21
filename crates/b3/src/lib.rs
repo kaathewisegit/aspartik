@@ -26,6 +26,8 @@ pub mod pymodule {
 	#[pymodule_export]
 	use likelihood::PyCudaLikelihood;
 	#[pymodule_export]
+	use likelihood::PyParallel4Likelihood;
+	#[pymodule_export]
 	use likelihood::PyThread4Likelihood;
 
 	#[pymodule_export]

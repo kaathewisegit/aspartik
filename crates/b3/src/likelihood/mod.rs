@@ -5,6 +5,7 @@ use pyo3::prelude::*;
 
 use std::{
 	collections::HashMap,
+	fmt::Debug,
 	ops::{DivAssign, Mul},
 	slice,
 };
@@ -22,14 +23,23 @@ use util::{py_call_method, py_check_method};
 
 mod cpu;
 mod cuda;
+mod parallel;
 mod thread;
 
 use cpu::CpuLikelihood;
 use cuda::CudaLikelihood;
+use parallel::ParallelLikelihood;
 use thread::ThreadedLikelihood;
 
 pub trait Space {
-	type Scalar: Float + NumAssignOps + NumCast + From<f64>;
+	type Scalar: Float
+		+ NumAssignOps
+		+ NumCast
+		+ From<f64>
+		+ Sync
+		+ Send
+		+ Debug
+		+ 'static;
 	type Vector: Mul<Output = Self::Vector>
 		+ DivAssign<Self::Scalar>
 		+ PartialOrd<Self::Scalar>
@@ -37,12 +47,14 @@ pub trait Space {
 		+ Copy
 		+ Sync
 		+ Send
+		+ Debug
 		+ 'static;
 	type Matrix: Mul<Self::Vector, Output = Self::Vector>
 		+ Copy
 		+ Default
 		+ Sync
 		+ Send
+		+ Debug
 		+ 'static;
 
 	fn sum(v: Self::Vector) -> Self::Scalar;
@@ -332,6 +344,42 @@ impl PyThread4Likelihood {
 }
 
 likelihood_methods!(PyThread4Likelihood);
+
+#[pyclass(
+	name = "Parallel4Likelihood",
+	module = "aspartik.b3.likelihoods",
+	frozen
+)]
+pub struct PyParallel4Likelihood {
+	inner: Mutex<GenericLikelihood<Linalg4, ParallelLikelihood<Linalg4>>>,
+}
+
+#[pymethods]
+impl PyParallel4Likelihood {
+	#[new]
+	#[pyo3(signature = (msa, substitution, clock, tree, num_threads))]
+	fn new(
+		msa: PyMsa,
+		substitution: Substitution4,
+		clock: PyClock,
+		tree: Py<PyTree>,
+		num_threads: usize,
+	) -> Result<Self> {
+		let calculator = ParallelLikelihood::new(msa.0, num_threads)?;
+		let generic = GenericLikelihood::new(
+			calculator,
+			substitution,
+			clock,
+			tree,
+		)?;
+
+		Ok(Self {
+			inner: Mutex::new(generic),
+		})
+	}
+}
+
+likelihood_methods!(PyParallel4Likelihood);
 
 /// Likelihood calculations on NVIDIA graphics cards.
 ///
