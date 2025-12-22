@@ -2,7 +2,7 @@
   "version": "5",
   "specifiers": {
     "npm:@biomejs/biome@^2.2.2": "2.3.10",
-    "npm:@kaathewise/ssg@0.8.0": "0.8.0",
+    "npm:@kaathewise/ssg@0.8.1": "0.8.1",
     "npm:@kitajs/html@^4.2.9": "4.2.11",
     "npm:@lezer/highlight@^1.2.1": "1.2.3",
     "npm:@lezer/python@^1.1.18": "1.1.18",
@@ -104,8 +104,8 @@
         "@jridgewell/sourcemap-codec"
       ]
     },
-    "@kaathewise/ssg@0.8.0": {
-      "integrity": "sha512-x/eE38yBsc9GiEMM+RCVDRLk9iMiQfrBACQYMaLc+Vd/rdRrEispPDfY/dYqEKpG3QHGWNn5kiclOjkQS3fZSQ==",
+    "@kaathewise/ssg@0.8.1": {
+      "integrity": "sha512-JLsetFE5fWI5W4jA/2OIHIAFutxO0KbUy7t96SLxbtNff0KcRrJO+UsKxv3erBXpo5tH0vpZO214C6XXuCNcWw==",
       "bin": true
     },
     "@kitajs/html@4.2.11": {
@@ -987,7 +987,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@biomejs/biome@^2.2.2",
-        "npm:@kaathewise/ssg@0.8.0",
+        "npm:@kaathewise/ssg@0.8.1",
         "npm:@kitajs/html@^4.2.9",
         "npm:@lezer/highlight@^1.2.1",
         "npm:@lezer/python@^1.1.18",
