@@ -18,8 +18,6 @@ pub struct Mcmc {
 	posterior: Mutex<f64>,
 
 	current_step: Mutex<usize>,
-	burnin: usize,
-	length: usize,
 
 	state: Vec<Py<PyAny>>,
 	priors: Vec<PyPrior>,
@@ -31,20 +29,12 @@ pub struct Mcmc {
 
 #[pymethods]
 impl Mcmc {
-	// This is a big constructor, so all of the arguments have to be here.
-	// In theory it might make sense to join trees and parameters together,
-	// but I'll have to benchmark that.
-	#[expect(clippy::too_many_arguments)]
 	#[new]
 	#[pyo3(signature = (
-		burnin, length,
 		state, priors, operators, likelihood, callbacks, rng,
 	))]
 	fn new(
 		py: Python,
-
-		burnin: usize,
-		length: usize,
 
 		state: Vec<Py<PyAny>>,
 		priors: Vec<PyPrior>,
@@ -58,9 +48,6 @@ impl Mcmc {
 		Ok(Mcmc {
 			posterior: Mutex::new(f64::NEG_INFINITY),
 			current_step: Mutex::new(0),
-
-			burnin,
-			length,
 
 			state,
 			priors,
@@ -122,8 +109,6 @@ impl Mcmc {
 
 	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
 		let tuple = (
-			self.burnin,
-			self.length,
 			self.state(py),
 			self.priors(py),
 			self.operators(py),
@@ -136,12 +121,13 @@ impl Mcmc {
 		Ok(tuple.into_any().unbind())
 	}
 
-	/// Start the simulation
+	/// Execute `n` steps of the Markov chain
 	///
 	/// This yields flow control to the Rust core until the simulation is
 	/// done.  Press Ctrl+C to interrupt and stop the execution.
-	fn run(this: Py<Self>, py: Python) -> Result<()> {
+	fn run(this: Py<Self>, py: Python, n: usize) -> Result<()> {
 		let self_ = this.get();
+		let end = self_.current_step() + n;
 		loop {
 			let current_step = *self_.current_step.lock();
 
@@ -158,15 +144,13 @@ impl Mcmc {
 
 			self_.finalize(py, operator_index, result)?;
 
-			if current_step >= self_.burnin {
-				Self::call_callbacks(
-					this.clone_ref(py),
-					py,
-					current_step,
-				)?;
-			}
+			Self::call_callbacks(
+				this.clone_ref(py),
+				py,
+				current_step,
+			)?;
 
-			if current_step == self_.length {
+			if current_step == end {
 				break;
 			}
 			*self_.current_step.lock() += 1;

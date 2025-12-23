@@ -120,8 +120,6 @@ loggers = [
 ]
 
 mcmc = MCMC(
-    burnin=0,
-    length=10_000_000,
     state=params + [tree],
     priors=priors,
     operators=operators,
@@ -130,7 +128,7 @@ mcmc = MCMC(
     rng=rng,
 )
 
-mcmc.run()
+mcmc.run(10_000_000)
 
 print_operator_stats(mcmc)
 print()

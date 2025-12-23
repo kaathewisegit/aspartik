@@ -90,14 +90,8 @@ loggers = [
     ),
 ]
 
-if len(sys.argv) > 1:
-    length = int(sys.argv[1])
-else:
-    length = 100_000
 
 mcmc = MCMC(
-    burnin=0,
-    length=length,
     state=[kappa, population_size, frequencies, tree],
     priors=priors,
     operators=operators,
@@ -106,5 +100,10 @@ mcmc = MCMC(
     rng=rng,
 )
 
-mcmc.run()
+if len(sys.argv) > 1:
+    length = int(sys.argv[1])
+else:
+    length = 100_000
+mcmc.run(length)
+
 print_operator_stats(mcmc)

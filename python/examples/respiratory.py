@@ -128,8 +128,6 @@ loggers = [
 ]
 
 mcmc = MCMC(
-    burnin=0,
-    length=100_000,
     state=params + [tree],
     priors=priors,
     operators=operators,
@@ -140,7 +138,7 @@ mcmc = MCMC(
 
 
 try:
-    mcmc.run()
+    mcmc.run(100_000)
 except Exception as e:
     print(e)
 

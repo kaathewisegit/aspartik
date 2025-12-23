@@ -31,8 +31,6 @@ def test_mcmc():
     )
 
     mcmc = MCMC(
-        burnin=0,
-        length=4,
         state=[a, tree],
         priors=[prior_a],
         operators=[op_param_scale, op_tree_scale],
@@ -41,7 +39,7 @@ def test_mcmc():
         rng=rng,
     )
 
-    mcmc.run()
+    mcmc.run(4)
 
     assert mcmc.priors == [prior_a]
     assert mcmc.operators == [op_param_scale, op_tree_scale]

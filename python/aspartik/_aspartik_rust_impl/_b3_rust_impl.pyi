@@ -121,8 +121,6 @@ class CUDALikelihood(Likelihood):
 class MCMC:
     def __init__(
         self,
-        burnin: int,
-        length: int,
         state: Sequence[Stateful],
         priors: Sequence[Prior],
         operators: Sequence[Operator],
@@ -152,7 +150,7 @@ class MCMC:
     def operator_statistics(
         self,
     ) -> list[tuple[Operator, list[int], timedelta, timedelta]]: ...
-    def run(self) -> None: ...
+    def run(self, n: int) -> None: ...
     def measure_operator(self, operator_index: int, length: int) -> list[int]: ...
 
 @dataclass
