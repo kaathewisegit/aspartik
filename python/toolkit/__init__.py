@@ -35,7 +35,8 @@ def make_parser():
     fix = subparsers.add_parser("fix", help="automatically fix code")
     add_langopts(fix)
 
-    subparsers.add_parser("lint", help="validate with linters and formatters")
+    lint = subparsers.add_parser("lint", help="validate with linters and formatters")
+    add_langopts(lint)
 
     test = subparsers.add_parser("test", help="run tests")
     add_langopts(test)
