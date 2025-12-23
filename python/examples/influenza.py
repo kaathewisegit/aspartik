@@ -9,7 +9,7 @@ from datetime import datetime
 
 from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
-from aspartik.b3.likelihoods import CPU4Likelihood, Parallel4Likelihood
+from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -81,12 +81,11 @@ operators = [
     DeltaExchange(frequencies, 0.01, rng, weight=3),
 ]
 
-likelihood = Parallel4Likelihood(
+likelihood = CPU4Likelihood(
     msa=msa,
     substitution=HKY(frequencies, kappa),
     clock=StrictClock(clock_rate),
     tree=tree,
-    num_threads=1,
 )
 
 loggers = [
@@ -125,7 +124,7 @@ mcmc = MCMC(
     rng=rng,
 )
 
-mcmc.run(10_000_000)
+mcmc.run(100_000)
 
 print_operator_stats(mcmc)
 print()

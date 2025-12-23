@@ -82,7 +82,7 @@ class CPU4Likelihood(Likelihood):
         substitution: Substiution4,
         clock: Clock,
         tree: Tree,
-        scale: float = 1e-40,
+        scale_ln: int = 30,
     ): ...
 
 class Parallel4Likelihood(Likelihood):

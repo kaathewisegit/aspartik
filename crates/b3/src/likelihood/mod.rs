@@ -280,15 +280,15 @@ pub struct PyCpu4Likelihood {
 #[pymethods]
 impl PyCpu4Likelihood {
 	#[new]
-	#[pyo3(signature = (msa, substitution, clock, tree, scale = 1e-40))]
+	#[pyo3(signature = (msa, substitution, clock, tree, scale_ln = 30))]
 	fn new(
 		msa: PyMsa,
 		substitution: Substitution4,
 		clock: PyClock,
 		tree: Py<PyTree>,
-		scale: f64,
+		scale_ln: u32,
 	) -> Result<Self> {
-		let calculator = CpuLikelihood::new(msa.0, scale);
+		let calculator = CpuLikelihood::new(msa.0, scale_ln);
 		let generic = GenericLikelihood::new(
 			calculator,
 			substitution,

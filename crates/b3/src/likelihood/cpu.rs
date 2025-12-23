@@ -16,7 +16,6 @@ where
 {
 	leaves: Vec<S::Vector>,
 	projections: SkVec<S::Vector>,
-	scales: SkVec<bool>,
 
 	/// Pattern weights
 	weights: Vec<S::Scalar>,
@@ -27,8 +26,12 @@ where
 	updated_edges: Vec<usize>,
 	likelihoods: Vec<S::Scalar>,
 
+	scales: SkVec<bool>,
+	scale_sums: SkVec<u32>,
+
 	scale: S::Scalar,
 	inv_scale: S::Scalar,
+	scale_ln: u32,
 }
 
 impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
@@ -70,8 +73,6 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 		}
 
 		for i in leaves_end..nodes.len() {
-			let mut should_scale = true;
-
 			let transition = transitions[i];
 			let node = nodes[i];
 
@@ -89,26 +90,37 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 				let right = self.projections[right_idx + site];
 
 				let likelihood = left * right;
-				let projection = transition * likelihood;
-				should_scale = projection < self.scale;
+				let mut projection = transition * likelihood;
+
+				let should_scale = if projection < self.scale {
+					projection *= self.inv_scale;
+					true
+				} else {
+					false
+				};
+
+				let projection_index = edge_idx + site;
+				let old_scale = self.scales[projection_index];
 
 				self.projections
-					.set(edge_idx + site, projection);
-			}
+					.set(projection_index, projection);
 
-			if should_scale {
-				for site in 0..num_sites {
-					let mut projection = self.projections
-						[edge_idx + site];
-					projection *= self.inv_scale;
-					self.projections.set(
-						edge_idx + site,
-						projection,
+				if should_scale != old_scale {
+					self.scales.set(
+						projection_index,
+						should_scale,
 					);
+
+					let old = self.scale_sums[site];
+
+					let new = if should_scale {
+						old + self.scale_ln
+					} else {
+						old - self.scale_ln
+					};
+
+					self.scale_sums.set(site, new);
 				}
-				self.scales.set(edge, true);
-			} else {
-				self.scales.set(edge, false);
 			}
 		}
 
@@ -135,8 +147,6 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 	}
 
 	fn likelihood(&mut self) -> Result<S::Scalar> {
-		let ln_scale = self.scale.ln();
-
 		let mut out = S::Scalar::zero();
 
 		for (likelihood, weight) in
@@ -145,12 +155,13 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 			out += *likelihood * *weight;
 		}
 
-		let num_sites =
-			<S::Scalar as NumCast>::from(self.num_sites).unwrap();
-		for scaled in &self.scales {
-			if *scaled {
-				out += ln_scale * num_sites;
-			}
+		for (scale_sum, weight) in
+			self.scale_sums.iter().zip(&self.weights)
+		{
+			let scale_sum =
+				<S::Scalar as NumCast>::from(*scale_sum)
+					.unwrap();
+			out -= scale_sum * *weight;
 		}
 
 		Ok(out)
@@ -159,6 +170,7 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 	fn accept(&mut self) -> Result<()> {
 		self.projections.accept();
 		self.scales.accept();
+		self.scale_sums.accept();
 		Ok(())
 	}
 
@@ -169,8 +181,9 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 		for edge in &edges {
 			let edge_offset = edge * num_sites;
 			for site in 0..num_sites {
-				self.projections
-					.reject_element(edge_offset + site);
+				let index = edge_offset + site;
+				self.projections.reject_element(index);
+				self.scales.reject_element(index);
 			}
 		}
 
@@ -178,14 +191,14 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 		// there's no need for `accept` or `reject`.
 
 		// small, so it's cheap to just reject
-		self.scales.reject();
+		self.scale_sums.reject();
 
 		Ok(())
 	}
 }
 
 impl CpuLikelihood<Linalg4> {
-	pub fn new(msa: Msa<DnaNucleotide>, scale: f64) -> Self {
+	pub fn new(msa: Msa<DnaNucleotide>, scale_ln: u32) -> Self {
 		let (msa, weights) = deduplicate(msa);
 
 		let num_sites = msa.num_sites();
@@ -197,12 +210,14 @@ impl CpuLikelihood<Linalg4> {
 
 		let projections =
 			skvec![Vector::default(); num_edges * num_sites];
-		let scales = skvec![false; num_edges];
+		let scales = skvec![false; num_edges * num_sites];
+		let scale_sums = skvec![0; num_sites];
+
+		let scale = (-<f64 as From<u32>>::from(scale_ln)).exp();
 
 		Self {
 			leaves,
 			projections,
-			scales,
 
 			num_sites,
 			num_leaves,
@@ -212,8 +227,12 @@ impl CpuLikelihood<Linalg4> {
 			updated_edges: Vec::new(),
 			likelihoods: vec![f64::NAN; num_sites],
 
+			scales,
+			scale_sums,
+
 			scale,
 			inv_scale: scale.inv(),
+			scale_ln,
 		}
 	}
 }

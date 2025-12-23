@@ -97,7 +97,7 @@ except:
         substitution=HKY(frequencies, kappa),
         clock=StrictClock(clock_rate),
         tree=tree,
-        num_threads=6,
+        num_threads=3,
     )
 
 loggers = [
@@ -138,7 +138,7 @@ mcmc = MCMC(
 
 
 try:
-    mcmc.run(100_000)
+    mcmc.run(20_000)
 except Exception as e:
     print(e)
 
