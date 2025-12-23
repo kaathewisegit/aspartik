@@ -49,6 +49,16 @@ where
 	inv_scale: S::Scalar,
 }
 
+/// Write `value` to the `index` position of `sync_ptr`
+///
+/// # Safety
+///
+/// - Index must be within bounds of the `sync_ptr` allocation
+/// - No other thread must be reading or writing to the position at `index`
+unsafe fn write_to<T>(sync_ptr: SyncMutPtr<T>, index: usize, value: T) {
+	let ptr = unsafe { sync_ptr.get(index) };
+	unsafe { ptr.write(value) };
+}
 impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 	type S = S;
 
@@ -91,10 +101,15 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 
 				let projection_index = edge_idx + site;
 
+				// SAFETY: for each iteration `projection_index`
+				// is thread-unique because `site`s are
+				// disjoint.
 				unsafe {
-					let ptr = projections
-						.get(projection_index);
-					ptr.write(projection);
+					write_to(
+						projections,
+						projection_index,
+						projection,
+					);
 				}
 			});
 		}
@@ -115,6 +130,8 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 			self.pool.for_n(num_sites, |prong| {
 				let site = prong.task_index;
 
+				// SAFETY: `site` is unique to us, the code in
+				// the closure is serial
 				let left = unsafe {
 					projections.get(left_idx + site).read()
 				};
@@ -134,27 +151,46 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 
 				let projection_index = edge_idx + site;
 				let old_scale = self.scales[projection_index];
+
+				// SAFETY: `projection_index` is
+				// disjoint on `site`, see `unsafe` in
+				// the leaf calculations.
 				unsafe {
-					let projection_ptr = projections
-						.get(projection_index);
-					projection_ptr.write(projection);
+					write_to(
+						projections,
+						projection_index,
+						projection,
+					);
+				}
 
-					if should_scale != old_scale {
-						let scale_ptr = scales
-							.get(projection_index);
-						scale_ptr.write(should_scale);
-
-						let scale_sum_ptr =
-							scale_sums.get(site);
-						let old = scale_sum_ptr.read();
-
-						let new = if should_scale {
-							old + self.scale_ln
-						} else {
-							old - self.scale_ln
-						};
-						scale_sum_ptr.write(new);
+				if should_scale != old_scale {
+					// SAFETY: see above
+					unsafe {
+						write_to(
+							scales,
+							projection_index,
+							should_scale,
+						);
 					}
+
+					let scale_sum_ptr =
+						// SAFETY: `site` is disjoint
+						unsafe { scale_sums.get(site) };
+					let old =
+						// SAFETY: we are the only
+						// thread which is reading from
+						// this pointer right now
+						unsafe { scale_sum_ptr.read() };
+
+					let new = if should_scale {
+						old + self.scale_ln
+					} else {
+						old - self.scale_ln
+					};
+
+					// SAFETY: `site` is disjoint
+					// between threads
+					unsafe { scale_sum_ptr.write(new) }
 				}
 			});
 		}
