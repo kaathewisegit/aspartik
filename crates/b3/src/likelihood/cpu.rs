@@ -1,7 +1,7 @@
 use anyhow::Result;
 use data::{DnaNucleotide, Msa};
 use linalg::Vector;
-use num_traits::{Float, NumCast, Zero};
+use num_traits::{Float, Inv, NumCast, Zero};
 
 use super::{LikelihoodTrait, Space};
 use crate::{
@@ -26,9 +26,10 @@ where
 
 	updated_edges: Vec<usize>,
 	likelihoods: Vec<S::Scalar>,
-}
 
-const SCALE: f64 = 1e-30;
+	scale: S::Scalar,
+	inv_scale: S::Scalar,
+}
 
 impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 	type S = S;
@@ -42,9 +43,6 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 		root: usize,
 		frequencies: S::Vector,
 	) -> Result<()> {
-		// TODO: verify this got constant folded
-		let scale = <S::Scalar as NumCast>::from(SCALE).unwrap();
-
 		assert_eq!(nodes.len(), edges.len());
 		assert_eq!(nodes.len(), transitions.len());
 
@@ -92,7 +90,7 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 
 				let likelihood = left * right;
 				let projection = transition * likelihood;
-				should_scale = projection < scale;
+				should_scale = projection < self.scale;
 
 				self.projections
 					.set(edge_idx + site, projection);
@@ -102,7 +100,7 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 				for site in 0..num_sites {
 					let mut projection = self.projections
 						[edge_idx + site];
-					projection /= scale;
+					projection *= self.inv_scale;
 					self.projections.set(
 						edge_idx + site,
 						projection,
@@ -137,8 +135,7 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 	}
 
 	fn likelihood(&mut self) -> Result<S::Scalar> {
-		let ln_scale =
-			<S::Scalar as NumCast>::from(SCALE).unwrap().ln();
+		let ln_scale = self.scale.ln();
 
 		let mut out = S::Scalar::zero();
 
@@ -188,7 +185,7 @@ impl<S: Space> LikelihoodTrait for CpuLikelihood<S> {
 }
 
 impl CpuLikelihood<Linalg4> {
-	pub fn new(msa: Msa<DnaNucleotide>) -> Self {
+	pub fn new(msa: Msa<DnaNucleotide>, scale: f64) -> Self {
 		let (msa, weights) = deduplicate(msa);
 
 		let num_sites = msa.num_sites();
@@ -214,6 +211,9 @@ impl CpuLikelihood<Linalg4> {
 
 			updated_edges: Vec::new(),
 			likelihoods: vec![f64::NAN; num_sites],
+
+			scale,
+			inv_scale: scale.inv(),
 		}
 	}
 }

@@ -82,6 +82,7 @@ class CPU4Likelihood(Likelihood):
         substitution: Substiution4,
         clock: Clock,
         tree: Tree,
+        scale: float = 1e-40,
     ): ...
 
 class Thread4Likelihood(Likelihood):
@@ -103,6 +104,7 @@ class Parallel4Likelihood(Likelihood):
         clock: Clock,
         tree: Tree,
         num_threads: int,
+        scale_ln: int = 30,
     ): ...
 
 class CUDALikelihood(Likelihood):

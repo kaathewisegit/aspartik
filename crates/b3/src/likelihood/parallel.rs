@@ -3,7 +3,7 @@ use core::f64;
 use anyhow::Result;
 use data::{DnaNucleotide, Msa};
 use fork_union::{SyncMutPtr, ThreadPool};
-use num_traits::{Float, NumCast, Zero};
+use num_traits::{Float, Inv, NumCast, Zero};
 
 use super::{LikelihoodTrait, Space};
 use crate::{
@@ -43,10 +43,11 @@ where
 
 	updated_edges: Buffer<usize>,
 	likelihoods: Buffer<S::Scalar>,
-}
 
-const SCALE: f64 = 0.000000000000000004248354255291589;
-const SCALE_LN: u32 = 40;
+	scale_ln: u32,
+	scale: S::Scalar,
+	inv_scale: S::Scalar,
+}
 
 impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 	type S = S;
@@ -60,9 +61,6 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 		root: usize,
 		frequencies: S::Vector,
 	) -> Result<()> {
-		// TODO: verify this got constant folded
-		let scale = <S::Scalar as NumCast>::from(SCALE).unwrap();
-
 		assert_eq!(nodes.len(), edges.len());
 		assert_eq!(nodes.len(), transitions.len());
 
@@ -127,8 +125,8 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 				let likelihood = left * right;
 				let mut projection = transition * likelihood;
 
-				let should_scale = if projection < scale {
-					projection /= scale;
+				let should_scale = if projection < self.scale {
+					projection *= self.inv_scale;
 					true
 				} else {
 					false
@@ -151,9 +149,9 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 						let old = scale_sum_ptr.read();
 
 						let new = if should_scale {
-							old + SCALE_LN
+							old + self.scale_ln
 						} else {
-							old - SCALE_LN
+							old - self.scale_ln
 						};
 						scale_sum_ptr.write(new);
 					}
@@ -245,6 +243,7 @@ impl ParallelLikelihood<Linalg4> {
 	pub fn new(
 		msa: Msa<DnaNucleotide>,
 		num_threads: usize,
+		scale_ln: u32,
 	) -> Result<Self> {
 		let (msa, weights) = deduplicate(msa);
 
@@ -261,6 +260,8 @@ impl ParallelLikelihood<Linalg4> {
 			buffer![Vector::default(); num_edges * num_sites];
 		let scales = buffer![false; num_edges * num_sites];
 		let scale_sums = buffer![0; num_sites];
+
+		let scale = (-<f64 as From<u32>>::from(scale_ln)).exp();
 
 		Ok(Self {
 			pool,
@@ -282,6 +283,10 @@ impl ParallelLikelihood<Linalg4> {
 
 			updated_edges: Box::default(),
 			likelihoods: buffer![f64::NAN; num_sites],
+
+			scale_ln,
+			scale,
+			inv_scale: scale.inv(),
 		})
 	}
 }

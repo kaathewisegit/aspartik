@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use std::{
 	collections::HashMap,
 	fmt::Debug,
-	ops::{DivAssign, Mul},
+	ops::{DivAssign, Mul, MulAssign},
 	slice,
 };
 
@@ -39,6 +39,7 @@ pub trait Space {
 		+ Debug
 		+ 'static;
 	type Vector: Mul<Output = Self::Vector>
+		+ MulAssign<Self::Scalar>
 		+ DivAssign<Self::Scalar>
 		+ PartialOrd<Self::Scalar>
 		+ DivAssign
@@ -279,13 +280,15 @@ pub struct PyCpu4Likelihood {
 #[pymethods]
 impl PyCpu4Likelihood {
 	#[new]
+	#[pyo3(signature = (msa, substitution, clock, tree, scale = 1e-40))]
 	fn new(
 		msa: PyMsa,
 		substitution: Substitution4,
 		clock: PyClock,
 		tree: Py<PyTree>,
+		scale: f64,
 	) -> Result<Self> {
-		let calculator = CpuLikelihood::new(msa.0);
+		let calculator = CpuLikelihood::new(msa.0, scale);
 		let generic = GenericLikelihood::new(
 			calculator,
 			substitution,
@@ -313,15 +316,17 @@ pub struct PyParallel4Likelihood {
 #[pymethods]
 impl PyParallel4Likelihood {
 	#[new]
-	#[pyo3(signature = (msa, substitution, clock, tree, num_threads))]
+	#[pyo3(signature = (msa, substitution, clock, tree, num_threads, scale_ln = 30))]
 	fn new(
 		msa: PyMsa,
 		substitution: Substitution4,
 		clock: PyClock,
 		tree: Py<PyTree>,
 		num_threads: usize,
+		scale_ln: u32,
 	) -> Result<Self> {
-		let calculator = ParallelLikelihood::new(msa.0, num_threads)?;
+		let calculator =
+			ParallelLikelihood::new(msa.0, num_threads, scale_ln)?;
 		let generic = GenericLikelihood::new(
 			calculator,
 			substitution,
