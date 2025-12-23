@@ -32,7 +32,6 @@ use parallel::ParallelLikelihood;
 pub trait Space {
 	type Scalar: Mul<Output = Self::Scalar>
 		+ NumCast
-		+ From<f64>
 		+ Into<f64>
 		+ Copy
 		+ Sync

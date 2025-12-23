@@ -49,14 +49,10 @@ impl<S: Space> Transitions<S> {
 		} else {
 			tree.edges_to_update()
 		};
-		let distances: Vec<S::Scalar> = edges
+		let distances: Vec<f64> = edges
 			.iter()
 			.copied()
-			.map(|e| -> S::Scalar {
-				let distance_f64 =
-					tree.edge_length(e) * self.rate;
-				distance_f64.into()
-			})
+			.map(|e| tree.edge_length(e) * self.rate)
 			.collect();
 
 		self.update_edges(&edges, &distances);
@@ -64,7 +60,7 @@ impl<S: Space> Transitions<S> {
 		Ok(full_update)
 	}
 
-	fn update_edges(&mut self, edges: &[usize], distances: &[S::Scalar]) {
+	fn update_edges(&mut self, edges: &[usize], distances: &[f64]) {
 		for (edge, distance) in edges.iter().zip(distances) {
 			let transition =
 				self.substitution.get_transition(*distance);

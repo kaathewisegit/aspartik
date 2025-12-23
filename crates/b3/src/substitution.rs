@@ -11,10 +11,7 @@ pub trait SubstitutionModel {
 
 	fn update(&mut self, py: Python) -> Result<bool>;
 
-	fn get_transition(
-		&self,
-		distance: <Self::S as Space>::Scalar,
-	) -> <Self::S as Space>::Matrix;
+	fn get_transition(&self, distance: f64) -> <Self::S as Space>::Matrix;
 
 	fn get_frequencies(&self) -> <Self::S as Space>::Vector;
 }
