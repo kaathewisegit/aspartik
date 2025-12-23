@@ -85,17 +85,6 @@ class CPU4Likelihood(Likelihood):
         scale: float = 1e-40,
     ): ...
 
-class Thread4Likelihood(Likelihood):
-    def __init__(
-        self,
-        msa: MSA,
-        substitution: Substiution4,
-        clock: Clock,
-        tree: Tree,
-        *,
-        thread_split_size: int = 400,
-    ): ...
-
 class Parallel4Likelihood(Likelihood):
     def __init__(
         self,
