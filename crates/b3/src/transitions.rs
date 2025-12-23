@@ -8,7 +8,7 @@ use crate::{
 use skvec::SkVec;
 
 pub struct Transitions<S: Space> {
-	substitution: BoxedSubstitutionModel<S>,
+	substitution: BoxedSubstitutionModel<S::ArrayVector, S::ArrayMatrix>,
 	clock: PyClock,
 
 	rate: f64,
@@ -19,7 +19,10 @@ pub struct Transitions<S: Space> {
 impl<S: Space> Transitions<S> {
 	pub fn new(
 		length: usize,
-		substitution: BoxedSubstitutionModel<S>,
+		substitution: BoxedSubstitutionModel<
+			S::ArrayVector,
+			S::ArrayMatrix,
+		>,
 		clock: PyClock,
 	) -> Self {
 		let transitions = SkVec::repeat(S::Matrix::default(), length);
@@ -65,7 +68,7 @@ impl<S: Space> Transitions<S> {
 			let transition =
 				self.substitution.get_transition(*distance);
 
-			self.transitions.set(*edge, transition);
+			self.transitions.set(*edge, S::into_matrix(transition));
 		}
 	}
 
@@ -88,6 +91,6 @@ impl<S: Space> Transitions<S> {
 	}
 
 	pub fn frequencies(&self) -> S::Vector {
-		self.substitution.get_frequencies()
+		S::into_vector(self.substitution.get_frequencies())
 	}
 }

@@ -12,13 +12,13 @@ use std::sync::Arc;
 
 use super::LikelihoodTrait;
 use crate::{
-	likelihood::{Linalg4, Space, deduplicate},
+	likelihood::{LinalgF64x4, Space, deduplicate},
 	tree::Internal,
 	util::msa_to_likelihoods,
 };
 
-type Row = <Linalg4 as Space>::Vector;
-type Transition = <Linalg4 as Space>::Matrix;
+type Row = <LinalgF64x4 as Space>::Vector;
+type Transition = <LinalgF64x4 as Space>::Matrix;
 
 const CUDA_SRC: &str =
 	concat!(include_str!("typedefs.h"), include_str!("kernels.cu"),);
@@ -97,7 +97,7 @@ pub struct CudaLikelihood {
 }
 
 impl LikelihoodTrait for CudaLikelihood {
-	type S = Linalg4;
+	type S = LinalgF64x4;
 
 	/// Propose an edit to the tree
 	///

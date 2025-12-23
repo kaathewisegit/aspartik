@@ -7,7 +7,7 @@ use num_traits::Inv;
 
 use super::{LikelihoodTrait, Space};
 use crate::{
-	likelihood::{Linalg4, deduplicate},
+	likelihood::{LinalgF64x4, deduplicate},
 	util::msa_to_likelihoods,
 };
 use linalg::Vector;
@@ -282,7 +282,7 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 	}
 }
 
-impl ParallelLikelihood<Linalg4> {
+impl ParallelLikelihood<LinalgF64x4> {
 	pub fn new(
 		msa: Msa<DnaNucleotide>,
 		num_threads: usize,

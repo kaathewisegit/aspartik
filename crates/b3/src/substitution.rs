@@ -3,22 +3,23 @@ use linalg::{RowMatrix, Vector};
 use pyo3::conversion::FromPyObject;
 use pyo3::{PyTypeCheck, prelude::*};
 
-use crate::likelihood::{Linalg4, Space};
 use pyutil::SupportsFloat;
 
 pub trait SubstitutionModel {
-	type S: Space;
+	type Vector;
+	type Martix;
 
 	fn update(&mut self, py: Python) -> Result<bool>;
 
-	fn get_transition(&self, distance: f64) -> <Self::S as Space>::Matrix;
+	fn get_transition(&self, distance: f64) -> Self::Martix;
 
-	fn get_frequencies(&self) -> <Self::S as Space>::Vector;
+	fn get_frequencies(&self) -> Self::Vector;
 }
 
-pub type BoxedSubstitutionModel<S> = Box<dyn SubstitutionModel<S = S> + Send>;
+pub type BoxedSubstitutionModel<V, M> =
+	Box<dyn SubstitutionModel<Vector = V, Martix = M> + Send>;
 
-pub type Substitution4 = BoxedSubstitutionModel<Linalg4>;
+pub type Substitution4 = BoxedSubstitutionModel<[f64; 4], [[f64; 4]; 4]>;
 
 impl<'py> FromPyObject<'_, 'py> for Substitution4 {
 	type Error = PyErr;
@@ -56,13 +57,14 @@ impl<'py> FromPyObject<'_, 'py> for Substitution4 {
 pub struct JC;
 
 impl SubstitutionModel for JC {
-	type S = Linalg4;
+	type Vector = [f64; 4];
+	type Martix = [[f64; 4]; 4];
 
 	fn update(&mut self, _py: Python) -> Result<bool> {
 		Ok(false)
 	}
 
-	fn get_transition(&self, distance: f64) -> RowMatrix<f64, 4, 4> {
+	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
 		let exp = (-4.0 / 3.0 * distance).exp();
 
 		let diagonal = 0.25 + 0.75 * exp;
@@ -74,10 +76,11 @@ impl SubstitutionModel for JC {
 			[other, other, diagonal, other],
 			[other, other, other, diagonal],
 		])
+		.into()
 	}
 
-	fn get_frequencies(&self) -> Vector<f64, 4> {
-		Vector::from_element(0.25)
+	fn get_frequencies(&self) -> [f64; 4] {
+		[0.25; 4]
 	}
 }
 
@@ -116,7 +119,8 @@ impl K80 {
 }
 
 impl SubstitutionModel for K80 {
-	type S = Linalg4;
+	type Vector = [f64; 4];
+	type Martix = [[f64; 4]; 4];
 
 	fn update(&mut self, py: Python) -> Result<bool> {
 		let kappa = self.kappa.extract(py)?;
@@ -129,7 +133,7 @@ impl SubstitutionModel for K80 {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> RowMatrix<f64, 4, 4> {
+	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
 		let kappa = self.cached_kappa;
 
 		let frac1 = -4.0 / (kappa + 2.0);
@@ -148,10 +152,11 @@ impl SubstitutionModel for K80 {
 			[transition, transversion, diagonal, transversion],
 			[transversion, transition, transversion, diagonal],
 		])
+		.into()
 	}
 
-	fn get_frequencies(&self) -> Vector<f64, 4> {
-		Vector::from_element(0.25)
+	fn get_frequencies(&self) -> [f64; 4] {
+		[0.25; 4]
 	}
 }
 
@@ -238,7 +243,8 @@ impl HKY {
 }
 
 impl SubstitutionModel for HKY {
-	type S = Linalg4;
+	type Vector = [f64; 4];
+	type Martix = [[f64; 4]; 4];
 
 	fn update(&mut self, py: Python) -> Result<bool> {
 		let bf = self.frequencies.bind(py);
@@ -262,17 +268,16 @@ impl SubstitutionModel for HKY {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> RowMatrix<f64, 4, 4> {
+	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
 		let diag = RowMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		self.p * diag * self.inv_p
+		(self.p * diag * self.inv_p).into()
 	}
 
-	fn get_frequencies(&self) -> Vector<f64, 4> {
-		let array: [f64; 4] = self.cached_frequencies.into();
-		array.into()
+	fn get_frequencies(&self) -> [f64; 4] {
+		self.cached_frequencies.into()
 	}
 }
 

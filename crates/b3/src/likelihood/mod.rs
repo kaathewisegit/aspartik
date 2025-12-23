@@ -47,28 +47,69 @@ pub trait Space {
 		+ Debug
 		+ 'static;
 	type Matrix: Mul<Self::Vector, Output = Self::Vector>
-		+ Copy
 		+ Default
+		+ Copy
 		+ Sync
 		+ Send
 		+ Debug
 		+ 'static;
 
+	// a workaround for [f64; N], because `Self::N` can't be used
+	type ArrayVector;
+	fn into_vector(v: Self::ArrayVector) -> Self::Vector;
+	type ArrayMatrix;
+	fn into_matrix(m: Self::ArrayMatrix) -> Self::Matrix;
+
 	fn sum(v: Self::Vector) -> Self::Scalar;
 	fn ln(s: Self::Scalar) -> f64;
 }
 
-pub struct Linalg4;
-impl Space for Linalg4 {
+pub struct LinalgF64x4;
+impl Space for LinalgF64x4 {
 	type Scalar = f64;
 	type Vector = Vector<f64, 4>;
 	type Matrix = RowMatrix<f64, 4, 4>;
 
+	type ArrayVector = [f64; 4];
+	fn into_vector(v: [f64; 4]) -> Self::Vector {
+		v.into()
+	}
+
+	type ArrayMatrix = [[f64; 4]; 4];
+	fn into_matrix(m: [[f64; 4]; 4]) -> Self::Matrix {
+		m.into()
+	}
+
 	fn sum(v: Self::Vector) -> Self::Scalar {
 		v.sum()
 	}
-	fn ln(s: Self::Scalar) -> Self::Scalar {
+	fn ln(s: Self::Scalar) -> f64 {
 		s.ln()
+	}
+}
+
+pub struct LinalgF32x4;
+impl Space for LinalgF32x4 {
+	type Scalar = f32;
+	type Vector = Vector<f32, 4>;
+	type Matrix = RowMatrix<f32, 4, 4>;
+
+	type ArrayVector = [f64; 4];
+	fn into_vector(v: [f64; 4]) -> Self::Vector {
+		v.map(|f| f as f32).into()
+	}
+
+	type ArrayMatrix = [[f64; 4]; 4];
+	fn into_matrix(m: [[f64; 4]; 4]) -> Self::Matrix {
+		m.map(|row| row.map(|f| f as f32)).into()
+	}
+
+	fn sum(v: Self::Vector) -> Self::Scalar {
+		v.sum()
+	}
+	fn ln(s: Self::Scalar) -> f64 {
+		let ln: f32 = s.ln();
+		ln.into()
 	}
 }
 
@@ -115,7 +156,10 @@ where
 {
 	fn new(
 		calculator: L,
-		substitution: BoxedSubstitutionModel<S>,
+		substitution: BoxedSubstitutionModel<
+			S::ArrayVector,
+			S::ArrayMatrix,
+		>,
 		clock: PyClock,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
@@ -276,7 +320,9 @@ macro_rules! likelihood_methods {
 /// for alingments larger than 100Kb.
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
-	inner: Mutex<GenericLikelihood<Linalg4, CpuLikelihood<Linalg4>>>,
+	inner: Mutex<
+		GenericLikelihood<LinalgF64x4, CpuLikelihood<LinalgF64x4>>,
+	>,
 }
 
 #[pymethods]
@@ -290,7 +336,8 @@ impl PyCpu4Likelihood {
 		tree: Py<PyTree>,
 		scale_ln: u32,
 	) -> Result<Self> {
-		let calculator = CpuLikelihood::new(msa.0, scale_ln);
+		let calculator =
+			CpuLikelihood::<LinalgF64x4>::new(msa.0, scale_ln);
 		let generic = GenericLikelihood::new(
 			calculator,
 			substitution,
@@ -312,7 +359,9 @@ likelihood_methods!(PyCpu4Likelihood);
 	frozen
 )]
 pub struct PyParallel4Likelihood {
-	inner: Mutex<GenericLikelihood<Linalg4, ParallelLikelihood<Linalg4>>>,
+	inner: Mutex<
+		GenericLikelihood<LinalgF64x4, ParallelLikelihood<LinalgF64x4>>,
+	>,
 }
 
 #[pymethods]
@@ -350,7 +399,7 @@ likelihood_methods!(PyParallel4Likelihood);
 /// index.
 #[pyclass(name = "CUDALikelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCudaLikelihood {
-	inner: Mutex<GenericLikelihood<Linalg4, CudaLikelihood>>,
+	inner: Mutex<GenericLikelihood<LinalgF64x4, CudaLikelihood>>,
 }
 
 #[pymethods]

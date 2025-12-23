@@ -30,6 +30,14 @@ impl<T: Copy, const N: usize, const M: usize> From<[[T; M]; N]>
 	}
 }
 
+impl<T: Copy, const N: usize, const M: usize> From<RowMatrix<T, N, M>>
+	for [[T; M]; N]
+{
+	fn from(value: RowMatrix<T, N, M>) -> Self {
+		value.m.map(|row| row.into())
+	}
+}
+
 impl<T, const N: usize, const M: usize> Display for RowMatrix<T, N, M>
 where
 	T: Copy + Display,
