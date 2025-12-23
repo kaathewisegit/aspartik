@@ -25,7 +25,8 @@ def test_pickle_state(rng: RNG, size: int):
     new = pickle.loads(pickle.dumps(old))
 
     assert old.newick() == new.newick()
-    old.reject(), new.reject()
+    old.reject()
+    new.reject()
     assert old.newick() == new.newick()
 
     old.set_random_edges(rng)
@@ -34,7 +35,8 @@ def test_pickle_state(rng: RNG, size: int):
     new = pickle.loads(pickle.dumps(old))
 
     assert old.newick() == new.newick()
-    old.reject(), new.reject()
+    old.reject()
+    new.reject()
     assert old.newick() == new.newick()
 
 
