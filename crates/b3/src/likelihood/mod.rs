@@ -1,12 +1,12 @@
 use anyhow::Result;
-use num_traits::{Float, NumAssignOps, NumCast};
+use num_traits::NumCast;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
 use std::{
 	collections::HashMap,
 	fmt::Debug,
-	ops::{DivAssign, Mul, MulAssign},
+	ops::{Mul, MulAssign},
 	slice,
 };
 
@@ -30,19 +30,18 @@ use cuda::CudaLikelihood;
 use parallel::ParallelLikelihood;
 
 pub trait Space {
-	type Scalar: Float
-		+ NumAssignOps
+	type Scalar: Mul<Output = Self::Scalar>
 		+ NumCast
 		+ From<f64>
+		+ Into<f64>
+		+ Copy
 		+ Sync
 		+ Send
 		+ Debug
 		+ 'static;
 	type Vector: Mul<Output = Self::Vector>
 		+ MulAssign<Self::Scalar>
-		+ DivAssign<Self::Scalar>
 		+ PartialOrd<Self::Scalar>
-		+ DivAssign
 		+ Copy
 		+ Sync
 		+ Send
@@ -57,6 +56,7 @@ pub trait Space {
 		+ 'static;
 
 	fn sum(v: Self::Vector) -> Self::Scalar;
+	fn ln(s: Self::Scalar) -> f64;
 }
 
 pub struct Linalg4;
@@ -67,6 +67,9 @@ impl Space for Linalg4 {
 
 	fn sum(v: Self::Vector) -> Self::Scalar {
 		v.sum()
+	}
+	fn ln(s: Self::Scalar) -> Self::Scalar {
+		s.ln()
 	}
 }
 
@@ -83,7 +86,7 @@ pub trait LikelihoodTrait {
 		frequencies: <Self::S as Space>::Vector,
 	) -> Result<()>;
 
-	fn likelihood(&mut self) -> Result<<Self::S as Space>::Scalar>;
+	fn likelihood(&mut self) -> Result<f64>;
 
 	fn accept(&mut self) -> Result<()>;
 
@@ -98,10 +101,10 @@ where
 	calculator: L,
 	transitions: Transitions<S>,
 	/// Last accepted likelihood
-	cache: S::Scalar,
+	cache: f64,
 	/// Last calculated likelihood.  It's different from the cache, because
 	/// it might get rejected.
-	last: S::Scalar,
+	last: f64,
 	launched_update: bool,
 	tree: Py<PyTree>,
 }
@@ -126,8 +129,8 @@ where
 		let mut out = Self {
 			calculator,
 			transitions,
-			cache: f64::NAN.into(),
-			last: f64::NAN.into(),
+			cache: f64::NAN,
+			last: f64::NAN,
 			launched_update: false,
 			tree,
 		};
@@ -180,7 +183,7 @@ where
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<S::Scalar> {
+	fn likelihood(&mut self) -> Result<f64> {
 		if !self.launched_update {
 			self.last = self.cache;
 			return Ok(self.cache);

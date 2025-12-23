@@ -3,7 +3,7 @@ use core::f64;
 use anyhow::Result;
 use data::{DnaNucleotide, Msa};
 use fork_union::{SyncMutPtr, ThreadPool};
-use num_traits::{Float, Inv, NumCast, Zero};
+use num_traits::Inv;
 
 use super::{LikelihoodTrait, Space};
 use crate::{
@@ -42,7 +42,7 @@ where
 	num_leaves: usize,
 
 	updated_edges: Buffer<usize>,
-	likelihoods: Buffer<S::Scalar>,
+	likelihoods: Buffer<f64>,
 
 	scale_ln: u32,
 	scale: S::Scalar,
@@ -209,30 +209,37 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 			let right = self.projections[root_right_idx + site];
 			let likelihood = left * right;
 			let likelihood = likelihood * frequencies;
-			let log_sum = S::sum(likelihood).ln();
+			let sum = S::sum(likelihood);
+			let ln_sum = S::ln(sum);
 
-			self.likelihoods[site] = log_sum;
+			self.likelihoods[site] = ln_sum;
 		}
 
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<S::Scalar> {
-		let mut out = S::Scalar::zero();
+	fn likelihood(&mut self) -> Result<f64> {
+		let mut out: f64 = 0.0;
 
-		for (likelihood, weight) in
-			self.likelihoods.iter().zip(&self.weights)
+		for (likelihood, weight) in self
+			.likelihoods
+			.iter()
+			.copied()
+			.zip(self.weights.iter().copied())
 		{
-			out += *likelihood * *weight;
+			let weight: f64 = weight.into();
+			out += likelihood * weight;
 		}
 
-		for (scale_sum, weight) in
-			self.scale_sums.iter().zip(&self.weights)
+		for (scale_sum, weight) in self
+			.scale_sums
+			.iter()
+			.copied()
+			.zip(self.weights.iter().copied())
 		{
-			let scale_sum =
-				<S::Scalar as NumCast>::from(*scale_sum)
-					.unwrap();
-			out -= scale_sum * *weight;
+			let scale_sum = f64::from(scale_sum);
+			let weight: f64 = weight.into();
+			out -= scale_sum * weight;
 		}
 
 		Ok(out)
