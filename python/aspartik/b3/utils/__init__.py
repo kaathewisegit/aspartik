@@ -1,3 +1,6 @@
+import argparse
+import sys
+
 from .. import MCMC
 
 
@@ -42,3 +45,25 @@ def print_operator_timings(mcmc: MCMC) -> None:
         total = propose + likelihood
 
         print(f"{name: <20}{propose: >20.0f}{likelihood: >20.0f}{total: >20.0f}")
+
+
+def run_from_cmdline(mcmc: MCMC):
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--stats", action="store_true", help="Operator accepts/rejects")
+    parser.add_argument("--timings", action="store_true", help="Operator timings")
+
+    parser.add_argument("length", type=int, nargs="?", default=100_000)
+
+    args = parser.parse_args()
+
+    mcmc.run(args.length)
+
+    if args.stats or args.timings:
+        print()
+    if args.stats:
+        print_operator_stats(mcmc)
+    if args.stats and args.timings:
+        print()
+    if args.timings:
+        print_operator_timings(mcmc)

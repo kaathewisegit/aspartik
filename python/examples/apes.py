@@ -2,8 +2,6 @@
 <https://beast.community/first_tutorial>
 """
 
-import sys
-
 from aspartik import logger
 from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
@@ -22,7 +20,7 @@ from aspartik.b3.operators import (
 from aspartik.b3.parameters import Real, Weights
 from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
 from aspartik.b3.substitutions import HKY
-from aspartik.b3.utils import print_operator_stats
+from aspartik.b3.utils import run_from_cmdline
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, LogNormal, Uniform
@@ -100,10 +98,4 @@ mcmc = MCMC(
     rng=rng,
 )
 
-if len(sys.argv) > 1:
-    length = int(sys.argv[1])
-else:
-    length = 100_000
-mcmc.run(length)
-
-print_operator_stats(mcmc)
+run_from_cmdline(mcmc)

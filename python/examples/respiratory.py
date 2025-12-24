@@ -24,7 +24,7 @@ from aspartik.b3.operators import (
 from aspartik.b3.parameters import Internals, Real, Weights
 from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
-from aspartik.b3.utils import print_operator_stats, print_operator_timings
+from aspartik.b3.utils import run_from_cmdline
 from aspartik.data import newick
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
@@ -137,11 +137,4 @@ mcmc = MCMC(
 )
 
 
-try:
-    mcmc.run(20_000)
-except Exception as e:
-    print(e)
-
-print_operator_stats(mcmc)
-print()
-print_operator_timings(mcmc)
+run_from_cmdline(mcmc)
