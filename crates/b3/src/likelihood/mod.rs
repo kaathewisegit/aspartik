@@ -367,7 +367,10 @@ pub struct PyParallel4Likelihood {
 #[pymethods]
 impl PyParallel4Likelihood {
 	#[new]
-	#[pyo3(signature = (msa, substitution, clock, tree, num_threads, scale_ln = 30))]
+	#[pyo3(signature = (
+		msa, substitution, clock, tree,
+		num_threads = 3, scale_ln = 30
+	))]
 	fn new(
 		msa: PyMsa,
 		substitution: Substitution4,

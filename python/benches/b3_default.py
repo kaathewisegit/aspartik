@@ -43,10 +43,10 @@ def worker(msa, kind, sender):
 
     signal.signal(signal.SIGTERM, termination_handler)
 
-    mcmc = default_b3_config(msa, RNG(4), 1_000_000_000, kind)
+    mcmc = default_b3_config(msa, RNG(4), kind)
 
     try:
-        mcmc.run()
+        mcmc.run(1_000_000_000)
     except:
         sender.send(mcmc.current_step)
 

@@ -16,6 +16,7 @@ from ..rng import RNG
 from ..stats.distributions import Sample
 
 class Tree(Stateful):
+    def __init__(self, names: list[str], rng: RNG): ...
     @classmethod
     def from_newick(_cls, newick: NewickTree) -> Tree: ...
     def set_random_topology(self, rng: RNG): ...
@@ -92,7 +93,7 @@ class Parallel4Likelihood(Likelihood):
         substitution: Substiution4,
         clock: Clock,
         tree: Tree,
-        num_threads: int,
+        num_threads: int = 3,
         scale_ln: int = 30,
     ): ...
 

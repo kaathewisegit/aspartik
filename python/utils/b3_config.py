@@ -23,7 +23,7 @@ from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Unif
 type Calculator = Literal["cpu", "parallel", "cuda"]
 
 
-def default(msa: MSA, rng: RNG, length: int, kind: Calculator) -> MCMC:
+def default(msa: MSA, rng: RNG, kind: Calculator) -> MCMC:
     """
     Default configuration for benchmarking purposes
 
@@ -78,8 +78,6 @@ def default(msa: MSA, rng: RNG, length: int, kind: Calculator) -> MCMC:
     )
 
     mcmc = MCMC(
-        burnin=0,
-        length=length,
         state=params + [tree],
         priors=priors,
         operators=operators,
