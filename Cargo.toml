@@ -68,5 +68,6 @@ cast_lossless = "warn"
 default_trait_access = "warn"
 derive_partial_eq_without_eq = "warn"
 
-[profile.release]
+[profile.profile]
+inherits = "release"
 debug = true
