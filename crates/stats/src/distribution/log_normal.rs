@@ -13,6 +13,7 @@ use util::impl_pyerr;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 
@@ -226,35 +227,24 @@ impl ContinuousCDF for LogNormal {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// log-normal distribution at `p`
-	///
-	/// # Panics
-	///
-	/// If `p < 0.0` or `p > 1.0`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ - σ * sqrt(2) * erfc_inv(2p)
-	/// ```
-	///
-	/// where `μ` is the location, `σ` is the scale and `erfc_inv` is
-	/// the inverse of the complementary error function
-	fn inverse_cdf(&self, p: f64) -> f64 {
+	/// `μ - σ * sqrt(2) * erfc_inv(2p)`, where `μ` is the location, `σ` is
+	/// the scale and `erfc_inv` is the inverse of the complementary error
+	/// function.
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let p = *p;
+
 		if p == 0.0 {
 			0.0
-		} else if p < 1.0 {
+		} else if p == 1.0 {
+			f64::INFINITY
+		} else {
+			// XXX: breakup
 			(self.location
 				- (self.scale
 					* f64::consts::SQRT_2 * erf::erfc_inv(
 					2.0 * p,
 				)))
 			.exp()
-		} else if p == 1.0 {
-			f64::INFINITY
-		} else {
-			panic!("p must be within [0.0, 1.0]");
 		}
 	}
 

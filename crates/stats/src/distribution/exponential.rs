@@ -9,6 +9,7 @@ use util::impl_pyerr;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 
@@ -167,16 +168,10 @@ impl ContinuousCDF for Exp {
 		if x < 0.0 { 1.0 } else { (-self.rate * x).exp() }
 	}
 
-	/// Calculates the inverse cumulative distribution function.
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// -ln(1 - p) / λ
-	/// ```
-	///
-	/// where `p` is the probability and `λ` is the rate
-	fn inverse_cdf(&self, p: f64) -> f64 {
+	/// `-ln(1 - p) / λ`, where `p` is the probability and `λ` is the rate.
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let p = *p;
+
 		-(-p).ln_1p() / self.rate
 	}
 

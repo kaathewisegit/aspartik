@@ -1,6 +1,10 @@
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::*;
 use core::f64;
+
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Cauchy](https://en.wikipedia.org/wiki/Cauchy_distribution)
 /// distribution, also known as the Lorentz distribution.
@@ -160,24 +164,11 @@ impl ContinuousCDF for Cauchy {
 			+ 0.5
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// cauchy distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// x_0 + γ tan((x - 0.5) π)
-	/// ```
-	///
-	/// where `x_0` is the location and `γ` is the scale
-	fn inverse_cdf(&self, x: f64) -> f64 {
-		if !(0.0..=1.0).contains(&x) {
-			panic!("x must be in [0, 1]");
-		} else {
-			self.location
-				+ self.scale
-					* (f64::consts::PI * (x - 0.5)).tan()
-		}
+	/// `x_0 + γ tan((x - 0.5) π)`, where `x_0` is the location and `γ` is
+	/// the scale.
+	fn inverse_cdf(&self, x: Probability<f64>) -> f64 {
+		self.location
+			+ self.scale * (f64::consts::PI * (*x - 0.5)).tan()
 	}
 
 	fn lower(&self) -> f64 {

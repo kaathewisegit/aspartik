@@ -220,14 +220,19 @@ fn test_inverse_cdf() {
 		((3.0, 10.0), 6.0, 6.0),
 	];
 	for (args, p, expected) in cases {
-		// The original test uses `x.inverse_cdf(x.cdf(arg))`, which implies we're testing
-		// if inverse_cdf correctly reverses cdf for the given `arg`.
-		// The new harness's `assert_exact` takes `(args, input_val, closure, expected)`.
-		// Here, the `input_val` to `inverse_cdf` is `d.cdf(p)`, and the `expected` is `p`.
+		// The original test uses `x.inverse_cdf(x.cdf(arg))`, which
+		// implies we're testing if inverse_cdf correctly reverses cdf
+		// for the given `arg`.  The new harness's `assert_exact` takes
+		// `(args, input_val, closure, expected)`.  Here, the
+		// `input_val` to `inverse_cdf` is `d.cdf(p)`, and the
+		// `expected` is `p`.
 		assert_exact(
 			args,
 			p,
-			|d, p_val| d.inverse_cdf(d.cdf(p_val)),
+			|d, p| {
+				let prob = Probability::new(d.cdf(p)).unwrap();
+				d.inverse_cdf(prob)
+			},
 			expected,
 		);
 	}

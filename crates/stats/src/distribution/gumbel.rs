@@ -2,7 +2,10 @@ use core::f64::consts::PI;
 use math::consts::EULER_MASCHERONI;
 
 use super::{Continuous, ContinuousCDF};
-use crate::statistics::{Distribution, Mode};
+use crate::{
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Gumbel](https://en.wikipedia.org/wiki/Gumbel_distribution)
 /// distribution, also known as the type-I generalized extreme value distribution.
@@ -139,22 +142,14 @@ impl ContinuousCDF for Gumbel {
 		(-(-(x - self.location) / self.scale).exp()).exp()
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// Gumbel distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ - β ln(-ln(p)) where 0 < p < 1
-	/// -INF             where p <= 0
-	/// INF              otherwise
-	/// ```
-	///
-	/// where `μ` is the location and `β` is the scale
-	fn inverse_cdf(&self, p: f64) -> f64 {
-		if p <= 0.0 {
+	/// `μ - β ln(-ln(p))` for 0 < p < 1, where `μ` is the location and `β`
+	/// is the scale, and infinities at the ends.
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let p = *p;
+
+		if p == 0.0 {
 			f64::NEG_INFINITY
-		} else if p >= 1.0 {
+		} else if p == 1.0 {
 			f64::INFINITY
 		} else {
 			self.location - self.scale * ((-(p.ln())).ln())

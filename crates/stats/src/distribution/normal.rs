@@ -2,19 +2,20 @@
 use pyo3::prelude::*;
 
 use core::f64;
+
+#[cfg(feature = "python")]
+use crate::python_macros::impl_pymethods;
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 use math::{
 	consts::{LN_SQRT_2PI, LN_SQRT_2PIE, SQRT_2PI},
 	function::erf,
 };
 #[cfg(feature = "python")]
 use util::impl_pyerr;
-
-#[cfg(feature = "python")]
-use crate::python_macros::impl_pymethods;
-use crate::{
-	distribution::{Continuous, ContinuousCDF},
-	statistics::{Distribution, Mode},
-};
 
 /// Implements the [Normal](https://en.wikipedia.org/wiki/Normal_distribution)
 /// distribution
@@ -189,32 +190,14 @@ impl ContinuousCDF for Normal {
 		sf_unchecked(x, self.mean, self.std_dev)
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// normal distribution at `x`.
-	/// In other languages, such as R, this is known as the the quantile function.
-	///
-	/// # Panics
-	///
-	/// If `x < 0.0` or `x > 1.0`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ - sqrt(2) * σ * erfc_inv(2x)
-	/// ```
-	///
-	/// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
-	/// the inverse of the complementary error function
-	fn inverse_cdf(&self, x: f64) -> f64 {
-		if !(0.0..=1.0).contains(&x) {
-			panic!("x must be in [0, 1]");
-		} else {
-			self.mean
-				- (self.std_dev
-					* f64::consts::SQRT_2 * erf::erfc_inv(
-					2.0 * x,
-				))
-		}
+	/// `μ - sqrt(2) * σ * erfc_inv(2x)`, where `μ` is the mean, `σ` is the
+	/// standard deviation and `erfc_inv` is the inverse of the
+	/// complementary error function.
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let p = *p;
+		self.mean
+			- (self.std_dev
+				* f64::consts::SQRT_2 * erf::erfc_inv(2.0 * p))
 	}
 
 	fn lower(&self) -> f64 {

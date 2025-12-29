@@ -1,12 +1,14 @@
 use core::f64;
+
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 use math::{
 	consts::LN_SQRT_2PI,
 	function::erf::{erf, erfc, erfc_inv},
 };
-
-use crate::distribution::{Continuous, ContinuousCDF};
-
-use crate::statistics::{Distribution, Mode};
 
 /// Implements the [Levy](https://en.wikipedia.org/wiki/L%C3%A9vy_distribution) distribution.
 ///
@@ -169,27 +171,11 @@ impl ContinuousCDF for Levy {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// normal distribution at `x`.
-	///
-	/// # Panics
-	///
-	/// If `x < 0.0` or `x > 1.0`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ + c * (erfc_inv(x)^2)/2
-	/// ```
-	///
-	/// where `μ` is the mean, `σ` is the standard deviation and `erfc_inv` is
-	/// the inverse of the complementary error function
-	fn inverse_cdf(&self, x: f64) -> f64 {
-		if !(0.0..=1.0).contains(&x) {
-			panic!("x must be in [0, 1]");
-		} else {
-			self.mu + 0.5 * self.c / (erfc_inv(x).powf(2.0))
-		}
+	/// `μ + c * (erfc_inv(x)^2) / 2`, where `μ` is the mean, `σ` is the
+	/// standard deviation and `erfc_inv` is the inverse of the
+	/// complementary error function.
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		self.mu + 0.5 * self.c / (erfc_inv(*p).powf(2.0))
 	}
 
 	fn lower(&self) -> f64 {

@@ -1,6 +1,10 @@
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::*;
 use core::f64;
+
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Pareto](https://en.wikipedia.org/wiki/Pareto_distribution)
 /// distribution
@@ -174,22 +178,10 @@ impl ContinuousCDF for Pareto {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the Pareto
-	/// distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// x_m / (1 - x)^(1 / α)
-	/// ```
-	///
-	/// where `x_m` is the scale and `α` is the shape
-	fn inverse_cdf(&self, p: f64) -> f64 {
-		if !(0.0..=1.0).contains(&p) {
-			panic!("x must be in [0, 1]");
-		} else {
-			self.scale * (1.0 - p).powf(-1.0 / self.shape)
-		}
+	/// `x_m / (1 - x)^(1 / α)`, where `x_m` is the scale and `α` is the
+	/// shape.
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		self.scale * (1.0 - *p).powf(-1.0 / self.shape)
 	}
 
 	fn lower(&self) -> f64 {

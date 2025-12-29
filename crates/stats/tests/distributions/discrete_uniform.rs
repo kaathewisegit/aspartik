@@ -167,6 +167,7 @@ fn test_inverse_cdf() {
 		((3, 10), 0.9995, 10),
 	];
 	for (args, p, expected) in cases {
+		let p = Probability::new(p).unwrap();
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }

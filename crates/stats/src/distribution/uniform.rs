@@ -8,6 +8,7 @@ use util::impl_pyerr;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 
@@ -234,11 +235,10 @@ impl ContinuousCDF for Uniform {
 		}
 	}
 
-	/// Finds the value of `x` where `F(p) = x`
-	fn inverse_cdf(&self, p: f64) -> f64 {
-		if !(0.0..=1.0).contains(&p) {
-			panic!("p must be in [0, 1], was {p}");
-		} else if p == 0.0 {
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let p = *p;
+
+		if p == 0.0 {
 			self.min
 		} else if p == 1.0 {
 			self.max

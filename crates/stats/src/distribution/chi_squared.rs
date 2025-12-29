@@ -1,6 +1,10 @@
-use crate::distribution::{Continuous, ContinuousCDF, Gamma, GammaError};
-use crate::statistics::*;
 use core::f64;
+
+use crate::{
+	distribution::{Continuous, ContinuousCDF, Gamma, GammaError},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the
 /// [Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution)
@@ -151,7 +155,7 @@ impl ContinuousCDF for ChiSquared {
 	///
 	/// where `k` is the degrees of freedom, `Γ` is the gamma function,
 	/// and `γ` is the lower incomplete gamma function
-	fn inverse_cdf(&self, p: f64) -> f64 {
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
 		self.g.inverse_cdf(p)
 	}
 

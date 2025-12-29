@@ -247,6 +247,7 @@ fn test_inverse_cdf() {
 	];
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
+		let p = Probability::new(p).unwrap();
 		assert_almost_eq!(
 			dist.inverse_cdf(p),
 			expected,

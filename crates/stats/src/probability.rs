@@ -7,6 +7,7 @@ use std::ops::Deref;
 /// It can be returned from a function or required as an argument to signal that
 /// the value must be between 0 and 1, inclusively.
 #[repr(transparent)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub struct Probability<F>(F);
 
 impl<F: Float> Probability<F> {

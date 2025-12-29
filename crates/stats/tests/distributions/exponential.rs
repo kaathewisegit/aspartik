@@ -205,9 +205,10 @@ fn test_inverse_cdf_identity() {
 	let args = [0.42, 0.042, 0.0042, 0.33, 0.033, 0.0033];
 	for rate in args {
 		let dist = new_dist(rate);
+		let half = Probability::new(0.5).unwrap();
 		assert_close(
 			rate,
-			0.5,
+			half,
 			|d, p| d.inverse_cdf(p),
 			dist.median().unwrap(),
 		);

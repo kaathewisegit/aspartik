@@ -9,6 +9,7 @@ use util::impl_pyerr;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 
@@ -189,25 +190,11 @@ impl ContinuousCDF for Laplace {
 		if x >= self.location { y } else { 1.0 - y }
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// laplace distribution at `p`
-	///
-	/// # Formula
-	///
-	/// if p <= 1/2
-	/// ```text
-	/// μ + b * ln(2p)
-	/// ```
-	/// if p >= 1/2
-	/// ```text
-	/// μ - b * ln(2 - 2p)
-	/// ```
-	///
-	/// where `μ` is the location, `b` is the scale
-	fn inverse_cdf(&self, p: f64) -> f64 {
-		if p <= 0.0 || 1.0 <= p {
-			panic!("p must be in [0, 1]");
-		};
+	/// `μ + b * ln(2p)` if `p <= 1/2`, `μ - b * ln(2 - 2p)` otherwise,
+	/// where `μ` is the location, `b` is the scale.
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let p = *p;
+
 		if p <= 0.5 {
 			self.location + self.scale * (2.0 * p).ln()
 		} else {

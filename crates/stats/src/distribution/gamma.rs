@@ -16,6 +16,7 @@ use util::impl_pyerr;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 
@@ -189,12 +190,9 @@ impl ContinuousCDF for Gamma {
 		}
 	}
 
-	fn inverse_cdf(&self, p: f64) -> f64 {
-		if !(0.0..=1.0).contains(&p) {
-			panic!(
-				"default inverse_cdf implementation should be provided probability on [0,1]"
-			)
-		}
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let p = *p;
+
 		if p == 0.0 {
 			return self.lower();
 		};

@@ -13,6 +13,7 @@ use util::impl_pyerr;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 
@@ -171,16 +172,8 @@ impl ContinuousCDF for Beta {
 
 	/// `I_x^{-1}(β, α)`, where `I_x` is the regularized lower incomplete
 	/// beta function.
-	///
-	/// # Panics
-	///
-	/// If x is not in `[0, 1]`.
-	fn inverse_cdf(&self, x: f64) -> f64 {
-		if !(0.0..=1.0).contains(&x) {
-			panic!("x must be in [0, 1]");
-		} else {
-			beta::inv_beta_reg(self.shape_a, self.shape_b, x)
-		}
+	fn inverse_cdf(&self, x: Probability<f64>) -> f64 {
+		beta::inv_beta_reg(self.shape_a, self.shape_b, *x)
 	}
 
 	fn lower(&self) -> f64 {

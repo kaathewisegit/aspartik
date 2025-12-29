@@ -1,10 +1,11 @@
-use math::function::{beta, gamma};
+use core::f64;
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
 	statistics::{Distribution, Mode},
 };
-use core::f64;
+use math::function::{beta, gamma};
 
 /// Implements the [Student's
 /// T](https://en.wikipedia.org/wiki/Student%27s_t-distribution) distribution
@@ -255,23 +256,25 @@ impl ContinuousCDF for StudentsT {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// Student's T-distribution at `x`
-	fn inverse_cdf(&self, x: f64) -> f64 {
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let p = *p;
+
 		// first calculate inverse_cdf for normal Student's T
-		assert!((0.0..=1.0).contains(&x));
-		let x1 = if x >= 0.5 { 1.0 - x } else { x };
+		let x1 = if p >= 0.5 { 1.0 - p } else { p };
 		let a = 0.5 * self.freedom;
 		let b = 0.5;
 		let mut y = beta::inv_beta_reg(a, b, 2.0 * x1);
 		y = (self.freedom * (1.0 - y) / y).sqrt();
-		y = if x >= 0.5 { y } else { -y };
-		// generalised Student's T is related to normal Student's T by `Y = μ + σ X`
-		// where `X` is distributed as Student's T, so this result has to be scaled and shifted back
-		// formally: F_Y(t) = P(Y <= t) = P(X <= (t - μ) / σ) = F_X((t - μ) / σ)
-		// F_Y^{-1}(p) = inf { t' | F_Y(t') >= p } = inf { t' = μ + σ t | F_X((t' - μ) / σ) >= p }
-		// because scale is positive: loc + scale * t is strictly monotonic function
-		// = μ + σ inf { t | F_X(t) >= p } = μ + σ F_X^{-1}(p)
+		y = if p >= 0.5 { y } else { -y };
+
+		// generalised Student's T is related to normal Student's T by
+		// `Y = μ + σ X` where `X` is distributed as Student's T, so
+		// this result has to be scaled and shifted back formally:
+		// F_Y(t) = P(Y <= t) = P(X <= (t - μ) / σ) = F_X((t - μ) / σ)
+		// F_Y^{-1}(p) = inf { t' | F_Y(t') >= p } = inf { t' = μ + σ t
+		// | F_X((t' - μ) / σ) >= p } because scale is positive: loc +
+		// scale * t is strictly monotonic function = μ + σ inf { t |
+		// F_X(t) >= p } = μ + σ F_X^{-1}(p)
 		self.location + self.scale * y
 	}
 

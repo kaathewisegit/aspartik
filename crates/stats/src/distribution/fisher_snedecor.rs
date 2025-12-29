@@ -1,7 +1,9 @@
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 use math::function::beta;
-
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::*;
 
 /// Implements the
 /// [Fisher-Snedecor](https://en.wikipedia.org/wiki/F-distribution) distribution
@@ -205,9 +207,6 @@ impl ContinuousCDF for FisherSnedecor {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// fisher-snedecor distribution at `x`
-	///
 	/// # Formula
 	///
 	/// ```text
@@ -215,20 +214,15 @@ impl ContinuousCDF for FisherSnedecor {
 	/// d2 / (d1 (1 / z - 1))
 	/// ```
 	///
-	/// where `d1` is the first degree of freedom, `d2` is
-	/// the second degree of freedom, and `I` is the regularized incomplete
-	/// beta function
-	fn inverse_cdf(&self, x: f64) -> f64 {
-		if !(0.0..=1.0).contains(&x) {
-			panic!("x must be in [0, 1]");
-		} else {
-			let z = beta::inv_beta_reg(
-				self.freedom_1 / 2.0,
-				self.freedom_2 / 2.0,
-				x,
-			);
-			self.freedom_2 / (self.freedom_1 * (1.0 / z - 1.0))
-		}
+	/// where `d1` is the first degree of freedom, `d2` is the second degree
+	/// of freedom, and `I` is the regularized incomplete beta function
+	fn inverse_cdf(&self, x: Probability<f64>) -> f64 {
+		let z = beta::inv_beta_reg(
+			self.freedom_1 / 2.0,
+			self.freedom_2 / 2.0,
+			*x,
+		);
+		self.freedom_2 / (self.freedom_1 * (1.0 / z - 1.0))
 	}
 
 	fn lower(&self) -> f64 {

@@ -1,8 +1,11 @@
-use math::{consts::EULER_MASCHERONI, function::gamma, ulps_eq};
 use std::f64::consts::LN_2;
 
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::*;
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
+use math::{consts::EULER_MASCHERONI, function::gamma, ulps_eq};
 
 /// Implements the [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
 /// distribution
@@ -171,22 +174,10 @@ impl ContinuousCDF for Weibull {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the weibull
-	/// distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// λ (-ln(1 - x))^(1 / k)
-	/// ```
-	///
-	/// where `k` is the shape and `λ` is the scale
-	fn inverse_cdf(&self, p: f64) -> f64 {
-		if !(0.0..=1.0).contains(&p) {
-			panic!("x must be in [0, 1]");
-		}
-
-		(-((-p).ln_1p() / self.scale_pow_shape_inv))
+	/// `λ (-ln(1 - x))^(1 / k)`, where `k` is the shape and `λ` is the
+	/// scale.
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		(-((-*p).ln_1p() / self.scale_pow_shape_inv))
 			.powf(1.0 / self.shape)
 	}
 

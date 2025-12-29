@@ -220,6 +220,7 @@ fn test_discrete() {
 fn test_inverse_cdf() {
 	let cases = [((10, 2, 5), 0.5, 1), ((100, 2, 5), 0.5, 0)];
 	for (args, p, expected) in cases {
+		let p = Probability::new(p).unwrap();
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }

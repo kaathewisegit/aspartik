@@ -230,7 +230,13 @@ fn test_inverse_cdf() {
 		((10.0, 1.0), 0.6321205588285577, 1.0), // cdf(1.0)
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.inverse_cdf(p), expected);
+		let dist = new_dist(args);
+		let p = Probability::new(p).unwrap();
+		assert_almost_eq!(
+			dist.inverse_cdf(p),
+			expected,
+			relative = ACCURACY
+		);
 	}
 }
 

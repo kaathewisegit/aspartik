@@ -1,6 +1,10 @@
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::*;
 use core::f64;
+
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the
 /// [Triangular](https://en.wikipedia.org/wiki/Triangular_distribution)
@@ -239,10 +243,6 @@ impl ContinuousCDF for Triangular {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the triangular
-	/// distribution
-	/// at `x`
-	///
 	/// # Formula
 	///
 	/// ```text
@@ -252,18 +252,16 @@ impl ContinuousCDF for Triangular {
 	///     max - ((max - min) * (max - mode) * (1 - x))^(1 / 2)
 	/// }
 	/// ```
-	fn inverse_cdf(&self, p: f64) -> f64 {
-		let a = self.min;
-		let b = self.max;
-		let c = self.mode;
-		if !(0.0..=1.0).contains(&p) {
-			panic!("x must be in [0, 1]");
-		}
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+		let min = self.min;
+		let max = self.max;
+		let mode = self.mode;
+		let p = *p;
 
-		if p < (c - a) / (b - a) {
-			a + ((c - a) * (b - a) * p).sqrt()
+		if p < (mode - min) / (max - min) {
+			min + ((mode - min) * (max - min) * p).sqrt()
 		} else {
-			b - ((b - a) * (b - c) * (1.0 - p)).sqrt()
+			max - ((max - min) * (max - mode) * (1.0 - p)).sqrt()
 		}
 	}
 

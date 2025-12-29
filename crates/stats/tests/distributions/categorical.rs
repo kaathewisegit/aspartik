@@ -176,22 +176,9 @@ fn test_inverse_cdf() {
 		(&[4.0, 2.5, 2.5, 1.0], 0.95, 3),
 	];
 	for (args, p, expected) in cases {
-		assert_exact(args, p, |d, p| d.inverse_cdf(*p), *expected);
+		let p = Probability::new(*p).unwrap();
+		assert_exact(args, p, |d, p| d.inverse_cdf(p), *expected);
 	}
-}
-
-#[test]
-#[should_panic]
-fn test_inverse_cdf_input_low() {
-	let dist = new_dist(&[4.0, 2.5, 2.5, 1.0]);
-	dist.inverse_cdf(0.0);
-}
-
-#[test]
-#[should_panic]
-fn test_inverse_cdf_input_high() {
-	let dist = new_dist(&[4.0, 2.5, 2.5, 1.0]);
-	dist.inverse_cdf(1.0);
 }
 
 #[test]

@@ -180,6 +180,11 @@ fn test_discrete() {
 fn test_inverse_cdf() {
 	let cases = [(1.5, 0.0, 0)];
 	for (args, p, expected) in cases {
-		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
+		assert_exact(
+			args,
+			p,
+			|d, p| d.inverse_cdf(Probability::new(p).unwrap()),
+			expected,
+		);
 	}
 }

@@ -246,12 +246,9 @@ fn test_inverse_cdf() {
 		((-5.0, -3.0, -4.0), 0.875, -3.5),
 	];
 	for (args, p, expected) in cases {
-		assert_close(
-			args,
-			p,
-			|d, p_val| d.inverse_cdf(p_val),
-			expected,
-		);
+		let dist = new_dist(args);
+		let p = Probability::new(p).unwrap();
+		assert_almost_eq!(dist.inverse_cdf(p), expected);
 	}
 }
 

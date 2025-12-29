@@ -87,8 +87,15 @@ macro_rules! impl_pymethods {
 			}
 
 			#[pyo3(name = "inverse_cdf")]
-			fn py_inverse_cdf(&self, p: f64) -> <Self as Continuous>::T {
-				self.inverse_cdf(p)
+			fn py_inverse_cdf(
+				&self, p: f64
+			) -> pyo3::PyResult<<Self as Continuous>::T> {
+				use pyo3::exceptions::PyValueError;
+				use crate::probability::Probability;
+				let Some(p) = Probability::new(p) else {
+					return Err(PyValueError::new_err(format!("`p` must be in `[0, 1]`, got {p}")));
+				};
+				Ok(self.inverse_cdf(p))
 			}
 
 			#[getter]
@@ -138,8 +145,15 @@ macro_rules! impl_pymethods {
 			}
 
 			#[pyo3(name = "inverse_cdf")]
-			fn py_inverse_cdf(&self, p: f64) -> <Self as Discrete>::T {
-				self.inverse_cdf(p)
+			fn py_inverse_cdf(
+				&self, p: f64
+			) -> pyo3::PyResult<<Self as Discrete>::T> {
+				use pyo3::exceptions::PyValueError;
+				use crate::probability::Probability;
+				let Some(p) = Probability::new(p) else {
+					return Err(PyValueError::new_err(format!("`p` must be in `[0, 1]`, got {p}")));
+				};
+				Ok(self.inverse_cdf(p))
 			}
 
 			#[getter]

@@ -3,6 +3,8 @@
 //! concrete implementations for a variety of distributions.
 use num_traits::{Float, Num, NumAssignOps, One};
 
+use crate::probability::Probability;
+
 mod bernoulli;
 mod beta;
 mod binomial;
@@ -143,15 +145,19 @@ where
 		1.0 - self.cdf(x)
 	}
 
-	/// Due to issues with rounding and floating-point accuracy the default
-	/// implementation may be ill-behaved.
-	/// Specialized inverse cdfs should be used whenever possible.
-	/// Performs a binary search on the domain of `cdf` to obtain an approximation
-	/// of `F^-1(p) := inf { x | F(x) >= p }`. Needless to say, performance may
-	/// may be lacking.
+	/// The quantile function
+	///
+	/// The default implementation may be ill-behaved due to issues with
+	/// rounding and floating-point accuracy.  Specialized inverse cdfs
+	/// should be used whenever possible.  The default implementation
+	/// performs a binary search on the domain of `cdf` to obtain an
+	/// approximation of `F^-1(p) := inf { x | F(x) >= p }`. Needless to
+	/// say, performance may may be lacking.
 	#[doc(alias = "quantile function")]
 	#[doc(alias = "quantile")]
-	fn inverse_cdf(&self, p: f64) -> Self::T {
+	fn inverse_cdf(&self, p: Probability<f64>) -> Self::T {
+		let p = p.into_inner();
+
 		if p == 0.0 {
 			return self.lower();
 		};
@@ -270,12 +276,12 @@ where
 		1.0 - self.cdf(x)
 	}
 
-	/// Due to issues with rounding and floating-point accuracy the default implementation may be ill-behaved
-	/// Specialized inverse cdfs should be used whenever possible.
-	///
-	/// # Panics
-	/// this default impl panics if provided `p` not on interval [0.0, 1.0]
-	fn inverse_cdf(&self, p: f64) -> Self::T {
+	/// Due to issues with rounding and floating-point accuracy the default
+	/// implementation may be ill-behaved Specialized inverse cdfs should be
+	/// used whenever possible.
+	fn inverse_cdf(&self, p: Probability<f64>) -> Self::T {
+		let p = p.into_inner();
+
 		if p <= self.cdf(self.lower()) {
 			return self.lower();
 		} else if p == 1.0 {

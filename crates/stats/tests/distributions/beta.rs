@@ -222,7 +222,15 @@ fn test_inverse_cdf() {
 		((1.0, 1.0), 2.0, 1.0),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.inverse_cdf(d.cdf(p)), expected);
+		assert_close(
+			args,
+			p,
+			|d, p| {
+				let prob = Probability::new(d.cdf(p)).unwrap();
+				d.inverse_cdf(prob)
+			},
+			expected,
+		);
 	}
 }
 

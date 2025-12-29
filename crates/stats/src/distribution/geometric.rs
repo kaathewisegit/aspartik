@@ -1,9 +1,11 @@
 use core::f64;
 
+use crate::{
+	distribution::{Discrete, DiscreteCDF},
+	probability::Probability,
+	statistics::{Distribution, Mode},
+};
 use math::ulps_eq;
-
-use crate::distribution::{Discrete, DiscreteCDF};
-use crate::statistics::*;
 
 /// Implements the
 /// [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)
@@ -138,12 +140,14 @@ impl DiscreteCDF for Geometric {
 		}
 	}
 
-	fn inverse_cdf(&self, probability: f64) -> u64 {
-		if probability == 1.0 || probability == 0.0 {
+	fn inverse_cdf(&self, p: Probability<f64>) -> u64 {
+		let p = *p;
+
+		if p == 1.0 || p == 0.0 {
 			return 1;
 		}
 
-		let approx = (-probability).ln_1p() / (-self.p).ln_1p();
+		let approx = (-p).ln_1p() / (-self.p).ln_1p();
 
 		approx.round() as u64
 	}

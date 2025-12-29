@@ -336,6 +336,7 @@ pub mod prelude {
 		distribution::{
 			Continuous, ContinuousCDF, Discrete, DiscreteCDF,
 		},
+		probability::Probability,
 		statistics::{Distribution, Mode},
 	};
 

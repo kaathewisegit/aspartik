@@ -1,5 +1,8 @@
-use crate::distribution::{Discrete, DiscreteCDF};
-use crate::statistics::*;
+use crate::{
+	distribution::{Discrete, DiscreteCDF},
+	probability::Probability,
+	statistics::Distribution,
+};
 
 /// Implements the
 /// [Categorical](https://en.wikipedia.org/wiki/Categorical_distribution)
@@ -183,28 +186,11 @@ impl DiscreteCDF for Categorical {
 		}
 	}
 
-	/// Calculates the inverse cumulative distribution function for the
-	/// categorical
-	/// distribution at `x`
-	///
-	/// # Panics
-	///
-	/// If `x <= 0.0` or `x >= 1.0`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// i
-	/// ```
-	///
-	/// where `i` is the first index such that `x < f(i)`
-	/// and `f(x)` is defined as `p_x + f(x - 1)` and `f(0) = p_0` where
-	/// `p_x` is the `x`th probability mass
-	fn inverse_cdf(&self, x: f64) -> u64 {
-		if x >= 1.0 || x <= 0.0 {
-			panic!("x must be in [0, 1]")
-		}
-		let denorm_prob = x * self.cdf_max();
+	/// Returns `i` where `i` is the first index such that `x < f(i)` and
+	/// `f(x)` is defined as `p_x + f(x - 1)` and `f(0) = p_0` where `p_x`
+	/// is the `x`th probability mass
+	fn inverse_cdf(&self, x: Probability<f64>) -> u64 {
+		let denorm_prob = *x * self.cdf_max();
 		binary_index(&self.cdf, denorm_prob) as u64
 	}
 
@@ -245,7 +231,9 @@ impl Distribution for Categorical {
 	/// CDF^-1(0.5)
 	/// ```
 	fn median(&self) -> Option<f64> {
-		Some(self.inverse_cdf(0.5) as f64)
+		// TODO: const
+		let half = Probability::new(0.5).unwrap();
+		Some(self.inverse_cdf(half) as f64)
 	}
 
 	/// Returns the variance of the categorical distribution
