@@ -231,9 +231,10 @@ impl Distribution for Categorical {
 	/// CDF^-1(0.5)
 	/// ```
 	fn median(&self) -> Option<f64> {
-		// TODO: const
-		let half = Probability::new(0.5).unwrap();
-		Some(self.inverse_cdf(half) as f64)
+		const HALF: Probability<f64> =
+			Probability::new_const(0.5).unwrap();
+
+		Some(self.inverse_cdf(HALF) as f64)
 	}
 
 	/// Returns the variance of the categorical distribution

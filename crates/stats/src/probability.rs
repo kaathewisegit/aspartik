@@ -31,6 +31,21 @@ impl<F: Float> Probability<F> {
 	}
 }
 
+impl Probability<f64> {
+	/// `const` constructor
+	///
+	/// It has to be implemented for a specific type because Rust currently
+	/// doesn't allow const trait methods, and for a generic type comparison
+	/// will use the `Ord` trait.
+	pub const fn new_const(p: f64) -> Option<Self> {
+		if p >= 0.0 && p <= 1.0 {
+			Some(Probability(p))
+		} else {
+			None
+		}
+	}
+}
+
 impl<F> Deref for Probability<F> {
 	type Target = F;
 
