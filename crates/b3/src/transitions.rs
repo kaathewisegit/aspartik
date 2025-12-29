@@ -1,31 +1,29 @@
 use anyhow::Result;
+use linalg::RowMatrix;
 use pyo3::prelude::*;
 
-use crate::{
-	clock::PyClock, likelihood::Space,
-	substitution::BoxedSubstitutionModel, tree::Tree,
-};
+use crate::{clock::PyClock, substitution::BoxedSubstitutionModel, tree::Tree};
 use skvec::SkVec;
 
-pub struct Transitions<S: Space> {
-	substitution: BoxedSubstitutionModel<S::ArrayVector, S::ArrayMatrix>,
+pub struct Transitions<const N: usize, F> {
+	substitution: BoxedSubstitutionModel<N, F>,
 	clock: PyClock,
 
 	rate: f64,
 
-	transitions: SkVec<S::Matrix>,
+	transitions: SkVec<RowMatrix<F, N, N>>,
 }
 
-impl<S: Space> Transitions<S> {
+impl<const N: usize, F> Transitions<N, F>
+where
+	F: Default + Copy,
+{
 	pub fn new(
 		length: usize,
-		substitution: BoxedSubstitutionModel<
-			S::ArrayVector,
-			S::ArrayMatrix,
-		>,
+		substitution: BoxedSubstitutionModel<N, F>,
 		clock: PyClock,
 	) -> Self {
-		let transitions = SkVec::repeat(S::Matrix::default(), length);
+		let transitions = SkVec::repeat(RowMatrix::default(), length);
 
 		Self {
 			substitution,
@@ -68,7 +66,7 @@ impl<S: Space> Transitions<S> {
 			let transition =
 				self.substitution.get_transition(*distance);
 
-			self.transitions.set(*edge, S::into_matrix(transition));
+			self.transitions.set(*edge, transition.into());
 		}
 	}
 
@@ -80,17 +78,17 @@ impl<S: Space> Transitions<S> {
 		self.transitions.reject();
 	}
 
-	pub fn matrices(&self, edges: &[usize]) -> Vec<S::Matrix> {
+	pub fn matrices(&self, edges: &[usize]) -> Vec<[[F; N]; N]> {
 		let mut out = Vec::with_capacity(edges.len());
 
 		for edge in edges {
-			out.push(self.transitions[*edge])
+			out.push(self.transitions[*edge].into())
 		}
 
 		out
 	}
 
-	pub fn frequencies(&self) -> S::Vector {
-		S::into_vector(self.substitution.get_frequencies())
+	pub fn frequencies(&self) -> [F; N] {
+		self.substitution.get_frequencies()
 	}
 }

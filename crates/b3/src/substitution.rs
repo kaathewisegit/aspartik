@@ -5,21 +5,18 @@ use pyo3::{PyTypeCheck, prelude::*};
 
 use pyutil::SupportsFloat;
 
-pub trait SubstitutionModel {
-	type Vector;
-	type Martix;
-
+pub trait SubstitutionModel<const N: usize, F> {
 	fn update(&mut self, py: Python) -> Result<bool>;
 
-	fn get_transition(&self, distance: f64) -> Self::Martix;
+	fn get_transition(&self, distance: f64) -> [[F; N]; N];
 
-	fn get_frequencies(&self) -> Self::Vector;
+	fn get_frequencies(&self) -> [F; N];
 }
 
-pub type BoxedSubstitutionModel<V, M> =
-	Box<dyn SubstitutionModel<Vector = V, Martix = M> + Send>;
+pub type BoxedSubstitutionModel<const N: usize, F> =
+	Box<dyn SubstitutionModel<N, F> + Send>;
 
-pub type Substitution4 = BoxedSubstitutionModel<[f64; 4], [[f64; 4]; 4]>;
+pub type Substitution4 = BoxedSubstitutionModel<4, f64>;
 
 impl<'py> FromPyObject<'_, 'py> for Substitution4 {
 	type Error = PyErr;
@@ -56,10 +53,7 @@ impl<'py> FromPyObject<'_, 'py> for Substitution4 {
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct JC;
 
-impl SubstitutionModel for JC {
-	type Vector = [f64; 4];
-	type Martix = [[f64; 4]; 4];
-
+impl SubstitutionModel<4, f64> for JC {
 	fn update(&mut self, _py: Python) -> Result<bool> {
 		Ok(false)
 	}
@@ -118,10 +112,7 @@ impl K80 {
 	}
 }
 
-impl SubstitutionModel for K80 {
-	type Vector = [f64; 4];
-	type Martix = [[f64; 4]; 4];
-
+impl SubstitutionModel<4, f64> for K80 {
 	fn update(&mut self, py: Python) -> Result<bool> {
 		let kappa = self.kappa.extract(py)?;
 
@@ -242,10 +233,7 @@ impl HKY {
 	}
 }
 
-impl SubstitutionModel for HKY {
-	type Vector = [f64; 4];
-	type Martix = [[f64; 4]; 4];
-
+impl SubstitutionModel<4, f64> for HKY {
 	fn update(&mut self, py: Python) -> Result<bool> {
 		let bf = self.frequencies.bind(py);
 		let frequencies = (

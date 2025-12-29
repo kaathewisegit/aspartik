@@ -8,6 +8,7 @@ authors.workspace = true
 
 [dependencies]
 bitmap = { workspace = true }
+bytemuck = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
 linalg = { workspace = true, features = ["bytemuck", "cuda"] }

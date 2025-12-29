@@ -12,13 +12,12 @@ use std::sync::Arc;
 
 use super::LikelihoodTrait;
 use crate::{
-	likelihood::{LinalgF64x4, Space, deduplicate},
-	tree::Internal,
-	util::msa_to_likelihoods,
+	likelihood::deduplicate, tree::Internal, util::msa_to_likelihoods,
 };
+use linalg::{RowMatrix, Vector};
 
-type Row = <LinalgF64x4 as Space>::Vector;
-type Transition = <LinalgF64x4 as Space>::Matrix;
+type Row = Vector<f64, 4>;
+type Transition = RowMatrix<f64, 4, 4>;
 
 const CUDA_SRC: &str =
 	concat!(include_str!("typedefs.h"), include_str!("kernels.cu"),);
@@ -96,9 +95,7 @@ pub struct CudaLikelihood {
 	num_updated_nodes: u32,
 }
 
-impl LikelihoodTrait for CudaLikelihood {
-	type S = LinalgF64x4;
-
+impl LikelihoodTrait<4, f64> for CudaLikelihood {
 	/// Propose an edit to the tree
 	///
 	/// Asynchronous.  This method starts the GPU calculations and returns
@@ -108,10 +105,10 @@ impl LikelihoodTrait for CudaLikelihood {
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[Transition],
+		transitions: &[[[f64; 4]; 4]],
 		leaves_end: usize,
 		root: usize,
-		frequencies: Row,
+		frequencies: [f64; 4],
 	) -> Result<()> {
 		self.num_updated_nodes = nodes.len() as u32;
 		if self.num_updated_nodes == 0 {
@@ -123,6 +120,8 @@ impl LikelihoodTrait for CudaLikelihood {
 
 		self.stream.memcpy_htod(&edges, &mut self.edges)?;
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
+		let transitions: &[Transition] =
+			bytemuck::cast_slice(transitions);
 		self.stream
 			.memcpy_htod(transitions, &mut self.transitions)?;
 
@@ -135,6 +134,7 @@ impl LikelihoodTrait for CudaLikelihood {
 		}
 		self.update_all(leaves_end, internals_start)?;
 
+		let frequencies = Vector::from(frequencies);
 		self.update_likelihoods(root as u32, frequencies)?;
 
 		Ok(())
@@ -352,6 +352,7 @@ impl CudaLikelihood {
 		}
 	}
 
+	#[expect(unused)]
 	pub fn pattern_likelihoods(
 		&self,
 		root: Internal,

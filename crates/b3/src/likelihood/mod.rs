@@ -1,14 +1,9 @@
 use anyhow::Result;
-use num_traits::NumCast;
+use num_traits::Float;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use std::{
-	collections::HashMap,
-	fmt::Debug,
-	ops::{Mul, MulAssign},
-	slice,
-};
+use std::{collections::HashMap, fmt::Debug, slice};
 
 use crate::{
 	Transitions,
@@ -17,7 +12,6 @@ use crate::{
 	tree::PyTree,
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
-use linalg::{RowMatrix, Vector};
 use logger::trace;
 use util::{py_call_method, py_check_method};
 
@@ -29,101 +23,15 @@ use cpu::CpuLikelihood;
 use cuda::CudaLikelihood;
 use parallel::ParallelLikelihood;
 
-pub trait Space {
-	type Scalar: Mul<Output = Self::Scalar>
-		+ NumCast
-		+ Into<f64>
-		+ Copy
-		+ Sync
-		+ Send
-		+ Debug
-		+ 'static;
-	type Vector: Mul<Output = Self::Vector>
-		+ MulAssign<Self::Scalar>
-		+ PartialOrd<Self::Scalar>
-		+ Copy
-		+ Sync
-		+ Send
-		+ Debug
-		+ 'static;
-	type Matrix: Mul<Self::Vector, Output = Self::Vector>
-		+ Default
-		+ Copy
-		+ Sync
-		+ Send
-		+ Debug
-		+ 'static;
-
-	// a workaround for [f64; N], because `Self::N` can't be used
-	type ArrayVector;
-	fn into_vector(v: Self::ArrayVector) -> Self::Vector;
-	type ArrayMatrix;
-	fn into_matrix(m: Self::ArrayMatrix) -> Self::Matrix;
-
-	fn sum(v: Self::Vector) -> Self::Scalar;
-	fn ln(s: Self::Scalar) -> f64;
-}
-
-pub struct LinalgF64x4;
-impl Space for LinalgF64x4 {
-	type Scalar = f64;
-	type Vector = Vector<f64, 4>;
-	type Matrix = RowMatrix<f64, 4, 4>;
-
-	type ArrayVector = [f64; 4];
-	fn into_vector(v: [f64; 4]) -> Self::Vector {
-		v.into()
-	}
-
-	type ArrayMatrix = [[f64; 4]; 4];
-	fn into_matrix(m: [[f64; 4]; 4]) -> Self::Matrix {
-		m.into()
-	}
-
-	fn sum(v: Self::Vector) -> Self::Scalar {
-		v.sum()
-	}
-	fn ln(s: Self::Scalar) -> f64 {
-		s.ln()
-	}
-}
-
-pub struct LinalgF32x4;
-impl Space for LinalgF32x4 {
-	type Scalar = f32;
-	type Vector = Vector<f32, 4>;
-	type Matrix = RowMatrix<f32, 4, 4>;
-
-	type ArrayVector = [f64; 4];
-	fn into_vector(v: [f64; 4]) -> Self::Vector {
-		v.map(|f| f as f32).into()
-	}
-
-	type ArrayMatrix = [[f64; 4]; 4];
-	fn into_matrix(m: [[f64; 4]; 4]) -> Self::Matrix {
-		m.map(|row| row.map(|f| f as f32)).into()
-	}
-
-	fn sum(v: Self::Vector) -> Self::Scalar {
-		v.sum()
-	}
-	fn ln(s: Self::Scalar) -> f64 {
-		let ln: f32 = s.ln();
-		ln.into()
-	}
-}
-
-pub trait LikelihoodTrait {
-	type S: Space;
-
+pub trait LikelihoodTrait<const N: usize, F> {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[<Self::S as Space>::Matrix],
+		transitions: &[[[F; N]; N]],
 		leaves_end: usize,
 		root: usize,
-		frequencies: <Self::S as Space>::Vector,
+		frequencies: [F; N],
 	) -> Result<()>;
 
 	fn likelihood(&mut self) -> Result<f64>;
@@ -133,13 +41,9 @@ pub trait LikelihoodTrait {
 	fn reject(&mut self) -> Result<()>;
 }
 
-pub struct GenericLikelihood<S, L>
-where
-	S: Space,
-	L: LikelihoodTrait<S = S>,
-{
+pub struct GenericLikelihood<const N: usize, F, L> {
 	calculator: L,
-	transitions: Transitions<S>,
+	transitions: Transitions<N, F>,
 	/// Last accepted likelihood
 	cache: f64,
 	/// Last calculated likelihood.  It's different from the cache, because
@@ -149,17 +53,14 @@ where
 	tree: Py<PyTree>,
 }
 
-impl<S, L> GenericLikelihood<S, L>
+impl<const N: usize, F, L> GenericLikelihood<N, F, L>
 where
-	S: Space,
-	L: LikelihoodTrait<S = S>,
+	F: Float + Default,
+	L: LikelihoodTrait<N, F>,
 {
 	fn new(
 		calculator: L,
-		substitution: BoxedSubstitutionModel<
-			S::ArrayVector,
-			S::ArrayMatrix,
-		>,
+		substitution: BoxedSubstitutionModel<N, F>,
 		clock: PyClock,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
@@ -320,9 +221,7 @@ macro_rules! likelihood_methods {
 /// for alingments larger than 100Kb.
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
-	inner: Mutex<
-		GenericLikelihood<LinalgF64x4, CpuLikelihood<LinalgF64x4>>,
-	>,
+	inner: Mutex<GenericLikelihood<4, f64, CpuLikelihood<4, f64>>>,
 }
 
 #[pymethods]
@@ -336,8 +235,7 @@ impl PyCpu4Likelihood {
 		tree: Py<PyTree>,
 		scale_ln: u32,
 	) -> Result<Self> {
-		let calculator =
-			CpuLikelihood::<LinalgF64x4>::new(msa.0, scale_ln);
+		let calculator = CpuLikelihood::new(msa.0, scale_ln);
 		let generic = GenericLikelihood::new(
 			calculator,
 			substitution,
@@ -359,9 +257,7 @@ likelihood_methods!(PyCpu4Likelihood);
 	frozen
 )]
 pub struct PyParallel4Likelihood {
-	inner: Mutex<
-		GenericLikelihood<LinalgF64x4, ParallelLikelihood<LinalgF64x4>>,
-	>,
+	inner: Mutex<GenericLikelihood<4, f64, ParallelLikelihood<4, f64>>>,
 }
 
 #[pymethods]
@@ -402,7 +298,7 @@ likelihood_methods!(PyParallel4Likelihood);
 /// index.
 #[pyclass(name = "CUDALikelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCudaLikelihood {
-	inner: Mutex<GenericLikelihood<LinalgF64x4, CudaLikelihood>>,
+	inner: Mutex<GenericLikelihood<4, f64, CudaLikelihood>>,
 }
 
 #[pymethods]
@@ -431,18 +327,6 @@ impl PyCudaLikelihood {
 		Ok(Self {
 			inner: Mutex::new(generic),
 		})
-	}
-
-	fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
-		let generic = &mut *self.inner.lock();
-		let root = generic.tree.get().root();
-		let frequencies = generic.transitions.frequencies();
-
-		let likelihoods = generic
-			.calculator
-			.pattern_likelihoods(root, frequencies)?;
-
-		Ok(likelihoods)
 	}
 }
 

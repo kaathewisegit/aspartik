@@ -68,6 +68,7 @@ dependencies = [
  "anyhow",
  "bitmap",
  "blake3",
+ "bytemuck",
  "crossbeam-channel",
  "cudarc",
  "data",

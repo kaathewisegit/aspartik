@@ -1,16 +1,15 @@
-use core::f64;
-
 use anyhow::Result;
 use data::{DnaNucleotide, Msa};
 use fork_union::{SyncMutPtr, ThreadPool};
 use num_traits::Inv;
+use num_traits::{Float, Num, NumAssign};
 
-use super::{LikelihoodTrait, Space};
-use crate::{
-	likelihood::{LinalgF64x4, deduplicate},
-	util::msa_to_likelihoods,
-};
-use linalg::Vector;
+use core::f64;
+use std::ops::Mul;
+
+use super::LikelihoodTrait;
+use crate::{likelihood::deduplicate, util::msa_to_likelihoods};
+use linalg::{RowMatrix, Vector};
 
 type Buffer<T> = Box<[T]>;
 
@@ -20,23 +19,20 @@ macro_rules! buffer {
 	};
 }
 
-pub struct ParallelLikelihood<S>
-where
-	S: Space,
-{
+pub struct ParallelLikelihood<const N: usize, F> {
 	pool: ThreadPool,
 
-	projections: Buffer<S::Vector>,
-	projections_backup: Buffer<S::Vector>,
+	projections: Buffer<Vector<F, N>>,
+	projections_backup: Buffer<Vector<F, N>>,
 
 	scales: Buffer<bool>,
 	scales_backup: Buffer<bool>,
 	scale_sums: Buffer<u32>,
 	scale_sums_backup: Buffer<u32>,
 
-	leaves: Vec<S::Vector>,
+	leaves: Vec<Vector<F, N>>,
 
-	weights: Vec<S::Scalar>,
+	weights: Vec<F>,
 
 	num_sites: usize,
 	num_leaves: usize,
@@ -45,8 +41,8 @@ where
 	likelihoods: Buffer<f64>,
 
 	scale_ln: u32,
-	scale: S::Scalar,
-	inv_scale: S::Scalar,
+	scale: F,
+	inv_scale: F,
 }
 
 /// Write `value` to the `index` position of `sync_ptr`
@@ -59,17 +55,22 @@ unsafe fn write_to<T>(sync_ptr: SyncMutPtr<T>, index: usize, value: T) {
 	let ptr = unsafe { sync_ptr.get(index) };
 	unsafe { ptr.write(value) };
 }
-impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
-	type S = S;
 
+impl<const N: usize, F> LikelihoodTrait<N, F> for ParallelLikelihood<N, F>
+where
+	F: Float + Num + NumAssign + Send + Sync,
+	f64: From<F>,
+	RowMatrix<F, N, N>: Mul<Vector<F, N>, Output = Vector<F, N>>,
+	Vector<F, N>: Mul<Output = Vector<F, N>>,
+{
 	fn propose(
 		&mut self,
 		nodes: &[usize],
 		edges: &[usize],
-		transitions: &[S::Matrix],
+		transitions: &[[[F; N]; N]],
 		leaves_end: usize,
 		root: usize,
-		frequencies: S::Vector,
+		frequencies: [F; N],
 	) -> Result<()> {
 		assert_eq!(nodes.len(), edges.len());
 		assert_eq!(nodes.len(), transitions.len());
@@ -85,7 +86,7 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 		let scale_sums = SyncMutPtr::new(self.scale_sums.as_mut_ptr());
 
 		for i in 0..leaves_end {
-			let transition = transitions[i];
+			let transition = RowMatrix::from(transitions[i]);
 
 			let edge = edges[i];
 			let edge_idx = edge * num_sites;
@@ -115,7 +116,7 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 		}
 
 		for i in leaves_end..nodes.len() {
-			let transition = transitions[i];
+			let transition = RowMatrix::from(transitions[i]);
 			let node = nodes[i];
 
 			let edge = edges[i];
@@ -204,15 +205,15 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 		let root_left_idx = root_left_edge * num_sites;
 		let root_right_idx = root_right_edge * num_sites;
 
+		let frequencies = Vector::from(frequencies);
 		for site in 0..num_sites {
 			let left = self.projections[root_left_idx + site];
 			let right = self.projections[root_right_idx + site];
 			let likelihood = left * right;
 			let likelihood = likelihood * frequencies;
-			let sum = S::sum(likelihood);
-			let ln_sum = S::ln(sum);
+			let ln_sum = likelihood.sum().ln();
 
-			self.likelihoods[site] = ln_sum;
+			self.likelihoods[site] = ln_sum.into();
 		}
 
 		Ok(())
@@ -237,7 +238,7 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 			.copied()
 			.zip(self.weights.iter().copied())
 		{
-			let scale_sum = f64::from(scale_sum);
+			let scale_sum: f64 = scale_sum.into();
 			let weight: f64 = weight.into();
 			out -= scale_sum * weight;
 		}
@@ -282,7 +283,7 @@ impl<S: Space> LikelihoodTrait for ParallelLikelihood<S> {
 	}
 }
 
-impl ParallelLikelihood<LinalgF64x4> {
+impl ParallelLikelihood<4, f64> {
 	pub fn new(
 		msa: Msa<DnaNucleotide>,
 		num_threads: usize,
