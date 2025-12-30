@@ -2,10 +2,6 @@
 
 using namespace cooperative_groups;
 
-typedef struct {
-	f64x4 a, c, g, t;
-} Transition;
-
 __device__ f64 dot(const f64x4 a, const f64x4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
@@ -16,18 +12,6 @@ __device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
 		a.y * b.y,
 		a.z * b.z,
 		a.w * b.w
-	);
-}
-
-__device__ f64x4 apply(
-	const Transition transition,
-	const f64x4 vector
-) {
-	return make_f64x4(
-		dot(transition.a, vector),
-		dot(transition.c, vector),
-		dot(transition.g, vector),
-		dot(transition.t, vector)
 	);
 }
 
