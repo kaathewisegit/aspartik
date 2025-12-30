@@ -307,6 +307,7 @@ impl PyCudaLikelihood {
 	#[pyo3(signature = (
 		msa, substitution, clock, tree,
 		*,
+		scale_ln = 30,
 		cuda_device= 0,
 	))]
 	fn new(
@@ -314,9 +315,11 @@ impl PyCudaLikelihood {
 		substitution: Substitution4,
 		clock: PyClock,
 		tree: Py<PyTree>,
+		scale_ln: u32,
 		cuda_device: usize,
 	) -> Result<Self> {
-		let calculator = CudaLikelihood::new(msa.0, cuda_device)?;
+		let calculator =
+			CudaLikelihood::new(msa.0, scale_ln, cuda_device)?;
 		let generic = GenericLikelihood::new(
 			calculator,
 			substitution,

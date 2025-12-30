@@ -34,15 +34,15 @@ __device__ f64x4 apply(
 #define BLOCK_SIZE 16 * 4
 
 #define idx(edge) \
-	((edge) * num_sites + site)
+	((edge) * NUM_SITES + site)
 
 #define sidx(edge) \
-	((edge) * num_sites + site) * 4 + sub
+	((edge) * NUM_SITES + site) * 4 + sub
 
 // Gets the site index from the thread and block id
 #define SITE_PRELUDE \
 	u32 site = blockIdx.x * blockDim.x + threadIdx.x; \
-	if (site >= num_sites) { \
+	if (site >= NUM_SITES) { \
 		return; \
 	} \
 
@@ -59,8 +59,6 @@ __device__ f64x4 apply(
 // Update partial likelihoods for edges which go to leaves
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void update_leaves(
-	const u32 num_sites,
-
 	const f64x4* restrict leaves,
 	f64* restrict projections,
 
@@ -69,7 +67,7 @@ void update_leaves(
 	const f64x4* restrict transitions
 ) {
 	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
-	if (site >= num_sites) {
+	if (site >= NUM_SITES) {
 		return;
 	}
 	u32 sub = threadIdx.y;
@@ -78,16 +76,8 @@ void update_leaves(
 	CALCULATE_LEAF_PROJECTION
 }
 
-// e^-40
-constexpr f64 CUTOFF = 0.000000000000000004248354255291589;
-// e^40
-constexpr f64 MULT = 235385266837020000.0;
-
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void propose(
-	const u32 num_sites,
-	const u32 num_leaves,
-
 	const f64x4* restrict leaves,
 	f64* restrict projections,
 	u8* restrict scales,
@@ -102,7 +92,7 @@ void propose(
 	const u32 internals_start
 ) {
 	u32 site = (blockIdx.x * blockDim.x + threadIdx.x) / 4;
-	if (site >= num_sites) {
+	if (site >= NUM_SITES) {
 		return;
 	}
 	auto g = tiled_partition<4>(this_thread_block());
@@ -118,7 +108,7 @@ void propose(
 	u32 scale_sum = scale_sums[site];
 
 	for (u32 i = internals_start; i < num_updated_nodes; i++) {
-		u32 left_edge = (nodes[i] - num_leaves) * 2;
+		u32 left_edge = (nodes[i] - NUM_LEAVES) * 2;
 		u32 right_edge = left_edge + 1;
 		u32 this_edge = edges[i];
 		u32 scale_idx = idx(this_edge);
@@ -131,13 +121,13 @@ void propose(
 
 		g.sync();
 
-		u32 should_scale = s_likelihood[tile * 4 + 0] < CUTOFF
-			&& s_likelihood[tile * 4 + 1] < CUTOFF
-			&& s_likelihood[tile * 4 + 2] < CUTOFF
-			&& s_likelihood[tile * 4 + 3] < CUTOFF;
+		u32 should_scale = s_likelihood[tile * 4 + 0] < INV_SCALE
+			&& s_likelihood[tile * 4 + 1] < INV_SCALE
+			&& s_likelihood[tile * 4 + 2] < INV_SCALE
+			&& s_likelihood[tile * 4 + 3] < INV_SCALE;
 
 		if (should_scale) {
-			s_likelihood[tile * 4 + sub] *= MULT;
+			s_likelihood[tile * 4 + sub] *= SCALE;
 
 			g.sync();
 		}
@@ -145,12 +135,12 @@ void propose(
 		if (sub == 0) {
 			if (should_scale) {
 				if (old_scale == 0) {
-					scale_sum += 40;
+					scale_sum += SCALE_LN;
 					scales[scale_idx] = 1;
 				}
 			} else {
 				if (old_scale == 1) {
-					scale_sum -= 40;
+					scale_sum -= SCALE_LN;
 					scales[scale_idx] = 0;
 				}
 			}
@@ -177,9 +167,6 @@ void propose(
 
 entrypoint __launch_bounds__(32)
 void update_likelihoods(
-	const u32 num_sites,
-	const u32 num_leaves,
-
 	const f64x4* restrict projections,
 	f64* restrict likelihoods,
 
@@ -190,7 +177,7 @@ void update_likelihoods(
 ) {
 	SITE_PRELUDE
 
-	u32 left_root_edge = (root - num_leaves) * 2;
+	u32 left_root_edge = (root - NUM_LEAVES) * 2;
 	u32 right_root_edge = left_root_edge + 1;
 
 	f64x4 pre_likelihood = hadamard(
@@ -213,8 +200,6 @@ void update_likelihoods(
 // needs to sample by edges.
 entrypoint __launch_bounds__(128)
 void copy_projections(
-	const u32 num_sites,
-
 	const f64x4* restrict p_src,
 	f64x4* restrict p_dst,
 

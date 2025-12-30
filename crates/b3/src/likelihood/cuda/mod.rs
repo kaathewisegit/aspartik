@@ -80,14 +80,7 @@ pub struct CudaLikelihood {
 	scale_sums_backup: Vec<u32>,
 
 	/// Total number of sites
-	///
-	/// Immutable, passed to the kernels.
 	num_sites: u32,
-
-	/// Total number of leaves
-	///
-	/// Immutable, passed to the kernels.
-	num_leaves: u32,
 
 	/// Number of nodes updated in the current proposal
 	///
@@ -219,9 +212,6 @@ impl CudaLikelihood {
 			shared_mem_bytes: 0,
 		};
 
-		builder.arg(&self.num_sites);
-		builder.arg(&self.num_leaves);
-
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
 		builder.arg(&self.scales);
@@ -257,8 +247,6 @@ impl CudaLikelihood {
 			shared_mem_bytes: 0,
 		};
 
-		builder.arg(&self.num_sites);
-
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
 
@@ -285,9 +273,6 @@ impl CudaLikelihood {
 			self.stream.launch_builder(&self.update_likelihoods_fn);
 
 		let cfg = self.cfg(32, 1);
-
-		builder.arg(&self.num_sites);
-		builder.arg(&self.num_leaves);
 
 		builder.arg(&self.projections);
 		builder.arg(&self.likelihoods);
@@ -316,8 +301,6 @@ impl CudaLikelihood {
 
 		let mut builder =
 			self.stream.launch_builder(&self.copy_projections_fn);
-
-		builder.arg(&self.num_sites);
 
 		if accept {
 			builder.arg(&self.projections);
@@ -367,6 +350,7 @@ impl CudaLikelihood {
 
 	pub fn new(
 		msa: Msa<DnaNucleotide>,
+		scale_ln: u32,
 		cuda_device: usize,
 	) -> Result<Self> {
 		// SAFETY: since the function tries to link the library [0], it
@@ -378,6 +362,9 @@ impl CudaLikelihood {
 		if !is_cuda_enabled {
 			bail!("CUDA library not found");
 		}
+
+		let scale = f64::from(scale_ln).exp();
+		let inv_scale = f64::from(-(scale_ln as i32)).exp();
 
 		let (msa, weights) = deduplicate(msa);
 
@@ -416,6 +403,13 @@ impl CudaLikelihood {
 			include_paths: vec![
 				"/usr/local/cuda/include/".to_owned()
 			],
+			options: vec![
+				format!("-DNUM_SITES={num_sites}"),
+				format!("-DNUM_LEAVES={num_leaves}"),
+				format!("-DSCALE_LN={scale_ln}"),
+				format!("-DSCALE={scale}"),
+				format!("-DINV_SCALE={inv_scale}"),
+			],
 			..Default::default()
 		};
 		let ptx = compile_ptx_with_opts(CUDA_SRC, opts)?;
@@ -453,7 +447,6 @@ impl CudaLikelihood {
 			scale_sums_backup,
 
 			num_sites: num_sites as u32,
-			num_leaves: num_leaves as u32,
 
 			num_updated_nodes: 0,
 		})
