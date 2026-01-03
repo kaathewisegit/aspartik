@@ -62,7 +62,7 @@ def worker(msa: MSA, length: int, kind: Kind):
     with tempfile.NamedTemporaryFile(suffix=".xml", mode="w+t") as tmp:
         tmp.write(config)
 
-        args = ["beast", "-seed", "4"]
+        args = ["beast", "-seed", "4", "-citations_off"]
         match kind:
             case "cpu":
                 args.append("-beagle_CPU")
