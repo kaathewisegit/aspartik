@@ -66,7 +66,7 @@
 
 ## `math`
 
-- [ ] Tests for `float`
+- [x] Tests for `float`
 
 
 ## `skvec`

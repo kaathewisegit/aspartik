@@ -50,7 +50,7 @@ pub fn mantissa_bits(x: f64) -> u64 {
 pub fn mantissa(x: f64) -> u64 {
 	let mut mantissa = mantissa_bits(x);
 	if exponent_bits(x) == 0 {
-		// demormals
+		// denormals
 		mantissa <<= 1;
 	} else {
 		mantissa |= 0x10000000000000; // 2^52

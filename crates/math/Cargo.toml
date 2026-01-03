@@ -13,6 +13,10 @@ indoc = { workspace = true }
 pyo3 = { workspace = true, features = ["multiple-pymethods"], optional = true }
 thiserror = { workspace = true }
 
+[dev-dependencies]
+arbitrary = { workspace = true }
+arbtest = { workspace = true }
+
 [features]
 default = ["python"]
 python = ["dep:pyo3"]
