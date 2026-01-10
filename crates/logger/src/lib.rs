@@ -26,13 +26,36 @@ pub fn logger() -> &'static Logger {
 	LOGGER.get_or_init(Logger::default)
 }
 
+/// Log verbosity level
+///
+/// It's a reversed version of [`log`'s `Level`][ll].  The least important
+/// events have the lower value, so `Trace < Error`.
+///
+/// [ll]: https://docs.rs/log/latest/log/enum.Level.html
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[cfg_attr(feature = "python", pyclass(module = "aspartik.logger"))]
 pub enum Level {
+	/// All logged events
+	///
+	/// Beware of using this level!  It can generate hundreds of megabytes
+	/// of logs in seconds.
 	Trace,
+	/// Logs important but mundane events, such as object creation
 	Debug,
+	/// User-facing tips
+	///
+	/// Can be used for configuraiton notes or optimization suggestions.
 	Info,
+	/// Important, but not fatal errors
+	///
+	/// Should include potential (but not panic-y) misconfiguration or
+	/// deprecation warnings.  It should be used for things which could be
+	/// problematic, but probably aren't.
 	Warn,
+	/// Severe errors which could compromise the results
+	///
+	/// Reserved for events which signal errors which might corrupt the
+	/// output or the analysis without erroring out the standard way.
 	Error,
 }
 
