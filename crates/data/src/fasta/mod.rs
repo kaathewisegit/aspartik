@@ -1,20 +1,18 @@
 use anyhow::{Context, Error, Result, anyhow};
 
 use std::{
-	cmp::min,
-	fmt::{self, Write},
+	fmt::{self},
 	mem,
 };
 
 use crate::seq::{
-	Character, Sequence, SequenceMut, parse_append_str, write_fmt,
-	write_str,
+	Character, Sequence, SequenceMut, parse_append_str, write_str,
 };
 
 #[cfg(feature = "python")]
 pub mod python;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Record<C: Character> {
 	/// The sequence description.  Must start with a '>' character and have
 	/// an ID follow right after without a space.
@@ -70,15 +68,10 @@ impl<C: Character> Record<C> {
 	pub fn is_empty(&self) -> bool {
 		self.seq.is_empty()
 	}
+}
 
-	/// Converts the record to a FASTA string
-	///
-	/// This function has to be implemented as a method because `ToString`
-	/// has a blanket implementation which conflicts with custom ones if
-	/// `Display` is implemented.  This implementation should be faster than
-	/// that of `Display`.
-	#[allow(clippy::inherent_to_string_shadow_display)]
-	pub fn to_string(&self) -> String {
+impl<C: Character> ToString for Record<C> {
+	fn to_string(&self) -> String {
 		// newline after description + one newline per 80 seq characters
 		// + final newline
 		let capacity = self.raw_description.len()
@@ -95,22 +88,12 @@ impl<C: Character> Record<C> {
 	}
 }
 
-impl<C: Character> fmt::Display for Record<C> {
+impl<C: Character> fmt::Debug for Record<C> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		f.write_str(self.raw_description())?;
-		f.write_str("\n")?;
-
-		const LINE_LEN: usize = 80;
-		let seq_len = self.seq.len();
-		let num_lines = seq_len.div_ceil(LINE_LEN);
-		for i in 0..num_lines {
-			let end = min(seq_len, (i + 1) * LINE_LEN);
-			let slice = &self.seq.as_ref()[(i * LINE_LEN)..end];
-			write_fmt(slice, f)?;
-			f.write_char('\n')?;
-		}
-
-		Ok(())
+		f.debug_struct("Record")
+			.field("description", &self.description())
+			.field("sequence", &self.sequence().to_string())
+			.finish()
 	}
 }
 

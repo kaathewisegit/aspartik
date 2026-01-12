@@ -68,6 +68,9 @@ cast_lossless = "warn"
 default_trait_access = "warn"
 derive_partial_eq_without_eq = "warn"
 
+# String API is much nicer to work with than the formatting one
+to_string_trait_impl = "allow"
+
 [profile.profile]
 inherits = "release"
 debug = true
