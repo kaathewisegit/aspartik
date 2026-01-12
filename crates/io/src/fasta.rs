@@ -59,33 +59,24 @@ impl PyFastaDnaReader {
 		let parser = &mut *self.parser.lock();
 		let reader = &mut *self.reader.lock();
 
-		let mut buf = String::new();
+		while !bubble!(reader.fill_buf()).is_empty() {
+			// XXX: string buffer which returns str
+			let mut src = str::from_utf8(reader.buffer()).unwrap();
+			let old_len = src.len();
 
-		loop {
-			buf.clear();
-			if bubble!(reader.read_line(&mut buf)) == 0 {
-				break;
-			}
-			trim_line_end(&mut buf);
+			let record = bubble!(parser.parse_record(&mut src));
+			let new_len = src.len();
+			reader.consume(old_len - new_len);
 
-			if let Some(record) =
-				bubble!(parser.read_line(Some(&buf)))
-			{
+			if let Some(record) = record {
 				return Some(Ok(PyFastaDnaRecord(record)));
 			}
 		}
 
-		let record = bubble!(parser.read_line(None));
-
-		record.map(PyFastaDnaRecord).map(Ok)
-	}
-}
-
-fn trim_line_end(line: &mut String) {
-	if line.ends_with('\n') {
-		line.pop();
-		if line.ends_with('\r') {
-			line.pop();
+		if parser.is_done() {
+			None
+		} else {
+			Some(parser.get_final_record().map(PyFastaDnaRecord))
 		}
 	}
 }

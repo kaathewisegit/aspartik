@@ -19,29 +19,12 @@ fn arb_record(u: &mut Unstructured) -> ArbResult<Record<DnaNucleotide>> {
 	Ok(Record::new(format!(">{description}"), seq))
 }
 
-fn parse_one_record(fasta: &str) -> Result<Record<DnaNucleotide>> {
+fn parse_one_record(mut fasta: &str) -> Result<Record<DnaNucleotide>> {
 	let mut parser = FastaParser::<DnaNucleotide>::new();
-	let mut lines = fasta.lines();
 
-	let mut out = None;
+	parser.parse_record(&mut fasta)?;
 
-	loop {
-		let line = lines.next();
-		let result = parser.read_line(line)?;
-		if let Some(record) = result {
-			if out.is_none() {
-				out = Some(record);
-				continue;
-			} else {
-				panic!("second record")
-			}
-		}
-		if line.is_none() {
-			break;
-		}
-	}
-
-	Ok(out.unwrap())
+	parser.get_final_record()
 }
 
 #[test]
@@ -54,5 +37,6 @@ fn parse_record() {
 		assert_eq!(record, parsed_record);
 
 		Ok(())
-	});
+	})
+	.seed(0xbebaff9400000020);
 }

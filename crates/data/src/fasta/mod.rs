@@ -1,16 +1,12 @@
-use anyhow::{Context, Error, Result, anyhow};
+use std::fmt::{self};
 
-use std::{
-	fmt::{self},
-	mem,
-};
+use crate::seq::{Character, Sequence, write_str};
 
-use crate::seq::{
-	Character, Sequence, SequenceMut, parse_append_str, write_str,
-};
+mod parser;
 
 #[cfg(feature = "python")]
 pub mod python;
+pub use parser::FastaParser;
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Record<C: Character> {
@@ -95,101 +91,4 @@ impl<C: Character> fmt::Debug for Record<C> {
 			.field("sequence", &self.sequence().to_string())
 			.finish()
 	}
-}
-
-#[derive(Debug)]
-pub struct FastaParser<C: Character> {
-	/// Since sequence descriptions must start with a '>' character,
-	/// `description` being empty must mean that we haven't read the first
-	/// record yet.
-	description: String,
-	chars: SequenceMut<C>,
-	line_idx: usize,
-}
-
-impl<C: Character> FastaParser<C> {
-	pub fn new() -> Self {
-		// XXX: Default trait?
-		Self {
-			description: String::new(),
-			chars: SequenceMut::new(),
-			line_idx: 0,
-		}
-	}
-
-	/// Takes the values and turns them into a [`Record`]
-	fn make_record(&mut self) -> Option<Record<C>> {
-		let description = mem::take(&mut self.description);
-
-		if description.is_empty() {
-			return None;
-		}
-
-		let chars = mem::take(&mut self.chars);
-
-		Some(Record {
-			raw_description: description,
-			seq: chars.into_sequence(),
-		})
-	}
-
-	/// Incrementally parse a FASTA file
-	///
-	/// Returns `None` if more lines are needed.  `line` being `None` is
-	/// taken as an EOF.
-	pub fn read_line(
-		&mut self,
-		line: Option<&str>,
-	) -> Result<Option<Record<C>>> {
-		let Some(line) = line else {
-			return Ok(self.make_record());
-		};
-
-		self.line_idx += 1;
-
-		// skip comments and empty lines
-		if line.starts_with(";") || line.trim().is_empty() {
-			return Ok(None);
-		}
-
-		if line.starts_with(">") {
-			let out = self.make_record();
-			self.description = line.to_owned();
-			self.chars = SequenceMut::new();
-			return Ok(out);
-		}
-
-		if self.description.is_empty() {
-			return Err(anyhow!(
-				"Encountered a sequence which does not belong to a record:\n{}: {}",
-				self.line_idx,
-				line
-			));
-		}
-
-		parse_append_str(&mut self.chars, line)
-			.with_context(|| sequence_error(self))?;
-
-		Ok(None)
-	}
-}
-
-impl<C: Character> Default for FastaParser<C> {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
-fn sequence_error<C: Character>(fasta: &FastaParser<C>) -> Error {
-	let record = if fasta.description.is_empty() {
-		String::new()
-	} else {
-		format!(" for the record '{}'", fasta.description)
-	};
-
-	anyhow!(
-		"Failed to parse sequence{} at line {}",
-		record,
-		fasta.line_idx,
-	)
 }
