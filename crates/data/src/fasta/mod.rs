@@ -6,7 +6,10 @@ use std::{
 	mem,
 };
 
-use crate::seq::{Character, Sequence, SequenceMut, parse_append_str};
+use crate::seq::{
+	Character, Sequence, SequenceMut, parse_append_str, write_fmt,
+	write_str,
+};
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -67,6 +70,29 @@ impl<C: Character> Record<C> {
 	pub fn is_empty(&self) -> bool {
 		self.seq.is_empty()
 	}
+
+	/// Converts the record to a FASTA string
+	///
+	/// This function has to be implemented as a method because `ToString`
+	/// has a blanket implementation which conflicts with custom ones if
+	/// `Display` is implemented.  This implementation should be faster than
+	/// that of `Display`.
+	#[allow(clippy::inherent_to_string_shadow_display)]
+	pub fn to_string(&self) -> String {
+		// newline after description + one newline per 80 seq characters
+		// + final newline
+		let capacity = self.raw_description.len()
+			+ 1 + self.sequence().len()
+			+ self.sequence().len() / 80
+			+ 1;
+		let mut out = String::with_capacity(capacity);
+
+		out.push_str(self.raw_description());
+		out.push('\n');
+		write_str(self.sequence(), &mut out);
+
+		out
+	}
 }
 
 impl<C: Character> fmt::Display for Record<C> {
@@ -80,13 +106,8 @@ impl<C: Character> fmt::Display for Record<C> {
 		for i in 0..num_lines {
 			let end = min(seq_len, (i + 1) * LINE_LEN);
 			let slice = &self.seq.as_ref()[(i * LINE_LEN)..end];
-			for character in slice {
-				let ch = char::from_u32(
-					character.to_ascii().into(),
-				)
-				.unwrap();
-				f.write_char(ch)?;
-			}
+			write_fmt(slice, f)?;
+			f.write_char('\n')?;
 		}
 
 		Ok(())

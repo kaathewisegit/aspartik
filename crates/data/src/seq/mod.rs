@@ -16,8 +16,10 @@ pub mod distance;
 mod parse;
 #[cfg(feature = "python")]
 pub mod python;
+mod write;
 
 pub use parse::{parse_append_bytes, parse_append_str, parse_bytes, parse_str};
+pub use write::{write_fmt, write_str};
 
 /// A character in a sequence alphabet.
 ///
