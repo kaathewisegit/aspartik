@@ -2,7 +2,7 @@ use anyhow::{Context, Error, Result, anyhow};
 
 use std::{
 	cmp::min,
-	fmt::{self, Pointer},
+	fmt::{self, Write},
 	mem,
 };
 
@@ -80,7 +80,13 @@ impl<C: Character> fmt::Display for Record<C> {
 		for i in 0..num_lines {
 			let end = min(seq_len, (i + 1) * LINE_LEN);
 			let slice = &self.seq.as_ref()[(i * LINE_LEN)..end];
-			slice.fmt(f)?;
+			for character in slice {
+				let ch = char::from_u32(
+					character.to_ascii().into(),
+				)
+				.unwrap();
+				f.write_char(ch)?;
+			}
 		}
 
 		Ok(())
