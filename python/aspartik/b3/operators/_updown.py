@@ -11,7 +11,15 @@ from ._util import assert_factor, sample_range
 @dataclass(slots=True)
 class UpDown(Operator):
     """
-    TODO
+    Scales `up` by factor and `down` by inverse factor on each step
+
+    See `factor` documentation for how the scaling factor is sampled.  Note
+    that it can be both more and less than 1, so `up` can sometimes be scaled
+    down (and so `down` would be scaled up on those steps).
+
+    Though, when using the uniform distribution, scaling factor will be biased
+    towards values `> 1`, so `up` will be scaled up more often than not (not
+    accounting for rejections).
     """
 
     up: Scalable
