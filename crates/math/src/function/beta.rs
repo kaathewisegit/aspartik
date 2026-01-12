@@ -1,40 +1,27 @@
 //! Provides the [beta](https://en.wikipedia.org/wiki/Beta_function) and related
 //! function
 
+use thiserror::Error;
+
 use crate::{function::gamma, tolerance};
 
 /// Represents the errors that can occur when computing the natural logarithm
 /// of the beta function or the regularized lower incomplete beta function.
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum BetaFuncError {
-	/// `a` is zero or less than zero.
+	/// `a` must be positive
+	#[error("a is infinite, zero, or negative")]
 	ANotGreaterThanZero,
 
-	/// `b` is zero or less than zero.
+	/// `b` must be positive
+	#[error("b is infinite, zero, or negative")]
 	BNotGreaterThanZero,
 
-	/// `x` is not in `[0, 1]`.
+	/// x must be in the interval `[0, 1]`
+	#[error("`x` is not in `[0, 1]`")]
 	XOutOfRange,
 }
-
-impl core::fmt::Display for BetaFuncError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			BetaFuncError::ANotGreaterThanZero => {
-				write!(f, "a is zero or less than zero")
-			}
-			BetaFuncError::BNotGreaterThanZero => {
-				write!(f, "b is zero or less than zero")
-			}
-			BetaFuncError::XOutOfRange => {
-				write!(f, "x is not in [0, 1]")
-			}
-		}
-	}
-}
-
-impl std::error::Error for BetaFuncError {}
 
 /// Natural logarithm of the beta function
 ///
