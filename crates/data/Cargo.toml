@@ -12,6 +12,7 @@ linalg = { workspace = true }
 util = { workspace = true }
 
 anyhow = { workspace = true }
+arbitrary = { workspace = true, optional = true, features = ["derive"] }
 bytes = { workspace = true }
 parking_lot = { workspace = true, optional = true }
 peg = { workspace = true }
@@ -19,9 +20,14 @@ petgraph = { workspace = true, default-features = false, features = ["stable_gra
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
 thiserror = { workspace = true }
 
+[dev-dependencies]
+arbitrary = { workspace = true }
+arbtest = { workspace = true }
+
 [features]
-default = ["python"]
+default = ["python", "arbitrary"]
 python = ["dep:pyo3", "dep:parking_lot"]
+arbitrary = ["dep:arbitrary"]
 
 [lints]
 workspace = true

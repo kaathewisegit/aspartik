@@ -1,4 +1,6 @@
 use anyhow::{Error, Result, bail};
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
@@ -9,6 +11,7 @@ use linalg::Vector;
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
 	feature = "python",
 	pyclass(

@@ -1,3 +1,5 @@
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Result as ArbResult, Unstructured};
 use bytes::{BufMut, Bytes, BytesMut};
 
 use std::{
@@ -297,3 +299,20 @@ macro_rules! dna {
 /// Create a new DNA sequence from a string literal
 #[doc(inline)]
 pub use crate::dna;
+
+#[cfg(feature = "arbitrary")]
+impl<'a, C> Arbitrary<'a> for Sequence<C>
+where
+	C: Character + Arbitrary<'a>,
+{
+	fn arbitrary(u: &mut Unstructured<'a>) -> ArbResult<Self> {
+		let character_iter = u.arbitrary_iter::<C>()?;
+
+		let mut seq_mut = SequenceMut::new();
+		for character in character_iter {
+			seq_mut.push(character?);
+		}
+
+		Ok(seq_mut.into())
+	}
+}
