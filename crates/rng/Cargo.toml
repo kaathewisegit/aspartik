@@ -13,5 +13,5 @@ anyhow = { workspace = true }
 rmp-serde = { workspace = true }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow", "multiple-pymethods"] }
-rand = { workspace = true, features = ["os_rng"] }
+rand = { workspace = true, features = ["sys_rng"] }
 rand_pcg = { workspace = true, features = ["serde"] }

@@ -5,7 +5,7 @@ use pyo3::types::PyTuple;
 use rand::{
 	Rng as _, SeedableRng, TryRngCore,
 	distr::uniform::{UniformFloat, UniformSampler},
-	rngs::OsRng,
+	rngs::SysRng,
 };
 use rand_pcg::Pcg64;
 
@@ -32,7 +32,7 @@ impl PyRng {
 	#[pyo3(signature = (seed = None))]
 	pub fn new(seed: Option<u64>) -> PyResult<Self> {
 		let seed =
-			seed.unwrap_or_else(|| OsRng.try_next_u64().unwrap());
+			seed.unwrap_or_else(|| SysRng.try_next_u64().unwrap());
 
 		let inner = Pcg64::seed_from_u64(seed);
 
