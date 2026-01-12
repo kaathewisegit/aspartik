@@ -1,9 +1,12 @@
 use anyhow::Result;
 use linalg::{RowMatrix, Vector};
-use pyo3::conversion::FromPyObject;
-use pyo3::{PyTypeCheck, prelude::*};
+use pyo3::{
+	PyTypeCheck, conversion::FromPyObject, exceptions::PyTypeError,
+	prelude::*,
+};
 
 use pyutil::SupportsFloat;
+use util::py_bail;
 
 pub trait SubstitutionModel<const N: usize, F> {
 	fn update(&mut self, py: Python) -> Result<bool>;
@@ -38,7 +41,11 @@ impl<'py> FromPyObject<'_, 'py> for Substitution4 {
 
 			Ok(Box::new(hky))
 		} else {
-			todo!("Type error")
+			py_bail!(
+				PyTypeError,
+				"Expected a DNA substitution model, got {}",
+				obj.get_type().name()?
+			)
 		}
 	}
 }
