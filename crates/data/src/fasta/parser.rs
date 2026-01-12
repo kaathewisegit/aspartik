@@ -102,6 +102,10 @@ impl<C: Character> FastaParser<C> {
 				*src = &src[1..];
 			} else {
 				self.description.push_str(&src[..line_end]);
+				if self.description.ends_with('\r') {
+					self.description.pop();
+				}
+
 				// `line_end + 1` is a valid bound because it's
 				// the index of the one-byte `\n` character
 				*src = &src[line_end + 1..];
