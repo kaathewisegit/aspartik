@@ -120,7 +120,11 @@ impl Logger {
 	}
 
 	pub fn init(self) {
-		// SAFETY: TODO
+		// SAFETY: `atexit` is thread safe, so `init` can be called from
+		// various threads.  Calling `exit` in the cleanup function is
+		// undefined behavior, but `cleanup` never panics.
+		//
+		// https://www.man7.org/linux/man-pages/man3/atexit.3.html
 		unsafe { libc::atexit(cleanup) };
 
 		LOGGER.set(self).unwrap();
@@ -156,12 +160,18 @@ impl Logger {
 	}
 }
 
+/// Flushes the logger if it hasn't done so yet
+///
+/// This function never panics.  If flushing fails, the error is simply printed
+/// and the data is discarded.
 extern "C" fn cleanup() {
 	let Some(logger) = LOGGER.get() else {
 		return;
 	};
 
-	logger.flush();
+	if let Err(error) = logger.destination.lock().flush() {
+		eprintln!("Failed to flush the logs while exiting: {error}");
+	}
 }
 
 #[doc(hidden)]
