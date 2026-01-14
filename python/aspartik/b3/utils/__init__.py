@@ -47,13 +47,13 @@ def print_operator_timings(mcmc: MCMC) -> None:
         print(f"{name: <20}{propose: >20.0f}{likelihood: >20.0f}{total: >20.0f}")
 
 
-def run_from_cmdline(mcmc: MCMC):
+def run_from_cmdline(mcmc: MCMC, default_length: int = 100_000):
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--stats", action="store_true", help="Operator accepts/rejects")
     parser.add_argument("--timings", action="store_true", help="Operator timings")
 
-    parser.add_argument("length", type=int, nargs="?", default=100_000)
+    parser.add_argument("length", type=int, nargs="?", default=default_length)
 
     args = parser.parse_args()
 
