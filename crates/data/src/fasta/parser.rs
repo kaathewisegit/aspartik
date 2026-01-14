@@ -81,7 +81,9 @@ impl<C: Character> FastaParser<C> {
 
 				self.state = State::InDescription;
 				return Ok(());
-			} else if line.trim_start().is_empty() {
+			} else if line.starts_with(';')
+				|| line.trim_start().is_empty()
+			{
 				continue;
 			} else {
 				bail!(
