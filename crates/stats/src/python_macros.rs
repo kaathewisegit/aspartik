@@ -60,12 +60,12 @@ macro_rules! impl_pymethods {
 		#[pymethods]
 		impl $class {
 			#[pyo3(name = "pdf")]
-			fn py_pdf(&self, x: <Self as Continuous>::T) -> f64 {
+			fn py_pdf(&self, x: f64) -> f64 {
 				self.pdf(x)
 			}
 
 			#[pyo3(name = "ln_pdf")]
-			fn py_ln_pdf(&self, x: <Self as Continuous>::T) -> f64 {
+			fn py_ln_pdf(&self, x: f64) -> f64 {
 				self.ln_pdf(x)
 			}
 		}
@@ -77,19 +77,19 @@ macro_rules! impl_pymethods {
 		#[pymethods]
 		impl $class {
 			#[pyo3(name = "cdf")]
-			fn py_cdf(&self, x: <Self as Continuous>::T) -> f64 {
+			fn py_cdf(&self, x: f64) -> f64 {
 				self.cdf(x)
 			}
 
 			#[pyo3(name = "sf")]
-			fn py_sf(&self, x: <Self as Continuous>::T) -> f64 {
+			fn py_sf(&self, x: f64) -> f64 {
 				self.sf(x)
 			}
 
 			#[pyo3(name = "inverse_cdf")]
 			fn py_inverse_cdf(
 				&self, p: f64
-			) -> pyo3::PyResult<<Self as Continuous>::T> {
+			) -> pyo3::PyResult<f64> {
 				use pyo3::exceptions::PyValueError;
 				use crate::probability::Probability;
 				let Some(p) = Probability::new(p) else {
@@ -100,13 +100,13 @@ macro_rules! impl_pymethods {
 
 			#[getter]
 			#[pyo3(name = "lower")]
-			fn py_lower(&self) -> <Self as Continuous>::T {
+			fn py_lower(&self) -> f64 {
 				self.lower()
 			}
 
 			#[getter]
 			#[pyo3(name = "upper")]
-			fn py_upper(&self) -> <Self as Continuous>::T {
+			fn py_upper(&self) -> f64 {
 				self.upper()
 			}
 		}

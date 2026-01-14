@@ -307,8 +307,6 @@ impl Mode<Option<f64>> for InverseGamma {
 }
 
 impl Continuous for InverseGamma {
-	type T = f64;
-
 	/// Calculates the probability density function for the
 	/// inverse gamma distribution at `x`
 	///

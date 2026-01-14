@@ -224,8 +224,6 @@ impl Mode<Option<f64>> for Cauchy {
 }
 
 impl Continuous for Cauchy {
-	type T = f64;
-
 	/// Calculates the probability density function for the cauchy
 	/// distribution at `x`
 	///

@@ -1,7 +1,7 @@
 //! Defines common interfaces for interacting with statistical distributions
 //! and provides
 //! concrete implementations for a variety of distributions.
-use num_traits::{Float, Num, NumAssignOps, One};
+use num_traits::{Num, NumAssignOps, One};
 
 use crate::probability::Probability;
 
@@ -69,20 +69,17 @@ pub use triangular::{Triangular, TriangularError};
 pub use uniform::{Uniform, UniformError};
 pub use weibull::{Weibull, WeibullError};
 
-/// The `Continuous` trait  provides an interface for interacting with
-/// continuous statistical distributions
+/// An interface for interacting with continuous statistical distributions
+///
 ///
 /// # Remarks
 ///
-/// All methods provided by the `Continuous` trait are unchecked, meaning
-/// they can panic if in an invalid state or encountering invalid input
-/// depending on the implementing distribution.
+/// All methods provided by the `Continuous` trait are unchecked, meaning they
+/// can panic if in an invalid state or encountering invalid input depending on
+/// the implementing distribution.
 pub trait Continuous {
-	type T;
-
-	/// Returns the probability density function calculated at `x` for a given
-	/// distribution.
-	/// May panic depending on the implementor.
+	/// Returns the probability density function calculated at `x` for a
+	/// given distribution.  May panic depending on the implementor.
 	///
 	/// # Examples
 	///
@@ -92,11 +89,11 @@ pub trait Continuous {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(1.0, n.pdf(0.5));
 	/// ```
-	fn pdf(&self, x: Self::T) -> f64;
+	fn pdf(&self, x: f64) -> f64;
 
-	/// Returns the log of the probability density function calculated at `x`
-	/// for a given distribution.
-	/// May panic depending on the implementor.
+	/// Returns the log of the probability density function calculated at
+	/// `x` for a given distribution.  May panic depending on the
+	/// implementor.
 	///
 	/// # Examples
 	///
@@ -106,15 +103,12 @@ pub trait Continuous {
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.0, n.ln_pdf(0.5));
 	/// ```
-	fn ln_pdf(&self, x: Self::T) -> f64;
+	fn ln_pdf(&self, x: f64) -> f64;
 }
 
 /// The `ContinuousCDF` trait is used to specify an interface for univariate
 /// distributions for which cdf float arguments are sensible.
-pub trait ContinuousCDF: Continuous
-where
-	Self::T: Float,
-{
+pub trait ContinuousCDF: Continuous {
 	/// Returns the cumulative distribution function calculated
 	/// at `x` for a given distribution. May panic depending
 	/// on the implementor.
@@ -127,7 +121,7 @@ where
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.cdf(0.5));
 	/// ```
-	fn cdf(&self, x: Self::T) -> f64;
+	fn cdf(&self, x: f64) -> f64;
 
 	/// Returns the survival function calculated
 	/// at `x` for a given distribution. May panic depending
@@ -141,7 +135,7 @@ where
 	/// let n = Uniform::new(0.0, 1.0).unwrap();
 	/// assert_eq!(0.5, n.sf(0.5));
 	/// ```
-	fn sf(&self, x: Self::T) -> f64 {
+	fn sf(&self, x: f64) -> f64 {
 		1.0 - self.cdf(x)
 	}
 
@@ -155,7 +149,7 @@ where
 	/// say, performance may may be lacking.
 	#[doc(alias = "quantile function")]
 	#[doc(alias = "quantile")]
-	fn inverse_cdf(&self, p: Probability<f64>) -> Self::T {
+	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
 		let p = p.into_inner();
 
 		if p == 0.0 {
@@ -164,9 +158,8 @@ where
 		if p == 1.0 {
 			return self.upper();
 		};
-		let two = Self::T::one() + Self::T::one();
-		let mut high = two;
-		let mut low = -high;
+		let mut high = 2.0;
+		let mut low = -2.0;
 		while self.cdf(low) > p {
 			low = low + low;
 		}
@@ -175,7 +168,7 @@ where
 		}
 		let mut i = 16;
 		while i != 0 {
-			let mid = (high + low) / two;
+			let mid = (high + low) / 2.0;
 			if self.cdf(mid) >= p {
 				high = mid;
 			} else {
@@ -183,20 +176,20 @@ where
 			}
 			i -= 1;
 		}
-		(high + low) / two
+		(high + low) / 2.0
 	}
 
 	/// The lower bound on the values returned by the distribution
 	///
 	/// Represents the start of the support.
-	fn lower(&self) -> Self::T;
+	fn lower(&self) -> f64;
 
 	/// The upper bound on the values returned by the distribution
 	///
 	/// Represents the end of the support.  Rays are represented via the
 	/// maximum value of the `T` type (infinity for floats and the maximum
 	/// possible value for integers).
-	fn upper(&self) -> Self::T;
+	fn upper(&self) -> f64;
 }
 
 /// The `Discrete` trait provides an interface for interacting with discrete

@@ -358,8 +358,6 @@ impl Mode<Option<f64>> for FisherSnedecor {
 }
 
 impl Continuous for FisherSnedecor {
-	type T = f64;
-
 	/// Calculates the probability density function for the fisher-snedecor
 	/// distribution
 	/// at `x`

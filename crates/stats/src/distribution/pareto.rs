@@ -306,8 +306,6 @@ impl Mode<Option<f64>> for Pareto {
 }
 
 impl Continuous for Pareto {
-	type T = f64;
-
 	/// Calculates the probability density function for the Pareto distribution
 	/// at `x`
 	///

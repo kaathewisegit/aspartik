@@ -283,8 +283,6 @@ impl Mode<Option<f64>> for Gamma {
 }
 
 impl Continuous for Gamma {
-	type T = f64;
-
 	/// `(β^α / Γ(α)) * x^(α - 1) * e^(-β * x)`, where `α` is the shape, `β`
 	/// is the rate, and `Γ` is the gamma function.
 	///

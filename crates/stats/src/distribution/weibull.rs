@@ -304,8 +304,6 @@ impl Mode<Option<f64>> for Weibull {
 }
 
 impl Continuous for Weibull {
-	type T = f64;
-
 	/// Calculates the probability density function for the weibull
 	/// distribution at `x`
 	///

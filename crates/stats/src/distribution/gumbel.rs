@@ -279,8 +279,6 @@ impl Mode<f64> for Gumbel {
 }
 
 impl Continuous for Gumbel {
-	type T = f64;
-
 	/// Calculates the probability density function for the Gumbel
 	/// distribution at `x`
 	///

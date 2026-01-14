@@ -24,20 +24,79 @@ from ..rng import RNG
 
 
 @runtime_checkable
-class Continuous[T](Protocol):
-    def pdf(self, x: T) -> float: ...
-    def ln_pdf(self, x: T) -> float: ...
+class Continuous(Protocol):
+    """
+    A continuous statistical distribution
+
+    In practice this defines the `pdf` and `ln_pdf` methods.
+    """
+
+    def pdf(self, x: float) -> float:
+        """
+        Probability density function
+
+        May throw an exception if `x` is outside of support.
+        """
+        ...
+
+    def ln_pdf(self, x: float) -> float:
+        """
+        Logarithm of a probability density function
+
+        Some implementations might be more precise than calculating a logarithm
+        on the result of the `pdf` method.
+        """
+        ...
 
 
 @runtime_checkable
-class ContinuousCDF[T](Continuous[T], Protocol):
-    def cdf(self, x: T) -> float: ...
-    def sf(self, x: T) -> float: ...
-    def inverse_cdf(self, p: float) -> T: ...
+class ContinuousCDF(Continuous, Protocol):
+    """
+    Density-related continuous distribution methods
+
+    Also includes `lower` and `upper` properties, which define the interval on
+    which the distribution is defined.
+    """
+
+    def cdf(self, x: float) -> float:
+        """
+        Continuous distribution function
+
+        This method might throw an exception if `x` is outside of the supported
+        interval.
+        """
+        ...
+
+    def sf(self, x: float) -> float:
+        """Survival function"""
+        ...
+
+    def inverse_cdf(self, p: float) -> float:
+        """
+        Inverse continuous distribution function
+
+        `p` must be in the interval `[0, 1]`.
+        """
+        ...
+
     @property
-    def lower(self) -> T: ...
+    def lower(self) -> float:
+        """
+        Lower bound of support
+
+        `-inf` for distributions defined on all real numbers.
+        """
+        ...
+
     @property
-    def upper(self) -> T: ...
+    def upper(self) -> float:
+        """
+        Upper bound of support
+
+        Will be `+inf` for distributions defined on the entire line or on all
+        positive reals.
+        """
+        ...
 
 
 @runtime_checkable

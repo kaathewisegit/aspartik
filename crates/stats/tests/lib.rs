@@ -176,7 +176,7 @@ mod test_make_test_harness {
 /// cdf should be the integral of the pdf
 fn check_integrate_pdf_is_cdf<D>(dist: &D, x_min: f64, x_max: f64, step: f64)
 where
-	D: ContinuousCDF + Continuous<T = f64>,
+	D: ContinuousCDF + Continuous,
 {
 	let mut prev_x = x_min;
 	let mut prev_density = dist.pdf(x_min);
@@ -252,7 +252,7 @@ fn check_derivative_of_cdf_is_pdf<D>(
 	x_max: f64,
 	step: f64,
 ) where
-	D: ContinuousCDF + Continuous<T = f64>,
+	D: ContinuousCDF + Continuous,
 {
 	const DELTA: f64 = 1e-12;
 	const DX: f64 = 2.0 * DELTA;
@@ -281,7 +281,7 @@ fn check_derivative_of_cdf_is_pdf<D>(
 /// difference of cdf should be near to the pdf for much of the support.
 pub fn check_continuous_distribution<D>(dist: &D, x_min: f64, x_max: f64)
 where
-	D: ContinuousCDF + Continuous<T = f64> + std::panic::RefUnwindSafe,
+	D: ContinuousCDF + Continuous + std::panic::RefUnwindSafe,
 {
 	assert_eq!(dist.pdf(f64::NEG_INFINITY), 0.0);
 	assert_eq!(dist.pdf(f64::INFINITY), 0.0);

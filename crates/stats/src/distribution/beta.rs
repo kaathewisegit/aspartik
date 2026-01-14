@@ -237,8 +237,6 @@ impl Mode<Option<f64>> for Beta {
 }
 
 impl Continuous for Beta {
-	type T = f64;
-
 	/// `x^(α - 1) * (1 - x)^(β - 1) / B(α, β)`, where `B` is the gamma
 	/// function.
 	fn pdf(&self, x: f64) -> f64 {

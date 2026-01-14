@@ -263,8 +263,6 @@ impl Mode<Option<f64>> for Exp {
 }
 
 impl Continuous for Exp {
-	type T = f64;
-
 	/// Calculates the probability density function for the exponential
 	/// distribution at `x`
 	///

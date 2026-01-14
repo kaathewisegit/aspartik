@@ -293,8 +293,6 @@ impl Mode<Option<f64>> for Normal {
 }
 
 impl Continuous for Normal {
-	type T = f64;
-
 	/// Calculates the probability density function for the normal distribution
 	/// at `x`
 	///

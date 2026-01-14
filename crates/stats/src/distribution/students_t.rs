@@ -411,8 +411,6 @@ impl Mode<Option<f64>> for StudentsT {
 }
 
 impl Continuous for StudentsT {
-	type T = f64;
-
 	/// Calculates the probability density function for the student's
 	/// t-distribution
 	/// at `x`

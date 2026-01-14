@@ -258,8 +258,6 @@ impl Mode<Option<f64>> for Levy {
 }
 
 impl Continuous for Levy {
-	type T = f64;
-
 	/// Calculates the probability density function for the Levy distribution at `x`
 	///
 	/// # Formula
