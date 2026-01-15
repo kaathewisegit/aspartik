@@ -14,9 +14,6 @@ input:checked + h2 span.triangle {
 section:target > h2 > span.title {
 	@apply font-bold;
 }
-section:target > h2 {
-	@apply bg-gray-300;
-}
 section:target > h2::before {
 	@apply me-1 font-bold;
 	content: "> ";

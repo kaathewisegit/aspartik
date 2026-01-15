@@ -1,4 +1,4 @@
-import Html from "../components/html"
+import Html from "../components/html.tsx"
 
 export default function () {
 	return (

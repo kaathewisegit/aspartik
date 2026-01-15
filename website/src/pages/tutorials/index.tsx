@@ -1,4 +1,4 @@
-import Html from "../../components/html"
+import Html from "../../components/html.tsx"
 import Markdown from "../../components/markdown"
 
 const MD = `

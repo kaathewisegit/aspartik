@@ -16,7 +16,7 @@
 		"build": "ssg build"
 	},
 	"dependencies": {
-		"@kaathewise/ssg": "0.8.1",
+		"@kaathewise/ssg": "^0.8.3",
 		"@kitajs/html": "^4.2.9",
 		"@lezer/highlight": "^1.2.1",
 		"@lezer/python": "^1.1.18",

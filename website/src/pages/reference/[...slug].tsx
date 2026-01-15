@@ -116,7 +116,7 @@ function Sidebar(props: ModuleType): JSX.Element {
 	}
 
 	return (
-		<nav class="fixed z-10 hidden h-screen w-screen w-screen overflow-y-auto bg-white pl-4 peer-has-[input:checked]:block lg:mt-6 lg:block lg:w-64">
+		<nav class="fixed z-10 hidden h-screen w-screen w-screen overflow-y-auto bg-white pl-4 peer-has-[input:checked]:block lg:mt-6 lg:block lg:w-64 dark:bg-black">
 			<Refs />
 		</nav>
 	)
@@ -215,7 +215,9 @@ async function Class(props: ClassType): Promise<string> {
 async function Variable(props: VariableType): Promise<string> {
 	let annotation = null
 	if (props.annotation) {
-		annotation = <span class="text-gray-600">: {props.annotation}</span>
+		annotation = (
+			<span class="text-gray-600 dark:text-gray-400">: {props.annotation}</span>
+		)
 	}
 
 	const title = (
@@ -306,7 +308,11 @@ function Header(props: {
 }
 
 function HeaderBare(props: { title: JSX.Element }): JSX.Element {
-	return <h2 class="flex flex-row bg-gray-200 px-4 py-2">{props.title}</h2>
+	return (
+		<h2 class="flex flex-row bg-gray-200 px-4 py-2 dark:bg-gray-800">
+			{props.title}
+		</h2>
+	)
 }
 
 function HeaderCode(props: {
@@ -320,7 +326,7 @@ function HeaderCode(props: {
 	return (
 		<>
 			<input class="peer hidden" id={inputId} type="checkbox" />
-			<h2 class="flex flex-row bg-gray-200 px-4 py-2">
+			<h2 class="flex flex-row bg-gray-200 px-4 py-2 dark:bg-gray-800">
 				{props.title}
 
 				<label
@@ -343,7 +349,7 @@ function Source(props: {
 	const code = highlight(props.source, "python")
 
 	return (
-		<pre class="overflow-x-scroll bg-gray-100 pl-2 font-mono peer-not-checked:hidden">
+		<pre class="overflow-x-scroll bg-gray-100 pl-2 font-mono peer-not-checked:hidden dark:bg-gray-800">
 			{code}
 		</pre>
 	)

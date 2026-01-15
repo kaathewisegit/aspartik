@@ -1,4 +1,4 @@
-import Html from "../../components/html"
+import Html from "../../components/html.tsx"
 
 const REDIRECT = `window.location.href = "/reference/aspartik"`
 
