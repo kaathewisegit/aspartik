@@ -6,7 +6,7 @@ export default function () {
 			title="Documentation"
 			class="flex min-h-screen items-center justify-center"
 		>
-			<div class="flex w-full max-w-5xl flex-col gap-y-4 md:grid md:grid-cols-2 md:gap-x-8">
+			<div class="grid w-full max-w-5xl grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
 				<Container
 					title="Tutorials"
 					href="/tutorials"
@@ -15,7 +15,7 @@ export default function () {
 				<Container
 					title="How-to guides"
 					href="/howto"
-					desc="Solutions to concrete tasks"
+					desc="Solutions to concrete problems"
 				/>
 				<Container
 					title="Explanation"
@@ -38,7 +38,7 @@ export function Container(props: {
 	desc: string
 }): JSX.Element {
 	return (
-		<div class="flex h-48 flex-col items-center justify-center border text-center lg:w-128">
+		<div class="flex h-48 flex-col items-center justify-center not-last:border-b text-center md:border lg:w-128">
 			<h2 class="text-xl lg:text-3xl">
 				<a class="" href={props.href}>
 					{props.title}
