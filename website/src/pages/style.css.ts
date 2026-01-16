@@ -1,4 +1,4 @@
-import { convertCSS } from "../utils/css"
+import { convertCSS } from "../utils/css.ts"
 
 export function getContentType() {
 	return "text/css"

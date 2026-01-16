@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises"
 
 import Html from "../../components/html.tsx"
-import Markdown from "../../components/markdown"
+import Markdown from "../../components/markdown.tsx"
 
 export async function getStaticParams() {
 	const out = []

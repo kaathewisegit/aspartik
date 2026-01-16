@@ -1,15 +1,15 @@
-import Html from "../../components/html"
-import Markdown from "../../components/markdown"
+import Html from "../../components/html.tsx"
+import Markdown from "../../components/markdown.tsx"
 import type {
 	ClassType,
 	CommonType,
 	FunctionType,
 	ModuleType,
 	VariableType,
-} from "../../content/reference"
-import modules from "../../content/reference"
-import { convertCSS } from "../../utils/css"
-import highlight from "../../utils/highlight"
+} from "../../content/reference.ts"
+import modules from "../../content/reference.ts"
+import { convertCSS } from "../../utils/css.ts"
+import highlight from "../../utils/highlight.ts"
 
 export async function getStaticParams() {
 	const out = []
