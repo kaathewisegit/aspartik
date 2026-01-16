@@ -1,0 +1,205 @@
+# Basic example
+
+This is a `b3` port of [the first BEAST X tutorial][bf].  It assumes the
+reader already has familiarity with BEAST or BEAST2 and maps their
+configuration onto `b3` Python.
+
+
+## Configuration
+
+As Aspartik `b3` is a Python library, it is configured via a Python
+script.  This tutorial will include snippets from it and you can check
+out the full example at [`python/example/apes.py`][ea].
+
+
+### Randomness
+
+As `b3` is deterministic, most components which rely on randomness must
+take an [`RNG` object][rng].  If it is given a seed it'll be possible to
+replicate the analysis using the same script and the same
+SemVer-compatible version of `b3`.
+
+```python
+from aspartik.rng import RNG
+
+rng = RNG(4)
+```
+
+
+### Data
+
+For now `b3` can only read multiple sequence alignments (`MSA` class)
+from FASTA files.  It can be done with the `read_msa_from_fasta` helper:
+
+```python
+from aspartik.io.msa import read_msa_from_fasta
+
+msa = read_msa_from_fasta("<local path to the alignment>")
+```
+
+
+### Parameters
+
+Next we can create the parameters of our model.  These are the objects
+which will be edited by operators, so they all have to support the
+`Stateful` protocol.
+
+```python
+from aspartik.b3 import Tree
+from aspartik.b3.parameters import Real, Weights
+
+tree = Tree(msa.sequence_names(), rng)
+
+kappa = Real(2.0)
+population_size = Real(2.0)
+frequencies = Weights(0.25, 0.25, 0.25, 0.25)
+
+parameters = [tree, kappa, population_size, frequencies]
+```
+
+As `Tree`'s starting structure and edge lengths are randomized, we must
+pass `rng` to it.  The sequence names are taken from `msa`.  All other
+parameters are created from `Real` and `Weights`: the former is scalar
+while the latter can have any number of dimensions.
+
+We'll use the `parameters` list later on when creating the final `MCMC`
+object.
+
+
+### Priors
+
+Each simulation will have a number of priors.  As they don't need to be
+referenced by other objects, they are typically not named.  Instead we
+can put them into a list from the get-go:
+
+```python
+priors = [
+    Distribution(kappa, LogNormal(1.0, 1.25)),
+    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
+    ConstantPopulation(tree, population_size),
+]
+```
+
+This analysis includes two distribution priors on parameters and a
+coalescent.
+
+
+### Operators
+
+As with priors, operators aren't named:
+
+```python
+operators = [
+    ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
+    DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
+    TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
+    SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
+    BeastNarrowExchange(tree, rng, weight=30),
+    BeastWideExchange(tree, rng, weight=3),
+    RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
+    NodeSlide(tree, Uniform(0, 1), rng, weight=30),
+    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
+]
+```
+
+Each operator constructor consists of:
+
+- One or more parameters it operates on[^updown].
+
+- Helper values.  These typically define sampling space via either a
+  distribution, a scale parameter, or both.  Note that all floats in
+  this configuration can be replaced with `Real` instances, allowing for
+  parameter tuning.  {% TODO: see more for SupportsFloat %}
+
+- RNG instance which is used to randomize the proposal.
+
+- `weight`.  It defaults to `1` and determines how likely an operator is
+  to be picked compared to all others.
+
+
+### Likelihood
+
+Each simulation needs a Felsenstein's tree likelihood calculator.  As
+the amount of DNA data in this example is very small, we'll use the most
+basic `CPU4Likelihood` (4-state single-core calculator).
+
+```python
+likelihood = CPU4Likelihood(
+    msa=msa,
+    substitution=HKY(frequencies, kappa),
+    clock=StrictClock(1.0),
+    tree=tree,
+)
+```
+
+A base calculator takes 4 essential parameters: an MSA, a substitution
+model, a clock model[^clock], and a tree.  Some calculators have
+additional parameters needed for performance tuning and there are also
+higher-level calculators which wrap several others.
+
+
+### Loggers
+
+Loggers are implemented via a callback interface, which allows to
+efficiently call Python methods every few steps.
+
+```python
+loggers = [
+    TreeLogger(tree=tree, path="target/apes.trees", every=1_000),
+    PrintLogger(every=10_000),
+    ValueLogger(
+        {
+            "step": lambda: mcmc.current_step,
+            "joint": lambda: mcmc.prior + mcmc.likelihood.likelihood(),
+            "prior": lambda: mcmc.prior,
+            "likelihood": lambda: mcmc.likelihood.likelihood(),
+            "tree:height": lambda: tree.height_of(tree.root),
+            "tree:length": lambda: tree.total_length(),
+            "kappa": kappa,
+            "population_size": population_size,
+            "frequencies": frequencies,
+            "prior:kappa": priors[0],
+            "prior:population_size": priors[1],
+            "prior:coalescent": priors[2],
+        },
+        path="target/apes.log",
+        every=1_000,
+    ),
+]
+```
+
+{% TODO: flexible interface, links to `Callback` and `ValueLogger`.
+Discussion of JSON %}
+
+
+### MCMC
+
+Finally, we use all of the objects define above to create an MCMC
+instance and launch it:
+
+```python
+mcmc = MCMC(
+    state=parameters,
+    priors=priors,
+    operators=operators,
+    likelihood=likelihood,
+    callbacks=loggers,
+    rng=rng,
+)
+
+mcmc.run(100_000)
+```
+
+The full example is at [`apes.py`][ea].  It wraps the above setup into a
+function and uses a `run_from_cmdline` which allows to configure length
+and debug information from the command line by running `python <path to
+file> [options]`.
+
+
+[^updown]: `UpDown` has two, for example: `up` and `down`.
+[^clock]: Currently only `StrictClock` is supported.
+
+
+[bf]: https://beast.community/first_tutorial
+[ea]: https://github.com/kaathewisegit/aspartik/blob/trunk/python/examples/apes.py
+[rng]: https://aspartik.kaathewise.net/reference/aspartik/rng/#RNG
