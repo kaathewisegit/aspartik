@@ -38,7 +38,7 @@ export function Container(props: {
 	desc: string
 }): JSX.Element {
 	return (
-		<div class="flex h-48 flex-col items-center justify-center not-last:border-b text-center md:border lg:w-128">
+		<div class="flex h-36 flex-col items-center justify-center not-last:border-b text-center md:h-48 md:border lg:w-128">
 			<h2 class="text-xl lg:text-3xl">
 				<a class="" href={props.href}>
 					{props.title}

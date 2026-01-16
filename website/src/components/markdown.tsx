@@ -13,7 +13,7 @@ export default async function (props: {
 	return <section class={props.class}>{rendered}</section>
 }
 
-async function md2html(md: string) {
+async function md2html(md: string): Promise<string> {
 	const file = await unified()
 		.use(remarkGfm)
 		.use(remarkParse)

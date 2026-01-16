@@ -58,7 +58,7 @@ a:hover {
 	}
 
 	color: var(--prose-color);
-	line-height: 2;
+	line-height: 1.75;
 
 	*:where(:not(.not-prose, .not-prose *))
 		+ *:where(:not(.not-prose, .not-prose *)) {
@@ -127,11 +127,12 @@ a:hover {
 	}
 
 	pre:where(:not(.not-prose, .not-prose *)) {
-		@apply mt-4 bg-gray-200 px-1 dark:bg-gray-800;
+		line-height: 1;
+		@apply mt-4 bg-gray-200 p-1 dark:bg-gray-800;
 	}
 
 	pre code:where(:not(.not-prose, .not-prose *)) {
-		@apply font-mono text-sm leading-1.5;
+		@apply font-mono text-sm;
 	}
 
 	table:where(:not(.not-prose, .not-prose *)) {
