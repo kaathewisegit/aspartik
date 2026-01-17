@@ -1,0 +1,13 @@
+{
+	"name": "islands",
+	"type": "module",
+	"private": true,
+	"scripts": {},
+	"devDependencies": {
+		"@tailwindcss/vite": "^4.1.18",
+		"tailwindcss": "^4.1.18"
+	},
+	"dependencies": {
+		"solid-js": "^1.9.5"
+	}
+}

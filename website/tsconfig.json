@@ -1,25 +1,4 @@
 {
-	"compilerOptions": {
-		"lib": ["ESNext"],
-		"target": "ESNext",
-		"module": "Preserve",
-		"moduleDetection": "force",
-
-		"jsx": "react-jsx",
-		"jsxImportSource": "@kitajs/html",
-
-		"strict": true,
-		"noFallthroughCasesInSwitch": true,
-		"noUncheckedIndexedAccess": true,
-		"noImplicitOverride": true,
-
-		"skipLibCheck": true,
-
-		"allowImportingTsExtensions": true,
-
-		// Biome handles that
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
-		"noPropertyAccessFromIndexSignature": false
-	}
+	"files": [],
+	"references": [{ "path": "./src" }, { "path": "./islands" }]
 }

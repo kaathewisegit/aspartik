@@ -2,6 +2,9 @@
 	"name": "website",
 	"type": "module",
 	"private": true,
+	"workspaces": [
+		"islands/"
+	],
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.2",
 		"@types/node": "^24.3.1",
@@ -9,7 +12,7 @@
 		"typescript-language-server": "^4.4.0"
 	},
 	"scripts": {
-		"check": "biome check && tsc --noEmit",
+		"check": "biome check && tsc --b && tsc -b --clean",
 		"format": "biome format --fix",
 		"fix": "biome check --fix --unsafe",
 		"dev": "ssg dev",
