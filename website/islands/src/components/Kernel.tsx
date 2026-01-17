@@ -1,9 +1,7 @@
-import "./index.css"
+import "../index.css"
 
 import { createContext, createEffect, Index } from "solid-js"
 import { createStore, type SetStoreFunction } from "solid-js/store"
-import { render } from "solid-js/web"
-import { getElementById } from "./utils"
 
 const [state, setState] = createStore({
 	kernelRowStart: 1,
@@ -16,7 +14,7 @@ export const Context = createContext<{
 	setState: SetStoreFunction<typeof state>
 }>({ state, setState })
 
-function Main() {
+export default function Main() {
 	setTimeout(() => {
 		setState("kernelRowStart", 2)
 		console.log(state)
@@ -82,5 +80,3 @@ function Block(props: { currentRow: number }) {
 
 	return <div class={`size-[25px] border ${color()}`}></div>
 }
-
-render(() => <Main />, getElementById("kernels"))
