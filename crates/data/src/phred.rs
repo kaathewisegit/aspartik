@@ -53,7 +53,13 @@ enum RangedU8 {
 	V40 = 40,
 }
 
-/// The Phred quality score.
+/// The [Phred quality score][wiki]
+///
+/// A Phred score estimates the probability that a given base has been assigned
+/// correctly.  It is primarily used in the FASTQ format.
+///
+///
+/// [wiki]: https://en.wikipedia.org/wiki/Phred_quality_score
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
@@ -162,11 +168,15 @@ impl Phred {
 		ch.try_into()
 	}
 
+	/// The chance that a base has been assigned correctly
 	#[pyo3(name = "accuracy")]
 	fn py_accuracy(&self) -> f64 {
 		self.accuracy()
 	}
 
+	/// The chance that there has been an error in a base assignment
+	///
+	/// Equals `1 - self.accuracy()`.
 	#[pyo3(name = "probability_incorrect")]
 	fn py_probability_incorrect(&self) -> f64 {
 		self.probability_incorrect()

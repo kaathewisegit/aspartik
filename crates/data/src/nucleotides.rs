@@ -9,6 +9,32 @@ use std::fmt;
 use crate::seq::Character;
 use linalg::Vector;
 
+/// DNA nucleotide bases and their combinations
+///
+/// This class only supports DNA, so it has thymine, but not uracil.  Aside from
+/// the core 4 bases it also supports all of their permutations (e.g. `Weak` for
+/// adenine or thymine).  See [IUPAC codes][ic] for the full list.  Finally, it
+/// also has two special values: `Any`, which encodes an arbitrary base, and
+/// `Gap`, which is used in alignments.
+///
+///
+/// ## Protocols
+///
+/// `DnaNucleotide` implements the `__contains__` protocol for testing which
+/// combinations of nucleotides are supersets of others.  For example:
+///
+/// ```python
+/// >>> DNANucleotide.Adenine in DNANucleotide.Weak
+/// True
+/// >>> DNANucleotide.Pyrimidine in DNANucleotide.NotGuanine
+/// True
+/// >>> DNANucleotide.Cytosine in DNANucleotide.NotCytosine
+/// False
+/// ```
+//their /
+/// `Any` includes all other states, including `Gap`.
+///
+/// [ic]: https://genome.ucsc.edu/goldenPath/help/iupac.html
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
@@ -104,6 +130,7 @@ impl DnaNucleotide {
 		}
 	}
 
+	// XXX: should all states include `Gap`?
 	pub fn includes(&self, other: &Self) -> bool {
 		(self.as_u8() & other.as_u8()) == other.as_u8()
 	}
@@ -302,6 +329,12 @@ impl DnaNucleotide {
 		self.includes(other)
 	}
 
+	/// The complementary pair of the nucleotide base
+	///
+	/// For combined states the combination of all possible complements will
+	/// be returned.  The complement of `Weak` is `Strong`, for `NotGuanine`
+	/// it is `NotCytosine`, and so on.  And `Any` and `Gap` will return
+	/// themselves.
 	#[pyo3(name = "complement")]
 	fn py_complement(&self) -> Self {
 		self.complement()

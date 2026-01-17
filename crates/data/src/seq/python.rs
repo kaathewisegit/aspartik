@@ -4,6 +4,10 @@ use pyo3::prelude::*;
 use super::{Sequence, parse_str};
 use crate::DnaNucleotide;
 
+/// An immutable DNA sequence
+///
+/// This sequence cannot be mutated.  Instead, its methods can be used for
+/// various transformations which will return new sequences.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
 #[repr(transparent)]
@@ -33,10 +37,15 @@ impl PyDnaSeq {
 		self.0.as_ref().len()
 	}
 
+	/// A complementary strand
+	///
+	/// See `DNANucleotide.complement` for notes on how combined states such
+	/// as `DNANucleotide.Weak` and gaps are handled.
 	fn complement(&self) -> Self {
 		PyDnaSeq(self.0.complement())
 	}
 
+	/// Reversed complementary strand
 	fn reverse_complement(&self) -> Self {
 		PyDnaSeq(self.0.reverse_complement())
 	}

@@ -4,6 +4,19 @@ use pyo3::prelude::*;
 
 use super::{Tree, parse};
 
+/// A classical Newick tree
+///
+/// This tree supports node and edge attributes, but it does not parse them in
+/// any way.  It also doesn't support extended Newick which includes
+/// hybridization events.
+///
+/// The constructor takes a single line of Newick notation.
+///
+/// ```python
+/// >>> tree = Tree("(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);")
+/// >>> str(tree)
+/// '(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);'
+/// ```
 #[derive(Debug)]
 #[pyclass(name = "Tree", module = "aspartik.data.newick", frozen)]
 #[repr(transparent)]
