@@ -5,7 +5,7 @@ use crate::tree::{Node, PyTree, Tree};
 use pyutil::SupportsFloat;
 
 /// All nodes (leaves and internals) of a tree sorted by height
-fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
+pub fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
 	let mut nodes = Vec::with_capacity(tree.num_nodes());
 
 	for node in tree.nodes() {

@@ -1,5 +1,6 @@
 mod coalescent;
 mod monophyly;
+mod skyline;
 mod yule;
 
 pub use coalescent::{ConstantPopulation, ExponentialGrowth};
