@@ -208,4 +208,4 @@ file> [options]`.
 [ea]: https://github.com/kaathewisegit/aspartik/blob/trunk/python/examples/apes.py
 [rng]: https://aspartik.kaathewise.net/reference/aspartik/rng/#RNG
 [sf]: https://docs.python.org/3/library/typing.html#typing.SupportsFloat
-[hl]: //howto/logging
+[hl]: /howto/log

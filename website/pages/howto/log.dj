@@ -1,0 +1,76 @@
+# Logging in `b3`
+
+Unlike in BEAST, `b3` has no unified logger object.  Instead it uses a
+callback interface to implement both runtime helpers and loggers.  This
+enables users to write quick, one-off loggers which can perform
+arbitrary computation.
+
+While it's easy to write custom loggers (see the [callbacks guide][c]),
+`b3` provides 3 loggers out of the box which should be sufficient for
+the majority of use cases.
+
+
+## `PrintLogger`
+
+`PrintLogger` is a mostly stylistic logger which prints key features of
+the run (posterior, prior, likelihood, and execution speed).  It only
+accepts the required `every` parameter which determines how often it'll
+print the step information.
+
+```python
+PrintLogger(every=10_000)
+```
+
+
+## `TreeLogger`
+
+The equivalent of `logTree` from BEAST X.  Currently it simply outputs
+newline-delimited Newick trees without branch rates (as `b3` only
+supports a strict clock for now) or support.  If You need either of
+those, [please open an issue][i].
+
+```python
+TreeLogger(tree=tree, path="target/apes.trees", every=1_000, zstd=True)
+```
+
+
+## `ValueLogger`
+
+A more powerful equivalent of `log`, it allows logging arbitrary
+structured information.  The latter is enabled by the use of JSON:
+`ValueLogger` writes its output in the [JSON lines format][jl].
+
+It's main parameter is `items` which describes the values written as
+JSON objects.  Because each entry is a valid JSON value, you can return
+lists, arrays, nested objects, or other arbitrarily complex values to
+describe the step's state.
+
+`ValueLogger` additionally supports passing priors to it (it'll record
+the probability) and functions.  For the latter, it'll call the function
+and use its output.
+
+```python
+ValueLogger(
+    {
+        "step": lambda: mcmc.current_step,
+        "joint": lambda: mcmc.prior + mcmc.likelihood.likelihood(),
+        "prior": lambda: mcmc.prior,
+        "likelihood": lambda: mcmc.likelihood.likelihood(),
+        "tree:height": lambda: tree.height_of(tree.root),
+        "tree:length": lambda: tree.total_length(),
+        "kappa": kappa,
+        "population_size": population_size,
+        "frequencies": frequencies,
+        "prior:kappa": priors[0],
+        "prior:population_size": priors[1],
+        "prior:coalescent": priors[2],
+    },
+    path="target/apes.log",
+    every=1_000,
+)
+```
+
+
+[c]: /howto/callbacks
+[i]: https://github.com/kaathewisegit/aspartik/issues/new?labels=feature
+[jl]: https://jsonlines.org/
