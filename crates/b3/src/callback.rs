@@ -34,7 +34,7 @@ impl PyCallback {
 	}
 
 	pub fn call(&self, py: Python, mcmc: Py<Mcmc>) -> Result<()> {
-		py_call_method!(py, self.inner, "log", mcmc)?;
+		py_call_method!(py, self.inner, "call", mcmc)?;
 
 		Ok(())
 	}

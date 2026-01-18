@@ -31,7 +31,7 @@ class TreeLogger(Callback):
     def __post_init__(self):
         self._file = open(self.path, "w")
 
-    def log(self, mcmc: MCMC):
+    def call(self, mcmc: MCMC):
         line = self.tree.newick()
         self._file.write(line)
         self._file.write("\n")
@@ -47,7 +47,7 @@ class PrintLogger(Callback):
 
     _last_time: Optional[float] = field(init=False, default=None)
 
-    def log(self, mcmc: MCMC):
+    def call(self, mcmc: MCMC):
         if mcmc.current_step == 0:
             print(
                 f"{'Step':>10}{'Posterior':>15}{'Likelihood':>15}{'Prior':>15}{'Speed t/m':>15}"
@@ -97,7 +97,7 @@ class ValueLogger(Callback):
     def __post_init__(self):
         self._file = open(self.path, "w")
 
-    def log(self, mcmc: MCMC):
+    def call(self, mcmc: MCMC):
         entry_json = json.dumps(self.items, default=_serialize)
         self._file.write(entry_json)
         self._file.write("\n")

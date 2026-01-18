@@ -101,6 +101,7 @@ class Callback(Protocol):
 
         Used by loggers and other periodic actions.
         """
+        ...
 
 
 @runtime_checkable

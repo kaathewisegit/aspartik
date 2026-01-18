@@ -122,7 +122,7 @@ def test_compare_likelihood():
 
         max_diff: float = 0.0
 
-        def log(self, mcmc: MCMC):
+        def call(self, mcmc: MCMC):
             likelihoods = [calculator.likelihood() for calculator in calculators]
             diff = max(likelihoods) - min(likelihoods)
             self.max_diff = max(self.max_diff, diff)
