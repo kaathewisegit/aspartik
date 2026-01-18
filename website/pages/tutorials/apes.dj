@@ -109,7 +109,7 @@ Each operator constructor consists of:
 - Helper values.  These typically define sampling space via either a
   distribution, a scale parameter, or both.  Note that all floats in
   this configuration can be replaced with `Real` instances, allowing for
-  parameter tuning.  {% TODO: see more for SupportsFloat %}
+  parameter tuning[^sf].
 
 - RNG instance which is used to randomize the proposal.
 
@@ -168,8 +168,8 @@ loggers = [
 ]
 ```
 
-{% TODO: flexible interface, links to `Callback` and `ValueLogger`.
-Discussion of JSON %}
+See [the logging explanation][hl] for more details on how loggers work
+and their formats.
 
 
 ### MCMC
@@ -198,8 +198,14 @@ file> [options]`.
 
 [^updown]: `UpDown` has two, for example: `up` and `down`.
 [^clock]: Currently only `StrictClock` is supported.
+[^sf]: Most of the floating point operators and prior arguments accept
+  all types which implement the [`SupportsFloat`][sf] interface.  `Real`
+  also supports it, which means that such arguments can also be a
+  dynamic part of the MCMC state.
 
 
 [bf]: https://beast.community/first_tutorial
 [ea]: https://github.com/kaathewisegit/aspartik/blob/trunk/python/examples/apes.py
 [rng]: https://aspartik.kaathewise.net/reference/aspartik/rng/#RNG
+[sf]: https://docs.python.org/3/library/typing.html#typing.SupportsFloat
+[hl]: //howto/logging
