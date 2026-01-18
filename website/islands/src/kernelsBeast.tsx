@@ -1,6 +1,7 @@
 import { createContext, createEffect, Index, onMount } from "solid-js"
 import { createStore, type SetStoreFunction } from "solid-js/store"
 import { render } from "solid-js/web"
+import Tree10 from "./components/Tree10"
 import { getElementById } from "./utils"
 
 import "./index.css"
@@ -11,6 +12,9 @@ export const [state, setState] = createStore({
 	currentRow: -1,
 
 	kernelName: "StatesStates",
+
+	selectedNodes: Array(11).fill(false) as boolean[],
+	selectedEdges: Array(10).fill(false) as boolean[],
 })
 
 export const Context = createContext<{
@@ -30,7 +34,13 @@ export default function Main() {
 	onMount(() => window.addEventListener("keydown", handler))
 
 	return (
-		<div class="flex flex-col items-center">
+		<div class="flex flex-col items-center [&_*]:duration-300">
+			<figure class="h-54 w-64">
+				<Tree10
+					selectedNodes={state.selectedNodes}
+					selectedEdges={state.selectedEdges}
+				/>
+			</figure>
 			<Visualization />
 			<Controls />
 		</div>
@@ -182,6 +192,16 @@ function next() {
 
 createEffect(() => {
 	setState("kernelName", NAMES[Math.max(0, state.currentRow)])
+})
+
+createEffect(() => {
+	setState("selectedNodes", Array(11).fill(false))
+	setState("selectedEdges", Array(10).fill(false))
+	if (state.currentRow > -1) {
+		setState("selectedNodes", state.currentRow + 6, true)
+		setState("selectedEdges", state.currentRow * 2, true)
+		setState("selectedEdges", state.currentRow * 2 + 1, true)
+	}
 })
 
 render(() => <Main />, getElementById("kernelsBeast"))
