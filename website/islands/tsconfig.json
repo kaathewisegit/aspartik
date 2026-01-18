@@ -12,8 +12,6 @@
 		"moduleResolution": "bundler",
 
 		"strict": true,
-		"types": ["vite/client"],
-
-		"composite": true
+		"types": ["vite/client"]
 	}
 }

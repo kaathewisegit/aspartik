@@ -24,8 +24,8 @@ const makeConfig = (name: string, entry: string) =>
 	})
 
 const ENTRIES = {
-	kernelsBeast: "src/kernels_beast.tsx",
-	kernelsB3: "src/kernels_b3.tsx",
+	kernelsBeast: "src/kernelsBeast.tsx",
+	kernelsB3: "src/kernelsB3.tsx",
 }
 
 for (const [name, entry] of Object.entries(ENTRIES)) {

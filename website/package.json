@@ -12,14 +12,13 @@
 		"typescript-language-server": "^4.4.0"
 	},
 	"scripts": {
-		"check": "biome check && tsc --b && tsc -b --clean",
-		"format": "biome format --fix",
-		"fix": "biome check --fix --unsafe",
+		"check": "biome check && tsc --noEmit && cd islands/ && tsc --noEmit",
+		"fix": "biome check --fix",
 		"dev": "ssg dev",
-		"build": "ssg build"
+		"build": "cd islands/; npx tsx build.ts; cd ..; ssg build"
 	},
 	"dependencies": {
-		"@kaathewise/ssg": "^0.8.3",
+		"@kaathewise/ssg": "^0.9.2",
 		"@kitajs/html": "^4.2.9",
 		"@lezer/highlight": "^1.2.1",
 		"@lezer/python": "^1.1.18",
