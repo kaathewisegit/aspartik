@@ -103,6 +103,16 @@ class Callback(Protocol):
         """
         ...
 
+    def finish(self) -> None:
+        """
+        A method which will be called after a run ends
+
+        It's useful for finalizing logger actions, including flushing to files.
+        This method has a default no-op implementation, so it's not necessary
+        to implement it on a custom logger.
+        """
+        pass
+
 
 @runtime_checkable
 class Stateful(Protocol):

@@ -7,13 +7,44 @@ such.
 import json
 import time
 from collections.abc import Callable, Mapping
-from compression import zstd
+from compression.zstd import ZstdCompressor
 from dataclasses import dataclass, field
-from io import TextIOBase
+from io import BufferedWriter
 from typing import Any, Optional
 
 from . import MCMC, Callback, Prior, Tree
 from .parameters import Real, Weights
+
+
+class _LogWriter:
+    _file: BufferedWriter
+    _compressor: Optional[ZstdCompressor]
+
+    __slots__ = ("_file", "_compressor")
+
+    def __init__(self, path: str, zstd: bool = False):
+        if zstd:
+            self._file = open(f"{path}.zst", "wb")
+            self._compressor = ZstdCompressor()
+        else:
+            self._file = open(path, "wb")
+            self._compressor = None
+
+    def writeln(self, line: str) -> None:
+        encoded = f"{line}\n".encode()
+
+        if self._compressor:
+            compressed = self._compressor.compress(encoded)
+            self._file.write(compressed)
+        else:
+            self._file.write(encoded)
+
+    def flush(self) -> None:
+        if self._compressor:
+            compressed = self._compressor.flush()
+            self._file.write(compressed)
+
+        self._file.flush()
 
 
 @dataclass(slots=True)
@@ -34,13 +65,25 @@ class TreeLogger(Callback):
     every: int
     """How often the logger will be called"""
 
+    zstd: bool = False
+    """
+    Compress the output with zstd
+
+    If enabled, the logger will compress its output and write it to a
+    `{path}.zst`.
+    """
+
+    _writer: _LogWriter = field(init=False)
+
     def __post_init__(self):
-        self._file = open(self.path, "w")
+        self._writer = _LogWriter(self.path, zstd=self.zstd)
 
     def call(self, mcmc: MCMC):
-        line = self.tree.newick()
-        self._file.write(line)
-        self._file.write("\n")
+        newick = self.tree.newick()
+        self._writer.writeln(newick)
+
+    def finish(self):
+        self._writer.flush()
 
     def __getstate__(self):
         # None ignores __dict__ which contains the file handle
@@ -136,16 +179,25 @@ class ValueLogger(Callback):
 
     every: int
 
-    _file: TextIOBase = field(init=False)
+    zstd: bool = False
+    """
+    Compress the output with zstd
+
+    If enabled, the logger will compress its output and write it to a
+    `{path}.zst`.
+    """
+
+    _writer: _LogWriter = field(init=False)
 
     def __post_init__(self):
-        self._file = open(self.path, "w")
+        self._writer = _LogWriter(self.path, zstd=self.zstd)
 
     def call(self, mcmc: MCMC):
         entry_json = json.dumps(self.items, default=_serialize)
-        self._file.write(entry_json)
-        self._file.write("\n")
-        self._file.flush()
+        self._writer.writeln(entry_json)
+
+    def finish(self):
+        self._writer.flush()
 
     def __getstate__(self):
         return (None, self.__slots__)

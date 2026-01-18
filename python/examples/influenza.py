@@ -9,7 +9,7 @@ from datetime import datetime
 
 from aspartik.b3 import MCMC, Tree
 from aspartik.b3.clocks import StrictClock
-from aspartik.b3.likelihoods import CPU4Likelihood
+from aspartik.b3.likelihoods import CPU4Likelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -81,11 +81,12 @@ def make_mcmc(fasta_path: str):
         DeltaExchange(frequencies, 0.01, rng, weight=3),
     ]
 
-    likelihood = CPU4Likelihood(
+    likelihood = Parallel4Likelihood(
         msa=msa,
         substitution=HKY(frequencies, kappa),
         clock=StrictClock(clock_rate),
         tree=tree,
+        num_threads=3,
     )
 
     loggers = [
@@ -112,6 +113,7 @@ def make_mcmc(fasta_path: str):
             },
             path="target/influenza.log",
             every=1_000,
+            zstd=True,
         ),
     ]
 

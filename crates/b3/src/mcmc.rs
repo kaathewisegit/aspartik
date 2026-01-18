@@ -156,6 +156,8 @@ impl Mcmc {
 			*self_.current_step.lock() += 1;
 		}
 
+		self_.finish(py)?;
+
 		Ok(())
 	}
 
@@ -345,6 +347,13 @@ impl Mcmc {
 			})?;
 		}
 
+		Ok(())
+	}
+
+	fn finish(&self, py: Python) -> Result<()> {
+		for callback in &self.callbacks {
+			callback.finish(py)?;
+		}
 		Ok(())
 	}
 }

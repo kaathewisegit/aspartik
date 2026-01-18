@@ -111,6 +111,7 @@ def test(args: Namespace):
 def run():
     execute("maturin", "develop", "--release")
     execute("uv", "run", "python/examples/apes.py")
+    execute("uv", "run", "python/examples/influenza.py", "50_000")
 
 
 ARTIFACTS = [

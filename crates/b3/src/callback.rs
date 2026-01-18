@@ -2,7 +2,7 @@ use anyhow::Result;
 use pyo3::prelude::*;
 
 use crate::mcmc::Mcmc;
-use util::{py_call_method, py_check_method, py_extract_attr};
+use util::{py_call_method, py_check_method, py_extract_attr, py_has_method};
 
 pub struct PyCallback {
 	inner: Py<PyAny>,
@@ -35,6 +35,14 @@ impl PyCallback {
 
 	pub fn call(&self, py: Python, mcmc: Py<Mcmc>) -> Result<()> {
 		py_call_method!(py, self.inner, "call", mcmc)?;
+
+		Ok(())
+	}
+
+	pub fn finish(&self, py: Python) -> Result<()> {
+		if py_has_method!(self.inner.bind(py), "finish") {
+			py_call_method!(py, self.inner, "finish")?;
+		}
 
 		Ok(())
 	}
