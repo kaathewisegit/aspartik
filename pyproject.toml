@@ -1,8 +1,8 @@
 [project]
 name = "aspartik"
 dynamic = ["version", "author", "license"]
-# Uses square bracket generics (PEP 695)
-requires-python = ">=3.12"
+# Uses compression.zstd (PEP 784)
+requires-python = ">=3.14"
 classifiers = [
 	"Programming Language :: Rust",
 	"Programming Language :: Python :: Implementation :: CPython",
