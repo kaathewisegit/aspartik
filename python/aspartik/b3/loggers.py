@@ -7,6 +7,7 @@ such.
 import json
 import time
 from collections.abc import Callable, Mapping
+from compression import zstd
 from dataclasses import dataclass, field
 from io import TextIOBase
 from typing import Any, Optional
@@ -17,13 +18,18 @@ from .parameters import Real, Weights
 
 @dataclass(slots=True)
 class TreeLogger(Callback):
-    """Records the topology of the tree into a `.trees` file."""
+    """
+    Records the structure of the tree in Newick format
+
+    The exact format in the resulting file is a collection of tree structures
+    on each recorded step delimited by newlines
+    """
 
     tree: Tree
     path: str
     """
-    Path to the file where the trees will be appended in Newick format, one per
-    line.  It's opened verbatim (the `.trees` extension won't be added).
+    Path to the file to write to.  It's opened verbatim (so the `.trees`
+    extension won't be added automatically).
     """
     every: int
     """How often the logger will be called"""
@@ -43,6 +49,13 @@ class TreeLogger(Callback):
 
 @dataclass(slots=True)
 class PrintLogger(Callback):
+    """
+    Prints the simulation progress onto the screen
+
+    Currently it only supports the step index, posterior/likelihood/total
+    prior, and speed in time per million steps.
+    """
+
     every: int
 
     _last_time: Optional[float] = field(init=False, default=None)
@@ -88,8 +101,39 @@ def _serialize(item):
 
 @dataclass(slots=True)
 class ValueLogger(Callback):
+    """
+    Structurally logs analysis state values
+
+    `ValueLogger` produces JSON to allow embedding lists and other more complex
+    structures in fields.
+    """
+
     items: Mapping[str, Any]
+    """
+    Key-value mapping of the logged stateful objects
+
+    The key is the string name.  The values can either be plain objects, in
+    which case they will be serialised with `json.dumps`.  Or they can be
+    functions, which will be called and their result will be serialised
+    instead.  The latter can be used to easily create ad-hoc derived values:
+
+    ```python
+     ValueLogger({
+         "joint": lambda: mcmc.prior + mcmc.likelihood.likelihood(),
+         "tree:height": lambda: tree.height_of(tree.root),
+         "tree:length": lambda: tree.total_length(),
+         # ...
+    })
+    ```
+    """
+
     path: str
+    """
+    File path to log to
+
+    Will be overwritten each time the `run` method is called on `MCMC`.
+    """
+
     every: int
 
     _file: TextIOBase = field(init=False)
