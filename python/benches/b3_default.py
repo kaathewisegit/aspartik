@@ -57,7 +57,8 @@ def parse_cli_args():
     parser.add_argument("file_path", type=str)
 
     parser.add_argument("--kind", choices=["cpu", "parallel", "cuda"], required=True)
-    parser.add_argument("--magnitude", type=int, default=9)
+    parser.add_argument("--magnitude_start", type=int, default=3)
+    parser.add_argument("--magnitude_end", type=int, default=9)
     parser.add_argument("--time", type=int, default=60, help="In seconds")
 
     return parser.parse_args()
@@ -71,10 +72,10 @@ def main():
     args = parse_cli_args()
 
     records = list(FastaReader.from_file(args.file_path))
-    if 2**args.magnitude > len(records):
+    if 2**args.magnitude_end > len(records):
         raise Exception(f"Not enough sequences: the alignment only has {len(records)}")
 
-    seqs = [2**i for i in range(3, args.magnitude + 1)]
+    seqs = [2**i for i in range(args.magnitude_start, args.magnitude_end + 1)]
     speeds = [
         run_mcmc(MSA.from_fasta(records[:num_sequences]), args.time, args.kind)
         for num_sequences in seqs
