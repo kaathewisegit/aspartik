@@ -6,6 +6,7 @@ pub mod sam;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
+#[cfg(feature = "python")]
 #[pymodule(name = "_io_rust_impl")]
 pub mod pymodule {
 	use super::*;

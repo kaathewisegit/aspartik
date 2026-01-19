@@ -1,3 +1,4 @@
+#[cfg(feature = "python")]
 use anyhow::Result;
 #[cfg(feature = "python")]
 use pyo3::{
@@ -12,6 +13,7 @@ use std::{
 	path::Path,
 };
 
+#[cfg(feature = "python")]
 use util::{py_bail, py_call_method, py_check_method};
 
 pub enum AnyReader {

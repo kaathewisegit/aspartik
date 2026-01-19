@@ -5,7 +5,9 @@ mod nucleotides;
 mod phred;
 pub mod seq;
 
-pub use msa::{Msa, python::PyMsa};
+pub use msa::Msa;
+#[cfg(feature = "python")]
+pub use msa::python::PyMsa;
 pub use nucleotides::DnaNucleotide;
 pub use phred::Phred;
 
