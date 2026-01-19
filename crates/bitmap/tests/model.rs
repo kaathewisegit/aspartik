@@ -1,7 +1,7 @@
 use rand::{Rng as RngTrait, SeedableRng};
 use rand_pcg::Pcg64 as Rng;
 
-use crate::Bitmap;
+use bitmap::Bitmap;
 
 struct Model(Vec<bool>);
 

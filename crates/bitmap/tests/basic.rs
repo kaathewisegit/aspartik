@@ -1,4 +1,4 @@
-use crate::Bitmap;
+use bitmap::Bitmap;
 
 #[test]
 fn basic() {
