@@ -1,0 +1,15 @@
+# Explanations
+
+## Performance
+
+The most high-performing Felsenstein's likelihood calculator
+implementations in both [BEAGLE][b] (used by BEAST X and BEAST2) and
+`b3` are the GPU ones, both powered by CUDA.  `b3` includes a number of
+optimizations which allow it to outperform BEAGLE on the largest and the
+most computationally demanding datasets.
+
+- [Kernel count optimization][kc]
+
+
+[b]: https://beagle-dev.github.io/
+[kc]: /explanation/kernels

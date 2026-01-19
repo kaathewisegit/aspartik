@@ -17,8 +17,8 @@ async function md2html(md: string): Promise<string> {
 	const file = await unified()
 		.use(remarkGfm)
 		.use(remarkParse)
-		.use(remarkRehype)
-		.use(rehypeStringify)
+		.use(remarkRehype, { allowDangerousHtml: true })
+		.use(rehypeStringify, { allowDangerousHtml: true })
 		.process(md)
 
 	return String(file)

@@ -164,31 +164,25 @@ const NAMES = [
 function prev() {
 	if (state.currentRow === -1) {
 		return
+	} else {
+		setState("currentRow", (row) => row - 1)
 	}
-	if (state.currentRow === 0) {
-		setState("currentRow", -1)
-		return
-	}
-
-	setState("kernelRowStart", (start) => start - 1)
-	setState("kernelRowEnd", (end) => end - 1)
-	setState("currentRow", (row) => row - 1)
 }
 
 function next() {
-	if (state.currentRow === -1) {
-		setState("currentRow", (row) => row + 1)
-		return
-	}
-
 	if (state.currentRow === 4) {
 		return
+	} else {
+		setState("currentRow", (row) => row + 1)
 	}
-
-	setState("kernelRowStart", (start) => start + 1)
-	setState("kernelRowEnd", (end) => end + 1)
-	setState("currentRow", (row) => row + 1)
 }
+
+createEffect(() => {
+	if (state.currentRow > -1) {
+		setState("kernelRowStart", state.currentRow)
+		setState("kernelRowEnd", state.currentRow)
+	}
+})
 
 createEffect(() => {
 	setState("kernelName", NAMES[Math.max(0, state.currentRow)])
@@ -199,8 +193,26 @@ createEffect(() => {
 	setState("selectedEdges", Array(10).fill(false))
 	if (state.currentRow > -1) {
 		setState("selectedNodes", state.currentRow + 6, true)
-		setState("selectedEdges", state.currentRow * 2, true)
-		setState("selectedEdges", state.currentRow * 2 + 1, true)
+	}
+
+	switch (state.currentRow) {
+		case -1:
+			return
+		case 0:
+			setState("selectedEdges", [0, 1], true)
+			break
+		case 1:
+			setState("selectedEdges", [3, 4], true)
+			break
+		case 2:
+			setState("selectedEdges", [6, 2], true)
+			break
+		case 3:
+			setState("selectedEdges", [7, 5], true)
+			break
+		case 4:
+			setState("selectedEdges", [8, 9], true)
+			break
 	}
 })
 

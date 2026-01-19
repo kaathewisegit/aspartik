@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@include "../pages/";
+
 @font-face {
 	font-family: "Recursive";
 	font-style: normal;

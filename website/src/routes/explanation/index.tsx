@@ -1,9 +1,14 @@
+import * as fs from "node:fs/promises"
+
+import Html from "../../components/html.tsx"
+import Markdown from "../../components/markdown.tsx"
+
 export default async function () {
+	const source = await fs.readFile(`pages/explanation/index.dj`, "utf-8")
+
 	return (
-		<article>
-			<div id="kernelsBeast" />
-			<link rel="stylesheeet" href="/islands/kernelsBeast.css" />
-			<script type="module" src="/islands/kernelsBeast.js" />
-		</article>
+		<Html title="Tutorials">
+			<Markdown raw={source} class="prose mx-auto max-w-200" />
+		</Html>
 	)
 }

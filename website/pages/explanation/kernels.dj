@@ -1,0 +1,66 @@
+# Kernel number optimization
+
+CUDA kernels have a much lower overhead compared to other GPU APIs[^v].
+Even so, if a large number of them is launched, it can add up.
+
+BEAGLE's core execution model is a list of operations, where each
+operation is an update to partial likelihood of some node.  The caller
+builds up this list and BEAGLE iterates over it with a `for` loop,
+executing each operation one after another.  In the CUDA implementation,
+each operation launches a separate CUDA kernel.
+
+Here's an interactive illustration.  Each square is the state of the
+partial likelihood.  Rows are nodes, columns are sites.  When the square
+is blacked out, it means it is being updated.  The gray background shows
+kernel execution.
+
+<figure class="not-prose">
+  <div id="kernelsBeast"></div>
+  <link rel="stylesheet" href="/islands/kernelsBeast.css">
+  <script type="module" src="/islands/kernelsBeast.js"></script>
+
+  <figcaption class="text-center">Kernel execution in BEAGLE</figcaption>
+</figure>
+
+This means that if the tree has `N` nodes and an update has changed all
+of them[^fu] This can add up, especially for large trees made up of
+thousands of nodes.
+
+`b3`'s `CUDALikelihood`, on the other hand, launches at most 2
+kernels[^l].  It calculates likelihood projections which are associated
+with edges instead of nodes.  If all leaf edges have been updated[^fu],
+it launches `update_leaves` which calculates all projections in parallel
+across both sites and edges themselves.
+
+For the rest of the edges, the `propose` kernel is called.  It
+sequentially calculates all projections in a single kernel.
+
+<figure class="not-prose">
+  <div id="kernelsB3"></div>
+  <script type="module" src="/islands/kernelsB3.js"></script>
+  <link rel="stylesheet" href="/islands/kernelsB3.css">
+
+  <figcaption class="text-center">Kernel execution in b3</figcaption>
+</figure>
+
+This design helps increase parallelism on expensive moves and minimizes
+kernel launch overhead.
+
+
+[^v]: `b3` originally used [Vulkan][Vulkan] because it was
+  cross-platform.  But the overhead turned out to be too great: the
+  Vulkan implementation was 5 times slower than the BEAGLE one.  Video
+  game frames have milliseconds to get rendered (8ms for 120fps, ~3ms
+  for 360fps), while each MCMC step in phylogenetic simulations should
+  ideally take at most hundreds of microseconds (600µs for 1 million
+  steps per 10 minutes).
+
+[^fu]: Full updates are the most expensive kind of updates.  They are
+  caused, for example, by the tree scale operator or by changing the
+  parameters of the substation model.
+
+[^l]: Technically, both `b3` and BEAGLE have to launch one more kernel
+  (so 3 and `N + 1` in total, respectively) to get the root likelihood.
+  But its cost is negligible for both.
+
+[Vulkan]: https://www.vulkan.org/
