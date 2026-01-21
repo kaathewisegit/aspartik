@@ -34,7 +34,7 @@ pub trait LikelihoodTrait<const N: usize, F> {
 		frequencies: [F; N],
 	) -> Result<()>;
 
-	fn likelihood(&mut self) -> Result<f64>;
+	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()>;
 
 	fn accept(&mut self) -> Result<()>;
 
@@ -43,14 +43,18 @@ pub trait LikelihoodTrait<const N: usize, F> {
 
 pub struct GenericLikelihood<const N: usize, F, L> {
 	calculator: L,
+	pattern_likelihoods: Vec<f64>,
+	pattern_weights: Vec<u32>,
+
 	transitions: Transitions<N, F>,
+	tree: Py<PyTree>,
+
 	/// Last accepted likelihood
 	cache: f64,
 	/// Last calculated likelihood.  It's different from the cache, because
 	/// it might get rejected.
 	last: f64,
 	launched_update: bool,
-	tree: Py<PyTree>,
 }
 
 impl<const N: usize, F, L> GenericLikelihood<N, F, L>
@@ -60,6 +64,7 @@ where
 {
 	fn new(
 		calculator: L,
+		weights: Vec<u32>,
 		substitution: BoxedSubstitutionModel<N, F>,
 		clock: PyClock,
 		tree: Py<PyTree>,
@@ -72,11 +77,15 @@ where
 
 		let mut out = Self {
 			calculator,
+			pattern_likelihoods: vec![f64::NAN; weights.len()],
+			pattern_weights: weights,
+
 			transitions,
+			tree,
+
 			cache: f64::NAN,
 			last: f64::NAN,
 			launched_update: false,
-			tree,
 		};
 		Python::attach(|py| out.propose(py))?;
 		// This cannot be removed: the likelihood must be run to
@@ -133,9 +142,19 @@ where
 			return Ok(self.cache);
 		}
 
-		let likelihood = self.calculator.likelihood()?;
-		self.last = likelihood;
-		Ok(likelihood)
+		self.calculator.likelihood(&mut self.pattern_likelihoods)?;
+
+		let mut total_likelihood = 0.0;
+		for (likelihood, weight) in self
+			.pattern_likelihoods
+			.iter()
+			.zip(&self.pattern_weights)
+		{
+			total_likelihood += *likelihood * f64::from(*weight);
+		}
+
+		self.last = total_likelihood;
+		Ok(self.last)
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -154,7 +173,7 @@ where
 	}
 }
 
-fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
+fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<u32>) {
 	let mut hashes =
 		Vec::<(usize, blake3::Hash)>::with_capacity(msa.num_sites());
 
@@ -170,14 +189,14 @@ fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<f64>) {
 	}
 
 	// hash -> (index, count)
-	let mut map = HashMap::<blake3::Hash, (usize, f64)>::new();
+	let mut map = HashMap::<blake3::Hash, (usize, u32)>::new();
 
 	for (index, hash) in &hashes {
 		if let Some((_, count)) = map.get_mut(hash) {
 			// there's an earlier site with the same contents
-			*count += 1.0;
+			*count += 1;
 		} else {
-			map.insert(*hash, (*index, 1.0));
+			map.insert(*hash, (*index, 1));
 		}
 	}
 
@@ -235,9 +254,11 @@ impl PyCpu4Likelihood {
 		tree: Py<PyTree>,
 		scale_ln: u32,
 	) -> Result<Self> {
-		let calculator = CpuLikelihood::new(msa.0, scale_ln);
+		let (msa, weights) = deduplicate(msa.0);
+		let calculator = CpuLikelihood::new(msa, scale_ln);
 		let generic = GenericLikelihood::new(
 			calculator,
+			weights,
 			substitution,
 			clock,
 			tree,
@@ -275,10 +296,12 @@ impl PyParallel4Likelihood {
 		num_threads: usize,
 		scale_ln: u32,
 	) -> Result<Self> {
+		let (msa, weights) = deduplicate(msa.0);
 		let calculator =
-			ParallelLikelihood::new(msa.0, num_threads, scale_ln)?;
+			ParallelLikelihood::new(msa, num_threads, scale_ln)?;
 		let generic = GenericLikelihood::new(
 			calculator,
+			weights,
 			substitution,
 			clock,
 			tree,
@@ -318,10 +341,12 @@ impl PyCudaLikelihood {
 		scale_ln: u32,
 		cuda_device: usize,
 	) -> Result<Self> {
+		let (msa, weights) = deduplicate(msa.0);
 		let calculator =
-			CudaLikelihood::new(msa.0, scale_ln, cuda_device)?;
+			CudaLikelihood::new(msa, scale_ln, cuda_device)?;
 		let generic = GenericLikelihood::new(
 			calculator,
+			weights,
 			substitution,
 			clock,
 			tree,

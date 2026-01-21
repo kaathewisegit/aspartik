@@ -5,16 +5,13 @@ use data::{DnaNucleotide, Msa};
 use num_traits::{Float, Inv, Num, NumAssign};
 
 use super::LikelihoodTrait;
-use crate::{likelihood::deduplicate, util::msa_to_likelihoods};
+use crate::util::msa_to_likelihoods;
 use linalg::{RowMatrix, Vector};
 use skvec::{SkVec, skvec};
 
 pub struct CpuLikelihood<const N: usize, F> {
 	leaves: Vec<Vector<F, N>>,
 	projections: SkVec<Vector<F, N>>,
-
-	/// Pattern weights
-	weights: Vec<F>,
 
 	num_sites: usize,
 	num_leaves: usize,
@@ -33,7 +30,7 @@ pub struct CpuLikelihood<const N: usize, F> {
 impl<const N: usize, F> LikelihoodTrait<N, F> for CpuLikelihood<N, F>
 where
 	F: Float + Num + NumAssign,
-	f64: From<F>,
+	f64: From<F> + From<u32>,
 	RowMatrix<F, N, N>: Mul<Vector<F, N>, Output = Vector<F, N>>,
 	Vector<F, N>: Mul<Output = Vector<F, N>>,
 {
@@ -147,31 +144,14 @@ where
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<f64> {
-		let mut out: f64 = 0.0;
+	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()> {
+		patterns.copy_from_slice(&self.likelihoods);
 
-		for (likelihood, weight) in self
-			.likelihoods
-			.iter()
-			.copied()
-			.zip(self.weights.iter().copied())
-		{
-			let weight: f64 = weight.into();
-			out += likelihood * weight;
+		for (i, scale_sum) in self.scale_sums.iter().enumerate() {
+			patterns[i] -= f64::from(*scale_sum);
 		}
 
-		for (scale_sum, weight) in self
-			.scale_sums
-			.iter()
-			.copied()
-			.zip(self.weights.iter().copied())
-		{
-			let scale_sum: f64 = scale_sum.into();
-			let weight: f64 = weight.into();
-			out -= scale_sum * weight;
-		}
-
-		Ok(out)
+		Ok(())
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -206,8 +186,6 @@ where
 
 impl CpuLikelihood<4, f64> {
 	pub fn new(msa: Msa<DnaNucleotide>, scale_ln: u32) -> Self {
-		let (msa, weights) = deduplicate(msa);
-
 		let num_sites = msa.num_sites();
 		let num_leaves = msa.num_sequences();
 		let num_internals = num_leaves - 1;
@@ -228,8 +206,6 @@ impl CpuLikelihood<4, f64> {
 
 			num_sites,
 			num_leaves,
-
-			weights,
 
 			updated_edges: Vec::new(),
 			likelihoods: vec![f64::NAN; num_sites],

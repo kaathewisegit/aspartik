@@ -11,9 +11,7 @@ use data::{DnaNucleotide, Msa};
 use std::sync::Arc;
 
 use super::LikelihoodTrait;
-use crate::{
-	likelihood::deduplicate, tree::Internal, util::msa_to_likelihoods,
-};
+use crate::util::msa_to_likelihoods;
 use linalg::{RowMatrix, Vector};
 
 type Row = Vector<f64, 4>;
@@ -29,9 +27,6 @@ pub struct CudaLikelihood {
 	copy_projections_fn: CudaFunction,
 	update_leaves_fn: CudaFunction,
 	update_likelihoods_fn: CudaFunction,
-
-	/// Pattern weights
-	weights: Vec<f64>,
 
 	/// Leaf likelihoods
 	///
@@ -54,9 +49,6 @@ pub struct CudaLikelihood {
 
 	/// `num_sites`-long root likelihoods
 	likelihoods: CudaSlice<f64>,
-
-	/// Host storage for `likelihoods` to avoid repeating allocations
-	host_likelihoods: Vec<f64>,
 
 	/// Edges updated in the current proposal
 	///
@@ -138,26 +130,15 @@ impl LikelihoodTrait<4, f64> for CudaLikelihood {
 	/// Synchronous, blocks on the `self.likelihoods` buffer.
 	///
 	/// [`update_likelihoods`]: Self::update_likelihoods
-	fn likelihood(&mut self) -> Result<f64> {
-		self.stream.memcpy_dtoh(
-			&self.likelihoods,
-			&mut self.host_likelihoods,
-		)?;
-
-		let mut out: f64 = 0.0;
-
-		for (likelihood, weight) in
-			self.host_likelihoods.iter().zip(&self.weights)
-		{
-			out += likelihood * weight;
-		}
+	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()> {
+		self.stream.memcpy_dtoh(&self.likelihoods, patterns)?;
 
 		let scale_sums = self.stream.clone_dtoh(&self.scale_sums)?;
-		for (scale, weight) in scale_sums.iter().zip(&self.weights) {
-			out -= f64::from(*scale) * weight;
+		for (i, scale) in scale_sums.iter().enumerate() {
+			patterns[i] -= f64::from(*scale);
 		}
 
-		Ok(out)
+		Ok(())
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -335,19 +316,6 @@ impl CudaLikelihood {
 		}
 	}
 
-	#[expect(unused)]
-	pub fn pattern_likelihoods(
-		&self,
-		root: Internal,
-		frequencies: Row,
-	) -> Result<Vec<f64>> {
-		self.update_likelihoods(root.index() as u32, frequencies)?;
-
-		let likelihoods = self.stream.clone_dtoh(&self.likelihoods)?;
-
-		Ok(likelihoods)
-	}
-
 	pub fn new(
 		msa: Msa<DnaNucleotide>,
 		scale_ln: u32,
@@ -365,8 +333,6 @@ impl CudaLikelihood {
 
 		let scale = f64::from(scale_ln).exp();
 		let inv_scale = f64::from(-(scale_ln as i32)).exp();
-
-		let (msa, weights) = deduplicate(msa);
 
 		let num_sites = msa.num_sites();
 		let num_leaves = msa.num_sequences();
@@ -430,13 +396,10 @@ impl CudaLikelihood {
 			update_leaves_fn,
 			update_likelihoods_fn,
 
-			weights,
-
 			leaves,
 			projections,
 			projections_backup,
 			likelihoods,
-			host_likelihoods: vec![0.0; num_sites],
 			edges,
 			transitions,
 			nodes,

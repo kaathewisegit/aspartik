@@ -8,7 +8,7 @@ use core::f64;
 use std::ops::Mul;
 
 use super::LikelihoodTrait;
-use crate::{likelihood::deduplicate, util::msa_to_likelihoods};
+use crate::util::msa_to_likelihoods;
 use linalg::{RowMatrix, Vector};
 
 type Buffer<T> = Box<[T]>;
@@ -31,8 +31,6 @@ pub struct ParallelLikelihood<const N: usize, F> {
 	scale_sums_backup: Buffer<u32>,
 
 	leaves: Vec<Vector<F, N>>,
-
-	weights: Vec<F>,
 
 	num_sites: usize,
 	num_leaves: usize,
@@ -59,7 +57,7 @@ unsafe fn write_to<T>(sync_ptr: SyncMutPtr<T>, index: usize, value: T) {
 impl<const N: usize, F> LikelihoodTrait<N, F> for ParallelLikelihood<N, F>
 where
 	F: Float + Num + NumAssign + Send + Sync,
-	f64: From<F>,
+	f64: From<F> + From<u32>,
 	RowMatrix<F, N, N>: Mul<Vector<F, N>, Output = Vector<F, N>>,
 	Vector<F, N>: Mul<Output = Vector<F, N>>,
 {
@@ -219,31 +217,14 @@ where
 		Ok(())
 	}
 
-	fn likelihood(&mut self) -> Result<f64> {
-		let mut out: f64 = 0.0;
+	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()> {
+		patterns.copy_from_slice(&self.likelihoods);
 
-		for (likelihood, weight) in self
-			.likelihoods
-			.iter()
-			.copied()
-			.zip(self.weights.iter().copied())
-		{
-			let weight: f64 = weight.into();
-			out += likelihood * weight;
+		for (i, scale_sum) in self.scale_sums.iter().enumerate() {
+			patterns[i] -= f64::from(*scale_sum);
 		}
 
-		for (scale_sum, weight) in self
-			.scale_sums
-			.iter()
-			.copied()
-			.zip(self.weights.iter().copied())
-		{
-			let scale_sum: f64 = scale_sum.into();
-			let weight: f64 = weight.into();
-			out -= scale_sum * weight;
-		}
-
-		Ok(out)
+		Ok(())
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -289,8 +270,6 @@ impl ParallelLikelihood<4, f64> {
 		num_threads: usize,
 		scale_ln: u32,
 	) -> Result<Self> {
-		let (msa, weights) = deduplicate(msa);
-
 		let pool = ThreadPool::try_spawn(num_threads)?;
 
 		let num_sites = msa.num_sites();
@@ -319,8 +298,6 @@ impl ParallelLikelihood<4, f64> {
 			scale_sums,
 
 			leaves,
-
-			weights,
 
 			num_sites,
 			num_leaves,
