@@ -273,7 +273,7 @@ would've existed in its current form if it wasn't for this crate.
 See `proc-macro2`.
 
 
-### [`rand`/`rand_pcg`][`rand`], [`rand_distr`]
+### [`rand`/`rand_pcg`][`rand`]
 
 Randomness crates used by both `b3` and `stats`.  The PCG generator
 powers the `rng` module because it's serializable.
@@ -345,4 +345,3 @@ long-running `b3` tests.
 
 
 [`rand`]: ./rand-license
-[`rand_distr`]: ./rand_distr-license

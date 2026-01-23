@@ -84,7 +84,6 @@ dependencies = [
  "pyo3",
  "pyutil",
  "rand",
- "rand_distr",
  "rand_pcg",
  "rmp-serde",
  "rng",
@@ -431,12 +430,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libm"
-version = "0.2.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
-
-[[package]]
 name = "linalg"
 version = "0.1.0-alpha.4"
 dependencies = [
@@ -510,7 +503,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
- "libm",
 ]
 
 [[package]]
@@ -698,16 +690,6 @@ name = "rand_core"
 version = "0.10.0-rc-3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f66ee92bc15280519ef199a274fe0cafff4245d31bc39aaa31c011ad56cb1f05"
-
-[[package]]
-name = "rand_distr"
-version = "0.6.0-rc.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c3a7feb94c50b74f330339212980859f68cde634ce0f6dfea65ca2282f4d310"
-dependencies = [
- "num-traits",
- "rand",
-]
 
 [[package]]
 name = "rand_pcg"
