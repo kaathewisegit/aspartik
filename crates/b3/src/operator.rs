@@ -13,7 +13,10 @@ use std::time::Duration;
 use crate::mcmc::StepResult;
 use logger::{debug, trace};
 use rng::Rng;
-use util::{py_bail, py_call_method, py_check_method, py_extract_attr, time};
+use util::{
+	py_bail, py_call_method, py_check_method, py_extract_attr,
+	py_has_method, time,
+};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize)]
 pub enum Proposal {
@@ -91,6 +94,8 @@ impl PyProposal {
 #[derive(Debug)]
 pub struct PyOperator {
 	inner: Py<PyAny>,
+
+	has_accept_reject: bool,
 }
 
 impl<'py> FromPyObject<'_, 'py> for PyOperator {
@@ -100,8 +105,12 @@ impl<'py> FromPyObject<'_, 'py> for PyOperator {
 		py_check_method!(obj, "propose");
 		py_extract_attr!(obj, "weight", f64)?;
 
+		let has_accept_reject = py_has_method!(obj, "accept")
+			&& py_has_method!(obj, "reject");
+
 		let out = Self {
 			inner: obj.to_owned().unbind(),
+			has_accept_reject,
 		};
 		let repr = obj.repr()?;
 		debug!(
@@ -140,11 +149,17 @@ impl PyOperator {
 		self.inner.clone_ref(py)
 	}
 
-	pub fn accept(&self, _py: Python) -> Result<()> {
+	pub fn accept(&self, py: Python) -> Result<()> {
+		if self.has_accept_reject {
+			py_call_method!(py, self.inner, "accept")?;
+		}
 		Ok(())
 	}
 
-	pub fn reject(&self, _py: Python) -> Result<()> {
+	pub fn reject(&self, py: Python) -> Result<()> {
+		if self.has_accept_reject {
+			py_call_method!(py, self.inner, "reject")?;
+		}
 		Ok(())
 	}
 }
