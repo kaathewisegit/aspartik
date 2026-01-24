@@ -7,7 +7,6 @@ use pyo3::prelude::*;
 use std::fmt;
 
 use crate::seq::Character;
-use linalg::Vector;
 
 /// DNA nucleotide bases and their combinations
 ///
@@ -140,7 +139,7 @@ impl DnaNucleotide {
 	/// Mixed bases such as `Weak` or `NotGuanine` are treated as if all of
 	/// their components have the same likelihood of occurring.  `Gap` is
 	/// treated same as `Any`.
-	pub fn base_frequencies(&self) -> Vector<f64, 4> {
+	pub fn base_frequencies(&self) -> [f64; 4] {
 		const F1_3: f64 = 1.0 / 3.0;
 
 		use DnaNucleotide::*;
@@ -164,10 +163,9 @@ impl DnaNucleotide {
 
 			Any | Gap => [0.25, 0.25, 0.25, 0.25],
 		}
-		.into()
 	}
 
-	pub fn base_frequencies_denormalized(&self) -> Vector<f64, 4> {
+	pub fn base_frequencies_denormalized(&self) -> [f64; 4] {
 		use DnaNucleotide::*;
 		match self {
 			Adenine => [1.0, 0.0, 0.0, 0.0],
@@ -189,7 +187,6 @@ impl DnaNucleotide {
 
 			Any | Gap => [1.0, 1.0, 1.0, 1.0],
 		}
-		.into()
 	}
 }
 

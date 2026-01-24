@@ -12,10 +12,9 @@ use std::sync::Arc;
 
 use super::LikelihoodTrait;
 use crate::util::msa_to_likelihoods;
-use linalg::{RowMatrix, Vector};
 
-type Row = Vector<f64, 4>;
-type Transition = RowMatrix<f64, 4, 4>;
+type Row = [f64; 4];
+type Transition = [f64; 16];
 
 const CUDA_SRC: &str =
 	concat!(include_str!("typedefs.h"), include_str!("kernels.cu"),);
@@ -119,7 +118,6 @@ impl LikelihoodTrait<4, f64> for CudaLikelihood {
 		}
 		self.update_all(leaves_end, internals_start)?;
 
-		let frequencies = Vector::from(frequencies);
 		self.update_likelihoods(root as u32, frequencies)?;
 
 		Ok(())
@@ -348,6 +346,7 @@ impl CudaLikelihood {
 		unsafe { context.disable_event_tracking() };
 
 		let leaves = stream.clone_htod(&msa_to_likelihoods(msa))?;
+
 		let projections: CudaSlice<Row> =
 			stream.alloc_zeros(num_edges * num_sites)?;
 		let projections_backup: CudaSlice<Row> =

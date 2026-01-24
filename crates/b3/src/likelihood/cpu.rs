@@ -1,8 +1,9 @@
-use std::ops::Mul;
-
 use anyhow::Result;
+use bytemuck::allocation::cast_vec;
 use data::{DnaNucleotide, Msa};
 use num_traits::{Float, Inv, Num, NumAssign};
+
+use std::ops::Mul;
 
 use super::LikelihoodTrait;
 use crate::util::msa_to_likelihoods;
@@ -191,7 +192,7 @@ impl CpuLikelihood<4, f64> {
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
 
-		let leaves = msa_to_likelihoods(msa);
+		let leaves = cast_vec(msa_to_likelihoods(msa));
 
 		let projections =
 			skvec![Vector::default(); num_edges * num_sites];

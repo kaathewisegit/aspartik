@@ -1,8 +1,8 @@
 use anyhow::Result;
+use bytemuck::allocation::cast_vec;
 use data::{DnaNucleotide, Msa};
 use fork_union::{SyncMutPtr, ThreadPool};
-use num_traits::Inv;
-use num_traits::{Float, Num, NumAssign};
+use num_traits::{Float, Inv, Num, NumAssign};
 
 use core::f64;
 use std::ops::Mul;
@@ -286,7 +286,7 @@ impl ParallelLikelihood<4, f64> {
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
 
-		let leaves = msa_to_likelihoods(msa);
+		let leaves = cast_vec(msa_to_likelihoods(msa));
 
 		let projections =
 			buffer![Vector::default(); num_edges * num_sites];

@@ -7,7 +7,6 @@ use crate::{
 	fasta::Record,
 	seq::{Character, Sequence, SequenceMut},
 };
-use linalg::Vector;
 
 #[cfg(feature = "python")]
 pub mod python;
@@ -144,21 +143,32 @@ impl<C: Character> Msa<C> {
 	}
 }
 
+fn add_assign_arr(to: &mut [f64; 4], from: [f64; 4]) {
+	for i in 0..4 {
+		to[i] += from[i];
+	}
+}
+
 impl Msa<DnaNucleotide> {
 	pub fn base_frequencies(&self) -> [f64; 4] {
-		let mut counts = Vector::zeros();
+		let mut counts = [0.0; 4];
 		let num_chars = self.num_characters();
 
 		for seq in 0..self.num_sequences {
 			let seq = self.sequence(seq);
 
 			for site in self.sites_iter() {
-				counts += seq[site].base_frequencies();
+				add_assign_arr(
+					&mut counts,
+					seq[site].base_frequencies(),
+				);
 			}
 		}
 
-		counts /= num_chars as f64;
-		counts.into()
+		for count in &mut counts {
+			*count /= num_chars as f64;
+		}
+		counts
 	}
 }
 

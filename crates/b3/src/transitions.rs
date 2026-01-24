@@ -1,9 +1,9 @@
 use anyhow::Result;
-use linalg::RowMatrix;
+use num_traits::Zero;
 use pyo3::prelude::*;
 
 use crate::{clock::PyClock, substitution::BoxedSubstitutionModel, tree::Tree};
-use skvec::SkVec;
+use skvec::{SkVec, skvec};
 
 pub struct Transitions<const N: usize, F> {
 	substitution: BoxedSubstitutionModel<N, F>,
@@ -11,19 +11,19 @@ pub struct Transitions<const N: usize, F> {
 
 	rate: f64,
 
-	transitions: SkVec<RowMatrix<F, N, N>>,
+	transitions: SkVec<[[F; N]; N]>,
 }
 
 impl<const N: usize, F> Transitions<N, F>
 where
-	F: Default + Copy,
+	F: Default + Copy + Zero + Default,
 {
 	pub fn new(
 		length: usize,
 		substitution: BoxedSubstitutionModel<N, F>,
 		clock: PyClock,
 	) -> Self {
-		let transitions = SkVec::repeat(RowMatrix::default(), length);
+		let transitions = skvec![[[F::zero(); N]; N]; length];
 
 		Self {
 			substitution,
@@ -66,7 +66,7 @@ where
 			let transition =
 				self.substitution.get_transition(*distance);
 
-			self.transitions.set(*edge, transition.into());
+			self.transitions.set(*edge, transition);
 		}
 	}
 
@@ -82,7 +82,7 @@ where
 		let mut out = Vec::with_capacity(edges.len());
 
 		for edge in edges {
-			out.push(self.transitions[*edge].into())
+			out.push(self.transitions[*edge])
 		}
 
 		out

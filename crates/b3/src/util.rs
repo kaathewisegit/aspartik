@@ -1,12 +1,12 @@
 //! Kitchen sink utilities.
+
 use anyhow::{Result, bail};
 use pyo3::prelude::*;
 use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 
 use data::{DnaNucleotide, Msa};
-use linalg::Vector;
 
-pub fn msa_to_likelihoods(msa: Msa<DnaNucleotide>) -> Vec<Vector<f64, 4>> {
+pub fn msa_to_likelihoods(msa: Msa<DnaNucleotide>) -> Vec<[f64; 4]> {
 	let mut out = Vec::with_capacity(msa.num_sequences() * msa.num_sites());
 
 	for seq in 0..msa.num_sequences() {
