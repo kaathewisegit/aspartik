@@ -339,10 +339,10 @@ impl<T> SkVec<T> {
 	/// Appends the value as an accepted one.
 	pub fn push(&mut self, value: T)
 	where
-		T: Default,
+		T: Clone,
 	{
+		self.inner.push(value.clone());
 		self.inner.push(value);
-		self.inner.push(T::default());
 
 		self.edited.push(false);
 		self.mask.push(0);
@@ -383,7 +383,7 @@ impl<T> SkVec<T> {
 	/// Constructs a vector made out of `value` repeated `length` times.
 	pub fn repeat(value: T, length: usize) -> Self
 	where
-		T: Clone + Default,
+		T: Clone,
 	{
 		let mut out = SkVec::with_capacity(length);
 
@@ -397,7 +397,7 @@ impl<T> SkVec<T> {
 
 // From implementations
 
-impl<T: Clone + Default> From<&[T]> for SkVec<T> {
+impl<T: Clone> From<&[T]> for SkVec<T> {
 	fn from(values: &[T]) -> Self {
 		let mut out = Self::with_capacity(values.len());
 
@@ -409,13 +409,13 @@ impl<T: Clone + Default> From<&[T]> for SkVec<T> {
 	}
 }
 
-impl<T: Clone + Default> From<Vec<T>> for SkVec<T> {
+impl<T: Clone> From<Vec<T>> for SkVec<T> {
 	fn from(value: Vec<T>) -> Self {
 		value.as_slice().into()
 	}
 }
 
-impl<T: Clone + Default, const N: usize> From<[T; N]> for SkVec<T> {
+impl<T: Clone, const N: usize> From<[T; N]> for SkVec<T> {
 	fn from(values: [T; N]) -> Self {
 		let mut out = Self::with_capacity(values.len());
 
