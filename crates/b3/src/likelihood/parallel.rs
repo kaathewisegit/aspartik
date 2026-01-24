@@ -20,7 +20,8 @@ macro_rules! buffer {
 }
 
 pub struct ParallelLikelihood<const N: usize, F> {
-	pool: ThreadPool,
+	internals_pool: ThreadPool,
+	leaves_pool: ThreadPool,
 
 	projections: Buffer<Vector<F, N>>,
 	projections_backup: Buffer<Vector<F, N>>,
@@ -83,7 +84,16 @@ where
 		let scales = SyncMutPtr::new(self.scales.as_mut_ptr());
 		let scale_sums = SyncMutPtr::new(self.scale_sums.as_mut_ptr());
 
-		for i in 0..leaves_end {
+		let pool = if leaves_end > 10 {
+			&mut self.leaves_pool
+		} else {
+			&mut self.internals_pool
+		};
+
+		pool.for_n(num_sites * leaves_end, |prong| {
+			let i = prong.task_index / num_sites;
+			let site = prong.task_index % num_sites;
+
 			let transition = RowMatrix::from(transitions[i]);
 
 			let edge = edges[i];
@@ -92,26 +102,22 @@ where
 			let leaf = nodes[i];
 			let leaf_idx = leaf * num_sites;
 
-			self.pool.for_n(num_sites, |prong| {
-				let site = prong.task_index;
+			let leaf = self.leaves[leaf_idx + site];
+			let projection = transition * leaf;
 
-				let leaf = self.leaves[leaf_idx + site];
-				let projection = transition * leaf;
+			let projection_index = edge_idx + site;
 
-				let projection_index = edge_idx + site;
-
-				// SAFETY: for each iteration `projection_index`
-				// is thread-unique because `site`s are
-				// disjoint.
-				unsafe {
-					write_to(
-						projections,
-						projection_index,
-						projection,
-					);
-				}
-			});
-		}
+			// SAFETY: for each iteration `projection_index`
+			// is thread-unique because `site`s are
+			// disjoint.
+			unsafe {
+				write_to(
+					projections,
+					projection_index,
+					projection,
+				);
+			}
+		});
 
 		for i in leaves_end..nodes.len() {
 			let transition = RowMatrix::from(transitions[i]);
@@ -126,7 +132,7 @@ where
 			let left_idx = left_edge * num_sites;
 			let right_idx = right_edge * num_sites;
 
-			self.pool.for_n(num_sites, |prong| {
+			self.internals_pool.for_n(num_sites, |prong| {
 				let site = prong.task_index;
 
 				// SAFETY: `site` is unique to us, the code in
@@ -267,10 +273,13 @@ where
 impl ParallelLikelihood<4, f64> {
 	pub fn new(
 		msa: Msa<DnaNucleotide>,
-		num_threads: usize,
+		num_leaf_threads: usize,
+		num_internal_threads: usize,
 		scale_ln: u32,
 	) -> Result<Self> {
-		let pool = ThreadPool::try_spawn(num_threads)?;
+		let internals_pool =
+			ThreadPool::try_spawn(num_internal_threads)?;
+		let leaves_pool = ThreadPool::try_spawn(num_leaf_threads)?;
 
 		let num_sites = msa.num_sites();
 		let num_leaves = msa.num_sequences();
@@ -287,7 +296,8 @@ impl ParallelLikelihood<4, f64> {
 		let scale = (-<f64 as From<u32>>::from(scale_ln)).exp();
 
 		Ok(Self {
-			pool,
+			internals_pool,
+			leaves_pool,
 
 			projections_backup: projections.clone(),
 			projections,

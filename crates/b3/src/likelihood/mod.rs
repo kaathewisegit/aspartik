@@ -286,19 +286,28 @@ impl PyParallel4Likelihood {
 	#[new]
 	#[pyo3(signature = (
 		msa, substitution, clock, tree,
-		num_threads = 3, scale_ln = 30
+		num_leaf_threads = 0, num_internal_threads = 3, scale_ln = 30
 	))]
 	fn new(
 		msa: PyMsa,
 		substitution: Substitution4,
 		clock: PyClock,
 		tree: Py<PyTree>,
-		num_threads: usize,
+		mut num_leaf_threads: usize,
+		num_internal_threads: usize,
 		scale_ln: u32,
 	) -> Result<Self> {
+		if num_leaf_threads == 0 {
+			num_leaf_threads = num_internal_threads;
+		}
+
 		let (msa, weights) = deduplicate(msa.0);
-		let calculator =
-			ParallelLikelihood::new(msa, num_threads, scale_ln)?;
+		let calculator = ParallelLikelihood::new(
+			msa,
+			num_leaf_threads,
+			num_internal_threads,
+			scale_ln,
+		)?;
 		let generic = GenericLikelihood::new(
 			calculator,
 			weights,

@@ -93,7 +93,8 @@ class Parallel4Likelihood(Likelihood):
         substitution: Substiution4,
         clock: Clock,
         tree: Tree,
-        num_threads: int = 3,
+        num_leaf_threads: int = 0,
+        num_internal_threads: int = 3,
         scale_ln: int = 30,
     ): ...
 

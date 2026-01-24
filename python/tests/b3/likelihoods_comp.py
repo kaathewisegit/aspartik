@@ -77,7 +77,8 @@ def test_compare_likelihood():
         substitution=HKY(frequencies, kappa),
         clock=StrictClock(clock_rate),
         tree=tree,
-        num_threads=2,
+        num_leaf_threads=5,
+        num_internal_threads=2,
     )
     try:
         cuda_calculator = CUDALikelihood(

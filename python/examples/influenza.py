@@ -86,7 +86,7 @@ def make_mcmc(fasta_path: str):
         substitution=HKY(frequencies, kappa),
         clock=StrictClock(clock_rate),
         tree=tree,
-        num_threads=3,
+        num_internal_threads=3,
     )
 
     loggers = [
