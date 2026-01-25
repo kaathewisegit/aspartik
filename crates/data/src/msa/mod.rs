@@ -1,6 +1,7 @@
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
-use std::{cmp::Ordering, ops::Range, sync::Arc};
+use std::{cmp::Ordering, ops::Range};
 
 use crate::{
 	DnaNucleotide,
@@ -11,11 +12,11 @@ use crate::{
 #[cfg(feature = "python")]
 pub mod python;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Msa<C: Character> {
 	num_sequences: usize,
 	num_sites: usize,
-	names: Arc<[String]>,
+	names: Box<[String]>,
 	data: Sequence<C>,
 }
 
@@ -23,7 +24,7 @@ impl<C: Character> Msa<C> {
 	pub fn new(
 		num_sequences: usize,
 		num_sites: usize,
-		names: Arc<[String]>,
+		names: Box<[String]>,
 		data: Sequence<C>,
 	) -> Result<Self> {
 		ensure!(num_sequences * num_sites == data.len());

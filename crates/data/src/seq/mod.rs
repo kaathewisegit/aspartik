@@ -16,6 +16,7 @@ pub mod distance;
 mod parse;
 #[cfg(feature = "python")]
 pub mod python;
+mod serde;
 mod write;
 
 pub use parse::{parse_append_bytes, parse_append_str, parse_bytes, parse_str};
@@ -67,6 +68,15 @@ unsafe fn b2c_mut<C: Character>(bytes: &mut [u8]) -> &mut [C] {
 	let ptr = bytes.as_ptr() as *mut C;
 	// SAFETY: characters must be equal in layout to `u8` bytes
 	unsafe { slice::from_raw_parts_mut(ptr, bytes.len()) }
+}
+
+fn verify_bytes<C: Character>(bytes: &[u8]) -> bool {
+	for byte in bytes.iter().copied() {
+		if C::from_byte(byte).is_none() {
+			return false;
+		}
+	}
+	true
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -129,6 +139,16 @@ impl<C: Character> Sequence<C> {
 		Self {
 			bytes: Bytes::from_owner(bytes),
 			marker: PhantomData,
+		}
+	}
+
+	pub fn copy_from_byte_slice(bytes: &[u8]) -> Option<Self> {
+		if verify_bytes::<C>(bytes) {
+			// SAFETY: We have checked that every byte is valid
+			let data = unsafe { b2c(bytes) };
+			Some(Self::copy_from_slice(data))
+		} else {
+			None
 		}
 	}
 

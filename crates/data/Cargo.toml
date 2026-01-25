@@ -17,6 +17,7 @@ parking_lot = { workspace = true, optional = true }
 peg = { workspace = true }
 petgraph = { workspace = true, default-features = false, features = ["stable_graph"] }
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
+serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 
 [dev-dependencies]

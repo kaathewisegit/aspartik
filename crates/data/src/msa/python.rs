@@ -10,7 +10,7 @@ use crate::{
 ///
 /// A set of sequences of the same length along with their names.
 #[derive(Debug, Clone)]
-#[pyclass(name = "MSA", module = "aspartik.data.msa")]
+#[pyclass(name = "MSA", module = "aspartik.data.msa", frozen)]
 #[repr(transparent)]
 pub struct PyMsa(pub Msa<DnaNucleotide>);
 
