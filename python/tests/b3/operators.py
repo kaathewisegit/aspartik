@@ -2,10 +2,10 @@ from utils import check_tree_operator
 
 from aspartik.b3.operators import (
     EpochScale,
+    FixedHeightSubtreePruneRegraft,
     NarrowExchange,
     NodeSlide,
     ParamScale,
-    SubtreePruneRegraft,
     TreeScale,
     WideExchange,
     WilsonBalding,
@@ -44,5 +44,5 @@ def test_tree_scale(rng):
 
 
 def test_spr(rng):
-    factory = lambda tree: SubtreePruneRegraft(tree, rng)
+    factory = lambda tree: FixedHeightSubtreePruneRegraft(tree, rng)
     check_tree_operator(factory)

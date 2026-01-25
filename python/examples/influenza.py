@@ -13,10 +13,10 @@ from aspartik.b3.likelihoods import CPU4Likelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
+    FixedHeightSubtreePruneRegraft,
     ParamScale,
     RandomWalk,
     SubtreeLeap,
-    SubtreePruneRegraft,
     UpDown,
 )
 from aspartik.b3.parameters import Internals, Real, Weights
@@ -75,7 +75,7 @@ def make_mcmc(fasta_path: str):
         ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
         UpDown(Internals(tree), clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
         SubtreeLeap(tree, Normal(0, 1), rng, weight=50),
-        SubtreePruneRegraft(tree, rng, weight=5),
+        FixedHeightSubtreePruneRegraft(tree, rng, weight=5),
         ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
         RandomWalk(growth_rate, window=1, rng=rng, weight=3),
         DeltaExchange(frequencies, 0.01, rng, weight=3),

@@ -13,10 +13,10 @@ from aspartik.b3.likelihoods import CPU4Likelihood, WeightedLikelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
+    FixedHeightSubtreePruneRegraft,
     ParamScale,
     RandomWalk,
     SubtreeLeap,
-    SubtreePruneRegraft,
     UpDown,
 )
 from aspartik.b3.parameters import Internals, Real, Weights
@@ -78,7 +78,7 @@ operators = [
         for clock_rate in clock_rates
     ),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
-    SubtreePruneRegraft(tree, rng, weight=4 * N),
+    FixedHeightSubtreePruneRegraft(tree, rng, weight=4 * N),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3 * N),
     *(DeltaExchange(freq, 0.01, rng, weight=3) for freq in freqs),
     DeltaExchange(likelihood_weights, 0.01, rng, weight=3 * N),

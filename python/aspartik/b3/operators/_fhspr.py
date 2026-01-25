@@ -7,7 +7,7 @@ from ._util import assert_two_internals, family
 
 
 @dataclass(slots=True)
-class SubtreePruneRegraft(Operator):
+class FixedHeightSubtreePruneRegraft(Operator):
     """
     Fixed height subtree and regraft move.
 
