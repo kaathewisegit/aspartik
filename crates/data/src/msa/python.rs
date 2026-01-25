@@ -1,18 +1,28 @@
 use anyhow::Result;
+use parking_lot::{Mutex, MutexGuard};
 use pyo3::{prelude::*, types::PyType};
 
 use crate::{
 	DnaNucleotide, Msa, fasta::python::PyFastaDnaRecord,
 	seq::python::PyDnaSeq,
 };
+use util::py_pickle_state_impl;
 
 /// DNA multiple sequence alignment
 ///
 /// A set of sequences of the same length along with their names.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[pyclass(name = "MSA", module = "aspartik.data.msa", frozen)]
 #[repr(transparent)]
-pub struct PyMsa(pub Msa<DnaNucleotide>);
+pub struct PyMsa {
+	inner: Mutex<Msa<DnaNucleotide>>,
+}
+
+impl PyMsa {
+	pub fn inner(&self) -> MutexGuard<'_, Msa<DnaNucleotide>> {
+		self.inner.lock()
+	}
+}
 
 #[pymethods]
 impl PyMsa {
@@ -23,34 +33,36 @@ impl PyMsa {
 		records: Vec<Py<PyFastaDnaRecord>>,
 	) -> Result<Self> {
 		let msa = Msa::from_fasta(records.into_iter())?;
-		Ok(Self(msa))
+		Ok(Self {
+			inner: Mutex::new(msa),
+		})
 	}
 
 	/// Total number of sites, including gaps
 	#[getter]
 	fn num_sites(&self) -> usize {
-		self.0.num_sites()
+		self.inner().num_sites()
 	}
 
 	/// Number of sequences
 	#[getter]
 	fn num_sequences(&self) -> usize {
-		self.0.num_sequences()
+		self.inner().num_sequences()
 	}
 
 	/// The name of the `index`'th sequence
 	fn sequence_name(&self, index: usize) -> String {
-		self.0.sequence_name(index).to_owned()
+		self.inner().sequence_name(index).to_owned()
 	}
 
 	/// A list with all of the sequence names
 	fn sequence_names(&self) -> Vec<String> {
-		self.0.sequence_names().to_vec()
+		self.inner().sequence_names().to_vec()
 	}
 
 	/// `index`'th sequence
 	fn sequence(&self, index: usize) -> PyDnaSeq {
-		PyDnaSeq(self.0.sequence(index))
+		PyDnaSeq(self.inner().sequence(index))
 	}
 
 	/// The shares each DNA base takes up in the total alignment
@@ -60,6 +72,8 @@ impl PyMsa {
 	/// The components of the resulting tuple should always add up to almost
 	/// 1, taking floating point precision limitations into account.
 	fn base_frequencies(&self) -> (f64, f64, f64, f64) {
-		self.0.base_frequencies().into()
+		self.inner().base_frequencies().into()
 	}
 }
+
+py_pickle_state_impl!(PyMsa, _msa_pickle_impl);

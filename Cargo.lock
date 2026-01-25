@@ -242,6 +242,8 @@ dependencies = [
  "peg",
  "petgraph",
  "pyo3",
+ "rmp-serde",
+ "serde",
  "thiserror",
  "util",
 ]

@@ -252,13 +252,13 @@ impl PyCpu4Likelihood {
 	#[new]
 	#[pyo3(signature = (msa, substitution, clock, tree, scale_ln = 30))]
 	fn new(
-		msa: PyMsa,
+		msa: Py<PyMsa>,
 		substitution: Substitution4,
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 		scale_ln: u32,
 	) -> Result<Self> {
-		let (leaves, weights) = deduplicate(&msa.0);
+		let (leaves, weights) = deduplicate(&msa.get().inner());
 		let calculator =
 			CpuLikelihood::new(weights.len(), leaves, scale_ln);
 		let generic = GenericLikelihood::new(
@@ -294,7 +294,7 @@ impl PyParallel4Likelihood {
 		num_leaf_threads = 0, num_internal_threads = 3, scale_ln = 30
 	))]
 	fn new(
-		msa: PyMsa,
+		msa: Py<PyMsa>,
 		substitution: Substitution4,
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
@@ -306,7 +306,7 @@ impl PyParallel4Likelihood {
 			num_leaf_threads = num_internal_threads;
 		}
 
-		let (leaves, weights) = deduplicate(&msa.0);
+		let (leaves, weights) = deduplicate(&msa.get().inner());
 		let calculator = ParallelLikelihood::new(
 			weights.len(),
 			leaves,
@@ -349,14 +349,14 @@ impl PyCudaLikelihood {
 		cuda_device= 0,
 	))]
 	fn new(
-		msa: PyMsa,
+		msa: Py<PyMsa>,
 		substitution: Substitution4,
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 		scale_ln: u32,
 		cuda_device: usize,
 	) -> Result<Self> {
-		let (leaves, weights) = deduplicate(&msa.0);
+		let (leaves, weights) = deduplicate(&msa.get().inner());
 		let calculator = CudaLikelihood::new(
 			weights.len(),
 			leaves,

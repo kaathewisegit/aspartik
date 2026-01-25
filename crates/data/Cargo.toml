@@ -17,6 +17,7 @@ parking_lot = { workspace = true, optional = true }
 peg = { workspace = true }
 petgraph = { workspace = true, default-features = false, features = ["stable_graph"] }
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
+rmp-serde = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 
@@ -26,7 +27,7 @@ arbtest = { workspace = true }
 
 [features]
 default = ["python", "arbitrary"]
-python = ["dep:pyo3", "dep:parking_lot"]
+python = ["dep:pyo3", "dep:parking_lot", "dep:rmp-serde"]
 arbitrary = ["dep:arbitrary"]
 
 [lints]

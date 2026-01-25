@@ -3,6 +3,7 @@ use anyhow::{Error, Result, bail};
 use arbitrary::Arbitrary;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use std::fmt;
 
@@ -35,7 +36,7 @@ use crate::seq::Character;
 ///
 /// [ic]: https://genome.ucsc.edu/goldenPath/help/iupac.html
 #[repr(u8)]
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
 	feature = "python",
