@@ -436,7 +436,7 @@ impl Tree {
 
 	pub fn edges_to_update(&self) -> Vec<usize> {
 		let mut out = Vec::new();
-		for edge in 0..self.num_edges() {
+		for edge in self.edges() {
 			if self.updated_edges.at(edge) {
 				out.push(edge);
 			}
@@ -446,6 +446,14 @@ impl Tree {
 
 	pub fn nodes_to_update(&mut self) -> (Vec<Node>, usize) {
 		let mut nodes = Vec::<Node>::with_capacity(self.num_nodes());
+
+		// mark updated nodes derived from edges
+		for edge in self.edges() {
+			if self.updated_edges.at(edge) {
+				let (child, _) = self.edge_nodes(edge);
+				self.mark_node_updated(&child);
+			}
+		}
 
 		// For each updated node go upwards in the tree until root and
 		// mark nodes as updated
@@ -537,18 +545,12 @@ impl Tree {
 		self.parents.set(new_child.0, parent.0);
 
 		self.mark_edge_updated(edge);
-
-		// `parent` is now the parent of `new_child`, so it'll
-		// be updated.  The operator must handle the old node
-		// separately.
-		self.mark_node_updated(new_child);
 	}
 
 	/// Sets the height of `node`, recording it and it's parent and child
 	/// edges (if it has those).
 	pub fn set_height(&mut self, node: &Node, height: f64) {
 		self.heights.set(node.0, height);
-		self.mark_node_updated(node);
 
 		if self.parent_of(node).is_some() {
 			self.mark_edge_updated(self.edge_index(node));
@@ -557,9 +559,6 @@ impl Tree {
 			let (left, right) = self.children_of(&node);
 			self.mark_edge_updated(self.edge_index(&left));
 			self.mark_edge_updated(self.edge_index(&right));
-
-			self.mark_node_updated(&left);
-			self.mark_node_updated(&right);
 		}
 	}
 
@@ -894,7 +893,7 @@ impl Tree {
 		(0..self.num_leaves()).map(Leaf)
 	}
 
-	pub fn edges(&self) -> impl Iterator<Item = usize> {
+	pub fn edges(&self) -> impl Iterator<Item = usize> + 'static {
 		0..self.num_edges()
 	}
 
