@@ -102,8 +102,6 @@ class SubtreeSlide(Operator):
 
         tree.set_height(parent, new_height)
 
-        tree.validate()
-
         return Proposal.Hastings(ratio)
 
 

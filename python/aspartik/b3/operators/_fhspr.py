@@ -62,6 +62,4 @@ class FixedHeightSubtreePruneRegraft(Operator):
         tree.update_edge(other_parent_to_other, parent)
         tree.update_edge(parent_to_sibling, other)
 
-        tree.validate()
-
         return Proposal.Hastings(0.0)
