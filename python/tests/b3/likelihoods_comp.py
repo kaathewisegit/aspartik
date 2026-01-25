@@ -2,8 +2,7 @@ import pytest
 
 from dataclasses import dataclass
 
-from aspartik.b3 import MCMC, Callback, Tree
-from aspartik.b3.clocks import StrictClock
+from aspartik.b3 import MCMC, Callback, Clock, Tree
 from aspartik.b3.likelihoods import (
     CPU4Likelihood,
     CUDALikelihood,
@@ -69,13 +68,13 @@ def test_compare_likelihood():
     cpu_calculator = CPU4Likelihood(
         msa=msa,
         substitution=HKY(frequencies, kappa),
-        clock=StrictClock(clock_rate),
+        clock=Clock.Strict(clock_rate),
         tree=tree,
     )
     parallel_calculator = Parallel4Likelihood(
         msa=msa,
         substitution=HKY(frequencies, kappa),
-        clock=StrictClock(clock_rate),
+        clock=Clock.Strict(clock_rate),
         tree=tree,
         num_leaf_threads=5,
         num_internal_threads=2,
@@ -84,7 +83,7 @@ def test_compare_likelihood():
         cuda_calculator = CUDALikelihood(
             msa=msa,
             substitution=HKY(frequencies, kappa),
-            clock=StrictClock(clock_rate),
+            clock=Clock.Strict(clock_rate),
             tree=tree,
         )
     except Exception as e:

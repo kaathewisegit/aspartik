@@ -2,6 +2,7 @@ from typing import Protocol, runtime_checkable
 
 from .._aspartik_rust_impl._b3_rust_impl import (
     MCMC as MCMC,
+    Clock as Clock,
     Internal as Internal,
     Leaf as Leaf,
     Proposal as Proposal,

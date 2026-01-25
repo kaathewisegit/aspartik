@@ -66,7 +66,7 @@ where
 		calculator: L,
 		weights: Vec<u32>,
 		substitution: BoxedSubstitutionModel<N, F>,
-		clock: PyClock,
+		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
 		let transitions = Transitions::new(
@@ -246,7 +246,7 @@ impl PyCpu4Likelihood {
 	fn new(
 		msa: PyMsa,
 		substitution: Substitution4,
-		clock: PyClock,
+		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 		scale_ln: u32,
 	) -> Result<Self> {
@@ -287,7 +287,7 @@ impl PyParallel4Likelihood {
 	fn new(
 		msa: PyMsa,
 		substitution: Substitution4,
-		clock: PyClock,
+		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 		mut num_leaf_threads: usize,
 		num_internal_threads: usize,
@@ -341,7 +341,7 @@ impl PyCudaLikelihood {
 	fn new(
 		msa: PyMsa,
 		substitution: Substitution4,
-		clock: PyClock,
+		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 		scale_ln: u32,
 		cuda_device: usize,

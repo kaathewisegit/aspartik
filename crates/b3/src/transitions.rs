@@ -7,9 +7,7 @@ use skvec::{SkVec, skvec};
 
 pub struct Transitions<const N: usize, F> {
 	substitution: BoxedSubstitutionModel<N, F>,
-	clock: PyClock,
-
-	rate: f64,
+	clock: Py<PyClock>,
 
 	transitions: SkVec<[[F; N]; N]>,
 }
@@ -21,7 +19,7 @@ where
 	pub fn new(
 		length: usize,
 		substitution: BoxedSubstitutionModel<N, F>,
-		clock: PyClock,
+		clock: Py<PyClock>,
 	) -> Self {
 		let transitions = skvec![[[F::zero(); N]; N]; length];
 
@@ -29,26 +27,22 @@ where
 			substitution,
 			clock,
 
-			rate: f64::NAN,
-
 			transitions,
 		}
 	}
 
 	/// Returns `true` if a full update is needed.
 	pub fn update(&mut self, py: Python, tree: &mut Tree) -> Result<()> {
-		let new_rate = self.clock.get_rate(py)?;
-		if self.rate != new_rate {
-			tree.mark_all_edges_updated();
-			self.rate = new_rate;
-		}
+		let mut clock = self.clock.get().inner();
+		clock.update(py)?;
+		clock.mark_tree(tree);
 
 		if self.substitution.update(py)? {
 			tree.mark_all_edges_updated();
 		}
 
 		for edge in tree.edges_to_update() {
-			let rate = self.rate;
+			let rate = clock.get_rate(edge);
 			let time_length = tree.edge_length(edge);
 			let length = time_length * rate;
 

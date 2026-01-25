@@ -1,7 +1,6 @@
 from typing import Literal
 
-from aspartik.b3 import MCMC, Tree
-from aspartik.b3.clocks import StrictClock
+from aspartik.b3 import MCMC, Clock, Tree
 from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger
 from aspartik.b3.operators import (
@@ -73,7 +72,7 @@ def default(msa: MSA, rng: RNG, kind: Calculator) -> MCMC:
     likelihood = calculator(
         msa=msa,
         substitution=HKY(frequencies, kappa),
-        clock=StrictClock(clock_rate),
+        clock=Clock.Strict(clock_rate),
         tree=tree,
     )
 

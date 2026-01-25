@@ -9,8 +9,7 @@ from collections import deque
 from datetime import datetime
 from pathlib import Path
 
-from aspartik.b3 import MCMC, Internal, Tree
-from aspartik.b3.clocks import StrictClock
+from aspartik.b3 import MCMC, Clock, Internal, Tree
 from aspartik.b3.likelihoods import CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
@@ -88,14 +87,14 @@ def make_mcmc(fasta_path: str):
         likelihood = CUDALikelihood(
             msa=msa,
             substitution=HKY(frequencies, kappa),
-            clock=StrictClock(clock_rate),
+            clock=Clock.Strict(clock_rate),
             tree=tree,
         )
     except:
         likelihood = Parallel4Likelihood(
             msa=msa,
             substitution=HKY(frequencies, kappa),
-            clock=StrictClock(clock_rate),
+            clock=Clock.Strict(clock_rate),
             tree=tree,
             num_internal_threads=3,
         )

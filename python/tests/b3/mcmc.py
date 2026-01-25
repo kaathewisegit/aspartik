@@ -1,5 +1,4 @@
-from aspartik.b3 import MCMC, Tree
-from aspartik.b3.clocks import StrictClock
+from aspartik.b3 import MCMC, Clock, Tree
 from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.operators import ParamScale, TreeScale
 from aspartik.b3.parameters import Real
@@ -26,7 +25,7 @@ def test_mcmc():
     likelihood = CPU4Likelihood(
         msa=msa,
         substitution=K80(1.0),
-        clock=StrictClock(1.0),
+        clock=Clock.Strict(1.0),
         tree=tree,
     )
 

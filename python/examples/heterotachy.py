@@ -7,8 +7,7 @@ Based on the [GHOST paper][g], HKY+H4 version.
 from copy import deepcopy
 from datetime import datetime
 
-from aspartik.b3 import MCMC, Tree
-from aspartik.b3.clocks import StrictClock
+from aspartik.b3 import MCMC, Clock, Tree
 from aspartik.b3.likelihoods import CPU4Likelihood, WeightedLikelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
@@ -90,7 +89,7 @@ likelihood = WeightedLikelihood(
         CPU4Likelihood(
             msa=msa,
             substitution=HKY(freq, kappa),
-            clock=StrictClock(clock_rate),
+            clock=Clock.Strict(clock_rate),
             tree=tree,
         )
         for kappa, freq, clock_rate in zip(kappas, freqs, clock_rates)

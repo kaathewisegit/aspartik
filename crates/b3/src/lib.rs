@@ -59,6 +59,9 @@ pub mod pymodule {
 	#[pymodule_export]
 	use substitution::K80;
 
+	#[pymodule_export]
+	use clock::PyClock;
+
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
 		::util::py_patch_module!(m);
