@@ -3,6 +3,7 @@ import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from shutil import rmtree
+from typing import Optional
 
 from . import doc
 
@@ -53,8 +54,8 @@ def make_parser():
     return parser
 
 
-def execute(*args):
-    result = subprocess.run(args)
+def execute(*args: str, cwd: Optional[str] = None):
+    result = subprocess.run(args, cwd=cwd)
 
     if result.returncode != 0:
         sys.exit(
@@ -72,7 +73,7 @@ def fix(args: Namespace):
         execute("ruff", "check", "--fix")
 
     if args.website:
-        execute("deno", "task", "--cwd", "website/", "fix")
+        execute("npm", "run", "fix", cwd="website/")
 
 
 def lint(args: Namespace):
@@ -97,7 +98,7 @@ def lint(args: Namespace):
         execute("pyright")
 
     if args.website:
-        execute("deno", "task", "--cwd", "website/", "check")
+        execute("npm", "run", "check", cwd="website/")
 
 
 def test(args: Namespace):
