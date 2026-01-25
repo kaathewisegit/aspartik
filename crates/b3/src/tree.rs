@@ -7,7 +7,6 @@ use pyo3::{
 };
 use rand::{
 	Rng as _,
-	distr::{Distribution, Uniform},
 	seq::{IteratorRandom, SliceRandom},
 };
 use serde::{Deserialize, Serialize};
@@ -522,10 +521,11 @@ impl Tree {
 		self.updated_nodes.at(node.0)
 	}
 
-	/// Overwrites the child of `edge` with `new_child`.  Only `edge` and
-	/// `new_child` changes are recorded, it is presumed that the operator
-	/// will call another method for the old child and `new_child`'s parent
-	/// edge.
+	/// Overwrites the child of `edge` with `new_child`.
+	///
+	/// Only `edge` and `new_child` changes are recorded, it is presumed
+	/// that the operator will call another method for the old child and
+	/// `new_child`'s parent edge.
 	pub fn update_edge(&mut self, edge: usize, new_child: &Node) {
 		let (_, parent) = self.edge_nodes(edge);
 
@@ -833,8 +833,7 @@ impl Tree {
 	}
 
 	pub fn random_node(&self, rng: &mut Rng) -> Node {
-		let range = Uniform::new(0, self.num_nodes()).unwrap();
-		let i = range.sample(rng);
+		let i = rng.random_range(0..self.num_nodes());
 		Node(i)
 	}
 
@@ -848,9 +847,7 @@ impl Tree {
 	}
 
 	pub fn random_internal(&self, rng: &mut Rng) -> Internal {
-		let range = Uniform::new(self.num_leaves(), self.num_nodes())
-			.unwrap();
-		let i = range.sample(rng);
+		let i = rng.random_range(self.num_leaves()..self.num_nodes());
 		Internal(i)
 	}
 
@@ -867,8 +864,7 @@ impl Tree {
 	}
 
 	pub fn random_leaf(&self, rng: &mut Rng) -> Leaf {
-		let range = Uniform::new(0, self.num_leaves()).unwrap();
-		let i = range.sample(rng);
+		let i = rng.random_range(0..self.num_leaves());
 		Leaf(i)
 	}
 
