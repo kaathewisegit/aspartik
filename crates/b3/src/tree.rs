@@ -39,7 +39,7 @@ pub struct Tree {
 	parents: SkVec<usize>,
 	heights: SkVec<f64>,
 
-	updated_edges: Vec<usize>,
+	updated_edges: Bitmap,
 	/// An array of length num_nodes, where `true` means that the node has
 	/// been updated.
 	updated_nodes: Bitmap,
@@ -166,6 +166,7 @@ impl Tree {
 		let num_leaves = names.len();
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
+		let num_edges = num_nodes - 1;
 
 		let mut out = Self {
 			names,
@@ -174,7 +175,7 @@ impl Tree {
 			parents: skvec![ROOT; num_nodes],
 			heights: skvec![0.0; num_nodes],
 
-			updated_edges: Vec::new(),
+			updated_edges: Bitmap::new(num_edges),
 			updated_nodes: Bitmap::new(num_nodes),
 		};
 
@@ -187,6 +188,7 @@ impl Tree {
 		let num_nodes = newick.num_nodes();
 		let num_internals = (num_nodes - 1) / 2;
 		let num_leaves = num_nodes.div_ceil(2);
+		let num_edges = num_nodes - 1;
 
 		let mut children = vec![ROOT; num_internals * 2];
 		let mut parents = vec![ROOT; num_nodes];
@@ -295,7 +297,7 @@ impl Tree {
 			parents: parents.into(),
 			heights: heights.into(),
 
-			updated_edges: Vec::new(),
+			updated_edges: Bitmap::new(num_edges),
 			updated_nodes: Bitmap::new(num_nodes),
 		})
 	}
@@ -414,12 +416,22 @@ impl Tree {
 	}
 
 	fn clear_updated(&mut self) {
-		self.updated_edges.clear();
+		self.updated_edges.set_all_off();
 		self.updated_nodes.set_all_off();
 	}
 
+	pub fn mark_edge_updated(&mut self, edge: usize) {
+		self.updated_edges.set_on(edge);
+	}
+
 	pub fn edges_to_update(&self) -> Vec<usize> {
-		self.updated_edges.clone()
+		let mut out = Vec::new();
+		for edge in 0..self.num_edges() {
+			if self.updated_edges.at(edge) {
+				out.push(edge);
+			}
+		}
+		out
 	}
 
 	pub fn nodes_to_update(&mut self) -> (Vec<Node>, usize) {
@@ -437,7 +449,7 @@ impl Tree {
 					if self.is_updated(&parent) {
 						break;
 					}
-					self.mark_updated(&parent);
+					self.mark_node_updated(&parent);
 					curr = *parent;
 				}
 			}
@@ -502,7 +514,7 @@ impl Tree {
 		(out_nodes, edges, root)
 	}
 
-	fn mark_updated(&mut self, node: &Node) {
+	fn mark_node_updated(&mut self, node: &Node) {
 		self.updated_nodes.set_on(node.0);
 	}
 
@@ -520,30 +532,30 @@ impl Tree {
 		self.children.set(edge, new_child.0);
 		self.parents.set(new_child.0, parent.0);
 
-		self.updated_edges.push(edge);
+		self.mark_edge_updated(edge);
 
 		// `parent` is now the parent of `new_child`, so it'll
 		// be updated.  The operator must handle the old node
 		// separately.
-		self.mark_updated(new_child);
+		self.mark_node_updated(new_child);
 	}
 
 	/// Sets the height of `node`, recording it and it's parent and child
 	/// edges (if it has those).
 	pub fn set_height(&mut self, node: &Node, height: f64) {
 		self.heights.set(node.0, height);
-		self.mark_updated(node);
+		self.mark_node_updated(node);
 
 		if self.parent_of(node).is_some() {
-			self.updated_edges.push(self.edge_index(node));
+			self.mark_edge_updated(self.edge_index(node));
 		}
 		if let Some(node) = self.as_internal(node) {
 			let (left, right) = self.children_of(&node);
-			self.updated_edges.push(self.edge_index(&left));
-			self.updated_edges.push(self.edge_index(&right));
+			self.mark_edge_updated(self.edge_index(&left));
+			self.mark_edge_updated(self.edge_index(&right));
 
-			self.mark_updated(&left);
-			self.mark_updated(&right);
+			self.mark_node_updated(&left);
+			self.mark_node_updated(&right);
 		}
 	}
 
