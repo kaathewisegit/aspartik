@@ -1,6 +1,8 @@
+import os
 import subprocess
 import sys
 from argparse import ArgumentParser, Namespace
+from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
 from typing import Optional
@@ -54,65 +56,69 @@ def make_parser():
     return parser
 
 
-def execute(*args: str, cwd: Optional[str] = None):
-    result = subprocess.run(args, cwd=cwd)
+@contextmanager
+def chdir(dir: str):
+    old_dir = os.getcwd()
+
+    os.chdir(dir)
+
+    try:
+        yield
+    finally:
+        os.chdir(old_dir)
+
+
+def execute(cmd: str):
+    result = subprocess.run(cmd, shell=True)
 
     if result.returncode != 0:
-        sys.exit(
-            f"Command `{' '.join(args)}` failed with exit code {result.returncode}"
-        )
+        sys.exit(f"Command `{cmd}` failed with exit code {result.returncode}")
 
 
 def fix(args: Namespace):
     if args.rust:
-        execute("cargo", "fmt")
-        execute("cargo", "clippy", "--fix", "--allow-dirty")
+        execute("cargo fmt")
+        execute("cargo clippy --fix --allow-dirty")
 
     if args.python:
-        execute("ruff", "format")
-        execute("ruff", "check", "--fix")
+        execute("ruff format")
+        execute("ruff check --fix")
 
     if args.website:
-        execute("npm", "run", "fix", cwd="website/")
+        with chdir("website/"):
+            execute("npm run fix")
 
 
 def lint(args: Namespace):
     if args.rust:
-        execute("cargo", "fmt", "--check")
+        execute("cargo fmt --check")
         execute(
-            "cargo",
-            "clippy",
-            "--workspace",
-            "--tests",
-            "--features",
-            "arbitrary",
-            "--",
-            "-D",
-            "warnings",
+            "cargo clippy --workspace --tests --features arbitrary -- -D warnings",
         )
 
     if args.python:
-        execute("ruff", "format", "--check")
-        execute("ruff", "check")
+        execute("ruff format --check")
+        execute("ruff check")
 
         execute("pyright")
 
     if args.website:
-        execute("npm", "run", "check", cwd="website/")
+        with chdir("website/"):
+            execute("npm run check")
 
 
 def test(args: Namespace):
     if args.rust:
-        execute("cargo", "test", "--workspace", "--features", "arbitrary")
+        execute("cargo test --workspace --features arbitrary")
 
     if args.python:
         execute("pytest")
 
 
 def run():
-    execute("maturin", "develop", "--release")
-    execute("uv", "run", "python/examples/apes.py")
-    execute("uv", "run", "python/examples/influenza.py", "50_000")
+    execute("maturin develop --release")
+    execute("uv run python/examples/apes.py")
+    execute("uv run python/examples/influenza.py 50_000")
 
 
 ARTIFACTS = [
@@ -132,7 +138,7 @@ def check(args: Namespace):
 
 
 def clean():
-    execute("ruff", "clean")
+    execute("ruff clean")
 
     for path in Path(".").glob("python/**/__pycache__/"):
         rmtree(path)
