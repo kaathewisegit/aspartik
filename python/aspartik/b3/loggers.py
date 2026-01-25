@@ -162,7 +162,7 @@ class ValueLogger(Callback):
 
     ```python
      ValueLogger({
-         "joint": lambda: mcmc.prior + mcmc.likelihood.likelihood(),
+         "posterior": lambda: mcmc.posterior,
          "tree:height": lambda: tree.height_of(tree.root),
          "tree:length": lambda: tree.total_length(),
          # ...

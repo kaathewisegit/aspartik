@@ -94,7 +94,7 @@ def make_mcmc(fasta_path: str):
         ValueLogger(
             {
                 "step": lambda: mcmc.current_step,
-                "joint": lambda: mcmc.prior + mcmc.likelihood.likelihood(),
+                "posterior": lambda: mcmc.posterior,
                 "prior": lambda: mcmc.prior,
                 "likelihood": lambda: mcmc.likelihood.likelihood(),
                 "kappa": kappa,
