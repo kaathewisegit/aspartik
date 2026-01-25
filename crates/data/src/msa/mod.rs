@@ -12,7 +12,7 @@ use crate::{
 #[cfg(feature = "python")]
 pub mod python;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Msa<C: Character> {
 	num_sequences: usize,
 	num_sites: usize,
@@ -69,6 +69,15 @@ impl<C: Character> Msa<C> {
 			names: names.into(),
 			data: data.into(),
 		})
+	}
+
+	pub fn empty() -> Self {
+		Self {
+			num_sequences: 0,
+			num_sites: 0,
+			names: Box::default(),
+			data: Sequence::empty(),
+		}
 	}
 
 	pub fn num_sequences(&self) -> usize {

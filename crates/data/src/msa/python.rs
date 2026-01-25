@@ -1,6 +1,9 @@
 use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
-use pyo3::{prelude::*, types::PyType};
+use pyo3::{
+	prelude::*,
+	types::{PyTuple, PyType},
+};
 
 use crate::{
 	DnaNucleotide, Msa, fasta::python::PyFastaDnaRecord,
@@ -12,7 +15,7 @@ use util::py_pickle_state_impl;
 ///
 /// A set of sequences of the same length along with their names.
 #[derive(Debug)]
-#[pyclass(name = "MSA", module = "aspartik.data.msa", frozen)]
+#[pyclass(name = "MSA", module = "aspartik.data.msa", frozen, eq)]
 #[repr(transparent)]
 pub struct PyMsa {
 	inner: Mutex<Msa<DnaNucleotide>>,
@@ -24,8 +27,23 @@ impl PyMsa {
 	}
 }
 
+impl PartialEq for PyMsa {
+	fn eq(&self, other: &Self) -> bool {
+		let a = &*self.inner();
+		let b = &*other.inner();
+		a == b
+	}
+}
+
 #[pymethods]
 impl PyMsa {
+	#[new]
+	fn new() -> Self {
+		Self {
+			inner: Mutex::new(Msa::empty()),
+		}
+	}
+
 	/// Constructs an MSA from a list of FASTA records
 	#[classmethod]
 	fn from_fasta(
@@ -73,6 +91,10 @@ impl PyMsa {
 	/// 1, taking floating point precision limitations into account.
 	fn base_frequencies(&self) -> (f64, f64, f64, f64) {
 		self.inner().base_frequencies().into()
+	}
+
+	fn __getnewargs__(&self, py: Python) -> Py<PyTuple> {
+		PyTuple::empty(py).into()
 	}
 }
 
