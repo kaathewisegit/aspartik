@@ -36,38 +36,29 @@ where
 	}
 
 	/// Returns `true` if a full update is needed.
-	pub fn update(&mut self, py: Python, tree: &Tree) -> Result<bool> {
+	pub fn update(&mut self, py: Python, tree: &mut Tree) -> Result<()> {
 		let new_rate = self.clock.get_rate(py)?;
-
-		let full_update =
-			self.substitution.update(py)? || self.rate != new_rate;
-		if full_update {
+		if self.rate != new_rate {
+			tree.mark_all_edges_updated();
 			self.rate = new_rate;
 		}
 
-		let edges: Vec<usize> = if full_update {
-			(0..(tree.num_internals() * 2)).collect()
-		} else {
-			tree.edges_to_update()
-		};
-		let distances: Vec<f64> = edges
-			.iter()
-			.copied()
-			.map(|e| tree.edge_length(e) * self.rate)
-			.collect();
-
-		self.update_edges(&edges, &distances);
-
-		Ok(full_update)
-	}
-
-	fn update_edges(&mut self, edges: &[usize], distances: &[f64]) {
-		for (edge, distance) in edges.iter().zip(distances) {
-			let transition =
-				self.substitution.get_transition(*distance);
-
-			self.transitions.set(*edge, transition);
+		if self.substitution.update(py)? {
+			tree.mark_all_edges_updated();
 		}
+
+		for edge in tree.edges_to_update() {
+			let rate = self.rate;
+			let time_length = tree.edge_length(edge);
+			let length = time_length * rate;
+
+			let transition =
+				self.substitution.get_transition(length);
+
+			self.transitions.set(edge, transition);
+		}
+
+		Ok(())
 	}
 
 	pub fn accept(&mut self) {

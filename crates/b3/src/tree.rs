@@ -423,6 +423,17 @@ impl Tree {
 		self.updated_edges.set_on(edge);
 	}
 
+	/// Mark all edges as requiring updates
+	///
+	/// Also marks all nodes as updated.  The latter is needed because the
+	/// clock and the substituion model might call this method via
+	/// `Transitions`.  And it might make sense to the requirement to mark
+	/// nodes in the future, instead computing them from edges.
+	pub fn mark_all_edges_updated(&mut self) {
+		self.updated_edges.set_all_on();
+		self.updated_nodes.set_all_on();
+	}
+
 	pub fn edges_to_update(&self) -> Vec<usize> {
 		let mut out = Vec::new();
 		for edge in 0..self.num_edges() {
@@ -486,13 +497,6 @@ impl Tree {
 		nodes.append(&mut internals);
 
 		(nodes, num_updated_leaves)
-	}
-
-	/// A breadth-first order of internals starting from the root.
-	pub fn full_update(&mut self) -> (Vec<Node>, usize) {
-		self.updated_nodes.set_all_on();
-
-		self.nodes_to_update()
 	}
 
 	pub fn to_lists(

@@ -99,16 +99,12 @@ where
 
 	fn propose(&mut self, py: Python) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
-		let full_update = self.transitions.update(py, tree)?;
-		let (nodes, leaves_end) = if full_update {
-			tree.full_update()
-		} else {
-			tree.nodes_to_update()
-		};
+		self.transitions.update(py, tree)?;
+		let (nodes, leaves_end) = tree.nodes_to_update();
+
 		trace!(
 			target: "b3::likelihood::propose",
-			num_nodes_to_update = nodes.len(),
-			full_update = full_update
+			num_nodes_to_update = nodes.len()
 		);
 
 		// no tree update, return the cache
