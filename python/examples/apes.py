@@ -54,7 +54,7 @@ def make_mcmc(fasta_path: str):
         # randomly within bounds.  Using it on `nodeHeights` is equivalent to
         # selecting a random node and moving it uniformly between it's maximum and
         # minimum heights, which is what `NodeSlide` with `Uniform` does.
-        NodeSlide(tree, Uniform(0, 1), rng, weight=30),
+        NodeSlide(tree, rng, weight=30),
         ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     ]
 

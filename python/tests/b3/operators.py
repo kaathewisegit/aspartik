@@ -34,7 +34,7 @@ def test_wilson_balding(rng):
 
 
 def test_node_slide(rng):
-    factory = lambda tree: NodeSlide(tree, Uniform(0, 1), rng)
+    factory = lambda tree: NodeSlide(tree, rng)
     check_tree_operator(factory)
 
 

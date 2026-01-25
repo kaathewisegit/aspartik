@@ -17,11 +17,6 @@ class NodeSlide(Operator):
 
     tree: Tree
     """The tree to edit."""
-    distribution: Distribution
-    """
-    The distribution which will sample the new node height on the interval
-    between its parent and the closest child.
-    """
     rng: RNG
     weight: float = 1
 
@@ -34,10 +29,10 @@ class NodeSlide(Operator):
         node, parent = tree.random_nonroot_internal(self.rng)
         left, right = tree.children_of(node)
 
-        oldest = tree.height_of(parent)
-        youngest = max(tree.height_of(left), tree.height_of(right))
+        upper = tree.height_of(parent)
+        lower = max(tree.height_of(left), tree.height_of(right))
 
-        new_height = sample_range(youngest, oldest, self.distribution, self.rng)
+        new_height = (upper - lower) * self.rng.random_float() + lower
 
         tree.set_height(node, new_height)
 
