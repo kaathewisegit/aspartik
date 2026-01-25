@@ -6,12 +6,10 @@ use cudarc::{
 	},
 	nvrtc::{CompileOptions, compile_ptx_with_opts},
 };
-use data::{DnaNucleotide, Msa};
 
 use std::sync::Arc;
 
 use super::LikelihoodTrait;
-use crate::util::msa_to_likelihoods;
 
 type Row = [f64; 4];
 type Transition = [f64; 16];
@@ -315,7 +313,8 @@ impl CudaLikelihood {
 	}
 
 	pub fn new(
-		msa: Msa<DnaNucleotide>,
+		num_sites: usize,
+		leaves: Vec<[f64; 4]>,
 		scale_ln: u32,
 		cuda_device: usize,
 	) -> Result<Self> {
@@ -332,8 +331,7 @@ impl CudaLikelihood {
 		let scale = f64::from(scale_ln).exp();
 		let inv_scale = f64::from(-(scale_ln as i32)).exp();
 
-		let num_sites = msa.num_sites();
-		let num_leaves = msa.num_sequences();
+		let num_leaves = leaves.len() / num_sites;
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
 		let num_edges = num_internals * 2;
@@ -345,7 +343,7 @@ impl CudaLikelihood {
 		// there's no need for cross-stream synchronization
 		unsafe { context.disable_event_tracking() };
 
-		let leaves = stream.clone_htod(&msa_to_likelihoods(msa))?;
+		let leaves = stream.clone_htod(&leaves)?;
 
 		let projections: CudaSlice<Row> =
 			stream.alloc_zeros(num_edges * num_sites)?;

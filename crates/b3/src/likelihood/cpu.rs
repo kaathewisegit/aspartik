@@ -1,12 +1,10 @@
 use anyhow::Result;
 use bytemuck::allocation::cast_vec;
-use data::{DnaNucleotide, Msa};
 use num_traits::{Float, Inv, Num, NumAssign};
 
 use std::ops::Mul;
 
 use super::LikelihoodTrait;
-use crate::util::msa_to_likelihoods;
 use linalg::{RowMatrix, Vector};
 use skvec::{SkVec, skvec};
 
@@ -186,13 +184,16 @@ where
 }
 
 impl CpuLikelihood<4, f64> {
-	pub fn new(msa: Msa<DnaNucleotide>, scale_ln: u32) -> Self {
-		let num_sites = msa.num_sites();
-		let num_leaves = msa.num_sequences();
+	pub fn new(
+		num_sites: usize,
+		leaves: Vec<[f64; 4]>,
+		scale_ln: u32,
+	) -> Self {
+		let num_leaves = leaves.len() / num_sites;
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
 
-		let leaves = cast_vec(msa_to_likelihoods(msa));
+		let leaves = cast_vec(leaves);
 
 		let projections =
 			skvec![Vector::default(); num_edges * num_sites];

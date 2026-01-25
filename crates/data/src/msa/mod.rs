@@ -1,6 +1,6 @@
 use anyhow::{Result, ensure};
 
-use std::{cmp::Ordering, ops::RangeBounds, sync::Arc};
+use std::{cmp::Ordering, ops::Range, sync::Arc};
 
 use crate::{
 	DnaNucleotide,
@@ -14,8 +14,7 @@ pub mod python;
 #[derive(Debug, Clone)]
 pub struct Msa<C: Character> {
 	num_sequences: usize,
-	num_sites_total: usize,
-	sites: Option<Vec<usize>>,
+	num_sites: usize,
 	names: Arc<[String]>,
 	data: Sequence<C>,
 }
@@ -32,15 +31,10 @@ impl<C: Character> Msa<C> {
 
 		Ok(Self {
 			num_sequences,
-			num_sites_total: num_sites,
-			sites: None,
+			num_sites,
 			names,
 			data,
 		})
-	}
-
-	pub fn set_sites(&mut self, sites: Vec<usize>) {
-		self.sites = Some(sites);
 	}
 
 	pub fn from_fasta<I, R>(records: I) -> Result<Self>
@@ -70,8 +64,7 @@ impl<C: Character> Msa<C> {
 
 		Ok(Self {
 			num_sequences,
-			num_sites_total: num_sites,
-			sites: None,
+			num_sites,
 			names: names.into(),
 			data: data.into(),
 		})
@@ -82,10 +75,7 @@ impl<C: Character> Msa<C> {
 	}
 
 	pub fn num_sites(&self) -> usize {
-		self.sites
-			.as_ref()
-			.map(|s| s.len())
-			.unwrap_or(self.num_sites_total)
+		self.num_sites
 	}
 
 	pub fn num_characters(&self) -> usize {
@@ -101,31 +91,13 @@ impl<C: Character> Msa<C> {
 	}
 
 	pub fn sequence(&self, index: usize) -> Sequence<C> {
-		let start = index * self.num_sites_total;
-		let end = start + self.num_sites_total;
+		let start = index * self.num_sites;
+		let end = start + self.num_sites;
 		self.data.slice(start..end)
 	}
 
-	pub fn sites_iter(&self) -> SitesIter<'_> {
-		SitesIter {
-			sites: self.sites.as_deref(),
-			current: 0,
-			end: self.num_sites(),
-		}
-	}
-
-	pub fn slice(&self, range: impl RangeBounds<usize>) -> Self {
-		let mut out = self.clone();
-
-		let mut sites = match self.sites.as_ref() {
-			Some(sites) => sites.clone(),
-			None => (0..self.num_sites()).collect(),
-		};
-
-		sites = sites.drain(range).collect();
-
-		out.sites = Some(sites);
-		out
+	pub fn sites(&self) -> Range<usize> {
+		0..self.num_sites
 	}
 
 	pub fn compare_sites(&self, a: &usize, b: &usize) -> Ordering {
@@ -157,10 +129,10 @@ impl Msa<DnaNucleotide> {
 		for seq in 0..self.num_sequences {
 			let seq = self.sequence(seq);
 
-			for site in self.sites_iter() {
+			for char in seq.iter() {
 				add_assign_arr(
 					&mut counts,
-					seq[site].base_frequencies(),
+					char.base_frequencies(),
 				);
 			}
 		}
@@ -169,32 +141,5 @@ impl Msa<DnaNucleotide> {
 			*count /= num_chars as f64;
 		}
 		counts
-	}
-}
-
-pub struct SitesIter<'a> {
-	sites: Option<&'a [usize]>,
-	current: usize,
-	end: usize,
-}
-
-impl<'a> Iterator for SitesIter<'a> {
-	type Item = usize;
-
-	fn next(&mut self) -> Option<usize> {
-		if self.current == self.end {
-			return None;
-		}
-
-		let out;
-		if let Some(sites) = self.sites {
-			out = sites[self.current];
-		} else {
-			out = self.current;
-		}
-
-		self.current += 1;
-
-		Some(out)
 	}
 }

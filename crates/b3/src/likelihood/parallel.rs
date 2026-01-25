@@ -1,6 +1,5 @@
 use anyhow::Result;
 use bytemuck::allocation::cast_vec;
-use data::{DnaNucleotide, Msa};
 use fork_union::{SyncMutPtr, ThreadPool};
 use num_traits::{Float, Inv, Num, NumAssign};
 
@@ -8,7 +7,6 @@ use core::f64;
 use std::ops::Mul;
 
 use super::LikelihoodTrait;
-use crate::util::msa_to_likelihoods;
 use linalg::{RowMatrix, Vector};
 
 type Buffer<T> = Box<[T]>;
@@ -272,7 +270,8 @@ where
 
 impl ParallelLikelihood<4, f64> {
 	pub fn new(
-		msa: Msa<DnaNucleotide>,
+		num_sites: usize,
+		leaves: Vec<[f64; 4]>,
 		num_leaf_threads: usize,
 		num_internal_threads: usize,
 		scale_ln: u32,
@@ -281,12 +280,11 @@ impl ParallelLikelihood<4, f64> {
 			ThreadPool::try_spawn(num_internal_threads)?;
 		let leaves_pool = ThreadPool::try_spawn(num_leaf_threads)?;
 
-		let num_sites = msa.num_sites();
-		let num_leaves = msa.num_sequences();
+		let num_leaves = leaves.len() / num_sites;
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
 
-		let leaves = cast_vec(msa_to_likelihoods(msa));
+		let leaves = cast_vec(leaves);
 
 		let projections =
 			buffer![Vector::default(); num_edges * num_sites];

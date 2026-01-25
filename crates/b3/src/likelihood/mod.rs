@@ -169,7 +169,7 @@ where
 	}
 }
 
-fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<u32>) {
+fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<[f64; 4]>, Vec<u32>) {
 	let mut hashes =
 		Vec::<(usize, blake3::Hash)>::with_capacity(msa.num_sites());
 
@@ -202,9 +202,17 @@ fn deduplicate(mut msa: Msa<DnaNucleotide>) -> (Msa<DnaNucleotide>, Vec<u32>) {
 	let (indices, weights): (Vec<_>, Vec<_>) =
 		pairs.iter().copied().copied().unzip();
 
-	msa.set_sites(indices);
+	let mut leaves =
+		Vec::with_capacity(msa.num_sequences() * indices.len());
 
-	(msa, weights)
+	for seq in 0..msa.num_sequences() {
+		for site in indices.iter().copied() {
+			let char = msa.sequence(seq)[site];
+			leaves.push(char.base_frequencies_denormalized())
+		}
+	}
+
+	(leaves, weights)
 }
 
 macro_rules! likelihood_methods {
@@ -250,8 +258,9 @@ impl PyCpu4Likelihood {
 		tree: Py<PyTree>,
 		scale_ln: u32,
 	) -> Result<Self> {
-		let (msa, weights) = deduplicate(msa.0);
-		let calculator = CpuLikelihood::new(msa, scale_ln);
+		let (leaves, weights) = deduplicate(&msa.0);
+		let calculator =
+			CpuLikelihood::new(weights.len(), leaves, scale_ln);
 		let generic = GenericLikelihood::new(
 			calculator,
 			weights,
@@ -297,9 +306,10 @@ impl PyParallel4Likelihood {
 			num_leaf_threads = num_internal_threads;
 		}
 
-		let (msa, weights) = deduplicate(msa.0);
+		let (leaves, weights) = deduplicate(&msa.0);
 		let calculator = ParallelLikelihood::new(
-			msa,
+			weights.len(),
+			leaves,
 			num_leaf_threads,
 			num_internal_threads,
 			scale_ln,
@@ -346,9 +356,13 @@ impl PyCudaLikelihood {
 		scale_ln: u32,
 		cuda_device: usize,
 	) -> Result<Self> {
-		let (msa, weights) = deduplicate(msa.0);
-		let calculator =
-			CudaLikelihood::new(msa, scale_ln, cuda_device)?;
+		let (leaves, weights) = deduplicate(&msa.0);
+		let calculator = CudaLikelihood::new(
+			weights.len(),
+			leaves,
+			scale_ln,
+			cuda_device,
+		)?;
 		let generic = GenericLikelihood::new(
 			calculator,
 			weights,

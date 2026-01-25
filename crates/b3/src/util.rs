@@ -4,21 +4,6 @@ use anyhow::{Result, bail};
 use pyo3::prelude::*;
 use pyo3::types::{PySlice, PySliceIndices, PyTuple};
 
-use data::{DnaNucleotide, Msa};
-
-pub fn msa_to_likelihoods(msa: Msa<DnaNucleotide>) -> Vec<[f64; 4]> {
-	let mut out = Vec::with_capacity(msa.num_sequences() * msa.num_sites());
-
-	for seq in 0..msa.num_sequences() {
-		for site in msa.sites_iter() {
-			let char = msa.sequence(seq)[site];
-			out.push(char.base_frequencies_denormalized())
-		}
-	}
-
-	out
-}
-
 #[derive(Debug)]
 pub struct SlicesIter {
 	slices: Vec<PySliceIndices>,
