@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyTuple};
 
 use crate::tree::{Node, PyTree, Tree};
 use pyutil::SupportsFloat;
@@ -109,11 +109,10 @@ impl ConstantPopulation {
 		self.population_size.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
-		let tuple = (self.tree(py), self.population_size(py))
-			.into_pyobject(py)?;
-
-		Ok(tuple.into_any().unbind())
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
+		(self.tree(py), self.population_size(py))
+			.into_pyobject(py)
+			.map(|o| o.unbind())
 	}
 
 	fn probability(&self, py: Python) -> Result<f64> {
@@ -183,15 +182,14 @@ impl ExponentialGrowth {
 		self.growth_rate.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
-		let tuple = (
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
+		(
 			self.tree(py),
 			self.population_size(py),
 			self.growth_rate(py),
 		)
-			.into_pyobject(py)?;
-
-		Ok(tuple.into_any().unbind())
+			.into_pyobject(py)
+			.map(|o| o.unbind())
 	}
 
 	fn probability(&self, py: Python) -> Result<f64> {

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyTuple};
 use rand::seq::IndexedRandom;
 
 use crate::{
@@ -48,16 +48,15 @@ impl SubtreeLeap {
 		})
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
-		let tuple = (
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
+		(
 			self.tree.clone_ref(py),
 			self.distribution.clone_ref(py),
 			self.rng.clone_ref(py),
 			self.weight,
 		)
-			.into_pyobject(py)?;
-
-		Ok(tuple.into_any().unbind())
+			.into_pyobject(py)
+			.map(|o| o.unbind())
 	}
 
 	fn propose(&self, py: Python) -> Result<Proposal> {

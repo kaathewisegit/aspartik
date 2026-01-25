@@ -1,7 +1,6 @@
 use anyhow::{Result, ensure};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
-use pyo3::types::PyTuple;
 use rand::{
 	Rng as _, SeedableRng, TryRngCore,
 	distr::uniform::{UniformFloat, UniformSampler},
@@ -103,16 +102,6 @@ impl PyRng {
 			let d = UniformFloat::<f64>::new(lower, upper)?;
 			d.sample(&mut self.inner())
 		})
-	}
-
-	// pickle
-	fn __getnewargs__<'py>(
-		&self,
-		py: Python<'py>,
-	) -> PyResult<Bound<'py, PyTuple>> {
-		// not the actual seed, but the state will be restored by
-		// `__setstate__`
-		(0,).into_pyobject(py)
 	}
 }
 

@@ -42,33 +42,41 @@ macro_rules! py_pickle_state_impl {
 			use super::$class;
 
 			use anyhow::Result;
+			use parking_lot::Mutex;
 			use pyo3::prelude::*;
-			use pyo3::types::PyBytes;
+			use pyo3::type_object::PyTypeInfo;
+			use pyo3::types::{PyBytes, PyType};
 
 			#[pymethods]
 			impl $class {
-				fn __getstate__<'py>(
+				#[classmethod]
+				fn deserialize(
+					_cls: Py<PyType>,
+					bytes: &[u8],
+				) -> Result<Self> {
+					let inner =
+						rmp_serde::from_slice(bytes)?;
+					Ok(Self {
+						inner: Mutex::new(inner),
+					})
+				}
+
+				fn __reduce__(
 					&self,
-					py: Python<'py>,
-				) -> Result<Bound<'py, PyBytes>> {
+					py: Python,
+				) -> Result<(Py<PyAny>, Py<PyAny>)> {
 					let inner = &*self.inner.lock();
 					let vec = rmp_serde::to_vec(inner)?;
 
-					Ok(PyBytes::new(py, &vec))
-				}
+					let pytype = Self::type_object(py);
+					let method =
+						pytype.getattr("deserialize")?;
 
-				fn __setstate__(
-					&self,
-					state: Bound<PyBytes>,
-				) -> Result<()> {
-					let slice = state.as_bytes();
-					let state =
-						rmp_serde::from_slice(slice)?;
-
-					let inner = &mut *self.inner.lock();
-					*inner = state;
-
-					Ok(())
+					Ok((
+						method.into(),
+						(vec,).into_pyobject(py)?
+							.into(),
+					))
 				}
 			}
 		}

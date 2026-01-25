@@ -1,5 +1,5 @@
 use anyhow::{Result, ensure};
-use pyo3::{intern, prelude::*};
+use pyo3::{intern, prelude::*, types::PyTuple};
 
 use crate::{operator::Proposal, tree::PyTree};
 use rng::PyRng;
@@ -67,17 +67,16 @@ impl EpochScale {
 		self.rng.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
-		let tuple = (
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
+		(
 			self.tree(py),
 			self.factor,
 			self.distribution(py),
 			self.rng(py),
 			self.weight,
 		)
-			.into_pyobject(py)?;
-
-		Ok(tuple.into_any().unbind())
+			.into_pyobject(py)
+			.map(|o| o.unbind())
 	}
 
 	fn propose(&self, py: Python) -> Result<Proposal> {

@@ -1,7 +1,9 @@
 use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
-use pyo3::prelude::*;
-use pyo3::types::PyList;
+use pyo3::{
+	prelude::*,
+	types::{PyList, PyTuple},
+};
 use rand::Rng as _;
 
 use crate::{
@@ -107,8 +109,8 @@ impl Mcmc {
 		self.rng.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
-		let tuple = (
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
+		(
 			self.state(py),
 			self.priors(py),
 			self.operators(py),
@@ -116,9 +118,8 @@ impl Mcmc {
 			self.callbacks(py),
 			self.rng(py),
 		)
-			.into_pyobject(py)?;
-
-		Ok(tuple.into_any().unbind())
+			.into_pyobject(py)
+			.map(|o| o.unbind())
 	}
 
 	/// Execute `n` steps of the Markov chain

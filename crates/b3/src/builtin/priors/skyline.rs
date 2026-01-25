@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use parking_lot::Mutex;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyTuple};
 
 use super::coalescent::sorted_nodes;
 use crate::tree::{PyTree, Tree};
@@ -57,11 +57,10 @@ impl Skyline {
 		self.population_sizes.lock().clone()
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
-		let tuple = (self.tree(py), self.mutation_rate, self.epsilon)
-			.into_pyobject(py)?;
-
-		Ok(tuple.into_any().unbind())
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
+		(self.tree(py), self.mutation_rate, self.epsilon)
+			.into_pyobject(py)
+			.map(|o| o.unbind())
 	}
 
 	fn probability(&self, _py: Python) -> Result<f64> {

@@ -71,15 +71,6 @@ impl<C: Character> Msa<C> {
 		})
 	}
 
-	pub fn empty() -> Self {
-		Self {
-			num_sequences: 0,
-			num_sites: 0,
-			names: Box::default(),
-			data: Sequence::empty(),
-		}
-	}
-
 	pub fn num_sequences(&self) -> usize {
 		self.num_sequences
 	}

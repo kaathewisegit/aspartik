@@ -152,13 +152,6 @@ impl<C: Character> Sequence<C> {
 		}
 	}
 
-	pub fn empty() -> Self {
-		Self {
-			bytes: Bytes::new(),
-			marker: PhantomData,
-		}
-	}
-
 	pub fn as_bytes(&self) -> &[u8] {
 		&self.bytes
 	}

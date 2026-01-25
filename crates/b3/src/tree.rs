@@ -1389,19 +1389,6 @@ impl PyTree {
 	fn reject(&self) {
 		self.inner().reject()
 	}
-
-	// pickle
-	fn __getnewargs__<'py>(
-		&self,
-		py: Python<'py>,
-	) -> PyResult<Bound<'py, PyTuple>> {
-		let inner = &*self.inner.lock();
-		let dummy_rng = PyRng::new(Some(0))?;
-
-		// the tree will be overwritten by `__setstate__`, so we're
-		// passing no names and a dummy RNG
-		(inner.names.clone(), dummy_rng).into_pyobject(py)
-	}
 }
 
 py_pickle_state_impl!(PyTree, _tree_pickle_impl);

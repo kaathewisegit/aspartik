@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use anyhow::Result;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyTuple};
 
 use crate::tree::{Internal, Leaf, PyTree, Tree};
 
@@ -33,11 +33,10 @@ impl Monophyly {
 		self.tree.clone_ref(py)
 	}
 
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyAny>> {
-		let tuple = (self.tree(py), self.leaves.clone())
-			.into_pyobject(py)?;
-
-		Ok(tuple.into_any().unbind())
+	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
+		(self.tree(py), self.leaves.clone())
+			.into_pyobject(py)
+			.map(|o| o.unbind())
 	}
 
 	fn probability(&self) -> Result<f64> {

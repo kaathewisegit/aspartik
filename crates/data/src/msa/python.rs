@@ -1,9 +1,6 @@
 use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
-use pyo3::{
-	prelude::*,
-	types::{PyTuple, PyType},
-};
+use pyo3::{prelude::*, types::PyType};
 
 use crate::{
 	DnaNucleotide, Msa, fasta::python::PyFastaDnaRecord,
@@ -37,13 +34,6 @@ impl PartialEq for PyMsa {
 
 #[pymethods]
 impl PyMsa {
-	#[new]
-	fn new() -> Self {
-		Self {
-			inner: Mutex::new(Msa::empty()),
-		}
-	}
-
 	/// Constructs an MSA from a list of FASTA records
 	#[classmethod]
 	fn from_fasta(
@@ -91,10 +81,6 @@ impl PyMsa {
 	/// 1, taking floating point precision limitations into account.
 	fn base_frequencies(&self) -> (f64, f64, f64, f64) {
 		self.inner().base_frequencies().into()
-	}
-
-	fn __getnewargs__(&self, py: Python) -> Py<PyTuple> {
-		PyTuple::empty(py).into()
 	}
 }
 
