@@ -103,18 +103,6 @@ Provides a macro which allows using `if else` with `cfg` directive.
 Used by `libloading`, `parking_lot_core`, `getrandom`, and `divan`.
 
 
-### [`crossbeam-channel`](./crossbeam-license)
-
-MPMC channel with senders and consumers which implement `Clone` and
-`Send`, used by the `thread` calculator in `b3`.
-
-
-### [`crossbeam-utils`](./crossbeam-license)
-
-A crate shared by all of the high-level `crossbeam` crates, pulled in by
-`crossbeam-channel`.
-
-
 ### [`cudarc`](./cudarc-license)
 
 A crate which includes `sys`, unsafe idiomatic, and safe abstraction

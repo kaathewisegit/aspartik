@@ -31,7 +31,6 @@ arbtest = "0.3.2"
 blake3 = "1.8"
 bytemuck = "1.24"
 bytes = "1.11"
-crossbeam-channel = "0.5.15"
 cudarc = { git = "https://github.com/kaathewisegit/cudarc", branch = "array-repr", default-features = false }
 divan = "0.1.21"
 fork_union = "2.3"
