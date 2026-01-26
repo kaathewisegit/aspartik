@@ -155,16 +155,20 @@ where
 
 	fn accept(&mut self) -> Result<()> {
 		self.cache = self.last;
+		if self.launched_update {
+			self.calculator.accept()?;
+			self.transitions.accept();
+		}
 		self.launched_update = false;
-		self.calculator.accept()?;
-		self.transitions.accept();
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
+		if self.launched_update {
+			self.calculator.reject()?;
+			self.transitions.reject();
+		}
 		self.launched_update = false;
-		self.calculator.reject()?;
-		self.transitions.reject();
 		Ok(())
 	}
 }
