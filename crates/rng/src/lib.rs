@@ -103,6 +103,16 @@ impl PyRng {
 			d.sample(&mut self.inner())
 		})
 	}
+
+	fn dump(&self) -> Result<Vec<u8>> {
+		Ok(rmp_serde::to_vec(&*self.inner())?)
+	}
+
+	fn load(&self, bytes: &[u8]) -> Result<()> {
+		let inner = &mut *self.inner();
+		*inner = rmp_serde::from_slice(bytes)?;
+		Ok(())
+	}
 }
 
 py_pickle_state_impl!(PyRng, _pickle_impl);

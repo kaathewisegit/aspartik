@@ -1,6 +1,9 @@
 use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{
+	prelude::*,
+	types::{PyBytes, PyList},
+};
 use rand::Rng as _;
 
 use crate::{
@@ -185,6 +188,69 @@ impl Mcmc {
 	fn operator_statistics(&self, py: Python) -> Result<Py<PyList>> {
 		self.scheduler.statistics(py)
 	}
+
+	fn dump_state(&self, py: Python) -> Result<Vec<u8>> {
+		use rmp::encode;
+
+		let mut out = Vec::new();
+
+		encode::write_u64(&mut out, *self.current_step.lock() as u64)?;
+		encode::write_f64(&mut out, *self.posterior.lock())?;
+
+		encode::write_array_len(&mut out, self.state.len() as u32)?;
+		for param in &self.state {
+			let bytes = py_call_method!(py, param, "dump")?;
+			let bytes = bytes.cast_bound::<PyBytes>(py).unwrap();
+			let bytes = bytes.as_bytes();
+
+			encode::write_bin_len(&mut out, bytes.len() as u32)?;
+			out.extend_from_slice(bytes);
+		}
+
+		let bytes = py_call_method!(py, self.rng, "dump")?;
+		let bytes = bytes.cast_bound::<PyBytes>(py).unwrap();
+		let bytes = bytes.as_bytes();
+		encode::write_bin_len(&mut out, bytes.len() as u32)?;
+		out.extend_from_slice(bytes);
+
+		Ok(out)
+	}
+
+	fn load_state(&self, py: Python, bytes: &[u8]) -> Result<()> {
+		use rmp::decode;
+
+		let mut bytes = bytes;
+
+		let current_step = decode::read_u64(&mut bytes)?;
+		*self.current_step.lock() = current_step as usize;
+
+		let posterior = decode::read_f64(&mut bytes)?;
+		*self.posterior.lock() = posterior;
+
+		let num_params = decode::read_array_len(&mut bytes)? as usize;
+		for i in 0..num_params {
+			let len = decode::read_bin_len(&mut bytes)? as usize;
+			let param_bytes = &bytes[..len];
+			py_call_method!(
+				py,
+				self.state[i],
+				"load",
+				param_bytes
+			)?;
+
+			bytes = &bytes[len..];
+		}
+
+		let len = decode::read_bin_len(&mut bytes)? as usize;
+		let rng_bytes = &bytes[..len];
+		py_call_method!(py, self.rng, "load", rng_bytes)?;
+
+		self.likelihood.propose(py)?;
+		self.likelihood.likelihood(py)?;
+		self.likelihood.accept(py)?;
+
+		Ok(())
+	}
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -216,10 +282,6 @@ impl StepResult {
 }
 
 impl Mcmc {
-	fn propose(&self, py: Python) -> Result<()> {
-		self.likelihood.propose(py)
-	}
-
 	fn step(
 		&self,
 		py: Python,
@@ -247,7 +309,7 @@ impl Mcmc {
 		}
 
 		let (likelihood, time) = time! {{
-			self.propose(py)?;
+			self.likelihood.propose(py)?;
 			self.likelihood.likelihood(py)?
 		}};
 

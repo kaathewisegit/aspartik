@@ -84,6 +84,7 @@ dependencies = [
  "pyutil",
  "rand",
  "rand_pcg",
+ "rmp",
  "rmp-serde",
  "rng",
  "serde",

@@ -3,7 +3,7 @@ use parking_lot::{Mutex, MutexGuard};
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
 	prelude::*,
-	types::{PyAny, PyTuple, PyType},
+	types::{PyAny, PyType},
 };
 use rand::{
 	Rng as _,
@@ -30,7 +30,7 @@ use util::{py_bail, py_pickle_state_impl};
 
 const ROOT: usize = usize::MAX;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tree {
 	names: Vec<String>,
 
@@ -123,13 +123,6 @@ macro_rules! nodes_2 {
 
 			fn __int__(&self) -> usize {
 				self.0
-			}
-
-			fn __getnewargs__<'py>(
-				&self,
-				py: Python<'py>,
-			) -> PyResult<Bound<'py, PyTuple>> {
-				(self.0,).into_pyobject(py)
 			}
 		}
 
@@ -1055,6 +1048,19 @@ impl PyTree {
 			inner: Mutex::new(tree),
 		};
 		Ok(tree)
+	}
+
+	fn dump(&self) -> Result<Vec<u8>> {
+		Ok(rmp_serde::to_vec(&*self.inner())?)
+	}
+
+	fn load(&self, bytes: &[u8]) -> Result<()> {
+		let inner = &mut *self.inner();
+		*inner = rmp_serde::from_slice(bytes)?;
+		// TODO: saner MCMC.load in regards to likelihood
+		// initialization
+		inner.mark_all_edges_updated();
+		Ok(())
 	}
 
 	/// Randomizes the tree structure
