@@ -12,7 +12,7 @@ use crate::{
 	tree::PyTree,
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
-use logger::trace;
+use logger::{info, trace};
 use util::{py_call_method, py_check_method};
 
 mod cpu;
@@ -69,6 +69,11 @@ where
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
+		info!(
+			target: "b3::likelihood::GenericLikelihood::new",
+			weights_len = weights.len()
+		);
+
 		let transitions = Transitions::new(
 			tree.get().num_edges(),
 			substitution,
