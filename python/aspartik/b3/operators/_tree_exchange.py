@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from math import log
 
 from ...rng import RNG
-from .. import Internal, Node, Operator, Proposal, Tree
+from .. import Operator, Proposal
+from ..parameters import Internal, Node, Tree
 from ._util import assert_two_internals
 
 

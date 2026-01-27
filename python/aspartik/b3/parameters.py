@@ -3,7 +3,21 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Protocol, SupportsFloat, runtime_checkable
 
-from . import Stateful, Tree
+from .._aspartik_rust_impl._b3_rust_impl import (
+    Internal as Internal,
+    Leaf as Leaf,
+    Proposal as Proposal,
+    Real as Real,
+    Tree as Tree,
+)
+from . import Stateful
+
+type Node = Leaf | Internal
+"""Any node of the phylogenetic tree
+
+Used for type hints in places where there isn't a need to distinguish between
+internal and leaf nodes.
+"""
 
 
 @runtime_checkable
@@ -14,77 +28,6 @@ class Scalable(Protocol):
         """
 
         ...
-
-
-class Real(Stateful, SupportsFloat, Scalable):
-    __slots__ = ("_value", "_backup")
-    _value: float
-    _backup: float
-
-    def __init__(self, value: SupportsFloat):
-        self._value = float(value)
-        self._backup = self._value
-
-    # comparison
-    def __lt__(self, other: SupportsFloat) -> bool:
-        return self._value < float(other)
-
-    def __le__(self, other: SupportsFloat) -> bool:
-        return self._value <= float(other)
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, SupportsFloat):
-            return self._value == float(other)
-        else:
-            return False
-
-    def __ne__(self, other: object) -> bool:
-        if isinstance(other, SupportsFloat):
-            return self._value != float(other)
-        else:
-            return False
-
-    def __gt__(self, other: SupportsFloat) -> bool:
-        return self._value > float(other)
-
-    def __ge__(self, other: SupportsFloat) -> bool:
-        return self._value >= float(other)
-
-    # math
-    def __iadd__(self, other: SupportsFloat):
-        self._value += float(other)
-        return self
-
-    def __isub__(self, other: SupportsFloat):
-        self._value -= float(other)
-        return self
-
-    def __imul__(self, other: SupportsFloat):
-        self._value *= float(other)
-        return self
-
-    def __idiv__(self, other: SupportsFloat):
-        self._value /= float(other)
-        return self
-
-    def __repr__(self) -> str:
-        return repr(self._value)
-
-    def __float__(self) -> float:
-        return self._value
-
-    def set(self, value: SupportsFloat) -> None:
-        self._value = float(value)
-
-    def scale(self, factor: float) -> int:
-        self *= factor
-        return 1
-
-    def accept(self):
-        self._backup = self._value
-
-    def reject(self):
-        self._value = self._backup
 
 
 class Weights(Stateful, Scalable):

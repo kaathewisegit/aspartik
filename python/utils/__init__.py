@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
-from aspartik.b3 import Operator, Proposal, Tree
+from aspartik.b3 import Operator, Proposal
+from aspartik.b3.parameters import Tree
 from aspartik.rng import RNG
 
 

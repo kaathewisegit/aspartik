@@ -1,7 +1,7 @@
 from math import exp, inf, isfinite, log
 
 from ...rng import RNG
-from .. import Internal, Node, Tree
+from ..parameters import Internal, Node, Tree
 
 
 # x must be in [0, inf)

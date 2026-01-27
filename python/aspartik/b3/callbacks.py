@@ -1,7 +1,8 @@
 import time
 from dataclasses import dataclass, field
 
-from . import MCMC, Callback, Tree
+from . import MCMC, Callback
+from .parameters import Tree
 
 
 @dataclass(slots=True)

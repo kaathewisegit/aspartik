@@ -3,18 +3,30 @@ from typing import Protocol, runtime_checkable
 from .._aspartik_rust_impl._b3_rust_impl import (
     MCMC as MCMC,
     Clock as Clock,
-    Internal as Internal,
-    Leaf as Leaf,
     Proposal as Proposal,
-    Tree as Tree,
 )
 
-type Node = Leaf | Internal
-"""Any node of the phylogenetic tree
 
-Used for type hints in places where there isn't a need to distinguish between
-internal and leaf nodes.
-"""
+@runtime_checkable
+class Stateful(Protocol):
+    """
+    Epoch-versioned objects for use with MCMC
+
+    All stateful objects handled by `MCMC` must conform to this protocol.
+    During each step operators can edit objects using whatever APIs provided.
+    Then, at the end of the step, `MCMC` calls `accept` if the move has been
+    accepted, or `reject` otherwise.
+    """
+
+    def accept(self) -> None:
+        """Accept changes made during the current step"""
+
+    def reject(self) -> None:
+        """Reject changes made during the current step
+
+        This method must roll the state of the object back to how it was at the
+        beginning of the MCMC step.
+        """
 
 
 @runtime_checkable
@@ -113,25 +125,3 @@ class Callback(Protocol):
         to implement it on a custom logger.
         """
         pass
-
-
-@runtime_checkable
-class Stateful(Protocol):
-    """
-    Epoch-versioned objects for use with MCMC
-
-    All stateful objects handled by `MCMC` must conform to this protocol.
-    During each step operators can edit objects using whatever APIs provided.
-    Then, at the end of the step, `MCMC` calls `accept` if the move has been
-    accepted, or `reject` otherwise.
-    """
-
-    def accept(self) -> None:
-        """Accept changes made during the current step"""
-
-    def reject(self) -> None:
-        """Reject changes made during the current step
-
-        This method must roll the state of the object back to how it was at the
-        beginning of the MCMC step.
-        """

@@ -26,7 +26,7 @@ use data::newick::{
 };
 use rng::{PyRng, Rng};
 use skvec::{SkVec, skvec};
-use util::{py_bail, py_pickle_state_impl};
+use util::py_bail;
 
 const ROOT: usize = usize::MAX;
 
@@ -1396,5 +1396,3 @@ impl PyTree {
 		self.inner().reject()
 	}
 }
-
-py_pickle_state_impl!(PyTree, _tree_pickle_impl);

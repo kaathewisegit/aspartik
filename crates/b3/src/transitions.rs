@@ -2,7 +2,9 @@ use anyhow::Result;
 use num_traits::Zero;
 use pyo3::prelude::*;
 
-use crate::{clock::PyClock, substitution::BoxedSubstitutionModel, tree::Tree};
+use crate::{
+	clock::PyClock, parameters::Tree, substitution::BoxedSubstitutionModel,
+};
 use skvec::{SkVec, skvec};
 
 pub struct Transitions<const N: usize, F> {

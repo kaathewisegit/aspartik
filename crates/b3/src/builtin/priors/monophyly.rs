@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use anyhow::Result;
 use pyo3::{prelude::*, types::PyTuple};
 
-use crate::tree::{Internal, Leaf, PyTree, Tree};
+use crate::parameters::{Internal, Leaf, PyTree, Tree};
 
 /// Ensures that a group of leaves form a monophyly
 ///

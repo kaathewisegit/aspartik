@@ -8,8 +8,8 @@ use std::{collections::HashMap, fmt::Debug, slice};
 use crate::{
 	Transitions,
 	clock::PyClock,
+	parameters::PyTree,
 	substitution::{BoxedSubstitutionModel, Substitution4},
-	tree::PyTree,
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
 use logger::{info, trace};

@@ -7,7 +7,7 @@ tutorial][l].
 
 from datetime import datetime
 
-from aspartik.b3 import MCMC, Clock, Tree
+from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CPU4Likelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
@@ -18,7 +18,7 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, Weights
+from aspartik.b3.parameters import Internals, Real, Tree, Weights
 from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline

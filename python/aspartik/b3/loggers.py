@@ -12,8 +12,8 @@ from dataclasses import dataclass, field
 from io import BufferedWriter
 from typing import Any, Optional
 
-from . import MCMC, Callback, Prior, Tree
-from .parameters import Real, Weights
+from . import MCMC, Callback, Prior
+from .parameters import Real, Tree, Weights
 
 
 class _LogWriter:

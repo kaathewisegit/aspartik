@@ -4,7 +4,7 @@ use rand::seq::IndexedRandom;
 
 use crate::{
 	operator::Proposal,
-	tree::{Internal, Node, PyTree, Tree},
+	parameters::{Internal, Node, PyTree, Tree},
 };
 use rng::PyRng;
 use util::py_call_method;

@@ -4,7 +4,7 @@ from typing import Literal
 
 from ...rng import RNG
 from ...stats.distributions import Uniform
-from .. import Operator, Proposal, Tree
+from .. import Operator, Proposal
 from ..parameters import Real
 from ._util import sample_range
 

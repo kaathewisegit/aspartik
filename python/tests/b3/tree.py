@@ -1,43 +1,8 @@
 import pytest
 from utils import random_integer, random_trees
 
-import pickle
-
-from aspartik.b3 import Tree
+from aspartik.b3.parameters import Tree
 from aspartik.rng import RNG
-
-
-def test_pickle_roundtrip(rng):
-    old = Tree([str(i) for i in range(10)], rng)
-    new = pickle.loads(pickle.dumps(old))
-
-    assert old.newick() == new.newick()
-
-
-@pytest.mark.parametrize("size", random_integer(0, 1000, num=100))
-def test_pickle_state(rng: RNG, size: int):
-    old = Tree([str(i) for i in range(size)], rng)
-    old.set_random_edges(rng)
-    for internal in old.internals():
-        old.set_height(internal, rng.random_float())
-    old.set_random_heights(0.1 + rng.random_float(), rng)
-
-    new = pickle.loads(pickle.dumps(old))
-
-    assert old.newick() == new.newick()
-    old.reject()
-    new.reject()
-    assert old.newick() == new.newick()
-
-    old.set_random_edges(rng)
-    old.set_random_heights(0.1 + rng.random_float(), rng)
-
-    new = pickle.loads(pickle.dumps(old))
-
-    assert old.newick() == new.newick()
-    old.reject()
-    new.reject()
-    assert old.newick() == new.newick()
 
 
 def test_other_child(rng):

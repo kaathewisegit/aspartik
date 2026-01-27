@@ -5,7 +5,7 @@ use parking_lot::Mutex;
 use pyo3::{prelude::*, types::PyTuple};
 
 use super::coalescent::sorted_nodes;
-use crate::tree::{PyTree, Tree};
+use crate::parameters::{PyTree, Tree};
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]

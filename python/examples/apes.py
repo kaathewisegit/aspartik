@@ -3,7 +3,7 @@
 """
 
 from aspartik import logger
-from aspartik.b3 import MCMC, Clock, Tree
+from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
@@ -16,7 +16,7 @@ from aspartik.b3.operators import (
     SubtreeSlide,
     TreeScale,
 )
-from aspartik.b3.parameters import Real, Weights
+from aspartik.b3.parameters import Real, Tree, Weights
 from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
@@ -42,8 +42,8 @@ def make_mcmc(fasta_path: str):
     ]
 
     operators = [
-        ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
-        DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
+        # ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
+        # DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
         TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
         SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
         BeastNarrowExchange(tree, rng, weight=30),
@@ -54,7 +54,7 @@ def make_mcmc(fasta_path: str):
         # selecting a random node and moving it uniformly between it's maximum and
         # minimum heights, which is what `NodeSlide` with `Uniform` does.
         NodeSlide(tree, rng, weight=30),
-        ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
+        # ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     ]
 
     likelihood = CPU4Likelihood(
@@ -88,7 +88,7 @@ def make_mcmc(fasta_path: str):
     ]
 
     mcmc = MCMC(
-        state=[kappa, population_size, frequencies, tree],
+        state=[tree],
         priors=priors,
         operators=operators,
         likelihood=likelihood,

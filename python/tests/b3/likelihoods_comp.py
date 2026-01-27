@@ -2,7 +2,7 @@ import pytest
 
 from dataclasses import dataclass
 
-from aspartik.b3 import MCMC, Callback, Clock, Tree
+from aspartik.b3 import MCMC, Callback, Clock
 from aspartik.b3.likelihoods import (
     CPU4Likelihood,
     CUDALikelihood,
@@ -18,13 +18,12 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, Weights
+from aspartik.b3.parameters import Internals, Real, Tree, Weights
 from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth, Yule
 from aspartik.b3.substitutions import HKY
-from aspartik.data.msa import MSA
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
+from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
 
 
 @pytest.mark.manual
@@ -58,7 +57,7 @@ def test_compare_likelihood():
         ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
         ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
         UpDown(Internals(tree), clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
-        SubtreeLeap(tree, Normal(0, 1), rng, weight=msa.num_sequences),
+        SubtreeLeap(tree, Uniform(0, 1), rng, weight=msa.num_sequences),
         FixedHeightSubtreePruneRegraft(tree, rng, weight=msa.num_sequences / 10),
         ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
         RandomWalk(growth_rate, window=1, rng=rng, weight=3),

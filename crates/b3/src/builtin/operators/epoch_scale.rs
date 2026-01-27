@@ -1,7 +1,7 @@
 use anyhow::{Result, ensure};
 use pyo3::{intern, prelude::*, types::PyTuple};
 
-use crate::{operator::Proposal, tree::PyTree};
+use crate::{operator::Proposal, parameters::PyTree};
 use rng::PyRng;
 use util::py_get_attr;
 

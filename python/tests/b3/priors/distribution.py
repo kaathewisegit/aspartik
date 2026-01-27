@@ -1,7 +1,6 @@
 import pytest
 
-from aspartik.b3 import Tree
-from aspartik.b3.parameters import Real, Root
+from aspartik.b3.parameters import Real, Root, Tree
 from aspartik.b3.priors import Distribution
 from aspartik.math import is_close
 from aspartik.stats.distributions import Normal, Poisson

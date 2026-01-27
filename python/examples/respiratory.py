@@ -9,7 +9,7 @@ from collections import deque
 from datetime import datetime
 from pathlib import Path
 
-from aspartik.b3 import MCMC, Clock, Internal, Tree
+from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
@@ -20,7 +20,7 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, Weights
+from aspartik.b3.parameters import Internals, Real, Tree, Weights
 from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline

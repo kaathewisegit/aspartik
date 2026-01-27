@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 from ...rng import RNG
 from ...stats.distributions import Distribution
-from .. import Operator, Proposal, Tree
+from .. import Operator, Proposal
+from ..parameters import Tree
 from ._util import assert_two_internals, family
 
 

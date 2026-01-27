@@ -4,22 +4,24 @@ pub mod clock;
 pub mod likelihood;
 pub mod mcmc;
 pub mod operator;
+pub mod parameters;
 pub mod prior;
 pub mod substitution;
 mod transitions;
-mod tree;
 pub mod util;
 
 pub use callback::PyCallback;
 pub use prior::PyPrior;
 pub use transitions::Transitions;
-pub use tree::Tree;
 
 use pyo3::prelude::*;
 
 #[pymodule(name = "_b3_rust_impl")]
 pub mod pymodule {
 	use super::*;
+
+	#[pymodule_export]
+	use clock::PyClock;
 
 	#[pymodule_export]
 	use likelihood::PyCpu4Likelihood;
@@ -32,12 +34,12 @@ pub mod pymodule {
 	use mcmc::Mcmc;
 	#[pymodule_export]
 	use operator::PyProposal;
+
 	#[pymodule_export]
-	use tree::Internal;
+	use parameters::{Internal, Leaf, PyTree};
+
 	#[pymodule_export]
-	use tree::Leaf;
-	#[pymodule_export]
-	use tree::PyTree;
+	use parameters::PyReal;
 
 	#[pymodule_export]
 	use builtin::operators::EpochScale;
@@ -58,9 +60,6 @@ pub mod pymodule {
 	use substitution::JC;
 	#[pymodule_export]
 	use substitution::K80;
-
-	#[pymodule_export]
-	use clock::PyClock;
 
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {

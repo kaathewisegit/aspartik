@@ -1,7 +1,7 @@
 use anyhow::Result;
 use pyo3::{prelude::*, types::PyTuple};
 
-use crate::tree::PyTree;
+use crate::parameters::PyTree;
 use pyutil::SupportsFloat;
 
 /// Uncalibrated Yule birth-rate model

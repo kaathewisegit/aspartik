@@ -1,7 +1,7 @@
 use anyhow::Result;
 use pyo3::{prelude::*, types::PyTuple};
 
-use crate::tree::{Node, PyTree, Tree};
+use crate::parameters::{Node, PyTree, Tree};
 use pyutil::SupportsFloat;
 
 /// All nodes (leaves and internals) of a tree sorted by height

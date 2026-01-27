@@ -2,7 +2,7 @@ use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::{prelude::*, types::PyType};
 
-use crate::tree::Tree;
+use crate::parameters::Tree;
 use pyutil::SupportsFloat;
 
 pub struct StrictClock {

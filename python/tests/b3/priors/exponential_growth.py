@@ -3,7 +3,7 @@ import pytest
 
 import re
 
-from aspartik.b3 import Tree
+from aspartik.b3.parameters import Tree
 from aspartik.b3.priors import ExponentialGrowth
 from aspartik.data.newick import Tree as NewickTree
 

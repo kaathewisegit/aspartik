@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Optional, SupportsFloat
 
-from ..b3 import Callback, Clock, Internal, Leaf, Node, Operator, Prior, Stateful, Tree
+from ..b3 import Callback, Clock, Operator, Prior, Stateful
 from ..b3.likelihoods import Likelihood
-from ..b3.parameters import Scalable, Weights
+from ..b3.parameters import Node, Scalable, Weights
 from ..b3.substitutions import Substiution4
 from ..data.msa import MSA
 from ..data.newick import Tree as NewickTree
@@ -189,3 +189,7 @@ class K80:
 class HKY:
     frequencies: Weights | tuple[float, float, float, float]
     kappa: SupportsFloat
+
+class Real(Stateful, SupportsFloat, Scalable):
+    def __init__(self, value: SupportsFloat): ...
+    def set(self, value: SupportsFloat) -> None: ...
