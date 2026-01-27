@@ -1,9 +1,6 @@
 use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
-use pyo3::{
-	prelude::*,
-	types::{PyList, PyTuple},
-};
+use pyo3::{prelude::*, types::PyList};
 use rand::Rng as _;
 
 use crate::{
@@ -21,11 +18,13 @@ pub struct Mcmc {
 
 	current_step: Mutex<usize>,
 
+	#[pyo3(get)]
 	state: Vec<Py<PyAny>>,
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
 	likelihood: PyLikelihood,
 	callbacks: Vec<PyCallback>,
+	#[pyo3(get)]
 	rng: Py<PyRng>,
 }
 
@@ -68,12 +67,6 @@ impl Mcmc {
 		*self.current_step.lock()
 	}
 
-	/// All stateful objects tracked by this `MCMC` instance
-	#[getter]
-	fn state(&self, py: Python) -> Vec<Py<PyAny>> {
-		self.state.iter().map(|s| s.clone_ref(py)).collect()
-	}
-
 	/// All priors
 	#[getter]
 	fn priors(&self, py: Python) -> Vec<Py<PyAny>> {
@@ -96,30 +89,6 @@ impl Mcmc {
 	#[getter]
 	fn callbacks(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.callbacks.iter().map(|l| l.clone_ref(py)).collect()
-	}
-
-	/// Randomness source of this analysis
-	///
-	/// This objects is used for internal randomness generation (such as
-	/// picking the operator on each step).  Since the underlying object is
-	/// shared, using it will outside of MCMC might alter the rest of the
-	/// analysis.
-	#[getter]
-	fn rng(&self, py: Python) -> Py<PyRng> {
-		self.rng.clone_ref(py)
-	}
-
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
-		(
-			self.state(py),
-			self.priors(py),
-			self.operators(py),
-			self.likelihood(py),
-			self.callbacks(py),
-			self.rng(py),
-		)
-			.into_pyobject(py)
-			.map(|o| o.unbind())
 	}
 
 	/// Execute `n` steps of the Markov chain
