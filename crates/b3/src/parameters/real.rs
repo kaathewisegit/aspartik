@@ -10,35 +10,35 @@ pub struct Real {
 }
 
 impl Real {
-	fn new(value: f64) -> Self {
+	pub fn new(value: f64) -> Self {
 		Self {
 			value,
 			backup: value,
 		}
 	}
 
-	fn value(&self) -> f64 {
+	pub fn value(&self) -> f64 {
 		self.value
 	}
 
-	fn set(&mut self, new_value: f64) {
+	pub fn set(&mut self, new_value: f64) {
 		self.value = new_value;
 	}
 
-	fn scale(&mut self, factor: f64) -> usize {
+	pub fn scale(&mut self, factor: f64) -> usize {
 		self.value *= factor;
 		1
 	}
 
-	fn is_changed(&self) -> bool {
+	pub fn is_changed(&self) -> bool {
 		self.value != self.backup
 	}
 
-	fn accept(&mut self) {
+	pub fn accept(&mut self) {
 		self.backup = self.value;
 	}
 
-	fn reject(&mut self) {
+	pub fn reject(&mut self) {
 		self.value = self.backup;
 	}
 }
@@ -55,13 +55,13 @@ impl PartialOrd for Real {
 	}
 }
 
-#[pyclass(name = "Real", module = "aspartik.b3.parameters")]
+#[pyclass(name = "Real", module = "aspartik.b3.parameters", frozen)]
 pub struct PyReal {
 	inner: Mutex<Real>,
 }
 
 impl PyReal {
-	fn inner(&self) -> MutexGuard<'_, Real> {
+	pub fn inner(&self) -> MutexGuard<'_, Real> {
 		self.inner.lock()
 	}
 }

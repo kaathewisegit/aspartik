@@ -5,8 +5,9 @@ use pyo3::{
 	prelude::*,
 };
 
-use pyutil::SupportsFloat;
 use util::py_bail;
+
+use crate::parameters::PyReal;
 
 pub trait SubstitutionModel<const N: usize, F> {
 	fn update(&mut self, py: Python) -> Result<bool>;
@@ -106,7 +107,7 @@ impl JC {
 pub struct K80 {
 	/// A transition is taken to be kappa times more likely than a
 	/// transversion.
-	kappa: SupportsFloat,
+	kappa: Py<PyReal>,
 	cached_kappa: f64,
 }
 
@@ -120,11 +121,11 @@ impl K80 {
 }
 
 impl SubstitutionModel<4, f64> for K80 {
-	fn update(&mut self, py: Python) -> Result<bool> {
-		let kappa = self.kappa.extract(py)?;
+	fn update(&mut self, _py: Python) -> Result<bool> {
+		let kappa = &*self.kappa.get().inner();
 
-		if kappa != self.cached_kappa {
-			self.cached_kappa = kappa;
+		if kappa.is_changed() {
+			self.cached_kappa = kappa.value();
 			Ok(true)
 		} else {
 			Ok(false)
@@ -161,7 +162,7 @@ impl SubstitutionModel<4, f64> for K80 {
 #[pymethods]
 impl K80 {
 	#[new]
-	pub fn new(kappa: SupportsFloat) -> Self {
+	pub fn new(kappa: Py<PyReal>) -> Self {
 		Self {
 			kappa,
 			cached_kappa: f64::NAN,
@@ -186,7 +187,8 @@ pub struct HKY {
 	#[pyo3(get)]
 	frequencies: Py<PyAny>,
 	/// Transition/transversion ratio
-	kappa: SupportsFloat,
+	#[pyo3(get)]
+	kappa: Py<PyReal>,
 
 	cached_kappa: f64,
 	cached_frequencies: (f64, f64, f64, f64),
@@ -249,13 +251,12 @@ impl SubstitutionModel<4, f64> for HKY {
 			bf.get_item(2)?.extract::<f64>()?,
 			bf.get_item(3)?.extract::<f64>()?,
 		);
-		let kappa = self.kappa.extract(py)?;
 
-		if kappa != self.cached_kappa
+		if self.kappa.get().inner().is_changed()
 			|| frequencies != self.cached_frequencies
 		{
 			self.cached_frequencies = frequencies;
-			self.cached_kappa = kappa;
+			self.cached_kappa = self.kappa.get().inner().value();
 			self.update_matrices();
 			Ok(true)
 		} else {
@@ -279,7 +280,7 @@ impl SubstitutionModel<4, f64> for HKY {
 #[pymethods]
 impl HKY {
 	#[new]
-	pub fn new(frequencies: Py<PyAny>, kappa: SupportsFloat) -> Self {
+	pub fn new(frequencies: Py<PyAny>, kappa: Py<PyReal>) -> Self {
 		Self {
 			kappa,
 			frequencies,
