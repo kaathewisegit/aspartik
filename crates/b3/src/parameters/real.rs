@@ -3,6 +3,8 @@ use parking_lot::{Mutex, MutexGuard};
 use pyo3::{basic::CompareOp, prelude::*};
 use serde::{Deserialize, Serialize};
 
+use super::Parameter;
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Real {
 	value: f64,
@@ -29,16 +31,27 @@ impl Real {
 		self.value *= factor;
 		1
 	}
+}
 
-	pub fn is_changed(&self) -> bool {
+impl Parameter for Real {
+	fn is_changed(&self) -> bool {
 		self.value != self.backup
 	}
 
-	pub fn accept(&mut self) {
+	fn dump(&self) -> Result<Vec<u8>> {
+		Ok(rmp_serde::to_vec(self)?)
+	}
+
+	fn load(&mut self, bytes: &[u8]) -> Result<()> {
+		*self = rmp_serde::from_slice(bytes)?;
+		Ok(())
+	}
+
+	fn accept(&mut self) {
 		self.backup = self.value;
 	}
 
-	pub fn reject(&mut self) {
+	fn reject(&mut self) {
 		self.value = self.backup;
 	}
 }
@@ -83,12 +96,20 @@ impl PyReal {
 		self.inner().set(new_value)
 	}
 
+	fn scale(&self, factor: f64) -> usize {
+		self.inner().scale(factor)
+	}
+
 	fn is_changed(&self) -> bool {
 		self.inner().is_changed()
 	}
 
-	fn scale(&self, factor: f64) -> usize {
-		self.inner().scale(factor)
+	fn dump(&self) -> Result<Vec<u8>> {
+		self.inner().dump()
+	}
+
+	fn load(&self, bytes: &[u8]) -> Result<()> {
+		self.inner().load(bytes)
 	}
 
 	fn accept(&self) {
@@ -97,15 +118,6 @@ impl PyReal {
 
 	fn reject(&self) {
 		self.inner().reject();
-	}
-
-	fn dump(&self) -> Result<Vec<u8>> {
-		Ok(rmp_serde::to_vec(&*self.inner())?)
-	}
-
-	fn load(&self, bytes: &[u8]) -> Result<()> {
-		*self.inner() = rmp_serde::from_slice(bytes)?;
-		Ok(())
 	}
 
 	fn __richcmp__(&self, other: f64, op: CompareOp) -> bool {

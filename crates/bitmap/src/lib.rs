@@ -50,4 +50,8 @@ impl Bitmap {
 			*byte = 0b1111_1111;
 		}
 	}
+
+	pub fn is_any_on(&self) -> bool {
+		self.inner.iter().any(|&b| b != 0)
+	}
 }

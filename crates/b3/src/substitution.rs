@@ -7,7 +7,7 @@ use pyo3::{
 
 use util::py_bail;
 
-use crate::parameters::PyReal;
+use crate::parameters::{Parameter, PyReal};
 
 pub trait SubstitutionModel<const N: usize, F> {
 	fn update(&mut self, py: Python) -> Result<bool>;

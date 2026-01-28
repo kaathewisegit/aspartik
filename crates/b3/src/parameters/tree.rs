@@ -19,6 +19,7 @@ use std::{
 	ops::Deref,
 };
 
+use super::Parameter;
 use bitmap::Bitmap;
 use data::newick::{
 	Edge as NewickEdge, Node as NewickNode, NodeIndex as NewickNodeIndex,
@@ -391,20 +392,6 @@ impl Tree {
 		}
 
 		Ok(())
-	}
-
-	pub fn accept(&mut self) {
-		self.children.accept();
-		self.parents.accept();
-		self.heights.accept();
-		self.clear_updated();
-	}
-
-	pub fn reject(&mut self) {
-		self.children.reject();
-		self.parents.reject();
-		self.heights.reject();
-		self.clear_updated();
 	}
 
 	fn clear_updated(&mut self) {
@@ -935,6 +922,38 @@ impl Tree {
 	}
 }
 
+impl Parameter for Tree {
+	fn is_changed(&self) -> bool {
+		self.updated_edges.is_any_on()
+	}
+
+	fn dump(&self) -> Result<Vec<u8>> {
+		Ok(rmp_serde::to_vec(self)?)
+	}
+
+	fn load(&mut self, bytes: &[u8]) -> Result<()> {
+		*self = rmp_serde::from_slice(bytes)?;
+		// TODO: saner MCMC.load in regards to likelihood
+		// initialization
+		self.mark_all_edges_updated();
+		Ok(())
+	}
+
+	fn accept(&mut self) {
+		self.children.accept();
+		self.parents.accept();
+		self.heights.accept();
+		self.clear_updated();
+	}
+
+	fn reject(&mut self) {
+		self.children.reject();
+		self.parents.reject();
+		self.heights.reject();
+		self.clear_updated();
+	}
+}
+
 macro_rules! make_iterator {
 	($name: ident, $t: tt) => {
 		#[pyclass(frozen, module = "aspartik.b3.tree")]
@@ -1051,16 +1070,11 @@ impl PyTree {
 	}
 
 	fn dump(&self) -> Result<Vec<u8>> {
-		Ok(rmp_serde::to_vec(&*self.inner())?)
+		self.inner().dump()
 	}
 
 	fn load(&self, bytes: &[u8]) -> Result<()> {
-		let inner = &mut *self.inner();
-		*inner = rmp_serde::from_slice(bytes)?;
-		// TODO: saner MCMC.load in regards to likelihood
-		// initialization
-		inner.mark_all_edges_updated();
-		Ok(())
+		self.inner().load(bytes)
 	}
 
 	/// Randomizes the tree structure
