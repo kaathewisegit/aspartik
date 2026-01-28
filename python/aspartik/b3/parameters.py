@@ -11,7 +11,6 @@ from .._aspartik_rust_impl._b3_rust_impl import (
     RealVector as RealVector,
     Tree as Tree,
 )
-from . import Stateful
 
 type Node = Leaf | Internal
 """Any node of the phylogenetic tree
@@ -41,11 +40,3 @@ class Internals(Scalable):
         self.tree.scale(factor)
 
         return self.tree.num_internals
-
-
-@dataclass
-class Root:
-    tree: Tree
-
-    def __float__(self) -> float:
-        return self.tree.height_of(self.tree.root)
