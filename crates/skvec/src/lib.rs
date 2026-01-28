@@ -178,6 +178,15 @@ impl<T> SkVec<T> {
 			self.edited[index] = false;
 		}
 	}
+
+	/// Returns `true` if at least a single element has been changed
+	///
+	/// This only accounts for `set` calls, not values.  So, if an element
+	/// is overwritten with the same value, `is_changed` will still return
+	/// `true`.
+	pub fn is_changed(&self) -> bool {
+		self.edited.iter().any(|&e| e)
+	}
 }
 
 // Trait implementations

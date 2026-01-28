@@ -28,7 +28,7 @@ impl ClassVector {
 
 impl Parameter for ClassVector {
 	fn is_changed(&self) -> bool {
-		todo!()
+		self.classes.is_changed()
 	}
 
 	fn dump(&self) -> Result<Vec<u8>> {
