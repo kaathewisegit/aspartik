@@ -100,7 +100,11 @@ impl HeteroLikelihood {
 		Ok(())
 	}
 
-	fn likelihood(&self) -> Result<f64> {
+	fn likelihood(&self, py: Python) -> Result<f64> {
+		for likelihood in &self.likelihoods {
+			likelihood.likelihood(py)?;
+		}
+
 		let likelihoods: Vec<Vec<f64>> = self
 			.likelihoods
 			.iter()
@@ -162,8 +166,8 @@ impl PyHeteroLikelihood {
 		self.inner.lock().propose(py)
 	}
 
-	fn likelihood(&self) -> Result<f64> {
-		self.inner.lock().likelihood()
+	fn likelihood(&self, py: Python) -> Result<f64> {
+		self.inner.lock().likelihood(py)
 	}
 
 	fn accept(&self, py: Python) -> Result<()> {
