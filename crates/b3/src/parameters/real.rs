@@ -100,26 +100,6 @@ impl PyReal {
 		self.inner().scale(factor)
 	}
 
-	fn is_changed(&self) -> bool {
-		self.inner().is_changed()
-	}
-
-	fn dump(&self) -> Result<Vec<u8>> {
-		self.inner().dump()
-	}
-
-	fn load(&self, bytes: &[u8]) -> Result<()> {
-		self.inner().load(bytes)
-	}
-
-	fn accept(&self) {
-		self.inner().accept();
-	}
-
-	fn reject(&self) {
-		self.inner().reject();
-	}
-
 	fn __richcmp__(&self, other: f64, op: CompareOp) -> bool {
 		let this = self.value();
 		match op {

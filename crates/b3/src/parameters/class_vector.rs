@@ -59,14 +59,3 @@ impl PyClassVector {
 		self.inner.lock()
 	}
 }
-
-#[pymethods]
-impl PyClassVector {
-	fn accept(&self) {
-		self.inner().accept()
-	}
-
-	fn reject(&self) {
-		self.inner().reject()
-	}
-}

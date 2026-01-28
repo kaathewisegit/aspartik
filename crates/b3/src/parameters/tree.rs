@@ -1069,14 +1069,6 @@ impl PyTree {
 		Ok(tree)
 	}
 
-	fn dump(&self) -> Result<Vec<u8>> {
-		self.inner().dump()
-	}
-
-	fn load(&self, bytes: &[u8]) -> Result<()> {
-		self.inner().load(bytes)
-	}
-
 	/// Randomizes the tree structure
 	///
 	/// This methods creates a random [Prüfer sequence][wiki] and
@@ -1399,9 +1391,6 @@ impl PyTree {
 		self.inner().to_newick(internal_ids)
 	}
 
-	// protocols
-
-	// Stateful
 	fn accept(&self) {
 		self.inner().accept()
 	}
