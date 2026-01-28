@@ -109,6 +109,9 @@ class CUDALikelihood(Likelihood):
         cuda_device: int = 0,
     ): ...
 
+class HeteroLikelihood(Likelihood):
+    def __init__(self, likelihoods: list[Likelihood]): ...
+
 class MCMC:
     def __init__(
         self,
@@ -190,6 +193,8 @@ class K80:
 class HKY:
     frequencies: RealVector | tuple[float, float, float, float]
     kappa: SupportsFloat
+
+class ClassVector: ...
 
 class Real(SupportsFloat, Scalable):
     def __init__(self, value: SupportsFloat): ...

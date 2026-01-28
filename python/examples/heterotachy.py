@@ -8,7 +8,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.likelihoods import CPU4Likelihood, WeightedLikelihood
+from aspartik.b3.likelihoods import CPU4Likelihood, HeteroLikelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -39,18 +39,16 @@ def repeat(v, count: int):
     return [deepcopy(v) for _ in range(count)]
 
 
-kappas = repeat(Real(2.0), N)
-freqs = repeat(RealVector(0.25, 0.25, 0.25, 0.25), N)
+kappas = [Real(2.0) for _ in range(N)]
+freqs = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
 population_size = Real(1.0)
-clock_rates = repeat(Real(0.001), N)
-likelihood_weights = RealVector(*repeat(1 / N, N))
+clock_rates = [Real(0.001) for _ in range(N)]
 
 params = [
     *kappas,
     *freqs,
     population_size,
     *clock_rates,
-    likelihood_weights,
 ]
 
 priors = [
@@ -58,7 +56,6 @@ priors = [
     *(Bound(freq) for freq in freqs),
     Bound(population_size),
     *(Bound(clock_rate) for clock_rate in clock_rates),
-    Bound(likelihood_weights),
     *(Distribution(kappa, LogNormal(1.0, 1.25)) for kappa in kappas),
     *(Distribution(clock_rate, Laplace(0, 0.5)) for clock_rate in clock_rates),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
@@ -80,11 +77,9 @@ operators = [
     FixedHeightSubtreePruneRegraft(tree, rng, weight=4 * N),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3 * N),
     *(DeltaExchange(freq, 0.01, rng, weight=3) for freq in freqs),
-    DeltaExchange(likelihood_weights, 0.01, rng, weight=3 * N),
 ]
 
-likelihood = WeightedLikelihood(
-    weights=likelihood_weights,
+likelihood = HeteroLikelihood(
     likelihoods=[
         CPU4Likelihood(
             msa=msa,
@@ -109,7 +104,6 @@ loggers = [
             "population_size": population_size,
             "clock_rates": clock_rates,
             "frequencies": freqs,
-            "likelihood_weights": likelihood_weights,
             "tree:height": lambda: tree.height_of(tree.root),
             "tree:length": lambda: tree.total_length(),
         },

@@ -178,6 +178,24 @@ where
 		self.launched_update = false;
 		Ok(())
 	}
+
+	fn num_patterns(&self) -> usize {
+		self.pattern_weights.len()
+	}
+
+	fn pattern_likelihoods(&mut self) -> Result<Vec<f64>> {
+		let mut out = vec![0.0; self.num_patterns()];
+
+		self.calculator.likelihood(&mut out)?;
+
+		for (likelihood, weight) in
+			out.iter_mut().zip(&self.pattern_weights)
+		{
+			*likelihood *= f64::from(*weight);
+		}
+
+		Ok(out)
+	}
 }
 
 fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<[f64; 4]>, Vec<u32>) {
@@ -244,6 +262,16 @@ macro_rules! likelihood_methods {
 
 			fn reject(&self) -> Result<()> {
 				self.inner.lock().reject()
+			}
+		}
+
+		impl $type {
+			pub fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
+				self.inner.lock().pattern_likelihoods()
+			}
+
+			pub fn num_patterns(&self) -> usize {
+				self.inner.lock().num_patterns()
 			}
 		}
 	};

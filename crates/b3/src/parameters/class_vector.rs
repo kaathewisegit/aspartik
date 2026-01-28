@@ -3,6 +3,8 @@ use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use std::ops::Index;
+
 use super::Parameter;
 use skvec::SkVec;
 
@@ -49,6 +51,14 @@ impl Parameter for ClassVector {
 	}
 }
 
+impl Index<usize> for ClassVector {
+	type Output = u8;
+
+	fn index(&self, index: usize) -> &u8 {
+		&self.classes[index]
+	}
+}
+
 #[pyclass(name = "ClassVector", module = "aspartik.b3.parameters", frozen)]
 pub struct PyClassVector {
 	inner: Mutex<ClassVector>,
@@ -57,5 +67,15 @@ pub struct PyClassVector {
 impl PyClassVector {
 	pub fn inner(&self) -> MutexGuard<'_, ClassVector> {
 		self.inner.lock()
+	}
+}
+
+#[pymethods]
+impl PyClassVector {
+	#[new]
+	pub fn new(num_classes: u8, len: usize) -> Self {
+		Self {
+			inner: Mutex::new(ClassVector::new(num_classes, len)),
+		}
 	}
 }

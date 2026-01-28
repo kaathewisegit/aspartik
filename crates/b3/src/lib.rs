@@ -24,11 +24,10 @@ pub mod pymodule {
 	use clock::PyClock;
 
 	#[pymodule_export]
-	use likelihood::PyCpu4Likelihood;
-	#[pymodule_export]
-	use likelihood::PyCudaLikelihood;
-	#[pymodule_export]
-	use likelihood::PyParallel4Likelihood;
+	use likelihood::{
+		PyCpu4Likelihood, PyCudaLikelihood, PyHeteroLikelihood,
+		PyParallel4Likelihood,
+	};
 
 	#[pymodule_export]
 	use mcmc::Mcmc;

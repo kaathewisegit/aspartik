@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol, SupportsFloat, runtime_checkable
 
 from .._aspartik_rust_impl._b3_rust_impl import (
+    ClassVector as ClassVector,
     Internal as Internal,
     Leaf as Leaf,
     Proposal as Proposal,
