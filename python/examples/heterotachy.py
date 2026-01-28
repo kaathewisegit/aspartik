@@ -18,7 +18,7 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, Tree, Weights
+from aspartik.b3.parameters import Internals, Real, RealVector, Tree
 from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
@@ -40,10 +40,10 @@ def repeat(v, count: int):
 
 
 kappas = repeat(Real(2.0), N)
-freqs = repeat(Weights(0.25, 0.25, 0.25, 0.25), N)
+freqs = repeat(RealVector(0.25, 0.25, 0.25, 0.25), N)
 population_size = Real(1.0)
 clock_rates = repeat(Real(0.001), N)
-likelihood_weights = Weights(*repeat(1 / N, N))
+likelihood_weights = RealVector(*repeat(1 / N, N))
 
 params = [
     *kappas,

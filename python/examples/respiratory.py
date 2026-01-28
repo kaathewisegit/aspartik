@@ -20,7 +20,7 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, Tree, Weights
+from aspartik.b3.parameters import Internals, Real, RealVector, Tree
 from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
@@ -58,7 +58,7 @@ def make_mcmc(fasta_path: str):
     population_size = Real(1.0)
     growth_rate = Real(0.0)
     clock_rate = Real(0.001)
-    frequencies = Weights(0.25, 0.25, 0.25, 0.25)
+    frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
     params = [kappa, population_size, growth_rate, clock_rate]
 
     priors = [

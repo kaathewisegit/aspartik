@@ -3,10 +3,12 @@ use pyo3::prelude::*;
 
 mod class_vector;
 mod real;
+mod real_vector;
 mod tree;
 
 pub use class_vector::{ClassVector, PyClassVector};
 pub use real::{PyReal, Real};
+pub use real_vector::{PyRealVector, RealVector};
 pub use tree::{Internal, Leaf, Node, PyTree, Tree};
 
 pub trait Parameter {

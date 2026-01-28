@@ -16,7 +16,7 @@ from aspartik.b3.operators import (
     SubtreeSlide,
     TreeScale,
 )
-from aspartik.b3.parameters import Real, Tree, Weights
+from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
@@ -33,7 +33,7 @@ def make_mcmc(fasta_path: str):
 
     kappa = Real(2.0)
     population_size = Real(2.0)
-    frequencies = Weights(0.25, 0.25, 0.25, 0.25)
+    frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
 
     priors = [
         Distribution(kappa, LogNormal(1.0, 1.25)),
@@ -88,7 +88,7 @@ def make_mcmc(fasta_path: str):
     ]
 
     mcmc = MCMC(
-        state=[tree],
+        state=[tree, kappa, population_size, frequencies],
         priors=priors,
         operators=operators,
         likelihood=likelihood,

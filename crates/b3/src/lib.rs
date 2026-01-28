@@ -36,7 +36,7 @@ pub mod pymodule {
 	use operator::PyProposal;
 
 	#[pymodule_export]
-	use parameters::{Internal, Leaf, PyTree};
+	use parameters::{Internal, Leaf, PyClassVector, PyRealVector, PyTree};
 
 	#[pymodule_export]
 	use parameters::PyReal;

@@ -13,7 +13,7 @@ from io import BufferedWriter
 from typing import Any, Optional
 
 from . import MCMC, Callback, Prior
-from .parameters import Real, Tree, Weights
+from .parameters import Real, RealVector, Tree
 
 
 class _LogWriter:
@@ -132,7 +132,7 @@ def _serialize(item):
     if isinstance(item, Real):
         return float(item)
 
-    elif isinstance(item, Weights):
+    elif isinstance(item, RealVector):
         return list(item)
 
     elif isinstance(item, Prior):

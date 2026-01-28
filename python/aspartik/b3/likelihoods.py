@@ -11,7 +11,7 @@ from .._aspartik_rust_impl._b3_rust_impl import (
     Parallel4Likelihood as Parallel4Likelihood,
 )
 from . import Stateful
-from .parameters import Weights
+from .parameters import RealVector
 
 
 class Likelihood(Stateful, Protocol):
@@ -86,7 +86,7 @@ class WeightedLikelihood(Likelihood):
     """
 
     likelihoods: list[Likelihood]
-    weights: Weights
+    weights: RealVector
 
     def propose(self) -> None:
         for likelihood in self.likelihoods:

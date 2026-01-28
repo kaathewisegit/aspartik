@@ -1,6 +1,6 @@
 import pytest
 
-from aspartik.b3.parameters import Real, Weights
+from aspartik.b3.parameters import Real, RealVector
 
 
 # pyright: reportUnusedExpression=false
@@ -16,12 +16,12 @@ def test_comparison_value():
 
 
 def test_weights_comparable():
-    assert Weights(0.1, 0.2, 0.3) < 0.4
-    assert Weights(0.1, 0.2, 0.3) <= 0.3
-    assert Weights(0.1, 0.2, 0.3) > 0.0
-    assert Weights(0.1, 0.2, 0.3) >= 0.1
+    assert RealVector(0.1, 0.2, 0.3) < 0.4
+    assert RealVector(0.1, 0.2, 0.3) <= 0.3
+    assert RealVector(0.1, 0.2, 0.3) > 0.0
+    assert RealVector(0.1, 0.2, 0.3) >= 0.1
 
-    assert not Weights(0.1, 0.2, 0.3) < 0.2
-    assert not Weights(0.1, 0.2, 0.3) <= 0.2
-    assert not Weights(0.1, 0.2, 0.3) > 0.2
-    assert not Weights(0.1, 0.2, 0.3) >= 0.2
+    assert not RealVector(0.1, 0.2, 0.3) < 0.2
+    assert not RealVector(0.1, 0.2, 0.3) <= 0.2
+    assert not RealVector(0.1, 0.2, 0.3) > 0.2
+    assert not RealVector(0.1, 0.2, 0.3) >= 0.2
