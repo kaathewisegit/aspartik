@@ -1,8 +1,10 @@
 use anyhow::Result;
 
+mod class_vector;
 mod real;
 mod tree;
 
+pub use class_vector::{ClassVector, PyClassVector};
 pub use real::{PyReal, Real};
 pub use tree::{Internal, Leaf, Node, PyTree, Tree};
 
