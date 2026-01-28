@@ -17,10 +17,12 @@ use util::{py_call_method, py_check_method};
 
 mod cpu;
 mod cuda;
+mod hetero;
 mod parallel;
 
 use cpu::CpuLikelihood;
 use cuda::CudaLikelihood;
+pub use hetero::PyHeteroLikelihood;
 use parallel::ParallelLikelihood;
 
 pub trait LikelihoodTrait<const N: usize, F> {
