@@ -385,6 +385,19 @@ impl<T> SkVec<T> {
 			Some(&self[self.len() - 1])
 		}
 	}
+
+	pub fn to_vec(&self) -> Vec<T>
+	where
+		T: Clone,
+	{
+		let mut out = Vec::with_capacity(self.len());
+
+		for i in 0..self.len() {
+			out.push(self[i].clone());
+		}
+
+		out
+	}
 }
 
 // Custom
@@ -419,8 +432,14 @@ impl<T: Clone> From<&[T]> for SkVec<T> {
 }
 
 impl<T: Clone> From<Vec<T>> for SkVec<T> {
-	fn from(value: Vec<T>) -> Self {
-		value.as_slice().into()
+	fn from(values: Vec<T>) -> Self {
+		let mut out = Self::with_capacity(values.len());
+
+		for value in values {
+			out.push(value);
+		}
+
+		out
 	}
 }
 
@@ -429,7 +448,7 @@ impl<T: Clone, const N: usize> From<[T; N]> for SkVec<T> {
 		let mut out = Self::with_capacity(values.len());
 
 		for value in values {
-			out.push(value.clone());
+			out.push(value);
 		}
 
 		out
