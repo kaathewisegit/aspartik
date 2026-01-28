@@ -5,16 +5,16 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Optional, SupportsFloat
 
-from ..b3 import Callback, Clock, Operator, Prior, Stateful
+from ..b3 import Callback, Clock, Operator, Prior
 from ..b3.likelihoods import Likelihood
-from ..b3.parameters import Node, Scalable
+from ..b3.parameters import Node, Parameter, Scalable
 from ..b3.substitutions import Substiution4
 from ..data.msa import MSA
 from ..data.newick import Tree as NewickTree
 from ..rng import RNG
 from ..stats.distributions import Sample
 
-class Tree(Stateful):
+class Tree:
     def __init__(self, names: list[str], rng: RNG): ...
     @classmethod
     def from_newick(_cls, newick: NewickTree) -> Tree: ...
@@ -111,7 +111,7 @@ class CUDALikelihood(Likelihood):
 class MCMC:
     def __init__(
         self,
-        state: Sequence[Stateful],
+        state: Sequence[Parameter],
         priors: Sequence[Prior],
         operators: Sequence[Operator],
         likelihood: Likelihood,
@@ -121,7 +121,7 @@ class MCMC:
     @property
     def current_step(self) -> int: ...
     @property
-    def state(self) -> list[Stateful]: ...
+    def state(self) -> list[Parameter]: ...
     @property
     def priors(self) -> list[Prior]: ...
     @property
@@ -190,9 +190,9 @@ class HKY:
     frequencies: RealVector | tuple[float, float, float, float]
     kappa: SupportsFloat
 
-class Real(Stateful, SupportsFloat, Scalable):
+class Real(SupportsFloat, Scalable):
     def __init__(self, value: SupportsFloat): ...
     def set(self, value: SupportsFloat) -> None: ...
 
-class RealVector(Stateful):
+class RealVector:
     def __init__(self, values: list[SupportsFloat]): ...

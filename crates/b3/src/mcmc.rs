@@ -10,6 +10,7 @@ use crate::{
 	PyCallback, PyPrior,
 	likelihood::PyLikelihood,
 	operator::{Proposal, PyOperator, WeightedScheduler},
+	parameters::PyParameter,
 };
 use rng::PyRng;
 use util::{py_call_method, time};
@@ -21,8 +22,7 @@ pub struct Mcmc {
 
 	current_step: Mutex<usize>,
 
-	#[pyo3(get)]
-	state: Vec<Py<PyAny>>,
+	state: Vec<PyParameter>,
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
 	likelihood: PyLikelihood,
@@ -40,7 +40,7 @@ impl Mcmc {
 	fn new(
 		py: Python,
 
-		state: Vec<Py<PyAny>>,
+		state: Vec<PyParameter>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
 		likelihood: PyLikelihood,
@@ -199,12 +199,11 @@ impl Mcmc {
 
 		encode::write_array_len(&mut out, self.state.len() as u32)?;
 		for param in &self.state {
-			let bytes = py_call_method!(py, param, "dump")?;
-			let bytes = bytes.cast_bound::<PyBytes>(py).unwrap();
-			let bytes = bytes.as_bytes();
+			let param = &*param.as_ref();
+			let bytes = param.dump()?;
 
 			encode::write_bin_len(&mut out, bytes.len() as u32)?;
-			out.extend_from_slice(bytes);
+			out.extend_from_slice(&bytes);
 		}
 
 		let bytes = py_call_method!(py, self.rng, "dump")?;
@@ -231,12 +230,9 @@ impl Mcmc {
 		for i in 0..num_params {
 			let len = decode::read_bin_len(&mut bytes)? as usize;
 			let param_bytes = &bytes[..len];
-			py_call_method!(
-				py,
-				self.state[i],
-				"load",
-				param_bytes
-			)?;
+
+			let param = &mut *self.state[i].as_ref();
+			param.load(param_bytes)?;
 
 			bytes = &bytes[len..];
 		}
@@ -348,13 +344,15 @@ impl Mcmc {
 			self.likelihood.accept(py)?;
 
 			for parameter in &self.state {
-				py_call_method!(py, parameter, "accept")?;
+				let parameter = &mut *parameter.as_ref();
+				parameter.accept();
 			}
 		} else {
 			self.likelihood.reject(py)?;
 
 			for parameter in &self.state {
-				py_call_method!(py, parameter, "reject")?;
+				let parameter = &mut *parameter.as_ref();
+				parameter.reject();
 			}
 		}
 

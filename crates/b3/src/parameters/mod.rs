@@ -1,4 +1,5 @@
 use anyhow::Result;
+use parking_lot::{MappedMutexGuard, MutexGuard};
 use pyo3::prelude::*;
 
 mod class_vector;
@@ -24,23 +25,76 @@ pub trait Parameter {
 }
 
 pub enum PyParameter {
-	Tree(Py<PyTree>),
-	Real(Py<PyReal>),
 	ClassVector(Py<PyClassVector>),
+	Real(Py<PyReal>),
+	RealVector(Py<PyRealVector>),
+	Tree(Py<PyTree>),
 }
 
 impl<'py> FromPyObject<'_, 'py> for PyParameter {
 	type Error = PyErr;
 
 	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
-		if let Ok(tree) = obj.cast::<PyTree>() {
-			Ok(Self::Tree(tree.into()))
+		if let Ok(class_vector) = obj.cast::<PyClassVector>() {
+			Ok(Self::ClassVector(class_vector.into()))
 		} else if let Ok(real) = obj.cast::<PyReal>() {
 			Ok(Self::Real(real.into()))
-		} else if let Ok(class_vector) = obj.cast::<PyClassVector>() {
-			Ok(Self::ClassVector(class_vector.into()))
+		} else if let Ok(real_vector) = obj.cast::<PyRealVector>() {
+			Ok(Self::RealVector(real_vector.into()))
+		} else if let Ok(tree) = obj.cast::<PyTree>() {
+			Ok(Self::Tree(tree.into()))
 		} else {
 			todo!("descriptive error")
+		}
+	}
+}
+
+impl<'py> IntoPyObject<'py> for PyParameter {
+	type Target = PyAny;
+	type Output = Bound<'py, PyAny>;
+	type Error = PyErr;
+
+	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
+		Ok(match self {
+			Self::ClassVector(p) => {
+				Bound::new(py, p.clone_ref(py))?.into_any()
+			}
+			Self::Real(p) => {
+				Bound::new(py, p.clone_ref(py))?.into_any()
+			}
+			Self::RealVector(p) => {
+				Bound::new(py, p.clone_ref(py))?.into_any()
+			}
+			Self::Tree(p) => {
+				Bound::new(py, p.clone_ref(py))?.into_any()
+			}
+		})
+	}
+}
+
+impl PyParameter {
+	pub fn as_ref(&self) -> MappedMutexGuard<'_, dyn Parameter> {
+		match self {
+			Self::ClassVector(p) => {
+				MutexGuard::map(p.get().inner(), |r| {
+					r as &mut dyn Parameter
+				})
+			}
+			Self::Real(p) => {
+				MutexGuard::map(p.get().inner(), |r| {
+					r as &mut dyn Parameter
+				})
+			}
+			Self::RealVector(p) => {
+				MutexGuard::map(p.get().inner(), |r| {
+					r as &mut dyn Parameter
+				})
+			}
+			Self::Tree(p) => {
+				MutexGuard::map(p.get().inner(), |r| {
+					r as &mut dyn Parameter
+				})
+			}
 		}
 	}
 }

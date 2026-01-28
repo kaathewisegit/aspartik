@@ -55,7 +55,7 @@ pub struct PyClassVector {
 }
 
 impl PyClassVector {
-	fn inner(&self) -> MutexGuard<'_, ClassVector> {
+	pub fn inner(&self) -> MutexGuard<'_, ClassVector> {
 		self.inner.lock()
 	}
 }
