@@ -11,6 +11,7 @@ from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CPU4Likelihood, HeteroLikelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
+    ClassvecFlip,
     DeltaExchange,
     FixedHeightSubtreePruneRegraft,
     ParamScale,
@@ -18,7 +19,7 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, RealVector, Tree
+from aspartik.b3.parameters import ClassVector, Internals, Real, RealVector, Tree
 from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
@@ -63,6 +64,18 @@ priors = [
 ]
 
 
+likelihood = HeteroLikelihood(
+    likelihoods=[
+        CPU4Likelihood(
+            msa=msa,
+            substitution=HKY(freq, kappa),
+            clock=Clock.Strict(clock_rate),
+            tree=tree,
+        )
+        for kappa, freq, clock_rate in zip(kappas, freqs, clock_rates)
+    ],
+)
+
 operators = [
     *(ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1) for kappa in kappas),
     *(
@@ -77,19 +90,8 @@ operators = [
     FixedHeightSubtreePruneRegraft(tree, rng, weight=4 * N),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3 * N),
     *(DeltaExchange(freq, 0.01, rng, weight=3) for freq in freqs),
+    ClassvecFlip(likelihood.class_vector, rng, weight=3),
 ]
-
-likelihood = HeteroLikelihood(
-    likelihoods=[
-        CPU4Likelihood(
-            msa=msa,
-            substitution=HKY(freq, kappa),
-            clock=Clock.Strict(clock_rate),
-            tree=tree,
-        )
-        for kappa, freq, clock_rate in zip(kappas, freqs, clock_rates)
-    ],
-)
 
 loggers = [
     TreeLogger(tree=tree, path="target/heterotachy.trees", every=1_000),

@@ -41,9 +41,7 @@ pub mod pymodule {
 	use parameters::PyReal;
 
 	#[pymodule_export]
-	use builtin::operators::EpochScale;
-	#[pymodule_export]
-	use builtin::operators::SubtreeLeap;
+	use builtin::operators::{ClassvecFlip, EpochScale, SubtreeLeap};
 	#[pymodule_export]
 	use builtin::priors::ConstantPopulation;
 	#[pymodule_export]

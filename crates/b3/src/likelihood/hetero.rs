@@ -173,4 +173,9 @@ impl PyHeteroLikelihood {
 	fn reject(&self, py: Python) -> Result<()> {
 		self.inner.lock().reject(py)
 	}
+
+	#[getter]
+	fn class_vector(&self, py: Python) -> Py<PyClassVector> {
+		self.inner.lock().classes.clone_ref(py)
+	}
 }

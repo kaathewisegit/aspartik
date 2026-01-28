@@ -111,6 +111,8 @@ class CUDALikelihood(Likelihood):
 
 class HeteroLikelihood(Likelihood):
     def __init__(self, likelihoods: list[Likelihood]): ...
+    @property
+    def class_vector(self) -> ClassVector: ...
 
 class MCMC:
     def __init__(
@@ -161,6 +163,9 @@ class SubtreeLeap(Operator):
     distribution: Sample[float]
     rng: RNG
     weight: float = 1
+
+class ClassvecFlip(Operator):
+    def __init__(self, classvec: ClassVector, rng: RNG): ...
 
 @dataclass
 class ConstantPopulation(Prior):

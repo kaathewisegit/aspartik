@@ -26,6 +26,15 @@ impl ClassVector {
 	pub fn len(&self) -> usize {
 		self.classes.len()
 	}
+
+	pub fn num_classes(&self) -> u8 {
+		self.num_classes
+	}
+
+	pub fn set(&mut self, index: usize, class: u8) {
+		assert!(class < self.num_classes);
+		self.classes.set(index, class);
+	}
 }
 
 impl Parameter for ClassVector {
