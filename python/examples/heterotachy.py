@@ -33,7 +33,7 @@ rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
 
 
-N = 2
+N = 4
 
 
 def repeat(v, count: int):
@@ -108,6 +108,7 @@ loggers = [
             "frequencies": freqs,
             "tree:height": lambda: tree.height_of(tree.root),
             "tree:length": lambda: tree.total_length(),
+            "classes": lambda: likelihood.class_vector.into_list(),
         },
         path="target/heterotachy.log",
         every=1_000,
@@ -115,7 +116,7 @@ loggers = [
 ]
 
 mcmc = MCMC(
-    state=params + [tree],
+    state=params + [tree, likelihood.class_vector],
     priors=priors,
     operators=operators,
     likelihood=likelihood,

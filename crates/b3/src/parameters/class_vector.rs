@@ -87,4 +87,8 @@ impl PyClassVector {
 			inner: Mutex::new(ClassVector::new(num_classes, len)),
 		}
 	}
+
+	pub fn into_list(&self) -> Vec<usize> {
+		self.inner().classes.iter().map(|&c| c as usize).collect()
+	}
 }
