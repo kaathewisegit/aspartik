@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use anyhow::Result;
-use pyo3::{prelude::*, types::PyTuple};
+use pyo3::prelude::*;
 
 use crate::parameters::{Internal, Leaf, PyTree, Tree};
 
@@ -12,6 +12,7 @@ use crate::parameters::{Internal, Leaf, PyTree, Tree};
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct Monophyly {
+	#[pyo3(get)]
 	tree: Py<PyTree>,
 
 	/// The leaves which must be [monophyletic][w]
@@ -26,17 +27,6 @@ impl Monophyly {
 	#[new]
 	fn new(tree: Py<PyTree>, leaves: Vec<Leaf>) -> Self {
 		Self { tree, leaves }
-	}
-
-	#[getter]
-	fn tree(&self, py: Python) -> Py<PyTree> {
-		self.tree.clone_ref(py)
-	}
-
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
-		(self.tree(py), self.leaves.clone())
-			.into_pyobject(py)
-			.map(|o| o.unbind())
 	}
 
 	fn probability(&self) -> Result<f64> {

@@ -1,8 +1,7 @@
 use anyhow::Result;
-use pyo3::{prelude::*, types::PyTuple};
+use pyo3::prelude::*;
 
-use crate::parameters::{Node, PyTree, Tree};
-use pyutil::SupportsFloat;
+use crate::parameters::{Node, PyReal, PyTree, Tree};
 
 /// All nodes (leaves and internals) of a tree sorted by height
 pub fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
@@ -22,18 +21,18 @@ pub fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
 trait Coalescent {
 	type State: Copy;
 
-	fn fetch_state(&self, py: Python) -> Result<Self::State>;
+	fn fetch_state(&self) -> Self::State;
 
 	fn population_size_at(&self, point: f64, state: Self::State) -> f64;
 
 	fn integral(&self, start: f64, end: f64, state: Self::State) -> f64;
 }
 
-fn calculate<C>(py: Python, tree: &Tree, coalescent: &C) -> Result<f64>
+fn calculate<C>(tree: &Tree, coalescent: &C) -> Result<f64>
 where
 	C: Coalescent,
 {
-	let state = coalescent.fetch_state(py)?;
+	let state = coalescent.fetch_state();
 
 	let nodes = sorted_nodes(tree);
 
@@ -66,15 +65,17 @@ where
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ConstantPopulation {
+	#[pyo3(get)]
 	tree: Py<PyTree>,
-	population_size: SupportsFloat,
+	#[pyo3(get)]
+	population_size: Py<PyReal>,
 }
 
 impl Coalescent for ConstantPopulation {
 	type State = f64;
 
-	fn fetch_state(&self, py: Python) -> Result<f64> {
-		Ok(self.population_size.extract(py)?)
+	fn fetch_state(&self) -> f64 {
+		self.population_size.get().inner().value()
 	}
 
 	fn population_size_at(&self, _point: f64, pop: f64) -> f64 {
@@ -89,54 +90,38 @@ impl Coalescent for ConstantPopulation {
 #[pymethods]
 impl ConstantPopulation {
 	#[new]
-	fn new(
-		tree: Py<PyTree>,
-		population_size: SupportsFloat,
-	) -> Result<Self> {
+	fn new(tree: Py<PyTree>, population_size: Py<PyReal>) -> Result<Self> {
 		Ok(Self {
 			tree,
 			population_size,
 		})
 	}
 
-	#[getter]
-	fn tree(&self, py: Python) -> Py<PyTree> {
-		self.tree.clone_ref(py)
-	}
-
-	#[getter]
-	fn population_size(&self, py: Python) -> SupportsFloat {
-		self.population_size.clone_ref(py)
-	}
-
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
-		(self.tree(py), self.population_size(py))
-			.into_pyobject(py)
-			.map(|o| o.unbind())
-	}
-
-	fn probability(&self, py: Python) -> Result<f64> {
+	fn probability(&self) -> Result<f64> {
 		let tree = self.tree.get().inner();
-		calculate(py, &tree, self)
+		calculate(&tree, self)
 	}
 }
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct ExponentialGrowth {
+	#[pyo3(get)]
 	tree: Py<PyTree>,
-	population_size: SupportsFloat,
-	growth_rate: SupportsFloat,
+	#[pyo3(get)]
+	population_size: Py<PyReal>,
+	#[pyo3(get)]
+	growth_rate: Py<PyReal>,
 }
 
 impl Coalescent for ExponentialGrowth {
 	type State = (f64, f64);
 
-	fn fetch_state(&self, py: Python) -> Result<Self::State> {
-		let pop = self.population_size(py).extract(py)?;
-		let gr = self.growth_rate(py).extract(py)?;
+	fn fetch_state(&self) -> Self::State {
+		let pop = self.population_size.get().inner().value();
+		let gr = self.growth_rate.get().inner().value();
 
-		Ok((pop, gr))
+		(pop, gr)
 	}
 
 	fn population_size_at(&self, point: f64, (pop, gr): (f64, f64)) -> f64 {
@@ -157,8 +142,8 @@ impl ExponentialGrowth {
 	#[new]
 	fn new(
 		tree: Py<PyTree>,
-		population_size: SupportsFloat,
-		growth_rate: SupportsFloat,
+		population_size: Py<PyReal>,
+		growth_rate: Py<PyReal>,
 	) -> Result<Self> {
 		Ok(Self {
 			tree,
@@ -167,33 +152,8 @@ impl ExponentialGrowth {
 		})
 	}
 
-	#[getter]
-	fn tree(&self, py: Python) -> Py<PyTree> {
-		self.tree.clone_ref(py)
-	}
-
-	#[getter]
-	fn population_size(&self, py: Python) -> SupportsFloat {
-		self.population_size.clone_ref(py)
-	}
-
-	#[getter]
-	fn growth_rate(&self, py: Python) -> SupportsFloat {
-		self.growth_rate.clone_ref(py)
-	}
-
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
-		(
-			self.tree(py),
-			self.population_size(py),
-			self.growth_rate(py),
-		)
-			.into_pyobject(py)
-			.map(|o| o.unbind())
-	}
-
-	fn probability(&self, py: Python) -> Result<f64> {
+	fn probability(&self) -> Result<f64> {
 		let tree = self.tree.get().inner();
-		calculate(py, &tree, self)
+		calculate(&tree, self)
 	}
 }

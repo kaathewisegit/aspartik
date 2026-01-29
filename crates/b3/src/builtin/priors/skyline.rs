@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use parking_lot::Mutex;
-use pyo3::{prelude::*, types::PyTuple};
+use pyo3::prelude::*;
 
 use super::coalescent::sorted_nodes;
 use crate::parameters::{PyTree, Tree};
@@ -10,8 +10,11 @@ use crate::parameters::{PyTree, Tree};
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct Skyline {
+	#[pyo3(get)]
 	tree: Py<PyTree>,
+	#[pyo3(get)]
 	mutation_rate: f64,
+	#[pyo3(get)]
 	epsilon: f64,
 	population_sizes: Mutex<Vec<f64>>,
 }
@@ -35,32 +38,6 @@ impl Skyline {
 
 			population_sizes,
 		})
-	}
-
-	#[getter]
-	fn tree(&self, py: Python) -> Py<PyTree> {
-		self.tree.clone_ref(py)
-	}
-
-	#[getter]
-	fn mutation_rate(&self) -> f64 {
-		self.mutation_rate
-	}
-
-	#[getter]
-	fn epsilon(&self) -> f64 {
-		self.epsilon
-	}
-
-	#[getter]
-	fn population_sizes(&self) -> Vec<f64> {
-		self.population_sizes.lock().clone()
-	}
-
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
-		(self.tree(py), self.mutation_rate, self.epsilon)
-			.into_pyobject(py)
-			.map(|o| o.unbind())
 	}
 
 	fn probability(&self, _py: Python) -> Result<f64> {

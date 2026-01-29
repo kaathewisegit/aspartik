@@ -170,13 +170,13 @@ class ClassvecFlip(Operator):
 @dataclass
 class ConstantPopulation(Prior):
     tree: Tree
-    population: SupportsFloat
+    population: Real
 
 @dataclass
 class ExponentialGrowth(Prior):
     tree: Tree
-    population: SupportsFloat
-    growth_rate: SupportsFloat
+    population: Real
+    growth_rate: Real
 
 @dataclass
 class Monophyly(Prior):
@@ -186,18 +186,18 @@ class Monophyly(Prior):
 @dataclass
 class Yule(Prior):
     tree: Tree
-    birth_rate: SupportsFloat
+    birth_rate: Real
 
 class JC: ...
 
 @dataclass
 class K80:
-    kappa: SupportsFloat
+    kappa: Real
 
 @dataclass
 class HKY:
     frequencies: RealVector | tuple[float, float, float, float]
-    kappa: SupportsFloat
+    kappa: Real
 
 class ClassVector: ...
 
