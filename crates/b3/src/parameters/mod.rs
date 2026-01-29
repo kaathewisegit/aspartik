@@ -24,6 +24,34 @@ pub trait Parameter {
 	fn reject(&mut self);
 }
 
+#[macro_export]
+macro_rules! impl_pyparameter_common {
+	($pytype:ty, $type:ty) => {
+		impl $pytype {
+			pub fn inner(
+				&self,
+			) -> parking_lot::MutexGuard<'_, $type> {
+				self.inner.lock()
+			}
+		}
+
+		#[pymethods]
+		impl $pytype {
+			fn is_changed(&self) -> bool {
+				self.inner().is_changed()
+			}
+
+			fn accept(&self) {
+				self.inner().accept();
+			}
+
+			fn reject(&self) {
+				self.inner().reject();
+			}
+		}
+	};
+}
+
 pub enum PyParameter {
 	ClassVector(Py<PyClassVector>),
 	Real(Py<PyReal>),

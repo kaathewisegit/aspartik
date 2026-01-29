@@ -1,9 +1,10 @@
 use anyhow::Result;
-use parking_lot::{Mutex, MutexGuard};
+use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, exceptions::PyIndexError, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use super::Parameter;
+use crate::impl_pyparameter_common;
 use skvec::SkVec;
 use util::py_bail;
 
@@ -53,11 +54,7 @@ pub struct PyRealVector {
 	inner: Mutex<RealVector>,
 }
 
-impl PyRealVector {
-	pub fn inner(&self) -> MutexGuard<'_, RealVector> {
-		self.inner.lock()
-	}
-}
+impl_pyparameter_common!(PyRealVector, RealVector);
 
 #[pymethods]
 impl PyRealVector {

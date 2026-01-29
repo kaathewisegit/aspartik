@@ -1,9 +1,10 @@
 use anyhow::Result;
-use parking_lot::{Mutex, MutexGuard};
+use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use super::Parameter;
+use crate::impl_pyparameter_common;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Real {
@@ -73,11 +74,7 @@ pub struct PyReal {
 	inner: Mutex<Real>,
 }
 
-impl PyReal {
-	pub fn inner(&self) -> MutexGuard<'_, Real> {
-		self.inner.lock()
-	}
-}
+impl_pyparameter_common!(PyReal, Real);
 
 #[pymethods]
 impl PyReal {

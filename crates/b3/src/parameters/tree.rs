@@ -1,5 +1,5 @@
 use anyhow::{Result, bail, ensure};
-use parking_lot::{Mutex, MutexGuard};
+use parking_lot::Mutex;
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
 	prelude::*,
@@ -20,6 +20,7 @@ use std::{
 };
 
 use super::Parameter;
+use crate::impl_pyparameter_common;
 use bitmap::Bitmap;
 use data::newick::{
 	Edge as NewickEdge, Node as NewickNode, NodeIndex as NewickNodeIndex,
@@ -1039,11 +1040,7 @@ pub struct PyTree {
 	inner: Mutex<Tree>,
 }
 
-impl PyTree {
-	pub fn inner(&self) -> MutexGuard<'_, Tree> {
-		self.inner.lock()
-	}
-}
+impl_pyparameter_common!(PyTree, Tree);
 
 #[pymethods]
 impl PyTree {
@@ -1389,13 +1386,5 @@ impl PyTree {
 	#[pyo3(signature = (internal_ids = false))]
 	fn newick(&self, internal_ids: bool) -> String {
 		self.inner().to_newick(internal_ids)
-	}
-
-	fn accept(&self) {
-		self.inner().accept()
-	}
-
-	fn reject(&self) {
-		self.inner().reject()
 	}
 }

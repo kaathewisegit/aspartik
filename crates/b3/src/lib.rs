@@ -35,10 +35,9 @@ pub mod pymodule {
 	use operator::PyProposal;
 
 	#[pymodule_export]
-	use parameters::{Internal, Leaf, PyClassVector, PyRealVector, PyTree};
-
-	#[pymodule_export]
-	use parameters::PyReal;
+	use parameters::{
+		Internal, Leaf, PyClassVector, PyReal, PyRealVector, PyTree,
+	};
 
 	#[pymodule_export]
 	use builtin::operators::{ClassvecFlip, EpochScale, SubtreeLeap};

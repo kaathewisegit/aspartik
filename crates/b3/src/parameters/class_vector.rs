@@ -1,11 +1,12 @@
 use anyhow::Result;
-use parking_lot::{Mutex, MutexGuard};
+use parking_lot::Mutex;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use std::ops::Index;
 
 use super::Parameter;
+use crate::impl_pyparameter_common;
 use skvec::SkVec;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,11 +74,7 @@ pub struct PyClassVector {
 	inner: Mutex<ClassVector>,
 }
 
-impl PyClassVector {
-	pub fn inner(&self) -> MutexGuard<'_, ClassVector> {
-		self.inner.lock()
-	}
-}
+impl_pyparameter_common!(PyClassVector, ClassVector);
 
 #[pymethods]
 impl PyClassVector {
