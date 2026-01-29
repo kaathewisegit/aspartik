@@ -46,6 +46,7 @@ pub trait LikelihoodTrait<const N: usize, F> {
 pub struct GenericLikelihood<const N: usize, F, L> {
 	calculator: L,
 	pattern_likelihoods: Vec<f64>,
+	backup_pattern_likelihoods: Vec<f64>,
 	pattern_weights: Vec<u32>,
 
 	transitions: Transitions<N, F>,
@@ -85,6 +86,10 @@ where
 		let mut out = Self {
 			calculator,
 			pattern_likelihoods: vec![f64::NAN; weights.len()],
+			backup_pattern_likelihoods: vec![
+				f64::NAN;
+				weights.len()
+			],
 			pattern_weights: weights,
 
 			transitions,
@@ -147,16 +152,15 @@ where
 
 		self.calculator.likelihood(&mut self.pattern_likelihoods)?;
 
-		let mut total_likelihood = 0.0;
 		for (likelihood, weight) in self
 			.pattern_likelihoods
-			.iter()
+			.iter_mut()
 			.zip(&self.pattern_weights)
 		{
-			total_likelihood += *likelihood * f64::from(*weight);
+			*likelihood *= f64::from(*weight);
 		}
 
-		self.last = total_likelihood;
+		self.last = self.pattern_likelihoods.iter().sum();
 		Ok(self.last)
 	}
 
@@ -165,6 +169,8 @@ where
 		if self.launched_update {
 			self.calculator.accept()?;
 			self.transitions.accept();
+			self.backup_pattern_likelihoods
+				.copy_from_slice(&self.pattern_likelihoods);
 		}
 		self.launched_update = false;
 		Ok(())
@@ -174,6 +180,9 @@ where
 		if self.launched_update {
 			self.calculator.reject()?;
 			self.transitions.reject();
+			self.pattern_likelihoods.copy_from_slice(
+				&self.backup_pattern_likelihoods,
+			);
 		}
 		self.launched_update = false;
 		Ok(())
@@ -184,17 +193,7 @@ where
 	}
 
 	fn pattern_likelihoods(&mut self) -> Result<Vec<f64>> {
-		let mut out = vec![0.0; self.num_patterns()];
-
-		self.calculator.likelihood(&mut out)?;
-
-		for (likelihood, weight) in
-			out.iter_mut().zip(&self.pattern_weights)
-		{
-			*likelihood *= f64::from(*weight);
-		}
-
-		Ok(out)
+		Ok(self.pattern_likelihoods.clone())
 	}
 }
 

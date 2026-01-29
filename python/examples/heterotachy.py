@@ -25,40 +25,32 @@ from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
+from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 
 rng = RNG(4)
-tree = Tree(msa.sequence_names(), rng)
-
 
 N = 4
 
-
-def repeat(v, count: int):
-    return [deepcopy(v) for _ in range(count)]
-
-
+tree = Tree(msa.sequence_names(), rng)
 kappas = [Real(2.0) for _ in range(N)]
 freqs = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
 population_size = Real(1.0)
-clock_rates = [Real(0.001) for _ in range(N)]
+clock_rate = Real(0.001)  # TODO
 
 params = [
     *kappas,
     *freqs,
     population_size,
-    *clock_rates,
+    clock_rate,
 ]
 
 priors = [
     *(Bound(kappa) for kappa in kappas),
     *(Bound(freq) for freq in freqs),
     Bound(population_size),
-    *(Bound(clock_rate) for clock_rate in clock_rates),
     *(Distribution(kappa, LogNormal(1.0, 1.25)) for kappa in kappas),
-    *(Distribution(clock_rate, Laplace(0, 0.5)) for clock_rate in clock_rates),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     ConstantPopulation(tree, population_size),
 ]
@@ -72,21 +64,13 @@ likelihood = HeteroLikelihood(
             clock=Clock.Strict(clock_rate),
             tree=tree,
         )
-        for kappa, freq, clock_rate in zip(kappas, freqs, clock_rates)
+        for kappa, freq in zip(kappas, freqs)
     ],
 )
 
 operators = [
     *(ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1) for kappa in kappas),
-    *(
-        ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3)
-        for clock_rate in clock_rates
-    ),
-    *(
-        UpDown(Internals(tree), clock_rate, 0.75, Uniform(0, 1), rng, weight=3)
-        for clock_rate in clock_rates
-    ),
-    SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
+    SubtreeLeap(tree, Uniform(0, 1), rng, weight=12 * N),
     FixedHeightSubtreePruneRegraft(tree, rng, weight=4 * N),
     ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3 * N),
     *(DeltaExchange(freq, 0.01, rng, weight=3) for freq in freqs),
@@ -104,7 +88,7 @@ loggers = [
             "likelihood": lambda: mcmc.likelihood.likelihood(),
             "kappas": kappas,
             "population_size": population_size,
-            "clock_rates": clock_rates,
+            "clock_rate": clock_rate,
             "frequencies": freqs,
             "tree:height": lambda: tree.height_of(tree.root),
             "tree:length": lambda: tree.total_length(),

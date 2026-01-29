@@ -6,6 +6,7 @@ from aspartik.b3 import MCMC, Callback, Clock
 from aspartik.b3.likelihoods import (
     CPU4Likelihood,
     CUDALikelihood,
+    HeteroLikelihood,
     Likelihood,
     Parallel4Likelihood,
 )
@@ -78,6 +79,16 @@ def test_compare_likelihood():
         num_leaf_threads=5,
         num_internal_threads=2,
     )
+    hetero = HeteroLikelihood(
+        likelihoods=[
+            CPU4Likelihood(
+                msa=msa,
+                substitution=HKY(frequencies, kappa),
+                clock=Clock.Strict(clock_rate),
+                tree=tree,
+            )
+        ]
+    )
     try:
         cuda_calculator = CUDALikelihood(
             msa=msa,
@@ -88,7 +99,7 @@ def test_compare_likelihood():
     except Exception as e:
         cuda_calculator = None
 
-    calculators = [cpu_calculator, parallel_calculator]
+    calculators = [cpu_calculator, parallel_calculator, hetero]
     if cuda_calculator:
         calculators.insert(0, cuda_calculator)
 
