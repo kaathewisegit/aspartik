@@ -1,5 +1,5 @@
 use anyhow::{Result, ensure};
-use pyo3::{intern, prelude::*, types::PyTuple};
+use pyo3::{intern, prelude::*};
 
 use crate::{operator::Proposal, parameters::PyTree};
 use rng::PyRng;
@@ -13,6 +13,7 @@ use util::py_get_attr;
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.operators", frozen)]
 pub struct EpochScale {
+	#[pyo3(get)]
 	tree: Py<PyTree>,
 
 	/// The scaling ratio will be sampled from `(factor, 1 / factor)`.  So,
@@ -22,7 +23,9 @@ pub struct EpochScale {
 	factor: f64,
 
 	/// Distribution from which the scale is sampled.
+	#[pyo3(get)]
 	distribution: Py<PyAny>,
+	#[pyo3(get)]
 	rng: Py<PyRng>,
 	#[pyo3(get)]
 	weight: f64,
@@ -52,33 +55,6 @@ impl EpochScale {
 		})
 	}
 
-	#[getter]
-	fn tree(&self, py: Python) -> Py<PyTree> {
-		self.tree.clone_ref(py)
-	}
-
-	#[getter]
-	fn distribution(&self, py: Python) -> Py<PyAny> {
-		self.distribution.clone_ref(py)
-	}
-
-	#[getter]
-	fn rng(&self, py: Python) -> Py<PyRng> {
-		self.rng.clone_ref(py)
-	}
-
-	fn __getnewargs__(&self, py: Python) -> PyResult<Py<PyTuple>> {
-		(
-			self.tree(py),
-			self.factor,
-			self.distribution(py),
-			self.rng(py),
-			self.weight,
-		)
-			.into_pyobject(py)
-			.map(|o| o.unbind())
-	}
-
 	fn propose(&self, py: Python) -> Result<Proposal> {
 		let mut tree = self.tree.get().inner();
 
@@ -94,8 +70,8 @@ impl EpochScale {
 			.call1((
 				low,
 				high,
-				self.distribution(py),
-				self.rng(py),
+				self.distribution.clone_ref(py),
+				self.rng.clone_ref(py),
 			))?
 			.extract::<f64>()?;
 

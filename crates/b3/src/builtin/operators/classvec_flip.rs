@@ -6,7 +6,9 @@ use rng::PyRng;
 
 #[pyclass(module = "aspartik.b3.operators", frozen)]
 pub struct ClassvecFlip {
+	#[pyo3(get)]
 	classvec: Py<PyClassVector>,
+	#[pyo3(get)]
 	rng: Py<PyRng>,
 	#[pyo3(get)]
 	weight: f64,
