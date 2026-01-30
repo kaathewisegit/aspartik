@@ -3,7 +3,10 @@ use anyhow::{Context, Result, anyhow, bail};
 use std::mem;
 
 use super::Record;
-use crate::seq::{Character, SequenceMut, parse_append_str};
+use crate::{
+	Parser,
+	seq::{Character, SequenceMut, parse_append_str},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum State {
@@ -11,7 +14,6 @@ enum State {
 	InDescription,
 	InSequence,
 	ParsedRecord,
-	Done,
 }
 
 #[derive(Debug)]
@@ -33,7 +35,7 @@ impl<C: Character> FastaParser<C> {
 		}
 	}
 
-	pub fn parse_record(
+	fn parse_record(
 		&mut self,
 		src: &mut &str,
 	) -> Result<Option<Record<C>>> {
@@ -51,9 +53,6 @@ impl<C: Character> FastaParser<C> {
 				State::ParsedRecord => {
 					self.state = State::Blank;
 					return Ok(Some(self.make_record()));
-				}
-				State::Done => {
-					bail!("Unreachable");
 				}
 			}
 		}
@@ -144,21 +143,23 @@ impl<C: Character> FastaParser<C> {
 		*src = &src[src.len()..];
 		Ok(())
 	}
+}
 
-	pub fn get_final_record(&mut self) -> Result<Record<C>> {
-		match self.state {
-			State::Blank | State::InSequence => {
-				// ok
-			}
-			_ => bail!("Parser is in progress: {:?}", self.state),
-		}
-		self.state = State::Done;
-		let record = self.make_record();
+impl<C: Character> Parser<str> for FastaParser<C> {
+	type Output = Record<C>;
 
-		Ok(record)
+	fn advance(
+		&mut self,
+		input: &mut &str,
+	) -> Result<Option<Self::Output>> {
+		self.parse_record(input)
 	}
 
-	pub fn is_done(&self) -> bool {
-		self.state == State::Done
+	fn final_object(&mut self) -> Option<Record<C>> {
+		if !matches!(self.state, State::Blank | State::InSequence) {
+			return None;
+		}
+		self.state = State::Blank;
+		Some(self.make_record())
 	}
 }

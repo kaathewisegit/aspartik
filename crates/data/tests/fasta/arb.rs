@@ -3,7 +3,7 @@ use arbitrary::{Result as ArbResult, Unstructured};
 use arbtest::arbtest;
 
 use data::{
-	DnaNucleotide,
+	DnaNucleotide, Parser,
 	fasta::{FastaParser, Record},
 	seq::Sequence,
 };
@@ -21,10 +21,8 @@ fn arb_record(u: &mut Unstructured) -> ArbResult<Record<DnaNucleotide>> {
 
 fn parse_one_record(mut fasta: &str) -> Result<Record<DnaNucleotide>> {
 	let mut parser = FastaParser::<DnaNucleotide>::new();
-
-	parser.parse_record(&mut fasta)?;
-
-	parser.get_final_record()
+	parser.advance(&mut fasta)?;
+	Ok(parser.final_object().unwrap())
 }
 
 #[test]

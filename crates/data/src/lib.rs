@@ -2,6 +2,7 @@ pub mod fasta;
 mod msa;
 pub mod newick;
 mod nucleotides;
+mod parser;
 mod phred;
 pub mod seq;
 
@@ -9,6 +10,7 @@ pub use msa::Msa;
 #[cfg(feature = "python")]
 pub use msa::python::PyMsa;
 pub use nucleotides::DnaNucleotide;
+pub use parser::Parser;
 pub use phred::Phred;
 
 #[cfg(feature = "python")]

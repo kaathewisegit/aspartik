@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 mod fasta;
+pub mod reader;
 pub mod rw;
 pub mod sam;
 
