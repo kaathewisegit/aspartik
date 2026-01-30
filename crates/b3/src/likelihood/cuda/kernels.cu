@@ -190,10 +190,14 @@ void copy_projections(
 	const u8* restrict s_src,
 	u8* restrict s_dst,
 
+	u32 num_updated_nodes,
 	const u32* restrict edges
 ) {
 	SITE_PRELUDE
-	u32 i = blockIdx.y;
+	u32 i = blockIdx.y * 128 + blockIdx.z;
+	if (i >= num_updated_nodes) {
+		return;
+	}
 
 	u32 proj_idx = idx(edges[i]);
 	p_dst[proj_idx] = p_src[proj_idx];
