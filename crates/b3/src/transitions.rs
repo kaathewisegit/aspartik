@@ -3,26 +3,23 @@ use num_traits::Zero;
 use pyo3::prelude::*;
 
 use crate::{
-	clock::PyClock, parameters::Tree, substitution::BoxedSubstitutionModel,
+	clock::PyClock, parameters::Tree, substitution::SubstitutionModel,
 };
 use skvec::{SkVec, skvec};
 
-pub struct Transitions<const N: usize, F> {
-	substitution: BoxedSubstitutionModel<N, F>,
+pub struct Transitions<const N: usize, F, S> {
+	substitution: S,
 	clock: Py<PyClock>,
 
 	transitions: SkVec<[[F; N]; N]>,
 }
 
-impl<const N: usize, F> Transitions<N, F>
+impl<const N: usize, F, S> Transitions<N, F, S>
 where
 	F: Default + Copy + Zero + Default,
+	S: SubstitutionModel<N, F>,
 {
-	pub fn new(
-		length: usize,
-		substitution: BoxedSubstitutionModel<N, F>,
-		clock: Py<PyClock>,
-	) -> Self {
+	pub fn new(length: usize, substitution: S, clock: Py<PyClock>) -> Self {
 		let transitions = skvec![[[F::zero(); N]; N]; length];
 
 		Self {

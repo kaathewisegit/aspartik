@@ -9,7 +9,7 @@ use crate::{
 	Transitions,
 	clock::PyClock,
 	parameters::PyTree,
-	substitution::{BoxedSubstitutionModel, Substitution4},
+	substitution::{PySubstitution4, SubstitutionModel},
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
 use logger::{info, trace};
@@ -43,13 +43,13 @@ pub trait LikelihoodTrait<const N: usize, F> {
 	fn reject(&mut self) -> Result<()>;
 }
 
-pub struct GenericLikelihood<const N: usize, F, L> {
+pub struct GenericLikelihood<const N: usize, F, L, S> {
 	calculator: L,
 	pattern_likelihoods: Vec<f64>,
 	backup_pattern_likelihoods: Vec<f64>,
 	pattern_weights: Vec<u32>,
 
-	transitions: Transitions<N, F>,
+	transitions: Transitions<N, F, S>,
 	tree: Py<PyTree>,
 
 	/// Last accepted likelihood
@@ -60,15 +60,16 @@ pub struct GenericLikelihood<const N: usize, F, L> {
 	launched_update: bool,
 }
 
-impl<const N: usize, F, L> GenericLikelihood<N, F, L>
+impl<const N: usize, F, L, S> GenericLikelihood<N, F, L, S>
 where
 	F: Float + Default,
 	L: LikelihoodTrait<N, F>,
+	S: SubstitutionModel<N, F>,
 {
 	fn new(
 		calculator: L,
 		weights: Vec<u32>,
-		substitution: BoxedSubstitutionModel<N, F>,
+		substitution: S,
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
@@ -282,7 +283,14 @@ macro_rules! likelihood_methods {
 /// for alingments larger than 100Kb.
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
-	inner: Mutex<GenericLikelihood<4, f64, CpuLikelihood<4, f64>>>,
+	inner: Mutex<
+		GenericLikelihood<
+			4,
+			f64,
+			CpuLikelihood<4, f64>,
+			PySubstitution4,
+		>,
+	>,
 }
 
 #[pymethods]
@@ -291,7 +299,7 @@ impl PyCpu4Likelihood {
 	#[pyo3(signature = (msa, substitution, clock, tree, scale_ln = 30))]
 	fn new(
 		msa: Py<PyMsa>,
-		substitution: Substitution4,
+		substitution: PySubstitution4,
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 		scale_ln: u32,
@@ -321,7 +329,14 @@ likelihood_methods!(PyCpu4Likelihood);
 	frozen
 )]
 pub struct PyParallel4Likelihood {
-	inner: Mutex<GenericLikelihood<4, f64, ParallelLikelihood<4, f64>>>,
+	inner: Mutex<
+		GenericLikelihood<
+			4,
+			f64,
+			ParallelLikelihood<4, f64>,
+			PySubstitution4,
+		>,
+	>,
 }
 
 #[pymethods]
@@ -333,7 +348,7 @@ impl PyParallel4Likelihood {
 	))]
 	fn new(
 		msa: Py<PyMsa>,
-		substitution: Substitution4,
+		substitution: PySubstitution4,
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 		mut num_leaf_threads: usize,
@@ -374,7 +389,9 @@ likelihood_methods!(PyParallel4Likelihood);
 /// index.
 #[pyclass(name = "CUDALikelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCudaLikelihood {
-	inner: Mutex<GenericLikelihood<4, f64, CudaLikelihood>>,
+	inner: Mutex<
+		GenericLikelihood<4, f64, CudaLikelihood, PySubstitution4>,
+	>,
 }
 
 #[pymethods]
@@ -388,7 +405,7 @@ impl PyCudaLikelihood {
 	))]
 	fn new(
 		msa: Py<PyMsa>,
-		substitution: Substitution4,
+		substitution: PySubstitution4,
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 		scale_ln: u32,

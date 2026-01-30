@@ -1,11 +1,6 @@
 use anyhow::Result;
 use linalg::{RowMatrix, Vector};
-use pyo3::{
-	PyTypeCheck, conversion::FromPyObject, exceptions::PyTypeError,
-	prelude::*,
-};
-
-use util::py_bail;
+use pyo3::{conversion::FromPyObject, prelude::*};
 
 use crate::parameters::{Parameter, PyReal};
 
@@ -17,38 +12,101 @@ pub trait SubstitutionModel<const N: usize, F> {
 	fn get_frequencies(&self) -> [F; N];
 }
 
-pub type BoxedSubstitutionModel<const N: usize, F> =
-	Box<dyn SubstitutionModel<N, F> + Send>;
+pub enum PySubstitution4 {
+	JC(Py<PyJC>),
+	K80(Py<PyK80>),
+	HKY(Py<PyHKY>),
+}
 
-pub type Substitution4 = BoxedSubstitutionModel<4, f64>;
-
-impl<'py> FromPyObject<'_, 'py> for Substitution4 {
+impl<'py> FromPyObject<'_, 'py> for PySubstitution4 {
 	type Error = PyErr;
 
-	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> Result<Self, Self::Error> {
-		if JC::type_check(&obj) {
-			let jc = obj.cast::<JC>()?;
-			let jc = *jc.get();
-
-			Ok(Box::new(jc))
-		} else if K80::type_check(&obj) {
-			let k80 = obj.cast::<K80>()?;
-			let k80 = k80.get().clone(obj.py());
-
-			Ok(Box::new(k80))
-		} else if HKY::type_check(&obj) {
-			let hky = obj.cast::<HKY>()?;
-			let hky = hky.get().clone(obj.py());
-
-			Ok(Box::new(hky))
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+		if let Ok(class_vector) = obj.cast::<PyJC>() {
+			Ok(Self::JC(class_vector.into()))
+		} else if let Ok(real) = obj.cast::<PyK80>() {
+			Ok(Self::K80(real.into()))
+		} else if let Ok(real_vector) = obj.cast::<PyHKY>() {
+			Ok(Self::HKY(real_vector.into()))
 		} else {
-			py_bail!(
-				PyTypeError,
-				"Expected a DNA substitution model, got {}",
-				obj.get_type().name()?
-			)
+			todo!("descriptive error")
 		}
 	}
+}
+
+impl<'py> IntoPyObject<'py> for PySubstitution4 {
+	type Target = PyAny;
+	type Output = Bound<'py, PyAny>;
+	type Error = PyErr;
+
+	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
+		Ok(match self {
+			Self::JC(p) => {
+				Bound::new(py, p.clone_ref(py))?.into_any()
+			}
+			Self::K80(p) => {
+				Bound::new(py, p.clone_ref(py))?.into_any()
+			}
+			Self::HKY(p) => {
+				Bound::new(py, p.clone_ref(py))?.into_any()
+			}
+		})
+	}
+}
+
+impl SubstitutionModel<4, f64> for PySubstitution4 {
+	fn update(&mut self, py: Python) -> Result<bool> {
+		match self {
+			Self::JC(m) => m.get().inner().update(py),
+			Self::K80(m) => m.get().inner().update(py),
+			Self::HKY(m) => m.get().inner().update(py),
+		}
+	}
+
+	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
+		match self {
+			Self::JC(m) => m.get().inner().get_transition(distance),
+			Self::K80(m) => {
+				m.get().inner().get_transition(distance)
+			}
+			Self::HKY(m) => {
+				m.get().inner().get_transition(distance)
+			}
+		}
+	}
+
+	fn get_frequencies(&self) -> [f64; 4] {
+		match self {
+			Self::JC(m) => m.get().inner().get_frequencies(),
+			Self::K80(m) => m.get().inner().get_frequencies(),
+			Self::HKY(m) => m.get().inner().get_frequencies(),
+		}
+	}
+}
+
+macro_rules! create_pysubstitution {
+	($pytype:tt, $type:ty, $str:literal, $($v:ident: $t:ty),*) => {
+		#[pyclass(name = $str, module = "aspartik.b3.substitutions", frozen)]
+		pub struct $pytype {
+			inner: parking_lot::Mutex<$type>,
+		}
+
+		impl $pytype {
+			pub fn inner(&self) -> parking_lot::MutexGuard<'_, $type> {
+				self.inner.lock()
+			}
+		}
+
+		#[pymethods]
+		impl $pytype {
+			#[new]
+			fn new($($v: $t),*) -> Self {
+				Self {
+					inner: <$type>::new($($v),*).into(),
+				}
+			}
+		}
+	};
 }
 
 /// Jukes-Cantor
@@ -58,8 +116,13 @@ impl<'py> FromPyObject<'_, 'py> for Substitution4 {
 /// Jukes and Cantor 1969, Evolution of Protein Molecules,
 /// <https://doi.org/10.1016/b978-1-4832-3211-9.50009-7>.
 #[derive(Debug, Clone, Copy)]
-#[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct JC;
+
+impl JC {
+	fn new() -> Self {
+		Self
+	}
+}
 
 impl SubstitutionModel<4, f64> for JC {
 	fn update(&mut self, _py: Python) -> Result<bool> {
@@ -86,13 +149,7 @@ impl SubstitutionModel<4, f64> for JC {
 	}
 }
 
-#[pymethods]
-impl JC {
-	#[new]
-	fn new() -> Self {
-		Self
-	}
-}
+create_pysubstitution!(PyJC, JC, "JC",);
 
 /// Kimura 80
 ///
@@ -103,7 +160,6 @@ impl JC {
 /// substitutions through comparative studies of nucleotide sequences,
 /// <https://doi.org/10.1007/BF01731581>.
 #[derive(Debug)]
-#[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct K80 {
 	/// A transition is taken to be kappa times more likely than a
 	/// transversion.
@@ -112,10 +168,10 @@ pub struct K80 {
 }
 
 impl K80 {
-	fn clone(&self, py: Python) -> Self {
+	fn new(kappa: Py<PyReal>) -> Self {
 		Self {
-			kappa: self.kappa.clone_ref(py),
-			cached_kappa: self.cached_kappa,
+			kappa,
+			cached_kappa: f64::NAN,
 		}
 	}
 }
@@ -159,16 +215,7 @@ impl SubstitutionModel<4, f64> for K80 {
 	}
 }
 
-#[pymethods]
-impl K80 {
-	#[new]
-	pub fn new(kappa: Py<PyReal>) -> Self {
-		Self {
-			kappa,
-			cached_kappa: f64::NAN,
-		}
-	}
-}
+create_pysubstitution!(PyK80, K80, "K80", kappa: Py<PyReal>);
 
 /// Hasegawa et al. 1985
 ///
@@ -199,6 +246,25 @@ pub struct HKY {
 }
 
 impl HKY {
+	fn new(frequencies: Py<PyAny>, kappa: Py<PyReal>) -> Self {
+		Self {
+			kappa,
+			frequencies,
+
+			cached_kappa: f64::NAN,
+			cached_frequencies: (
+				f64::NAN,
+				f64::NAN,
+				f64::NAN,
+				f64::NAN,
+			),
+
+			p: RowMatrix::default(),
+			inv_p: RowMatrix::default(),
+			diag: Vector::default(),
+		}
+	}
+
 	fn update_matrices(&mut self) {
 		let kappa = self.cached_kappa;
 		let (a, c, g, t) = self.cached_frequencies;
@@ -230,15 +296,6 @@ impl HKY {
 			[-a / r, 0.0, a / r, 0.0],
 			[0.0, -c / y, 0.0, c / y],
 		]);
-	}
-
-	fn clone(&self, py: Python) -> Self {
-		Self {
-			frequencies: self.frequencies.clone_ref(py),
-			kappa: self.kappa.clone_ref(py),
-
-			..*self
-		}
 	}
 }
 
@@ -277,25 +334,4 @@ impl SubstitutionModel<4, f64> for HKY {
 	}
 }
 
-#[pymethods]
-impl HKY {
-	#[new]
-	pub fn new(frequencies: Py<PyAny>, kappa: Py<PyReal>) -> Self {
-		Self {
-			kappa,
-			frequencies,
-
-			cached_kappa: f64::NAN,
-			cached_frequencies: (
-				f64::NAN,
-				f64::NAN,
-				f64::NAN,
-				f64::NAN,
-			),
-
-			p: RowMatrix::default(),
-			inv_p: RowMatrix::default(),
-			diag: Vector::default(),
-		}
-	}
-}
+create_pysubstitution!(PyHKY, HKY, "HKY", frequencies: Py<PyAny>, kappa: Py<PyReal>);
