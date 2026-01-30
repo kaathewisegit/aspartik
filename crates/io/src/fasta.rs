@@ -2,10 +2,7 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{prelude::*, types::PyType};
 
-use std::{
-	fs::File,
-	io::{BufRead, BufReader},
-};
+use std::io::{BufRead, BufReader};
 
 use crate::rw::AnyReader;
 use data::{
@@ -30,20 +27,9 @@ macro_rules! bubble {
 
 #[pymethods]
 impl PyFastaDnaReader {
-	#[new]
-	fn new(obj: Bound<PyAny>) -> Result<Self> {
-		let reader = AnyReader::from_python(obj)?;
-		let buf_reader = BufReader::new(reader);
-		Ok(Self {
-			parser: Mutex::new(FastaParser::new()),
-			reader: Mutex::new(buf_reader),
-		})
-	}
-
 	#[classmethod]
 	fn from_file(_cls: Py<PyType>, path: &str) -> Result<Self> {
-		let file = File::open(path)?;
-		let reader = AnyReader::from_dynamic(file);
+		let reader = AnyReader::from_file(path)?;
 		let buf_reader = BufReader::new(reader);
 		Ok(Self {
 			parser: Mutex::new(FastaParser::new()),

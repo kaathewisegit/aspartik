@@ -14,7 +14,7 @@ def test_one():
 
 
 def test_two():
-    r = FastaReader(open("python/tests/io/fasta/two.fasta"))
+    r = FastaReader.from_file("python/tests/io/fasta/two.fasta")
     records = list(r)
 
     assert len(records) == 2
