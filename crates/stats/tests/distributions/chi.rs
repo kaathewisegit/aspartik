@@ -1,19 +1,12 @@
-use stats::distribution::{Chi, ChiError};
+use stats::distribution::Chi;
 
 use crate::prelude::*;
-use std::f64::consts::SQRT_2;
+use std::{f64::consts::SQRT_2, num::NonZeroU64};
 
-make_test_harness!(Chi(freedom: u64), ChiError);
+make_test_harness!(Chi(freedom: NonZeroU64));
 
-#[test]
-fn test_create() {
-	assert_new_is_ok(1);
-	assert_new_is_ok(3);
-}
-
-#[test]
-fn test_bad_create() {
-	assert_new_is_err(0, ChiError::FreedomInvalid);
+fn nz(value: u64) -> NonZeroU64 {
+	NonZeroU64::new(value).unwrap()
 }
 
 #[test]
@@ -25,14 +18,14 @@ fn test_mean() {
 		(336, 18.31666925443713),
 	];
 	for (args, expected) in cases {
-		assert_close(args, (), |d, _| d.mean().unwrap(), expected);
+		assert_close(nz(args), (), |d, _| d.mean().unwrap(), expected);
 	}
 }
 
 #[test]
 fn test_large_dof_mean_not_nan() {
 	for i in 1..1000 {
-		let mean = Chi::new(i).unwrap().mean().unwrap();
+		let mean = Chi::new(nz(i)).mean().unwrap();
 		assert!(!mean.is_nan(), "Chi mean for {i} dof was {mean}");
 	}
 }
@@ -45,7 +38,12 @@ fn test_variance() {
 		(3, 0.45352091052967464),
 	];
 	for (args, expected) in cases {
-		assert_close(args, (), |d, _| d.variance().unwrap(), expected);
+		assert_close(
+			nz(args),
+			(),
+			|d, _| d.variance().unwrap(),
+			expected,
+		);
 	}
 }
 
@@ -57,7 +55,12 @@ fn test_entropy() {
 		(3, 0.9961541981062056),
 	];
 	for (args, expected) in cases {
-		assert_close(args, (), |d, _| d.entropy().unwrap(), expected);
+		assert_close(
+			nz(args),
+			(),
+			|d, _| d.entropy().unwrap(),
+			expected,
+		);
 	}
 }
 
@@ -65,7 +68,12 @@ fn test_entropy() {
 fn test_skewness() {
 	let cases = [(1, 0.995271746431156), (3, 0.4856928280495908)];
 	for (args, expected) in cases {
-		assert_close(args, (), |d, _| d.skewness().unwrap(), expected);
+		assert_close(
+			nz(args),
+			(),
+			|d, _| d.skewness().unwrap(),
+			expected,
+		);
 	}
 }
 
@@ -73,7 +81,7 @@ fn test_skewness() {
 fn test_mode() {
 	let cases = [(1, 0.0), (2, 1.0), (3, SQRT_2)];
 	for (args, expected) in cases {
-		assert_close(args, (), |d, _| d.mode().unwrap(), expected);
+		assert_close(nz(args), (), |d, _| d.mode().unwrap(), expected);
 	}
 }
 
@@ -81,7 +89,7 @@ fn test_mode() {
 fn test_lower() {
 	let cases = [(1, 0.0), (2, 0.0), (3, 0.0)];
 	for (args, expected) in cases {
-		assert_close(args, (), |d, _| d.lower(), expected);
+		assert_close(nz(args), (), |d, _| d.lower(), expected);
 	}
 }
 
@@ -90,7 +98,7 @@ fn test_upper() {
 	let cases =
 		[(1, f64::INFINITY), (2, f64::INFINITY), (3, f64::INFINITY)];
 	for (args, expected) in cases {
-		assert_close(args, (), |d, _| d.upper(), expected);
+		assert_close(nz(args), (), |d, _| d.upper(), expected);
 	}
 }
 
@@ -110,7 +118,7 @@ fn test_pdf() {
 		(170, 13.0, 0.5644678498668441),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.pdf(p), expected);
+		assert_close(nz(args), p, |d, p| d.pdf(p), expected);
 	}
 }
 
@@ -118,7 +126,7 @@ fn test_pdf() {
 fn test_neg_pdf() {
 	let cases = [(1, -1.0, 0.0)];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.pdf(p), expected);
+		assert_close(nz(args), p, |d, p| d.pdf(p), expected);
 	}
 }
 
@@ -138,7 +146,7 @@ fn test_ln_pdf() {
 		(170, 13.0, -0.5718718503060052),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.ln_pdf(p), expected);
+		assert_close(nz(args), p, |d, p| d.ln_pdf(p), expected);
 	}
 }
 
@@ -146,7 +154,7 @@ fn test_ln_pdf() {
 fn test_neg_ln_pdf() {
 	let cases = [(1, -1.0, f64::NEG_INFINITY)];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.ln_pdf(p), expected);
+		assert_close(nz(args), p, |d, p| d.ln_pdf(p), expected);
 	}
 }
 
@@ -163,7 +171,7 @@ fn test_cdf() {
 		(2, f64::INFINITY, 1.0),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.cdf(p), expected);
+		assert_close(nz(args), p, |d, p| d.cdf(p), expected);
 	}
 }
 
@@ -182,7 +190,7 @@ fn test_sf() {
 		(2, f64::INFINITY, 0.0),
 	];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.sf(p), expected);
+		assert_close(nz(args), p, |d, p| d.sf(p), expected);
 	}
 }
 
@@ -190,7 +198,7 @@ fn test_sf() {
 fn test_neg_cdf() {
 	let cases = [(1, -1.0, 0.0)];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.cdf(p), expected);
+		assert_close(nz(args), p, |d, p| d.cdf(p), expected);
 	}
 }
 
@@ -198,13 +206,13 @@ fn test_neg_cdf() {
 fn test_neg_sf() {
 	let cases = [(1, -1.0, 1.0)];
 	for (args, p, expected) in cases {
-		assert_close(args, p, |d, p| d.sf(p), expected);
+		assert_close(nz(args), p, |d, p| d.sf(p), expected);
 	}
 }
 
 #[test]
 fn test_continuous() {
-	check_continuous_distribution(&new_dist(1), 0.0, 10.0);
-	check_continuous_distribution(&new_dist(2), 0.0, 10.0);
-	check_continuous_distribution(&new_dist(5), 0.0, 10.0);
+	for i in [1, 2, 5] {
+		check_continuous_distribution(&Chi::new(nz(i)), 0.0, 10.0);
+	}
 }

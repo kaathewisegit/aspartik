@@ -1,5 +1,3 @@
-use thiserror::Error;
-
 use core::{f64, num::NonZeroU64};
 
 use crate::{
@@ -14,11 +12,11 @@ use math::function::gamma;
 /// # Examples
 ///
 /// ```
-/// use stats::distribution::{Chi, Continuous};
-/// use stats::statistics::Distribution;
+/// use std::num::NonZeroU64;
+/// use stats::{distribution::{Chi, Continuous}, statistics::Distribution};
 /// use math::assert_almost_eq;
 ///
-/// let n = Chi::new(2).unwrap();
+/// let n = Chi::new(NonZeroU64::new(2).unwrap());
 /// assert_almost_eq!(n.mean().unwrap(), 1.2533141373155003, epsilon = 1e-14);
 /// assert_almost_eq!(n.pdf(1.0), 0.6065306597126334, epsilon = 1e-15);
 /// ```
@@ -27,53 +25,21 @@ pub struct Chi {
 	freedom: NonZeroU64,
 }
 
-/// Represents the errors that can occur when creating a [`Chi`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
-#[non_exhaustive]
-pub enum ChiError {
-	#[error("The degrees of freedom are zero")]
-	FreedomInvalid,
-}
-
 impl Chi {
-	/// Constructs a new chi distribution
-	/// with `freedom` degrees of freedom
-	///
-	/// # Errors
-	///
-	/// Returns an error if `freedom` is equal to `0`.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Chi;
-	///
-	/// let mut result = Chi::new(2);
-	/// assert!(result.is_ok());
-	///
-	/// result = Chi::new(0);
-	/// assert!(result.is_err());
-	/// ```
-	pub fn new(freedom: u64) -> Result<Chi, ChiError> {
-		match NonZeroU64::new(freedom) {
-			Some(freedom) => Ok(Self { freedom }),
-			None => Err(ChiError::FreedomInvalid),
-		}
+	/// Constructs a new chi distribution with `freedom` degrees of freedom
+	pub fn new(freedom: NonZeroU64) -> Chi {
+		Self { freedom }
 	}
 
-	/// Returns the degrees of freedom of the chi distribution.
-	/// Guaranteed to be non-zero.
+	/// The degrees of freedom of the chi distribution.
 	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Chi;
-	///
-	/// let n = Chi::new(2).unwrap();
-	/// assert_eq!(n.freedom(), 2);
-	/// ```
+	/// Never zero.  Use the `freedom_nz` method to get `NonZeroU64`.
 	pub fn freedom(&self) -> u64 {
 		self.freedom.get()
+	}
+
+	pub fn freedom_nz(&self) -> NonZeroU64 {
+		self.freedom
 	}
 }
 

@@ -45,6 +45,19 @@ macro_rules! make_test_harness {
 
 		}
 
+		$crate::make_test_harness!(@common, $dist($($arg_name: $arg_type),+));
+	};
+
+	($dist:ident($($arg_name:ident: $arg_type:ty),+)) => {
+		#[allow(unused_parens)]
+		fn new_dist(($($arg_name),+): ($($arg_type),+)) -> $dist {
+			<$dist>::new($($arg_name),+)
+		}
+
+		$crate::make_test_harness!(@common, $dist($($arg_name: $arg_type),+));
+	};
+
+	(@common, $dist:ident($($arg_name:ident: $arg_type:ty),+)) => {
 		#[allow(unused)]
 		fn assert_exact<T, F, O>(
 			new_args: ($($arg_type),+),
@@ -102,7 +115,7 @@ macro_rules! make_test_harness {
 				value,
 			)
 		}
-	};
+	}
 }
 
 mod test_make_test_harness {

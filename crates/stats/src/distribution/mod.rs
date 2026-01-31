@@ -46,7 +46,7 @@ pub use beta::{Beta, BetaError};
 pub use binomial::{Binomial, BinomialError};
 pub use categorical::{Categorical, CategoricalError};
 pub use cauchy::{Cauchy, CauchyError};
-pub use chi::{Chi, ChiError};
+pub use chi::Chi;
 pub use chi_squared::ChiSquared;
 pub use discrete_uniform::{DiscreteUniform, DiscreteUniformError};
 pub use erlang::Erlang;
