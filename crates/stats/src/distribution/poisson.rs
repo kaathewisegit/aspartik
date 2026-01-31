@@ -1,6 +1,7 @@
 use core::f64;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use thiserror::Error;
 
 use math::function::{factorial, gamma};
 #[cfg(feature = "python")]
@@ -48,32 +49,19 @@ impl_pymethods! {for Poisson;
 }
 
 /// Represents the errors that can occur when creating a [`Poisson`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum PoissonError {
-	/// The lambda is NaN, zero or less than zero.
+	#[error("The lambda is NaN, zero or less than zero")]
 	LambdaInvalid,
 }
 
 #[cfg(feature = "python")]
 impl_pyerr!(PoissonError, pyo3::exceptions::PyValueError);
-
-impl core::fmt::Display for PoissonError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			PoissonError::LambdaInvalid => write!(
-				f,
-				"Lambda is NaN, zero or less than zero"
-			),
-		}
-	}
-}
-
-impl std::error::Error for PoissonError {}
 
 impl Poisson {
 	/// Constructs a new poisson distribution with a rate (λ)

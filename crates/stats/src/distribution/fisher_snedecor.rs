@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	probability::Probability,
@@ -27,36 +29,15 @@ pub struct FisherSnedecor {
 }
 
 /// Represents the errors that can occur when creating a [`FisherSnedecor`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum FisherSnedecorError {
-	/// `freedom_1` is NaN, infinite, zero or less than zero.
+	#[error("`freedom_1` is NaN, infinite, zero or less than zero")]
 	Freedom1Invalid,
 
-	/// `freedom_2` is NaN, infinite, zero or less than zero.
+	#[error("`freedom_2` is NaN, infinite, zero or less than zero")]
 	Freedom2Invalid,
 }
-
-impl core::fmt::Display for FisherSnedecorError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			FisherSnedecorError::Freedom1Invalid => {
-				write!(
-					f,
-					"freedom_1 is NaN, infinite, zero or less than zero."
-				)
-			}
-			FisherSnedecorError::Freedom2Invalid => {
-				write!(
-					f,
-					"freedom_2 is NaN, infinite, zero or less than zero."
-				)
-			}
-		}
-	}
-}
-
-impl std::error::Error for FisherSnedecorError {}
 
 impl FisherSnedecor {
 	/// Constructs a new fisher-snedecor distribution with

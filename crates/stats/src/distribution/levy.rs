@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use core::f64;
 
 use crate::{
@@ -28,30 +30,14 @@ pub struct Levy {
 }
 
 /// Represents the errors that can occur when creating a [`Levy`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum LevyError {
-	/// Location is NaN or infinite
+	#[error("Location is NaN or infinite")]
 	LocationInvalid,
-	/// Scale is NaN, infinite or nonpositive
+	#[error("Scale is NaN, infinite or nonpositive")]
 	ScaleInvalid,
 }
-
-impl core::fmt::Display for LevyError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			LevyError::LocationInvalid => {
-				write!(f, "location is NaN or infinite")
-			}
-			LevyError::ScaleInvalid => write!(
-				f,
-				"scale is NaN, infinite or nonpositive"
-			),
-		}
-	}
-}
-
-impl std::error::Error for LevyError {}
 
 impl Levy {
 	/// Constructs a new Levy distribution with a location (μ) and dispersion (c)

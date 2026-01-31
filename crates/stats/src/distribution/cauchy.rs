@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use core::f64;
 
 use crate::{
@@ -26,31 +28,15 @@ pub struct Cauchy {
 }
 
 /// Represents the errors that can occur when creating a [`Cauchy`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum CauchyError {
-	/// The location is NaN.
+	#[error("The location is NaN")]
 	LocationInvalid,
 
-	/// The scale is NaN, zero or less than zero.
+	#[error("The scale is NaN, zero or less than zero")]
 	ScaleInvalid,
 }
-
-impl core::fmt::Display for CauchyError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			CauchyError::LocationInvalid => {
-				write!(f, "Location is NaN")
-			}
-			CauchyError::ScaleInvalid => write!(
-				f,
-				"Scale is NaN, zero or less than zero"
-			),
-		}
-	}
-}
-
-impl std::error::Error for CauchyError {}
 
 impl Cauchy {
 	/// Constructs a new cauchy distribution with the given

@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use core::f64;
 
 use crate::{
@@ -27,32 +29,15 @@ pub struct Pareto {
 }
 
 /// Represents the errors that can occur when creating a [`Pareto`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum ParetoError {
-	/// The scale is NaN, zero or less than zero.
+	#[error("The scale is NaN, zero or less than zero")]
 	ScaleInvalid,
 
-	/// The shape is NaN, zero or less than zero.
+	#[error("The shape is NaN, zero or less than zero")]
 	ShapeInvalid,
 }
-
-impl core::fmt::Display for ParetoError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			ParetoError::ScaleInvalid => write!(
-				f,
-				"Scale is NaN, zero, or less than zero"
-			),
-			ParetoError::ShapeInvalid => write!(
-				f,
-				"Shape is NaN, zero, or less than zero"
-			),
-		}
-	}
-}
-
-impl std::error::Error for ParetoError {}
 
 impl Pareto {
 	/// Constructs a new Pareto distribution with scale `scale`, and `shape`

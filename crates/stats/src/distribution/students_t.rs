@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use core::f64;
 
 use crate::{
@@ -29,40 +31,18 @@ pub struct StudentsT {
 }
 
 /// Represents the errors that can occur when creating a [`StudentsT`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum StudentsTError {
-	/// The location is NaN.
+	#[error("The location is NaN")]
 	LocationInvalid,
 
-	/// The scale is NaN, zero or less than zero.
+	#[error("The scale is NaN, zero or less than zero")]
 	ScaleInvalid,
 
-	/// The degrees of freedom are NaN, zero or less than zero.
+	#[error("The degrees of freedom are NaN, zero or less than zero")]
 	FreedomInvalid,
 }
-
-impl core::fmt::Display for StudentsTError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			StudentsTError::LocationInvalid => {
-				write!(f, "Location is NaN")
-			}
-			StudentsTError::ScaleInvalid => write!(
-				f,
-				"Scale is NaN, zero or less than zero"
-			),
-			StudentsTError::FreedomInvalid => {
-				write!(
-					f,
-					"Degrees of freedom are NaN, zero or less than zero"
-				)
-			}
-		}
-	}
-}
-
-impl std::error::Error for StudentsTError {}
 
 impl StudentsT {
 	/// Constructs a new student's t-distribution with location `location`,

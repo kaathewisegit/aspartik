@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use thiserror::Error;
 
 #[cfg(feature = "python")]
 use util::impl_pyerr;
@@ -50,70 +51,33 @@ impl_pymethods! {for Uniform;
 }
 
 /// Represents the errors that can occur when creating a [`Uniform`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum UniformError {
-	/// The minimum is NaN or infinite.
+	#[error("The minimum is NaN or infinite")]
 	MinInvalid,
 
-	/// The maximum is NaN or infinite.
+	#[error("The maximum is NaN or infinite")]
 	MaxInvalid,
 
-	/// The maximum is not greater than the minimum.
+	#[error("The maximum is not greater than the minimum")]
 	MaxNotGreaterThanMin,
 }
 
 #[cfg(feature = "python")]
 impl_pyerr!(UniformError, pyo3::exceptions::PyValueError);
 
-impl core::fmt::Display for UniformError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			UniformError::MinInvalid => {
-				write!(f, "Minimum is NaN or infinite")
-			}
-			UniformError::MaxInvalid => {
-				write!(f, "Maximum is NaN or infinite")
-			}
-			UniformError::MaxNotGreaterThanMin => {
-				write!(
-					f,
-					"Maximum is not greater than the minimum"
-				)
-			}
-		}
-	}
-}
-
-impl std::error::Error for UniformError {}
-
 impl Uniform {
-	/// Constructs a new uniform distribution with a min of `min` and a max
-	/// of `max`.
+	/// A uniform distribution on `[min, max]`
 	///
 	/// # Errors
 	///
-	/// Returns an error if `min` or `max` are `NaN` or infinite.
-	/// Returns an error if `min >= max`.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Uniform;
-	///
-	/// let mut result = Uniform::new(0.0, 1.0);
-	/// assert!(result.is_ok());
-	///
-	/// result = Uniform::new(f64::NAN, f64::NAN);
-	/// assert!(result.is_err());
-	///
-	/// result = Uniform::new(f64::NEG_INFINITY, 1.0);
-	/// assert!(result.is_err());
-	/// ```
+	/// - If `min` or `max` are `NaN` or infinite.
+	/// - If `min >= max`.
 	pub fn new(min: f64, max: f64) -> Result<Uniform, UniformError> {
 		if !min.is_finite() {
 			return Err(UniformError::MinInvalid);
@@ -130,46 +94,17 @@ impl Uniform {
 		}
 	}
 
-	/// Constructs a new standard uniform distribution with
-	/// a lower bound 0 and an upper bound of 1.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Uniform;
-	///
-	/// let uniform = Uniform::standard();
-	/// ```
+	/// A uniform distribution on `[0, 1]`
 	pub fn standard() -> Self {
 		Self { min: 0.0, max: 1.0 }
 	}
 
-	/// Returns the lower bound of the uniform distribution
-	/// as a `f64`
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Uniform;
-	///
-	/// let uniform = Uniform::new(0.0, 1.0).unwrap();
-	/// assert_eq!(uniform.min(), 0.0);
-	/// ```
+	/// Lower bound
 	pub fn min(&self) -> f64 {
 		self.min
 	}
 
-	/// Returns the upper bound of the uniform distribution
-	/// as a `f64`
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Uniform;
-	///
-	/// let uniform = Uniform::new(0.0, 1.0).unwrap();
-	/// assert_eq!(uniform.max(), 1.0);
-	/// ```
+	/// Upper bound
 	pub fn max(&self) -> f64 {
 		self.max
 	}
@@ -183,7 +118,7 @@ impl Default for Uniform {
 
 impl core::fmt::Display for Uniform {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		write!(f, "Uni([{},{}])", self.min, self.max)
+		write!(f, "Uniform([{},{}])", self.min, self.max)
 	}
 }
 

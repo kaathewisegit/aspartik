@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use thiserror::Error;
 
 use core::f64;
 
@@ -52,38 +53,22 @@ impl_pymethods! {for Normal;
 }
 
 /// Represents the errors that can occur when creating a [`Normal`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum NormalError {
-	/// The mean is NaN.
+	#[error("The mean is NaN")]
 	MeanInvalid,
 
-	/// The standard deviation is NaN, zero or less than zero.
+	#[error("The standard deviation is NaN, zero or less than zero")]
 	StandardDeviationInvalid,
 }
 
 #[cfg(feature = "python")]
 impl_pyerr!(NormalError, pyo3::exceptions::PyValueError);
-
-impl core::fmt::Display for NormalError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			NormalError::MeanInvalid => write!(f, "Mean is NaN"),
-			NormalError::StandardDeviationInvalid => {
-				write!(
-					f,
-					"Standard deviation is NaN, zero or less than zero"
-				)
-			}
-		}
-	}
-}
-
-impl std::error::Error for NormalError {}
 
 impl Normal {
 	///  Constructs a new normal distribution with a mean of `mean`

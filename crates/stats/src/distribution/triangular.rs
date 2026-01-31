@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use core::f64;
 
 use crate::{
@@ -28,51 +30,26 @@ pub struct Triangular {
 }
 
 /// Represents the errors that can occur when creating a [`Triangular`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum TriangularError {
-	/// The minimum is NaN or infinite.
+	#[error("The minimum is NaN or infinite")]
 	MinInvalid,
 
-	/// The maximum is NaN or infinite.
+	#[error("The maximum is NaN or infinite")]
 	MaxInvalid,
 
-	/// The mode is NaN or infinite.
+	#[error("The mode is NaN or infinite")]
 	ModeInvalid,
 
-	/// The mode is less than the minimum or greater than the maximum.
+	#[error(
+		"The mode is less than the minimum or greater than the maximum"
+	)]
 	ModeOutOfRange,
 
-	/// The minimum equals the maximum.
+	#[error("The minimum equals the maximum")]
 	MinEqualsMax,
 }
-
-impl core::fmt::Display for TriangularError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			TriangularError::MinInvalid => {
-				write!(f, "Minimum is NaN or infinite.")
-			}
-			TriangularError::MaxInvalid => {
-				write!(f, "Maximum is NaN or infinite.")
-			}
-			TriangularError::ModeInvalid => {
-				write!(f, "Mode is NaN or infinite.")
-			}
-			TriangularError::ModeOutOfRange => {
-				write!(
-					f,
-					"Mode is less than minimum or greater than maximum"
-				)
-			}
-			TriangularError::MinEqualsMax => {
-				write!(f, "Minimum equals Maximum")
-			}
-		}
-	}
-}
-
-impl std::error::Error for TriangularError {}
 
 impl Triangular {
 	/// Constructs a new triangular distribution with a minimum of `min`,

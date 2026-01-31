@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use thiserror::Error;
 
 use math::{function::gamma, ulps_eq};
 #[cfg(feature = "python")]
@@ -51,43 +52,22 @@ impl_pymethods! {for InverseGamma;
 }
 
 /// Represents the errors that can occur when creating an [`InverseGamma`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum InverseGammaError {
-	/// The shape is NaN, infinite, zero or less than zero.
+	#[error("The shape is NaN, infinite, zero or less than zero")]
 	ShapeInvalid,
 
-	/// The rate is NaN, infinite, zero or less than zero.
+	#[error("The rate is NaN, infinite, zero or less than zero")]
 	RateInvalid,
 }
 
 #[cfg(feature = "python")]
 impl_pyerr!(InverseGammaError, pyo3::exceptions::PyValueError);
-
-impl core::fmt::Display for InverseGammaError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			InverseGammaError::ShapeInvalid => {
-				write!(
-					f,
-					"Shape is NaN, infinite, zero or less than zero"
-				)
-			}
-			InverseGammaError::RateInvalid => {
-				write!(
-					f,
-					"Rate is NaN, infinite, zero or less than zero"
-				)
-			}
-		}
-	}
-}
-
-impl std::error::Error for InverseGammaError {}
 
 impl InverseGamma {
 	/// Constructs a new inverse gamma distribution with a shape (α)

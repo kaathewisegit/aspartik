@@ -1,5 +1,9 @@
-use crate::distribution::{Binomial, BinomialError, Discrete, DiscreteCDF};
-use crate::statistics::*;
+use std::fmt;
+
+use crate::{
+	distribution::{Binomial, BinomialError, Discrete, DiscreteCDF},
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the
 /// [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution)
@@ -78,8 +82,8 @@ impl Bernoulli {
 	}
 }
 
-impl core::fmt::Display for Bernoulli {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl fmt::Display for Bernoulli {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "Bernoulli({})", self.p())
 	}
 }

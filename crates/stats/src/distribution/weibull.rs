@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use std::f64::consts::LN_2;
 
 use crate::{
@@ -29,32 +31,15 @@ pub struct Weibull {
 }
 
 /// Represents the errors that can occur when creating a [`Weibull`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum WeibullError {
-	/// The shape is NaN, zero or less than zero.
+	#[error("The shape is NaN, zero or less than zero")]
 	ShapeInvalid,
 
-	/// The scale is NaN, zero or less than zero.
+	#[error("The scale is NaN, zero or less than zero")]
 	ScaleInvalid,
 }
-
-impl core::fmt::Display for WeibullError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			WeibullError::ShapeInvalid => write!(
-				f,
-				"Shape is NaN, zero or less than zero."
-			),
-			WeibullError::ScaleInvalid => write!(
-				f,
-				"Scale is NaN, zero or less than zero."
-			),
-		}
-	}
-}
-
-impl std::error::Error for WeibullError {}
 
 impl Weibull {
 	/// Constructs a new weibull distribution with a shape (k) of `shape`

@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use thiserror::Error;
 
 use core::f64;
 use math::{
@@ -56,38 +57,22 @@ impl_pymethods! {for LogNormal;
 }
 
 /// Represents the errors that can occur when creating a [`LogNormal`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum LogNormalError {
-	/// The location is NaN.
+	#[error("The location is NaN")]
 	LocationInvalid,
 
-	/// The scale is NaN, zero or less than zero.
+	#[error("The scale is NaN, zero or less than zero")]
 	ScaleInvalid,
 }
 
 #[cfg(feature = "python")]
 impl_pyerr!(LogNormalError, pyo3::exceptions::PyValueError);
-
-impl core::fmt::Display for LogNormalError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			LogNormalError::LocationInvalid => {
-				write!(f, "Location is NaN")
-			}
-			LogNormalError::ScaleInvalid => write!(
-				f,
-				"Scale is NaN, zero or less than zero"
-			),
-		}
-	}
-}
-
-impl std::error::Error for LogNormalError {}
 
 impl LogNormal {
 	/// Constructs a new log-normal distribution with a location of `location`

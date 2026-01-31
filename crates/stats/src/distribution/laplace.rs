@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use thiserror::Error;
 
 use core::f64;
 #[cfg(feature = "python")]
@@ -50,38 +51,22 @@ impl_pymethods! {for Laplace;
 }
 
 /// Represents the errors that can occur when creating a [`Laplace`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum LaplaceError {
-	/// The location is NaN.
+	#[error("The location is NaN")]
 	LocationInvalid,
 
-	/// The scale is NaN, zero or less than zero.
+	#[error("The scale is NaN, zero or less than zero")]
 	ScaleInvalid,
 }
 
 #[cfg(feature = "python")]
 impl_pyerr!(LaplaceError, pyo3::exceptions::PyValueError);
-
-impl core::fmt::Display for LaplaceError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			LaplaceError::LocationInvalid => {
-				write!(f, "Location is NaN")
-			}
-			LaplaceError::ScaleInvalid => write!(
-				f,
-				"Scale is NaN, zero or less than zero"
-			),
-		}
-	}
-}
-
-impl std::error::Error for LaplaceError {}
 
 impl Laplace {
 	/// Constructs a new laplace distribution with the given

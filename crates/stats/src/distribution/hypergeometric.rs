@@ -1,10 +1,12 @@
+use thiserror::Error;
+
 use core::cmp;
-use math::function::factorial;
 
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::{Distribution, Mode},
 };
+use math::function::factorial;
 
 /// Implements the
 /// [Hypergeometric](http://en.wikipedia.org/wiki/Hypergeometric_distribution)
@@ -30,30 +32,15 @@ pub struct Hypergeometric {
 }
 
 /// Represents the errors that can occur when creating a [`Hypergeometric`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum HypergeometricError {
-	/// The number of successes is greater than the population.
+	#[error("The number of successes is greater than the population")]
 	TooManySuccesses,
 
-	/// The number of draws is greater than the population.
+	#[error("The number of draws is greater than the population")]
 	TooManyDraws,
 }
-
-impl core::fmt::Display for HypergeometricError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			HypergeometricError::TooManySuccesses => {
-				write!(f, "successes > population")
-			}
-			HypergeometricError::TooManyDraws => {
-				write!(f, "draws > population")
-			}
-		}
-	}
-}
-
-impl std::error::Error for HypergeometricError {}
 
 impl Hypergeometric {
 	/// Constructs a new hypergeometric distribution

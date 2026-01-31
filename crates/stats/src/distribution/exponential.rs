@@ -1,9 +1,8 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use thiserror::Error;
 
 use core::f64;
-#[cfg(feature = "python")]
-use util::impl_pyerr;
 
 #[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
@@ -12,6 +11,8 @@ use crate::{
 	probability::Probability,
 	statistics::{Distribution, Mode},
 };
+#[cfg(feature = "python")]
+use util::impl_pyerr;
 
 /// Implements the
 /// [Exp](https://en.wikipedia.org/wiki/Exp_distribution)
@@ -51,31 +52,19 @@ impl_pymethods! {for Exp;
 }
 
 /// Represents the errors that can occur when creating a [`Exp`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
 	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
 )]
 pub enum ExpError {
-	/// The rate is NaN, zero or less than zero.
+	#[error("The rate is NaN, zero or less than zero")]
 	RateInvalid,
 }
 
 #[cfg(feature = "python")]
 impl_pyerr!(ExpError, pyo3::exceptions::PyValueError);
-
-impl core::fmt::Display for ExpError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			ExpError::RateInvalid => {
-				write!(f, "Rate is NaN, zero or less than zero")
-			}
-		}
-	}
-}
-
-impl std::error::Error for ExpError {}
 
 impl Exp {
 	/// Constructs a new exponential distribution with a

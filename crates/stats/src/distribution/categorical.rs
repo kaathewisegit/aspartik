@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	probability::Probability,
@@ -28,37 +30,20 @@ pub struct Categorical {
 }
 
 /// Represents the errors that can occur when creating a [`Categorical`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum CategoricalError {
-	/// The probability mass is empty.
+	#[error("The probability mass is empty")]
 	ProbMassEmpty,
 
-	/// The probabilities sums up to zero.
+	#[error("The probabilities sums up to zero")]
 	ProbMassSumZero,
 
-	/// The probability mass contains at least one element which is NaN or less than zero.
+	#[error(
+		"The probability mass contains at least one element which is NaN or less than zero"
+	)]
 	ProbMassHasInvalidElements,
 }
-
-impl core::fmt::Display for CategoricalError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			CategoricalError::ProbMassEmpty => {
-				write!(f, "Probability mass is empty")
-			}
-			CategoricalError::ProbMassSumZero => {
-				write!(f, "Probabilities sum up to zero")
-			}
-			CategoricalError::ProbMassHasInvalidElements => write!(
-				f,
-				"Probability mass contains at least one element which is NaN or less than zero"
-			),
-		}
-	}
-}
-
-impl std::error::Error for CategoricalError {}
 
 impl Categorical {
 	/// Constructs a new categorical distribution

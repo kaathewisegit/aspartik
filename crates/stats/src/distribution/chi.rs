@@ -1,9 +1,12 @@
-use core::f64;
-use core::num::NonZeroU64;
-use math::function::gamma;
+use thiserror::Error;
 
-use crate::distribution::{Continuous, ContinuousCDF};
-use crate::statistics::*;
+use core::{f64, num::NonZeroU64};
+
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	statistics::{Distribution, Mode},
+};
+use math::function::gamma;
 
 /// Implements the [Chi](https://en.wikipedia.org/wiki/Chi_distribution)
 /// distribution
@@ -25,24 +28,12 @@ pub struct Chi {
 }
 
 /// Represents the errors that can occur when creating a [`Chi`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum ChiError {
-	/// The degrees of freedom are zero.
+	#[error("The degrees of freedom are zero")]
 	FreedomInvalid,
 }
-
-impl core::fmt::Display for ChiError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			ChiError::FreedomInvalid => {
-				write!(f, "Degrees of freedom are zero")
-			}
-		}
-	}
-}
-
-impl std::error::Error for ChiError {}
 
 impl Chi {
 	/// Constructs a new chi distribution

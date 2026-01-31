@@ -1,10 +1,13 @@
+use thiserror::Error;
+
+use crate::{
+	distribution::{Discrete, DiscreteCDF},
+	statistics::{Distribution, Mode},
+};
 use math::{
 	function::{beta, factorial},
 	ulps_eq,
 };
-
-use crate::distribution::{Discrete, DiscreteCDF};
-use crate::statistics::*;
 
 /// Implements the
 /// [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
@@ -28,24 +31,12 @@ pub struct Binomial {
 }
 
 /// Represents the errors that can occur when creating a [`Binomial`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum BinomialError {
-	/// The probability is NaN or not in `[0, 1]`.
+	#[error("The probability is NaN or not in `[0, 1]`")]
 	ProbabilityInvalid,
 }
-
-impl core::fmt::Display for BinomialError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			BinomialError::ProbabilityInvalid => {
-				write!(f, "Probability is NaN or not in [0, 1]")
-			}
-		}
-	}
-}
-
-impl std::error::Error for BinomialError {}
 
 impl Binomial {
 	/// Constructs a new binomial distribution

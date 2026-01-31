@@ -1,5 +1,9 @@
-use crate::distribution::{Discrete, DiscreteCDF};
-use crate::statistics::*;
+use thiserror::Error;
+
+use crate::{
+	distribution::{Discrete, DiscreteCDF},
+	statistics::{Distribution, Mode},
+};
 
 /// Implements the [Discrete
 /// Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
@@ -22,24 +26,12 @@ pub struct DiscreteUniform {
 }
 
 /// Represents the errors that can occur when creating a [`DiscreteUniform`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum DiscreteUniformError {
-	/// The maximum is less than the minimum.
+	#[error("Maximum is less than minimum")]
 	MinMaxInvalid,
 }
-
-impl core::fmt::Display for DiscreteUniformError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			DiscreteUniformError::MinMaxInvalid => {
-				write!(f, "Maximum is less than minimum")
-			}
-		}
-	}
-}
-
-impl std::error::Error for DiscreteUniformError {}
 
 impl DiscreteUniform {
 	/// Constructs a new discrete uniform distribution with a minimum value

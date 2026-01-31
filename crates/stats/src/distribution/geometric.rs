@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use core::f64;
 
 use crate::{
@@ -28,24 +30,12 @@ pub struct Geometric {
 }
 
 /// Represents the errors that can occur when creating a [`Geometric`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum GeometricError {
-	/// The probability is NaN or not in `(0, 1]`.
+	#[error("The probability is NaN or not in `(0, 1]`")]
 	ProbabilityInvalid,
 }
-
-impl core::fmt::Display for GeometricError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			GeometricError::ProbabilityInvalid => {
-				write!(f, "Probability is NaN or not in (0, 1]")
-			}
-		}
-	}
-}
-
-impl std::error::Error for GeometricError {}
 
 impl Geometric {
 	/// Constructs a new shifted geometric distribution with a probability

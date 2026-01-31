@@ -1,11 +1,13 @@
+use thiserror::Error;
+
 use core::f64::consts::PI;
-use math::consts::EULER_MASCHERONI;
 
 use super::{Continuous, ContinuousCDF};
 use crate::{
 	probability::Probability,
 	statistics::{Distribution, Mode},
 };
+use math::consts::EULER_MASCHERONI;
 
 /// Implements the [Gumbel](https://en.wikipedia.org/wiki/Gumbel_distribution)
 /// distribution, also known as the type-I generalized extreme value distribution.
@@ -28,31 +30,15 @@ pub struct Gumbel {
 }
 
 /// Represents the errors that can occur when creating a [`Gumbel`]
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum GumbelError {
-	/// The location is invalid (NAN)
+	#[error("The location is NaN")]
 	LocationInvalid,
 
-	/// The scale is NAN, zero or less than zero
+	#[error("The scale is NaN, zero or less than zero")]
 	ScaleInvalid,
 }
-
-impl core::fmt::Display for GumbelError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		match self {
-			GumbelError::LocationInvalid => {
-				write!(f, "Location is NAN")
-			}
-			GumbelError::ScaleInvalid => write!(
-				f,
-				"Scale is NAN, zero or less than zero"
-			),
-		}
-	}
-}
-
-impl std::error::Error for GumbelError {}
 
 impl Gumbel {
 	/// Constructs a new Gumbel distribution with the given
