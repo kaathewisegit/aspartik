@@ -8,7 +8,6 @@ pub mod parameters;
 pub mod prior;
 pub mod substitution;
 mod transitions;
-pub mod util;
 
 pub use callback::PyCallback;
 pub use prior::PyPrior;
@@ -55,7 +54,7 @@ pub mod pymodule {
 
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
-		::util::py_patch_module!(m);
+		util::py_patch_module!(m);
 
 		Ok(())
 	}
