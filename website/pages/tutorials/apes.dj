@@ -52,7 +52,7 @@ tree = Tree(msa.sequence_names(), rng)
 
 kappa = Real(2.0)
 population_size = Real(2.0)
-frequencies = Weights(0.25, 0.25, 0.25, 0.25)
+frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
 
 parameters = [tree, kappa, population_size, frequencies]
 ```
@@ -127,7 +127,7 @@ basic `CPU4Likelihood` (4-state single-core calculator).
 likelihood = CPU4Likelihood(
     msa=msa,
     substitution=HKY(frequencies, kappa),
-    clock=StrictClock(1.0),
+    clock=Clock.Strict(Real(1.0)),
     tree=tree,
 )
 ```

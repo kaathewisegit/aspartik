@@ -2,18 +2,17 @@ use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::{prelude::*, types::PyType};
 
-use crate::parameters::Tree;
-use pyutil::SupportsFloat;
+use crate::parameters::{PyReal, Tree};
 
 pub struct StrictClock {
-	rate: SupportsFloat,
+	rate: Py<PyReal>,
 	cached_rate: f64,
 	full_update: bool,
 }
 
 impl StrictClock {
-	fn update(&mut self, py: Python) -> Result<()> {
-		let rate = self.rate.extract(py)?;
+	fn update(&mut self) -> Result<()> {
+		let rate = self.rate.get().inner().value();
 		if rate != self.cached_rate {
 			self.cached_rate = rate;
 			self.full_update = true;
@@ -40,9 +39,9 @@ pub enum Clock {
 }
 
 impl Clock {
-	pub fn update(&mut self, py: Python) -> Result<()> {
+	pub fn update(&mut self) -> Result<()> {
 		match self {
-			Self::Strict(clock) => clock.update(py),
+			Self::Strict(clock) => clock.update(),
 		}
 	}
 
@@ -68,7 +67,7 @@ pub struct PyClock {
 impl PyClock {
 	#[pyo3(name = "Strict")]
 	#[classmethod]
-	fn strict(_cls: Py<PyType>, rate: SupportsFloat) -> Self {
+	fn strict(_cls: Py<PyType>, rate: Py<PyReal>) -> Self {
 		let strict = StrictClock {
 			rate,
 			cached_rate: f64::NAN,

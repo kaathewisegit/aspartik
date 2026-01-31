@@ -27,9 +27,9 @@ impl HeteroLikelihood {
 		})
 	}
 
-	fn propose(&self, py: Python) -> Result<()> {
+	fn propose(&self) -> Result<()> {
 		for likelihood in &self.likelihoods {
-			likelihood.propose(py)?;
+			likelihood.propose()?;
 		}
 		Ok(())
 	}
@@ -93,8 +93,8 @@ impl PyHeteroLikelihood {
 		})
 	}
 
-	pub fn propose(&self, py: Python) -> Result<()> {
-		self.inner.lock().propose(py)
+	pub fn propose(&self) -> Result<()> {
+		self.inner.lock().propose()
 	}
 
 	pub fn likelihood(&self) -> Result<f64> {

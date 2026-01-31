@@ -99,7 +99,7 @@ where
 			last: f64::NAN,
 			launched_update: false,
 		};
-		Python::attach(|py| out.propose(py))?;
+		out.propose()?;
 		// This cannot be removed: the likelihood must be run to
 		// completion in case the calculator is async.
 		out.likelihood()?;
@@ -109,9 +109,9 @@ where
 		Ok(out)
 	}
 
-	fn propose(&mut self, py: Python) -> Result<()> {
+	fn propose(&mut self) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
-		self.transitions.update(py, tree)?;
+		self.transitions.update(tree)?;
 		let (nodes, leaves_end) = tree.nodes_to_update();
 
 		trace!(
@@ -247,8 +247,8 @@ macro_rules! likelihood_methods {
 	($type:ty) => {
 		#[pymethods]
 		impl $type {
-			fn propose(&self, py: Python) -> Result<()> {
-				self.inner.lock().propose(py)
+			fn propose(&self) -> Result<()> {
+				self.inner.lock().propose()
 			}
 
 			fn likelihood(&self) -> Result<f64> {
@@ -491,12 +491,12 @@ impl PyLikelihood {
 		}
 	}
 
-	pub fn propose(&self, py: Python) -> Result<()> {
+	pub fn propose(&self) -> Result<()> {
 		match self {
-			Self::Cpu(l) => l.get().propose(py),
-			Self::Parallel(l) => l.get().propose(py),
-			Self::Cuda(l) => l.get().propose(py),
-			Self::Hetero(l) => l.get().propose(py),
+			Self::Cpu(l) => l.get().propose(),
+			Self::Parallel(l) => l.get().propose(),
+			Self::Cuda(l) => l.get().propose(),
+			Self::Hetero(l) => l.get().propose(),
 		}
 	}
 

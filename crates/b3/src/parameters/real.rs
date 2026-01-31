@@ -85,10 +85,6 @@ impl PyReal {
 		}
 	}
 
-	fn value(&self) -> f64 {
-		self.inner().value()
-	}
-
 	fn set(&self, new_value: f64) {
 		self.inner().set(new_value)
 	}
@@ -98,7 +94,7 @@ impl PyReal {
 	}
 
 	fn __richcmp__(&self, other: f64, op: CompareOp) -> bool {
-		let this = self.value();
+		let this = self.inner().value();
 		match op {
 			CompareOp::Lt => this < other,
 			CompareOp::Le => this <= other,

@@ -2,10 +2,10 @@ use anyhow::Result;
 use linalg::{RowMatrix, Vector};
 use pyo3::{conversion::FromPyObject, prelude::*};
 
-use crate::parameters::{Parameter, PyReal};
+use crate::parameters::{Parameter, PyReal, PyRealVector};
 
 pub trait SubstitutionModel<const N: usize, F> {
-	fn update(&mut self, py: Python) -> Result<bool>;
+	fn update(&mut self) -> Result<bool>;
 
 	fn get_transition(&self, distance: f64) -> [[F; N]; N];
 
@@ -55,11 +55,11 @@ impl<'py> IntoPyObject<'py> for PySubstitution4 {
 }
 
 impl SubstitutionModel<4, f64> for PySubstitution4 {
-	fn update(&mut self, py: Python) -> Result<bool> {
+	fn update(&mut self) -> Result<bool> {
 		match self {
-			Self::JC(m) => m.get().inner().update(py),
-			Self::K80(m) => m.get().inner().update(py),
-			Self::HKY(m) => m.get().inner().update(py),
+			Self::JC(m) => m.get().inner().update(),
+			Self::K80(m) => m.get().inner().update(),
+			Self::HKY(m) => m.get().inner().update(),
 		}
 	}
 
@@ -125,7 +125,7 @@ impl JC {
 }
 
 impl SubstitutionModel<4, f64> for JC {
-	fn update(&mut self, _py: Python) -> Result<bool> {
+	fn update(&mut self) -> Result<bool> {
 		Ok(false)
 	}
 
@@ -177,7 +177,7 @@ impl K80 {
 }
 
 impl SubstitutionModel<4, f64> for K80 {
-	fn update(&mut self, _py: Python) -> Result<bool> {
+	fn update(&mut self) -> Result<bool> {
 		let kappa = &*self.kappa.get().inner();
 
 		if kappa.is_changed() {
@@ -227,15 +227,15 @@ create_pysubstitution!(PyK80, K80, "K80", kappa: Py<PyReal>);
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct HKY {
+	/// Transition/transversion ratio
+	#[pyo3(get)]
+	kappa: Py<PyReal>,
 	/// DNA nucleotide frequencies
 	///
 	/// Must have the length of 4, with each element corresponding to
 	/// Adenine, Cytosine, Guanine, and Thymine respectively.
 	#[pyo3(get)]
-	frequencies: Py<PyAny>,
-	/// Transition/transversion ratio
-	#[pyo3(get)]
-	kappa: Py<PyReal>,
+	frequencies: Py<PyRealVector>,
 
 	cached_kappa: f64,
 	cached_frequencies: (f64, f64, f64, f64),
@@ -246,7 +246,7 @@ pub struct HKY {
 }
 
 impl HKY {
-	fn new(frequencies: Py<PyAny>, kappa: Py<PyReal>) -> Self {
+	fn new(frequencies: Py<PyRealVector>, kappa: Py<PyReal>) -> Self {
 		Self {
 			kappa,
 			frequencies,
@@ -300,14 +300,11 @@ impl HKY {
 }
 
 impl SubstitutionModel<4, f64> for HKY {
-	fn update(&mut self, py: Python) -> Result<bool> {
-		let bf = self.frequencies.bind(py);
-		let frequencies = (
-			bf.get_item(0)?.extract::<f64>()?,
-			bf.get_item(1)?.extract::<f64>()?,
-			bf.get_item(2)?.extract::<f64>()?,
-			bf.get_item(3)?.extract::<f64>()?,
-		);
+	fn update(&mut self) -> Result<bool> {
+		let frequencies = {
+			let freqs = &*self.frequencies.get().inner();
+			(freqs[0], freqs[1], freqs[2], freqs[3])
+		};
 
 		if self.kappa.get().inner().is_changed()
 			|| frequencies != self.cached_frequencies
@@ -334,4 +331,4 @@ impl SubstitutionModel<4, f64> for HKY {
 	}
 }
 
-create_pysubstitution!(PyHKY, HKY, "HKY", frequencies: Py<PyAny>, kappa: Py<PyReal>);
+create_pysubstitution!(PyHKY, HKY, "HKY", frequencies: Py<PyRealVector>, kappa: Py<PyReal>);

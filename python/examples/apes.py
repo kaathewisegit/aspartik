@@ -60,7 +60,7 @@ def make_mcmc(fasta_path: str):
     likelihood = CPU4Likelihood(
         msa=msa,
         substitution=HKY(frequencies, kappa),
-        clock=Clock.Strict(1.0),
+        clock=Clock.Strict(Real(1.0)),
         tree=tree,
     )
 

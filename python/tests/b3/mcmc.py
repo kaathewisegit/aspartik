@@ -25,7 +25,7 @@ def test_mcmc():
     likelihood = CPU4Likelihood(
         msa=msa,
         substitution=K80(Real(1.0)),
-        clock=Clock.Strict(1.0),
+        clock=Clock.Strict(Real(1.0)),
         tree=tree,
     )
 

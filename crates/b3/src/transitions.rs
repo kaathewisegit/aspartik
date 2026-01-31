@@ -31,12 +31,12 @@ where
 	}
 
 	/// Returns `true` if a full update is needed.
-	pub fn update(&mut self, py: Python, tree: &mut Tree) -> Result<()> {
+	pub fn update(&mut self, tree: &mut Tree) -> Result<()> {
 		let mut clock = self.clock.get().inner();
-		clock.update(py)?;
+		clock.update()?;
 		clock.mark_tree(tree);
 
-		if self.substitution.update(py)? {
+		if self.substitution.update()? {
 			tree.mark_all_edges_updated();
 		}
 

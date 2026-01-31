@@ -3,6 +3,8 @@ use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, exceptions::PyIndexError, prelude::*};
 use serde::{Deserialize, Serialize};
 
+use std::ops::Index;
+
 use super::Parameter;
 use crate::impl_pyparameter_common;
 use skvec::SkVec;
@@ -23,6 +25,18 @@ impl RealVector {
 
 	pub fn len(&self) -> usize {
 		self.values.len()
+	}
+
+	pub fn set(&mut self, index: usize, value: f64) {
+		self.values.set(index, value)
+	}
+}
+
+impl Index<usize> for RealVector {
+	type Output = f64;
+
+	fn index(&self, index: usize) -> &f64 {
+		&self.values[index]
 	}
 }
 
@@ -92,7 +106,6 @@ impl PyRealVector {
 	}
 
 	fn __setitem__(&self, index: usize, value: f64) {
-		let inner = &mut *self.inner();
-		inner.values.set(index, value);
+		self.inner().set(index, value);
 	}
 }

@@ -241,7 +241,7 @@ impl Mcmc {
 		let rng_bytes = &bytes[..len];
 		py_call_method!(py, self.rng, "load", rng_bytes)?;
 
-		self.likelihood.propose(py)?;
+		self.likelihood.propose()?;
 		self.likelihood.likelihood()?;
 		self.likelihood.accept()?;
 
@@ -305,7 +305,7 @@ impl Mcmc {
 		}
 
 		let (likelihood, time) = time! {{
-			self.likelihood.propose(py)?;
+			self.likelihood.propose()?;
 			self.likelihood.likelihood()?
 		}};
 
