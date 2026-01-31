@@ -12,7 +12,6 @@ data = { workspace = true }
 io = { workspace = true }
 linalg = { workspace = true, features = ["bytemuck", "cuda"] }
 logger = { workspace = true }
-pyutil = { workspace = true }
 rng = { workspace = true }
 skvec = { workspace = true, features = ["serde"] }
 util = { workspace = true }

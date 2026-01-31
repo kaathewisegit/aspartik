@@ -5,12 +5,10 @@ members = [
 	"crates/b3",
 	"crates/bitmap",
 	"crates/data",
-	"crates/histogram",
 	"crates/io",
 	"crates/linalg",
 	"crates/logger",
 	"crates/math",
-	"crates/pyutil",
 	"crates/rng",
 	"crates/skvec",
 	"crates/stats",
@@ -52,12 +50,10 @@ thiserror = "2.0"
 b3 = { version = "0.1.0-alpha.4", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.4", path = "crates/bitmap" }
 data = { version = "0.1.0-alpha.4", path = "crates/data" }
-histogram = { version = "0.1.0-alpha.4", path = "crates/histogram" }
 io = { version = "0.1.0-alpha.4", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.4", path = "crates/linalg" }
 logger = { version = "0.1.0-alpha.4", path = "crates/logger" }
 math = { version = "0.1.0-alpha.4", path = "crates/math" }
-pyutil = { version = "0.1.0-alpha.4", path = "crates/pyutil" }
 rng = { version = "0.1.0-alpha.4", path = "crates/rng" }
 skvec = { version = "0.1.0-alpha.4", path = "crates/skvec" }
 stats = { version = "0.1.0-alpha.4", path = "crates/stats" }
