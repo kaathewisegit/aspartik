@@ -13,7 +13,6 @@ use crate::{
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
 use logger::{info, trace};
-use util::{py_call_method, py_check_method};
 
 mod cpu;
 mod cuda;
@@ -193,7 +192,7 @@ where
 		self.pattern_weights.len()
 	}
 
-	fn pattern_likelihoods(&mut self) -> Result<Vec<f64>> {
+	fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
 		Ok(self.pattern_likelihoods.clone())
 	}
 }
@@ -434,48 +433,115 @@ impl PyCudaLikelihood {
 
 likelihood_methods!(PyCudaLikelihood);
 
-pub struct PyLikelihood {
-	inner: Py<PyAny>,
+pub enum PyLikelihood {
+	Cpu(Py<PyCpu4Likelihood>),
+	Parallel(Py<PyParallel4Likelihood>),
+	Cuda(Py<PyCudaLikelihood>),
+	Hetero(Py<PyHeteroLikelihood>),
 }
 
 impl<'py> FromPyObject<'_, 'py> for PyLikelihood {
 	type Error = PyErr;
 
 	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
-		py_check_method!(obj, "propose");
-		py_check_method!(obj, "likelihood");
-		py_check_method!(obj, "accept");
-		py_check_method!(obj, "reject");
+		if let Ok(l) = obj.cast::<PyCpu4Likelihood>() {
+			Ok(Self::Cpu(l.into()))
+		} else if let Ok(l) = obj.cast::<PyParallel4Likelihood>() {
+			Ok(Self::Parallel(l.into()))
+		} else if let Ok(l) = obj.cast::<PyCudaLikelihood>() {
+			Ok(Self::Cuda(l.into()))
+		} else if let Ok(l) = obj.cast::<PyHeteroLikelihood>() {
+			Ok(Self::Hetero(l.into()))
+		} else {
+			todo!("descriptive error")
+		}
+	}
+}
 
-		Ok(PyLikelihood {
-			inner: obj.to_owned().unbind(),
+impl<'py> IntoPyObject<'py> for PyLikelihood {
+	type Target = PyAny;
+	type Output = Bound<'py, PyAny>;
+	type Error = PyErr;
+
+	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
+		Ok(match self {
+			Self::Cpu(l) => {
+				Bound::new(py, l.clone_ref(py))?.into_any()
+			}
+			Self::Parallel(l) => {
+				Bound::new(py, l.clone_ref(py))?.into_any()
+			}
+			Self::Cuda(l) => {
+				Bound::new(py, l.clone_ref(py))?.into_any()
+			}
+			Self::Hetero(l) => {
+				Bound::new(py, l.clone_ref(py))?.into_any()
+			}
 		})
 	}
 }
 
 impl PyLikelihood {
+	pub fn clone_ref(&self, py: Python) -> Self {
+		match self {
+			Self::Cpu(l) => Self::Cpu(l.clone_ref(py)),
+			Self::Parallel(l) => Self::Parallel(l.clone_ref(py)),
+			Self::Cuda(l) => Self::Cuda(l.clone_ref(py)),
+			Self::Hetero(l) => Self::Hetero(l.clone_ref(py)),
+		}
+	}
+
 	pub fn propose(&self, py: Python) -> Result<()> {
-		py_call_method!(py, self.inner, "propose")?;
-		Ok(())
+		match self {
+			Self::Cpu(l) => l.get().propose(py),
+			Self::Parallel(l) => l.get().propose(py),
+			Self::Cuda(l) => l.get().propose(py),
+			Self::Hetero(l) => l.get().propose(py),
+		}
 	}
 
-	pub fn likelihood(&self, py: Python) -> Result<f64> {
-		let out = py_call_method!(py, self.inner, "likelihood")?
-			.extract(py)?;
-		Ok(out)
+	pub fn likelihood(&self) -> Result<f64> {
+		match self {
+			Self::Cpu(l) => l.get().likelihood(),
+			Self::Parallel(l) => l.get().likelihood(),
+			Self::Cuda(l) => l.get().likelihood(),
+			Self::Hetero(l) => l.get().likelihood(),
+		}
 	}
 
-	pub fn accept(&self, py: Python) -> Result<()> {
-		py_call_method!(py, self.inner, "accept")?;
-		Ok(())
+	pub fn accept(&self) -> Result<()> {
+		match self {
+			Self::Cpu(l) => l.get().accept(),
+			Self::Parallel(l) => l.get().accept(),
+			Self::Cuda(l) => l.get().accept(),
+			Self::Hetero(l) => l.get().accept(),
+		}
 	}
 
-	pub fn reject(&self, py: Python) -> Result<()> {
-		py_call_method!(py, self.inner, "reject")?;
-		Ok(())
+	pub fn reject(&self) -> Result<()> {
+		match self {
+			Self::Cpu(l) => l.get().reject(),
+			Self::Parallel(l) => l.get().reject(),
+			Self::Cuda(l) => l.get().reject(),
+			Self::Hetero(l) => l.get().reject(),
+		}
 	}
 
-	pub fn clone_ref(&self, py: Python) -> Py<PyAny> {
-		self.inner.clone_ref(py)
+	pub fn num_patterns(&self) -> usize {
+		match self {
+			Self::Cpu(l) => l.get().num_patterns(),
+			Self::Parallel(l) => l.get().num_patterns(),
+			Self::Cuda(l) => l.get().num_patterns(),
+			Self::Hetero(_l) => todo!(),
+		}
+	}
+
+	pub fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
+		match self {
+			Self::Cpu(l) => l.get().pattern_likelihoods(),
+			Self::Parallel(l) => l.get().pattern_likelihoods(),
+			Self::Cuda(l) => l.get().pattern_likelihoods(),
+			Self::Hetero(_l) => todo!(),
+		}
 	}
 }

@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
 use pyo3::{
+	IntoPyObjectExt,
 	prelude::*,
 	types::{PyBytes, PyList},
 };
@@ -82,10 +83,9 @@ impl Mcmc {
 		self.scheduler.operators(py)
 	}
 
-	/// Likelihood calculator object
 	#[getter]
-	fn likelihood(&self, py: Python) -> Py<PyAny> {
-		self.likelihood.clone_ref(py)
+	fn likelihood(&self, py: Python) -> PyResult<Py<PyAny>> {
+		self.likelihood.clone_ref(py).into_py_any(py)
 	}
 
 	/// A list of callbacks
@@ -242,8 +242,8 @@ impl Mcmc {
 		py_call_method!(py, self.rng, "load", rng_bytes)?;
 
 		self.likelihood.propose(py)?;
-		self.likelihood.likelihood(py)?;
-		self.likelihood.accept(py)?;
+		self.likelihood.likelihood()?;
+		self.likelihood.accept()?;
 
 		Ok(())
 	}
@@ -306,7 +306,7 @@ impl Mcmc {
 
 		let (likelihood, time) = time! {{
 			self.likelihood.propose(py)?;
-			self.likelihood.likelihood(py)?
+			self.likelihood.likelihood()?
 		}};
 
 		if likelihood == f64::NEG_INFINITY {
@@ -341,14 +341,14 @@ impl Mcmc {
 		self.scheduler.finalize(py, operator_index, status)?;
 
 		if status.is_accept() {
-			self.likelihood.accept(py)?;
+			self.likelihood.accept()?;
 
 			for parameter in &self.state {
 				let parameter = &mut *parameter.as_ref();
 				parameter.accept();
 			}
 		} else {
-			self.likelihood.reject(py)?;
+			self.likelihood.reject()?;
 
 			for parameter in &self.state {
 				let parameter = &mut *parameter.as_ref();

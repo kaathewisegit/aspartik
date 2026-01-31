@@ -7,79 +7,13 @@ use pyo3::prelude::*;
 use super::{PyCpu4Likelihood, PyLikelihood, PyParallel4Likelihood};
 use crate::{likelihood, parameters::PyClassVector};
 
-enum ConcreteLikelihood {
-	Cpu(Py<PyCpu4Likelihood>),
-	Parallel(Py<PyParallel4Likelihood>),
-}
-
-impl<'py> FromPyObject<'_, 'py> for ConcreteLikelihood {
-	type Error = PyErr;
-
-	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
-		if let Ok(l) = obj.cast::<PyCpu4Likelihood>() {
-			Ok(Self::Cpu(l.into()))
-		} else if let Ok(l) = obj.cast::<PyParallel4Likelihood>() {
-			Ok(Self::Parallel(l.into()))
-		} else {
-			todo!("descriptive error")
-		}
-	}
-}
-
-impl ConcreteLikelihood {
-	fn propose(&self, py: Python) -> Result<()> {
-		match self {
-			Self::Cpu(l) => l.get().propose(py),
-			Self::Parallel(l) => l.get().propose(py),
-		}
-	}
-
-	fn likelihood(&self, py: Python) -> Result<f64> {
-		match self {
-			Self::Cpu(l) => l.get().likelihood(),
-			Self::Parallel(l) => l.get().likelihood(),
-		}
-	}
-
-	fn accept(&self, py: Python) -> Result<()> {
-		match self {
-			Self::Cpu(l) => l.get().accept(),
-			Self::Parallel(l) => l.get().accept(),
-		}
-	}
-
-	fn reject(&self, py: Python) -> Result<()> {
-		match self {
-			Self::Cpu(l) => l.get().reject(),
-			Self::Parallel(l) => l.get().reject(),
-		}
-	}
-
-	fn num_patterns(&self) -> usize {
-		match self {
-			Self::Cpu(l) => l.get().num_patterns(),
-			Self::Parallel(l) => l.get().num_patterns(),
-		}
-	}
-
-	fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
-		match self {
-			Self::Cpu(l) => l.get().pattern_likelihoods(),
-			Self::Parallel(l) => l.get().pattern_likelihoods(),
-		}
-	}
-}
-
 pub struct HeteroLikelihood {
-	likelihoods: Vec<ConcreteLikelihood>,
+	likelihoods: Vec<PyLikelihood>,
 	classes: Py<PyClassVector>,
 }
 
 impl HeteroLikelihood {
-	fn new(
-		py: Python,
-		likelihoods: Vec<ConcreteLikelihood>,
-	) -> Result<Self> {
+	fn new(py: Python, likelihoods: Vec<PyLikelihood>) -> Result<Self> {
 		let num_classes = likelihoods.len() as u8;
 		let num_patterns = likelihoods[0].num_patterns();
 		let classes = Py::new(
@@ -100,9 +34,9 @@ impl HeteroLikelihood {
 		Ok(())
 	}
 
-	fn likelihood(&self, py: Python) -> Result<f64> {
+	fn likelihood(&self) -> Result<f64> {
 		for likelihood in &self.likelihoods {
-			likelihood.likelihood(py)?;
+			likelihood.likelihood()?;
 		}
 
 		let likelihoods: Vec<Vec<f64>> = self
@@ -123,16 +57,16 @@ impl HeteroLikelihood {
 		Ok(out)
 	}
 
-	fn accept(&self, py: Python) -> Result<()> {
+	fn accept(&self) -> Result<()> {
 		for likelihood in &self.likelihoods {
-			likelihood.accept(py)?;
+			likelihood.accept()?;
 		}
 		Ok(())
 	}
 
-	fn reject(&self, py: Python) -> Result<()> {
+	fn reject(&self) -> Result<()> {
 		for likelihood in &self.likelihoods {
-			likelihood.reject(py)?;
+			likelihood.reject()?;
 		}
 		Ok(())
 	}
@@ -150,10 +84,7 @@ pub struct PyHeteroLikelihood {
 #[pymethods]
 impl PyHeteroLikelihood {
 	#[new]
-	fn new(
-		py: Python,
-		likelihoods: Vec<ConcreteLikelihood>,
-	) -> Result<Self> {
+	fn new(py: Python, likelihoods: Vec<PyLikelihood>) -> Result<Self> {
 		Ok(Self {
 			inner: Mutex::new(HeteroLikelihood::new(
 				py,
@@ -162,20 +93,20 @@ impl PyHeteroLikelihood {
 		})
 	}
 
-	fn propose(&self, py: Python) -> Result<()> {
+	pub fn propose(&self, py: Python) -> Result<()> {
 		self.inner.lock().propose(py)
 	}
 
-	fn likelihood(&self, py: Python) -> Result<f64> {
-		self.inner.lock().likelihood(py)
+	pub fn likelihood(&self) -> Result<f64> {
+		self.inner.lock().likelihood()
 	}
 
-	fn accept(&self, py: Python) -> Result<()> {
-		self.inner.lock().accept(py)
+	pub fn accept(&self) -> Result<()> {
+		self.inner.lock().accept()
 	}
 
-	fn reject(&self, py: Python) -> Result<()> {
-		self.inner.lock().reject(py)
+	pub fn reject(&self) -> Result<()> {
+		self.inner.lock().reject()
 	}
 
 	#[getter]
