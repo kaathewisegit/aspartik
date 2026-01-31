@@ -2,9 +2,8 @@ from dataclasses import dataclass
 from math import inf
 from typing import Protocol
 
-from ...utils.typing import Comparable
 from .. import Prior
-from ..parameters import Real
+from ..parameters import Real, RealVector
 
 
 @dataclass(slots=True)
@@ -21,7 +20,7 @@ class Bound(Prior):
     the bounds aren't satisfied.
     """
 
-    param: Comparable
+    param: Real | RealVector
     """The parameter to be constrained."""
     lower: float = 0
     """Minimum possible value of the parameter, inclusive."""

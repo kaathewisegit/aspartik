@@ -1,32 +1,32 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Optional, Self
+from typing import Optional
 
 class DNANucleotide:
-    Adenine: Self
-    Cytosine: Self
-    Guanine: Self
-    Thymine: Self
+    Adenine: DNANucleotide
+    Cytosine: DNANucleotide
+    Guanine: DNANucleotide
+    Thymine: DNANucleotide
 
-    Weak: Self
-    Strong: Self
-    Amino: Self
-    Ketone: Self
-    Purine: Self
-    Pyrimidine: Self
+    Weak: DNANucleotide
+    Strong: DNANucleotide
+    Amino: DNANucleotide
+    Ketone: DNANucleotide
+    Purine: DNANucleotide
+    Pyrimidine: DNANucleotide
 
-    NotAdenine: Self
-    NotCytosine: Self
-    NotGuanine: Self
-    NotThymine: Self
+    NotAdenine: DNANucleotide
+    NotCytosine: DNANucleotide
+    NotGuanine: DNANucleotide
+    NotThymine: DNANucleotide
 
-    Any: Self
-    Gap: Self
+    Any: DNANucleotide
+    Gap: DNANucleotide
 
     def __init__(self, char: str): ...
-    def __contains__(self, other: Self) -> bool: ...
-    def complement(self) -> Self: ...
+    def __contains__(self, other: DNANucleotide) -> bool: ...
+    def complement(self) -> DNANucleotide: ...
 
 class DNASeq:
     def __init__(self, sequence: str | None): ...

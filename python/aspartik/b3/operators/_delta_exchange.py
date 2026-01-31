@@ -1,10 +1,8 @@
 from dataclasses import dataclass
-from typing import Protocol
 
 from ...rng import RNG
-from ...utils.typing import SimpleSequence
 from .. import Operator, Proposal
-from ..parameters import Real
+from ..parameters import RealVector
 
 
 @dataclass(slots=True)
@@ -17,7 +15,7 @@ class DeltaExchange(Operator):
     other one.
     """
 
-    param: SimpleSequence[float]
+    param: RealVector
     """
     The multidimensional parameter to edit.  Two random dimensions ones will be
     changed for each proposal.

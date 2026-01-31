@@ -137,15 +137,17 @@ def test_compare_likelihood():
             diff = max(likelihoods) - min(likelihoods)
             self.max_diff = max(self.max_diff, diff)
 
+    check_callback = CheckLikelihood()
+
     mcmc = MCMC(
         state=params + [tree],
         priors=priors,
         operators=operators,
         likelihood=test_likelihood,
-        callbacks=[CheckLikelihood()],
+        callbacks=[check_callback],
         rng=rng,
     )
 
     mcmc.run(100_000)
     likelihood = mcmc.likelihood.likelihood()
-    assert mcmc.callbacks[0].max_diff < abs(likelihood * 0.01)
+    assert check_callback.max_diff < abs(likelihood * 0.01)
