@@ -1,15 +1,17 @@
 use anyhow::Result;
-use bytemuck::allocation::cast_vec;
+use bytemuck::{allocation::cast_vec, cast_slice};
 use num_traits::{Float, Inv, Num, NumAssign};
 
-use std::ops::Mul;
+use std::{ops::Mul, slice};
+
+use crate::transitions;
 
 use super::LikelihoodTrait;
 use linalg::{RowMatrix, Vector};
 use skvec::{SkVec, skvec};
 
 pub struct CpuLikelihood<const N: usize, F> {
-	leaves: Vec<Vector<F, N>>,
+	leaves: Vec<u8>,
 	projections: SkVec<Vector<F, N>>,
 
 	num_sites: usize,
@@ -45,13 +47,15 @@ where
 		assert_eq!(nodes.len(), edges.len());
 		assert_eq!(nodes.len(), transitions.len());
 
+		let transitions = cast_transitions(transitions);
+
 		self.updated_edges = edges.to_vec();
 
 		let num_sites = self.num_sites;
 		let num_leaves = self.num_leaves;
 
 		for i in 0..leaves_end {
-			let transition = RowMatrix::from(transitions[i]);
+			let transition = &transitions[i];
 
 			let edge = edges[i];
 			let edge_idx = edge * num_sites;
@@ -61,7 +65,8 @@ where
 
 			for site in 0..num_sites {
 				let leaf = self.leaves[leaf_idx + site];
-				let projection = transition * leaf;
+				let projection =
+					calc_leaf_projection(transition, leaf);
 
 				self.projections
 					.set(edge_idx + site, projection);
@@ -69,7 +74,7 @@ where
 		}
 
 		for i in leaves_end..nodes.len() {
-			let transition = RowMatrix::from(transitions[i]);
+			let transition = transitions[i];
 			let node = nodes[i];
 
 			let edge = edges[i];
@@ -183,17 +188,44 @@ where
 	}
 }
 
+pub fn calc_leaf_projection<const N: usize, F: Num + NumAssign + Copy>(
+	transition: &RowMatrix<F, N, N>,
+	leaf: u8,
+) -> Vector<F, N> {
+	let mut out = Vector::zeros();
+
+	if leaf & 0b0001 != 0 {
+		out += transition[0];
+	}
+	if leaf & 0b0010 != 0 {
+		out += transition[1];
+	}
+	if leaf & 0b0100 != 0 {
+		out += transition[2];
+	}
+	if leaf & 0b1000 != 0 {
+		out += transition[3];
+	}
+
+	out
+}
+
+pub fn cast_transitions<const N: usize, F>(
+	transitions: &[[[F; N]; N]],
+) -> &[RowMatrix<F, N, N>] {
+	unsafe {
+		slice::from_raw_parts(
+			transitions.as_ptr() as *const _,
+			transitions.len(),
+		)
+	}
+}
+
 impl CpuLikelihood<4, f64> {
-	pub fn new(
-		num_sites: usize,
-		leaves: Vec<[f64; 4]>,
-		scale_ln: u32,
-	) -> Self {
+	pub fn new(num_sites: usize, leaves: Vec<u8>, scale_ln: u32) -> Self {
 		let num_leaves = leaves.len() / num_sites;
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
-
-		let leaves = cast_vec(leaves);
 
 		let projections =
 			skvec![Vector::default(); num_edges * num_sites];

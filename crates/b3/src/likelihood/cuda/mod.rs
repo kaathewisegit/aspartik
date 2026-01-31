@@ -32,7 +32,7 @@ pub struct CudaLikelihood {
 	/// Values are grouped by leaves.  The slice is divided into rows of the
 	/// length `num_sites`.  `0` to `num_sites` is leaf 0, `num_sites` to `2
 	/// * num_sites` is leaf 1, and so on.
-	leaves: CudaSlice<Row>,
+	leaves: CudaSlice<u8>,
 
 	/// A contiguous array which stores projection likelihoods
 	///
@@ -321,7 +321,7 @@ impl CudaLikelihood {
 
 	pub fn new(
 		num_sites: usize,
-		leaves: Vec<[f64; 4]>,
+		leaves: Vec<u8>,
 		scale_ln: u32,
 		cuda_device: usize,
 	) -> Result<Self> {

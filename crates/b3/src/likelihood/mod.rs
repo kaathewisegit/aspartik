@@ -1,3 +1,5 @@
+#![expect(unused)]
+
 use anyhow::Result;
 use num_traits::Float;
 use parking_lot::Mutex;
@@ -197,7 +199,7 @@ where
 	}
 }
 
-fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<[f64; 4]>, Vec<u32>) {
+fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 	let mut hashes =
 		Vec::<(usize, blake3::Hash)>::with_capacity(msa.num_sites());
 
@@ -233,10 +235,17 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<[f64; 4]>, Vec<u32>) {
 	let mut leaves =
 		Vec::with_capacity(msa.num_sequences() * indices.len());
 
+	fn char_to_u8(ch: DnaNucleotide) -> u8 {
+		match ch {
+			DnaNucleotide::Gap => 0b1111,
+			ch => ch.to_byte(),
+		}
+	}
+
 	for seq in 0..msa.num_sequences() {
 		for site in indices.iter().copied() {
 			let char = msa.sequence(seq)[site];
-			leaves.push(char.base_frequencies_denormalized())
+			leaves.push(char_to_u8(char))
 		}
 	}
 

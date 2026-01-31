@@ -6,7 +6,10 @@ use num_traits::{Float, Inv, Num, NumAssign};
 use core::f64;
 use std::ops::Mul;
 
-use super::LikelihoodTrait;
+use super::{
+	LikelihoodTrait,
+	cpu::{calc_leaf_projection, cast_transitions},
+};
 use linalg::{RowMatrix, Vector};
 
 type Buffer<T> = Box<[T]>;
@@ -29,7 +32,7 @@ pub struct ParallelLikelihood<const N: usize, F> {
 	scale_sums: Buffer<u32>,
 	scale_sums_backup: Buffer<u32>,
 
-	leaves: Vec<Vector<F, N>>,
+	leaves: Vec<u8>,
 
 	num_sites: usize,
 	num_leaves: usize,
@@ -72,6 +75,8 @@ where
 		assert_eq!(nodes.len(), edges.len());
 		assert_eq!(nodes.len(), transitions.len());
 
+		let transitions = cast_transitions(transitions);
+
 		self.updated_edges = edges.into();
 
 		let num_sites = self.num_sites;
@@ -92,7 +97,7 @@ where
 			let i = prong.task_index / num_sites;
 			let site = prong.task_index % num_sites;
 
-			let transition = RowMatrix::from(transitions[i]);
+			let transition = &transitions[i];
 
 			let edge = edges[i];
 			let edge_idx = edge * num_sites;
@@ -101,7 +106,7 @@ where
 			let leaf_idx = leaf * num_sites;
 
 			let leaf = self.leaves[leaf_idx + site];
-			let projection = transition * leaf;
+			let projection = calc_leaf_projection(transition, leaf);
 
 			let projection_index = edge_idx + site;
 
@@ -118,7 +123,7 @@ where
 		});
 
 		for i in leaves_end..nodes.len() {
-			let transition = RowMatrix::from(transitions[i]);
+			let transition = transitions[i];
 			let node = nodes[i];
 
 			let edge = edges[i];
@@ -271,7 +276,7 @@ where
 impl ParallelLikelihood<4, f64> {
 	pub fn new(
 		num_sites: usize,
-		leaves: Vec<[f64; 4]>,
+		leaves: Vec<u8>,
 		num_leaf_threads: usize,
 		num_internal_threads: usize,
 		scale_ln: u32,
@@ -283,8 +288,6 @@ impl ParallelLikelihood<4, f64> {
 		let num_leaves = leaves.len() / num_sites;
 		let num_internals = num_leaves - 1;
 		let num_edges = num_internals * 2;
-
-		let leaves = cast_vec(leaves);
 
 		let projections =
 			buffer![Vector::default(); num_edges * num_sites];

@@ -2,6 +2,10 @@
 
 using namespace cooperative_groups;
 
+__device__ f64 sum(const f64x4 v) {
+    return v.x + v.y + v.z + v.w;
+}
+
 __device__ f64 dot(const f64x4 a, const f64x4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
@@ -34,16 +38,19 @@ __device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
 // - i: index of the update
 // - sub: index of the site allele
 #define CALCULATE_LEAF_PROJECTION \
-	f64 projection = dot( \
-		transitions[i * 4 + sub], \
-		leaves[idx(nodes[i])] \
-	); \
+	u8 leaf = leaves[idx(nodes[i])]; \
+	f64 projection = 0.0; \
+	f64x4 tv = transitions[i * 4 + sub]; \
+	if (leaf & 0b0001) projection += tv.x; \
+	if (leaf & 0b0010) projection += tv.y; \
+	if (leaf & 0b0100) projection += tv.z; \
+	if (leaf & 0b1000) projection += tv.w; \
 	projections[sidx(edges[i])] = projection; \
 
 // Update partial likelihoods for edges which go to leaves
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void update_leaves(
-	const f64x4* restrict leaves,
+	const u8* restrict leaves,
 	f64* restrict projections,
 
 	const u32* restrict nodes,
@@ -62,7 +69,7 @@ void update_leaves(
 
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void propose(
-	const f64x4* restrict leaves,
+	const u8* restrict leaves,
 	f64* restrict projections,
 	u8* restrict scales,
 	u32* scale_sums,
