@@ -72,41 +72,32 @@ pub struct SkVec<T> {
 	/// `inner`, only one of which is active, determined by the `mask` at
 	/// the index.
 	inner: Vec<T>,
-	/// True if an element had been edited.  It uses the `bool` type, which
-	/// is guaranteed to be one byte:
+	/// Metadata associated with each element
 	///
-	/// - <https://doc.rust-lang.org/std/mem/fn.size_of.html#:~:text=bool>
-	/// - <https://github.com/rust-lang/rust/pull/46156>
-	edited: Vec<bool>,
-	/// Mask points to the currently active item in `inner`.
-	///
-	/// ## Safety
-	///
-	/// - Masks must have the values of either 0 or 1.
-	///
-	/// - Masks must point at initialized memory.  When an element is
-	///   created for the first time, the 0th one is presumed to be
-	///   initialized.  This can change after an `accept` call.
-	mask: Vec<u8>,
+	/// - The first bit is a pointer to the first or the second element.
+	/// - The second bit is the edited state: 0 if not edited, 1 if edited.
+	metadata: Vec<u8>,
 }
 
 // Memoization-related methods
 impl<T> SkVec<T> {
+	fn offset(&self, i: usize) -> usize {
+		usize::from(self.metadata[i] & 0b1)
+	}
+
 	/// Returns the currently active item at index `i`.
-	#[inline(always)]
 	fn active_inner(&self, i: usize) -> &T {
-		&self.inner[i * 2 + self.mask[i] as usize]
+		&self.inner[i * 2 + self.offset(i)]
 	}
 
 	/// Mutable version of [`active_inner`][SkVec::active_inner].
-	#[inline(always)]
 	fn active_inner_mut(&mut self, i: usize) -> &mut T {
-		&mut self.inner[i * 2 + self.mask[i] as usize]
+		let offset = self.offset(i);
+		&mut self.inner[i * 2 + offset]
 	}
 
-	/// Zero-out the edited status array.
-	fn clear_edited(&mut self) {
-		self.edited.iter_mut().for_each(|v| *v = false);
+	fn is_edited(&self, i: usize) -> bool {
+		(self.metadata[i] & 0b10) != 0
 	}
 
 	/// Accept all of the changes made since the creation of the vector or
@@ -116,7 +107,10 @@ impl<T> SkVec<T> {
 	/// which will take awhile for long arrays.  If `T` is not [`Drop`],
 	/// this method much faster.
 	pub fn accept(&mut self) {
-		self.clear_edited();
+		// zero-out the edited status
+		for m in &mut self.metadata {
+			*m &= 0b01;
+		}
 	}
 
 	/// Reject all of the changes made this epoch.  All edited items will be
@@ -125,25 +119,25 @@ impl<T> SkVec<T> {
 	/// This method is much slower than `accept` for non-[`Drop`] types, as
 	/// it has to iterate over the vector to search for edited elements.
 	pub fn reject(&mut self) {
-		for i in 0..self.len() {
-			if self.edited[i] {
-				// Point back to the old item.
-				self.mask[i] ^= 1;
-			}
+		for m in &mut self.metadata {
+			// 00 -> 00
+			// 01 -> 01
+			// 10 -> 01
+			// 11 -> 00
+			*m = (*m ^ (*m >> 1)) & 1;
 		}
-
-		self.clear_edited();
 	}
 
 	/// Sets the item at `index` to `value`.  All of the subsequent index
 	/// operations (via [`SkVec::index`] or the `[]` operator) will return
 	/// the updated item which equals value.
 	pub fn set(&mut self, index: usize, value: T) {
-		if !self.edited[index] {
+		if !self.is_edited(index) {
 			// The element was unedited, so the item is being
 			// written for the first time during this epoch.
-			self.mask[index] ^= 1;
-			self.edited[index] = true;
+
+			self.metadata[index] ^= 0b01; // flip the pointer
+			self.metadata[index] |= 0b10; // set edited to true
 		}
 
 		*self.active_inner_mut(index) = value;
@@ -160,9 +154,9 @@ impl<T> SkVec<T> {
 	///
 	/// Essentially, this is an item-local version of `reject`.
 	pub fn reject_element(&mut self, index: usize) {
-		if self.edited[index] {
-			self.edited[index] = false;
-			self.mask[index] ^= 1;
+		if self.is_edited(index) {
+			self.metadata[index] &= 0b01; // set edited to false
+			self.metadata[index] ^= 0b01; // flip the pointer
 		}
 	}
 
@@ -174,9 +168,7 @@ impl<T> SkVec<T> {
 	///
 	/// Essentially, this is an item-local version of `accept`.
 	pub fn accept_element(&mut self, index: usize) {
-		if self.edited[index] {
-			self.edited[index] = false;
-		}
+		self.metadata[index] &= 0b01;
 	}
 
 	/// Returns `true` if at least a single element has been changed
@@ -185,7 +177,7 @@ impl<T> SkVec<T> {
 	/// is overwritten with the same value, `is_changed` will still return
 	/// `true`.
 	pub fn is_changed(&self) -> bool {
-		self.edited.iter().any(|&e| e)
+		self.metadata.iter().any(|&e| (e & 0b10) != 0)
 	}
 }
 
@@ -298,8 +290,7 @@ impl<T> SkVec<T> {
 	pub fn new() -> Self {
 		Self {
 			inner: Vec::new(),
-			edited: Vec::new(),
-			mask: Vec::new(),
+			metadata: Vec::new(),
 		}
 	}
 
@@ -308,8 +299,7 @@ impl<T> SkVec<T> {
 	pub fn with_capacity(capacity: usize) -> Self {
 		Self {
 			inner: Vec::with_capacity(capacity * 2),
-			edited: Vec::with_capacity(capacity),
-			mask: Vec::with_capacity(capacity),
+			metadata: Vec::with_capacity(capacity),
 		}
 	}
 
@@ -323,9 +313,7 @@ impl<T> SkVec<T> {
 	/// allocations, but their exact size might vary in different
 	/// situations.
 	pub fn capacity(&self) -> usize {
-		(self.inner.capacity() / 2)
-			.min(self.edited.capacity())
-			.min(self.mask.capacity())
+		(self.inner.capacity() / 2).min(self.metadata.capacity())
 	}
 
 	/// Reserve the space for at least `additional` more items.
@@ -334,15 +322,13 @@ impl<T> SkVec<T> {
 	/// allocations.
 	pub fn reserve(&mut self, additional: usize) {
 		self.inner.reserve(additional * 2);
-		self.edited.reserve(additional);
-		self.mask.reserve(additional);
+		self.metadata.reserve(additional);
 	}
 
 	/// Shrinks the capacity of the vector as much as possible.
 	pub fn shrink_to_fit(&mut self) {
 		self.inner.shrink_to_fit();
-		self.edited.shrink_to_fit();
-		self.mask.shrink_to_fit();
+		self.metadata.shrink_to_fit();
 	}
 
 	/// Appends the value as an accepted one.
@@ -353,15 +339,13 @@ impl<T> SkVec<T> {
 		self.inner.push(value.clone());
 		self.inner.push(value);
 
-		self.edited.push(false);
-		self.mask.push(0);
+		self.metadata.push(0b00);
 	}
 
 	/// Clears the vector, removing all values.
 	pub fn clear(&mut self) {
 		self.inner.clear();
-		self.edited.clear();
-		self.mask.clear();
+		self.metadata.clear();
 	}
 
 	/// Number of items in the `SkVec`.
@@ -369,7 +353,7 @@ impl<T> SkVec<T> {
 	/// See [`SkVec` documentation][SkVec] for the distinction between items
 	/// and values.
 	pub fn len(&self) -> usize {
-		self.mask.len()
+		self.metadata.len()
 	}
 
 	/// Returns `true` if the vector has no items.
