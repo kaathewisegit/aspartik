@@ -102,6 +102,12 @@ impl Tree {
 		self.graph.edges(node)
 	}
 
+	pub fn parent_of(&self, node: NodeIndex) -> Option<NodeIndex> {
+		self.graph
+			.neighbors_directed(node, Direction::Incoming)
+			.next()
+	}
+
 	pub fn get_node(&self, idx: NodeIndex) -> &Node {
 		&self.graph[idx]
 	}
@@ -123,5 +129,11 @@ impl Tree {
 
 	pub fn num_nodes(&self) -> usize {
 		self.graph.node_count()
+	}
+
+	pub fn leaves(&self) -> impl Iterator<Item = NodeIndex> {
+		self.graph
+			.node_indices()
+			.filter(|&node| self.graph.neighbors(node).count() == 0)
 	}
 }
