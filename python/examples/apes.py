@@ -42,8 +42,8 @@ def make_mcmc(fasta_path: str):
     ]
 
     operators = [
-        # ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
-        # DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
+        ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
+        DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
         TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
         SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
         BeastNarrowExchange(tree, rng, weight=30),
@@ -54,7 +54,7 @@ def make_mcmc(fasta_path: str):
         # selecting a random node and moving it uniformly between it's maximum and
         # minimum heights, which is what `NodeSlide` with `Uniform` does.
         NodeSlide(tree, rng, weight=30),
-        # ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
+        ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
     ]
 
     likelihood = CPU4Likelihood(

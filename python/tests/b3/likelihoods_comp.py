@@ -20,7 +20,7 @@ from aspartik.b3.operators import (
     UpDown,
 )
 from aspartik.b3.parameters import Internals, Real, RealVector, Tree
-from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth, Yule
+from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG

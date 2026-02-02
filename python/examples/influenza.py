@@ -8,7 +8,7 @@ tutorial][l].
 from datetime import datetime
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.likelihoods import CPU4Likelihood, Parallel4Likelihood
+from aspartik.b3.likelihoods import Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -19,7 +19,7 @@ from aspartik.b3.operators import (
     UpDown,
 )
 from aspartik.b3.parameters import Internals, Real, RealVector, Tree
-from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth, Yule
+from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.io.msa import read_msa_from_fasta

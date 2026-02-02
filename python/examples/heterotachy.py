@@ -19,13 +19,13 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import ClassVector, Internals, Real, RealVector, Tree
-from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
+from aspartik.b3.parameters import Internals, Real, RealVector, Tree
+from aspartik.b3.priors import Bound, Distribution, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
+from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 
@@ -36,23 +36,16 @@ N = 4
 tree = Tree(msa.sequence_names(), rng)
 kappas = [Real(2.0) for _ in range(N)]
 freqs = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
-population_size = Real(1.0)
+birth_rate = Real(1.0)
 clock_rate = Real(0.001)  # TODO
-
-params = [
-    *kappas,
-    *freqs,
-    population_size,
-    clock_rate,
-]
 
 priors = [
     *(Bound(kappa) for kappa in kappas),
     *(Bound(freq) for freq in freqs),
-    Bound(population_size),
+    Bound(birth_rate),
     *(Distribution(kappa, LogNormal(1.0, 1.25)) for kappa in kappas),
-    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
-    ConstantPopulation(tree, population_size),
+    Distribution(birth_rate, Gamma(0.001, 1 / 1000.0)),
+    Yule(tree, birth_rate),
 ]
 
 
@@ -70,9 +63,9 @@ likelihood = HeteroLikelihood(
 
 operators = [
     *(ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1) for kappa in kappas),
-    SubtreeLeap(tree, Uniform(0, 1), rng, weight=12 * N),
+    SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
     FixedHeightSubtreePruneRegraft(tree, rng, weight=4 * N),
-    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3 * N),
+    ParamScale(birth_rate, 0.75, Uniform(0, 1), rng, weight=3 * N),
     *(DeltaExchange(freq, 0.01, rng, weight=3) for freq in freqs),
     ClassvecFlip(likelihood.class_vector, rng, weight=3),
 ]
@@ -87,7 +80,7 @@ loggers = [
             "prior": lambda: mcmc.prior,
             "likelihood": lambda: mcmc.likelihood.likelihood(),
             "kappas": kappas,
-            "population_size": population_size,
+            "birth_rate": birth_rate,
             "clock_rate": clock_rate,
             "frequencies": freqs,
             "tree:height": lambda: tree.height_of(tree.root),
@@ -100,7 +93,7 @@ loggers = [
 ]
 
 mcmc = MCMC(
-    state=params + [tree, likelihood.class_vector],
+    state=[*kappas, *freqs, birth_rate, clock_rate, tree, likelihood.class_vector],
     priors=priors,
     operators=operators,
     likelihood=likelihood,

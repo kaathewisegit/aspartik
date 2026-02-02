@@ -5,9 +5,7 @@ tutorial:
 <https://beast.community/workshop_respiratory_virus_phylodynamics>
 """
 
-from collections import deque
 from datetime import datetime
-from pathlib import Path
 
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CUDALikelihood, Parallel4Likelihood
@@ -24,7 +22,6 @@ from aspartik.b3.parameters import Internals, Real, RealVector, Tree
 from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
-from aspartik.data import newick
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
