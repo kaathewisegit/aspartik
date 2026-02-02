@@ -29,6 +29,7 @@ rand_pcg = { workspace = true, features = ["serde"] }
 rmp = { workspace = true }
 rmp-serde = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 
 [lints]
 workspace = true

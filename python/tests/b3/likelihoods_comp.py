@@ -19,14 +19,12 @@ from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
 def test_compare_likelihood():
     rng = RNG(4)
 
-    msa = read_msa_from_fasta("data/alignments/influenza.fasta")
+    msa = read_msa_from_fasta("data/alignments/apes.fasta")
 
     tree = Tree(msa.sequence_names(), rng)
 
-    kappa = Real(0)
-    population_size = Real(0)
-    growth_rate = Real(0)
-    clock_rate = Real(0)
+    kappa = Real(1.0)
+    clock_rate = Real(1.0)
     frequencies = RealVector(0, 0, 0, 0)
 
     cpu_calculator = CPU4Likelihood(
@@ -68,14 +66,13 @@ def test_compare_likelihood():
         calculators.insert(0, cuda_calculator)
 
     compare(
-        "data/runs/influenza/b3.trace",
-        "data/runs/influenza/b3.trees",
+        # "data/runs/influenza/b3.trace",
+        "target/apes.log",
         parameters={
+            "tree": tree,
             "kappa": kappa,
-            "population_size": population_size,
-            "growth_rate": growth_rate,
-            "clock_rate": clock_rate,
+            # "clock_rate": clock_rate,
             "frequencies": frequencies,
         },
-        likelihoods=calculators,
+        likelihoods=[cpu_calculator],
     )

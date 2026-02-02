@@ -30,7 +30,7 @@ use rng::{PyRng, Rng};
 use skvec::{SkVec, skvec};
 use util::py_bail;
 
-const ROOT: usize = usize::MAX;
+const ROOT: usize = 0x524f4f54;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tree {
@@ -1388,7 +1388,21 @@ impl PyTree {
 		self.inner().to_newick(internal_ids)
 	}
 
+	fn to_json(&self) -> Result<String> {
+		Ok(serde_json::to_string(&*self.inner())?)
+	}
+
+	#[classmethod]
+	fn from_json(_cls: Py<PyType>, json: String) -> Result<Self> {
+		let inner: Tree = serde_json::from_str(&json)?;
+
+		Ok(Self {
+			inner: inner.into(),
+		})
+	}
+
 	fn set(&self, other: &PyTree) {
 		*self.inner() = other.inner().clone();
+		self.inner().mark_all_edges_updated();
 	}
 }

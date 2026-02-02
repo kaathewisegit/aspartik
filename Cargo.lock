@@ -87,6 +87,7 @@ dependencies = [
  "rmp-serde",
  "rng",
  "serde",
+ "serde_json",
  "skvec",
  "util",
 ]
