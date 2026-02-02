@@ -20,7 +20,7 @@ Used for type hints in places where there isn't a need to distinguish between
 internal and leaf nodes.
 """
 
-type Parameter = Real | RealVector | Tree
+type Parameter = ClassVector | Real | RealVector | Tree
 
 
 @runtime_checkable

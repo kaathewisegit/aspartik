@@ -1387,4 +1387,8 @@ impl PyTree {
 	fn newick(&self, internal_ids: bool) -> String {
 		self.inner().to_newick(internal_ids)
 	}
+
+	fn set(&self, other: &PyTree) {
+		*self.inner() = other.inner().clone();
+	}
 }
