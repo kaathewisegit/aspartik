@@ -195,16 +195,28 @@ pub fn calc_leaf_projection<const N: usize, F: Num + NumAssign + Copy>(
 	let mut out = Vector::zeros();
 
 	if leaf & 0b0001 != 0 {
-		out += transition[0];
+		out[0] += transition[0][0];
+		out[1] += transition[1][0];
+		out[2] += transition[2][0];
+		out[3] += transition[3][0];
 	}
 	if leaf & 0b0010 != 0 {
-		out += transition[1];
+		out[0] += transition[0][1];
+		out[1] += transition[1][1];
+		out[2] += transition[2][1];
+		out[3] += transition[3][1];
 	}
 	if leaf & 0b0100 != 0 {
-		out += transition[2];
+		out[0] += transition[0][2];
+		out[1] += transition[1][2];
+		out[2] += transition[2][2];
+		out[3] += transition[3][2];
 	}
 	if leaf & 0b1000 != 0 {
-		out += transition[3];
+		out[0] += transition[0][3];
+		out[1] += transition[1][3];
+		out[2] += transition[2][3];
+		out[3] += transition[3][3];
 	}
 
 	out
