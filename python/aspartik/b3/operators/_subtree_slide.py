@@ -55,20 +55,15 @@ class SubtreeSlide(Operator):
                     if new_parent is None:
                         break
 
-                parent_to_sibling = tree.edge_index(sibling)
-                grandparent_to_parent = tree.edge_index(parent)
-
                 if new_parent is None:
                     # new_child was the root
-                    tree.update_edge(parent_to_sibling, new_child)
-                    tree.update_edge(grandparent_to_parent, sibling)
+                    tree.replace_child(parent, sibling, new_child)
+                    tree.replace_child(grandparent, parent, sibling)
                     tree.set_root(parent)
                 else:
-                    new_parent_to_new_child = tree.edge_index(new_child)
-
-                    tree.update_edge(parent_to_sibling, new_child)
-                    tree.update_edge(grandparent_to_parent, sibling)
-                    tree.update_edge(new_parent_to_new_child, parent)
+                    tree.replace_child(parent, sibling, new_child)
+                    tree.replace_child(grandparent, parent, sibling)
+                    tree.replace_child(new_parent, new_child, parent)
 
                 num_reverse_sources = len(intersections(tree, new_child, old_height))
                 ratio = -log(num_reverse_sources)
@@ -83,21 +78,17 @@ class SubtreeSlide(Operator):
                 random_idx = rng.random_int(0, len(destinations))
                 new_child = destinations[random_idx]
                 new_parent = tree.parent_of(new_child)
+                assert new_parent is not None
 
-                parent_to_sibling = tree.edge_index(sibling)
-                new_parent_to_new_child = tree.edge_index(new_child)
-
-                if parent == tree.root:
-                    tree.update_edge(parent_to_sibling, new_child)
-                    tree.update_edge(new_parent_to_new_child, parent)
+                if grandparent is None:
+                    tree.replace_child(parent, sibling, new_child)
+                    tree.replace_child(new_parent, new_child, parent)
 
                     tree.set_root(sibling)
                 else:
-                    grandparent_to_parent = tree.edge_index(parent)
-
-                    tree.update_edge(parent_to_sibling, new_child)
-                    tree.update_edge(grandparent_to_parent, sibling)
-                    tree.update_edge(new_parent_to_new_child, parent)
+                    tree.replace_child(parent, sibling, new_child)
+                    tree.replace_child(grandparent, parent, sibling)
+                    tree.replace_child(new_parent, new_child, parent)
 
                 ratio = -log(len(destinations))
 

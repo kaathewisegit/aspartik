@@ -54,13 +54,7 @@ class FixedHeightSubtreePruneRegraft(Operator):
 
         other, other_parent = tree.edge_nodes(edge)
 
-        # Tree update
-        grandparent_to_parent = tree.edge_index(parent)
-        parent_to_sibling = tree.edge_index(sibling)
-        other_parent_to_other = tree.edge_index(other)
-
-        tree.update_edge(grandparent_to_parent, sibling)
-        tree.update_edge(other_parent_to_other, parent)
-        tree.update_edge(parent_to_sibling, other)
+        # regraft parent of `node` to edge between `other` its parent
+        tree.spr(node, other)
 
         return Proposal.Hastings(0.0)

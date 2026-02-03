@@ -36,7 +36,7 @@ pub struct CudaLikelihood {
 
 	/// A contiguous array which stores projection likelihoods
 	///
-	/// It has the length of `num_edges * num_sites`, with each likelihood
+	/// It has the length of `num_nodes * num_sites`, with each likelihood
 	/// being associated with a particular edge.  Stored in the same way as
 	/// `leaves`, except grouped by edges.
 	projections: CudaSlice<Row>,
@@ -47,11 +47,8 @@ pub struct CudaLikelihood {
 	/// `num_sites`-long root likelihoods
 	likelihoods: CudaSlice<f64>,
 
-	/// Edges updated in the current proposal
-	///
-	/// For each updated node this is the index of the edge leading to its
-	/// parent.  Has the length of `num_updated_nodes`.
-	edges: CudaSlice<u32>,
+	/// Children of internal nodes updated in current proposal
+	children: CudaSlice<u32>,
 
 	/// Transitions for each edge from `edges`
 	///
@@ -86,22 +83,25 @@ impl LikelihoodTrait<4, f64> for CudaLikelihood {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		edges: &[usize],
+		children: &[(usize, usize)],
 		transitions: &[[[f64; 4]; 4]],
 		leaves_end: usize,
-		root: usize,
 		frequencies: [f64; 4],
 	) -> Result<()> {
-		self.num_updated_nodes = nodes.len() as u32;
+		self.num_updated_nodes = nodes.len() as u32 - 1;
 		if self.num_updated_nodes == 0 {
 			return Ok(());
 		}
 
+		let root_children = children.last().unwrap();
 		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
-		let edges: Vec<_> = edges.iter().map(|e| *e as u32).collect();
+		let children: Vec<_> = children
+			.iter()
+			.flat_map(|&(l, r)| [l as u32, r as u32])
+			.collect();
 
-		self.stream.memcpy_htod(&edges, &mut self.edges)?;
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
+		self.stream.memcpy_htod(&children, &mut self.children)?;
 		let transitions: &[Transition] =
 			bytemuck::cast_slice(transitions);
 		self.stream
@@ -116,7 +116,12 @@ impl LikelihoodTrait<4, f64> for CudaLikelihood {
 		}
 		self.update_all(leaves_end, internals_start)?;
 
-		self.update_likelihoods(root as u32, frequencies)?;
+		let root = nodes.last().unwrap();
+		self.update_likelihoods(
+			*root,
+			(root_children.0 as u32, root_children.1 as u32),
+			frequencies,
+		)?;
 
 		Ok(())
 	}
@@ -128,6 +133,9 @@ impl LikelihoodTrait<4, f64> for CudaLikelihood {
 	/// [`update_likelihoods`]: Self::update_likelihoods
 	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()> {
 		self.stream.memcpy_dtoh(&self.likelihoods, patterns)?;
+
+		let projections =
+			self.stream.clone_dtoh(&self.projections).unwrap();
 
 		let scale_sums = self.stream.clone_dtoh(&self.scale_sums)?;
 		for (i, scale) in scale_sums.iter().enumerate() {
@@ -196,7 +204,7 @@ impl CudaLikelihood {
 
 		builder.arg(&self.num_updated_nodes);
 		builder.arg(&self.nodes);
-		builder.arg(&self.edges);
+		builder.arg(&self.children);
 		builder.arg(&self.transitions);
 
 		builder.arg(&leaves_end);
@@ -228,7 +236,6 @@ impl CudaLikelihood {
 		builder.arg(&self.projections);
 
 		builder.arg(&self.nodes);
-		builder.arg(&self.edges);
 		builder.arg(&self.transitions);
 
 		// TODO: safety
@@ -244,6 +251,7 @@ impl CudaLikelihood {
 	fn update_likelihoods(
 		&self,
 		root: u32,
+		(left, right): (u32, u32),
 		frequencies: Row,
 	) -> Result<()> {
 		let mut builder =
@@ -253,10 +261,12 @@ impl CudaLikelihood {
 
 		builder.arg(&self.projections);
 		builder.arg(&self.likelihoods);
-
-		builder.arg(&self.edges);
+		builder.arg(&self.scales);
+		builder.arg(&self.scale_sums);
 
 		builder.arg(&root);
+		builder.arg(&left);
+		builder.arg(&right);
 		builder.arg(&frequencies);
 
 		// SAFETY: TODO
@@ -300,7 +310,7 @@ impl CudaLikelihood {
 		}
 
 		builder.arg(&self.num_updated_nodes);
-		builder.arg(&self.edges);
+		builder.arg(&self.nodes);
 
 		// SAFETY: TODO
 		unsafe { builder.launch(cfg) }.with_context(|| {
@@ -353,19 +363,19 @@ impl CudaLikelihood {
 		let leaves = stream.clone_htod(&leaves)?;
 
 		let projections: CudaSlice<Row> =
-			stream.alloc_zeros(num_edges * num_sites)?;
+			stream.alloc_zeros(num_nodes * num_sites)?;
 		let projections_backup: CudaSlice<Row> =
-			stream.alloc_zeros(num_edges * num_sites)?;
+			stream.alloc_zeros(num_nodes * num_sites)?;
 
 		let likelihoods: CudaSlice<f64> =
 			stream.alloc_zeros(num_sites)?;
-		let edges = stream.alloc_zeros(num_edges)?;
+		let children = stream.alloc_zeros(num_internals * 2)?;
 		let transitions = stream.alloc_zeros(num_edges)?;
 		let nodes = stream.alloc_zeros(num_nodes)?;
 
-		let scales = stream.alloc_zeros(num_edges * num_sites)?;
+		let scales = stream.alloc_zeros(num_nodes * num_sites)?;
 		let scales_backup =
-			stream.alloc_zeros(num_edges * num_sites)?;
+			stream.alloc_zeros(num_nodes * num_sites)?;
 		let scale_sums = stream.alloc_zeros(num_sites)?;
 		let scale_sums_backup = vec![0; num_sites];
 
@@ -404,7 +414,7 @@ impl CudaLikelihood {
 			projections,
 			projections_backup,
 			likelihoods,
-			edges,
+			children,
 			transitions,
 			nodes,
 

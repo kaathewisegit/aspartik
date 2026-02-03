@@ -30,10 +30,9 @@ pub trait LikelihoodTrait<const N: usize, F> {
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		edges: &[usize],
+		children: &[(usize, usize)],
 		transitions: &[[[F; N]; N]],
 		leaves_end: usize,
-		root: usize,
 		frequencies: [F; N],
 	) -> Result<()>;
 
@@ -80,7 +79,7 @@ where
 		);
 
 		let transitions = Transitions::new(
-			tree.get().num_edges(),
+			tree.get().num_nodes(),
 			substitution,
 			clock,
 		);
@@ -127,18 +126,21 @@ where
 			return Ok(());
 		}
 
-		let (nodes, edges, root) = tree.to_lists(&nodes);
+		let (nodes, children) = tree.to_lists(&nodes);
 
-		let transitions = self.transitions.matrices(&edges);
+		let transitions =
+			self.transitions.matrices(&nodes[..nodes.len() - 1]);
 
 		let frequencies = self.transitions.frequencies();
 
+		assert_eq!(nodes.len() - leaves_end, children.len());
+		assert_eq!(nodes.len() - 1, transitions.len());
+
 		self.calculator.propose(
 			&nodes,
-			&edges,
+			&children,
 			&transitions,
 			leaves_end,
-			root,
 			frequencies,
 		)?;
 		self.launched_update = true;
@@ -288,7 +290,7 @@ macro_rules! likelihood_methods {
 /// 4-state DNA likelihood calculator.
 ///
 /// It's synchronous.  `CUDALikelihood` should be used for parallel calculations
-/// for alingments larger than 100Kb.
+/// for alignments larger than 100Kb.
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
 	inner: Mutex<

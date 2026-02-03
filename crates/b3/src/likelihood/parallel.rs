@@ -66,18 +66,14 @@ where
 	fn propose(
 		&mut self,
 		nodes: &[usize],
-		edges: &[usize],
+		children: &[(usize, usize)],
 		transitions: &[[[F; N]; N]],
 		leaves_end: usize,
-		root: usize,
 		frequencies: [F; N],
 	) -> Result<()> {
-		assert_eq!(nodes.len(), edges.len());
-		assert_eq!(nodes.len(), transitions.len());
-
 		let transitions = cast_transitions(transitions);
 
-		self.updated_edges = edges.into();
+		self.updated_edges = nodes.into();
 
 		let num_sites = self.num_sites;
 		let num_leaves = self.num_leaves;
@@ -99,38 +95,30 @@ where
 
 			let transition = &transitions[i];
 
-			let edge = edges[i];
-			let edge_idx = edge * num_sites;
-
 			let leaf = nodes[i];
 			let leaf_idx = leaf * num_sites;
 
 			let leaf = self.leaves[leaf_idx + site];
 			let projection = calc_leaf_projection(transition, leaf);
 
-			let projection_index = edge_idx + site;
-
-			// SAFETY: for each iteration `projection_index`
-			// is thread-unique because `site`s are
-			// disjoint.
+			// SAFETY: for each iteration the destination is
+			// thread-unique because `site`s are disjoint.
 			unsafe {
 				write_to(
 					projections,
-					projection_index,
+					leaf_idx + site,
 					projection,
 				);
 			}
 		});
 
-		for i in leaves_end..nodes.len() {
+		for i in leaves_end..nodes.len() - 1 {
 			let transition = transitions[i];
 			let node = nodes[i];
 
-			let edge = edges[i];
-			let edge_idx = edge * num_sites;
+			let node_idx = node * num_sites;
 
-			let left_edge = (node - num_leaves) * 2;
-			let right_edge = left_edge + 1;
+			let (left_edge, right_edge) = children[i - leaves_end];
 
 			let left_idx = left_edge * num_sites;
 			let right_idx = right_edge * num_sites;
@@ -157,7 +145,7 @@ where
 					false
 				};
 
-				let projection_index = edge_idx + site;
+				let projection_index = node_idx + site;
 				let old_scale = self.scales[projection_index];
 
 				// SAFETY: `projection_index` is
@@ -197,17 +185,17 @@ where
 					};
 
 					// SAFETY: `site` is disjoint
-					// between threads
 					unsafe { scale_sum_ptr.write(new) }
 				}
 			});
 		}
 
-		let num_leaves = self.num_leaves;
-		let num_sites = self.num_sites;
+		let (_, _) = (scales, scale_sums);
 
-		let root_left_edge = (root - num_leaves) * 2;
-		let root_right_edge = root_left_edge + 1;
+		// XXX: deduplicate with cpu.rs?
+		let root = nodes.last().unwrap();
+		let (root_left_edge, root_right_edge) =
+			children.last().unwrap();
 
 		let root_left_idx = root_left_edge * num_sites;
 		let root_right_idx = root_right_edge * num_sites;
@@ -221,6 +209,11 @@ where
 			let ln_sum = likelihood.sum().ln();
 
 			self.likelihoods[site] = ln_sum.into();
+
+			if self.scales[site] {
+				self.scales[site] = false;
+				self.scale_sums[site] -= self.scale_ln;
+			}
 		}
 
 		Ok(())
@@ -287,11 +280,12 @@ impl ParallelLikelihood<4, f64> {
 
 		let num_leaves = leaves.len() / num_sites;
 		let num_internals = num_leaves - 1;
+		let num_nodes = num_leaves + num_internals;
 		let num_edges = num_internals * 2;
 
 		let projections =
-			buffer![Vector::default(); num_edges * num_sites];
-		let scales = buffer![false; num_edges * num_sites];
+			buffer![Vector::default(); num_nodes * num_sites];
+		let scales = buffer![false; num_nodes * num_sites];
 		let scale_sums = buffer![0; num_sites];
 
 		let scale = (-<f64 as From<u32>>::from(scale_ln)).exp();

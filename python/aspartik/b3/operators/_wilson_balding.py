@@ -59,12 +59,12 @@ class WilsonBalding(Operator):
 
         # Cut out i_parent and replace it with a direct edge from grandparent
         # to i_brother
-        tree.update_edge(i_grandparent_to_i_parent, i_brother)
+        tree.replace_child(i_grandparent, i_parent, i_brother)
         # Hook up i_parent to j_parent.  It's fine because we checked that
         # i_parent is lower than j_parent when selecting j
-        tree.update_edge(j_parent_to_j, i_parent)
+        tree.replace_child(j_parent, j, i_parent)
         # Replace i_brother edge from i_parent with j.  Once again, we've
         # enforced i_parent being above j earlier
-        tree.update_edge(i_parent_to_i_brother, j)
+        tree.replace_child(i_parent, i_brother, j)
 
         return Proposal.Hastings(ratio)

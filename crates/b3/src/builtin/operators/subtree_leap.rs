@@ -78,38 +78,35 @@ impl SubtreeLeap {
 		{
 			// no topological changes
 		} else {
-			let parent_to_sibling_edge = tree.edge_index(&sibling);
-
-			if grandparent.is_none() {
-				tree.set_root(&sibling);
-			} else {
-				let grandparent_to_parent =
-					tree.edge_index(&parent);
-				tree.update_edge(
-					grandparent_to_parent,
+			if let Some(grandparent) = grandparent {
+				tree.replace_child(
+					&grandparent,
+					&parent,
 					&sibling,
 				);
+			} else {
+				tree.set_root(&sibling);
 			}
 
-			if destination_parent.is_none() {
-				tree.update_edge(
-					parent_to_sibling_edge,
+			if let Some(destination_parent) = destination_parent {
+				tree.replace_child(
+					&destination_parent,
 					destination,
-				);
-				tree.set_root(&parent);
-			} else {
-				let destination_parent_to_destination =
-					tree.edge_index(destination);
-
-				tree.update_edge(
-					destination_parent_to_destination,
 					&parent,
 				);
 
-				tree.update_edge(
-					parent_to_sibling_edge,
+				tree.replace_child(
+					&parent,
+					&sibling,
 					destination,
 				);
+			} else {
+				tree.replace_child(
+					&parent,
+					&sibling,
+					destination,
+				);
+				tree.set_root(&parent);
 			}
 		}
 

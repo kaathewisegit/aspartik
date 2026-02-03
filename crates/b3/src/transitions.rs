@@ -36,7 +36,6 @@ where
 		clock.update()?;
 		clock.mark_tree(tree);
 
-		tree.mark_all_edges_updated();
 		if self.substitution.update()? {
 			tree.mark_all_edges_updated();
 		}

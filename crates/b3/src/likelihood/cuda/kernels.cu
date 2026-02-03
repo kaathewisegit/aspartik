@@ -45,7 +45,7 @@ __device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
 	if (leaf & 0b0010) projection += tv.y; \
 	if (leaf & 0b0100) projection += tv.z; \
 	if (leaf & 0b1000) projection += tv.w; \
-	projections[sidx(edges[i])] = projection; \
+	projections[sidx(nodes[i])] = projection; \
 
 // Update partial likelihoods for edges which go to leaves
 entrypoint __launch_bounds__(BLOCK_SIZE)
@@ -54,7 +54,6 @@ void update_leaves(
 	f64* restrict projections,
 
 	const u32* restrict nodes,
-	const u32* restrict edges,
 	const f64x4* restrict transitions
 ) {
 	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
@@ -76,7 +75,7 @@ void propose(
 
 	const u32 num_updated_nodes,
 	const u32* restrict nodes,
-	const u32* restrict edges,
+	const u32* restrict children,
 	const f64x4* restrict transitions,
 
 	const u32 leaves_end,
@@ -99,9 +98,9 @@ void propose(
 	u32 scale_sum = scale_sums[site];
 
 	for (u32 i = internals_start; i < num_updated_nodes; i++) {
-		u32 left_edge = (nodes[i] - NUM_LEAVES) * 2;
-		u32 right_edge = left_edge + 1;
-		u32 this_edge = edges[i];
+		u32 left_edge = children[(i - leaves_end) * 2];
+		u32 right_edge = children[(i - leaves_end) * 2 + 1];
+		u32 this_edge = nodes[i];
 		u32 scale_idx = idx(this_edge);
 		u32 old_scale = scales[scale_idx];
 
@@ -160,20 +159,19 @@ entrypoint __launch_bounds__(32)
 void update_likelihoods(
 	const f64x4* restrict projections,
 	f64* restrict likelihoods,
-
-	const u32* restrict edges,
+	u8* restrict scales,
+	u32* scale_sums,
 
 	u32 root,
+	u32 left_child,
+	u32 right_child,
 	f64x4 frequencies
 ) {
 	SITE_PRELUDE
 
-	u32 left_root_edge = (root - NUM_LEAVES) * 2;
-	u32 right_root_edge = left_root_edge + 1;
-
 	f64x4 pre_likelihood = hadamard(
-		projections[idx(left_root_edge)],
-		projections[idx(right_root_edge)]
+		projections[idx(left_child)],
+		projections[idx(right_child)]
 	);
 	f64x4 likelihood = hadamard(
 		pre_likelihood,
@@ -182,13 +180,18 @@ void update_likelihoods(
 
 	f64 sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
 	likelihoods[site] = log(sum);
+
+	if (scales[idx(root)]) {
+		scales[idx(root)] = 0;
+		scale_sums[site] -= SCALE_LN;
+	}
 }
 
 // Updates the backups or resets the working arrays
 //
 // TODO: it might make sense to separate it into two kernels: one for
 // projections and one for scales.  I can't use the default memcpy because it
-// needs to sample by edges.
+// needs to sample by nodes.
 entrypoint __launch_bounds__(128)
 void copy_projections(
 	const f64x4* restrict p_src,
@@ -198,7 +201,7 @@ void copy_projections(
 	u8* restrict s_dst,
 
 	u32 num_updated_nodes,
-	const u32* restrict edges
+	const u32* restrict nodes
 ) {
 	SITE_PRELUDE
 	u32 i = blockIdx.y * 128 + blockIdx.z;
@@ -206,7 +209,7 @@ void copy_projections(
 		return;
 	}
 
-	u32 proj_idx = idx(edges[i]);
+	u32 proj_idx = idx(nodes[i]);
 	p_dst[proj_idx] = p_src[proj_idx];
 	s_dst[proj_idx] = s_src[proj_idx];
 }

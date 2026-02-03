@@ -160,7 +160,6 @@ impl Tree {
 		let num_leaves = names.len();
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
-		let num_edges = num_nodes - 1;
 
 		let mut out = Self {
 			names,
@@ -169,7 +168,7 @@ impl Tree {
 			parents: skvec![ROOT; num_nodes],
 			heights: skvec![0.0; num_nodes],
 
-			updated_edges: Bitmap::new(num_edges),
+			updated_edges: Bitmap::new(num_nodes),
 			updated_nodes: Bitmap::new(num_nodes),
 		};
 
@@ -182,7 +181,6 @@ impl Tree {
 		let num_nodes = newick.num_nodes();
 		let num_internals = (num_nodes - 1) / 2;
 		let num_leaves = num_nodes.div_ceil(2);
-		let num_edges = num_nodes - 1;
 
 		let mut children = vec![ROOT; num_internals * 2];
 		let mut parents = vec![ROOT; num_nodes];
@@ -291,7 +289,7 @@ impl Tree {
 			parents: parents.into(),
 			heights: heights.into(),
 
-			updated_edges: Bitmap::new(num_edges),
+			updated_edges: Bitmap::new(num_nodes),
 			updated_nodes: Bitmap::new(num_nodes),
 		})
 	}
@@ -463,7 +461,7 @@ impl Tree {
 		let num_updated_leaves = nodes.len();
 
 		let mut queue = VecDeque::from([self.root()]);
-		let mut internals = Vec::<Node>::new();
+		let mut internals = Vec::<Node>::from([*self.root()]);
 
 		while let Some(node) = queue.pop_front() {
 			let (left, right) = self.children_of(&node);
@@ -488,22 +486,24 @@ impl Tree {
 		(nodes, num_updated_leaves)
 	}
 
+	/// Returns a list of nodes and a list of children for internals
 	pub fn to_lists(
 		&self,
 		nodes: &[Node],
-	) -> (Vec<usize>, Vec<usize>, usize) {
-		let root = self.root().0;
-
+	) -> (Vec<usize>, Vec<(usize, usize)>) {
 		let num_nodes = nodes.len();
 		let mut out_nodes = Vec::with_capacity(num_nodes);
-		let mut edges = Vec::with_capacity(num_nodes);
+		let mut children = Vec::with_capacity(num_nodes);
 
 		for node in nodes {
 			out_nodes.push(node.0);
-			edges.push(self.edge_index(node));
+			if let Some(internal) = self.as_internal(node) {
+				let (left, right) = self.children_of(&internal);
+				children.push((left.0, right.0));
+			}
 		}
 
-		(out_nodes, edges, root)
+		(out_nodes, children)
 	}
 
 	fn mark_node_updated(&mut self, node: &Node) {
@@ -514,18 +514,43 @@ impl Tree {
 		self.updated_nodes.at(node.0)
 	}
 
-	/// Overwrites the child of `edge` with `new_child`.
-	///
-	/// Only `edge` and `new_child` changes are recorded, it is presumed
-	/// that the operator will call another method for the old child and
-	/// `new_child`'s parent edge.
-	pub fn update_edge(&mut self, edge: usize, new_child: &Node) {
-		let (_, parent) = self.edge_nodes(edge);
-
-		self.children.set(edge, new_child.0);
+	pub fn replace_child(
+		&mut self,
+		parent: &Internal,
+		&old_child: &Node,
+		new_child: &Node,
+	) {
 		self.parents.set(new_child.0, parent.0);
 
-		self.mark_edge_updated(edge);
+		let (left, right) = self.children_of(parent);
+		let idx = (parent.0 - self.num_leaves()) * 2;
+
+		if old_child == left {
+			self.children.set(idx, new_child.0);
+		} else if old_child == right {
+			self.children.set(idx + 1, new_child.0);
+		} else {
+			todo!("error");
+		}
+
+		self.mark_edge_updated(self.edge_index(new_child));
+	}
+
+	/// Prunes parent of `node` and grafts it as a parent of `other`
+	pub fn spr(&mut self, node: &Node, other: &Node) -> Result<()> {
+		let parent = self.parent_of(node).unwrap();
+		let grandparent = self.parent_of(&parent).unwrap();
+		let other_parent = self.parent_of(other).unwrap();
+
+		let sibling = self.other_child(&parent, node)?;
+
+		self.replace_child(&grandparent, &parent, &sibling);
+
+		self.replace_child(&other_parent, other, &parent);
+
+		self.replace_child(&parent, &sibling, other);
+
+		Ok(())
 	}
 
 	/// Sets the height of `node`, recording it and it's parent and child
@@ -548,21 +573,16 @@ impl Tree {
 		self.parents.set(node.0, ROOT);
 	}
 
-	/// Replaces `child` with `replacement` in respect to `child`'s parent.
-	pub fn update_replacement(&mut self, child: &Node, replacement: &Node) {
-		let edge = self.edge_index(child);
-		self.update_edge(edge, replacement);
-	}
-
 	pub fn swap_parents(&mut self, a: &Node, b: &Node) -> Result<()> {
-		ensure!(self.parent_of(a).is_some(), "a must not be root");
-		ensure!(self.parent_of(b).is_some(), "b must not be root");
+		let Some(a_parent) = self.parent_of(a) else {
+			bail!("a must not be root");
+		};
+		let Some(b_parent) = self.parent_of(b) else {
+			bail!("b must not be root");
+		};
 
-		let edge_a = self.edge_index(a);
-		let edge_b = self.edge_index(b);
-
-		self.update_edge(edge_a, b);
-		self.update_edge(edge_b, a);
+		self.replace_child(&a_parent, a, b);
+		self.replace_child(&b_parent, b, a);
 
 		ensure!(self.is_node_height_valid(a));
 		ensure!(self.is_node_height_valid(b));
@@ -600,7 +620,15 @@ impl Tree {
 	}
 
 	pub fn total_length(&self) -> f64 {
-		self.edges().map(|edge| self.edge_length(edge)).sum()
+		let mut out = 0.0;
+		let root = self.root();
+		for node in self.nodes() {
+			if node == *root {
+				continue;
+			}
+			out += self.edge_length(self.edge_index(&node));
+		}
+		out
 	}
 
 	pub fn validate(&self) -> Result<()> {
@@ -760,7 +788,7 @@ impl Tree {
 		height: f64,
 		rng: &mut Rng,
 	) -> Option<usize> {
-		(0..self.num_edges())
+		self.edges()
 			.filter(|edge| {
 				let (node, parent) = self.edge_nodes(*edge);
 				self.height_of(&node) < height
@@ -770,18 +798,8 @@ impl Tree {
 	}
 
 	/// Index of the edge between `child` and its parent.
-	///
-	/// # Panics
-	///
-	/// Panics if `child` is root.
 	pub fn edge_index(&self, child: &Node) -> usize {
-		let parent = self.parent_of(child).unwrap();
-
-		if &self.children_of(&parent).0 == child {
-			(parent.0 - self.num_leaves()) * 2
-		} else {
-			(parent.0 - self.num_leaves()) * 2 + 1
-		}
+		child.0
 	}
 
 	pub fn edge_length(&self, edge: usize) -> f64 {
@@ -791,16 +809,18 @@ impl Tree {
 	}
 
 	pub fn edge_nodes(&self, edge: usize) -> (Node, Internal) {
-		let parent = edge / 2 + self.num_leaves();
-		let child = self.children[edge];
+		let child = edge;
+		let parent = self.parents[child];
 
 		(Node(child), Internal(parent))
 	}
 
 	pub fn parent_of(&self, node: &Node) -> Option<Internal> {
-		Some(self.parents[node.0])
-			.take_if(|p| *p != ROOT)
-			.map(Internal)
+		if self.parents[node.0] != ROOT {
+			Some(Internal(self.parents[node.0]))
+		} else {
+			None
+		}
 	}
 
 	pub fn is_grandparent(&self, node: &Internal) -> bool {
@@ -874,8 +894,9 @@ impl Tree {
 		(0..self.num_leaves()).map(Leaf)
 	}
 
-	pub fn edges(&self) -> impl Iterator<Item = usize> + 'static {
-		0..self.num_edges()
+	pub fn edges(&self) -> impl Iterator<Item = usize> + use<> {
+		let root = self.root().0;
+		(0..self.num_nodes()).filter(move |&e| e != root)
 	}
 
 	pub fn to_newick(&self, internal_ids: bool) -> String {
@@ -1106,16 +1127,18 @@ impl PyTree {
 		self.inner().scale(scale)
 	}
 
-	/// Sets the **child** of `edge` to `new_child`
-	///
-	/// This will only change the child, so the parent (internal node from
-	/// which `edge` comes out) will now have `node` as a child.
-	///
-	/// This function doesn't do any validation, it's up to the operator to
-	/// preserve the validity of the tree.
-	fn update_edge(&self, edge: usize, new_child: Node) -> Result<()> {
-		self.inner().update_edge(edge, &new_child);
+	fn replace_child(
+		&self,
+		parent: Internal,
+		old_child: Node,
+		new_child: Node,
+	) -> Result<()> {
+		self.inner().replace_child(&parent, &old_child, &new_child);
 		Ok(())
+	}
+
+	fn spr(&self, node: Node, other: Node) -> Result<()> {
+		self.inner().spr(&node, &other)
 	}
 
 	/// Sets the height of `node` to `height`
@@ -1147,7 +1170,7 @@ impl PyTree {
 
 	/// Total number of nodes in the tree
 	#[getter]
-	fn num_nodes(&self) -> usize {
+	pub fn num_nodes(&self) -> usize {
 		self.inner().num_nodes()
 	}
 
@@ -1247,8 +1270,8 @@ impl PyTree {
 	}
 
 	/// Returns the index of an edge from `child` to its parent
-	fn edge_index(&self, child: Node) -> Result<usize> {
-		Ok(self.inner().edge_index(&child))
+	fn edge_index(&self, child: Node) -> usize {
+		self.inner().edge_index(&child)
 	}
 
 	/// Returns the length of `edge`
