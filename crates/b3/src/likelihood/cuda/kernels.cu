@@ -98,8 +98,8 @@ void propose(
 	u32 scale_sum = scale_sums[site];
 
 	for (u32 i = internals_start; i < num_updated_nodes; i++) {
-		u32 left_edge = children[(i - leaves_end) * 2];
-		u32 right_edge = children[(i - leaves_end) * 2 + 1];
+		u32 left_edge = children[(i - internals_start) * 2];
+		u32 right_edge = children[(i - internals_start) * 2 + 1];
 		u32 this_edge = nodes[i];
 		u32 scale_idx = idx(this_edge);
 		u32 old_scale = scales[scale_idx];
