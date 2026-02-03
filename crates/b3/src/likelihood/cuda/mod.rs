@@ -134,9 +134,6 @@ impl LikelihoodTrait<4, f64> for CudaLikelihood {
 	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()> {
 		self.stream.memcpy_dtoh(&self.likelihoods, patterns)?;
 
-		let projections =
-			self.stream.clone_dtoh(&self.projections).unwrap();
-
 		let scale_sums = self.stream.clone_dtoh(&self.scale_sums)?;
 		for (i, scale) in scale_sums.iter().enumerate() {
 			patterns[i] -= f64::from(*scale);
