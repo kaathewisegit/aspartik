@@ -2,7 +2,7 @@ use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::{prelude::*, types::PyType};
 
-use crate::parameters::{PyReal, Tree};
+use crate::parameters::{Parameter, PyReal, Tree};
 
 pub struct StrictClock {
 	rate: Py<PyReal>,
@@ -12,15 +12,16 @@ pub struct StrictClock {
 
 impl StrictClock {
 	fn update(&mut self) -> Result<()> {
-		let rate = self.rate.get().inner().value();
-		if rate != self.cached_rate {
-			self.cached_rate = rate;
+		if self.rate.get().inner().is_changed() {
+			self.update_rate();
 			self.full_update = true;
-		} else {
-			self.full_update = false;
 		}
 
 		Ok(())
+	}
+
+	fn update_rate(&mut self) {
+		self.cached_rate = self.rate.get().inner().value();
 	}
 
 	fn get_rate(&self) -> f64 {
@@ -31,6 +32,15 @@ impl StrictClock {
 		if self.full_update {
 			tree.mark_all_edges_updated();
 		}
+	}
+
+	fn accept(&mut self) {
+		self.full_update = false;
+	}
+
+	fn reject(&mut self) {
+		self.update_rate();
+		self.full_update = false;
 	}
 }
 
@@ -56,6 +66,18 @@ impl Clock {
 			Self::Strict(clock) => clock.mark_tree(tree),
 		}
 	}
+
+	pub fn accept(&mut self) {
+		match self {
+			Self::Strict(clock) => clock.accept(),
+		}
+	}
+
+	pub fn reject(&mut self) {
+		match self {
+			Self::Strict(clock) => clock.reject(),
+		}
+	}
 }
 
 #[pyclass(name = "Clock", module = "aspartik.b3", frozen)]
@@ -68,9 +90,10 @@ impl PyClock {
 	#[pyo3(name = "Strict")]
 	#[classmethod]
 	fn strict(_cls: Py<PyType>, rate: Py<PyReal>) -> Self {
+		let cached_rate = rate.get().inner().value();
 		let strict = StrictClock {
 			rate,
-			cached_rate: f64::NAN,
+			cached_rate,
 			full_update: true,
 		};
 		let clock = Clock::Strict(strict);

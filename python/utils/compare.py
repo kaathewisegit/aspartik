@@ -20,16 +20,10 @@ def compare(
         logs = pd.read_json(logs_path, lines=True)
 
     for i, row in logs.iterrows():
-        print(row)
-        print(row["kappa"])
-        print(row["frequencies"])
-        print(row["tree:newick"])
-        print(row["tree"])
         for name, param in parameters.items():
             match param:
                 case Tree():
                     param.set(Tree.from_json(row[name]))
-                    print(param.newick(internal_ids=True))
                 case Real():
                     param.set(row[name])
                 case RealVector():
@@ -42,7 +36,5 @@ def compare(
 
         for likelihood in likelihoods:
             likelihood.propose()
-            print(likelihood.likelihood(), row["likelihood"])
             diff = abs(likelihood.likelihood() - row["likelihood"])
-            assert diff < 0.5
-            # assert diff < abs(row["likelihood"]) * 0.0000000001
+            assert diff < 0.01

@@ -36,6 +36,7 @@ where
 		clock.update()?;
 		clock.mark_tree(tree);
 
+		tree.mark_all_edges_updated();
 		if self.substitution.update()? {
 			tree.mark_all_edges_updated();
 		}
@@ -56,10 +57,14 @@ where
 
 	pub fn accept(&mut self) {
 		self.transitions.accept();
+		self.substitution.accept();
+		self.clock.get().inner().accept();
 	}
 
 	pub fn reject(&mut self) {
 		self.transitions.reject();
+		self.substitution.reject();
+		self.clock.get().inner().reject();
 	}
 
 	pub fn matrices(&self, edges: &[usize]) -> Vec<[[F; N]; N]> {

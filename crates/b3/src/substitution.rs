@@ -10,6 +10,10 @@ pub trait SubstitutionModel<const N: usize, F> {
 	fn get_transition(&self, distance: f64) -> [[F; N]; N];
 
 	fn get_frequencies(&self) -> [F; N];
+
+	fn accept(&mut self);
+
+	fn reject(&mut self);
 }
 
 pub enum PySubstitution4 {
@@ -82,6 +86,22 @@ impl SubstitutionModel<4, f64> for PySubstitution4 {
 			Self::HKY(m) => m.get().inner().get_frequencies(),
 		}
 	}
+
+	fn accept(&mut self) {
+		match self {
+			Self::JC(m) => m.get().inner().accept(),
+			Self::K80(m) => m.get().inner().accept(),
+			Self::HKY(m) => m.get().inner().accept(),
+		}
+	}
+
+	fn reject(&mut self) {
+		match self {
+			Self::JC(m) => m.get().inner().reject(),
+			Self::K80(m) => m.get().inner().reject(),
+			Self::HKY(m) => m.get().inner().reject(),
+		}
+	}
 }
 
 macro_rules! create_pysubstitution {
@@ -147,6 +167,9 @@ impl SubstitutionModel<4, f64> for JC {
 	fn get_frequencies(&self) -> [f64; 4] {
 		[0.25; 4]
 	}
+
+	fn accept(&mut self) {}
+	fn reject(&mut self) {}
 }
 
 create_pysubstitution!(PyJC, JC, "JC",);
@@ -169,9 +192,10 @@ pub struct K80 {
 
 impl K80 {
 	fn new(kappa: Py<PyReal>) -> Self {
+		let cached_kappa = kappa.get().inner().value();
 		Self {
 			kappa,
-			cached_kappa: f64::NAN,
+			cached_kappa,
 		}
 	}
 }
@@ -213,6 +237,12 @@ impl SubstitutionModel<4, f64> for K80 {
 	fn get_frequencies(&self) -> [f64; 4] {
 		[0.25; 4]
 	}
+
+	fn accept(&mut self) {}
+
+	fn reject(&mut self) {
+		self.cached_kappa = self.kappa.get().inner().value();
+	}
 }
 
 create_pysubstitution!(PyK80, K80, "K80", kappa: Py<PyReal>);
@@ -247,7 +277,7 @@ pub struct HKY {
 
 impl HKY {
 	fn new(frequencies: Py<PyRealVector>, kappa: Py<PyReal>) -> Self {
-		Self {
+		let mut out = Self {
 			kappa,
 			frequencies,
 
@@ -262,10 +292,18 @@ impl HKY {
 			p: RowMatrix::default(),
 			inv_p: RowMatrix::default(),
 			diag: Vector::default(),
-		}
+		};
+		out.update_matrices();
+		out
 	}
 
 	fn update_matrices(&mut self) {
+		self.cached_frequencies = {
+			let freqs = &*self.frequencies.get().inner();
+			(freqs[0], freqs[1], freqs[2], freqs[3])
+		};
+		self.cached_kappa = self.kappa.get().inner().value();
+
 		let kappa = self.cached_kappa;
 		let (a, c, g, t) = self.cached_frequencies;
 		let r = a + g;
@@ -301,16 +339,9 @@ impl HKY {
 
 impl SubstitutionModel<4, f64> for HKY {
 	fn update(&mut self) -> Result<bool> {
-		let frequencies = {
-			let freqs = &*self.frequencies.get().inner();
-			(freqs[0], freqs[1], freqs[2], freqs[3])
-		};
-
 		if self.kappa.get().inner().is_changed()
-			|| frequencies != self.cached_frequencies
+			|| self.frequencies.get().inner().is_changed()
 		{
-			self.cached_frequencies = frequencies;
-			self.cached_kappa = self.kappa.get().inner().value();
 			self.update_matrices();
 			Ok(true)
 		} else {
@@ -328,6 +359,12 @@ impl SubstitutionModel<4, f64> for HKY {
 
 	fn get_frequencies(&self) -> [f64; 4] {
 		self.cached_frequencies.into()
+	}
+
+	fn accept(&mut self) {}
+
+	fn reject(&mut self) {
+		self.update_matrices();
 	}
 }
 

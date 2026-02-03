@@ -74,5 +74,5 @@ def test_compare_likelihood():
             # "clock_rate": clock_rate,
             "frequencies": frequencies,
         },
-        likelihoods=[cpu_calculator],
+        likelihoods=calculators,
     )

@@ -341,19 +341,19 @@ impl Mcmc {
 		self.scheduler.finalize(py, operator_index, status)?;
 
 		if status.is_accept() {
-			self.likelihood.accept()?;
-
 			for parameter in &self.state {
 				let parameter = &mut *parameter.as_ref();
 				parameter.accept();
 			}
-		} else {
-			self.likelihood.reject()?;
 
+			self.likelihood.accept()?;
+		} else {
 			for parameter in &self.state {
 				let parameter = &mut *parameter.as_ref();
 				parameter.reject();
 			}
+
+			self.likelihood.reject()?;
 		}
 
 		Ok(())
