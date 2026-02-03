@@ -30,7 +30,7 @@ pub struct CpuLikelihood<const N: usize, F> {
 
 impl<const N: usize, F> LikelihoodTrait<N, F> for CpuLikelihood<N, F>
 where
-	F: Float + Num + NumAssign + std::fmt::Debug,
+	F: Float + Num + NumAssign,
 	f64: From<F> + From<u32>,
 	RowMatrix<F, N, N>: Mul<Vector<F, N>, Output = Vector<F, N>>,
 	Vector<F, N>: Mul<Output = Vector<F, N>>,
@@ -118,6 +118,7 @@ where
 		let root = nodes.last().unwrap();
 		let (root_left_edge, root_right_edge) =
 			children.last().unwrap();
+		let root_idx = root * num_sites;
 
 		let root_left_idx = root_left_edge * num_sites;
 		let root_right_idx = root_right_edge * num_sites;
@@ -132,8 +133,8 @@ where
 
 			self.likelihoods[site] = ln_sum.into();
 
-			if self.scales[site] {
-				self.scales.set(site, false);
+			if self.scales[root_idx + site] {
+				self.scales.set(root_idx + site, false);
 				self.scale_sums.set(
 					site,
 					self.scale_sums[site] - self.scale_ln,
@@ -162,22 +163,8 @@ where
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		let edges = std::mem::take(&mut self.updated_edges);
-		let num_sites = self.num_sites;
-
-		for edge in &edges {
-			let edge_offset = edge * num_sites;
-			for site in 0..num_sites {
-				let index = edge_offset + site;
-				self.projections.reject_element(index);
-				self.scales.reject_element(index);
-			}
-		}
-
-		// All of the edited items have been manually unset, so
-		// there's no need for `accept` or `reject`.
-
-		// small, so it's cheap to just reject
+		self.projections.reject();
+		self.scales.reject();
 		self.scale_sums.reject();
 
 		Ok(())

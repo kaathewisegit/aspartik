@@ -27,7 +27,7 @@ def test_compare_likelihood():
 
     kappa = Real(1.0)
     clock_rate = Real(1.0)
-    frequencies = RealVector(0, 0, 0, 0)
+    frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
 
     cpu_calculators = [
         CPU4Likelihood(

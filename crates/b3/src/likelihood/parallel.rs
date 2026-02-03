@@ -196,6 +196,7 @@ where
 		let root = nodes.last().unwrap();
 		let (root_left_edge, root_right_edge) =
 			children.last().unwrap();
+		let root_idx = root * num_sites;
 
 		let root_left_idx = root_left_edge * num_sites;
 		let root_right_idx = root_right_edge * num_sites;
@@ -210,8 +211,8 @@ where
 
 			self.likelihoods[site] = ln_sum.into();
 
-			if self.scales[site] {
-				self.scales[site] = false;
+			if self.scales[root_idx + site] {
+				self.scales[root_idx + site] = false;
 				self.scale_sums[site] -= self.scale_ln;
 			}
 		}

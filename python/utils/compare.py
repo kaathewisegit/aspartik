@@ -37,4 +37,5 @@ def compare(
         for likelihood in likelihoods:
             likelihood.propose()
             diff = abs(likelihood.likelihood() - row["likelihood"])
+            likelihood.reject()
             assert diff < 0.01
