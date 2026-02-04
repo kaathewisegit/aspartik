@@ -1,4 +1,3 @@
-use indoc::indoc;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
@@ -135,13 +134,12 @@ where
 	T::Relative: Display,
 {
 	format!(
-		indoc!("
-			   given: {}
-			expected: {}
-			 ---------
-			abs diff: {}
-			relative: {}
-			    ulps: {}"),
+		"   given: {}
+expected: {}
+ ---------
+abs diff: {}
+relative: {}
+    ulps: {}",
 		given,
 		expected,
 		given.abs_diff(expected),

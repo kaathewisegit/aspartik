@@ -147,11 +147,6 @@ conversion attributes on pyclasses.
 Hash map which preserves insertion order, used by `petgraph`.
 
 
-### [`indoc`](./indoc-license)
-
-Macro which de-indents strings, used by `pyo3` in the `py_run` macro.
-
-
 ### [`inventory`](./inventory-license)
 
 "Distributed plugin registration", which uses platform-specific
