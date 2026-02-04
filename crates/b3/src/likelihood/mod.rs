@@ -475,20 +475,13 @@ impl<'py> IntoPyObject<'py> for PyLikelihood {
 	type Error = PyErr;
 
 	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		Ok(match self {
-			Self::Cpu(l) => {
-				Bound::new(py, l.clone_ref(py))?.into_any()
-			}
-			Self::Parallel(l) => {
-				Bound::new(py, l.clone_ref(py))?.into_any()
-			}
-			Self::Cuda(l) => {
-				Bound::new(py, l.clone_ref(py))?.into_any()
-			}
-			Self::Hetero(l) => {
-				Bound::new(py, l.clone_ref(py))?.into_any()
-			}
-		})
+		let any = match self {
+			Self::Cpu(l) => l.clone_ref(py).into_any(),
+			Self::Parallel(l) => l.clone_ref(py).into_any(),
+			Self::Cuda(l) => l.clone_ref(py).into_any(),
+			Self::Hetero(l) => l.clone_ref(py).into_any(),
+		};
+		Ok(any.into_bound(py))
 	}
 }
 

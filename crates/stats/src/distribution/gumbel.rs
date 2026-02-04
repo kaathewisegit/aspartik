@@ -1,3 +1,4 @@
+use rand::RngExt;
 use thiserror::Error;
 
 use core::f64::consts::PI;

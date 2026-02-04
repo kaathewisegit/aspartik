@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use rand::RngExt;
 use thiserror::Error;
 
 #[cfg(feature = "python")]
@@ -30,7 +31,13 @@ use crate::{
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub struct Uniform {
 	min: f64,
@@ -55,7 +62,13 @@ impl_pymethods! {for Uniform;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum UniformError {
 	#[error("The minimum is NaN or infinite")]

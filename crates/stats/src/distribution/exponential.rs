@@ -33,7 +33,13 @@ use util::impl_pyerr;
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub struct Exp {
 	rate: f64,
@@ -56,7 +62,13 @@ impl_pymethods! {for Exp;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum ExpError {
 	#[error("The rate is NaN, zero or less than zero")]

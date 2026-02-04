@@ -31,7 +31,13 @@ use crate::{
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub struct InverseGamma {
 	shape: f64,
@@ -56,7 +62,13 @@ impl_pymethods! {for InverseGamma;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum InverseGammaError {
 	#[error("The shape is NaN, infinite, zero or less than zero")]

@@ -34,7 +34,13 @@ use util::impl_pyerr;
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub struct Normal {
 	mean: f64,
@@ -57,7 +63,13 @@ impl_pymethods! {for Normal;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum NormalError {
 	#[error("The mean is NaN")]

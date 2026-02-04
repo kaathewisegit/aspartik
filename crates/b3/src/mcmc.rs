@@ -5,7 +5,7 @@ use pyo3::{
 	prelude::*,
 	types::{PyBytes, PyList},
 };
-use rand::Rng as _;
+use rand::RngExt;
 
 use crate::{
 	PyCallback, PyPrior,

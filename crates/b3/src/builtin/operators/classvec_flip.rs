@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use rand::Rng;
+use rand::RngExt;
 
 use crate::{operator::Proposal, parameters::PyClassVector};
 use rng::PyRng;

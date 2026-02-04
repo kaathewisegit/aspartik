@@ -1,3 +1,5 @@
+use rand::RngExt;
+
 use core::f64;
 
 #[cfg(feature = "python")]
@@ -37,7 +39,13 @@ use crate::{
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub struct Gamma {
 	shape: f64,
@@ -62,7 +70,13 @@ impl_pymethods! {for Gamma;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum GammaError {
 	/// Shape is NaN, zero or less than zero

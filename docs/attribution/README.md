@@ -194,12 +194,6 @@ Unified Rust `log` facade.
 SIMD-optimized string search, used by `nom` and `serde_json`.
 
 
-### [`memoffset`](./memoffset-license)
-
-Provides `offset_of`, used in `pyo3`.  It's equivalent to `std`'s
-`offset_of`, but its MSRV is lower (`std`'s is 1.77).
-
-
 ### [`num-traits`](./num-traits-license)
 
 Unified numerical interfaces.  Used in `linalg` and `stats`.
@@ -312,11 +306,6 @@ Currently only used in data because `stats` still supports `no_std`.
 ### [`unicode-indent`](./unicode-ident-license)
 
 Unicode-aware identifiers check, used by `serde_derive`.
-
-
-### [`unindent`](./indoc-license)
-
-Runtime version of `indoc`.
 
 
 ### [`zerocopy`](./zerocopy-license)

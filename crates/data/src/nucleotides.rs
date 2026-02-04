@@ -41,6 +41,7 @@ use crate::seq::Character;
 #[cfg_attr(
 	feature = "python",
 	pyclass(
+		skip_from_py_object,
 		name = "DNANucleotide",
 		module = "aspartik.data",
 		frozen,

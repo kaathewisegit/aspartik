@@ -1,3 +1,4 @@
+use rand::RngExt;
 use thiserror::Error;
 
 use std::f64::consts::LN_2;

@@ -85,20 +85,13 @@ impl<'py> IntoPyObject<'py> for PyParameter {
 	type Error = PyErr;
 
 	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		Ok(match self {
-			Self::ClassVector(p) => {
-				Bound::new(py, p.clone_ref(py))?.into_any()
-			}
-			Self::Real(p) => {
-				Bound::new(py, p.clone_ref(py))?.into_any()
-			}
-			Self::RealVector(p) => {
-				Bound::new(py, p.clone_ref(py))?.into_any()
-			}
-			Self::Tree(p) => {
-				Bound::new(py, p.clone_ref(py))?.into_any()
-			}
-		})
+		let any = match self {
+			Self::ClassVector(p) => p.clone_ref(py).into_any(),
+			Self::Real(p) => p.clone_ref(py).into_any(),
+			Self::RealVector(p) => p.clone_ref(py).into_any(),
+			Self::Tree(p) => p.clone_ref(py).into_any(),
+		};
+		Ok(any.into_bound(py))
 	}
 }
 

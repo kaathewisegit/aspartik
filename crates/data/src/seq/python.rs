@@ -9,7 +9,7 @@ use crate::DnaNucleotide;
 /// This sequence cannot be mutated.  Instead, its methods can be used for
 /// various transformations which will return new sequences.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[pyclass(name = "DNASeq", module = "aspartik.data", frozen)]
+#[pyclass(from_py_object, name = "DNASeq", module = "aspartik.data", frozen)]
 #[repr(transparent)]
 pub struct PyDnaSeq(pub Sequence<DnaNucleotide>);
 

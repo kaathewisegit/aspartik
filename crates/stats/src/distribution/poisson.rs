@@ -1,7 +1,9 @@
-use core::f64;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use rand::RngExt;
 use thiserror::Error;
+
+use core::f64;
 
 use math::function::{factorial, gamma};
 #[cfg(feature = "python")]
@@ -31,7 +33,13 @@ use crate::{
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub struct Poisson {
 	lambda: f64,
@@ -53,7 +61,13 @@ impl_pymethods! {for Poisson;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum PoissonError {
 	#[error("The lambda is NaN, zero or less than zero")]

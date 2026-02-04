@@ -64,7 +64,14 @@ enum RangedU8 {
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(name = "Phred", module = "aspartik.data", frozen, eq, ord)
+	pyclass(
+		from_py_object,
+		name = "Phred",
+		module = "aspartik.data",
+		frozen,
+		eq,
+		ord
+	)
 )]
 pub struct Phred(RangedU8);
 

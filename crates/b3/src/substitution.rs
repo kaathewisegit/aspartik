@@ -44,17 +44,12 @@ impl<'py> IntoPyObject<'py> for PySubstitution4 {
 	type Error = PyErr;
 
 	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		Ok(match self {
-			Self::JC(p) => {
-				Bound::new(py, p.clone_ref(py))?.into_any()
-			}
-			Self::K80(p) => {
-				Bound::new(py, p.clone_ref(py))?.into_any()
-			}
-			Self::HKY(p) => {
-				Bound::new(py, p.clone_ref(py))?.into_any()
-			}
-		})
+		let any = match self {
+			Self::JC(p) => p.clone_ref(py).into_any(),
+			Self::K80(p) => p.clone_ref(py).into_any(),
+			Self::HKY(p) => p.clone_ref(py).into_any(),
+		};
+		Ok(any.into_bound(py))
 	}
 }
 

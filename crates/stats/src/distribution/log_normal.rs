@@ -36,7 +36,13 @@ use crate::{
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub struct LogNormal {
 	location: f64,
@@ -61,7 +67,13 @@ impl_pymethods! {for LogNormal;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum LogNormalError {
 	#[error("The location is NaN")]

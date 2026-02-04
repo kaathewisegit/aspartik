@@ -2,7 +2,7 @@ use anyhow::{Result, ensure};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use rand::{
-	Rng as _, SeedableRng, TryRngCore,
+	RngExt, SeedableRng, TryRng,
 	distr::uniform::{UniformFloat, UniformSampler},
 	rngs::SysRng,
 };

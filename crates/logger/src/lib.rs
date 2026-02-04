@@ -33,7 +33,10 @@ pub fn logger() -> &'static Logger {
 ///
 /// [ll]: https://docs.rs/log/latest/log/enum.Level.html
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
-#[cfg_attr(feature = "python", pyclass(module = "aspartik.logger"))]
+#[cfg_attr(
+	feature = "python",
+	pyclass(skip_from_py_object, module = "aspartik.logger", frozen)
+)]
 pub enum Level {
 	/// All logged events
 	///
@@ -57,6 +60,17 @@ pub enum Level {
 	/// Reserved for events which signal errors which might corrupt the
 	/// output or the analysis without erroring out the standard way.
 	Error,
+}
+
+#[cfg(feature = "python")]
+impl<'py> FromPyObject<'_, 'py> for Level {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+		let level = obj.cast::<Level>()?;
+
+		Ok(*level.get())
+	}
 }
 
 pub struct Logger {

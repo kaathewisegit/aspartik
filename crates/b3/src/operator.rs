@@ -49,7 +49,13 @@ impl<'py> IntoPyObject<'py> for Proposal {
 /// While the operators edit the tree directly, they need to communicate the
 /// status of their move to `MCMC`.  This is the class used for that.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-#[pyclass(module = "aspartik.b3", name = "Proposal", frozen, eq)]
+#[pyclass(
+	from_py_object,
+	module = "aspartik.b3",
+	name = "Proposal",
+	frozen,
+	eq
+)]
 pub struct PyProposal(Proposal);
 
 #[pymethods]

@@ -1,3 +1,5 @@
+use rand::RngExt;
+
 use std::fmt;
 
 use crate::{

@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
+use rand::RngExt;
 use thiserror::Error;
 
 use core::f64;
@@ -30,7 +31,13 @@ use crate::{
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub struct Laplace {
 	location: f64,
@@ -55,7 +62,13 @@ impl_pymethods! {for Laplace;
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.stats.distributions", frozen, eq, str)
+	pyclass(
+		from_py_object,
+		module = "aspartik.stats.distributions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum LaplaceError {
 	#[error("The location is NaN")]

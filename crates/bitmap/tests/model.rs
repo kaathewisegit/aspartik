@@ -1,4 +1,4 @@
-use rand::{Rng as RngTrait, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_pcg::Pcg64 as Rng;
 
 use bitmap::Bitmap;

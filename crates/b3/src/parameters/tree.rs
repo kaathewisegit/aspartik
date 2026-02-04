@@ -6,7 +6,7 @@ use pyo3::{
 	types::{PyAny, PyType},
 };
 use rand::{
-	Rng as _,
+	RngExt,
 	seq::{IteratorRandom, SliceRandom},
 };
 use serde::{Deserialize, Serialize};
@@ -91,7 +91,7 @@ impl<'py> FromPyObject<'_, 'py> for Node {
 /// Internals are the unnamed nodes which represent most recent common ancestors
 /// of leaves and other internals.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[pyclass(module = "aspartik.b3.tree", frozen, eq, hash)]
+#[pyclass(from_py_object, module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
 pub struct Internal(usize);
 
@@ -99,7 +99,7 @@ pub struct Internal(usize);
 ///
 /// Every leaf node is associated with a concrete sequence.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[pyclass(module = "aspartik.b3.tree", frozen, eq, hash)]
+#[pyclass(from_py_object, module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
 pub struct Leaf(usize);
 

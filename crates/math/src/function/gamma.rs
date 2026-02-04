@@ -20,7 +20,13 @@ use crate::{
 #[non_exhaustive]
 #[cfg_attr(
 	feature = "python",
-	pyclass(module = "aspartik.math.functions", frozen, eq, str)
+	pyclass(
+		skip_from_py_object,
+		module = "aspartik.math.functions",
+		frozen,
+		eq,
+		str
+	)
 )]
 pub enum GammaFuncError {
 	/// `a` must be a finite non-zero positive number.
