@@ -3,7 +3,7 @@ use parking_lot::Mutex;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use std::ops::Index;
+use std::{io::Write, ops::Index};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
@@ -43,8 +43,8 @@ impl Parameter for ClassVector {
 		self.classes.is_changed()
 	}
 
-	fn dump(&self) -> Result<Vec<u8>> {
-		Ok(rmp_serde::to_vec(self)?)
+	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
+		Ok(rmp_serde::encode::write(dst, &self)?)
 	}
 
 	fn load(&mut self, bytes: &[u8]) -> Result<()> {

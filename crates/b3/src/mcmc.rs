@@ -190,9 +190,12 @@ impl Mcmc {
 	}
 
 	fn dump_state(&self, py: Python) -> Result<Vec<u8>> {
-		use rmp::encode;
+		use rmp::encode::{self, buffer::ByteBuf};
 
-		let mut out = Vec::new();
+		// scratch space for parameter dumps to write into to avoid
+		// repeated allocations
+		let mut scratch = Vec::new();
+		let mut out = ByteBuf::new();
 
 		encode::write_u64(&mut out, *self.current_step.lock() as u64)?;
 		encode::write_f64(&mut out, *self.posterior.lock())?;
@@ -200,19 +203,16 @@ impl Mcmc {
 		encode::write_array_len(&mut out, self.state.len() as u32)?;
 		for param in &self.state {
 			let param = &*param.as_ref();
-			let bytes = param.dump()?;
-
-			encode::write_bin_len(&mut out, bytes.len() as u32)?;
-			out.extend_from_slice(&bytes);
+			param.dump(&mut scratch)?;
+			encode::write_bin(&mut out, &scratch)?;
+			scratch.clear();
 		}
 
 		let bytes = py_call_method!(py, self.rng, "dump")?;
 		let bytes = bytes.cast_bound::<PyBytes>(py).unwrap();
-		let bytes = bytes.as_bytes();
-		encode::write_bin_len(&mut out, bytes.len() as u32)?;
-		out.extend_from_slice(bytes);
+		encode::write_bin(&mut out, bytes.as_bytes())?;
 
-		Ok(out)
+		Ok(out.into())
 	}
 
 	fn load_state(&self, py: Python, bytes: &[u8]) -> Result<()> {

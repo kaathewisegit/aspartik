@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 use std::{
 	cmp::Reverse,
-	collections::HashMap,
-	collections::{BinaryHeap, VecDeque},
+	collections::{BinaryHeap, HashMap, VecDeque},
+	io::Write,
 	mem,
 	ops::Deref,
 };
@@ -949,8 +949,8 @@ impl Parameter for Tree {
 		self.updated_edges.is_any_on()
 	}
 
-	fn dump(&self) -> Result<Vec<u8>> {
-		Ok(rmp_serde::to_vec(self)?)
+	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
+		Ok(rmp_serde::encode::write(dst, &self)?)
 	}
 
 	fn load(&mut self, bytes: &[u8]) -> Result<()> {

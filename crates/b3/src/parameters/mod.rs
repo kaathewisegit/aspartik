@@ -2,6 +2,8 @@ use anyhow::Result;
 use parking_lot::{MappedMutexGuard, MutexGuard};
 use pyo3::prelude::*;
 
+use std::io::Write;
+
 mod class_vector;
 mod real;
 mod real_vector;
@@ -15,7 +17,7 @@ pub use tree::{Internal, Leaf, Node, PyTree, Tree};
 pub trait Parameter {
 	fn is_changed(&self) -> bool;
 
-	fn dump(&self) -> Result<Vec<u8>>;
+	fn dump(&self, dst: &mut dyn Write) -> Result<()>;
 
 	fn load(&mut self, bytes: &[u8]) -> Result<()>;
 
