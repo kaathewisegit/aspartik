@@ -1,8 +1,7 @@
 import pytest
-from utils import random_integer, random_trees
+from utils import random_trees
 
 from aspartik.b3.parameters import Tree
-from aspartik.rng import RNG
 
 
 def test_other_child(rng):

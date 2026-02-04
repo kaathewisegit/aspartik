@@ -53,10 +53,6 @@ class WilsonBalding(Operator):
         after = tree.height_of(j_parent) - max(tree.height_of(i), tree.height_of(j))
         ratio = log(after / before)
 
-        i_grandparent_to_i_parent = tree.edge_index(i_parent)
-        j_parent_to_j = tree.edge_index(j)
-        i_parent_to_i_brother = tree.edge_index(i_brother)
-
         # Cut out i_parent and replace it with a direct edge from grandparent
         # to i_brother
         tree.replace_child(i_grandparent, i_parent, i_brother)

@@ -6,7 +6,7 @@ such.
 
 import json
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from compression.zstd import ZstdCompressor
 from dataclasses import dataclass, field
 from io import BufferedWriter
@@ -20,7 +20,7 @@ class _LogWriter:
     _file: BufferedWriter
     _compressor: Optional[ZstdCompressor]
 
-    __slots__ = ("_file", "_compressor")
+    __slots__ = ("_compressor", "_file")
 
     def __init__(self, path: str, zstd: bool = False):
         if zstd:

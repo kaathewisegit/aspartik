@@ -1,7 +1,7 @@
 import pytest
 from utils.compare import compare
 
-from aspartik.b3.parameters import Real, RealVector, Tree
+from aspartik.b3.parameters import Real, Tree
 from aspartik.b3.priors import ExponentialGrowth
 from aspartik.rng import RNG
 

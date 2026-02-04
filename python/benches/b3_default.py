@@ -47,7 +47,7 @@ def worker(msa, kind, sender):
 
     try:
         mcmc.run(1_000_000_000)
-    except:
+    except Exception:
         sender.send(mcmc.current_step)
 
 

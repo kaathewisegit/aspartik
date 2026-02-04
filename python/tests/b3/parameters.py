@@ -1,5 +1,3 @@
-import pytest
-
 from aspartik.b3.parameters import Real, RealVector
 
 

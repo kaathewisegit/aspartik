@@ -2,7 +2,6 @@
 Felsenstein's tree likelihood calculators.
 """
 
-from dataclasses import dataclass
 from typing import Protocol
 
 from .._aspartik_rust_impl._b3_rust_impl import (
@@ -12,7 +11,6 @@ from .._aspartik_rust_impl._b3_rust_impl import (
     Parallel4Likelihood as Parallel4Likelihood,
 )
 from . import Stateful
-from .parameters import RealVector
 
 
 class Likelihood(Stateful, Protocol):

@@ -1,7 +1,5 @@
-from collections.abc import Sequence
-from copy import deepcopy
 from dataclasses import dataclass
-from typing import Protocol, SupportsFloat, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from .._aspartik_rust_impl._b3_rust_impl import (
     ClassVector as ClassVector,

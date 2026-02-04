@@ -1,9 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import SupportsFloat
 
-from ...stats.distributions import Continuous, Discrete
+from ...stats.distributions import Continuous
 from .. import Prior
-from ..parameters import Real
 
 
 @dataclass(slots=True)

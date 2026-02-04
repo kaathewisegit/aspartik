@@ -1,10 +1,6 @@
-from utils.b3_config import default as default_b3_config
-
 import argparse
 import multiprocessing
-import signal
 import subprocess
-import sys
 import tempfile
 import time
 from pathlib import Path
@@ -13,7 +9,6 @@ from typing import Literal, Optional, get_args
 
 from aspartik.data.msa import MSA
 from aspartik.io import FastaReader
-from aspartik.rng import RNG
 
 Kind = Literal["cpu", "cuda"]
 
@@ -24,8 +19,6 @@ def run_mcmc(
     kind: Kind,
 ) -> Optional[float]:
     print(f"\n# {msa.num_sequences}")
-
-    (receiver, sender) = multiprocessing.Pipe(duplex=False)
 
     proc = multiprocessing.Process(target=worker, args=(msa, length, kind))
     start_time = time.perf_counter()

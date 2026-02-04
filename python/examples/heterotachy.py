@@ -4,9 +4,6 @@ Based on the [GHOST paper][g], HKY+H4 version.
 [g]: https://doi.org/10.1093/sysbio/syz051
 """
 
-from copy import deepcopy
-from datetime import datetime
-
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CPU4Likelihood, HeteroLikelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
@@ -15,17 +12,15 @@ from aspartik.b3.operators import (
     DeltaExchange,
     FixedHeightSubtreePruneRegraft,
     ParamScale,
-    RandomWalk,
     SubtreeLeap,
-    UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, RealVector, Tree
+from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import Bound, Distribution, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
+from aspartik.stats.distributions import Gamma, LogNormal, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 

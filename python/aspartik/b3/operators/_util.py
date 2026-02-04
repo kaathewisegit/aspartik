@@ -1,4 +1,4 @@
-from math import exp, inf, isfinite, log
+from math import exp, inf, isfinite
 
 from ...rng import RNG
 from ..parameters import Internal, Node, Tree

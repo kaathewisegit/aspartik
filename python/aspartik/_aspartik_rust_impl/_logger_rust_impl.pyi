@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from os import PathLike
 
 class Logger:
     def __init__(self): ...

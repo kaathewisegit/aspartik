@@ -12,10 +12,9 @@ from aspartik.b3.operators import (
     UpDown,
 )
 from aspartik.b3.parameters import Internals, Real, RealVector, Tree
-from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth, Yule
+from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.data.msa import MSA
-from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
@@ -36,7 +35,7 @@ def default(msa: MSA, rng: RNG, kind: Calculator) -> MCMC:
     growth_rate = Real(0)
     clock_rate = Real(0.001)
     frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-    params = [kappa, population_size, growth_rate, clock_rate, frequencies]
+    params = [kappa, population_size, growth_rate, clock_rate, frequencies, tree]
 
     priors = [
         Bound(kappa),
@@ -77,7 +76,7 @@ def default(msa: MSA, rng: RNG, kind: Calculator) -> MCMC:
     )
 
     mcmc = MCMC(
-        state=params + [tree],
+        state=params,
         priors=priors,
         operators=operators,
         likelihood=likelihood,

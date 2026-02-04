@@ -16,6 +16,6 @@ from ._tree_exchange import (
     NarrowExchange as NarrowExchange,
     WideExchange as WideExchange,
 )
-from ._tree_scale import TreeScale
-from ._updown import UpDown
+from ._tree_scale import TreeScale as TreeScale
+from ._updown import UpDown as UpDown
 from ._wilson_balding import WilsonBalding as WilsonBalding

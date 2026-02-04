@@ -88,8 +88,6 @@ class MSA:
         order
         """
 
-    from typing import Optional
-
 class Tree:
     def __init__(self, newick: Optional[str] = None): ...
     def __str__(self) -> str: ...

@@ -1,19 +1,16 @@
 from utils.compare import compare
 
-from aspartik.b3 import MCMC, Clock, Prior
+from aspartik.b3 import Clock
 from aspartik.b3.likelihoods import (
     CPU4Likelihood,
     CUDALikelihood,
     HeteroLikelihood,
-    Likelihood,
     Parallel4Likelihood,
 )
-from aspartik.b3.parameters import Internals, Real, RealVector, Tree
-from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
+from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.substitutions import HKY
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Uniform
 
 SCALES = [3, 30, 300]
 
@@ -68,7 +65,7 @@ def test_compare_likelihood():
             clock=Clock.Strict(clock_rate),
             tree=tree,
         )
-    except Exception as e:
+    except Exception:
         cuda_calculator = None
 
     calculators = [*cpu_calculators, *parallel_calculators, hetero]

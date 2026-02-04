@@ -1,5 +1,4 @@
 import argparse
-import sys
 
 from .. import MCMC
 
@@ -10,11 +9,11 @@ def print_operator_stats(mcmc: MCMC) -> None:
 
     for operator, results, _, _ in mcmc.operator_statistics:
         (
-            unconditional_accepts,
+            _unconditional_accepts,
             unconditional_rejects,
             prior_rejects,
             accepts,
-            rejects,
+            _rejects,
         ) = results
         total = sum(results)
         accepts_share = accepts / total
@@ -33,8 +32,8 @@ def print_operator_timings(mcmc: MCMC) -> None:
 
     for operator, results, propose, likelihood in mcmc.operator_statistics:
         (
-            unconditional_accepts,
-            unconditional_rejects,
+            _unconditional_accepts,
+            _unconditional_rejects,
             prior_rejects,
             accepts,
             rejects,

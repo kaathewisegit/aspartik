@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from math import inf
-from typing import Protocol
 
 from .. import Prior
 from ..parameters import Real, RealVector

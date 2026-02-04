@@ -1,9 +1,7 @@
-import pytest
-
-from aspartik.b3.parameters import Real, Tree
+from aspartik.b3.parameters import Real
 from aspartik.b3.priors import Distribution
 from aspartik.math import is_close
-from aspartik.stats.distributions import Normal, Poisson
+from aspartik.stats.distributions import Normal
 
 
 def test_float():

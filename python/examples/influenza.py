@@ -5,8 +5,6 @@ tutorial][l].
 [l]: https://beast.community/workshop_influenza_phylodynamics
 """
 
-from datetime import datetime
-
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
@@ -55,7 +53,8 @@ def make_mcmc(fasta_path: str):
     growth_rate = Real(0)
     clock_rate = Real(0.001)
     frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-    params = [kappa, population_size, growth_rate, clock_rate, frequencies]
+
+    params = [kappa, population_size, growth_rate, clock_rate, frequencies, tree]
 
     priors = [
         Bound(kappa),
@@ -117,7 +116,7 @@ def make_mcmc(fasta_path: str):
     ]
 
     mcmc = MCMC(
-        state=params + [tree],
+        state=params,
         priors=priors,
         operators=operators,
         likelihood=likelihood,

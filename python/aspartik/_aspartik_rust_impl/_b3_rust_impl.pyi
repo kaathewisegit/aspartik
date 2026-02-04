@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Optional, Sized, SupportsFloat
 
-from ..b3 import Callback, Clock, Operator, Prior
+from ..b3 import Callback, Operator, Prior
 from ..b3.likelihoods import Likelihood
 from ..b3.parameters import Node, Parameter, Scalable
 from ..b3.substitutions import Substiution4

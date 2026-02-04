@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 
 from ...rng import RNG
-from ...stats.distributions import Distribution
 from .. import Operator, Proposal
 from ..parameters import Tree
-from ._util import assert_two_internals, sample_range
+from ._util import assert_two_internals
 
 
 @dataclass(slots=True)

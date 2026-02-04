@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from math import log
-from typing import Literal
 
 from ...rng import RNG
 from ...stats.distributions import Distribution

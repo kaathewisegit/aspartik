@@ -3,7 +3,7 @@ from math import log
 
 from ...rng import RNG
 from .. import Operator, Proposal
-from ..parameters import Internal, Node, Tree
+from ..parameters import Internal, Tree
 from ._util import assert_two_internals
 
 

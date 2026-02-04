@@ -2,7 +2,6 @@
 <https://beast.community/first_tutorial>
 """
 
-from aspartik import logger
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
@@ -17,7 +16,7 @@ from aspartik.b3.operators import (
     TreeScale,
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
-from aspartik.b3.priors import Bound, ConstantPopulation, Distribution
+from aspartik.b3.priors import ConstantPopulation, Distribution
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.io.msa import read_msa_from_fasta

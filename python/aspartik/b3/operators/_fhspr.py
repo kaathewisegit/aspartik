@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 
 from ...rng import RNG
-from ...stats.distributions import Distribution
 from .. import Operator, Proposal
 from ..parameters import Tree
-from ._util import assert_two_internals, family
+from ._util import assert_two_internals
 
 
 @dataclass(slots=True)
@@ -43,8 +42,6 @@ class FixedHeightSubtreePruneRegraft(Operator):
         grandparent = tree.parent_of(parent)
         assert grandparent is not None
 
-        sibling = tree.other_child(parent, node)
-
         parent_height = tree.height_of(parent)
 
         edge = tree.random_intersecting_edge(parent_height, rng)
@@ -52,7 +49,7 @@ class FixedHeightSubtreePruneRegraft(Operator):
         if edge is None:
             return Proposal.Reject()
 
-        other, other_parent = tree.edge_nodes(edge)
+        other, _other_parent = tree.edge_nodes(edge)
 
         # regraft parent of `node` to edge between `other` its parent
         tree.spr(node, other)

@@ -1,6 +1,5 @@
-from typing import Optional, Protocol, Self, TypeVar, runtime_checkable
+from typing import Self
 
-from aspartik.rng import RNG
 from aspartik.stats.distributions import (
     Continuous,
     ContinuousCDF,

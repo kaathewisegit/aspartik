@@ -5,7 +5,6 @@ from argparse import ArgumentParser, Namespace
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
-from typing import Optional
 
 from . import doc
 

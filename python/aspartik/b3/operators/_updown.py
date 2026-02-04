@@ -4,7 +4,7 @@ from math import log
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal
-from ..parameters import Real, Scalable
+from ..parameters import Scalable
 from ._util import assert_factor, sample_range
 
 
@@ -47,7 +47,7 @@ class UpDown(Operator):
         try:
             num_scaling_up = self.up.scale(scale)
             num_scaling_down = self.down.scale(1 / scale)
-        except:
+        except Exception:
             return Proposal.Reject()
 
         ratio = log(scale) * (num_scaling_up - num_scaling_down - 2)

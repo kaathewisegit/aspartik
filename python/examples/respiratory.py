@@ -11,7 +11,6 @@ from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
-    DeltaExchange,
     FixedHeightSubtreePruneRegraft,
     ParamScale,
     RandomWalk,
@@ -56,7 +55,7 @@ def make_mcmc(fasta_path: str):
     growth_rate = Real(0.0)
     clock_rate = Real(0.001)
     frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-    params = [kappa, population_size, growth_rate, clock_rate]
+    params = [kappa, population_size, growth_rate, clock_rate, tree]
 
     priors = [
         Bound(kappa),
@@ -87,7 +86,8 @@ def make_mcmc(fasta_path: str):
             clock=Clock.Strict(clock_rate),
             tree=tree,
         )
-    except:
+    except Exception as e:
+        print(f"failed to create CUDALikelihood: {e}")
         likelihood = Parallel4Likelihood(
             msa=msa,
             substitution=HKY(frequencies, kappa),
@@ -124,7 +124,7 @@ def make_mcmc(fasta_path: str):
     ]
 
     mcmc = MCMC(
-        state=params + [tree],
+        state=params,
         priors=priors,
         operators=operators,
         likelihood=likelihood,

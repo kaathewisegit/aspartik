@@ -30,7 +30,6 @@ class SubtreeSlide(Operator):
 
         rng = self.rng
         tree = self.tree
-        root = tree.root
 
         ratio = 0.0
 

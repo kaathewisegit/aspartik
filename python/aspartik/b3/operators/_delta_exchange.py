@@ -29,7 +29,7 @@ class DeltaExchange(Operator):
 
     def __post_init__(self):
         if len(self.param) <= 1:
-            raise ValueError(f"`param` must have at least two dimensions")
+            raise ValueError("`param` must have at least two dimensions")
 
     def propose(self) -> Proposal:
         rng = self.rng

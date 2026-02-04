@@ -3,7 +3,6 @@ import pandas as pd
 from aspartik.b3 import Prior
 from aspartik.b3.likelihoods import Likelihood
 from aspartik.b3.parameters import Parameter, Real, RealVector, Tree
-from aspartik.rng import RNG
 
 
 def compare(

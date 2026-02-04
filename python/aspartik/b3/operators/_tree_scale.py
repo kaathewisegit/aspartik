@@ -4,7 +4,7 @@ from math import log
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal
-from ..parameters import Internal, Node, Tree
+from ..parameters import Tree
 from ._util import assert_factor, sample_range
 
 
@@ -36,14 +36,13 @@ class TreeScale(Operator):
     def propose(self) -> Proposal:
         tree = self.tree
         rng = self.rng
-        root = tree.root
 
         low, high = self.factor, 1 / self.factor
         scale = sample_range(low, high, self.distribution, rng)
 
         try:
             tree.scale(scale)
-        except:
+        except Exception:
             return Proposal.Reject()
 
         ratio = log(scale) * (tree.num_internals - 2)

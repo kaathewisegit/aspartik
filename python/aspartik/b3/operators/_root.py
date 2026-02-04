@@ -4,7 +4,7 @@ from math import log
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal
-from ..parameters import Internal, Node, Tree
+from ..parameters import Tree
 from ._util import assert_factor, sample_range
 
 
