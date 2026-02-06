@@ -3,6 +3,9 @@ mod fasta;
 pub mod reader;
 pub mod rw;
 pub mod sam;
+mod str_buf;
+
+pub use str_buf::StrBufReader;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
