@@ -6,7 +6,7 @@ use std::{ops::Mul, slice};
 
 use crate::transitions;
 
-use super::LikelihoodTrait;
+use super::Calculator;
 use linalg::{RowMatrix, Vector};
 use skvec::{SkVec, skvec};
 
@@ -28,7 +28,7 @@ pub struct CpuLikelihood<const N: usize, F> {
 	scale_ln: u32,
 }
 
-impl<const N: usize, F> LikelihoodTrait<N, F> for CpuLikelihood<N, F>
+impl<const N: usize, F> Calculator<N, F> for CpuLikelihood<N, F>
 where
 	F: Float + Num + NumAssign,
 	f64: From<F> + From<u32>,

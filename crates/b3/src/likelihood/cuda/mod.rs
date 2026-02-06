@@ -9,7 +9,7 @@ use cudarc::{
 
 use std::sync::Arc;
 
-use super::LikelihoodTrait;
+use super::Calculator;
 
 type Row = [f64; 4];
 type Transition = [f64; 16];
@@ -74,7 +74,7 @@ pub struct CudaLikelihood {
 	num_updated_nodes: u32,
 }
 
-impl LikelihoodTrait<4, f64> for CudaLikelihood {
+impl Calculator<4, f64> for CudaLikelihood {
 	/// Propose an edit to the tree
 	///
 	/// Asynchronous.  This method starts the GPU calculations and returns

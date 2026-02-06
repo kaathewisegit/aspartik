@@ -7,7 +7,7 @@ use core::f64;
 use std::ops::Mul;
 
 use super::{
-	LikelihoodTrait,
+	Calculator,
 	cpu::{calc_leaf_projection, cast_transitions},
 };
 use linalg::{RowMatrix, Vector};
@@ -56,7 +56,7 @@ unsafe fn write_to<T>(sync_ptr: SyncMutPtr<T>, index: usize, value: T) {
 	unsafe { ptr.write(value) };
 }
 
-impl<const N: usize, F> LikelihoodTrait<N, F> for ParallelLikelihood<N, F>
+impl<const N: usize, F> Calculator<N, F> for ParallelLikelihood<N, F>
 where
 	F: Float + Num + NumAssign + Send + Sync,
 	f64: From<F> + From<u32>,

@@ -26,7 +26,50 @@ use cuda::CudaLikelihood;
 pub use hetero::PyHeteroLikelihood;
 use parallel::ParallelLikelihood;
 
-pub trait LikelihoodTrait<const N: usize, F> {
+/// Felsenstein's pruning tree likelihood calculator
+///
+/// This trait is for low-level implementations of Felsenstein's likelihood
+/// algorithm which are used by `GenericLikelihood`.  The latter takes care of
+/// the substitution model and the tree, so a calculator only needs to implement
+/// the raw calculations.
+///
+/// The trait is generic over `N`, the dimensionality of data, and `F`, the
+/// floating point type.  For now all likelihoods use `N = 4` (DNA nucleotides)
+/// and `f64`.
+///
+/// Calculators have a simple life cycle.  On a step where either the tree, the
+/// clock rate, or the substitution models are edited, `GenericLikelihood`
+/// figures out the minimal set of nodes to update, the transition matrices
+/// relevant for the update, and calls `propose`.  After that it calls
+/// `likelihood`, and, finally, either `accept` or `reject`.
+///
+/// `propose` and `likelihood` are split into two different methods to allow
+/// asynchronous implementations.  Some higher-level likelihoods compose over
+/// several calculators.  In this case, they'll first call `propose` on each
+/// calculator and then block on `likelihood` calls.
+pub trait Calculator<const N: usize, F> {
+	/// Launch a tree likelihood update
+	///
+	/// ## Parameters
+	///
+	/// - `nodes` is the list of nodes whose projections will be updated.
+	///   They are ordered by dependency: if `i < j`, then `nodes[i]` is
+	///   either a descendant of or unrelated to `nodes[j]`.  The last node
+	///   is always the root.  Additionally, all leaf nodes are located in a
+	///   single prefix of `nodes` without any internal nodes in-between.
+	///
+	/// - `children` is a list of tuples with children of each internal node
+	///   in `nodes`.
+	///
+	/// - `transitions` are transition matrices for the parent edges of
+	///   `nodes`.  The length of `transitions` is equal to `nodes.len() -
+	///   1` because the final root node has no parent edge.
+	///
+	/// - `leaves_end` is the number of leaves in `nodes` and the index of
+	///   the first internal node.
+	///
+	/// - `frequencies` are the presumed frequencies of states in the root
+	///   sequence.
 	fn propose(
 		&mut self,
 		nodes: &[usize],
@@ -36,10 +79,19 @@ pub trait LikelihoodTrait<const N: usize, F> {
 		frequencies: [F; N],
 	) -> Result<()>;
 
+	/// Write back the likelihoods for each pattern
+	///
+	/// `patterns` is a mutable slice with length equal to the number of
+	/// patterns in the alignment passed to the calculator.
 	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()>;
 
+	/// Accept the changes made in `propose`
 	fn accept(&mut self) -> Result<()>;
 
+	/// Reject the changes made in `propose`
+	///
+	/// This should roll back the internal state of the calculator to
+	/// exactly what it was after the last call to `accept`.
 	fn reject(&mut self) -> Result<()>;
 }
 
@@ -63,7 +115,7 @@ pub struct GenericLikelihood<const N: usize, F, L, S> {
 impl<const N: usize, F, L, S> GenericLikelihood<N, F, L, S>
 where
 	F: Float + Default,
-	L: LikelihoodTrait<N, F>,
+	L: Calculator<N, F>,
 	S: SubstitutionModel<N, F>,
 {
 	fn new(
