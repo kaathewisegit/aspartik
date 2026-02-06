@@ -113,18 +113,8 @@ macro_rules! nodes_2 {
 
 		#[pymethods]
 		impl $type {
-			#[new]
-			fn new(idx: usize) -> Self {
-				// XXX: warning?
-				Self(idx)
-			}
-
 			fn __repr__(&self) -> String {
 				format!("{}({})", stringify!($type), self.0)
-			}
-
-			fn __int__(&self) -> usize {
-				self.0
 			}
 		}
 
@@ -437,13 +427,13 @@ impl Tree {
 		// For each updated node go upwards in the tree until root and
 		// mark nodes as updated
 		for node in self.nodes() {
-			if self.is_updated(&node) {
+			if self.is_node_updated(&node) {
 				let mut curr = node;
 				while let Some(parent) = self.parent_of(&curr) {
 					// return early when we find an already
 					// visited node to avoid wasting time
 					// on already checked paths
-					if self.is_updated(&parent) {
+					if self.is_node_updated(&parent) {
 						break;
 					}
 					self.mark_node_updated(&parent);
@@ -454,7 +444,7 @@ impl Tree {
 
 		// Updated leaves, in order
 		for leaf in self.leaves() {
-			if self.is_updated(&leaf) {
+			if self.is_node_updated(&leaf) {
 				nodes.push(*leaf);
 			}
 		}
@@ -467,13 +457,13 @@ impl Tree {
 			let (left, right) = self.children_of(&node);
 
 			if let Some(left) = self.as_internal(&left)
-				&& self.is_updated(&left)
+				&& self.is_node_updated(&left)
 			{
 				internals.push(*left);
 				queue.push_back(left);
 			}
 			if let Some(right) = self.as_internal(&right)
-				&& self.is_updated(&right)
+				&& self.is_node_updated(&right)
 			{
 				internals.push(*right);
 				queue.push_back(right);
@@ -510,7 +500,7 @@ impl Tree {
 		self.updated_nodes.set_on(node.0);
 	}
 
-	fn is_updated(&self, node: &Node) -> bool {
+	fn is_node_updated(&self, node: &Node) -> bool {
 		self.updated_nodes.at(node.0)
 	}
 
@@ -609,7 +599,7 @@ impl Tree {
 			&& height > self.height_of(&right)
 	}
 
-	pub(crate) fn has_dated_tips(&self) -> bool {
+	fn has_dated_tips(&self) -> bool {
 		for leaf in self.leaves() {
 			if self.height_of(&leaf) != 0.0 {
 				return true;
