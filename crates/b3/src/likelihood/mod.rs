@@ -314,7 +314,7 @@ impl PyCpu4Likelihood {
 		tree: Py<PyTree>,
 		scale_ln: u32,
 	) -> Result<Self> {
-		let (leaves, weights) = deduplicate(&msa.get().inner());
+		let (leaves, weights) = deduplicate(msa.get());
 		let calculator =
 			CpuLikelihood::new(weights.len(), leaves, scale_ln);
 		let generic = GenericLikelihood::new(
@@ -369,7 +369,7 @@ impl PyParallel4Likelihood {
 			num_leaf_threads = num_internal_threads;
 		}
 
-		let (leaves, weights) = deduplicate(&msa.get().inner());
+		let (leaves, weights) = deduplicate(msa.get());
 		let calculator = ParallelLikelihood::new(
 			weights.len(),
 			leaves,
@@ -421,7 +421,7 @@ impl PyCudaLikelihood {
 		scale_ln: u32,
 		cuda_device: usize,
 	) -> Result<Self> {
-		let (leaves, weights) = deduplicate(&msa.get().inner());
+		let (leaves, weights) = deduplicate(msa.get());
 		let calculator = CudaLikelihood::new(
 			weights.len(),
 			leaves,

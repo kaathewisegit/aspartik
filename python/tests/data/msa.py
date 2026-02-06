@@ -3,9 +3,9 @@ import pickle
 from aspartik.io.msa import read_msa_from_fasta
 
 
-def test_pickle_roundtrip():
+def test_eq():
     for name in ["apes", "influenza", "respiratory"]:
-        old_msa = read_msa_from_fasta(f"data/alignments/{name}.fasta")
-        new_msa = pickle.loads(pickle.dumps(old_msa))
+        a = read_msa_from_fasta(f"data/alignments/{name}.fasta")
+        b = read_msa_from_fasta(f"data/alignments/{name}.fasta")
 
-        assert new_msa == old_msa
+        assert a == b

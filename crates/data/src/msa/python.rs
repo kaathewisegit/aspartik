@@ -1,12 +1,12 @@
+use std::ops::Deref;
+
 use anyhow::Result;
-use parking_lot::{Mutex, MutexGuard};
 use pyo3::{prelude::*, types::PyType};
 
 use crate::{
 	DnaNucleotide, Msa, fasta::python::PyFastaDnaRecord,
 	seq::python::PyDnaSeq,
 };
-use util::py_pickle_state_impl;
 
 /// DNA multiple sequence alignment
 ///
@@ -14,21 +14,19 @@ use util::py_pickle_state_impl;
 #[derive(Debug)]
 #[pyclass(name = "MSA", module = "aspartik.data.msa", frozen, eq)]
 #[repr(transparent)]
-pub struct PyMsa {
-	inner: Mutex<Msa<DnaNucleotide>>,
-}
-
-impl PyMsa {
-	pub fn inner(&self) -> MutexGuard<'_, Msa<DnaNucleotide>> {
-		self.inner.lock()
-	}
-}
+pub struct PyMsa(Msa<DnaNucleotide>);
 
 impl PartialEq for PyMsa {
 	fn eq(&self, other: &Self) -> bool {
-		let a = &*self.inner();
-		let b = &*other.inner();
-		a == b
+		self.0 == other.0
+	}
+}
+
+impl Deref for PyMsa {
+	type Target = Msa<DnaNucleotide>;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
 	}
 }
 
@@ -41,36 +39,34 @@ impl PyMsa {
 		records: Vec<Py<PyFastaDnaRecord>>,
 	) -> Result<Self> {
 		let msa = Msa::from_fasta(records.into_iter())?;
-		Ok(Self {
-			inner: Mutex::new(msa),
-		})
+		Ok(Self(msa))
 	}
 
 	/// Total number of sites, including gaps
 	#[getter]
 	fn num_sites(&self) -> usize {
-		self.inner().num_sites()
+		self.0.num_sites()
 	}
 
 	/// Number of sequences
 	#[getter]
 	fn num_sequences(&self) -> usize {
-		self.inner().num_sequences()
+		self.0.num_sequences()
 	}
 
 	/// The name of the `index`'th sequence
-	fn sequence_name(&self, index: usize) -> String {
-		self.inner().sequence_name(index).to_owned()
+	fn sequence_name(&self, index: usize) -> &str {
+		self.0.sequence_name(index)
 	}
 
 	/// A list with all of the sequence names
-	fn sequence_names(&self) -> Vec<String> {
-		self.inner().sequence_names().to_vec()
+	fn sequence_names(&self) -> &[String] {
+		self.0.sequence_names()
 	}
 
 	/// `index`'th sequence
 	fn sequence(&self, index: usize) -> PyDnaSeq {
-		PyDnaSeq(self.inner().sequence(index))
+		PyDnaSeq(self.0.sequence(index))
 	}
 
 	/// The shares each DNA base takes up in the total alignment
@@ -80,8 +76,6 @@ impl PyMsa {
 	/// The components of the resulting tuple should always add up to almost
 	/// 1, taking floating point precision limitations into account.
 	fn base_frequencies(&self) -> (f64, f64, f64, f64) {
-		self.inner().base_frequencies().into()
+		self.0.base_frequencies().into()
 	}
 }
-
-py_pickle_state_impl!(PyMsa, _msa_pickle_impl);
