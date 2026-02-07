@@ -6,7 +6,7 @@ use std::{
 
 pub enum AnyReader {
 	File(File),
-	Dynamic(Box<dyn Read + Send>),
+	Dynamic(Box<dyn Read + Send + Sync>),
 }
 
 impl AnyReader {
@@ -16,7 +16,7 @@ impl AnyReader {
 
 	pub fn from_dynamic<R>(reader: R) -> Self
 	where
-		R: Read + Send + 'static,
+		R: Read + Send + Sync + 'static,
 	{
 		AnyReader::Dynamic(Box::new(reader))
 	}
@@ -33,13 +33,13 @@ impl Read for AnyReader {
 
 pub enum AnyWriter {
 	File(File),
-	Rust(Box<dyn Write + Send>),
+	Rust(Box<dyn Write + Send + Sync>),
 }
 
 impl AnyWriter {
 	pub fn from_dynamic<W>(writer: W) -> Self
 	where
-		W: Write + Send + 'static,
+		W: Write + Send + Sync + 'static,
 	{
 		AnyWriter::Rust(Box::new(writer))
 	}
