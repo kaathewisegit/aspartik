@@ -7,7 +7,7 @@ use std::{io::Write, ops::Index};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
-use skvec::SkVec;
+use skvec::{Iter, SkVec};
 use util::py_bail;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,6 +29,10 @@ impl RealVector {
 
 	pub fn set(&mut self, index: usize, value: f64) {
 		self.values.set(index, value)
+	}
+
+	pub fn iter(&self) -> Iter<'_, f64> {
+		self.values.iter()
 	}
 }
 

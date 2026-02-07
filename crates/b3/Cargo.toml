@@ -17,6 +17,9 @@ skvec = { workspace = true, features = ["serde"] }
 util = { workspace = true }
 
 anyhow = { workspace = true }
+arrow-array = { workspace = true }
+arrow-ipc = { workspace = true }
+arrow-schema = { workspace = true }
 blake3 = { workspace = true }
 bytemuck = { workspace = true, features = ["extern_crate_alloc"] }
 cudarc = { workspace = true, features = ["driver", "nvrtc", "dynamic-loading", "cuda-12000", "std"] }

@@ -20,6 +20,9 @@ pub mod pymodule {
 	use super::*;
 
 	#[pymodule_export]
+	use callback::TraceWriter;
+
+	#[pymodule_export]
 	use clock::PyClock;
 
 	#[pymodule_export]

@@ -4,6 +4,10 @@ use pyo3::prelude::*;
 use crate::mcmc::Mcmc;
 use util::{py_call_method, py_check_method, py_extract_attr, py_has_method};
 
+mod trace_writer;
+
+pub use trace_writer::TraceWriter;
+
 pub struct PyCallback {
 	inner: Py<PyAny>,
 	every: usize,

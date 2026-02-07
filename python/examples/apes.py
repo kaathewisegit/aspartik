@@ -3,6 +3,7 @@
 """
 
 from aspartik.b3 import MCMC, Clock
+from aspartik.b3.callbacks import TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
@@ -82,6 +83,16 @@ def make_mcmc(fasta_path: str):
                 "prior:coalescent": priors[2],
             },
             path="target/apes.log",
+            every=1_000,
+        ),
+        TraceWriter(
+            {
+                "kappa": kappa,
+                "population_size": population_size,
+                "frequencies": frequencies,
+                "tree": tree,
+            },
+            "target/apes.trace",
             every=1_000,
         ),
     ]

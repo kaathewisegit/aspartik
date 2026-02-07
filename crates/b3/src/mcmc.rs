@@ -154,8 +154,13 @@ impl Mcmc {
 
 	/// Posterior probability for the last accepted step
 	#[getter]
-	fn posterior(&self) -> f64 {
+	pub fn posterior(&self) -> f64 {
 		*self.posterior.lock()
+	}
+
+	#[getter]
+	pub fn likelihood_value(&self) -> Result<f64> {
+		self.likelihood.likelihood()
 	}
 
 	/// Prior likelihood for the current step
@@ -164,7 +169,7 @@ impl Mcmc {
 	/// [`Likelihood`](#MCMC.Likelihood), this property isn't cached.  It
 	/// will trigger a recalculation on all priors on each access.
 	#[getter]
-	fn prior(&self, py: Python) -> Result<f64> {
+	pub fn prior(&self, py: Python) -> Result<f64> {
 		let mut out = 0.0;
 		for py_prior in &self.priors {
 			out += py_prior.probability(py)?;

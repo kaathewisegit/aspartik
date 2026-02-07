@@ -1,6 +1,9 @@
 import time
 from dataclasses import dataclass, field
 
+from .._aspartik_rust_impl._b3_rust_impl import (
+    TraceWriter as TraceWriter,
+)
 from . import MCMC, Callback
 from .parameters import Tree
 

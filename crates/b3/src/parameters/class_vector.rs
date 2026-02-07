@@ -7,7 +7,7 @@ use std::{io::Write, ops::Index};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
-use skvec::SkVec;
+use skvec::{Iter, SkVec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClassVector {
@@ -35,6 +35,10 @@ impl ClassVector {
 	pub fn set(&mut self, index: usize, class: u8) {
 		assert!(class < self.num_classes);
 		self.classes.set(index, class);
+	}
+
+	pub fn iter(&self) -> Iter<'_, u8> {
+		self.classes.iter()
 	}
 }
 
