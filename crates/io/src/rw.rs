@@ -37,6 +37,10 @@ pub enum AnyWriter {
 }
 
 impl AnyWriter {
+	pub fn from_file(file: File) -> Self {
+		AnyWriter::File(file)
+	}
+
 	pub fn from_dynamic<W>(writer: W) -> Self
 	where
 		W: Write + Send + Sync + 'static,
