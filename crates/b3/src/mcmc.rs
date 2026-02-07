@@ -67,7 +67,7 @@ impl Mcmc {
 	///
 	/// Starts from 0, includes burn-in.
 	#[getter]
-	fn current_step(&self) -> usize {
+	pub fn current_step(&self) -> usize {
 		*self.current_step.lock()
 	}
 

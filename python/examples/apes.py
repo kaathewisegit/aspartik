@@ -93,6 +93,8 @@ def make_mcmc(fasta_path: str):
                 "tree": tree,
             },
             "target/apes.trace",
+            overwrite=True,
+            zstd=True,
             every=1_000,
         ),
     ]

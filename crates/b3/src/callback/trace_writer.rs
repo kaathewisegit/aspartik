@@ -1,12 +1,15 @@
-use anyhow::Result;
+use anyhow::{Context, Result, bail};
 use arrow_array::{
 	RecordBatch,
 	builder::{
 		ArrayBuilder, BinaryBuilder, Float64Builder, ListBuilder,
-		UInt8Builder,
+		UInt8Builder, UInt64Builder,
 	},
 };
-use arrow_ipc::writer::FileWriter;
+use arrow_ipc::{
+	CompressionType,
+	writer::{FileWriter, IpcWriteOptions},
+};
 use arrow_schema::{DataType, Field, SchemaBuilder, SchemaRef};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
@@ -14,6 +17,7 @@ use pyo3::prelude::*;
 use std::{
 	collections::HashMap,
 	fs::{File, OpenOptions},
+	io::BufWriter,
 	path::PathBuf,
 	sync::Arc,
 };
@@ -30,7 +34,7 @@ pub struct TraceWriter {
 	items: HashMap<String, Py<PyAny>>,
 	arrays: Mutex<Arrays>,
 	schema: SchemaRef,
-	writer: Mutex<FileWriter<File>>,
+	writer: Mutex<FileWriter<BufWriter<File>>>,
 	#[pyo3(get)]
 	every: usize,
 }
@@ -38,16 +42,35 @@ pub struct TraceWriter {
 #[pymethods]
 impl TraceWriter {
 	#[new]
-	#[pyo3(signature = (items, path, *, append = false, every))]
+	#[pyo3(signature = (
+		items, path,
+		*,
+		zstd = false, overwrite = false, every
+	))]
 	fn new(
 		py: Python,
 		items: HashMap<String, Py<PyAny>>,
-		path: PathBuf,
-		append: bool,
+		mut path: PathBuf,
+		zstd: bool,
+		overwrite: bool,
 		every: usize,
 	) -> Result<Self> {
 		let mut arrays = HashMap::new();
 		let mut schema = SchemaBuilder::new();
+
+		schema.push(field("step", DataType::UInt64));
+		arrays.insert(
+			"step".to_owned(),
+			dyn_builder(UInt64Builder::new()),
+		);
+		for name in ["posterior", "prior", "likelihood"] {
+			schema.push(field(name, DataType::Float64));
+			arrays.insert(
+				name.to_owned(),
+				dyn_builder(Float64Builder::new()),
+			);
+		}
+
 		for (name, value) in &items {
 			init_value(
 				name,
@@ -57,22 +80,35 @@ impl TraceWriter {
 			)?;
 		}
 
-		for name in ["posterior", "prior", "likelihood"] {
-			schema.push(field(name, DataType::Float64));
-			arrays.insert(
-				name.to_owned(),
-				dyn_builder(Float64Builder::new()),
+		let schema = schema.finish();
+
+		let compression = if zstd {
+			path.as_mut_os_string().push(".zst");
+			Some(CompressionType::ZSTD)
+		} else {
+			None
+		};
+
+		if path.is_file() && path.exists() && !overwrite {
+			bail!(
+				"File {path:?} already exists.  Add `overwrite=True` to replace it"
 			);
 		}
-
-		let schema = schema.finish();
 
 		let file = OpenOptions::new()
 			.write(true)
 			.create(true)
-			.append(append)
-			.open(path)?;
-		let writer = FileWriter::try_new(file, &schema)?;
+			.truncate(true)
+			.create_new(!overwrite)
+			.open(&path)
+			.context("Failed to create the trace file")?;
+		let writer = BufWriter::new(file);
+		let writer = FileWriter::try_new_with_options(
+			writer,
+			&schema,
+			IpcWriteOptions::default()
+				.try_with_compression(compression)?,
+		)?;
 		let writer = Mutex::new(writer);
 
 		Ok(Self {
@@ -87,9 +123,8 @@ impl TraceWriter {
 	fn call(&self, py: Python, mcmc: &Mcmc) -> Result<()> {
 		let arrays = &mut *self.arrays.lock();
 
-		for (name, value) in &self.items {
-			write_value(name, value.bind(py), arrays)?;
-		}
+		let array = get::<UInt64Builder>(arrays, "step");
+		array.append_value(mcmc.current_step() as u64);
 
 		let array = get::<Float64Builder>(arrays, "posterior");
 		array.append_value(mcmc.posterior());
@@ -99,6 +134,10 @@ impl TraceWriter {
 
 		let array = get::<Float64Builder>(arrays, "likelihood");
 		array.append_value(mcmc.likelihood_value()?);
+
+		for (name, value) in &self.items {
+			write_value(name, value.bind(py), arrays)?;
+		}
 
 		Ok(())
 	}
