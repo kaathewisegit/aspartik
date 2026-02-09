@@ -1,7 +1,4 @@
-use petgraph::{
-	Directed, Direction,
-	stable_graph::{Edges, Neighbors, StableDiGraph},
-};
+use std::collections::BTreeMap;
 
 mod parse;
 #[cfg(feature = "python")]
@@ -10,7 +7,7 @@ mod serialize;
 
 pub use parse::parse;
 
-pub use petgraph::stable_graph::NodeIndex;
+pub type NodeIdx = u32;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Node {
@@ -77,8 +74,9 @@ impl Edge {
 
 #[derive(Debug, Clone, Default)]
 pub struct Tree {
-	graph: StableDiGraph<Node, Edge>,
-	root: Option<NodeIndex>,
+	edges: BTreeMap<(NodeIdx, NodeIdx), Edge>,
+	nodes: Vec<Node>,
+	root: Option<NodeIdx>,
 }
 
 impl Tree {
@@ -86,54 +84,66 @@ impl Tree {
 		Tree::default()
 	}
 
-	pub fn root(&self) -> Option<&NodeIndex> {
+	pub fn root(&self) -> Option<&NodeIdx> {
 		self.root.as_ref()
 	}
 
-	pub fn set_root(&mut self, node: NodeIndex) {
+	pub fn set_root(&mut self, node: NodeIdx) {
 		self.root = Some(node);
 	}
 
-	pub fn children_of(&self, node: NodeIndex) -> Neighbors<'_, Edge> {
-		self.graph.neighbors(node)
+	pub fn children_of(
+		&self,
+		node: NodeIdx,
+	) -> impl DoubleEndedIterator<Item = NodeIdx> {
+		self.edges
+			.range((node, 0)..(node, self.num_nodes() as u32))
+			.map(|((_this, child), _)| *child)
 	}
 
-	pub fn edges_of(&self, node: NodeIndex) -> Edges<'_, Edge, Directed> {
-		self.graph.edges(node)
+	pub fn edges_of(&self, node: NodeIdx) -> impl Iterator<Item = &Edge> {
+		self.edges.range((node, 0)..).map(|(_, edge)| edge)
 	}
 
-	pub fn parent_of(&self, node: NodeIndex) -> Option<NodeIndex> {
-		self.graph
-			.neighbors_directed(node, Direction::Incoming)
-			.next()
+	pub fn parent_of(&self, node: NodeIdx) -> Option<NodeIdx> {
+		self.edges.iter().find_map(|(&(parent, child), _)| {
+			if child == node { Some(parent) } else { None }
+		})
 	}
 
-	pub fn get_node(&self, idx: NodeIndex) -> &Node {
-		&self.graph[idx]
+	pub fn get_node(&self, idx: NodeIdx) -> &Node {
+		&self.nodes[idx as usize]
 	}
 
-	pub fn add_node(&mut self, node: Node) -> NodeIndex {
-		self.graph.add_node(node)
+	pub fn add_node(&mut self, node: Node) -> NodeIdx {
+		self.nodes.push(node);
+		(self.nodes.len() - 1) as u32
 	}
 
-	pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex, edge: Edge) {
-		self.graph.add_edge(from, to, edge);
+	pub fn add_edge(&mut self, from: NodeIdx, to: NodeIdx, edge: Edge) {
+		self.edges.insert((from, to), edge);
 	}
 
-	pub fn edge_to_parent(&self, node: NodeIndex) -> Option<Edge> {
-		self.graph
-			.edges_directed(node, Direction::Incoming)
-			.next()
-			.map(|e| e.weight().clone())
+	pub fn edge_to_parent(&self, node: NodeIdx) -> Option<&Edge> {
+		self.edges.iter().find_map(|(&(_parent, child), edge)| {
+			if child == node { Some(edge) } else { None }
+		})
 	}
 
 	pub fn num_nodes(&self) -> usize {
-		self.graph.node_count()
+		self.nodes.len()
 	}
 
-	pub fn leaves(&self) -> impl Iterator<Item = NodeIndex> {
-		self.graph
-			.node_indices()
-			.filter(|&node| self.graph.neighbors(node).count() == 0)
+	pub fn leaves(&self) -> impl Iterator<Item = NodeIdx> {
+		(0..(self.num_nodes() as u32))
+			.filter(|&node| self.is_leaf(node))
+	}
+
+	pub fn is_leaf(&self, node: NodeIdx) -> bool {
+		self.children_of(node).count() == 0
+	}
+
+	pub fn edge(&self, parent: NodeIdx, child: NodeIdx) -> &Edge {
+		self.edges.get(&(parent, child)).unwrap()
 	}
 }

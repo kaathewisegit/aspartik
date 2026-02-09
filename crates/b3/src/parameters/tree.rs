@@ -23,7 +23,7 @@ use super::Parameter;
 use crate::impl_pyparameter_common;
 use bitmap::Bitmap;
 use data::newick::{
-	Edge as NewickEdge, Node as NewickNode, NodeIndex as NewickNodeIndex,
+	Edge as NewickEdge, Node as NewickNode, NodeIdx as NewickNodeIndex,
 	Tree as NewickTree,
 };
 use rng::{PyRng, Rng};

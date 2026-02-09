@@ -1,7 +1,5 @@
 use std::fmt::{Result, Write};
 
-use petgraph::visit::{EdgeRef, IntoNodeIdentifiers};
-
 use super::{Edge, Node, Tree};
 
 impl Tree {
@@ -18,10 +16,7 @@ impl Tree {
 }
 
 fn serialize<W: Write>(tree: &Tree, writer: &mut W) -> Result {
-	let root = tree.root.unwrap_or_else(|| {
-		// pick a random node if there's no root
-		tree.graph.node_identifiers().next().unwrap()
-	});
+	let root = tree.root.unwrap_or(0);
 
 	let dummy = &Edge::default();
 	let mut stack = Vec::from([(root, dummy, false)]);
@@ -45,9 +40,7 @@ fn serialize<W: Write>(tree: &Tree, writer: &mut W) -> Result {
 			continue;
 		}
 
-		let edges: Vec<_> = tree.edges_of(node).collect();
-
-		if edges.is_empty() {
+		if tree.is_leaf(node) {
 			// leaf
 			write_node(tree.get_node(node), edge, writer)?;
 			write_comma!();
@@ -56,10 +49,10 @@ fn serialize<W: Write>(tree: &Tree, writer: &mut W) -> Result {
 
 			stack.push((node, edge, true));
 
-			for edge in edges {
+			for child in tree.children_of(node).rev() {
 				stack.push((
-					edge.target(),
-					edge.weight(),
+					child,
+					tree.edge(node, child),
 					false,
 				));
 			}

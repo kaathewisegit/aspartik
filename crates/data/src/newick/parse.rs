@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use std::str::FromStr;
 
-use super::{Edge, Node, NodeIndex, Tree};
+use super::{Edge, Node, NodeIdx, Tree};
 
 type PNode = (Option<String>, Option<f64>);
 
@@ -43,7 +43,7 @@ peg::parser! {grammar newick_parser() for str {
 		subtree:subtree() ";" { subtree }
 }}
 
-fn add_subtree(tree: &mut Tree, subtree: Subtree) -> NodeIndex {
+fn add_subtree(tree: &mut Tree, subtree: Subtree) -> NodeIdx {
 	let node =
 		Node::new(subtree.parsed.0.unwrap_or_default(), String::new());
 

@@ -39,7 +39,6 @@ libc = "0.2.180"
 num-traits = "0.2.19"
 parking_lot = "0.12.5"
 peg = "0.8.5"
-petgraph = { version = "0.8.3", default-features = false }
 pyo3 = "0.28.0"
 rand = { version = "0.10.0-rc.9", default-features = false }
 rand_pcg = "0.10.0-rc.9"
