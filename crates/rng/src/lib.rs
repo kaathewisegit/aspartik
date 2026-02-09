@@ -8,8 +8,6 @@ use rand::{
 };
 use rand_pcg::Pcg64;
 
-use util::py_pickle_state_impl;
-
 pub type Rng = Pcg64;
 
 /// Random number generator
@@ -21,12 +19,6 @@ pub type Rng = Pcg64;
 /// It has a number of built-in methods, but it is primarily used by other
 /// Aspartik modules (for example `b3` and `stats.distributions`) as a
 /// randomness source.
-///
-///
-/// ## Pickling
-///
-/// This class supports pickling.  It can be saved and then restored without
-/// losing its internal state.
 #[derive(Debug)]
 #[pyclass(name = "RNG", module = "aspartik.rng", frozen)]
 #[repr(transparent)]
@@ -114,8 +106,6 @@ impl PyRng {
 		Ok(())
 	}
 }
-
-py_pickle_state_impl!(PyRng, _pickle_impl);
 
 #[pymodule(name = "_rng_rust_impl")]
 pub mod pymodule {

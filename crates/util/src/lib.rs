@@ -36,54 +36,6 @@ macro_rules! py_call_method {
 }
 
 #[macro_export]
-macro_rules! py_pickle_state_impl {
-	($class:ident, $mod:ident) => {
-		mod $mod {
-			use super::$class;
-
-			use anyhow::Result;
-			use parking_lot::Mutex;
-			use pyo3::prelude::*;
-			use pyo3::type_object::PyTypeInfo;
-			use pyo3::types::{PyBytes, PyType};
-
-			#[pymethods]
-			impl $class {
-				#[classmethod]
-				fn deserialize(
-					_cls: Py<PyType>,
-					bytes: &[u8],
-				) -> Result<Self> {
-					let inner =
-						verbatim::from_slice(bytes)?;
-					Ok(Self {
-						inner: Mutex::new(inner),
-					})
-				}
-
-				fn __reduce__(
-					&self,
-					py: Python,
-				) -> Result<(Py<PyAny>, Py<PyAny>)> {
-					let inner = &*self.inner.lock();
-					let vec = verbatim::to_vec(inner)?;
-
-					let pytype = Self::type_object(py);
-					let method =
-						pytype.getattr("deserialize")?;
-
-					Ok((
-						method.into(),
-						(vec,).into_pyobject(py)?
-							.into(),
-					))
-				}
-			}
-		}
-	};
-}
-
-#[macro_export]
 macro_rules! impl_pyerr {
 	($err: ty, $pyexc: ty) => {
 		impl std::convert::From<$err> for PyErr {
