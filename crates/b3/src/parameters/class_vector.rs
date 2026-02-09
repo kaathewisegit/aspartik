@@ -48,11 +48,11 @@ impl Parameter for ClassVector {
 	}
 
 	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
-		Ok(rmp_serde::encode::write(dst, &self)?)
+		Ok(verbatim::to_writer(&self, dst)?)
 	}
 
 	fn load(&mut self, bytes: &[u8]) -> Result<()> {
-		*self = rmp_serde::from_slice(bytes)?;
+		*self = verbatim::from_slice(bytes)?;
 		Ok(())
 	}
 

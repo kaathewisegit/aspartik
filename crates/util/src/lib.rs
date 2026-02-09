@@ -55,7 +55,7 @@ macro_rules! py_pickle_state_impl {
 					bytes: &[u8],
 				) -> Result<Self> {
 					let inner =
-						rmp_serde::from_slice(bytes)?;
+						verbatim::from_slice(bytes)?;
 					Ok(Self {
 						inner: Mutex::new(inner),
 					})
@@ -66,7 +66,7 @@ macro_rules! py_pickle_state_impl {
 					py: Python,
 				) -> Result<(Py<PyAny>, Py<PyAny>)> {
 					let inner = &*self.inner.lock();
-					let vec = rmp_serde::to_vec(inner)?;
+					let vec = verbatim::to_vec(inner)?;
 
 					let pytype = Self::type_object(py);
 					let method =

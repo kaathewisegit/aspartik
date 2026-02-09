@@ -44,10 +44,10 @@ pyo3 = "0.28.0"
 rand = { version = "0.10.0-rc.9", default-features = false }
 rand_pcg = "0.10.0-rc.9"
 rmp = "0.8.15"
-rmp-serde = "1.3"
 serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0"
+verbatim = { git = "https://github.com/kaathewisegit/verbatim", branch = "trunk", default-features = false }
 
 b3 = { version = "0.1.0-alpha.4", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.4", path = "crates/bitmap" }
