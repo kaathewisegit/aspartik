@@ -187,7 +187,6 @@ dependencies = [
  "pyo3",
  "rand",
  "rand_pcg",
- "rmp",
  "rng",
  "serde",
  "serde_json",
@@ -980,15 +979,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cab834c73d247e67f4fae452806d17d3c7501756d98c8808d7c9c7aa7d18f973"
 
 [[package]]
-name = "rmp"
-version = "0.8.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ba8be72d372b2c9b35542551678538b562e7cf86c3315773cae48dfbfe7790c"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "rng"
 version = "0.1.0-alpha.4"
 dependencies = [
@@ -1194,7 +1184,7 @@ version = "0.1.0-alpha.4"
 [[package]]
 name = "verbatim"
 version = "0.1.0"
-source = "git+https://github.com/kaathewisegit/verbatim?branch=trunk#cd9f15da07124a504d6c0a0d30209bd157eeeed5"
+source = "git+https://github.com/kaathewisegit/verbatim?branch=trunk#59b1c0396389018e6e31d547aa307c8701197306"
 dependencies = [
  "serde_core",
 ]

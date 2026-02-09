@@ -96,11 +96,11 @@ impl PyRng {
 		})
 	}
 
-	fn dump(&self) -> Result<Vec<u8>> {
+	pub fn dump(&self) -> Result<Vec<u8>> {
 		Ok(verbatim::to_vec(&*self.inner())?)
 	}
 
-	fn load(&self, bytes: &[u8]) -> Result<()> {
+	pub fn load(&self, bytes: &[u8]) -> Result<()> {
 		let inner = &mut *self.inner();
 		*inner = verbatim::from_slice(bytes)?;
 		Ok(())

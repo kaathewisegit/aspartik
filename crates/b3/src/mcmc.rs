@@ -1,11 +1,8 @@
 use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
-use pyo3::{
-	IntoPyObjectExt,
-	prelude::*,
-	types::{PyBytes, PyList},
-};
+use pyo3::{IntoPyObjectExt, prelude::*, types::PyList};
 use rand::RngExt;
+use serde::{Deserialize, Serializer, ser::SerializeSeq};
 
 use crate::{
 	PyCallback, PyPrior,
@@ -13,8 +10,8 @@ use crate::{
 	operator::{Proposal, PyOperator, WeightedScheduler},
 	parameters::PyParameter,
 };
-use rng::PyRng;
-use util::{py_call_method, time};
+use rng::{PyRng, Rng};
+use util::time;
 
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
@@ -194,57 +191,49 @@ impl Mcmc {
 		self.scheduler.statistics(py)
 	}
 
-	fn dump_state(&self, py: Python) -> Result<Vec<u8>> {
-		use rmp::encode::{self, buffer::ByteBuf};
-
-		// scratch space for parameter dumps to write into to avoid
-		// repeated allocations
+	fn dump_state(&self) -> Result<Vec<u8>> {
+		let mut ser = verbatim::Serializer::new(Vec::new());
 		let mut scratch = Vec::new();
-		let mut out = ByteBuf::new();
 
-		encode::write_u64(&mut out, *self.current_step.lock() as u64)?;
-		encode::write_f64(&mut out, *self.posterior.lock())?;
+		ser.serialize_u64(*self.current_step.lock() as u64)?;
+		ser.serialize_f64(*self.posterior.lock())?;
 
-		encode::write_array_len(&mut out, self.state.len() as u32)?;
+		let mut seq = ser.serialize_seq(Some(self.state.len()))?;
 		for param in &self.state {
 			let param = &*param.as_ref();
 			param.dump(&mut scratch)?;
-			encode::write_bin(&mut out, &scratch)?;
+			seq.serialize_element(&scratch)?;
 			scratch.clear();
 		}
+		seq.end()?;
 
-		let bytes = py_call_method!(py, self.rng, "dump")?;
-		let bytes = bytes.cast_bound::<PyBytes>(py).unwrap();
-		encode::write_bin(&mut out, bytes.as_bytes())?;
+		let bytes = self.rng.get().dump()?;
+		ser.serialize_bytes(&bytes)?;
 
-		Ok(out.into())
+		Ok(ser.into_inner())
 	}
 
-	fn load_state(&self, py: Python, bytes: &[u8]) -> Result<()> {
-		use rmp::decode;
+	fn load_state(&self, bytes: &[u8]) -> Result<()> {
+		#[derive(Deserialize)]
+		struct De<'a> {
+			current_step: u64,
+			posterior: f64,
+			#[serde(borrow)]
+			params: Vec<&'a [u8]>,
+			rng: Rng,
+		}
+		let mut deserializer = verbatim::Deserializer::new(bytes);
+		let de = De::deserialize(&mut deserializer)?;
 
-		let mut bytes = bytes;
+		*self.current_step.lock() = de.current_step as usize;
+		*self.posterior.lock() = de.posterior;
 
-		let current_step = decode::read_u64(&mut bytes)?;
-		*self.current_step.lock() = current_step as usize;
-
-		let posterior = decode::read_f64(&mut bytes)?;
-		*self.posterior.lock() = posterior;
-
-		let num_params = decode::read_array_len(&mut bytes)? as usize;
-		for i in 0..num_params {
-			let len = decode::read_bin_len(&mut bytes)? as usize;
-			let param_bytes = &bytes[..len];
-
+		for (i, bytes) in de.params.iter().enumerate() {
 			let param = &mut *self.state[i].as_ref();
-			param.load(param_bytes)?;
-
-			bytes = &bytes[len..];
+			param.load(bytes)?;
 		}
 
-		let len = decode::read_bin_len(&mut bytes)? as usize;
-		let rng_bytes = &bytes[..len];
-		py_call_method!(py, self.rng, "load", rng_bytes)?;
+		*self.rng.get().inner() = de.rng;
 
 		self.likelihood.propose()?;
 		self.likelihood.likelihood()?;

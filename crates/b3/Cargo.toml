@@ -29,7 +29,6 @@ parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }
 rand_pcg = { workspace = true, features = ["serde"] }
-rmp = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 verbatim = { workspace = true, features = ["std"] }
