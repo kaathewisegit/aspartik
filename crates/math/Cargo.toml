@@ -9,7 +9,7 @@ authors.workspace = true
 [dependencies]
 util = { workspace = true }
 
-pyo3 = { workspace = true, features = ["multiple-pymethods"], optional = true }
+pyo3 = { workspace = true, optional = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]

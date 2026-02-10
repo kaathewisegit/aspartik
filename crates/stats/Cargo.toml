@@ -12,11 +12,11 @@ categories = ["science"]
 
 [dependencies]
 math = { workspace = true }
-rng = { workspace = true }
+rng = { workspace = true, optional = true }
 util = { workspace = true }
 
 num-traits = { workspace = true }
-pyo3 = { workspace = true, features = ["multiple-pymethods"], optional = true }
+pyo3 = { workspace = true, optional = true }
 thiserror = { workspace = true }
 
 [dependencies.rand]
@@ -31,7 +31,7 @@ pyo3 = { workspace = true, features = ["auto-initialize"] }
 [features]
 default = ["rand", "python"]
 rand = ["dep:rand"]
-python = ["dep:pyo3"]
+python = ["dep:pyo3", "rng"]
 
 [lints]
 workspace = true
