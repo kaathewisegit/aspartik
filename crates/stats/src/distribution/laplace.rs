@@ -47,14 +47,12 @@ pub struct Laplace {
 #[cfg(feature = "python")]
 impl_pymethods! {for Laplace;
 	new(location: f64, scale: f64) throws LaplaceError;
-	get(py_location) location: f64;
-	get(py_scale) scale: f64;
+	get(location: f64 as py_location);
+	get(scale: f64 as py_scale);
 	repr("Laplace(location={}, scale={})", location, scale);
-	Continuous;
-	ContinuousCDF;
-	Distribution;
-	sample;
-	pickle(location, scale);
+	Continuous true;
+	ContinuousCDF true;
+	Distribution true;
 }
 
 /// Represents the errors that can occur when creating a [`Laplace`].

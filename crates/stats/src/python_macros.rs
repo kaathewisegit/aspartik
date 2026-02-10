@@ -3,8 +3,19 @@ macro_rules! impl_pymethods {
 	(
 		for $class:ty;
 		new($($arg:ident: $type:ty),* $(,)?) throws $err:ty;
-		$($rest:tt)*
+		$(get($field:ident: $get_type:ty as $py_field_name:ident);)*
+		repr($repr_fmt:literal, $($repr_args:tt),* $(,)?);
+		$(Continuous $continuous:literal;)?
+		$(ContinuousCDF $continuous_cdf:literal;)?
+		$(Discrete $discrete:literal;)?
+		$(DiscreteCDF $discrete_cdf:literal;)?
+		$(Distribution $distribution:literal;)?
+
+		$(@ $($rest:tt)*)?
 	) => {
+		#[cfg(feature = "python")]
+		use rng::PyRng;
+
 		#[cfg(feature = "python")]
 		#[pymethods]
 		impl $class {
@@ -12,55 +23,23 @@ macro_rules! impl_pymethods {
 			fn py_new($($arg: $type),*) -> Result<$class, $err> {
 				<$class>::new($($arg),*)
 			}
-		}
 
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(for $class:ty; get($m:ident) $field:ident: $type:ty; $($rest:tt)*) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
+			$(
 			#[getter($field)]
-			fn $m(&self) -> $type {
+			fn $py_field_name(&self) -> $get_type {
 				self.$field
 			}
-		}
+			)*
 
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(for $class:ty; get(as $m:ident) $field:ident: $type:ty; $($rest:tt)*) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
-			#[getter]
-			fn $m(&self) -> $type {
-				self.$field
-			}
-		}
-
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(
-		for $class:ty;
-		repr($fmt:literal, $($args:tt),* $(,)?);
-		$($rest:tt)*
-	) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
 			fn __repr__(&self) -> String {
-				format!($fmt, $(self.$args),*)
+				format!($repr_fmt, $(self.$repr_args),*)
 			}
-		}
 
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(for $class:ty; Continuous; $($rest:tt)*) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
+			$(
 			#[pyo3(name = "pdf")]
 			fn py_pdf(&self, x: f64) -> f64 {
+				#[expect(clippy::no_effect)]
+				$continuous;
 				self.pdf(x)
 			}
 
@@ -68,16 +47,13 @@ macro_rules! impl_pymethods {
 			fn py_ln_pdf(&self, x: f64) -> f64 {
 				self.ln_pdf(x)
 			}
-		}
+			)?
 
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(for $class:ty; ContinuousCDF; $($rest:tt)*) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
+			$(
 			#[pyo3(name = "cdf")]
 			fn py_cdf(&self, x: f64) -> f64 {
+				#[expect(clippy::no_effect)]
+				$continuous_cdf;
 				self.cdf(x)
 			}
 
@@ -109,16 +85,13 @@ macro_rules! impl_pymethods {
 			fn py_upper(&self) -> f64 {
 				self.upper()
 			}
-		}
+			)?
 
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(for $class:ty; Discrete; $($rest:tt)*) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
+			$(
 			#[pyo3(name = "pmf")]
 			fn py_pmf(&self, x: <Self as Discrete>::T) -> f64 {
+				#[expect(clippy::no_effect)]
+				$discrete;
 				self.pmf(x)
 			}
 
@@ -126,16 +99,13 @@ macro_rules! impl_pymethods {
 			fn py_ln_pmf(&self, x: <Self as Discrete>::T) -> f64 {
 				self.ln_pmf(x)
 			}
-		}
+			)?
 
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(for $class:ty; DiscreteCDF; $($rest:tt)*) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
+			$(
 			#[pyo3(name = "cdf")]
 			fn py_cdf(&self, x: <Self as Discrete>::T) -> f64 {
+				#[expect(clippy::no_effect)]
+				$discrete_cdf;
 				self.cdf(x)
 			}
 
@@ -167,16 +137,13 @@ macro_rules! impl_pymethods {
 			fn py_upper(&self) -> <Self as Discrete>::T {
 				self.upper()
 			}
-		}
+			)?
 
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(for $class:ty; Distribution; $($rest:tt)*) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
+			$(
 			#[pyo3(name = "mean")]
 			fn py_mean(&self) -> Option<f64> {
+				#[expect(clippy::no_effect)]
+				$distribution;
 				self.mean()
 			}
 
@@ -204,16 +171,8 @@ macro_rules! impl_pymethods {
 			fn py_skewness(&self) -> Option<f64> {
 				self.skewness()
 			}
-		}
+			)?
 
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(for $class:ty; sample; $($rest:tt)*) => {
-		use rng::PyRng;
-
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
 			#[pyo3(name = "sample")]
 			fn py_sample(&self, rng: Py<PyRng>) -> PyResult<f64> {
 				use rand::distr::Distribution;
@@ -221,30 +180,9 @@ macro_rules! impl_pymethods {
 				let x = self.sample(&mut rng.get().inner());
 				Ok(x)
 			}
+
+			$($($rest)*)?
 		}
-
-		impl_pymethods!(for $class; $($rest)*);
-	};
-	(
-		for $class:ty;
-		pickle($($args:tt),* $(,)?);
-		$($rest:tt)*
-	) => {
-		#[cfg(feature = "python")]
-		#[pymethods]
-		impl $class {
-			fn __getnewargs__(
-				&self,
-				py: Python
-			) -> PyResult<Py<PyAny>> {
-				let tuple = ($(self.$args),*,).into_pyobject(py)?;
-
-				Ok(tuple.into_any().unbind())
-
-			}
-		}
-
-		impl_pymethods!(for $class; $($rest)*);
 	};
 }
 pub(crate) use impl_pymethods;

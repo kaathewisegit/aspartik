@@ -48,12 +48,17 @@ pub struct Poisson {
 #[cfg(feature = "python")]
 impl_pymethods! {for Poisson;
 	new(lambda_: f64) throws PoissonError;
-	get(as lambda_) lambda: f64;
 	repr("Poisson({})", lambda);
-	Discrete;
-	DiscreteCDF;
-	Distribution;
-	pickle(lambda);
+	Discrete true;
+	DiscreteCDF true;
+	Distribution true;
+
+	@
+
+	#[getter(lambda_)]
+	fn py_lambda(&self) -> f64 {
+		self.lambda
+	}
 }
 
 /// Represents the errors that can occur when creating a [`Poisson`].

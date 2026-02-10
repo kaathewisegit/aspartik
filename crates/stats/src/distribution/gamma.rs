@@ -55,14 +55,12 @@ pub struct Gamma {
 #[cfg(feature = "python")]
 impl_pymethods! {for Gamma;
 	new(shape: f64, rate: f64) throws GammaError;
-	get(py_shape) shape: f64;
-	get(py_rate) rate: f64;
+	get(shape: f64 as py_shape);
+	get(rate: f64 as py_rate);
 	repr("Gamma(shape={}, rate={})", shape, rate);
-	Continuous;
-	ContinuousCDF;
-	Distribution;
-	sample;
-	pickle(shape, rate);
+	Continuous true;
+	ContinuousCDF true;
+	Distribution true;
 }
 
 /// Represents the errors that can occur when creating a [`Gamma`].

@@ -51,11 +51,9 @@ pub struct Normal {
 impl_pymethods! {for Normal;
 	new(mean: f64, std_dev: f64) throws NormalError;
 	repr("Normal(mean={}, std_dev={})", mean, std_dev);
-	Continuous;
-	ContinuousCDF;
-	Distribution;
-	sample;
-	pickle(mean, std_dev);
+	Continuous true;
+	ContinuousCDF true;
+	Distribution true;
 }
 
 /// Represents the errors that can occur when creating a [`Normal`].

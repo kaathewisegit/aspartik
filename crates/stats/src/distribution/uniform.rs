@@ -47,14 +47,12 @@ pub struct Uniform {
 #[cfg(feature = "python")]
 impl_pymethods! {for Uniform;
 	new(min: f64, max: f64) throws UniformError;
-	get(py_min) min: f64;
-	get(py_max) max: f64;
+	get(min: f64 as py_min);
+	get(max: f64 as py_max);
 	repr("Uniform(min={}, max={})", min, max);
-	Continuous;
-	ContinuousCDF;
-	Distribution;
-	sample;
-	pickle(min, max);
+	Continuous true;
+	ContinuousCDF true;
+	Distribution true;
 }
 
 /// Represents the errors that can occur when creating a [`Uniform`].

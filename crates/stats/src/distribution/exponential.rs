@@ -48,13 +48,11 @@ pub struct Exp {
 #[cfg(feature = "python")]
 impl_pymethods! {for Exp;
 	new(rate: f64) throws ExpError;
-	get(py_rate) rate: f64;
+	get(rate: f64 as py_rate);
 	repr("Exp(rate={})", rate);
-	Continuous;
-	ContinuousCDF;
-	Distribution;
-	sample;
-	pickle(rate);
+	Continuous true;
+	ContinuousCDF true;
+	Distribution true;
 }
 
 /// Represents the errors that can occur when creating a [`Exp`].

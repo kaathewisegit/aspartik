@@ -49,14 +49,12 @@ pub struct Beta {
 #[cfg(feature = "python")]
 impl_pymethods! {for Beta;
 	new(shape_a: f64, shape_b: f64) throws BetaError;
-	get(py_shape_a) shape_a: f64;
-	get(py_shape_b) shape_b: f64;
+	get(shape_a: f64 as py_shape_a);
+	get(shape_b: f64 as py_shape_b);
 	repr("Beta(shape_a={}, shape_b={})", shape_a, shape_b);
-	Continuous;
-	ContinuousCDF;
-	Distribution;
-	sample;
-	pickle(shape_a, shape_b);
+	Continuous true;
+	ContinuousCDF true;
+	Distribution true;
 }
 
 /// Represents the errors that can occur when creating a [`Beta`].
