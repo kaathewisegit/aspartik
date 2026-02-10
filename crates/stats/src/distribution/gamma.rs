@@ -212,7 +212,7 @@ impl ContinuousCDF for Gamma {
 			return self.upper();
 		};
 
-		// Bisection search for MAX_ITERS.0 iterations
+		// Bisection search
 		let mut high = 2.0;
 		let mut low = 1.0;
 		while self.cdf(low) > p {
@@ -223,7 +223,7 @@ impl ContinuousCDF for Gamma {
 		}
 		let mut x_0 = (high + low) / 2.0;
 
-		for _ in 0..8 {
+		for _ in 0..100 {
 			if self.cdf(x_0) >= p {
 				high = x_0;
 			} else {
