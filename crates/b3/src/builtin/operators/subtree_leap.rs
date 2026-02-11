@@ -63,60 +63,63 @@ impl SubtreeLeap {
 		let rng = &mut *self.rng.get().inner();
 
 		let (node, parent) = tree.random_nonroot_node(rng);
-		let grandparent = tree.parent_of(&parent);
-		let sibling = tree.other_child(&parent, &node)?;
+		let grandparent = tree.parent_of(*parent);
+		let sibling = tree.other_child(parent, node)?;
 
 		let destinations =
-			walk_tree(tree, &node, &sibling, &parent, delta)?;
+			walk_tree(tree, node, sibling, parent, delta)?;
 
 		let (destination, destination_height) =
-			destinations.choose(rng).unwrap();
+			*destinations.choose(rng).unwrap();
 		let destination_parent = tree.parent_of(destination);
 
-		if *parent == *destination
+		if *parent == destination
 			|| destination_parent.is_some_and(|d| d == parent)
 		{
 			// no topological changes
 		} else {
 			if let Some(grandparent) = grandparent {
 				tree.replace_child(
-					&grandparent,
-					&parent,
-					&sibling,
+					grandparent,
+					*parent,
+					sibling,
 				);
+			} else if let Some(sibling) = tree.as_internal(sibling)
+			{
+				tree.set_root(sibling);
 			} else {
-				tree.set_root(&sibling);
+				unreachable!();
 			}
 
 			if let Some(destination_parent) = destination_parent {
 				tree.replace_child(
-					&destination_parent,
+					destination_parent,
 					destination,
-					&parent,
+					*parent,
 				);
 
 				tree.replace_child(
-					&parent,
-					&sibling,
+					parent,
+					sibling,
 					destination,
 				);
 			} else {
 				tree.replace_child(
-					&parent,
-					&sibling,
+					parent,
+					sibling,
 					destination,
 				);
-				tree.set_root(&parent);
+				tree.set_root(parent);
 			}
 		}
 
-		tree.set_height(&parent, *destination_height);
+		tree.set_height(*parent, destination_height);
 
 		let reverse_destinations = walk_tree(
 			tree,
-			&node,
-			&tree.other_child(&parent, &node)?,
-			&parent,
+			node,
+			tree.other_child(parent, node)?,
+			parent,
 			delta,
 		)?;
 
@@ -129,30 +132,30 @@ impl SubtreeLeap {
 
 fn walk_tree(
 	tree: &Tree,
-	node: &Node,
-	sibling: &Node,
-	parent: &Internal,
+	node: Node,
+	sibling: Node,
+	parent: Internal,
 	delta: f64,
 ) -> Result<Vec<(Node, f64)>> {
 	let mut destinations = Vec::<(Node, f64)>::new();
 
 	let node_height = tree.height_of(node);
-	let parent_height = tree.height_of(parent);
+	let parent_height = tree.height_of(*parent);
 	let (below, above) = (parent_height - delta, parent_height + delta);
 
 	if node_height < below {
 		intersections(&mut destinations, tree, sibling, below)
 	}
 
-	let mut up_node = *parent;
+	let mut up_node = parent;
 	loop {
-		let Some(up_parent) = tree.parent_of(&up_node) else {
+		let Some(up_parent) = tree.parent_of(*up_node) else {
 			// up_node is root, terminate
 			destinations.push((*up_node, above));
 			break;
 		};
 
-		let up_parent_height = tree.height_of(&up_parent);
+		let up_parent_height = tree.height_of(*up_parent);
 
 		if up_parent_height > above {
 			// up_parent is above the line, `up_node` is a valid
@@ -165,13 +168,13 @@ fn walk_tree(
 
 		let new_below = up_parent_height - (above - up_parent_height);
 
-		let up_sibling = tree.other_child(&up_parent, &up_node)?;
+		let up_sibling = tree.other_child(up_parent, *up_node)?;
 
 		if node_height < new_below {
 			intersections(
 				&mut destinations,
 				tree,
-				&up_sibling,
+				up_sibling,
 				new_below,
 			)
 		}
@@ -185,15 +188,15 @@ fn walk_tree(
 fn intersections(
 	destinations: &mut Vec<(Node, f64)>,
 	tree: &Tree,
-	node: &Node,
+	node: Node,
 	height: f64,
 ) {
 	if tree.height_of(node) < height {
-		destinations.push((*node, height));
+		destinations.push((node, height));
 	} else if let Some(internal) = tree.as_internal(node) {
-		let (left, right) = tree.children_of(&internal);
+		let (left, right) = tree.children_of(internal);
 
-		intersections(destinations, tree, &left, height);
-		intersections(destinations, tree, &right, height);
+		intersections(destinations, tree, left, height);
+		intersections(destinations, tree, right, height);
 	}
 }

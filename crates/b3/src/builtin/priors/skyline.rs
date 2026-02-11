@@ -55,7 +55,7 @@ impl Skyline {
 			let binom = ((num_lineages * (num_lineages - 1)) / 2)
 				as f64;
 
-			if tree.is_internal(&nodes[i].0) {
+			if tree.is_internal(nodes[i].0) {
 				// coalescent event
 				out += (binom / population_sizes[i]).ln();
 				num_lineages -= 1;

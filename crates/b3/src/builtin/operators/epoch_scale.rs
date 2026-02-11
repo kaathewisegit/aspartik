@@ -80,7 +80,7 @@ impl EpochScale {
 		let x = tree.random_internal(&mut rng);
 		let y = tree.random_internal(&mut rng);
 		let (x_height, y_height) =
-			(tree.height_of(&x), tree.height_of(&y));
+			(tree.height_of(*x), tree.height_of(*y));
 		let lower = f64::min(x_height, y_height);
 		let upper = f64::max(x_height, y_height);
 
@@ -90,18 +90,18 @@ impl EpochScale {
 		let mut num_scaled: u32 = 0;
 
 		for node in tree.internals() {
-			let height = tree.height_of(&node);
+			let height = tree.height_of(*node);
 			if lower < height && height <= upper {
 				let new_height =
 					lower + scale * (height - lower);
-				tree.set_height(&node, new_height);
+				tree.set_height(*node, new_height);
 				num_scaled += 1;
 			} else if height > upper {
 				let new_height = height + delta;
-				tree.set_height(&node, new_height);
+				tree.set_height(*node, new_height);
 			}
 
-			if !tree.is_node_height_valid(&node) {
+			if !tree.is_node_height_valid(*node) {
 				return Ok(Proposal::Reject());
 			}
 		}

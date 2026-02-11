@@ -39,22 +39,22 @@ impl FixedHeightSPR {
 		let root = tree.root();
 
 		let mut node = tree.random_node(rng);
-		let mut parent = tree.parent_of(&node);
+		let mut parent = tree.parent_of(node);
 		while node == *root || parent.is_none_or(|p| p == root) {
 			node = tree.random_node(rng);
-			parent = tree.parent_of(&node);
+			parent = tree.parent_of(node);
 		}
 		let parent = parent.unwrap();
 
-		let parent_height = tree.height_of(&parent);
+		let parent_height = tree.height_of(*parent);
 
 		// random edge which intersects `parent_height`
 		let edge = tree
 			.edges()
 			.filter(|edge| {
 				let (node, parent) = tree.edge_nodes(*edge);
-				tree.height_of(&node) < parent_height
-					&& tree.height_of(&parent)
+				tree.height_of(node) < parent_height
+					&& tree.height_of(*parent)
 						> parent_height
 			})
 			.choose(rng);
@@ -65,7 +65,7 @@ impl FixedHeightSPR {
 
 		let (other, _) = tree.edge_nodes(edge);
 
-		tree.spr(&node, &other)?;
+		tree.spr(node, other)?;
 
 		Ok(Proposal::Hastings(0.0))
 	}

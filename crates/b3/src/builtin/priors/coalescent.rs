@@ -8,7 +8,7 @@ pub fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
 	let mut nodes = Vec::with_capacity(tree.num_nodes());
 
 	for node in tree.nodes() {
-		let height = tree.height_of(&node);
+		let height = tree.height_of(node);
 		nodes.push((node, height));
 	}
 
@@ -45,7 +45,7 @@ where
 		let area = coalescent.integral(last_height, height, state);
 		out -= binomial * area;
 
-		if tree.is_internal(&node) {
+		if tree.is_internal(node) {
 			// merge event
 			let pop = coalescent.population_size_at(height, state);
 			out -= pop.ln();
