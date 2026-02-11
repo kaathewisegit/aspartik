@@ -42,7 +42,9 @@ pub mod pymodule {
 	};
 
 	#[pymodule_export]
-	use builtin::operators::{ClassvecFlip, EpochScale, SubtreeLeap};
+	use builtin::operators::{
+		ClassvecFlip, EpochScale, FixedHeightSPR, SubtreeLeap,
+	};
 	#[pymodule_export]
 	use builtin::priors::ConstantPopulation;
 	#[pymodule_export]

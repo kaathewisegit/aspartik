@@ -11,7 +11,7 @@ from aspartik.b3 import MCMC, Clock
 from aspartik.b3.likelihoods import CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
-    FixedHeightSubtreePruneRegraft,
+    FixedHeightSPR,
     ParamScale,
     RandomWalk,
     SubtreeLeap,
@@ -74,7 +74,7 @@ def make_mcmc(fasta_path: str):
         ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
         UpDown(Internals(tree), clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
         SubtreeLeap(tree, Normal(0, 1), rng, weight=1000),
-        FixedHeightSubtreePruneRegraft(tree, rng, weight=100),
+        FixedHeightSPR(tree, rng, weight=100),
         ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
         RandomWalk(growth_rate, window=1.0, rng=rng, weight=3),
     ]

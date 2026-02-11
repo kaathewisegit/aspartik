@@ -2,7 +2,7 @@ from utils import check_tree_operator
 
 from aspartik.b3.operators import (
     EpochScale,
-    FixedHeightSubtreePruneRegraft,
+    FixedHeightSPR,
     NarrowExchange,
     NodeSlide,
     TreeScale,
@@ -57,6 +57,6 @@ def test_tree_scale(rng):
 
 def test_spr(rng):
     def factory(tree: Tree):
-        return FixedHeightSubtreePruneRegraft(tree, rng)
+        return FixedHeightSPR(tree, rng)
 
     check_tree_operator(factory)

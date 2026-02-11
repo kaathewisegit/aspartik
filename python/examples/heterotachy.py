@@ -10,7 +10,7 @@ from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
 from aspartik.b3.operators import (
     ClassvecFlip,
     DeltaExchange,
-    FixedHeightSubtreePruneRegraft,
+    FixedHeightSPR,
     ParamScale,
     SubtreeLeap,
 )
@@ -59,7 +59,7 @@ likelihood = HeteroLikelihood(
 operators = [
     *(ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1) for kappa in kappas),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
-    FixedHeightSubtreePruneRegraft(tree, rng, weight=4 * N),
+    FixedHeightSPR(tree, rng, weight=4 * N),
     ParamScale(birth_rate, 0.75, Uniform(0, 1), rng, weight=3 * N),
     *(DeltaExchange(freq, 0.01, rng, weight=3) for freq in freqs),
     ClassvecFlip(likelihood.class_vector, rng, weight=3),

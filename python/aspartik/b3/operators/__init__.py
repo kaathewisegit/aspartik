@@ -1,10 +1,10 @@
 from ..._aspartik_rust_impl._b3_rust_impl import (
     ClassvecFlip as ClassvecFlip,
     EpochScale as EpochScale,
+    FixedHeightSPR as FixedHeightSPR,
     SubtreeLeap as SubtreeLeap,
 )
 from ._delta_exchange import DeltaExchange as DeltaExchange
-from ._fhspr import FixedHeightSubtreePruneRegraft as FixedHeightSubtreePruneRegraft
 from ._node_slide import NodeSlide as NodeSlide
 from ._param_scale import ParamScale as ParamScale
 from ._random_walk import RandomWalk as RandomWalk
