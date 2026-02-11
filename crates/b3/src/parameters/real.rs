@@ -81,7 +81,7 @@ impl_pyparameter_common!(PyReal, Real);
 #[pymethods]
 impl PyReal {
 	#[new]
-	fn new(value: f64) -> Self {
+	pub fn new(value: f64) -> Self {
 		Self {
 			inner: Mutex::new(Real::new(value)),
 		}

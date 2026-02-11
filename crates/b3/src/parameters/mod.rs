@@ -5,6 +5,7 @@ use pyo3::prelude::*;
 use std::io::Write;
 
 mod class_vector;
+mod gamma_disc;
 mod real;
 mod real_vector;
 mod tree;
@@ -39,15 +40,15 @@ macro_rules! impl_pyparameter_common {
 
 		#[pymethods]
 		impl $pytype {
-			fn is_changed(&self) -> bool {
+			pub fn is_changed(&self) -> bool {
 				self.inner().is_changed()
 			}
 
-			fn accept(&self) {
+			pub fn accept(&self) {
 				self.inner().accept();
 			}
 
-			fn reject(&self) {
+			pub fn reject(&self) {
 				self.inner().reject();
 			}
 		}
