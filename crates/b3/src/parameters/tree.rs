@@ -5,10 +5,7 @@ use pyo3::{
 	prelude::*,
 	types::{PyAny, PyType},
 };
-use rand::{
-	RngExt,
-	seq::{IteratorRandom, SliceRandom},
-};
+use rand::{RngExt, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 
 use std::{
@@ -655,21 +652,6 @@ impl Tree {
 		}
 	}
 
-	/// Nodes whose parent edge intersects `height`
-	pub fn random_intersecting_edge(
-		&self,
-		height: f64,
-		rng: &mut Rng,
-	) -> Option<usize> {
-		self.edges()
-			.filter(|edge| {
-				let (node, parent) = self.edge_nodes(*edge);
-				self.height_of(&node) < height
-					&& self.height_of(&parent) > height
-			})
-			.choose(rng)
-	}
-
 	/// Index of the edge between `child` and its parent.
 	pub fn edge_index(&self, child: &Node) -> usize {
 		child.0
@@ -1110,22 +1092,6 @@ impl PyTree {
 		let inner = self.inner();
 		inner.other_child(&parent, &child)
 			.and_then(|n| n.into_pyobject(py, inner.num_leaves()))
-	}
-
-	/// Returns a random edge which intersects `height`
-	///
-	/// "Intersects" here means that the edge parent is higher than
-	/// `height` and the child is lower.  The comparisons are strict: if
-	/// either node is exactly at `height`, the edge won't be picked.
-	///
-	/// Returns `None` if there is no such node.
-	fn random_intersecting_edge(
-		&self,
-		height: f64,
-		rng: &PyRng,
-	) -> Option<usize> {
-		self.inner()
-			.random_intersecting_edge(height, &mut rng.inner())
 	}
 
 	/// Returns the index of an edge from `child` to its parent
