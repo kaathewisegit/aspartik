@@ -1,6 +1,6 @@
 use anyhow::Result;
 use linalg::{RowMatrix, Vector};
-use pyo3::{conversion::FromPyObject, prelude::*};
+use pyo3::prelude::*;
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 
@@ -16,26 +16,11 @@ pub trait SubstitutionModel<const N: usize, F> {
 	fn reject(&mut self);
 }
 
+#[derive(FromPyObject)]
 pub enum PySubstitution4 {
 	JC(Py<PyJC>),
 	K80(Py<PyK80>),
 	HKY(Py<PyHKY>),
-}
-
-impl<'py> FromPyObject<'_, 'py> for PySubstitution4 {
-	type Error = PyErr;
-
-	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
-		if let Ok(class_vector) = obj.cast::<PyJC>() {
-			Ok(Self::JC(class_vector.into()))
-		} else if let Ok(real) = obj.cast::<PyK80>() {
-			Ok(Self::K80(real.into()))
-		} else if let Ok(real_vector) = obj.cast::<PyHKY>() {
-			Ok(Self::HKY(real_vector.into()))
-		} else {
-			todo!("descriptive error")
-		}
-	}
 }
 
 impl<'py> IntoPyObject<'py> for PySubstitution4 {
@@ -44,12 +29,11 @@ impl<'py> IntoPyObject<'py> for PySubstitution4 {
 	type Error = PyErr;
 
 	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		let any = match self {
-			Self::JC(p) => p.clone_ref(py).into_any(),
-			Self::K80(p) => p.clone_ref(py).into_any(),
-			Self::HKY(p) => p.clone_ref(py).into_any(),
-		};
-		Ok(any.into_bound(py))
+		Ok(match self {
+			Self::JC(p) => p.into_bound(py).into_any(),
+			Self::K80(p) => p.into_bound(py).into_any(),
+			Self::HKY(p) => p.into_bound(py).into_any(),
+		})
 	}
 }
 

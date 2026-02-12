@@ -485,29 +485,12 @@ impl PyCudaLikelihood {
 
 likelihood_methods!(PyCudaLikelihood);
 
+#[derive(FromPyObject)]
 pub enum PyLikelihood {
 	Cpu(Py<PyCpu4Likelihood>),
 	Parallel(Py<PyParallel4Likelihood>),
 	Cuda(Py<PyCudaLikelihood>),
 	Hetero(Py<PyHeteroLikelihood>),
-}
-
-impl<'py> FromPyObject<'_, 'py> for PyLikelihood {
-	type Error = PyErr;
-
-	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
-		if let Ok(l) = obj.cast::<PyCpu4Likelihood>() {
-			Ok(Self::Cpu(l.into()))
-		} else if let Ok(l) = obj.cast::<PyParallel4Likelihood>() {
-			Ok(Self::Parallel(l.into()))
-		} else if let Ok(l) = obj.cast::<PyCudaLikelihood>() {
-			Ok(Self::Cuda(l.into()))
-		} else if let Ok(l) = obj.cast::<PyHeteroLikelihood>() {
-			Ok(Self::Hetero(l.into()))
-		} else {
-			todo!("descriptive error")
-		}
-	}
 }
 
 impl<'py> IntoPyObject<'py> for PyLikelihood {
@@ -516,13 +499,12 @@ impl<'py> IntoPyObject<'py> for PyLikelihood {
 	type Error = PyErr;
 
 	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		let any = match self {
-			Self::Cpu(l) => l.clone_ref(py).into_any(),
-			Self::Parallel(l) => l.clone_ref(py).into_any(),
-			Self::Cuda(l) => l.clone_ref(py).into_any(),
-			Self::Hetero(l) => l.clone_ref(py).into_any(),
-		};
-		Ok(any.into_bound(py))
+		Ok(match self {
+			Self::Cpu(l) => l.into_bound(py).into_any(),
+			Self::Parallel(l) => l.into_bound(py).into_any(),
+			Self::Cuda(l) => l.into_bound(py).into_any(),
+			Self::Hetero(l) => l.into_bound(py).into_any(),
+		})
 	}
 }
 
