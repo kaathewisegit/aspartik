@@ -2,7 +2,6 @@ use anyhow::Result;
 use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
 
-use logger::{debug, trace};
 use util::{py_call_method, py_check_method};
 
 pub struct PyPrior {
@@ -22,7 +21,6 @@ impl PyPrior {
 	pub fn probability(&self, py: Python) -> Result<f64> {
 		let out = py_call_method!(py, self.inner, "probability")?;
 		let out = out.extract::<f64>(py)?;
-		trace!(target: "b3::prior", probability = out);
 		Ok(out)
 	}
 }
@@ -33,14 +31,8 @@ impl<'py> FromPyObject<'_, 'py> for PyPrior {
 	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		py_check_method!(obj, "probability");
 
-		let out = Self {
+		Ok(Self {
 			inner: obj.to_owned().unbind(),
-		};
-		let repr = obj.repr()?;
-		debug!(
-			target: "b3::prior::extract_bound",
-			repr = repr.to_str()?, id = out.id()
-		);
-		Ok(out)
+		})
 	}
 }

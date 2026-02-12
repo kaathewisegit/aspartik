@@ -14,7 +14,6 @@ use crate::{
 	substitution::{PySubstitution4, SubstitutionModel},
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
-use logger::{info, trace};
 
 mod cpu;
 mod cuda;
@@ -125,11 +124,6 @@ where
 		clock: Py<PyClock>,
 		tree: Py<PyTree>,
 	) -> Result<Self> {
-		info!(
-			target: "b3::likelihood::GenericLikelihood::new",
-			weights_len = weights.len()
-		);
-
 		let transitions = Transitions::new(
 			tree.get().num_nodes(),
 			substitution,
@@ -166,11 +160,6 @@ where
 		let tree = &mut self.tree.get().inner();
 		self.transitions.update(tree)?;
 		let (nodes, leaves_end) = tree.nodes_to_update();
-
-		trace!(
-			target: "b3::likelihood::propose",
-			num_nodes_to_update = nodes.len()
-		);
 
 		// no tree update, return the cache
 		if nodes.is_empty() {

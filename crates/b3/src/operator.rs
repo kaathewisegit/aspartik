@@ -11,7 +11,6 @@ use serde::Serialize;
 use std::time::Duration;
 
 use crate::mcmc::StepResult;
-use logger::{debug, trace};
 use rng::Rng;
 use util::{
 	py_bail, py_call_method, py_check_method, py_extract_attr,
@@ -114,16 +113,10 @@ impl<'py> FromPyObject<'_, 'py> for PyOperator {
 		let has_accept_reject = py_has_method!(obj, "accept")
 			&& py_has_method!(obj, "reject");
 
-		let out = Self {
+		Ok(Self {
 			inner: obj.to_owned().unbind(),
 			has_accept_reject,
-		};
-		let repr = obj.repr()?;
-		debug!(
-			target: "b3::operator::extract_bound",
-			repr = repr.to_str()?, id = out.id()
-		);
-		Ok(out)
+		})
 	}
 }
 
@@ -135,7 +128,6 @@ impl PyOperator {
 	pub fn propose(&self, py: Python) -> Result<Proposal> {
 		let proposal = py_call_method!(py, self.inner, "propose")?;
 		let proposal = proposal.extract::<Proposal>(py)?;
-		trace!(target: "b3::operator", propose = proposal);
 
 		Ok(proposal)
 	}

@@ -7,7 +7,6 @@ members = [
 	"crates/data",
 	"crates/io",
 	"crates/linalg",
-	"crates/logger",
 	"crates/math",
 	"crates/rng",
 	"crates/skvec",
@@ -53,7 +52,6 @@ bitmap = { version = "0.1.0-alpha.4", path = "crates/bitmap" }
 data = { version = "0.1.0-alpha.4", path = "crates/data" }
 io = { version = "0.1.0-alpha.4", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.4", path = "crates/linalg" }
-logger = { version = "0.1.0-alpha.4", path = "crates/logger" }
 math = { version = "0.1.0-alpha.4", path = "crates/math" }
 rng = { version = "0.1.0-alpha.4", path = "crates/rng" }
 skvec = { version = "0.1.0-alpha.4", path = "crates/skvec" }

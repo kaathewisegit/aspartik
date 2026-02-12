@@ -11,8 +11,6 @@ pub mod pymodule {
 	#[pymodule_export]
 	use io::pymodule as io;
 	#[pymodule_export]
-	use logger::pymodule as logger;
-	#[pymodule_export]
 	use math::pymodule as math;
 	#[pymodule_export]
 	use rng::pymodule as rng;
