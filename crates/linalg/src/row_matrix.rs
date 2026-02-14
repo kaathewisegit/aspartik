@@ -110,6 +110,21 @@ impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 	}
 }
 
+impl<T: Copy + Default, const N: usize, const M: usize> RowMatrix<T, N, M> {
+	pub fn from_data(data: &[T]) -> Self {
+		assert_eq!(data.len(), N * M);
+		let mut out = Self::default();
+
+		for i in 0..N {
+			for j in 0..M {
+				out[(i, j)] = data[i * N + j];
+			}
+		}
+
+		out
+	}
+}
+
 impl<T: Copy + Default, const N: usize, const M: usize> Default
 	for RowMatrix<T, N, M>
 {

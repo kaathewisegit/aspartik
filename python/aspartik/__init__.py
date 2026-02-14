@@ -6,3 +6,7 @@
 - `rng`: random number generator used by `b3` and `stats`.
 - `stats`: statistical functions.
 """
+
+import os
+
+os.environ["OPENBLAS_NUM_THREADS"] = "1"

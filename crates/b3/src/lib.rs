@@ -55,7 +55,7 @@ pub mod pymodule {
 	use builtin::priors::Yule;
 
 	#[pymodule_export]
-	use substitution::{PyHKY, PyJC, PyK80};
+	use substitution::{PyGTR, PyHKY, PyJC, PyK80};
 
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
