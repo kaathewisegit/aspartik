@@ -171,6 +171,12 @@ class SubtreeLeap(Operator):
     rng: RNG
     weight: float = 1
 
+@dataclass(slots=True)
+class FixedHeightSPR(Operator):
+    tree: Tree
+    rng: RNG
+    weight: float = 1
+
 class ClassvecFlip(Operator):
     def __init__(self, classvec: ClassVector, rng: RNG, weight: float): ...
 
@@ -203,8 +209,17 @@ class K80:
 
 @dataclass
 class HKY:
-    frequencies: RealVector | tuple[float, float, float, float]
+    frequencies: RealVector
     kappa: Real
+
+@dataclass
+class GTR:
+    frequencies: RealVector
+    a: Real
+    b: Real
+    c: Real
+    d: Real
+    e: Real
 
 class ClassVector(Sized):
     def into_list(self) -> list[int]: ...
@@ -233,3 +248,14 @@ class RealVector(Sized):
 class Clock:
     @classmethod
     def Strict(_cls, rate: Real) -> Clock: ...
+
+class TraceWriter(Callback):
+    def __init__(
+        self,
+        items: dict[str, Parameter],
+        path: str,
+        *,
+        overwrite: bool = False,
+        zstd: bool = False,
+        every: int,
+    ): ...
