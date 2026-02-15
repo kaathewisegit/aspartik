@@ -22,7 +22,7 @@ dev = [
 	"numpy~=2.3",
 	"pandas~=2.3",
 	"pdoc~=16.0",
-	"pyright~=1.1",
+	"ty~=0.0.17",
 	"pytest~=9.0",
 	"ruff~=0.14.5"
 ]

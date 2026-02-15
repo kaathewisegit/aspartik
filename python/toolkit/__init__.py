@@ -101,7 +101,7 @@ def lint(args: Namespace):
         execute("ruff format --check")
         execute("ruff check")
 
-        execute("pyright")
+        execute("ty check")
 
     if args.website:
         with chdir("website/"):

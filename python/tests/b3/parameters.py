@@ -1,7 +1,6 @@
 from aspartik.b3.parameters import Real, RealVector
 
 
-# pyright: reportUnusedExpression=false
 def test_eq():
     assert Real(0.1) == 0.1
     assert Real(0.1) != Real(0.2)
