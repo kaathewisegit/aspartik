@@ -24,7 +24,8 @@ dev = [
 	"pdoc~=16.0",
 	"ty~=0.0.17",
 	"pytest~=9.0",
-	"ruff~=0.14.5"
+	"ruff~=0.14.5",
+	"delvewheel~=1.12.0",
 ]
 
 [build-system]

@@ -117,8 +117,8 @@ def test(args: Namespace):
 
 
 def run():
-    execute("uv run python/examples/apes.py")
-    execute("uv run python/examples/influenza.py 10_000")
+    execute("uv run --no-sync python/examples/apes.py")
+    execute("uv run --no-sync python/examples/influenza.py 20_000")
 
 
 ARTIFACTS = [
@@ -132,7 +132,6 @@ ARTIFACTS = [
 
 
 def check(args: Namespace):
-    build()
     lint(args)
     test(args)
     run()
