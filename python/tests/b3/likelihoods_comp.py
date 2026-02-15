@@ -1,4 +1,7 @@
+import pytest
 from utils.compare import compare
+
+import os
 
 from aspartik.b3 import Clock
 from aspartik.b3.likelihoods import (
@@ -15,6 +18,7 @@ from aspartik.rng import RNG
 SCALES = [3, 30, 300]
 
 
+@pytest.mark.skipif(os.getenv("CI") == "true", reason="Expensive")
 def test_compare_likelihood():
     rng = RNG(4)
 

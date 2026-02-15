@@ -625,6 +625,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "lapack-static"
+version = "0.1.0"
+source = "git+https://github.com/kaathewisegit/lapack-static#4053addadb5e962688249478c3226453bbd83777"
+
+[[package]]
 name = "leb128fmt"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -660,6 +665,7 @@ dependencies = [
  "arbtest",
  "bytemuck",
  "cudarc",
+ "lapack-static",
  "math",
  "num-traits",
 ]

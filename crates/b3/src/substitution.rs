@@ -1,6 +1,6 @@
 use anyhow::Result;
 use linalg::{RowMatrix, Vector};
-use pyo3::{prelude::*, types::PyFunction};
+use pyo3::prelude::*;
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 
@@ -371,8 +371,6 @@ pub struct GTR {
 	d: Py<PyReal>,
 	e: Py<PyReal>,
 
-	eigen: Py<PyFunction>,
-
 	p: RowMatrix<f64, 4, 4>,
 	inv_p: RowMatrix<f64, 4, 4>,
 	diag: Vector<f64, 4>,
@@ -389,13 +387,6 @@ impl GTR {
 		d: Py<PyReal>,
 		e: Py<PyReal>,
 	) -> Self {
-		let eigen = Python::attach(|py| {
-			let module = py.import("aspartik.b3.utils").unwrap();
-			let eigen = module.getattr("_eigen").unwrap();
-			let eigen = eigen.cast_into::<PyFunction>().unwrap();
-			eigen.unbind()
-		});
-
 		let mut out = Self {
 			frequencies,
 			a,
@@ -403,8 +394,6 @@ impl GTR {
 			c,
 			d,
 			e,
-
-			eigen,
 
 			p: RowMatrix::default(),
 			inv_p: RowMatrix::default(),
@@ -424,7 +413,7 @@ impl GTR {
 		let d = self.d.get().inner().value();
 		let e = self.e.get().inner().value();
 
-		let sub = RowMatrix::from([
+		let gtr = RowMatrix::from([
 			[
 				-a * p_c - b * p_g - c * p_t,
 				a * p_c,
@@ -445,27 +434,13 @@ impl GTR {
 				+ b * p_a * p_g + c * p_a * p_t
 				+ d * p_c * p_g + e * p_c * p_t
 				+ p_g * p_t);
-		let sub = sub.map(|e| e / div);
-		let sub_vec = sub.as_slice().to_vec();
+		let gtr = gtr.map(|e| e / div);
 
-		Python::attach(|py| {
-			let results =
-				self.eigen.call(py, (sub_vec,), None).unwrap();
-			let (eigenvectors, eigenvalues, inv_eigenvectors) =
-				results.extract::<(&[u8], &[u8], &[u8])>(py)
-					.unwrap();
-			let eigenvectors =
-				bytemuck::cast_slice::<u8, f64>(eigenvectors);
-			let inv_eigenvectors = bytemuck::cast_slice::<u8, f64>(
-				inv_eigenvectors,
-			);
-			let eigenvalues =
-				bytemuck::cast_slice::<u8, f64>(eigenvalues);
-			self.diag =
-				Vector::from(*eigenvalues.as_array().unwrap());
-			self.p = RowMatrix::from_data(eigenvectors);
-			self.inv_p = RowMatrix::from_data(inv_eigenvectors);
-		});
+		let (eigenvalues, eigenvectors) = gtr.eigen();
+
+		self.diag = eigenvalues;
+		self.p = eigenvectors;
+		self.inv_p = eigenvectors.inverse();
 	}
 }
 

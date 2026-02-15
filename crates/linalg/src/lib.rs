@@ -5,6 +5,7 @@ mod bytemuck;
 #[cfg(feature = "cuda")]
 mod cuda;
 mod float;
+mod lapack;
 mod row_matrix;
 mod tolerance;
 mod vector;

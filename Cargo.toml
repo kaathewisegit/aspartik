@@ -34,6 +34,7 @@ bytes = "1.11"
 cudarc = { git = "https://github.com/kaathewisegit/cudarc", branch = "array-repr", default-features = false }
 divan = "0.1.21"
 fork_union = "2.3"
+lapack-static = { git = "https://github.com/kaathewisegit/lapack-static" }
 libc = "0.2.180"
 num-traits = "0.2.19"
 parking_lot = "0.12.5"

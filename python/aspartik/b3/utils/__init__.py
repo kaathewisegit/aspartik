@@ -1,5 +1,3 @@
-import numpy as np
-
 import argparse
 
 from .. import MCMC
@@ -68,13 +66,3 @@ def run_from_cmdline(mcmc: MCMC, default_length: int = 100_000):
         print()
     if args.timings:
         print_operator_timings(mcmc)
-
-
-def _eigen(m: list[float]):
-    m = np.array(m).reshape(4, 4)  # type: ignore
-    eigenvalues, eigenvectors = np.linalg.eig(m)
-    return (
-        eigenvectors.tobytes(),
-        eigenvalues.tobytes(),
-        np.linalg.inv(eigenvectors).tobytes(),
-    )

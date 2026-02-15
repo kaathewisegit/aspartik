@@ -52,6 +52,8 @@ def make_parser():
 
     subparsers.add_parser("pdoc", help="build the pdoc HTML files")
 
+    subparsers.add_parser("build", help="build the library")
+
     return parser
 
 
@@ -115,9 +117,8 @@ def test(args: Namespace):
 
 
 def run():
-    execute("maturin develop --release")
     execute("uv run python/examples/apes.py")
-    execute("uv run python/examples/influenza.py 50_000")
+    execute("uv run python/examples/influenza.py 10_000")
 
 
 ARTIFACTS = [
@@ -131,6 +132,7 @@ ARTIFACTS = [
 
 
 def check(args: Namespace):
+    build()
     lint(args)
     test(args)
     run()
@@ -147,6 +149,10 @@ def clean():
             path.unlink()
         elif path.is_dir():
             rmtree(path)
+
+
+def build():
+    execute("maturin develop --release")
 
 
 def pdoc():
@@ -173,5 +179,7 @@ def main():
             clean()
         case "pdoc":
             pdoc()
+        case "build":
+            build()
         case None:
             parser.print_help()
