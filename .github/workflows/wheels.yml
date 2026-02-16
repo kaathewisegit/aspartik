@@ -91,6 +91,16 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+      - name: Patch Windows wheel
+        run: |
+          $env:Path += ";C:/mingw64/bin"
+          pip install delvewheel
+          delvewheel show dist/aspartik-*.whl
+          delvewheel repair --include libgfortran-5.dll dist/aspartik-*.whl
+          Move-Item -Path wheelhouse/* -Destination dist/ -Force
+          ls dist/
+
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
