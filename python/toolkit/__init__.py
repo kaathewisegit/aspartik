@@ -53,8 +53,7 @@ def make_parser():
 
     subparsers.add_parser("pdoc", help="build the pdoc HTML files")
 
-    build = subparsers.add_parser("build", help="build the platform wheel")
-    build.add_argument("--musl", action="store_true", help="musl compatibility")
+    subparsers.add_parser("build", help="build the platform wheel")
 
     subparsers.add_parser("sdist", help="build sdist")
 
@@ -157,10 +156,7 @@ def clean():
 def build(args: Namespace):
     rmtree("target/wheels/", ignore_errors=True)
 
-    if args.musl:
-        execute("maturin build --release --compatibility musllinux_1_2")
-    else:
-        execute("maturin build --release")
+    execute("maturin build --release")
 
     if platform.system() == "Windows":
         wheel_dir = Path("target/wheels/")
