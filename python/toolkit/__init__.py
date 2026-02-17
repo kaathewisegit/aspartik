@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 import sys
 from argparse import ArgumentParser, Namespace
@@ -52,7 +53,10 @@ def make_parser():
 
     subparsers.add_parser("pdoc", help="build the pdoc HTML files")
 
-    subparsers.add_parser("build", help="build the library")
+    build = subparsers.add_parser("build", help="build the platform wheel")
+    build.add_argument("--musl", action="store_true", help="musl compatibility")
+
+    subparsers.add_parser("sdist", help="build sdist")
 
     return parser
 
@@ -150,8 +154,28 @@ def clean():
             rmtree(path)
 
 
-def build():
-    execute("maturin develop --release")
+def build(args: Namespace):
+    rmtree("target/wheels/", ignore_errors=True)
+
+    if args.musl:
+        execute("maturin build --release --compatibility musllinux_1_2")
+    else:
+        execute("maturin build --release")
+
+    if platform.system() == "Windows":
+        wheel_dir = Path("target/wheels/")
+        wheel_path = next(wheel_dir.iterdir())
+
+        paths = "C:/mingw64/bin/;C:/msys64/ucrt64/bin/;C:/msys64/mingw64/bin/"
+        execute(
+            f"delvewheel repair --add-path {paths} --include libgfortran-5.dll {wheel_path}"
+        )
+        execute(f"uv pip install wheelhouse/{wheel_path.name}")
+
+
+def sdist():
+    rmtree("target/sdist/", ignore_errors=True)
+    execute("maturin sdist --out target/sdist/")
 
 
 def pdoc():
@@ -179,6 +203,8 @@ def main():
         case "pdoc":
             pdoc()
         case "build":
-            build()
+            build(args)
+        case "sdist":
+            sdist()
         case None:
             parser.print_help()
