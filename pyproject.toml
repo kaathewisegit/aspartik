@@ -37,6 +37,7 @@ python-source = "python"
 module-name = "aspartik._aspartik_rust_impl"
 manifest-path = "crates/aspartik/Cargo.toml"
 features = ["pyo3/extension-module"]
+include = ["LICENSE"]
 
 [tool.pytest]
 testpaths = ["python/tests"]
