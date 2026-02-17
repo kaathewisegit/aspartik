@@ -46,16 +46,7 @@ jobs:
         run: |
           uv sync --extra dev
           uv pip install gmpy2
-
-      - name: Patch Windows wheel
-        if: runner.os == 'Windows'
-        run: |
-          $env:Path += ";C:/mingw64/bin"
-          .venv/Scripts/activate.ps1
-          maturin build --release
-          delvewheel show target/wheels/aspartik-*.whl
-          delvewheel repair --include libgfortran-5.dll target/wheels/aspartik-*.whl
-          uv pip install (Get-ChildItem -Path "wheelhouse/" -File | Select-Object -First 1).FullName
+          uv run -m python.toolkit build
 
       - name: Setup website dependencies
         run: |
