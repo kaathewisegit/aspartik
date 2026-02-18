@@ -31,15 +31,15 @@ arrow-schema = "57.3.0"
 blake3 = "1.8"
 bytemuck = "1.24"
 bytes = "1.11"
-cudarc = { git = "https://github.com/kaathewisegit/cudarc", branch = "array-repr", default-features = false }
+cudarc = { git = "https://github.com/chelsea0x3b/cudarc", rev = "a9e85fae3f8ed3a9213e7bb8d00bd2724a5eceab", default-features = false }
 divan = "0.1.21"
 fork_union = "2.3"
-lapack-static = { git = "https://github.com/kaathewisegit/lapack-static" }
+lapack-static = "0.1.0"
 libc = "0.2.180"
 num-traits = "0.2.19"
 parking_lot = "0.12.5"
 peg = "0.8.5"
-pyo3 = "0.28.0"
+pyo3 = "0.28.2"
 rand = { version = "0.10.0-rc.9", default-features = false }
 rand_pcg = "0.10.0-rc.9"
 rmp = "0.8.15"
