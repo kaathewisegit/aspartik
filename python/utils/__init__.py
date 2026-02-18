@@ -26,7 +26,6 @@ def check_tree_operator(factory: Callable[[Tree], Operator]) -> None:
         if proposal == Proposal.Reject():
             tree.reject()
         else:
-            print(proposal)
             tree.accept()
 
         tree.validate()
