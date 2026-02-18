@@ -18,7 +18,6 @@ from aspartik.rng import RNG
 SCALES = [3, 30, 300]
 
 
-@pytest.mark.skipif(os.getenv("CI") == "true", reason="Expensive")
 def test_compare_likelihood():
     rng = RNG(4)
 
