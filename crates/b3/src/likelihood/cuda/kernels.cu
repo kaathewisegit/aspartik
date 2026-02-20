@@ -122,17 +122,12 @@ void propose(
 			g.sync();
 		}
 
-		if (sub == 0) {
-			if (should_scale) {
-				if (old_scale == 0) {
-					scale_sum += SCALE_LN;
-					scales[scale_idx] = 1;
-				}
+		if (sub == 0 && should_scale != old_scale) {
+			scales[scale_idx] = should_scale;
+			if (old_scale == 0) {
+				scale_sum += SCALE_LN;
 			} else {
-				if (old_scale == 1) {
-					scale_sum -= SCALE_LN;
-					scales[scale_idx] = 0;
-				}
+				scale_sum -= SCALE_LN;
 			}
 		}
 
@@ -152,7 +147,9 @@ void propose(
 		projections[sidx(this_edge)] = projection;
 	}
 
-	if (sub == 0) scale_sums[site] = scale_sum;
+	if (sub == 0) {
+		scale_sums[site] = scale_sum;
+	}
 }
 
 entrypoint __launch_bounds__(32)
