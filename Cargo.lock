@@ -187,9 +187,9 @@ dependencies = [
  "rand_pcg",
  "rng",
  "serde",
+ "serde_verbatim",
  "skvec",
  "util",
- "verbatim",
 ]
 
 [[package]]
@@ -968,8 +968,8 @@ dependencies = [
  "pyo3",
  "rand",
  "rand_pcg",
+ "serde_verbatim",
  "util",
- "verbatim",
 ]
 
 [[package]]
@@ -1053,6 +1053,15 @@ dependencies = [
  "serde",
  "serde_core",
  "zmij",
+]
+
+[[package]]
+name = "serde_verbatim"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4c92f479a1bb747473852ef3257b78fa188791fec4e3c6cb22ec8af50dba098"
+dependencies = [
+ "serde_core",
 ]
 
 [[package]]
@@ -1161,14 +1170,6 @@ checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 [[package]]
 name = "util"
 version = "0.1.0-alpha.6"
-
-[[package]]
-name = "verbatim"
-version = "0.1.0"
-source = "git+https://github.com/kaathewisegit/verbatim?branch=trunk#59b1c0396389018e6e31d547aa307c8701197306"
-dependencies = [
- "serde_core",
-]
 
 [[package]]
 name = "version_check"

@@ -29,7 +29,7 @@ pyo3 = { workspace = true, features = ["anyhow", "multiple-pymethods"] }
 rand = { workspace = true }
 rand_pcg = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
-verbatim = { workspace = true, features = ["std"] }
+serde_verbatim = { workspace = true, features = ["std"] }
 
 [lints]
 workspace = true

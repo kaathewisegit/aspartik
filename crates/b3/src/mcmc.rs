@@ -192,7 +192,7 @@ impl Mcmc {
 	}
 
 	fn dump_state(&self) -> Result<Vec<u8>> {
-		let mut ser = verbatim::Serializer::new(Vec::new());
+		let mut ser = serde_verbatim::Serializer::new(Vec::new());
 		let mut scratch = Vec::new();
 
 		ser.serialize_u64(*self.current_step.lock() as u64)?;
@@ -222,7 +222,7 @@ impl Mcmc {
 			params: Vec<&'a [u8]>,
 			rng: Rng,
 		}
-		let mut deserializer = verbatim::Deserializer::new(bytes);
+		let mut deserializer = serde_verbatim::Deserializer::new(bytes);
 		let de = De::deserialize(&mut deserializer)?;
 
 		*self.current_step.lock() = de.current_step as usize;

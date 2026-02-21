@@ -50,11 +50,11 @@ impl Parameter for RealVector {
 	}
 
 	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
-		Ok(verbatim::to_writer(&self, dst)?)
+		Ok(serde_verbatim::to_writer(&self, dst)?)
 	}
 
 	fn load(&mut self, bytes: &[u8]) -> Result<()> {
-		*self = verbatim::from_slice(bytes)?;
+		*self = serde_verbatim::from_slice(bytes)?;
 		Ok(())
 	}
 
