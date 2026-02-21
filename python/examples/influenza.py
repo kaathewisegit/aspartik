@@ -106,7 +106,7 @@ def make_mcmc(fasta_path: str):
                 # "prior:coalescent": priors[8],
             },
             path="target/influenza.trace",
-            every=100,
+            every=1_000,
             overwrite=True,
             zstd=True,
         ),

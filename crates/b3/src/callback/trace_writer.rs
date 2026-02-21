@@ -194,10 +194,19 @@ fn write_value(
 		}
 		array.append(true);
 	} else if let Ok(tree) = value.cast_exact::<PyTree>() {
+		let tree = &*tree.get().inner();
+
 		let array = get::<BinaryBuilder>(arrays, name);
-		tree.get().inner().dump(array)?;
+		tree.dump(array)?;
 		array.append_value("");
-		// TODO: length and height
+
+		let name_length = format!("{name}:length");
+		let array = get::<Float64Builder>(arrays, &name_length);
+		array.append_value(tree.total_length());
+
+		let name_height = format!("{name}:height");
+		let array = get::<Float64Builder>(arrays, &name_height);
+		array.append_value(tree.height_of(*tree.root()));
 	}
 
 	Ok(())
@@ -233,7 +242,14 @@ fn init_value(
 			name.to_owned(),
 			dyn_builder(BinaryBuilder::new()),
 		);
-		// TODO: length and height
+
+		let name_length = format!("{name}:length");
+		schema.push(field(&name_length, DataType::Float64));
+		arrays.insert(name_length, dyn_builder(Float64Builder::new()));
+
+		let name_height = format!("{name}:height");
+		schema.push(field(&name_height, DataType::Float64));
+		arrays.insert(name_height, dyn_builder(Float64Builder::new()));
 	}
 
 	Ok(())
