@@ -1,5 +1,5 @@
 import pytest
-from utils.compare import compare
+from utils.compare import compare_verify_run
 
 from aspartik.b3.parameters import Real, Tree
 from aspartik.b3.priors import ExponentialGrowth
@@ -13,7 +13,7 @@ def test_exponential_growth():
     growth_rate = Real(0)
     eg = ExponentialGrowth(tree, population_size, growth_rate)
 
-    compare(
+    compare_verify_run(
         "data/runs/respiratory/log",
         # "data/runs/respiratory/trees",
         parameters={
@@ -24,5 +24,4 @@ def test_exponential_growth():
         priors={
             "prior:coalescent": eg,
         },
-        beast=True,
     )

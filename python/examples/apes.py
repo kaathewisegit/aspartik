@@ -18,7 +18,7 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import ConstantPopulation, Distribution
-from aspartik.b3.substitutions import GTR, HKY
+from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.io.msa import read_msa_from_fasta
 from aspartik.rng import RNG
@@ -59,7 +59,7 @@ def make_mcmc(fasta_path: str):
 
     likelihood = CPU4Likelihood(
         msa=msa,
-        substitution=GTR(frequencies, kappa, Real(1), Real(1), Real(1), Real(1)),
+        substitution=HKY(frequencies, kappa),
         clock=Clock.Strict(Real(1.0)),
         tree=tree,
     )
@@ -91,6 +91,7 @@ def make_mcmc(fasta_path: str):
                 "population_size": population_size,
                 "frequencies": frequencies,
                 "tree": tree,
+                "clock_rate": Real(1.0),
             },
             "target/apes.trace",
             overwrite=True,

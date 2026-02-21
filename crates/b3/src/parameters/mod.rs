@@ -44,6 +44,10 @@ macro_rules! impl_pyparameter_common {
 				self.inner().is_changed()
 			}
 
+			pub fn load(&self, bytes: &[u8]) -> Result<()> {
+				self.inner().load(bytes)
+			}
+
 			pub fn accept(&self) {
 				self.inner().accept();
 			}

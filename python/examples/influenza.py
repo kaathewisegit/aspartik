@@ -6,8 +6,9 @@ tutorial][l].
 """
 
 from aspartik.b3 import MCMC, Clock
+from aspartik.b3.callbacks import TraceWriter
 from aspartik.b3.likelihoods import Parallel4Likelihood
-from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
+from aspartik.b3.loggers import PrintLogger, TreeLogger
 from aspartik.b3.operators import (
     DeltaExchange,
     FixedHeightSPR,
@@ -90,27 +91,23 @@ def make_mcmc(fasta_path: str):
     loggers = [
         TreeLogger(tree=tree, path="target/influenza.trees", every=1_000),
         PrintLogger(every=10_000),
-        ValueLogger(
+        TraceWriter(
             {
-                "step": lambda: mcmc.current_step,
-                "posterior": lambda: mcmc.posterior,
-                "prior": lambda: mcmc.prior,
-                "likelihood": lambda: mcmc.likelihood.likelihood(),
                 "kappa": kappa,
                 "population_size": population_size,
                 "growth_rate": growth_rate,
                 "clock_rate": clock_rate,
                 "frequencies": frequencies,
-                "tree:height": lambda: tree.height_of(tree.root),
-                "tree:length": lambda: tree.total_length(),
-                "prior:kappa": priors[4],
-                "prior:clock_rate": priors[5],
-                "prior:population_size": priors[6],
-                "prior:growth_rate": priors[7],
-                "prior:coalescent": priors[8],
+                "tree": tree,
+                # "prior:kappa": priors[4],
+                # "prior:clock_rate": priors[5],
+                # "prior:population_size": priors[6],
+                # "prior:growth_rate": priors[7],
+                # "prior:coalescent": priors[8],
             },
-            path="target/influenza.log",
-            every=1_000,
+            path="target/influenza.trace",
+            every=100,
+            overwrite=True,
             zstd=True,
         ),
     ]

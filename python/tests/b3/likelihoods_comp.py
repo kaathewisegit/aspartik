@@ -1,7 +1,5 @@
 import pytest
-from utils.compare import compare
-
-import os
+from utils.compare import compare_verify_run
 
 from aspartik.b3 import Clock
 from aspartik.b3.likelihoods import (
@@ -75,7 +73,7 @@ def test_compare_likelihood():
     if cuda_calculator:
         calculators.insert(0, cuda_calculator)
 
-    compare(
+    compare_verify_run(
         "data/runs/influenza/b3.trace",
         parameters={
             "tree": tree,
