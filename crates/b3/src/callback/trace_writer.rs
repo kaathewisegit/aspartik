@@ -23,6 +23,7 @@ use std::{
 };
 
 use crate::{
+	PyPrior,
 	mcmc::Mcmc,
 	parameters::{Parameter, PyClassVector, PyReal, PyRealVector, PyTree},
 };
@@ -207,6 +208,9 @@ fn write_value(
 		let name_height = format!("{name}:height");
 		let array = get::<Float64Builder>(arrays, &name_height);
 		array.append_value(tree.height_of(*tree.root()));
+	} else if let Ok(prior) = value.extract::<PyPrior>() {
+		let array = get::<Float64Builder>(arrays, name);
+		array.append_value(prior.probability(value.py())?);
 	}
 
 	Ok(())
@@ -250,6 +254,17 @@ fn init_value(
 		let name_height = format!("{name}:height");
 		schema.push(field(&name_height, DataType::Float64));
 		arrays.insert(name_height, dyn_builder(Float64Builder::new()));
+	} else if let Ok(_value) = value.extract::<PyPrior>() {
+		schema.push(field(name, DataType::Float64));
+		arrays.insert(
+			name.to_owned(),
+			dyn_builder(Float64Builder::new()),
+		);
+	} else {
+		bail!(
+			"Unsupported logging target: {}",
+			value.get_type().name()?,
+		);
 	}
 
 	Ok(())
