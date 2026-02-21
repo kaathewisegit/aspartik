@@ -50,7 +50,7 @@ impl TraceWriter {
 	fn new(
 		py: Python,
 		items: HashMap<String, Py<PyAny>>,
-		mut path: PathBuf,
+		path: PathBuf,
 		zstd: bool,
 		overwrite: bool,
 		every: usize,
@@ -83,7 +83,6 @@ impl TraceWriter {
 		let schema = schema.finish();
 
 		let compression = if zstd {
-			path.as_mut_os_string().push(".zst");
 			Some(CompressionType::ZSTD)
 		} else {
 			None
@@ -101,7 +100,12 @@ impl TraceWriter {
 			.truncate(true)
 			.create_new(!overwrite)
 			.open(&path)
-			.context("Failed to create the trace file")?;
+			.with_context(|| {
+				format!(
+					"Failed to create the trace file {}",
+					path.display()
+				)
+			})?;
 		let writer = BufWriter::new(file);
 		let writer = FileWriter::try_new_with_options(
 			writer,
