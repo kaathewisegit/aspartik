@@ -5,8 +5,9 @@ Based on the [GHOST paper][g], HKY+H4 version.
 """
 
 from aspartik.b3 import MCMC, Clock
+from aspartik.b3.callbacks import TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood, HeteroLikelihood
-from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
+from aspartik.b3.loggers import PrintLogger, TreeLogger
 from aspartik.b3.operators import (
     ClassvecFlip,
     DeltaExchange,
@@ -68,21 +69,17 @@ operators = [
 loggers = [
     TreeLogger(tree=tree, path="target/heterotachy.trees", every=1_000),
     PrintLogger(every=10_000),
-    ValueLogger(
+    TraceWriter(
         {
-            "step": lambda: mcmc.current_step,
-            "posterior": lambda: mcmc.posterior,
-            "prior": lambda: mcmc.prior,
-            "likelihood": lambda: mcmc.likelihood.likelihood(),
-            "kappas": kappas,
+            **{f"m{i}:kappa": kappa for i, kappa in enumerate(kappas)},
+            **{f"m{i}:frequencies": freq for i, freq in enumerate(freqs)},
             "birth_rate": birth_rate,
             "clock_rate": clock_rate,
-            "frequencies": freqs,
-            "tree:height": lambda: tree.height_of(tree.root),
-            "tree:length": lambda: tree.total_length(),
-            "classes": lambda: likelihood.class_vector.into_list(),
+            "tree": tree,
+            "classes": likelihood.class_vector,
         },
-        path="target/heterotachy.log",
+        path="target/heterotachy.trace",
+        overwrite=True,
         every=1_000,
     ),
 ]

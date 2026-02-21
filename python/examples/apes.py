@@ -5,7 +5,7 @@
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.callbacks import TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood
-from aspartik.b3.loggers import PrintLogger, TreeLogger, ValueLogger
+from aspartik.b3.loggers import PrintLogger, TreeLogger
 from aspartik.b3.operators import (
     BeastNarrowExchange,
     BeastWideExchange,
