@@ -12,7 +12,7 @@ use arrow_ipc::{
 };
 use arrow_schema::{DataType, Field, SchemaBuilder, SchemaRef};
 use parking_lot::Mutex;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyDict};
 
 use std::{
 	collections::HashMap,
@@ -32,7 +32,7 @@ type Arrays = HashMap<String, Box<dyn ArrayBuilder>>;
 
 #[pyclass(module = "aspartik.b3.callbacks", frozen)]
 pub struct TraceWriter {
-	items: HashMap<String, Py<PyAny>>,
+	items: Vec<(String, Py<PyAny>)>,
 	arrays: Mutex<Arrays>,
 	schema: SchemaRef,
 	writer: Mutex<FileWriter<BufWriter<File>>>,
@@ -50,12 +50,14 @@ impl TraceWriter {
 	))]
 	fn new(
 		py: Python,
-		items: HashMap<String, Py<PyAny>>,
+		items: Bound<'_, PyDict>,
 		path: PathBuf,
 		zstd: bool,
 		overwrite: bool,
 		every: usize,
 	) -> Result<Self> {
+		let items = dict_to_vec(items)?;
+
 		let mut arrays = HashMap::new();
 		let mut schema = SchemaBuilder::new();
 
@@ -310,4 +312,16 @@ fn get<'a, T: 'static>(
 		.as_any_mut()
 		.downcast_mut::<T>()
 		.unwrap()
+}
+
+fn dict_to_vec(dict: Bound<'_, PyDict>) -> Result<Vec<(String, Py<PyAny>)>> {
+	let mut out = vec![];
+
+	for (key, value) in dict {
+		let key = key.extract::<String>()?;
+
+		out.push((key, value.unbind()))
+	}
+
+	Ok(out)
 }
