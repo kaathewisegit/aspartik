@@ -41,8 +41,8 @@ pub struct ParallelLikelihood<const N: usize, F> {
 	likelihoods: Buffer<f64>,
 
 	scale_ln: u32,
-	scale: F,
-	inv_scale: F,
+	scale_threshold: F,
+	scale_mult: F,
 }
 
 /// Write `value` to the `index` position of `sync_ptr`
@@ -138,12 +138,13 @@ where
 				let likelihood = left * right;
 				let mut projection = transition * likelihood;
 
-				let should_scale = if projection < self.scale {
-					projection *= self.inv_scale;
-					true
-				} else {
-					false
-				};
+				let should_scale =
+					if projection < self.scale_threshold {
+						projection *= self.scale_mult;
+						true
+					} else {
+						false
+					};
 
 				let projection_index = node_idx + site;
 				let old_scale = self.scales[projection_index];
@@ -312,8 +313,8 @@ impl ParallelLikelihood<4, f64> {
 			likelihoods: buffer![f64::NAN; num_sites],
 
 			scale_ln,
-			scale,
-			inv_scale: scale.inv(),
+			scale_threshold: scale,
+			scale_mult: scale.inv(),
 		})
 	}
 }

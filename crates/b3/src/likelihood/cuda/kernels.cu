@@ -111,13 +111,13 @@ void propose(
 
 		g.sync();
 
-		u32 should_scale = s_likelihood[tile * 4 + 0] < INV_SCALE
-			&& s_likelihood[tile * 4 + 1] < INV_SCALE
-			&& s_likelihood[tile * 4 + 2] < INV_SCALE
-			&& s_likelihood[tile * 4 + 3] < INV_SCALE;
+		u32 should_scale = s_likelihood[tile * 4 + 0] < SCALE_THRESHOLD
+			&& s_likelihood[tile * 4 + 1] < SCALE_THRESHOLD
+			&& s_likelihood[tile * 4 + 2] < SCALE_THRESHOLD
+			&& s_likelihood[tile * 4 + 3] < SCALE_THRESHOLD;
 
 		if (should_scale) {
-			s_likelihood[tile * 4 + sub] *= SCALE;
+			s_likelihood[tile * 4 + sub] *= SCALE_MULT;
 
 			g.sync();
 		}

@@ -342,8 +342,8 @@ impl CudaLikelihood {
 			bail!("CUDA library not found");
 		}
 
-		let scale = f64::from(scale_ln).exp();
-		let inv_scale = f64::from(-(scale_ln as i32)).exp();
+		let scale_threshold = f64::from(-(scale_ln as i32)).exp();
+		let scale_mult = f64::from(scale_ln).exp();
 
 		let num_leaves = leaves.len() / num_sites;
 		let num_internals = num_leaves - 1;
@@ -384,8 +384,8 @@ impl CudaLikelihood {
 				format!("-DNUM_SITES={num_sites}"),
 				format!("-DNUM_LEAVES={num_leaves}"),
 				format!("-DSCALE_LN={scale_ln}"),
-				format!("-DSCALE={scale}"),
-				format!("-DINV_SCALE={inv_scale}"),
+				format!("-DSCALE_THRESHOLD={scale_threshold}"),
+				format!("-DSCALE_MULT={scale_mult}"),
 			],
 			..Default::default()
 		};

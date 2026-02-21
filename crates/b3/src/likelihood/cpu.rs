@@ -23,9 +23,12 @@ pub struct CpuLikelihood<const N: usize, F> {
 	scales: SkVec<bool>,
 	scale_sums: SkVec<u32>,
 
-	scale: F,
-	inv_scale: F,
+	/// Scaling threshold on logarithmic scale
 	scale_ln: u32,
+	/// `e^{-scale_ln}`
+	scale_threshold: F,
+	/// `e^{scale_ln}`
+	scale_mult: F,
 }
 
 impl<const N: usize, F> Calculator<N, F> for CpuLikelihood<N, F>
@@ -83,12 +86,13 @@ where
 				let likelihood = left * right;
 				let mut projection = transition * likelihood;
 
-				let should_scale = if projection < self.scale {
-					projection *= self.inv_scale;
-					true
-				} else {
-					false
-				};
+				let should_scale =
+					if projection < self.scale_threshold {
+						projection *= self.scale_mult;
+						true
+					} else {
+						false
+					};
 
 				let projection_index = node_idx + site;
 				let old_scale = self.scales[projection_index];
@@ -243,9 +247,9 @@ impl CpuLikelihood<4, f64> {
 			scales,
 			scale_sums,
 
-			scale,
-			inv_scale: scale.inv(),
 			scale_ln,
+			scale_threshold: scale,
+			scale_mult: scale.inv(),
 		}
 	}
 }
