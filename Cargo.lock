@@ -187,7 +187,6 @@ dependencies = [
  "rand_pcg",
  "rng",
  "serde",
- "serde_json",
  "skvec",
  "util",
  "verbatim",

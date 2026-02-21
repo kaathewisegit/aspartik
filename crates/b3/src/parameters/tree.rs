@@ -3,7 +3,7 @@ use parking_lot::Mutex;
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
 	prelude::*,
-	types::{PyAny, PyType},
+	types::PyAny,
 };
 use rand::{RngExt, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
@@ -1233,19 +1233,6 @@ impl PyTree {
 	#[pyo3(signature = (internal_ids = false))]
 	fn newick(&self, internal_ids: bool) -> String {
 		self.inner().to_newick(internal_ids)
-	}
-
-	fn to_json(&self) -> Result<String> {
-		Ok(serde_json::to_string(&*self.inner())?)
-	}
-
-	#[classmethod]
-	fn from_json(_cls: Py<PyType>, json: String) -> Result<Self> {
-		let inner: Tree = serde_json::from_str(&json)?;
-
-		Ok(Self {
-			inner: inner.into(),
-		})
 	}
 
 	fn set(&self, other: &PyTree) {
