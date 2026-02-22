@@ -965,6 +965,7 @@ name = "rng"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
+ "math",
  "parking_lot",
  "pyo3",
  "rand",

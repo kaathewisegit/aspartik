@@ -1,4 +1,7 @@
 use num_traits::Float;
+#[cfg(feature = "python")]
+use pyo3::{exceptions::PyValueError, prelude::*};
+use util::py_bail;
 
 use std::ops::Deref;
 
@@ -62,5 +65,23 @@ impl From<Probability<f32>> for f32 {
 impl From<Probability<f64>> for f64 {
 	fn from(value: Probability<f64>) -> Self {
 		value.into_inner()
+	}
+}
+
+#[cfg(feature = "python")]
+impl<'py> FromPyObject<'_, 'py> for Probability<f64> {
+	type Error = PyErr;
+
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+		let float = obj.extract::<f64>()?;
+
+		let Some(out) = Probability::new(float) else {
+			py_bail!(
+				PyValueError,
+				"Probability must be in [0, 1], got {float}"
+			);
+		};
+
+		Ok(out)
 	}
 }

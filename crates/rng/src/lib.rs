@@ -1,4 +1,5 @@
 use anyhow::{Result, ensure};
+use math::Probability;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use rand::{
@@ -53,13 +54,12 @@ impl PyRng {
 
 	/// Returns `true` with the probability of `ratio`
 	///
-	///
 	/// ## Exceptions
 	///
 	/// Will throw an exception if `ratio` is not in `[0, 1]`.
-	#[pyo3(signature = (ratio = 0.5))]
-	fn random_bool(&self, ratio: f64) -> bool {
-		self.inner().random_bool(ratio)
+	#[pyo3(signature = (ratio = Probability::new_const(0.5).unwrap()))]
+	fn random_bool(&self, ratio: Probability<f64>) -> bool {
+		self.inner().random_bool(*ratio)
 	}
 
 	/// Returns a random integer in `[lower, upper)`
