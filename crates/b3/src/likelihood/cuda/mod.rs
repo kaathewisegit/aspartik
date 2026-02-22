@@ -281,8 +281,10 @@ impl CudaLikelihood {
 	///
 	/// Asynchronous.
 	fn copy_projections(&mut self, accept: bool) -> Result<()> {
+		let num_updated_nodes = self.num_updated_nodes + 1;
+
 		let num_site_blocks = self.num_sites.div_ceil(128);
-		let grid_dim_y = self.num_updated_nodes.div_ceil(128);
+		let grid_dim_y = num_updated_nodes.div_ceil(128);
 		let cfg = LaunchConfig {
 			grid_dim: (num_site_blocks, grid_dim_y, 128),
 			block_dim: (128, 1, 1),
@@ -306,7 +308,7 @@ impl CudaLikelihood {
 			builder.arg(&self.scales);
 		}
 
-		builder.arg(&self.num_updated_nodes);
+		builder.arg(&num_updated_nodes);
 		builder.arg(&self.nodes);
 
 		// SAFETY: TODO
