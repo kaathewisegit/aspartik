@@ -5,9 +5,9 @@ use core::f64;
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
+use math::Probability;
 
 /// Implements the [Pareto](https://en.wikipedia.org/wiki/Pareto_distribution)
 /// distribution

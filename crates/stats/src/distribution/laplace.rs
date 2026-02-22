@@ -4,16 +4,16 @@ use rand::RngExt;
 use thiserror::Error;
 
 use core::f64;
-#[cfg(feature = "python")]
-use util::impl_pyerr;
 
 #[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
+use math::Probability;
+#[cfg(feature = "python")]
+use util::impl_pyerr;
 
 /// Implements the [Laplace](https://en.wikipedia.org/wiki/Laplace_distribution)
 /// distribution.

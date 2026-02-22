@@ -5,10 +5,9 @@ use std::f64::consts::LN_2;
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
-use math::{consts::EULER_MASCHERONI, function::gamma, ulps_eq};
+use math::{Probability, consts::EULER_MASCHERONI, function::gamma, ulps_eq};
 
 /// Implements the [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
 /// distribution

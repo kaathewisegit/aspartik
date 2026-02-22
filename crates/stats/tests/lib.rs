@@ -343,13 +343,12 @@ where
 }
 
 pub mod prelude {
-	pub use math::{almost_eq, assert_almost_eq};
+	pub use math::{Probability, almost_eq, assert_almost_eq};
 	pub use num_traits::Float;
 	pub use stats::{
 		distribution::{
 			Continuous, ContinuousCDF, Discrete, DiscreteCDF,
 		},
-		probability::Probability,
 		statistics::{Distribution, Mode},
 	};
 

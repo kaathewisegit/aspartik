@@ -8,10 +8,10 @@ use core::f64;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 use math::{
+	Probability,
 	consts::{LN_SQRT_2PI, LN_SQRT_2PIE, SQRT_2PI},
 	function::erf,
 };

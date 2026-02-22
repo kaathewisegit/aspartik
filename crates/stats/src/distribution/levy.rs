@@ -5,10 +5,10 @@ use core::f64;
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 use math::{
+	Probability,
 	consts::LN_SQRT_2PI,
 	function::erf::{erf, erfc, erfc_inv},
 };

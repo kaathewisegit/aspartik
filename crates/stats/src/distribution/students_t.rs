@@ -4,10 +4,12 @@ use core::f64;
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
-use math::function::{beta, gamma};
+use math::{
+	Probability,
+	function::{beta, gamma},
+};
 
 /// Implements the [Student's
 /// T](https://en.wikipedia.org/wiki/Student%27s_t-distribution) distribution

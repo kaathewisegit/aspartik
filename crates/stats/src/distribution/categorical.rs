@@ -3,9 +3,9 @@ use thiserror::Error;
 
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
-	probability::Probability,
 	statistics::Distribution,
 };
+use math::Probability;
 
 /// Implements the
 /// [Categorical](https://en.wikipedia.org/wiki/Categorical_distribution)

@@ -53,7 +53,7 @@ bitmap = { version = "0.1.0-alpha.6", path = "crates/bitmap" }
 data = { version = "0.1.0-alpha.6", path = "crates/data" }
 io = { version = "0.1.0-alpha.6", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.6", path = "crates/linalg" }
-math = { version = "0.1.0-alpha.6", path = "crates/math" }
+math = { version = "0.1.0-alpha.6", path = "crates/math", default-features = false }
 rng = { version = "0.1.0-alpha.6", path = "crates/rng" }
 skvec = { version = "0.1.0-alpha.6", path = "crates/skvec" }
 stats = { version = "0.1.0-alpha.6", path = "crates/stats" }

@@ -2,9 +2,9 @@ use core::f64;
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF, Gamma, GammaError},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
+use math::Probability;
 
 /// Implements the
 /// [Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution)

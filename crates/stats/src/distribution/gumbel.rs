@@ -4,11 +4,8 @@ use thiserror::Error;
 use core::f64::consts::PI;
 
 use super::{Continuous, ContinuousCDF};
-use crate::{
-	probability::Probability,
-	statistics::{Distribution, Mode},
-};
-use math::consts::EULER_MASCHERONI;
+use crate::statistics::{Distribution, Mode};
+use math::{Probability, consts::EULER_MASCHERONI};
 
 /// Implements the [Gumbel](https://en.wikipedia.org/wiki/Gumbel_distribution)
 /// distribution, also known as the type-I generalized extreme value distribution.

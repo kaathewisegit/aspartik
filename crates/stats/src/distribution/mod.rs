@@ -3,7 +3,7 @@
 //! concrete implementations for a variety of distributions.
 use num_traits::{Num, NumAssignOps, One};
 
-use crate::probability::Probability;
+use math::Probability;
 
 mod bernoulli;
 mod beta;

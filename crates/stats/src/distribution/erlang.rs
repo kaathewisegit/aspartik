@@ -1,8 +1,8 @@
 use crate::{
 	distribution::{Continuous, ContinuousCDF, Gamma, GammaError},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
+use math::Probability;
 
 /// Implements the [Erlang](https://en.wikipedia.org/wiki/Erlang_distribution)
 /// distribution

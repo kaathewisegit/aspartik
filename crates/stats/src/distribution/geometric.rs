@@ -5,10 +5,9 @@ use core::f64;
 
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
-use math::ulps_eq;
+use math::{Probability, ulps_eq};
 
 /// Implements the
 /// [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)

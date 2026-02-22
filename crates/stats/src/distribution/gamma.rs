@@ -7,6 +7,7 @@ use pyo3::prelude::*;
 use thiserror::Error;
 
 use math::{
+	Probability,
 	function::gamma,
 	tolerance::{ACCURACY, Tolerance},
 	ulps_eq,
@@ -18,7 +19,6 @@ use util::impl_pyerr;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
 

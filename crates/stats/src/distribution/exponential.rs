@@ -8,9 +8,9 @@ use core::f64;
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
+use math::Probability;
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 

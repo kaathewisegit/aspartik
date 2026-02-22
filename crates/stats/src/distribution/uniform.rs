@@ -4,15 +4,14 @@ use rand::RngExt;
 use thiserror::Error;
 
 #[cfg(feature = "python")]
-use util::impl_pyerr;
-
-#[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
 	statistics::{Distribution, Mode},
 };
+use math::Probability;
+#[cfg(feature = "python")]
+use util::impl_pyerr;
 
 /// Implements the [Continuous
 /// Uniform](https://en.wikipedia.org/wiki/Uniform_distribution_(continuous))

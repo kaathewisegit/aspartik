@@ -67,7 +67,7 @@ macro_rules! impl_pymethods {
 				&self, p: f64
 			) -> pyo3::PyResult<f64> {
 				use pyo3::exceptions::PyValueError;
-				use crate::probability::Probability;
+				use math::Probability;
 				let Some(p) = Probability::new(p) else {
 					return Err(PyValueError::new_err(format!("`p` must be in `[0, 1]`, got {p}")));
 				};
@@ -119,7 +119,7 @@ macro_rules! impl_pymethods {
 				&self, p: f64
 			) -> pyo3::PyResult<<Self as Discrete>::T> {
 				use pyo3::exceptions::PyValueError;
-				use crate::probability::Probability;
+				use math::Probability;
 				let Some(p) = Probability::new(p) else {
 					return Err(PyValueError::new_err(format!("`p` must be in `[0, 1]`, got {p}")));
 				};

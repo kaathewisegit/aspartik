@@ -2,20 +2,19 @@
 use pyo3::prelude::*;
 use thiserror::Error;
 
+#[cfg(feature = "python")]
+use crate::python_macros::impl_pymethods;
+use crate::{
+	distribution::{Continuous, ContinuousCDF},
+	statistics::{Distribution, Mode},
+};
 use math::{
+	Probability,
 	function::{beta, gamma},
 	ulps_eq,
 };
 #[cfg(feature = "python")]
 use util::impl_pyerr;
-
-#[cfg(feature = "python")]
-use crate::python_macros::impl_pymethods;
-use crate::{
-	distribution::{Continuous, ContinuousCDF},
-	probability::Probability,
-	statistics::{Distribution, Mode},
-};
 
 /// [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution)
 ///

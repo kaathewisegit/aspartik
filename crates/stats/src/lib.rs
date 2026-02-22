@@ -43,7 +43,6 @@
 
 #[macro_use]
 pub mod distribution;
-pub mod probability;
 #[cfg(feature = "python")]
 pub(crate) mod python_macros;
 pub mod statistics;
