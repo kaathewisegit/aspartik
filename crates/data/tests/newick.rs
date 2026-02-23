@@ -26,3 +26,24 @@ fn serialize_basic() {
 
 	assert_eq!(string, "(A:0.1,B,(C,D)E)F;");
 }
+
+#[test]
+fn basic() {
+	let s = "(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);";
+	let tree = Tree::parse(s).unwrap();
+	assert_eq!(tree.into_string(), s);
+}
+
+#[test]
+fn number_names() {
+	let s = "(1:0.1,2:0.2);";
+	let tree = Tree::parse(s).unwrap();
+	assert_eq!(tree.into_string(), s);
+}
+
+#[test]
+fn quoted() {
+	let s = r#"("with quotes!":0.1,"another ' one":0.2);"#;
+	let tree = Tree::parse(s).unwrap();
+	assert_eq!(tree.into_string(), s);
+}

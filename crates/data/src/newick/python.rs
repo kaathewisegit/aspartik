@@ -2,7 +2,7 @@ use anyhow::Result;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
-use super::{Tree, parse};
+use super::Tree;
 
 /// A classical Newick tree
 ///
@@ -37,7 +37,7 @@ impl PyTree {
 	fn new(newick: Option<&str>) -> Result<Self> {
 		let tree = match newick {
 			None => Tree::new(),
-			Some(input) => parse(input)?,
+			Some(input) => Tree::parse(input)?,
 		};
 
 		Ok(PyTree {

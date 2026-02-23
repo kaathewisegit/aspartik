@@ -5,8 +5,6 @@ mod parse;
 pub(crate) mod python;
 mod serialize;
 
-pub use parse::parse;
-
 pub type NodeIdx = u32;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

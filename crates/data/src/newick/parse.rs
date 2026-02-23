@@ -62,37 +62,14 @@ fn add_subtree(tree: &mut Tree, subtree: Subtree) -> NodeIdx {
 	node_ref
 }
 
-pub fn parse(input: &str) -> Result<Tree> {
-	let mut tree = Tree::new();
+impl Tree {
+	pub fn parse(input: &str) -> Result<Self> {
+		let mut out = Tree::new();
 
-	let root = newick_parser::tree(input.trim())?;
-	let root_ref = add_subtree(&mut tree, root);
-	tree.set_root(root_ref);
+		let root = newick_parser::tree(input.trim())?;
+		let root_ref = add_subtree(&mut out, root);
+		out.set_root(root_ref);
 
-	Ok(tree)
-}
-
-#[cfg(test)]
-mod test {
-	use super::*;
-
-	#[test]
-	fn basic() {
-		let s = "(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);";
-		let tree = parse(s).unwrap();
-		assert_eq!(tree.into_string(), s);
-	}
-
-	#[test]
-	fn number_names() {
-		let s = "(1:0.1,2:0.2);";
-		let tree = parse(s).unwrap();
-		assert_eq!(tree.into_string(), s);
-	}
-
-	#[test]
-	fn quoted() {
-		let s = r#"("with quotes!":0.1,"another ' one":0.2);"#;
-		parse(s).unwrap();
+		Ok(out)
 	}
 }

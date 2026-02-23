@@ -62,16 +62,16 @@ fn serialize<W: Write>(tree: &Tree, writer: &mut W) -> Result {
 	writer.write_char(';')
 }
 
-fn write_node<W: Write>(
-	node: &Node,
-	parent_edge: &Edge,
-	writer: &mut W,
-) -> Result {
+fn write_node<W: Write>(node: &Node, parent_edge: &Edge, w: &mut W) -> Result {
 	if !node.name().is_empty() {
-		write!(writer, "{}{}", node.name(), node.attributes())?;
+		if node.name().contains([' ', '\'']) {
+			write!(w, "\"{}\"{}", node.name(), node.attributes())?;
+		} else {
+			write!(w, "{}{}", node.name(), node.attributes())?;
+		}
 	}
 	if let Some(distance) = parent_edge.distance() {
-		write!(writer, ":{}{}", distance, parent_edge.attributes())?;
+		write!(w, ":{}{}", distance, parent_edge.attributes())?;
 	}
 
 	Ok(())
