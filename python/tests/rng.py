@@ -37,7 +37,6 @@ def test_bool(rng, ratio: float):
     rng.random_bool(ratio)
 
 
-@pytest.mark.skip("Panics instead of throwing an exception")
 @pytest.mark.parametrize(
     "ratio", [*random_float(1, 10**10), *random_float(-(10**10), 0)]
 )
