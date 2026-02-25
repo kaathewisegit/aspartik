@@ -1,3 +1,5 @@
+import subprocess
+import tempfile
 from typing import Literal, Optional
 
 from aspartik.data.msa import MSA
@@ -90,7 +92,7 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
             </column>
         </log>
 
-        <log id="fileLog" logEvery="10000" fileName="beast1.log" overwrite="false">
+        <log id="fileLog" logEvery="1000" fileName="{log_path}" overwrite="false">
             <posterior idref="posterior"/>
             <prior idref="prior"/>
             <likelihood idref="likelihood"/>
@@ -113,25 +115,11 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 </beast>
 """
 
-_beast1_hky = """
-    <HKYModel id="hky">
-        <frequencies>
-            <frequencyModel dataType="nucleotide">
-                <frequencies>
-                    <parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
-                </frequencies>
-            </frequencyModel>
-        </frequencies>
-        <kappa>
-            <parameter id="kappa" value="2.0" lower="0.0"/>
-        </kappa>
-    </HKYModel>
-"""
-
 
 def beast1_config(
     msa: MSA,
     *,
+    log_path: str,
     substitution_model: Literal["HKY"],
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
@@ -155,7 +143,20 @@ def beast1_config(
     substitution_model_s = None
     match substitution_model:
         case "HKY":
-            substitution_model_s = _beast1_hky
+            substitution_model_s = """
+    <HKYModel id="hky">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </HKYModel>
+"""
             operators += """
         <scaleOperator scaleFactor="0.75" weight="1">
             <parameter idref="kappa"/>
@@ -319,5 +320,22 @@ def beast1_config(
         tree_prior=tree_prior_s,
         priors=priors,
         log=log,
+        log_path=log_path,
         length=length,
     )
+
+
+def beast1_run(config: str, calculator: Literal["cpu", "gpu"], seed: int = 4):
+    with tempfile.NamedTemporaryFile(suffix=".xml", mode="w+t") as tmp:
+        tmp.write(config)
+        tmp.flush()
+
+        args = ["beast", "-seed", str(seed), "-citations_off", "-overwrite"]
+        match calculator:
+            case "cpu":
+                args.append("-beagle_CPU")
+            case "cuda":
+                args.append("-beagle_cuda")
+        args.append(tmp.name)
+
+        subprocess.run(args)

@@ -7,6 +7,7 @@ from pathlib import Path
 from string import Template
 from typing import Literal, Optional, get_args
 
+from aspartik.b3.utils.beast import beast1_config
 from aspartik.data.msa import MSA
 from aspartik.io import FastaReader
 
@@ -35,20 +36,11 @@ def run_mcmc(
 def worker(msa: MSA, length: int, kind: Kind):
     template = Template(Path("data/templates/beast.template").read_text())
 
-    taxa = [f'<taxon id="{name}"/>' for name in msa.sequence_names()]
-    sequences = []
-    for i in range(msa.num_sequences):
-        name = msa.sequence_name(i)
-        seq = str(msa.sequence(i))
-        sequences.append(
-            f'<sequence>\n\t\t\t<taxon idref="{name}"/>\n\t\t\t{seq}\n\t\t</sequence>'
-        )
-
-    config = template.substitute(
-        taxa="\n\t\t".join(taxa),
-        sequences="\n\t\t".join(sequences),
-        subtree_leap_weight=msa.num_sequences,
-        spr_weight=msa.num_sequences / 10,
+    config = beast1_config(
+        msa,
+        log_path="target/bench.beast1.log",
+        tree_prior="constant",
+        substitution_model="HKY",
         length=length,
     )
 

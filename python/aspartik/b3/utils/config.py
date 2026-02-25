@@ -20,13 +20,13 @@ from aspartik.b3.operators import (
 from aspartik.b3.parameters import Internals, Real, RealVector, Tree
 from aspartik.b3.priors import ConstantPopulation, Distribution, Yule
 from aspartik.b3.substitutions import HKY
-from aspartik.io.msa import read_msa_from_fasta
+from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
 
 def make_mcmc(
-    fasta_path: str,
+    msa: MSA,
     *,
     trace_path: str,
     substitution_model: Literal["HKY"],
@@ -36,7 +36,6 @@ def make_mcmc(
     seed: int = 4,
 ):
     rng = RNG(seed)
-    msa = read_msa_from_fasta(fasta_path)
 
     parameters, operators, priors = [], [], []
     items = {}
@@ -75,7 +74,12 @@ def make_mcmc(
             operators.append(
                 ParamScale(birth_rate, 0.75, Uniform(0, 1), rng, weight=3),
             )
-            priors.append(Yule(tree, birth_rate))
+            priors.extend(
+                [
+                    Distribution(birth_rate, LogNormal(1.0, 1.5)),
+                    Yule(tree, birth_rate),
+                ]
+            )
         case "constant":
             population_size = Real(1.0)
             items["population_size"] = population_size
@@ -83,7 +87,12 @@ def make_mcmc(
             operators.append(
                 ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
             )
-            priors.append(ConstantPopulation(tree, population_size))
+            priors.extend(
+                [
+                    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
+                    ConstantPopulation(tree, population_size),
+                ]
+            )
 
     clock = None
     clock_rate_p = None
@@ -95,10 +104,12 @@ def make_mcmc(
                 ParamScale(clock_rate_p, 0.75, Uniform(0, 1), rng, weight=3)
             )
             priors.append(Distribution(clock_rate_p, Laplace(0, 0.5)))
+            parameters.append(clock_rate_p)
             clock = Clock.Strict(clock_rate_p)
         case float(clock_rate):
             clock_rate_p = Real(clock_rate)
             items["clock_rate"] = clock_rate_p
+            parameters.append(clock_rate_p)
             clock = Clock.Strict(clock_rate_p)
     assert clock is not None
     assert clock_rate_p is not None
