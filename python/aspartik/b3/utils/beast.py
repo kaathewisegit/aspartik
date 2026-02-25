@@ -1,0 +1,323 @@
+from typing import Literal, Optional
+
+from aspartik.data.msa import MSA
+
+_beast1_default_template = """<?xml version="1.0" standalone="yes"?>
+
+<beast version="10.5.0">
+    <taxa id="taxa">
+        {taxa}
+    </taxa>
+
+    <alignment id="alignment" dataType="nucleotide">
+        {sequences}
+    </alignment>
+
+    <patterns id="patterns" from="1" strip="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <constantSize id="_starting_coalescent" units="years">
+        <populationSize>
+            <parameter id="_starting_population_size" value="100.0" lower="0.0"/>
+        </populationSize>
+    </constantSize>
+    <coalescentSimulator id="startingTree">
+        <taxa idref="taxa"/>
+        <constantSize idref="_starting_coalescent"/>
+    </coalescentSimulator>
+
+    <treeModel id="tree">
+        <coalescentTree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="tree.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="tree.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="tree.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+{tree_prior}
+
+{clock}
+
+{substitution_model}
+
+    <siteModel id="siteModel">
+        <substitutionModel>
+            <HKYModel idref="hky"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="false">
+        <partition>
+            <patterns idref="patterns"/>
+            <siteModel idref="siteModel"/>
+        </partition>
+        <treeModel idref="tree"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <operators id="operators" optimizationSchedule="log">
+{operators}
+    </operators>
+
+    <mcmc id="mcmc" chainLength="{length}" autoOptimize="false">
+        <posterior id="posterior">
+            <prior id="prior">
+                {priors}
+
+                <strictClockBranchRates idref="branchRates"/>
+            </prior>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="treeLikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+
+        <log id="screenLog" logEvery="10000">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
+
+        <log id="fileLog" logEvery="10000" fileName="beast1.log" overwrite="false">
+            <posterior idref="posterior"/>
+            <prior idref="prior"/>
+            <likelihood idref="likelihood"/>
+            <treeHeightStatistic id="tree:height">
+                <treeModel idref="tree"/>
+            </treeHeightStatistic>
+            <treeLengthStatistic id="tree:length">
+                <treeModel idref="tree"/>
+            </treeLengthStatistic>
+
+{log}
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <mcmc idref="mcmc"/>
+        </property>
+    </report>
+</beast>
+"""
+
+_beast1_hky = """
+    <HKYModel id="hky">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </HKYModel>
+"""
+
+
+def beast1_config(
+    msa: MSA,
+    *,
+    substitution_model: Literal["HKY"],
+    operator_mix: Literal["default", "classic"] = "default",
+    clock_rate: Optional[float] = None,
+    tree_prior: Literal["yule", "constant"],
+    length: int,
+):
+    operators, priors, log = "", "", ""
+
+    taxa = [f'<taxon id="{name}"/>' for name in msa.sequence_names()]
+    taxa = "\n\t\t".join(taxa)
+
+    sequences = []
+    for i in range(msa.num_sequences):
+        name = msa.sequence_name(i)
+        seq = str(msa.sequence(i))
+        sequences.append(
+            f'<sequence>\n\t\t\t<taxon idref="{name}"/>\n\t\t\t{seq}\n\t\t</sequence>'
+        )
+    sequences = "\n\t\t".join(sequences)
+
+    substitution_model_s = None
+    match substitution_model:
+        case "HKY":
+            substitution_model_s = _beast1_hky
+            operators += """
+        <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="kappa"/>
+        </scaleOperator>
+        <deltaExchange delta="0.01" weight="3">
+            <parameter idref="frequencies"/>
+        </deltaExchange>
+            """
+
+            priors += """
+                <logNormalPrior id="prior.kappa" mu="1.0" sigma="1.25" offset="0.0">
+                    <parameter idref="kappa"/>
+                </logNormalPrior>
+            """
+
+            log += """
+            <parameter idref="kappa"/>
+            <parameter idref="frequencies"/>
+            """
+
+    match operator_mix:
+        case "default":
+            operators += f"""
+        <upDownOperator scaleFactor="0.75" weight="3">
+            <up>
+                <parameter idref="tree.allInternalNodeHeights"/>
+            </up>
+            <down>
+                <parameter idref="clock_rate"/>
+            </down>
+        </upDownOperator>
+        <subtreeLeap size="1.0" weight="{msa.num_sequences}">
+            <treeModel idref="tree"/>
+        </subtreeLeap>
+        <fixedHeightSubtreePruneRegraft weight="{msa.num_sequences / 10}">
+            <treeModel idref="tree"/>
+        </fixedHeightSubtreePruneRegraft>
+            """
+
+    clock_s = None
+    match clock_rate:
+        case None:
+            operators += """
+        <scaleOperator scaleFactor="0.75" weight="3">
+            <parameter idref="clock_rate"/>
+        </scaleOperator>
+            """
+
+            priors += """
+                <laplacePrior id="prior:clock_rate" mean="0.0" scale="0.5">
+                    <parameter idref="clock_rate"/>
+                </laplacePrior>
+            """
+
+            clock_s = """
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock_rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+            """
+
+            log += """
+            <parameter idref="clock_rate"/>
+            """
+
+        case float(clock_rate):
+            clock_s = f"""
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock_rate" value="{clock_rate}" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+            """
+
+    assert clock_s is not None
+
+    tree_prior_s = None
+    match tree_prior:
+        case "constant":
+            tree_prior_s = """
+    <constantSize id="constant_population" units="years">
+        <populationSize>
+            <parameter id="population_size" value="1.0" lower="0.0"/>
+        </populationSize>
+    </constantSize>
+    <coalescentLikelihood id="coalescent">
+        <model>
+            <constantSize idref="constant_population"/>
+        </model>
+        <intervals>
+            <treeIntervals>
+                <treeModel idref="tree"/>
+            </treeIntervals>
+        </intervals>
+    </coalescentLikelihood>
+            """
+
+            operators += """
+        <scaleOperator scaleFactor="0.75" weight="3">
+            <parameter idref="population_size"/>
+        </scaleOperator>
+            """
+
+            priors += """
+                <gammaPrior id="prior:population_size" shape="0.001" scale="1000.0" offset="0.0">
+                    <parameter idref="population_size"/>
+                </gammaPrior>
+
+                <coalescentLikelihood idref="coalescent"/>
+            """
+
+            log += """
+            <parameter idref="population_size"/>
+            <coalescentLikelihood idref="coalescent"/>
+            """
+
+        case "yule":
+            tree_prior_s = """
+    <yulemodel id="yule" units="years">
+        <birthrate>
+            <parameter id="birth_rate" value="2.0" lower="0.0"/>
+        </birthrate>
+    </yulemodel>
+    <speciationLikelihood id="speciation">
+        <model>
+            <yuleModel idref="yule"/>
+        </model>
+        <speciesTree>
+            <treeModel idref="tree"/>
+        </speciesTree>
+    </speciationLikelihood>
+            """
+
+            operators += """
+        <scaleOperator scaleFactor="0.75" weight="3">
+            <parameter idref="birth_rate"/>
+        </scaleOperator>
+            """
+
+            priors += """
+                <logNormalPrior mu="1.0" sigma="1.5" offset="0.0">
+                    <parameter idref="birth_rate"/>
+                </logNormalPrior>
+                <speciationLikelihood idref="speciation"/>
+            """
+
+            log += """
+            <parameter idref="birth_rate"/>
+            <speciationLikelihood idref="speciation"/>
+            """
+
+    assert tree_prior_s is not None
+
+    return _beast1_default_template.format(
+        taxa=taxa,
+        sequences=sequences,
+        clock=clock_s,
+        substitution_model=substitution_model_s,
+        operators=operators,
+        tree_prior=tree_prior_s,
+        priors=priors,
+        log=log,
+        length=length,
+    )

@@ -31,7 +31,7 @@ def make_mcmc(
     trace_path: str,
     substitution_model: Literal["HKY"],
     operator_mix: Literal["default", "classic"] = "default",
-    clock_rate: Optional[float] = 1.0,
+    clock_rate: Optional[float] = None,
     tree_prior: Literal["yule", "constant"],
     seed: int = 4,
 ):
