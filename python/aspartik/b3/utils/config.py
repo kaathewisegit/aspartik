@@ -15,8 +15,9 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     SubtreeSlide,
     TreeScale,
+    UpDown,
 )
-from aspartik.b3.parameters import Real, RealVector, Tree
+from aspartik.b3.parameters import Internals, Real, RealVector, Tree
 from aspartik.b3.priors import ConstantPopulation, Distribution, Yule
 from aspartik.b3.substitutions import HKY
 from aspartik.io.msa import read_msa_from_fasta
@@ -43,31 +44,6 @@ def make_mcmc(
     tree = Tree(msa.sequence_names(), rng)
     items["tree"] = tree
     parameters.append(tree)
-
-    match operator_mix:
-        case "default":
-            operators.extend(
-                [
-                    SubtreeLeap(tree, Normal(0, 1), rng, weight=msa.num_sequences),
-                    FixedHeightSPR(tree, rng, weight=msa.num_sequences / 10),
-                ]
-            )
-        case "classic":
-            operators.extend(
-                [
-                    TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
-                    SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
-                    BeastNarrowExchange(tree, rng, weight=30),
-                    BeastWideExchange(tree, rng, weight=3),
-                    RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
-                    # BEAST's `UniformOperator` picks one of the parameter
-                    # dimensions moves it randomly within bounds.  Using it on
-                    # `nodeHeights` is equivalent to selecting a random node
-                    # and moving it uniformly between it's maximum and minimum
-                    # heights, which is what `NodeSlide` with `Uniform` does.
-                    NodeSlide(tree, rng, weight=30),
-                ]
-            )
 
     match substitution_model:
         case "HKY":
@@ -110,6 +86,7 @@ def make_mcmc(
             priors.append(ConstantPopulation(tree, population_size))
 
     clock = None
+    clock_rate_p = None
     match clock_rate:
         case None:
             clock_rate_p = Real(1.0)
@@ -124,6 +101,40 @@ def make_mcmc(
             items["clock_rate"] = clock_rate_p
             clock = Clock.Strict(clock_rate_p)
     assert clock is not None
+    assert clock_rate_p is not None
+
+    match operator_mix:
+        case "default":
+            operators.extend(
+                [
+                    UpDown(
+                        Internals(tree),
+                        clock_rate_p,
+                        0.75,
+                        Uniform(0, 1),
+                        rng,
+                        weight=3,
+                    ),
+                    SubtreeLeap(tree, Normal(0, 1), rng, weight=msa.num_sequences),
+                    FixedHeightSPR(tree, rng, weight=msa.num_sequences / 10),
+                ]
+            )
+        case "classic":
+            operators.extend(
+                [
+                    TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
+                    SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
+                    BeastNarrowExchange(tree, rng, weight=30),
+                    BeastWideExchange(tree, rng, weight=3),
+                    RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
+                    # BEAST's `UniformOperator` picks one of the parameter
+                    # dimensions moves it randomly within bounds.  Using it on
+                    # `nodeHeights` is equivalent to selecting a random node
+                    # and moving it uniformly between it's maximum and minimum
+                    # heights, which is what `NodeSlide` with `Uniform` does.
+                    NodeSlide(tree, rng, weight=30),
+                ]
+            )
 
     likelihood = CPU4Likelihood(
         msa=msa,
