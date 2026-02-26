@@ -67,7 +67,7 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 {operators}
     </operators>
 
-    <mcmc id="mcmc" chainLength="{length}" autoOptimize="false">
+    <mcmc id="mcmc" chainLength="{length}" autoOptimize="false" adaptation="false">
         <posterior id="posterior">
             <prior id="prior">
                 {priors}
@@ -243,7 +243,7 @@ def beast1_config(
             <parameter id="population_size" value="1.0" lower="0.0"/>
         </populationSize>
     </constantSize>
-    <coalescentLikelihood id="coalescent">
+    <coalescentLikelihood id="prior:coalescent">
         <model>
             <constantSize idref="constant_population"/>
         </model>
@@ -266,22 +266,22 @@ def beast1_config(
                     <parameter idref="population_size"/>
                 </gammaPrior>
 
-                <coalescentLikelihood idref="coalescent"/>
+                <coalescentLikelihood idref="prior:coalescent"/>
             """
 
             log += """
             <parameter idref="population_size"/>
-            <coalescentLikelihood idref="coalescent"/>
+            <coalescentLikelihood idref="prior:coalescent"/>
             """
 
         case "yule":
             tree_prior_s = """
     <yulemodel id="yule" units="years">
-        <birthrate>
+        <birthRate>
             <parameter id="birth_rate" value="2.0" lower="0.0"/>
-        </birthrate>
+        </birthRate>
     </yulemodel>
-    <speciationLikelihood id="speciation">
+    <speciationLikelihood id="prior:yule">
         <model>
             <yuleModel idref="yule"/>
         </model>
@@ -301,12 +301,12 @@ def beast1_config(
                 <logNormalPrior mu="1.0" sigma="1.5" offset="0.0">
                     <parameter idref="birth_rate"/>
                 </logNormalPrior>
-                <speciationLikelihood idref="speciation"/>
+                <speciationLikelihood idref="prior:yule"/>
             """
 
             log += """
             <parameter idref="birth_rate"/>
-            <speciationLikelihood idref="speciation"/>
+            <speciationLikelihood idref="prior:yule"/>
             """
 
     assert tree_prior_s is not None

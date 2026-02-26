@@ -74,12 +74,9 @@ def make_mcmc(
             operators.append(
                 ParamScale(birth_rate, 0.75, Uniform(0, 1), rng, weight=3),
             )
-            priors.extend(
-                [
-                    Distribution(birth_rate, LogNormal(1.0, 1.5)),
-                    Yule(tree, birth_rate),
-                ]
-            )
+            yule = Yule(tree, birth_rate)
+            items["prior:yule"] = yule
+            priors.extend([Distribution(birth_rate, LogNormal(1.0, 1.5)), yule])
         case "constant":
             population_size = Real(1.0)
             items["population_size"] = population_size
@@ -87,11 +84,10 @@ def make_mcmc(
             operators.append(
                 ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
             )
+            coalescent = ConstantPopulation(tree, population_size)
+            items["prior:coalescent"] = coalescent
             priors.extend(
-                [
-                    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
-                    ConstantPopulation(tree, population_size),
-                ]
+                [Distribution(population_size, Gamma(0.001, 1 / 1000.0)), coalescent]
             )
 
     clock = None
