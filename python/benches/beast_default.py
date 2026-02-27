@@ -3,8 +3,6 @@ import multiprocessing
 import subprocess
 import tempfile
 import time
-from pathlib import Path
-from string import Template
 from typing import Literal, Optional, get_args
 
 from aspartik.b3.utils.beast import beast1_config
@@ -34,8 +32,6 @@ def run_mcmc(
 
 
 def worker(msa: MSA, length: int, kind: Kind):
-    template = Template(Path("data/templates/beast.template").read_text())
-
     config = beast1_config(
         msa,
         log_path="target/bench.beast1.log",

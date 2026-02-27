@@ -41,5 +41,5 @@ def test_bool(rng, ratio: float):
     "ratio", [*random_float(1, 10**10), *random_float(-(10**10), 0)]
 )
 def test_bool_error(rng, ratio: float):
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception):
         rng.random_bool(ratio)

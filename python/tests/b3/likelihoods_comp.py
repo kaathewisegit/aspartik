@@ -1,4 +1,3 @@
-import pytest
 from utils.compare import compare_verify_run
 
 from aspartik.b3 import Clock

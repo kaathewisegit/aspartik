@@ -4,16 +4,14 @@ All classes here adhere to the `Callback` protocol and should be passed as
 such.
 """
 
-import json
 import time
-from collections.abc import Mapping
 from compression.zstd import ZstdCompressor
 from dataclasses import dataclass, field
 from io import BufferedWriter
-from typing import Any, Optional
+from typing import Optional
 
-from . import MCMC, Callback, Prior
-from .parameters import Real, RealVector, Tree
+from . import MCMC, Callback
+from .parameters import Tree
 
 
 class _LogWriter:
@@ -113,10 +111,8 @@ class PrintLogger(Callback):
         if self._last_time:
             # in seconds
             speed = (current_time - self._last_time) / self.every * 1_000_000
-            if speed >= 60:
-                speed = f"{speed / 60:.1f}min"
-            else:
-                speed = f"{speed:.1f}sec"
+
+            speed = f"{speed / 60:.1f}min" if speed >= 60 else f"{speed:.0f}sec"
         else:
             speed = "-"
 

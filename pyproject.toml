@@ -52,7 +52,7 @@ markers = [
 reportUnsupportedDunderAll = false
 
 [tool.ruff.lint]
-select = ["E", "I", "W", "RUF"]
+select = ["E", "I", "W", "F", "RUF"]
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]

@@ -1,5 +1,3 @@
-import pickle
-
 from aspartik.io.msa import read_msa_from_fasta
 
 
