@@ -43,3 +43,7 @@ class Likelihood(Stateful, Protocol):
         this method must return the last accepted likelihood.
         """
         ...
+
+    def num_patterns(self) -> int:
+        """Number of unique state patterns in the underlying alignment"""
+        ...

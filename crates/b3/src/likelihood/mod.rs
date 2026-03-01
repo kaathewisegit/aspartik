@@ -559,7 +559,7 @@ impl PyLikelihood {
 			Self::Cpu(l) => l.get().num_patterns(),
 			Self::Parallel(l) => l.get().num_patterns(),
 			Self::Cuda(l) => l.get().num_patterns(),
-			Self::Hetero(_l) => todo!(),
+			Self::Hetero(l) => l.get().num_patterns(),
 		}
 	}
 

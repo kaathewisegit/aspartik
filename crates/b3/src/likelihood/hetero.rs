@@ -110,7 +110,11 @@ impl PyHeteroLikelihood {
 	}
 
 	#[getter]
-	fn class_vector(&self, py: Python) -> Py<PyClassVector> {
+	pub fn class_vector(&self, py: Python) -> Py<PyClassVector> {
 		self.inner.lock().classes.clone_ref(py)
+	}
+
+	pub fn num_patterns(&self) -> usize {
+		self.inner.lock().classes.get().inner().len()
 	}
 }
