@@ -1,3 +1,11 @@
+//! Cross-crate utils
+//!
+//! Currently they mostly contain PyO3 helpers.  Perhaps it would make sense to
+//! upstream some of them.
+
+/// Returns a Python exception of `$type` with a given message
+///
+/// The rest args have the same syntax as [`format_args!`].
 #[macro_export]
 macro_rules! py_bail {
 	($type:ident, $($arg:tt)*) => {
@@ -5,6 +13,15 @@ macro_rules! py_bail {
 	}
 }
 
+/// Calls a method named `$name` on the object `$obj`
+///
+/// `$name` is interned.  If there are rest parameters, they are passed as
+/// positional arguments to [`call_method1`].  If there are dict `=>`
+/// parameters, they are inserted into a `PyDict` which is passed to
+/// [`call_method`].
+///
+/// [`call_method1`]: https://docs.rs/pyo3/latest/pyo3/struct.Py.html#method.call_method1
+/// [`call_method`]: https://docs.rs/pyo3/latest/pyo3/struct.Py.html#method.call_method
 #[macro_export]
 macro_rules! py_call_method {
 	($py:ident, $obj:expr, $name:literal) => {{
@@ -35,6 +52,7 @@ macro_rules! py_call_method {
 	}};
 }
 
+/// Implements `From<$err> for PyErr`
 #[macro_export]
 macro_rules! impl_pyerr {
 	($err: ty, $pyexc: ty) => {
@@ -46,6 +64,7 @@ macro_rules! impl_pyerr {
 	};
 }
 
+/// Aspartik-specific utility which adds Rust submodules to `sys.modules`
 #[macro_export]
 macro_rules! py_patch_module {
 	($m:ident) => {
@@ -61,6 +80,7 @@ macro_rules! py_patch_module {
 	}
 }
 
+/// A convenience wrapper around `getattr` which interns `$name`
 #[macro_export]
 macro_rules! py_get_attr {
 	($obj:expr, $name:literal) => {
@@ -68,6 +88,7 @@ macro_rules! py_get_attr {
 	};
 }
 
+/// Calls `py_get_attr` and then extracts the result into `$type`
 #[macro_export]
 macro_rules! py_extract_attr {
 	($obj:expr, $name:literal, $type:ty $(,)?) => {
@@ -76,17 +97,19 @@ macro_rules! py_extract_attr {
 	};
 }
 
+/// Returns true if `$obj` has a method named `$name`
 #[macro_export]
 macro_rules! py_has_method {
-	($obj:expr, $name:expr) => {{
+	($obj:expr, $name:literal) => {{
 		let method = $crate::py_get_attr!($obj, $name);
 		method.is_ok_and(|m| m.is_callable())
 	}};
 }
 
+/// Returns an error if `$obj` doesn't have a method named `$name`
 #[macro_export]
 macro_rules! py_check_method {
-	($obj:expr, $name:expr) => {{
+	($obj:expr, $name:literal) => {{
 		use ::pyo3::exceptions::PyTypeError;
 
 		if !$crate::py_has_method!($obj, $name) {

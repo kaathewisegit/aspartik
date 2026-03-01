@@ -370,6 +370,7 @@ impl<T> SkVec<T> {
 		}
 	}
 
+	/// Convert active items to a contiguous vector
 	pub fn to_vec(&self) -> Vec<T>
 	where
 		T: Clone,

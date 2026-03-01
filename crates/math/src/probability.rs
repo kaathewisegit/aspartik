@@ -22,6 +22,7 @@ impl<F: Float> Probability<F> {
 		}
 	}
 
+	/// Copies the inner value
 	pub fn inner(&self) -> F {
 		self.0
 	}
