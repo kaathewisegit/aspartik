@@ -212,6 +212,8 @@ pub fn calc_leaf_projection<const N: usize, F: Num + NumAssign + Copy>(
 pub fn cast_transitions<const N: usize, F>(
 	transitions: &[[[F; N]; N]],
 ) -> &[RowMatrix<F, N, N>] {
+	// SAFETY: `RowMatrix<F, N, N>` is the same as `[[F; N]; N]`, as that's
+	// its inner representation plus `repr(C)`.
 	unsafe {
 		slice::from_raw_parts(
 			transitions.as_ptr() as *const _,

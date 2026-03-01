@@ -50,9 +50,11 @@ pub struct ParallelLikelihood<const N: usize, F> {
 /// # Safety
 ///
 /// - Index must be within bounds of the `sync_ptr` allocation
-/// - No other thread must be reading or writing to the position at `index`
+/// - No other thread must be reading from or writing to the position at `index`
 unsafe fn write_to<T>(sync_ptr: SyncMutPtr<T>, index: usize, value: T) {
+	// SAFETY: `index` must be within allocation bounds per invariant
 	let ptr = unsafe { sync_ptr.get(index) };
+	// SAFETY: writes to `index` must be scoped to a single thread
 	unsafe { ptr.write(value) };
 }
 
@@ -131,6 +133,7 @@ where
 				let left = unsafe {
 					projections.get(left_idx + site).read()
 				};
+				// SAFETY: same as above
 				let right = unsafe {
 					projections.get(right_idx + site).read()
 				};

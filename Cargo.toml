@@ -64,6 +64,7 @@ branches_sharing_code = "warn"
 cast_lossless = "warn"
 default_trait_access = "warn"
 derive_partial_eq_without_eq = "warn"
+undocumented_unsafe_blocks = "warn"
 
 # String API is much nicer to work with than the formatting one
 to_string_trait_impl = "allow"

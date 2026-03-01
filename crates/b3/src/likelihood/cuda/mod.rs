@@ -207,7 +207,7 @@ impl CudaLikelihood {
 		builder.arg(&leaves_end);
 		builder.arg(&internals_start);
 
-		// TODO: safety
+		// SAFETY: TODO
 		unsafe { builder.launch(cfg) }
 			.with_context(|| anyhow!("update_all: {cfg:?}"))?;
 
@@ -235,7 +235,7 @@ impl CudaLikelihood {
 		builder.arg(&self.nodes);
 		builder.arg(&self.transitions);
 
-		// TODO: safety
+		// SAFETY: TODO
 		unsafe { builder.launch(cfg) }
 			.with_context(|| anyhow!("update_leaves: {cfg:?}"))?;
 

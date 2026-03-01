@@ -2,22 +2,22 @@ use cudarc::driver::safe::{DeviceRepr, ValidAsZeroBits};
 
 use crate::{RowMatrix, Vector};
 
-// SAFETY: Vector and RowMatrix are repr(C)
-unsafe impl<T, const N: usize> DeviceRepr for Vector<T, N> where
-	T: DeviceRepr + Copy
-{
-}
+// SAFETY: Vector is repr(C) over an array
+unsafe impl<T, const N: usize> DeviceRepr for Vector<T, N> where T: DeviceRepr {}
+// SAFETY: Matrix is repr(C) over an array of arrays
 unsafe impl<T, const N: usize, const M: usize> DeviceRepr for RowMatrix<T, N, M> where
-	T: DeviceRepr + Copy
+	T: DeviceRepr
 {
 }
+// SAFETY: see `bytemuck` `Zeroable` implementation guarantees
 unsafe impl<T, const N: usize> ValidAsZeroBits for Vector<T, N> where
-	T: ValidAsZeroBits + Copy
+	T: ValidAsZeroBits
 {
 }
+// SAFETY: see `bytemuck` `Zeroable` implementation guarantees
 unsafe impl<T, const N: usize, const M: usize> ValidAsZeroBits
 	for RowMatrix<T, N, M>
 where
-	T: ValidAsZeroBits + Copy,
+	T: ValidAsZeroBits,
 {
 }

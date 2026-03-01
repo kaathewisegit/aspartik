@@ -5,7 +5,7 @@ use super::Character;
 pub fn write_str<C: Character>(seq: &[C], s: &mut String) {
 	s.reserve(seq.len());
 
-	// SAFETY: we well only push valid ASCII to the end of `s_bytes`, so
+	// SAFETY: we will only push valid ASCII to the end of `s_bytes`, so
 	// it'll remain valid UTF-8
 	let s_bytes = unsafe { s.as_mut_vec() };
 
