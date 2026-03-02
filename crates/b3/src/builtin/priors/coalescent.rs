@@ -13,7 +13,7 @@ pub fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
 	}
 
 	// sort by height
-	nodes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+	nodes.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
 	nodes
 }
