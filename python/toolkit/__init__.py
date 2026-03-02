@@ -156,7 +156,11 @@ def clean():
 def build(args: Namespace):
     rmtree("target/wheels/", ignore_errors=True)
 
-    execute("maturin build --release")
+    if platform.system() == "Linux" and platform.libc_ver()[0] == "glibc":
+        # support glibc 2.17
+        execute("maturin build --release --compatibility manylinux2014")
+    else:
+        execute("maturin build --release")
 
     if platform.system() == "Windows":
         wheel_dir = Path("target/wheels/")
