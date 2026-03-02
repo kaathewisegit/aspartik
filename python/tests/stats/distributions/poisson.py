@@ -1,5 +1,5 @@
+import mpmath
 import pytest
-from mpmath import mp
 from utils import random_integer
 
 from math import nan
@@ -7,7 +7,7 @@ from math import nan
 from aspartik.math import is_close
 from aspartik.stats.distributions import Poisson, PoissonError
 
-mp.pds = 1000
+mpmath.mp.prec = 1000
 
 
 def test_basic():
@@ -38,9 +38,9 @@ def test_errors():
 def test_pmf(lambda_, x):
     d = Poisson(lambda_)
 
-    mp_lambda = mp.mpf(lambda_)
-    mp_x = mp.mpf(x)
-    expected = (mp_lambda**mp_x * mp.e ** (-mp_lambda)) / mp.factorial(mp_x)
+    mp_lambda = mpmath.mpf(lambda_)
+    mp_x = mpmath.mpf(x)
+    expected = (mp_lambda**mp_x * mpmath.e ** (-mp_lambda)) / mpmath.factorial(mp_x)
     expected = float(expected)
 
     assert is_close(d.pmf(x), expected, relative=1e-14)
@@ -51,9 +51,9 @@ def test_pmf(lambda_, x):
 def test_cdf(lambda_, x):
     d = Poisson(lambda_)
 
-    mp_lambda = mp.mpf(lambda_)
-    mp_x = mp.mpf(x)
-    expected = mp.gammainc(mp_x + 1, mp_lambda, regularized=True)
+    mp_lambda = mpmath.mpf(lambda_)
+    mp_x = mpmath.mpf(x)
+    expected = mpmath.gammainc(mp_x + 1, mp_lambda, regularized=True)
     expected = float(expected)
 
     assert is_close(d.cdf(x), expected, relative=1e-13)
