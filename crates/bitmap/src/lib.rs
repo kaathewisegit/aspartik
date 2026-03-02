@@ -55,6 +55,10 @@ impl Bitmap {
 	}
 
 	/// Returns `true` if the `index`th bit is 1 and `false` if it is 0
+	// `inline` because `Bitmap` is not generic and this is a separate
+	// crate, so that's a rare case where `inline` is needed.  I only
+	// realized it after seeing this method on the flamegraph.
+	#[inline]
 	pub fn at(&self, index: usize) -> bool {
 		let byte_index = index / 8;
 		let bit_value = 1 << (index % 8);
