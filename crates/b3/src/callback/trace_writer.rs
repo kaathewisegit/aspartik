@@ -128,7 +128,8 @@ impl TraceWriter {
 	}
 
 	fn call(&self, py: Python, mcmc: &Mcmc) -> Result<()> {
-		let arrays = &mut *self.arrays.lock();
+		let mut arrays_lock = self.arrays.lock();
+		let arrays = &mut *arrays_lock;
 
 		let array = get::<UInt64Builder>(arrays, "step");
 		array.append_value(mcmc.current_step() as u64);
@@ -142,8 +143,17 @@ impl TraceWriter {
 		let array = get::<Float64Builder>(arrays, "likelihood");
 		array.append_value(mcmc.likelihood_value()?);
 
+		let mut max_size = 0;
 		for (name, value) in &self.items {
-			write_value(name, value.bind(py), arrays)?;
+			let size = write_value(name, value.bind(py), arrays)?;
+			max_size = max_size.max(size);
+		}
+
+		drop(arrays_lock);
+
+		// 64MB
+		if max_size > 64_000_000 {
+			self.write_batch()?;
 		}
 
 		Ok(())
@@ -179,10 +189,13 @@ fn write_value(
 	name: &str,
 	value: &Bound<'_, PyAny>,
 	arrays: &mut Arrays,
-) -> Result<()> {
+) -> Result<usize> {
+	let size: usize;
+
 	if let Ok(real) = value.cast_exact::<PyReal>() {
 		let array = get::<Float64Builder>(arrays, name);
 		array.append_value(real.get().inner().value());
+		size = array.len() * 8;
 	} else if let Ok(real_vector) = value.cast_exact::<PyRealVector>() {
 		let array = get::<ListBuilder<Float64Builder>>(arrays, name);
 		let subarr = array.values();
@@ -190,18 +203,21 @@ fn write_value(
 			subarr.append_value(*value);
 		}
 		array.append(true);
+		size = *array.offsets_slice().last().unwrap() as usize;
 	} else if let Ok(class_vector) = value.cast_exact::<PyClassVector>() {
 		let array = get::<ListBuilder<UInt8Builder>>(arrays, name);
 		for value in class_vector.get().inner().iter() {
 			array.values().append_value(*value);
 		}
 		array.append(true);
+		size = *array.offsets_slice().last().unwrap() as usize;
 	} else if let Ok(tree) = value.cast_exact::<PyTree>() {
 		let tree = &*tree.get().inner();
 
 		let array = get::<BinaryBuilder>(arrays, name);
 		tree.dump(array)?;
 		array.append_value("");
+		size = *array.offsets_slice().last().unwrap() as usize;
 
 		let name_length = format!("{name}:length");
 		let array = get::<Float64Builder>(arrays, &name_length);
@@ -213,9 +229,12 @@ fn write_value(
 	} else if let Ok(prior) = value.extract::<PyPrior>() {
 		let array = get::<Float64Builder>(arrays, name);
 		array.append_value(prior.probability(value.py())?);
+		size = array.len() * 8;
+	} else {
+		unreachable!();
 	}
 
-	Ok(())
+	Ok(size)
 }
 
 fn init_value(
