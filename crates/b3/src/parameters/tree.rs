@@ -384,6 +384,10 @@ impl Tree {
 		self.updated_nodes.at(node.0)
 	}
 
+	pub fn is_node_height_updated(&self, node: Node) -> bool {
+		self.heights.is_changed_at(node.0)
+	}
+
 	pub fn replace_child(
 		&mut self,
 		parent: Internal,
