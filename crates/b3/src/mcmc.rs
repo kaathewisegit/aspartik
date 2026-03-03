@@ -340,11 +340,19 @@ impl Mcmc {
 				parameter.accept();
 			}
 
+			for prior in &self.priors {
+				prior.accept(py)?;
+			}
+
 			self.likelihood.accept()?;
 		} else {
 			for parameter in &self.state {
 				let parameter = &mut *parameter.as_ref();
 				parameter.reject();
+			}
+
+			for prior in &self.priors {
+				prior.reject(py)?;
 			}
 
 			self.likelihood.reject()?;
