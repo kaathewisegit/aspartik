@@ -179,6 +179,11 @@ impl<T> SkVec<T> {
 	pub fn is_changed(&self) -> bool {
 		self.metadata.iter().any(|&e| (e & 0b10) != 0)
 	}
+
+	/// Checks if the element at `index` has been edited during this epoch
+	pub fn is_changed_at(&self, index: usize) -> bool {
+		(self.metadata[index] & 0b10) != 0
+	}
 }
 
 // Trait implementations
