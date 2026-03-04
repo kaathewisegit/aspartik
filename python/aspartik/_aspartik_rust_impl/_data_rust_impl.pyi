@@ -51,6 +51,7 @@ class Phred:
     def probability_incorrect(self) -> float: ...
 
 class MSA:
+    def __init__(self, names: list[str], sequences: list[DNASeq]): ...
     @classmethod
     def from_fasta(cls, fasta: Sequence[DNARecord]) -> MSA:
         """

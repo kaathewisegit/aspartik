@@ -1,10 +1,11 @@
-use std::ops::Deref;
-
-use anyhow::Result;
+use anyhow::{Result, ensure};
 use pyo3::{prelude::*, types::PyType};
 
+use std::ops::Deref;
+
 use crate::{
-	DnaNucleotide, Msa, fasta::python::PyFastaDnaRecord,
+	DnaNucleotide, Msa,
+	fasta::{Record, python::PyFastaDnaRecord},
 	seq::python::PyDnaSeq,
 };
 
@@ -32,6 +33,16 @@ impl Deref for PyMsa {
 
 #[pymethods]
 impl PyMsa {
+	#[new]
+	fn new(names: Vec<String>, sequences: Vec<PyDnaSeq>) -> Result<Self> {
+		ensure!(names.len() == sequences.len());
+		let iter = sequences
+			.into_iter()
+			.zip(names)
+			.map(|(s, n)| Ok(Record::new(n, s.0)));
+		Msa::from_fasta(iter).map(PyMsa)
+	}
+
 	/// Constructs an MSA from a list of FASTA records
 	#[classmethod]
 	fn from_fasta(
