@@ -86,7 +86,7 @@ def fix(args: Namespace):
 
     if args.python:
         execute("ruff format")
-        execute("ruff check --fix")
+        execute("ruff check --extend-select F401 --fix")
 
     if args.website:
         with chdir("website/"):
@@ -102,7 +102,7 @@ def lint(args: Namespace):
 
     if args.python:
         execute("ruff format --check")
-        execute("ruff check")
+        execute("ruff check --extend-select F401")
 
         execute("ty check")
 

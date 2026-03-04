@@ -52,8 +52,8 @@ markers = [
 reportUnsupportedDunderAll = false
 
 [tool.ruff.lint]
-select = ["E", "I", "W", "F", "RUF"]
-ignore = ["E501"]
+select = ["E", "F", "I", "W", "RUF"]
+ignore = ["E501", "F401"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
