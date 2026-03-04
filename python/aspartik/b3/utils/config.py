@@ -28,7 +28,9 @@ from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Unif
 def make_mcmc(
     msa: MSA,
     *,
-    trace_path: str,
+    print_every: int = 10_000,
+    trace_path: Optional[str] = None,
+    trace_every: int = 1_000,
     substitution_model: Literal["HKY"],
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
@@ -112,6 +114,7 @@ def make_mcmc(
 
     match operator_mix:
         case "default":
+            num = min(msa.num_sequences, 1000)
             operators.extend(
                 [
                     UpDown(
@@ -122,8 +125,8 @@ def make_mcmc(
                         rng,
                         weight=3,
                     ),
-                    SubtreeLeap(tree, Normal(0, 1), rng, weight=msa.num_sequences),
-                    FixedHeightSPR(tree, rng, weight=msa.num_sequences / 10),
+                    SubtreeLeap(tree, Normal(0, 1), rng, weight=num),
+                    FixedHeightSPR(tree, rng, weight=num / 10),
                 ]
             )
         case "classic":
@@ -150,10 +153,11 @@ def make_mcmc(
         tree=tree,
     )
 
-    loggers = [
-        PrintLogger(every=10_000),
-        TraceWriter(items, trace_path, overwrite=True, zstd=True, every=1_000),
-    ]
+    loggers = [PrintLogger(every=print_every)]
+    if trace_path:
+        loggers.append(
+            TraceWriter(items, trace_path, overwrite=True, zstd=True, every=trace_every)
+        )
 
     mcmc = MCMC(
         state=parameters,

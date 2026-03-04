@@ -92,19 +92,7 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
             </column>
         </log>
 
-        <log id="fileLog" logEvery="1000" fileName="{log_path}" overwrite="false">
-            <posterior idref="posterior"/>
-            <prior idref="prior"/>
-            <likelihood idref="likelihood"/>
-            <treeHeightStatistic id="tree:height">
-                <treeModel idref="tree"/>
-            </treeHeightStatistic>
-            <treeLengthStatistic id="tree:length">
-                <treeModel idref="tree"/>
-            </treeLengthStatistic>
-
-{log}
-        </log>
+        {file_log}
     </mcmc>
 
     <report>
@@ -116,10 +104,31 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 """
 
 
+def _file_log(log: str, log_path: Optional[str]):
+    if not log_path:
+        return ""
+
+    return f"""
+                <log id="fileLog" logEvery="1000" fileName="{log_path}" overwrite="false">
+                <posterior idref="posterior"/>
+                <prior idref="prior"/>
+                <likelihood idref="likelihood"/>
+                <treeHeightStatistic id="tree:height">
+                    <treeModel idref="tree"/>
+                </treeHeightStatistic>
+                <treeLengthStatistic id="tree:length">
+                    <treeModel idref="tree"/>
+                </treeLengthStatistic>
+
+    {log}
+            </log>
+    """
+
+
 def beast1_config(
     msa: MSA,
     *,
-    log_path: str,
+    log_path: Optional[str] = None,
     substitution_model: Literal["HKY"],
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
@@ -179,6 +188,7 @@ def beast1_config(
 
     match operator_mix:
         case "default":
+            num = min(msa.num_sequences, 1000)
             operators += f"""
         <upDownOperator scaleFactor="0.75" weight="3">
             <up>
@@ -188,10 +198,10 @@ def beast1_config(
                 <parameter idref="clock_rate"/>
             </down>
         </upDownOperator>
-        <subtreeLeap size="1.0" weight="{msa.num_sequences}">
+        <subtreeLeap size="1.0" weight="{num}">
             <treeModel idref="tree"/>
         </subtreeLeap>
-        <fixedHeightSubtreePruneRegraft weight="{msa.num_sequences / 10}">
+        <fixedHeightSubtreePruneRegraft weight="{num / 10}">
             <treeModel idref="tree"/>
         </fixedHeightSubtreePruneRegraft>
             """
@@ -319,8 +329,7 @@ def beast1_config(
         operators=operators,
         tree_prior=tree_prior_s,
         priors=priors,
-        log=log,
-        log_path=log_path,
+        file_log=_file_log(log, log_path),
         length=length,
     )
 

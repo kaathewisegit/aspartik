@@ -2,26 +2,23 @@
 A benchmark for estimating non-calculator elements of the analysis
 """
 
-from utils.b3_config import default as default_b3_config
-
 import argparse
 import time
 
-# from aspartik.b3.utils import print_operator_timings
+from aspartik.b3.utils import print_operator_timings
+from aspartik.b3.utils.config import make_mcmc
 from aspartik.data import DNASeq
 from aspartik.data.msa import MSA
-from aspartik.rng import RNG
 
 
 def run_mcmc(num_leaves: int, length: int):
     msa = MSA([str(i) for i in range(num_leaves)], [DNASeq("A")] * num_leaves)
-    mcmc = default_b3_config(msa, RNG(4), "cpu")
+    mcmc = make_mcmc(msa, tree_prior="constant", substitution_model="HKY")
 
     start = time.perf_counter()
     mcmc.run(length)
     end = time.perf_counter()
-    # TODO: divison by zero
-    # print_operator_timings(mcmc)
+    print_operator_timings(mcmc)
 
     return (end - start) / (length / 1_000_000)
 
