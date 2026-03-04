@@ -14,7 +14,7 @@ use crate::{
 #[derive(Debug)]
 #[pyclass(name = "MSA", module = "aspartik.data.msa", frozen, eq)]
 #[repr(transparent)]
-pub struct PyMsa(Msa<DnaNucleotide>);
+pub struct PyMsa(pub Msa<DnaNucleotide>);
 
 impl PartialEq for PyMsa {
 	fn eq(&self, other: &Self) -> bool {
@@ -38,7 +38,9 @@ impl PyMsa {
 		_cls: Py<PyType>,
 		records: Vec<Py<PyFastaDnaRecord>>,
 	) -> Result<Self> {
-		let msa = Msa::from_fasta(records.into_iter())?;
+		let msa = Msa::from_fasta(
+			records.into_iter().map(|r| Ok(r.get().0.clone())),
+		)?;
 		Ok(Self(msa))
 	}
 

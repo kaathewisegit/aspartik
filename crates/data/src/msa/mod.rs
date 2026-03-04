@@ -38,10 +38,9 @@ impl<C: Character> Msa<C> {
 		})
 	}
 
-	pub fn from_fasta<I, R>(records: I) -> Result<Self>
+	pub fn from_fasta<I>(records: I) -> Result<Self>
 	where
-		I: IntoIterator<Item = R>,
-		R: AsRef<Record<C>>,
+		I: IntoIterator<Item = Result<Record<C>>>,
 	{
 		let mut num_sites = 0;
 		let mut num_sequences = 0;
@@ -50,7 +49,7 @@ impl<C: Character> Msa<C> {
 		let mut names = Vec::new();
 
 		for record in records.into_iter() {
-			let record = record.as_ref();
+			let record = record?;
 
 			if num_sites == 0 {
 				num_sites = record.sequence().len();

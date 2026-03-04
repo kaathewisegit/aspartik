@@ -2,7 +2,7 @@ import pandas as pd
 
 from typing import Literal
 
-from ...io.msa import read_msa_from_fasta
+from ...io import read_msa_from_fasta
 from .beast import beast1_config, beast1_run
 from .config import make_mcmc
 

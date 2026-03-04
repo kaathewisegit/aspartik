@@ -9,7 +9,7 @@ from aspartik.b3.likelihoods import (
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.substitutions import HKY
-from aspartik.io.msa import read_msa_from_fasta
+from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
 
 SCALES = [3, 30, 300]
