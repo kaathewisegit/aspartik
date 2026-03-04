@@ -96,39 +96,14 @@ impl Mcmc {
 	/// This yields flow control to the Rust core until the simulation is
 	/// done.  Press Ctrl+C to interrupt and stop the execution.
 	fn run(this: Py<Self>, py: Python, n: usize) -> Result<()> {
-		let self_ = this.get();
-		let end = self_.current_step() + n;
-		loop {
-			let current_step = *self_.current_step.lock();
-
-			let operator_index =
-				self_.scheduler.random_operator_index(
-					&mut self_.rng.get().inner(),
-				);
-
-			let result = self_
-				.step(py, operator_index)
-				.with_context(|| {
-					anyhow!("Failed on step {current_step}")
-				})?;
-
-			self_.finalize(py, operator_index, result)?;
-
-			Self::call_callbacks(
-				this.clone_ref(py),
-				py,
-				current_step,
-			)?;
-
-			if current_step == end {
-				break;
+		match Self::try_run(this.clone_ref(py), py, n) {
+			Ok(()) => Ok(()),
+			Err(err) => {
+				let self_ = this.get();
+				self_.finish_run(py)?;
+				Err(err)
 			}
-			*self_.current_step.lock() += 1;
 		}
-
-		self_.finish(py)?;
-
-		Ok(())
 	}
 
 	/// TODO: refine and document
@@ -142,7 +117,11 @@ impl Mcmc {
 
 		for _ in 0..length {
 			let result = self.step(py, operator_index)?;
-			self.finalize(py, operator_index, StepResult::Reject)?;
+			self.finalize_step(
+				py,
+				operator_index,
+				StepResult::Reject,
+			)?;
 			out[result.index()] += 1;
 		}
 
@@ -272,6 +251,42 @@ impl StepResult {
 }
 
 impl Mcmc {
+	fn try_run(this: Py<Self>, py: Python, n: usize) -> Result<()> {
+		let self_ = this.get();
+		let end = self_.current_step() + n;
+		loop {
+			let current_step = *self_.current_step.lock();
+
+			let operator_index =
+				self_.scheduler.random_operator_index(
+					&mut self_.rng.get().inner(),
+				);
+
+			let result = self_
+				.step(py, operator_index)
+				.with_context(|| {
+					anyhow!("Failed on step {current_step}")
+				})?;
+
+			self_.finalize_step(py, operator_index, result)?;
+
+			Self::call_callbacks(
+				this.clone_ref(py),
+				py,
+				current_step,
+			)?;
+
+			if current_step == end {
+				break;
+			}
+			*self_.current_step.lock() += 1;
+		}
+
+		self_.finish_run(py)?;
+
+		Ok(())
+	}
+
 	fn step(
 		&self,
 		py: Python,
@@ -326,7 +341,7 @@ impl Mcmc {
 		}
 	}
 
-	fn finalize(
+	fn finalize_step(
 		&self,
 		py: Python,
 		operator_index: usize,
@@ -382,7 +397,7 @@ impl Mcmc {
 		Ok(())
 	}
 
-	fn finish(&self, py: Python) -> Result<()> {
+	fn finish_run(&self, py: Python) -> Result<()> {
 		for callback in &self.callbacks {
 			callback.finish(py)?;
 		}
