@@ -109,7 +109,7 @@ def _file_log(log: str, log_path: Optional[str]):
         return ""
 
     return f"""
-                <log id="fileLog" logEvery="1000" fileName="{log_path}" overwrite="false">
+            <log id="fileLog" logEvery="1000" fileName="{log_path}">
                 <posterior idref="posterior"/>
                 <prior idref="prior"/>
                 <likelihood idref="likelihood"/>

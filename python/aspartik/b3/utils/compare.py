@@ -16,7 +16,7 @@ def assert_value_close(b3, beast, col: str, threshold: float = 0.05):
     beast_mean = beast[col].mean()
     diff = abs(b3_mean - beast_mean) / beast_mean
 
-    assert diff < threshold, col
+    assert diff < threshold, f"{col}: {b3_mean} vs {beast_mean}"
 
 
 def compare_beast1(
@@ -34,7 +34,7 @@ def compare_beast1(
         msa,
         trace_path=b3_path,
         substitution_model="HKY",
-        tree_prior="yule",
+        tree_prior=tree_prior,
     )
     b3.run(length)
 
@@ -42,7 +42,7 @@ def compare_beast1(
         msa,
         log_path=beast1_path,
         substitution_model="HKY",
-        tree_prior="yule",
+        tree_prior=tree_prior,
         length=length,
     )
     beast1_run(beast1_xml_config, "cpu")
@@ -50,5 +50,16 @@ def compare_beast1(
     b3 = burnin(pd.read_feather(b3_path))
     beast1 = burnin(pd.read_csv(beast1_path, sep="\t", skiprows=3))
 
-    for col in ["clock_rate", "kappa"]:
-        assert_value_close(b3, beast1, col)
+    columns = ["clock_rate"]
+    match model:
+        case "HKY":
+            columns.append("kappa")
+
+    match tree_prior:
+        case "yule":
+            columns.append("birth_rate")
+        case "constant":
+            columns.append("population_size")
+
+    for column_name in columns:
+        assert_value_close(b3, beast1, column_name)
