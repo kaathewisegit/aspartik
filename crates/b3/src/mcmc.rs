@@ -106,28 +106,6 @@ impl Mcmc {
 		}
 	}
 
-	/// TODO: refine and document
-	fn measure_operator(
-		&self,
-		py: Python,
-		operator_index: usize,
-		length: usize,
-	) -> Result<[usize; 5]> {
-		let mut out = [0; 5];
-
-		for _ in 0..length {
-			let result = self.step(py, operator_index)?;
-			self.finalize_step(
-				py,
-				operator_index,
-				StepResult::Reject,
-			)?;
-			out[result.index()] += 1;
-		}
-
-		Ok(out)
-	}
-
 	/// Posterior probability for the last accepted step
 	#[getter]
 	pub fn posterior(&self) -> f64 {
