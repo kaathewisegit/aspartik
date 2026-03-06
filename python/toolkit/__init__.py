@@ -146,6 +146,9 @@ def clean():
     for path in Path(".").glob("python/**/__pycache__/"):
         rmtree(path)
 
+    for path in Path(".").glob("b3-error-*.state"):
+        path.unlink()
+
     for path in map(Path, ARTIFACTS):
         if path.is_file():
             path.unlink()

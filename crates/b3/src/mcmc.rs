@@ -4,6 +4,8 @@ use pyo3::{IntoPyObjectExt, prelude::*, types::PyList};
 use rand::RngExt;
 use serde::{Deserialize, Serializer, ser::SerializeSeq};
 
+use std::{fs, path::Path};
+
 use crate::{
 	PyCallback, PyPrior,
 	likelihood::PyLikelihood,
@@ -11,7 +13,7 @@ use crate::{
 	parameters::PyParameter,
 };
 use rng::{PyRng, Rng};
-use util::time;
+use util::{seconds_since_unix, time};
 
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
@@ -101,6 +103,10 @@ impl Mcmc {
 			Err(err) => {
 				let self_ = this.get();
 				self_.finish_run(py)?;
+				self_.dump_state_to_file(format!(
+					"b3-error-{}.state",
+					seconds_since_unix(),
+				))?;
 				Err(err)
 			}
 		}
@@ -262,6 +268,12 @@ impl Mcmc {
 
 		self_.finish_run(py)?;
 
+		Ok(())
+	}
+
+	fn dump_state_to_file(&self, path: impl AsRef<Path>) -> Result<()> {
+		let state = self.dump_state()?;
+		fs::write(path, state)?;
 		Ok(())
 	}
 

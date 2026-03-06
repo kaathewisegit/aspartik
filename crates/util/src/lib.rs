@@ -3,6 +3,8 @@
 //! Currently they mostly contain PyO3 helpers.  Perhaps it would make sense to
 //! upstream some of them.
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 /// Returns a Python exception of `$type` with a given message
 ///
 /// The rest args have the same syntax as [`format_args!`].
@@ -140,4 +142,11 @@ macro_rules! time {
 
 		(__out, __time)
 	}};
+}
+
+pub fn seconds_since_unix() -> u64 {
+	SystemTime::now()
+		.duration_since(UNIX_EPOCH)
+		.expect("time before the Unix epoch")
+		.as_secs()
 }
