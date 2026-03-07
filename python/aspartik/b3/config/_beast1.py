@@ -82,17 +82,7 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
         </posterior>
         <operators idref="operators"/>
 
-        <log id="screenLog" logEvery="10000">
-            <column label="Posterior" dp="4" width="12">
-                <posterior idref="posterior"/>
-            </column>
-            <column label="Prior" dp="4" width="12">
-                <prior idref="prior"/>
-            </column>
-            <column label="Likelihood" dp="4" width="12">
-                <likelihood idref="likelihood"/>
-            </column>
-        </log>
+        {screen_log}
 
         {file_log}
     </mcmc>
@@ -106,7 +96,7 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 """
 
 
-def _file_log(log: str, log_path: Optional[str]):
+def _file_log(log: str, log_path: Optional[str]) -> str:
     if not log_path:
         return ""
 
@@ -127,14 +117,34 @@ def _file_log(log: str, log_path: Optional[str]):
     """
 
 
+def _screen_log(screen_log_every: Optional[int]) -> str:
+    if not screen_log_every:
+        return ""
+
+    return f"""
+        <log id="screenLog" logEvery="{screen_log_every}">
+        <column label="Posterior" dp="4" width="12">
+            <posterior idref="posterior"/>
+        </column>
+        <column label="Prior" dp="4" width="12">
+            <prior idref="prior"/>
+        </column>
+        <column label="Likelihood" dp="4" width="12">
+            <likelihood idref="likelihood"/>
+        </column>
+    </log>
+    """
+
+
 def beast1_config(
     msa: MSA,
     *,
-    log_path: Optional[str] = None,
     substitution_model: SubstitutionModel,
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
+    log_path: Optional[str] = None,
+    screen_log_every: int = 1000,
     length: int,
 ):
     operators, priors, log = "", "", ""
@@ -332,6 +342,7 @@ def beast1_config(
         tree_prior=tree_prior_s,
         priors=priors,
         file_log=_file_log(log, log_path),
+        screen_log=_screen_log(screen_log_every),
         length=length,
     )
 
