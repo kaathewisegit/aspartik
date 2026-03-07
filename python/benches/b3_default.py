@@ -2,7 +2,7 @@ import argparse
 import time
 from typing import Literal, Optional, get_args
 
-from aspartik.b3.utils.config import make_mcmc
+from aspartik.b3.utils.config import CalculatorKind, make_mcmc
 from aspartik.data.msa import MSA
 from aspartik.io import FastaReader
 
@@ -12,7 +12,7 @@ type Kind = Literal["cpu", "parallel", "cuda"]
 def run_mcmc(
     fasta_path: str,
     num_sequences: int,
-    kind: Kind,
+    kind: CalculatorKind,
     length: int,
 ) -> Optional[float]:
     records = list(FastaReader.from_file(fasta_path))
@@ -30,10 +30,11 @@ def run_mcmc(
     return speed
 
 
-def run_bench(msa: MSA, kind: Kind, length: int):
+def run_bench(msa: MSA, kind: CalculatorKind, length: int):
     # TODO: calculator kind
     mcmc = make_mcmc(
         msa,
+        calculator=kind,
         trace_path="target/bench.b3.trace",
         tree_prior="constant",
         substitution_model="HKY",
@@ -46,7 +47,9 @@ def parse_cli_args():
 
     parser.add_argument("fasta_path", type=str)
 
-    parser.add_argument("--kind", choices=get_args(Kind.__value__), required=True)
+    parser.add_argument(
+        "--kind", choices=get_args(CalculatorKind.__value__), required=True
+    )
     parser.add_argument("--num_sequences", type=int)
     parser.add_argument("--length", type=int, default=1_000_000)
 

@@ -2,7 +2,7 @@ from typing import Literal, Optional
 
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.callbacks import TraceWriter
-from aspartik.b3.likelihoods import CPU4Likelihood
+from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger
 from aspartik.b3.operators import (
     BeastNarrowExchange,
@@ -24,17 +24,20 @@ from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
+type CalculatorKind = Literal["cpu", "parallel", "cuda"]
+
 
 def make_mcmc(
     msa: MSA,
     *,
-    print_every: int = 10_000,
-    trace_path: Optional[str] = None,
-    trace_every: int = 1_000,
+    calculator: CalculatorKind = "cpu",
     substitution_model: Literal["HKY"],
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
     tree_prior: Literal["yule", "constant"],
+    print_every: int = 10_000,
+    trace_path: Optional[str] = None,
+    trace_every: int = 1_000,
     seed: int = 4,
 ):
     rng = RNG(seed)
@@ -146,12 +149,22 @@ def make_mcmc(
                 ]
             )
 
-    likelihood = CPU4Likelihood(
-        msa=msa,
-        substitution=sub_model,
-        clock=clock,
-        tree=tree,
-    )
+    match calculator:
+        case "cpu":
+            likelihood = CPU4Likelihood(
+                msa=msa,
+                substitution=sub_model,
+                clock=clock,
+                tree=tree,
+            )
+        case "parallel":
+            likelihood = Parallel4Likelihood(
+                msa=msa, substitution=sub_model, clock=clock, tree=tree
+            )
+        case "cuda":
+            likelihood = CUDALikelihood(
+                msa=msa, substitution=sub_model, clock=clock, tree=tree
+            )
 
     loggers = [PrintLogger(every=print_every)]
     if trace_path:

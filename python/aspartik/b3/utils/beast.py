@@ -4,6 +4,8 @@ from typing import Literal, Optional
 
 from aspartik.data.msa import MSA
 
+from .config import CalculatorKind
+
 _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 
 <beast version="10.5.0">
@@ -336,7 +338,7 @@ def beast1_config(
 
 def beast1_run(
     config: str,
-    calculator: Literal["cpu", "cuda"],
+    calculator: CalculatorKind = "cpu",
     overwrite: bool = True,
     seed: int = 4,
 ):
@@ -349,6 +351,9 @@ def beast1_run(
             args.append("-overwrite")
         match calculator:
             case "cpu":
+                args.append("-beagle_CPU")
+                args.append("-beagle_threading_off")
+            case "parallel":
                 args.append("-beagle_CPU")
             case "cuda":
                 args.append("-beagle_cuda")
