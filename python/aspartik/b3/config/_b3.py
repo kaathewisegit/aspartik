@@ -11,6 +11,7 @@ from aspartik.b3.operators import (
     FixedHeightSPR,
     NodeSlide,
     ParamScale,
+    RandomWalk,
     RootSlide,
     SubtreeLeap,
     SubtreeSlide,
@@ -18,23 +19,29 @@ from aspartik.b3.operators import (
     UpDown,
 )
 from aspartik.b3.parameters import Internals, Real, RealVector, Tree
-from aspartik.b3.priors import ConstantPopulation, Distribution, Yule
+from aspartik.b3.priors import (
+    Bound,
+    ConstantPopulation,
+    Distribution,
+    ExponentialGrowth,
+    Yule,
+)
 from aspartik.b3.substitutions import HKY
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
 
-type CalculatorKind = Literal["cpu", "parallel", "cuda"]
+from ._shared import CalculatorKind, SubstitutionModel, TreePrior
 
 
-def make_mcmc(
+def b3_config(
     msa: MSA,
     *,
     calculator: CalculatorKind = "cpu",
-    substitution_model: Literal["HKY"],
+    substitution_model: SubstitutionModel,
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
-    tree_prior: Literal["yule", "constant"],
+    tree_prior: TreePrior,
     print_every: int = 10_000,
     trace_path: Optional[str] = None,
     trace_every: int = 1_000,
@@ -94,6 +101,27 @@ def make_mcmc(
             items["prior:coalescent"] = coalescent
             priors.extend(
                 [Distribution(population_size, Gamma(0.001, 1 / 1000.0)), coalescent]
+            )
+        case "exponential":
+            population_size = Real(1.0)
+            items["population_size"] = population_size
+            growth_rate = Real(1.0)
+            items["growth_rate"] = growth_rate
+            parameters.extend([population_size, growth_rate])
+
+            operators.extend(
+                [
+                    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
+                    RandomWalk(growth_rate, window=1, rng=rng, weight=3),
+                ]
+            )
+            priors.extend(
+                [
+                    Bound(growth_rate),
+                    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
+                    Distribution(growth_rate, Laplace(0, 100)),
+                    ExponentialGrowth(tree, population_size, growth_rate),
+                ]
             )
 
     clock = None

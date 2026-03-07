@@ -3,8 +3,7 @@ import pandas as pd
 from typing import Literal
 
 from ...io import read_msa_from_fasta
-from .beast import beast1_config, beast1_run
-from .config import make_mcmc
+from ..config import b3_config, beast1_config, beast1_run
 
 
 def burnin(df, share: float = 0.5):
@@ -30,7 +29,7 @@ def compare_beast1(
     beast1_path = f"target/{name}.beast1.log"
 
     msa = read_msa_from_fasta(fasta_path)
-    b3 = make_mcmc(
+    b3 = b3_config(
         msa,
         trace_path=b3_path,
         substitution_model="HKY",

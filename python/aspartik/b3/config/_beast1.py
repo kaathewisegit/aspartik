@@ -4,7 +4,7 @@ from typing import Literal, Optional
 
 from aspartik.data.msa import MSA
 
-from .config import CalculatorKind
+from ._shared import CalculatorKind, SubstitutionModel, TreePrior
 
 _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 
@@ -131,10 +131,10 @@ def beast1_config(
     msa: MSA,
     *,
     log_path: Optional[str] = None,
-    substitution_model: Literal["HKY"],
+    substitution_model: SubstitutionModel,
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
-    tree_prior: Literal["yule", "constant"],
+    tree_prior: TreePrior,
     length: int,
 ):
     operators, priors, log = "", "", ""

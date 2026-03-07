@@ -5,15 +5,15 @@ A benchmark for estimating non-calculator elements of the analysis
 import argparse
 import time
 
+from aspartik.b3.config import b3_config
 from aspartik.b3.utils import print_operator_timings
-from aspartik.b3.utils.config import make_mcmc
 from aspartik.data import DNASeq
 from aspartik.data.msa import MSA
 
 
 def run_mcmc(num_leaves: int, length: int):
     msa = MSA([str(i) for i in range(num_leaves)], [DNASeq("A")] * num_leaves)
-    mcmc = make_mcmc(msa, tree_prior="constant", substitution_model="HKY")
+    mcmc = b3_config(msa, tree_prior="constant", substitution_model="HKY")
 
     start = time.perf_counter()
     mcmc.run(length)

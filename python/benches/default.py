@@ -2,8 +2,7 @@ import argparse
 import time
 from typing import Optional, get_args
 
-from aspartik.b3.utils.beast import beast1_config, beast1_run
-from aspartik.b3.utils.config import CalculatorKind, make_mcmc
+from aspartik.b3.config import CalculatorKind, b3_config, beast1_config, beast1_run
 from aspartik.data.msa import MSA
 from aspartik.io import FastaReader
 
@@ -40,7 +39,7 @@ def run_mcmc(
 
 
 def run_b3(msa: MSA, length: int, kind: CalculatorKind):
-    mcmc = make_mcmc(
+    mcmc = b3_config(
         msa,
         calculator=kind,
         tree_prior="constant",
