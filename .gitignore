@@ -4,8 +4,8 @@
 *.fasta
 # runtime output
 *.trees
-*.log
-tracing.log.*
+*.trace
+*.state
 
 # Python artifacts
 __pycache__/
@@ -13,7 +13,6 @@ __pycache__/
 *.pyd
 
 # Python virtual environment
-# TODO: commit the list of installed packages (i.e. maturin)
 .venv/
 
 # perf
