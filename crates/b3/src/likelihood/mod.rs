@@ -314,15 +314,15 @@ macro_rules! likelihood_methods {
 			fn reject(&self) -> Result<()> {
 				self.inner.lock().reject()
 			}
+
+			pub fn num_patterns(&self) -> usize {
+				self.inner.lock().num_patterns()
+			}
 		}
 
 		impl $type {
 			pub fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
 				self.inner.lock().pattern_likelihoods()
-			}
-
-			pub fn num_patterns(&self) -> usize {
-				self.inner.lock().num_patterns()
 			}
 		}
 	};
