@@ -42,7 +42,7 @@ def b3_config(
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
-    print_every: int = 10_000,
+    print_every: Optional[int] = 10_000,
     trace_path: Optional[str] = None,
     trace_every: int = 1_000,
     timer: bool = False,
@@ -195,7 +195,9 @@ def b3_config(
                 msa=msa, substitution=sub_model, clock=clock, tree=tree
             )
 
-    callbacks = [PrintLogger(every=print_every)]
+    callbacks = []
+    if print_every:
+        callbacks.append(PrintLogger(every=print_every))
     if trace_path:
         callbacks.append(
             TraceWriter(items, trace_path, overwrite=True, zstd=True, every=trace_every)
