@@ -334,12 +334,19 @@ def beast1_config(
     )
 
 
-def beast1_run(config: str, calculator: Literal["cpu", "gpu"], seed: int = 4):
+def beast1_run(
+    config: str,
+    calculator: Literal["cpu", "cuda"],
+    overwrite: bool = True,
+    seed: int = 4,
+):
     with tempfile.NamedTemporaryFile(suffix=".xml", mode="w+t") as tmp:
         tmp.write(config)
         tmp.flush()
 
-        args = ["beast", "-seed", str(seed), "-citations_off", "-overwrite"]
+        args = ["beast", "-seed", str(seed), "-citations_off"]
+        if overwrite:
+            args.append("-overwrite")
         match calculator:
             case "cpu":
                 args.append("-beagle_CPU")
