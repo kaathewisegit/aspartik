@@ -7,7 +7,7 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-math = { workspace = true }
+math = { workspace = true, features = ["python"] }
 util = { workspace = true }
 
 anyhow = { workspace = true }
