@@ -113,6 +113,13 @@ impl<T> SkVec<T> {
 		}
 	}
 
+	/// Like `accept`, but only for the `start..end` subslice
+	pub fn accept_slice(&mut self, start: usize, end: usize) {
+		for m in &mut self.metadata[start..end] {
+			*m &= 0b01;
+		}
+	}
+
 	/// Reject all of the changes made this epoch.  All edited items will be
 	/// dropped and the items will roll back to their old values.
 	///
@@ -120,6 +127,17 @@ impl<T> SkVec<T> {
 	/// it has to iterate over the vector to search for edited elements.
 	pub fn reject(&mut self) {
 		for m in &mut self.metadata {
+			// 00 -> 00
+			// 01 -> 01
+			// 10 -> 01
+			// 11 -> 00
+			*m = (*m ^ (*m >> 1)) & 1;
+		}
+	}
+
+	/// Like `reject`, but only for the `start..end` subslice
+	pub fn reject_slice(&mut self, start: usize, end: usize) {
+		for m in &mut self.metadata[start..end] {
 			// 00 -> 00
 			// 01 -> 01
 			// 10 -> 01

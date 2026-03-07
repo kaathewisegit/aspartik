@@ -160,15 +160,30 @@ where
 	}
 
 	fn accept(&mut self) -> Result<()> {
-		self.projections.accept();
-		self.scales.accept();
+		let num_sites = self.num_sites;
+		for offset in self.updated_edges.iter().map(|e| e * num_sites) {
+			self.projections
+				.accept_slice(offset, offset + num_sites);
+		}
+		for offset in self.updated_edges.iter().map(|e| e * num_sites) {
+			self.scales.accept_slice(offset, offset + num_sites);
+		}
+
 		self.scale_sums.accept();
+
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		self.projections.reject();
-		self.scales.reject();
+		let num_sites = self.num_sites;
+		for offset in self.updated_edges.iter().map(|e| e * num_sites) {
+			self.projections
+				.reject_slice(offset, offset + num_sites);
+		}
+		for offset in self.updated_edges.iter().map(|e| e * num_sites) {
+			self.scales.reject_slice(offset, offset + num_sites);
+		}
+
 		self.scale_sums.reject();
 
 		Ok(())
