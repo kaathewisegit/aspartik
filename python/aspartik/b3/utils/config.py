@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.callbacks import TraceWriter
+from aspartik.b3.callbacks import Timer, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood, Parallel4Likelihood
 from aspartik.b3.loggers import PrintLogger
 from aspartik.b3.operators import (
@@ -38,6 +38,7 @@ def make_mcmc(
     print_every: int = 10_000,
     trace_path: Optional[str] = None,
     trace_every: int = 1_000,
+    timer: bool = False,
     seed: int = 4,
 ):
     rng = RNG(seed)
@@ -166,18 +167,21 @@ def make_mcmc(
                 msa=msa, substitution=sub_model, clock=clock, tree=tree
             )
 
-    loggers = [PrintLogger(every=print_every)]
+    callbacks = [PrintLogger(every=print_every)]
     if trace_path:
-        loggers.append(
+        callbacks.append(
             TraceWriter(items, trace_path, overwrite=True, zstd=True, every=trace_every)
         )
+
+    if timer:
+        callbacks.append(Timer())
 
     mcmc = MCMC(
         state=parameters,
         priors=priors,
         operators=operators,
         likelihood=likelihood,
-        callbacks=loggers,
+        callbacks=callbacks,
         rng=rng,
     )
 

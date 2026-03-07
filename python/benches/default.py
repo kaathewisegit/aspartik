@@ -43,9 +43,9 @@ def run_b3(msa: MSA, length: int, kind: CalculatorKind):
     mcmc = make_mcmc(
         msa,
         calculator=kind,
-        trace_path="target/bench.b3.trace",
         tree_prior="constant",
         substitution_model="HKY",
+        trace_path="target/bench.b3.trace",
     )
     mcmc.run(length)
 
