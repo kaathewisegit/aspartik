@@ -3,24 +3,34 @@ import time
 from typing import Optional, get_args
 
 from aspartik.b3.utils.beast import beast1_config, beast1_run
-from aspartik.b3.utils.config import CalculatorKind
+from aspartik.b3.utils.config import CalculatorKind, make_mcmc
 from aspartik.data.msa import MSA
 from aspartik.io import FastaReader
 
 
 def run_mcmc(
+    toolkit: str,
     fasta_path: str,
-    num_sequences: int,
+    num_sequences: Optional[int],
     kind: CalculatorKind,
     length: int,
 ) -> Optional[float]:
     records = list(FastaReader.from_file(fasta_path))
-    if num_sequences > len(records):
-        raise Exception(f"Not enough sequences: the alignment only has {len(records)}")
-    msa = MSA.from_fasta(records[:num_sequences])
+    if num_sequences:
+        if num_sequences > len(records):
+            raise Exception(
+                f"Not enough sequences: the alignment only has {len(records)}"
+            )
+        msa = MSA.from_fasta(records[:num_sequences])
+    else:
+        msa = MSA.from_fasta(records)
 
     start_time = time.perf_counter()
-    run_bench(msa, length, kind)
+    match toolkit:
+        case "b3":
+            run_b3(msa, length, kind)
+        case "beast1":
+            run_beast1(msa, length, kind)
     end_time = time.perf_counter()
 
     duration = end_time - start_time
@@ -29,7 +39,18 @@ def run_mcmc(
     return speed
 
 
-def run_bench(msa: MSA, length: int, kind: CalculatorKind):
+def run_b3(msa: MSA, length: int, kind: CalculatorKind):
+    mcmc = make_mcmc(
+        msa,
+        calculator=kind,
+        trace_path="target/bench.b3.trace",
+        tree_prior="constant",
+        substitution_model="HKY",
+    )
+    mcmc.run(length)
+
+
+def run_beast1(msa: MSA, length: int, kind: CalculatorKind):
     config = beast1_config(
         msa,
         log_path="target/bench.beast1.log",
@@ -46,6 +67,7 @@ def parse_cli_args():
 
     parser.add_argument("fasta_path", type=str)
 
+    parser.add_argument("--toolkit", choices=("b3", "beast1"), default="b3")
     parser.add_argument(
         "--kind", choices=get_args(CalculatorKind.__value__), required=True
     )
@@ -58,7 +80,14 @@ def parse_cli_args():
 def main():
     args = parse_cli_args()
 
-    print(run_mcmc(args.fasta_path, args.num_sequences, args.kind, args.length))
+    speed = run_mcmc(
+        args.toolkit,
+        args.fasta_path,
+        args.num_sequences,
+        args.kind,
+        args.length,
+    )
+    print(f"{speed} sec/million steps")
 
 
 if __name__ == "__main__":
