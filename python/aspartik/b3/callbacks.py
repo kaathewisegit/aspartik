@@ -35,12 +35,17 @@ class Timer(Callback):
     """
 
     __start: float = field(init=False, default=0.0)
+    __start_index: int = field(init=False)
     every: int = field(init=False, default=2**32)
 
     def call(self, mcmc: MCMC) -> None:
         "Due to high `every` this method will only be called once on step 0"
 
-        self.__start = time.perf_counter()
+        if self.__start == 0.0:
+            self.__start = time.perf_counter()
+            self.__start_index = mcmc.current_step
 
-    def finish(self) -> None:
-        print("Timer:", time.perf_counter() - self.__start)
+    def finish(self, mcmc: MCMC) -> None:
+        duration = time.perf_counter() - self.__start
+        speed = duration / (mcmc.current_step - self.__start_index) * 1_000_000
+        print(f"Timer: {speed} sec/million steps ({duration} sec total)")

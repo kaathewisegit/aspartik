@@ -43,9 +43,9 @@ impl PyCallback {
 		Ok(())
 	}
 
-	pub fn finish(&self, py: Python) -> Result<()> {
+	pub fn finish(&self, py: Python, mcmc: Py<Mcmc>) -> Result<()> {
 		if py_has_method!(self.inner.bind(py), "finish") {
-			py_call_method!(py, self.inner, "finish")?;
+			py_call_method!(py, self.inner, "finish", mcmc)?;
 		}
 
 		Ok(())

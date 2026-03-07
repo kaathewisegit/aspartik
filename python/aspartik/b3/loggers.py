@@ -80,7 +80,7 @@ class TreeLogger(Callback):
         newick = self.tree.newick()
         self._writer.writeln(newick)
 
-    def finish(self):
+    def finish(self, mcmc: MCMC):
         self._writer.flush()
 
     def __getstate__(self):

@@ -159,7 +159,7 @@ impl TraceWriter {
 		Ok(())
 	}
 
-	fn finish(&self) -> Result<()> {
+	fn finish(&self, _mcmc: Py<Mcmc>) -> Result<()> {
 		self.write_batch()?;
 		self.writer.lock().finish()?;
 		Ok(())

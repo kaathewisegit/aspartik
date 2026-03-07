@@ -116,7 +116,7 @@ class Callback(Protocol):
         """
         ...
 
-    def finish(self) -> None:
+    def finish(self, mcmc: MCMC) -> None:
         """
         A method which will be called after a run ends
 

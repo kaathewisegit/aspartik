@@ -102,7 +102,7 @@ impl Mcmc {
 			Ok(()) => Ok(()),
 			Err(err) => {
 				let self_ = this.get();
-				self_.finish_run(py)?;
+				self_.finish_run(py, this.clone_ref(py))?;
 				self_.dump_state_to_file(format!(
 					"b3-error-{}.state",
 					seconds_since_unix(),
@@ -266,7 +266,7 @@ impl Mcmc {
 			*self_.current_step.lock() += 1;
 		}
 
-		self_.finish_run(py)?;
+		self_.finish_run(py, this.clone_ref(py))?;
 
 		Ok(())
 	}
@@ -387,9 +387,9 @@ impl Mcmc {
 		Ok(())
 	}
 
-	fn finish_run(&self, py: Python) -> Result<()> {
+	fn finish_run(&self, py: Python, mcmc: Py<Mcmc>) -> Result<()> {
 		for callback in &self.callbacks {
-			callback.finish(py)?;
+			callback.finish(py, mcmc.clone_ref(py))?;
 		}
 		Ok(())
 	}
