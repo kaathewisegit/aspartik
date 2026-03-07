@@ -10,6 +10,10 @@ from shutil import rmtree
 from . import doc
 
 
+def is_ci():
+    return os.environ.get("CI") is not None
+
+
 def add_langopts(parser: ArgumentParser):
     parser.add_argument("--rust", action="store_true", help="run Rust commands")
     parser.add_argument("--python", action="store_true", help="run Python commands")
@@ -121,7 +125,9 @@ def test(args: Namespace):
 
 def run():
     execute("uv run --no-sync python/examples/apes.py")
-    execute("uv run --no-sync python/examples/influenza.py 20_000")
+
+    influenza_len = 100 if is_ci() else 20_000
+    execute(f"uv run --no-sync python/examples/influenza.py {influenza_len}")
 
 
 ARTIFACTS = [
