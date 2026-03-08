@@ -53,10 +53,9 @@ where
 		let num_sites = self.num_sites;
 		let num_leaves = self.num_leaves;
 
-		for i in 0..leaves_end {
-			let transition = &transitions[i];
-
-			let leaf = nodes[i];
+		for (transition, leaf) in
+			transitions.iter().zip(nodes).take(leaves_end)
+		{
 			let leaf_idx = leaf * num_sites;
 
 			for site in 0..num_sites {
@@ -68,13 +67,14 @@ where
 			}
 		}
 
-		for i in leaves_end..nodes.len() - 1 {
-			let transition = transitions[i];
-			let node = nodes[i];
-
+		// for i in leaves_end..nodes.len() - 1 {
+		for ((node, transition), (left_edge, right_edge)) in nodes
+			.iter()
+			.zip(transitions)
+			.skip(leaves_end)
+			.zip(children)
+		{
 			let node_idx = node * num_sites;
-
-			let (left_edge, right_edge) = children[i - leaves_end];
 
 			let left_idx = left_edge * num_sites;
 			let right_idx = right_edge * num_sites;
@@ -84,7 +84,7 @@ where
 				let right = self.projections[right_idx + site];
 
 				let likelihood = left * right;
-				let mut projection = transition * likelihood;
+				let mut projection = *transition * likelihood;
 
 				let should_scale =
 					if projection < self.scale_threshold {
