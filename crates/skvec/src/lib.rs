@@ -45,8 +45,6 @@
 //! assert_eq!(v, [10, 2, 30]);
 //! ```
 
-#![forbid(unsafe_code)]
-
 mod debug;
 mod eq;
 
@@ -81,19 +79,40 @@ pub struct SkVec<T> {
 
 // Memoization-related methods
 impl<T> SkVec<T> {
-	fn offset(&self, i: usize) -> usize {
-		usize::from(self.metadata[i] & 0b1)
+	/// Returns the offset, which is always 0 or 1
+	///
+	/// # Safety
+	///
+	/// `i` must be less than the length of `self`.
+	unsafe fn offset(&self, i: usize) -> usize {
+		// SAFETY: `i < self.len()` invariant
+		let m = unsafe { self.metadata.get_unchecked(i) } & 0b1;
+		usize::from(m)
 	}
 
 	/// Returns the currently active item at index `i`.
-	fn active_inner(&self, i: usize) -> &T {
-		&self.inner[i * 2 + self.offset(i)]
+	///
+	/// # Safety
+	///
+	/// `i` must be less than the length of `self`.
+	pub unsafe fn get_unchecked(&self, i: usize) -> &T {
+		// SAFETY: `i < self.len()` invariant
+		let idx = i * 2 + unsafe { self.offset(i) };
+		// SAFETY: `i < self.len()`, so `i * 2 + 1` is less than
+		// `self.len() * 2`, the length of `inner`
+		unsafe { self.inner.get_unchecked(idx) }
 	}
 
 	/// Mutable version of [`active_inner`][SkVec::active_inner].
-	fn active_inner_mut(&mut self, i: usize) -> &mut T {
-		let offset = self.offset(i);
-		&mut self.inner[i * 2 + offset]
+	///
+	/// # Safety
+	///
+	/// `i` must be less than the length of `self`.
+	pub unsafe fn get_unchecked_mut(&mut self, i: usize) -> &mut T {
+		// SAFETY: `i < self.len()` invariant
+		let idx = i * 2 + unsafe { self.offset(i) };
+		// SAFETY: see `active_inner`
+		unsafe { self.inner.get_unchecked_mut(idx) }
 	}
 
 	fn is_edited(&self, i: usize) -> bool {
@@ -146,20 +165,34 @@ impl<T> SkVec<T> {
 		}
 	}
 
-	/// Sets the item at `index` to `value`.  All of the subsequent index
-	/// operations (via [`SkVec::index`] or the `[]` operator) will return
-	/// the updated item which equals value.
-	pub fn set(&mut self, index: usize, value: T) {
+	/// Version of `set` without bounds checking
+	///
+	/// # Safety
+	///
+	/// `index` must be less than the length of `self`.
+	pub unsafe fn set_unchecked(&mut self, index: usize, value: T) {
 		// - If edited is 0, we set it to 1 and flip offset
 		// - If edited is 1, we keep it and keep the offset
 		// 00 -> 11
 		// 01 -> 10
 		// 10 -> 10
 		// 11 -> 11
-		let m = &mut self.metadata[index];
+		// SAFETY: `index < self.len()` invariant
+		let m = unsafe { self.metadata.get_unchecked_mut(index) };
 		*m = ((*m & 0b01) ^ !(*m >> 1)) & 0b11;
 
-		*self.active_inner_mut(index) = value;
+		// SAFETY: `index < self.len()` invariant
+		let item = unsafe { self.get_unchecked_mut(index) };
+		*item = value;
+	}
+
+	/// Sets the item at `index` to `value`.  All of the subsequent index
+	/// operations (via [`SkVec::index`] or the `[]` operator) will return
+	/// the updated item which equals value.
+	pub fn set(&mut self, index: usize, value: T) {
+		assert!(index < self.len());
+		// SAFETY: invariant checked above
+		unsafe { self.set_unchecked(index, value) }
 	}
 
 	/// Roll back the item at `index`.
@@ -211,22 +244,9 @@ impl<T> Index<usize> for SkVec<T> {
 	type Output = T;
 
 	fn index(&self, index: usize) -> &T {
-		// SAFETY:
-		//
-		// - When an element is added to the vector for the first time,
-		//   it's initialized and the mask points at it.
-		//
-		// - When an element is set, mask is moved to point to the
-		//   item.
-		//
-		// - During `accept` and `reject` the invariant of `mask`
-		//   pointing to the initialized items should be preserved.
-		//
-		// All of that means that this is sound, as long as mutating
-		// methods, constructors, `accept`, `reject`, `set`, and in
-		// general all of the methods which mutate the vector are sound
-		// and uphold the invariants.
-		self.active_inner(index)
+		assert!(index < self.len());
+		// SAFETY: the invariant is checked above
+		unsafe { self.get_unchecked(index) }
 	}
 }
 
