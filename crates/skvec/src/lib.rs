@@ -195,34 +195,6 @@ impl<T> SkVec<T> {
 		unsafe { self.set_unchecked(index, value) }
 	}
 
-	/// Roll back the item at `index`.
-	///
-	/// - If the item was edited, this will drop the edited item if needed
-	///   and roll back to the old one.  It will not be affected by
-	///   subsequent calls to [`accept`][`SkVec::accept`] or
-	///   [`reject`][`SkVec::reject`].
-	///
-	/// - If the item hasn't been edited, this is a no-op.
-	///
-	/// Essentially, this is an item-local version of `reject`.
-	pub fn reject_element(&mut self, index: usize) {
-		if self.is_edited(index) {
-			self.metadata[index] &= 0b01; // set edited to false
-			self.metadata[index] ^= 0b01; // flip the pointer
-		}
-	}
-
-	/// If the item at `index` has been edited, accept it.
-	///
-	/// This function acts independently of the `accept` and `reject`
-	/// methods.  A subsequent call to either of those won't change the
-	/// element or status of the accepted item.
-	///
-	/// Essentially, this is an item-local version of `accept`.
-	pub fn accept_element(&mut self, index: usize) {
-		self.metadata[index] &= 0b01;
-	}
-
 	/// Returns `true` if at least a single element has been changed
 	///
 	/// This only accounts for `set` calls, not values.  So, if an element
