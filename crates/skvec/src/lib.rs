@@ -150,13 +150,14 @@ impl<T> SkVec<T> {
 	/// operations (via [`SkVec::index`] or the `[]` operator) will return
 	/// the updated item which equals value.
 	pub fn set(&mut self, index: usize, value: T) {
-		if !self.is_edited(index) {
-			// The element was unedited, so the item is being
-			// written for the first time during this epoch.
-
-			self.metadata[index] ^= 0b01; // flip the pointer
-			self.metadata[index] |= 0b10; // set edited to true
-		}
+		// - If edited is 0, we set it to 1 and flip offset
+		// - If edited is 1, we keep it and keep the offset
+		// 00 -> 11
+		// 01 -> 10
+		// 10 -> 10
+		// 11 -> 11
+		let m = &mut self.metadata[index];
+		*m = ((*m & 0b01) ^ !(*m >> 1)) & 0b11;
 
 		*self.active_inner_mut(index) = value;
 	}
