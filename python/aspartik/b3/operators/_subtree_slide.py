@@ -74,6 +74,8 @@ class SubtreeSlide(Operator):
                 # topological changes
 
                 destinations = intersections(tree, sibling, new_height)
+                if len(destinations) == 0:
+                    return Proposal.Reject()
                 random_idx = rng.random_int(0, len(destinations))
                 new_child = destinations[random_idx]
                 new_parent = tree.parent_of(new_child)
