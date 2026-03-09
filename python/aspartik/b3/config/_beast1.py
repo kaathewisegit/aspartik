@@ -1,5 +1,6 @@
 import subprocess
 import tempfile
+from collections.abc import Sequence
 from typing import Literal, Optional
 
 from aspartik.data.msa import MSA
@@ -139,6 +140,7 @@ def _screen_log(screen_log_every: Optional[int]) -> str:
 def beast1_config(
     msa: MSA,
     *,
+    heights: Optional[Sequence] = None,
     substitution_model: SubstitutionModel,
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
@@ -149,7 +151,13 @@ def beast1_config(
 ):
     operators, priors, log = "", "", ""
 
-    taxa = [f'<taxon id="{name}"/>' for name in msa.sequence_names()]
+    if heights:
+        taxa = [
+            f'<taxon id="{name}">\n\t\t<date value="{height}" direction="backwards" units="years"/>\n\t</taxon>'
+            for name, height in zip(msa.sequence_names(), heights)
+        ]
+    else:
+        taxa = [f'<taxon id="{name}"/>' for name in msa.sequence_names()]
     taxa = "\n\t\t".join(taxa)
 
     sequences = []

@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Literal, Optional
 
 from aspartik.b3 import MCMC, Clock
@@ -37,6 +38,7 @@ from ._shared import CalculatorKind, SubstitutionModel, TreePrior
 def b3_config(
     msa: MSA,
     *,
+    heights: Optional[Sequence] = None,
     calculator: CalculatorKind = "cpu",
     substitution_model: SubstitutionModel,
     operator_mix: Literal["default", "classic"] = "default",
@@ -56,6 +58,12 @@ def b3_config(
     tree = Tree(msa.sequence_names(), rng)
     items["tree"] = tree
     parameters.append(tree)
+
+    if heights:
+        for leaf, height in zip(tree.leaves(), heights):
+            tree.set_height(leaf, height)
+        tree.set_random_heights(0.3, rng)
+        tree.accept()
 
     match substitution_model:
         case "HKY":
