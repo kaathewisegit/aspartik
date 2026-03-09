@@ -304,6 +304,54 @@ def beast1_config(
             <coalescentLikelihood idref="prior:coalescent"/>
             """
 
+        case "exponential":
+            tree_prior_s = """
+    <exponentialGrowth id="exponential_growth" units="years">
+        <populationSize>
+            <parameter id="population_size" value="1.0" lower="0.0" />
+        </populationSize>
+        <growthRate>
+            <parameter id="growth_rate" value="1.0" />
+        </growthRate>
+    </exponentialGrowth>
+    <coalescentLikelihood id="prior:coalescent">
+        <model>
+            <exponentialGrowth idref="exponential_growth"/>
+        </model>
+        <intervals>
+            <treeIntervals>
+                <treeModel idref="tree"/>
+            </treeIntervals>
+        </intervals>
+    </coalescentLikelihood>
+            """
+
+            operators += """
+        <scaleOperator scaleFactor="0.75" weight="3">
+            <parameter idref="population_size"/>
+        </scaleOperator>
+		<randomWalkOperator windowSize="1.0" weight="3">
+			<parameter idref="growth_rate"/>
+		</randomWalkOperator>
+            """
+
+            priors += """
+                <gammaPrior id="prior:population_size" shape="0.001" scale="1000.0" offset="0.0">
+                    <parameter idref="population_size"/>
+                </gammaPrior>
+				<laplacePrior mean="0" scale="100">
+					<parameter idref="growth_rate"/>
+				</laplacePrior>
+
+                <coalescentLikelihood idref="prior:coalescent"/>
+            """
+
+            log += """
+            <parameter idref="population_size"/>
+            <parameter idref="growth_rate"/>
+            <coalescentLikelihood idref="prior:coalescent"/>
+            """
+
         case "yule":
             tree_prior_s = """
     <yulemodel id="yule" units="years">
