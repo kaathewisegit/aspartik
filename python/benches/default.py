@@ -52,9 +52,10 @@ def run_b3(msa: MSA, length: int, kind: CalculatorKind):
 def run_beast1(msa: MSA, length: int, kind: CalculatorKind):
     config = beast1_config(
         msa,
-        log_path="target/bench.beast1.log",
         tree_prior="constant",
         substitution_model="HKY",
+        log_path="target/bench.beast1.log",
+        tree_log_path="target/bench.beast1.trees",
         length=length,
     )
 

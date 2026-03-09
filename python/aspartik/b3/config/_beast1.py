@@ -86,6 +86,8 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
         {screen_log}
 
         {file_log}
+
+        {tree_log}
     </mcmc>
 
     <report>
@@ -124,17 +126,28 @@ def _screen_log(screen_log_every: Optional[int]) -> str:
 
     return f"""
         <log id="screenLog" logEvery="{screen_log_every}">
-        <column label="Posterior" dp="4" width="12">
-            <posterior idref="posterior"/>
-        </column>
-        <column label="Prior" dp="4" width="12">
-            <prior idref="prior"/>
-        </column>
-        <column label="Likelihood" dp="4" width="12">
-            <likelihood idref="likelihood"/>
-        </column>
-    </log>
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
     """
+
+
+def _tree_log(tree_log_path: Optional[str], tree_log_every: int) -> str:
+    if not tree_log_path:
+        return ""
+
+    return f"""
+        <logTree id="treeFileLog" logEvery="{tree_log_every}" fileName="{tree_log_path}">
+            <treeModel idref="tree"/>
+        </logTree>
+"""
 
 
 def beast1_config(
@@ -146,6 +159,8 @@ def beast1_config(
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
     log_path: Optional[str] = None,
+    tree_log_path: Optional[str] = None,
+    tree_log_every: int = 1_000,
     screen_log_every: Optional[int] = 1_000,
     length: int,
 ):
@@ -399,6 +414,7 @@ def beast1_config(
         priors=priors,
         file_log=_file_log(log, log_path),
         screen_log=_screen_log(screen_log_every),
+        tree_log=_tree_log(tree_log_path, tree_log_every),
         length=length,
     )
 
