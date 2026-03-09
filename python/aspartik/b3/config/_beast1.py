@@ -144,7 +144,7 @@ def beast1_config(
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
     log_path: Optional[str] = None,
-    screen_log_every: int = 1000,
+    screen_log_every: Optional[int] = 1_000,
     length: int,
 ):
     operators, priors, log = "", "", ""

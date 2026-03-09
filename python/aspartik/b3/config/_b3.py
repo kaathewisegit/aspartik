@@ -42,7 +42,7 @@ def b3_config(
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
-    print_every: Optional[int] = 10_000,
+    print_every: Optional[int] = 1_000,
     trace_path: Optional[str] = None,
     trace_every: int = 1_000,
     timer: bool = False,
