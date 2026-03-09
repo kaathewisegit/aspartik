@@ -10,7 +10,7 @@ use std::{collections::HashMap, fmt::Debug, slice};
 use crate::{
 	Transitions,
 	clock::PyClock,
-	parameters::PyTree,
+	parameters::{Parameter, PyTree},
 	substitution::{PySubstitution4, SubstitutionModel},
 };
 use data::{DnaNucleotide, Msa, PyMsa, seq::Character};
@@ -159,13 +159,14 @@ where
 	fn propose(&mut self) -> Result<()> {
 		let tree = &mut self.tree.get().inner();
 		self.transitions.update(tree)?;
-		let (nodes, leaves_end) = tree.nodes_to_update();
 
 		// no tree update, return the cache
-		if nodes.is_empty() {
+		if !tree.is_changed() {
 			self.launched_update = false;
 			return Ok(());
 		}
+
+		let (nodes, leaves_end) = tree.nodes_to_update();
 
 		let (nodes, children) = tree.to_lists(&nodes);
 
