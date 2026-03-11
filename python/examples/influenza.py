@@ -7,7 +7,7 @@ tutorial][l].
 
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.callbacks import TraceWriter
-from aspartik.b3.likelihoods import Parallel4Likelihood
+from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -80,12 +80,11 @@ def make_mcmc(fasta_path: str):
         DeltaExchange(frequencies, 0.01, rng, weight=3),
     ]
 
-    likelihood = Parallel4Likelihood(
+    likelihood = CPU4Likelihood(
         msa=msa,
         substitution=HKY(frequencies, kappa),
         clock=Clock.Strict(clock_rate),
         tree=tree,
-        num_internal_threads=3,
     )
 
     loggers = [

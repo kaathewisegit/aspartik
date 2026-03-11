@@ -9,7 +9,7 @@ from datetime import datetime
 
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.callbacks import Timer, TraceWriter
-from aspartik.b3.likelihoods import CUDALikelihood, Parallel4Likelihood
+from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood
 from aspartik.b3.loggers import PrintLogger, TreeLogger
 from aspartik.b3.operators import (
     FixedHeightSPR,
@@ -89,13 +89,11 @@ def make_mcmc(fasta_path: str):
         )
     except Exception as e:
         print(f"failed to create CUDALikelihood: {e}")
-        likelihood = Parallel4Likelihood(
+        likelihood = CPU4Likelihood(
             msa=msa,
             substitution=HKY(frequencies, kappa),
             clock=Clock.Strict(clock_rate),
             tree=tree,
-            num_internal_threads=3,
-            num_leaf_threads=20,
         )
 
     loggers = [

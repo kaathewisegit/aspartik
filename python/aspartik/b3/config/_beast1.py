@@ -435,9 +435,6 @@ def beast1_run(
         match calculator:
             case "cpu":
                 args.append("-beagle_CPU")
-                args.append("-beagle_threading_off")
-            case "parallel":
-                args.append("-beagle_CPU")
             case "cuda":
                 args.append("-beagle_cuda")
         args.append(tmp.name)

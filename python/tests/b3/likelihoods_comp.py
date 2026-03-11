@@ -5,7 +5,6 @@ from aspartik.b3.likelihoods import (
     CPU4Likelihood,
     CUDALikelihood,
     HeteroLikelihood,
-    Parallel4Likelihood,
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.substitutions import HKY
@@ -36,18 +35,6 @@ def test_compare_likelihood():
         )
         for scale in SCALES
     ]
-    parallel_calculators = [
-        Parallel4Likelihood(
-            msa=msa,
-            substitution=HKY(frequencies, kappa),
-            clock=Clock.Strict(clock_rate),
-            tree=tree,
-            num_leaf_threads=5,
-            num_internal_threads=2,
-            scale_ln=scale,
-        )
-        for scale in SCALES
-    ]
     hetero = HeteroLikelihood(
         likelihoods=[
             CPU4Likelihood(
@@ -68,7 +55,7 @@ def test_compare_likelihood():
     except Exception:
         cuda_calculator = None
 
-    calculators = [*cpu_calculators, *parallel_calculators, hetero]
+    calculators = [*cpu_calculators, hetero]
     if cuda_calculator:
         calculators.insert(0, cuda_calculator)
 

@@ -6,7 +6,7 @@ from aspartik.io import read_msa_from_fasta
 APES_MSA = read_msa_from_fasta("data/alignments/apes.fasta")
 
 
-@pytest.mark.parametrize("calculator", ["cpu", "parallel"])
+@pytest.mark.parametrize("calculator", ["cpu"])
 @pytest.mark.parametrize("substitution_model", ["HKY"])
 @pytest.mark.parametrize("operator_mix", ["classic", "default"])
 @pytest.mark.parametrize("clock_rate", [None, 1.0])

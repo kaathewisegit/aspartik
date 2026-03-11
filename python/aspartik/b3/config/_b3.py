@@ -3,7 +3,7 @@ from typing import Literal, Optional
 
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.callbacks import Timer, TraceWriter
-from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood, Parallel4Likelihood
+from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood
 from aspartik.b3.loggers import PrintLogger
 from aspartik.b3.operators import (
     BeastNarrowExchange,
@@ -189,13 +189,6 @@ def b3_config(
     match calculator:
         case "cpu":
             likelihood = CPU4Likelihood(
-                msa=msa,
-                substitution=sub_model,
-                clock=clock,
-                tree=tree,
-            )
-        case "parallel":
-            likelihood = Parallel4Likelihood(
                 msa=msa, substitution=sub_model, clock=clock, tree=tree
             )
         case "cuda":

@@ -4,7 +4,7 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use super::{PyCpu4Likelihood, PyLikelihood, PyParallel4Likelihood};
+use super::{PyCpu4Likelihood, PyLikelihood};
 use crate::{likelihood, parameters::PyClassVector};
 
 pub struct HeteroLikelihood {
