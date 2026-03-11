@@ -63,7 +63,7 @@ pub struct CudaLikelihood {
 	scales: CudaSlice<u8>,
 	scales_backup: CudaSlice<u8>,
 	scale_sums: CudaSlice<u32>,
-	scale_sums_backup: Vec<u32>,
+	scale_sums_backup: CudaSlice<u32>,
 
 	/// Total number of sites
 	num_sites: u32,
@@ -147,7 +147,7 @@ impl Calculator<4, f64> for CudaLikelihood {
 			return Ok(());
 		}
 
-		self.stream.memcpy_dtoh(
+		self.stream.memcpy_dtod(
 			&self.scale_sums,
 			&mut self.scale_sums_backup,
 		)?;
@@ -163,7 +163,7 @@ impl Calculator<4, f64> for CudaLikelihood {
 			return Ok(());
 		}
 
-		self.stream.memcpy_htod(
+		self.stream.memcpy_dtod(
 			&self.scale_sums_backup,
 			&mut self.scale_sums,
 		)?;
@@ -376,7 +376,7 @@ impl CudaLikelihood {
 		let scales_backup =
 			stream.alloc_zeros(num_nodes * num_sites)?;
 		let scale_sums = stream.alloc_zeros(num_sites)?;
-		let scale_sums_backup = vec![0; num_sites];
+		let scale_sums_backup = stream.alloc_zeros(num_sites)?;
 
 		let opts = CompileOptions {
 			include_paths: vec![
