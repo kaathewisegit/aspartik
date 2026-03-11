@@ -7,7 +7,6 @@ use std::{
 };
 
 use super::Calculator;
-use skvec::{SkVec, skvec};
 
 pub struct CpuLikelihood<const N: usize, F> {
 	num_patterns: usize,
@@ -23,7 +22,8 @@ pub struct CpuLikelihood<const N: usize, F> {
 	likelihoods: Vec<f64>,
 
 	scales: Vec<bool>,
-	scale_sums: SkVec<u32>,
+	scale_sums: Vec<u32>,
+	scale_sums_backup: Vec<u32>,
 
 	/// Scaling threshold on logarithmic scale
 	scale_ln: u32,
@@ -31,23 +31,6 @@ pub struct CpuLikelihood<const N: usize, F> {
 	scale_threshold: F,
 	/// `e^scale_ln`
 	scale_mult: F,
-}
-
-// TODO: remove bounds checking
-macro_rules! add_scale_sum {
-	($self:ident, $pattern:expr) => {
-		let old = $self.scale_sums[$pattern];
-		let new = old + $self.scale_ln;
-		$self.scale_sums.set($pattern, new);
-	};
-}
-
-macro_rules! sub_scale_sum {
-	($self:ident, $pattern:expr) => {
-		let old = $self.scale_sums[$pattern];
-		let new = old - $self.scale_ln;
-		$self.scale_sums.set($pattern, new);
-	};
 }
 
 impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
@@ -163,9 +146,11 @@ impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
 				}
 				if should_scale != *old_scale {
 					if should_scale {
-						add_scale_sum!(self, pattern);
+						self.scale_sums[pattern] +=
+							self.scale_ln;
 					} else {
-						sub_scale_sum!(self, pattern);
+						self.scale_sums[pattern] -=
+							self.scale_ln;
 					}
 				}
 				*new_scale = should_scale;
@@ -209,14 +194,14 @@ impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
 
 	fn accept(&mut self) -> Result<()> {
 		self.selectors_backup.copy_from_slice(&self.selectors);
-		self.scale_sums.accept();
+		self.scale_sums_backup.copy_from_slice(&self.scale_sums);
 
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
 		self.selectors.copy_from_slice(&self.selectors_backup);
-		self.scale_sums.reject();
+		self.scale_sums.copy_from_slice(&self.scale_sums_backup);
 
 		Ok(())
 	}
@@ -260,7 +245,7 @@ impl<const N: usize, F> CpuLikelihood<N, F> {
 		let scales_old = &mut self.scales[range];
 		for (pattern, scale) in scales_old.iter().enumerate() {
 			if *scale {
-				sub_scale_sum!(self, pattern);
+				self.scale_sums[pattern] -= self.scale_ln;
 			}
 		}
 
@@ -350,7 +335,7 @@ impl CpuLikelihood<4, f64> {
 		let projections =
 			vec![Default::default(); num_nodes * num_patterns * 2];
 		let scales = vec![false; num_nodes * num_patterns * 2];
-		let scale_sums = skvec![0; num_patterns];
+		let scale_sums = vec![0; num_patterns];
 
 		let scale_ln_f64: f64 = scale_ln.into();
 		let scale_mult = scale_ln_f64.exp();
@@ -369,6 +354,7 @@ impl CpuLikelihood<4, f64> {
 			likelihoods: vec![f64::NAN; num_patterns],
 
 			scales,
+			scale_sums_backup: scale_sums.clone(),
 			scale_sums,
 
 			scale_ln,
