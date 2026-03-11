@@ -27,10 +27,27 @@ pub struct CpuLikelihood<const N: usize, F> {
 
 	/// Scaling threshold on logarithmic scale
 	scale_ln: u32,
-	/// `e^{-scale_ln}`
+	/// `e^(-scale_ln)`
 	scale_threshold: F,
-	/// `e^{scale_ln}`
+	/// `e^scale_ln`
 	scale_mult: F,
+}
+
+// TODO: remove bounds checking
+macro_rules! add_scale_sum {
+	($self:ident, $pattern:expr) => {
+		let old = $self.scale_sums[$pattern];
+		let new = old + $self.scale_ln;
+		$self.scale_sums.set($pattern, new);
+	};
+}
+
+macro_rules! sub_scale_sum {
+	($self:ident, $pattern:expr) => {
+		let old = $self.scale_sums[$pattern];
+		let new = old - $self.scale_ln;
+		$self.scale_sums.set($pattern, new);
+	};
 }
 
 impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
@@ -70,16 +87,17 @@ impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
 
 		for ((node, transition), (left_edge, right_edge)) in nodes
 			.iter()
+			.copied()
 			.zip(transitions)
 			.skip(leaves_end)
 			.zip(children)
 		{
-			self.selectors[*node] ^= 1;
+			self.selectors[node] ^= 1;
 
 			// SAFETY: TODO
 			let node_projections = unsafe {
 				from_raw_parts_mut(
-					self.offset_ptr(*node),
+					self.offset_ptr(node),
 					num_patterns,
 				)
 			};
@@ -99,10 +117,36 @@ impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
 				)
 			};
 
-			for ((left, right), node) in left_projections
+			// SAFETY: TODO
+			let new_scales = unsafe {
+				from_raw_parts_mut(
+					self.scales
+						.as_mut_ptr()
+						.add(self.offset(node)),
+					num_patterns,
+				)
+			};
+			// SAFETY: TODO
+			let old_scales = unsafe {
+				from_raw_parts(
+					self.scales
+						.as_mut_ptr()
+						.add(self.offset_old(node)),
+					num_patterns,
+				)
+			};
+
+			let scales_iter = new_scales.iter_mut().zip(old_scales);
+
+			for (
+				pattern,
+				(((left, right), node), (new_scale, old_scale)),
+			) in left_projections
 				.iter()
 				.zip(right_projections)
 				.zip(node_projections)
+				.zip(scales_iter)
+				.enumerate()
 			{
 				let prod = hadamard(left, right);
 				let mut projection = [0.0; N];
@@ -112,13 +156,25 @@ impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
 						dot(&prod, &transition[i]);
 				}
 
-				*node = projection;
+				let should_scale =
+					lt(&projection, self.scale_threshold);
+				if should_scale {
+					mul(&mut projection, self.scale_mult);
+				}
+				if should_scale != *old_scale {
+					if should_scale {
+						add_scale_sum!(self, pattern);
+					} else {
+						sub_scale_sum!(self, pattern);
+					}
+				}
+				*new_scale = should_scale;
 
-				// TODO: scales
+				*node = projection;
 			}
 		}
 
-		let root = nodes.last().unwrap();
+		let root = *nodes.last().unwrap();
 		let (root_left_edge, root_right_edge) =
 			children.last().unwrap();
 
@@ -135,9 +191,8 @@ impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
 			let ln_sum = sum.ln();
 
 			self.likelihoods[i] = ln_sum;
-
-			// TODO: clear scales
 		}
+		self.clear_scales(root);
 
 		Ok(())
 	}
@@ -154,12 +209,14 @@ impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
 
 	fn accept(&mut self) -> Result<()> {
 		self.selectors_backup.copy_from_slice(&self.selectors);
+		self.scale_sums.accept();
 
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
 		self.selectors.copy_from_slice(&self.selectors_backup);
+		self.scale_sums.reject();
 
 		Ok(())
 	}
@@ -168,6 +225,11 @@ impl<const N: usize> Calculator<N, f64> for CpuLikelihood<N, f64> {
 impl<const N: usize, F> CpuLikelihood<N, F> {
 	fn offset(&self, idx: usize) -> usize {
 		(idx * 2 + self.selectors[idx] as usize) * self.num_patterns
+	}
+
+	fn offset_old(&self, idx: usize) -> usize {
+		let selector = (self.selectors[idx] ^ 1) as usize;
+		(idx * 2 + selector) * self.num_patterns
 	}
 
 	/// # Safety
@@ -179,9 +241,34 @@ impl<const N: usize, F> CpuLikelihood<N, F> {
 		unsafe { self.projections.as_mut_ptr().add(self.offset(idx)) }
 	}
 
+	/// # Safety
+	///
+	/// `idx` must be within `num_nodes`
+	unsafe fn offset_old_ptr(&mut self, idx: usize) -> *mut [F; N] {
+		// SAFETY: because of the invariant `offset(idx)` will be within
+		// bounds
+		unsafe { self.projections.as_mut_ptr().add(self.offset(idx)) }
+	}
+
 	fn slice(&self, idx: usize) -> Range<usize> {
 		let offset = self.offset(idx);
 		offset..offset + self.num_patterns
+	}
+
+	fn clear_scales(&mut self, node: usize) {
+		let range = self.slice(node);
+		let scales_old = &mut self.scales[range];
+		for (pattern, scale) in scales_old.iter().enumerate() {
+			if *scale {
+				sub_scale_sum!(self, pattern);
+			}
+		}
+
+		self.selectors[node] ^= 1;
+
+		let range = self.slice(node);
+		let scales_new = &mut self.scales[range];
+		scales_new.fill(false);
 	}
 }
 
@@ -239,6 +326,16 @@ fn dot<const N: usize>(a: &[f64; N], b: &[f64; N]) -> f64 {
 	out
 }
 
+fn lt<const N: usize>(v: &[f64; N], threshold: f64) -> bool {
+	v.iter().all(|&v| v < threshold)
+}
+
+fn mul<const N: usize>(v: &mut [f64; N], mult: f64) {
+	for el in v {
+		*el *= mult;
+	}
+}
+
 impl CpuLikelihood<4, f64> {
 	pub fn new(
 		num_patterns: usize,
@@ -256,7 +353,8 @@ impl CpuLikelihood<4, f64> {
 		let scale_sums = skvec![0; num_patterns];
 
 		let scale_ln_f64: f64 = scale_ln.into();
-		let scale = scale_ln_f64.exp();
+		let scale_mult = scale_ln_f64.exp();
+		let scale_threshold = (-scale_ln_f64).exp();
 
 		Self {
 			num_patterns,
@@ -274,8 +372,8 @@ impl CpuLikelihood<4, f64> {
 			scale_sums,
 
 			scale_ln,
-			scale_threshold: scale,
-			scale_mult: scale.inv(),
+			scale_threshold,
+			scale_mult,
 		}
 	}
 }
