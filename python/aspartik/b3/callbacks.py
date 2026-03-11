@@ -46,6 +46,9 @@ class Timer(Callback):
             self.__start_index = mcmc.current_step
 
     def finish(self, mcmc: MCMC) -> None:
+        if not self.__start:
+            return
+
         duration = time.perf_counter() - self.__start
         speed = duration / (mcmc.current_step - self.__start_index) * 1_000_000
         print(f"Timer: {speed} sec/million steps ({duration} sec total)")
