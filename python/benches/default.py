@@ -1,5 +1,4 @@
 import argparse
-import time
 from typing import Optional, get_args
 
 from aspartik.b3.config import CalculatorKind, b3_config, beast1_config, beast1_run
@@ -24,18 +23,11 @@ def run_mcmc(
     else:
         msa = MSA.from_fasta(records)
 
-    start_time = time.perf_counter()
     match toolkit:
         case "b3":
             run_b3(msa, length, kind)
         case "beast1":
             run_beast1(msa, length, kind)
-    end_time = time.perf_counter()
-
-    duration = end_time - start_time
-    speed = duration / length * 1_000_000
-
-    return speed
 
 
 def run_b3(msa: MSA, length: int, kind: CalculatorKind):
@@ -44,6 +36,7 @@ def run_b3(msa: MSA, length: int, kind: CalculatorKind):
         calculator=kind,
         tree_prior="constant",
         substitution_model="HKY",
+        timer=True,
         trace_path="target/bench.b3.trace",
     )
     mcmc.run(length)
@@ -80,14 +73,13 @@ def parse_cli_args():
 def main():
     args = parse_cli_args()
 
-    speed = run_mcmc(
+    run_mcmc(
         args.toolkit,
         args.fasta_path,
         args.num_sequences,
         args.kind,
         args.length,
     )
-    print(f"{speed} sec/million steps")
 
 
 if __name__ == "__main__":
