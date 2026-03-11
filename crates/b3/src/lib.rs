@@ -1,16 +1,14 @@
-mod builtin;
 pub mod callback;
 pub mod clock;
 pub mod likelihood;
 pub mod mcmc;
-pub mod operator;
+pub mod operators;
 pub mod parameters;
-pub mod prior;
+pub mod priors;
 pub mod substitution;
 mod transitions;
 
 pub use callback::PyCallback;
-pub use prior::PyPrior;
 pub use transitions::Transitions;
 
 use pyo3::prelude::*;
@@ -33,7 +31,7 @@ pub mod pymodule {
 	#[pymodule_export]
 	use mcmc::Mcmc;
 	#[pymodule_export]
-	use operator::PyProposal;
+	use operators::PyProposal;
 
 	#[pymodule_export]
 	use parameters::{
@@ -41,17 +39,11 @@ pub mod pymodule {
 	};
 
 	#[pymodule_export]
-	use builtin::operators::{
+	use operators::{
 		ClassvecFlip, EpochScale, FixedHeightSPR, SubtreeLeap,
 	};
 	#[pymodule_export]
-	use builtin::priors::ConstantPopulation;
-	#[pymodule_export]
-	use builtin::priors::ExponentialGrowth;
-	#[pymodule_export]
-	use builtin::priors::Monophyly;
-	#[pymodule_export]
-	use builtin::priors::Yule;
+	use priors::{ConstantPopulation, ExponentialGrowth, Monophyly, Yule};
 
 	#[pymodule_export]
 	use substitution::{PyGTR, PyHKY, PyJC, PyK80};

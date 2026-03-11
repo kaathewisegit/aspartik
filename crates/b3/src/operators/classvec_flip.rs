@@ -1,7 +1,8 @@
 use pyo3::prelude::*;
 use rand::RngExt;
 
-use crate::{operator::Proposal, parameters::PyClassVector};
+use super::Proposal;
+use crate::parameters::PyClassVector;
 use rng::PyRng;
 
 #[pyclass(module = "aspartik.b3.operators", frozen)]

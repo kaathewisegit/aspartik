@@ -7,10 +7,11 @@ use serde::{Deserialize, Serializer, ser::SerializeSeq};
 use std::{fs, path::Path};
 
 use crate::{
-	PyCallback, PyPrior,
+	PyCallback,
 	likelihood::PyLikelihood,
-	operator::{Proposal, PyOperator, WeightedScheduler},
+	operators::{Proposal, PyOperator, WeightedScheduler},
 	parameters::PyParameter,
+	priors::PyPrior,
 };
 use rng::{PyRng, Rng};
 use util::{seconds_since_unix, time};

@@ -2,7 +2,8 @@ use anyhow::Result;
 use pyo3::prelude::*;
 use rand::seq::IteratorRandom;
 
-use crate::{operator::Proposal, parameters::PyTree};
+use super::Proposal;
+use crate::parameters::PyTree;
 use rng::PyRng;
 
 /// Fixed height subtree and regraft move.

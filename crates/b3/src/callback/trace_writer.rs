@@ -23,9 +23,9 @@ use std::{
 };
 
 use crate::{
-	PyPrior,
 	mcmc::Mcmc,
 	parameters::{Parameter, PyClassVector, PyReal, PyRealVector, PyTree},
+	priors::PyPrior,
 };
 
 type Arrays = HashMap<String, Box<dyn ArrayBuilder>>;

@@ -4,6 +4,15 @@ use pyo3::prelude::*;
 
 use util::{py_call_method, py_check_method, py_has_method};
 
+mod coalescent;
+mod monophyly;
+mod skyline;
+mod yule;
+
+pub use coalescent::{ConstantPopulation, ExponentialGrowth};
+pub use monophyly::Monophyly;
+pub use yule::Yule;
+
 pub struct PyPrior {
 	/// INVARIANT: the type has a `probability` method
 	inner: Py<PyAny>,
