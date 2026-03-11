@@ -121,10 +121,6 @@ impl<T> SkVec<T> {
 
 	/// Accept all of the changes made since the creation of the vector or
 	/// the last call to `accept` or [`reject`][SkVec::reject].
-	///
-	/// If `T` is [`Drop`], all of the overwritten elements will be dropped,
-	/// which will take awhile for long arrays.  If `T` is not [`Drop`],
-	/// this method much faster.
 	pub fn accept(&mut self) {
 		// zero-out the edited status
 		for m in &mut self.metadata {
@@ -132,31 +128,9 @@ impl<T> SkVec<T> {
 		}
 	}
 
-	/// Like `accept`, but only for the `start..end` subslice
-	pub fn accept_slice(&mut self, start: usize, end: usize) {
-		for m in &mut self.metadata[start..end] {
-			*m &= 0b01;
-		}
-	}
-
-	/// Reject all of the changes made this epoch.  All edited items will be
-	/// dropped and the items will roll back to their old values.
-	///
-	/// This method is much slower than `accept` for non-[`Drop`] types, as
-	/// it has to iterate over the vector to search for edited elements.
+	/// Reject all of the changes made this epoch.
 	pub fn reject(&mut self) {
 		for m in &mut self.metadata {
-			// 00 -> 00
-			// 01 -> 01
-			// 10 -> 01
-			// 11 -> 00
-			*m = (*m ^ (*m >> 1)) & 1;
-		}
-	}
-
-	/// Like `reject`, but only for the `start..end` subslice
-	pub fn reject_slice(&mut self, start: usize, end: usize) {
-		for m in &mut self.metadata[start..end] {
 			// 00 -> 00
 			// 01 -> 01
 			// 10 -> 01
