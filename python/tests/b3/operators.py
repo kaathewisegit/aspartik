@@ -9,54 +9,36 @@ from aspartik.b3.operators import (
     WideExchange,
     WilsonBalding,
 )
-from aspartik.b3.parameters import Tree
 from aspartik.stats.distributions import Uniform
 
 
 def test_epoch_scale(rng):
-    def factory(tree: Tree):
-        return EpochScale(tree, 0.9, Uniform(0, 1), rng, weight=1.0)
-
-    check_tree_operator(factory)
+    check_tree_operator(
+        lambda tree: EpochScale(tree, 0.9, Uniform(0, 1), rng, weight=1.0)
+    )
 
 
 def test_narrow_exchange(rng):
-    def factory(tree: Tree):
-        return NarrowExchange(tree, rng)
-
-    check_tree_operator(factory)
+    check_tree_operator(lambda tree: NarrowExchange(tree, rng))
 
 
 def test_wide_exchange(rng):
-    def factory(tree: Tree):
-        return WideExchange(tree, rng)
-
-    check_tree_operator(factory)
+    check_tree_operator(lambda tree: WideExchange(tree, rng))
 
 
 def test_wilson_balding(rng):
-    def factory(tree: Tree):
-        return WilsonBalding(tree, rng)
-
-    check_tree_operator(factory)
+    check_tree_operator(lambda tree: WilsonBalding(tree, rng))
 
 
 def test_node_slide(rng):
-    def factory(tree: Tree):
-        return NodeSlide(tree, rng)
-
-    check_tree_operator(factory)
+    check_tree_operator(lambda tree: NodeSlide(tree, rng))
 
 
 def test_tree_scale(rng):
-    def factory(tree: Tree):
-        return TreeScale(tree, 0.9, Uniform(0, 1), rng, weight=1.0)
-
-    check_tree_operator(factory)
+    check_tree_operator(
+        lambda tree: TreeScale(tree, 0.9, Uniform(0, 1), rng, weight=1.0)
+    )
 
 
 def test_spr(rng):
-    def factory(tree: Tree):
-        return FixedHeightSPR(tree, rng)
-
-    check_tree_operator(factory)
+    check_tree_operator(lambda tree: FixedHeightSPR(tree, rng))
