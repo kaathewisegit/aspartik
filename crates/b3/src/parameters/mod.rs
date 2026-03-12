@@ -83,6 +83,15 @@ impl<'py> IntoPyObject<'py> for PyParameter {
 }
 
 impl PyParameter {
+	pub fn into_py_any(&self, py: Python) -> Py<PyAny> {
+		match self {
+			Self::ClassVector(p) => p.clone_ref(py).into(),
+			Self::Real(p) => p.clone_ref(py).into(),
+			Self::RealVector(p) => p.clone_ref(py).into(),
+			Self::Tree(p) => p.clone_ref(py).into(),
+		}
+	}
+
 	pub fn as_ref(&self) -> MappedMutexGuard<'_, dyn Parameter> {
 		match self {
 			Self::ClassVector(p) => {

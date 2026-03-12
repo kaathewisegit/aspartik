@@ -71,6 +71,15 @@ impl Mcmc {
 		*self.current_step.lock()
 	}
 
+	#[getter]
+	fn parameters(&self, py: Python) -> Result<Vec<Py<PyAny>>> {
+		let mut out = Vec::with_capacity(self.state.len());
+		for param in &self.state {
+			out.push(param.into_py_any(py));
+		}
+		Ok(out)
+	}
+
 	/// All priors
 	#[getter]
 	fn priors(&self, py: Python) -> Vec<Py<PyAny>> {
