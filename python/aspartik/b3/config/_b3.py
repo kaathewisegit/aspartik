@@ -27,7 +27,7 @@ from aspartik.b3.priors import (
     ExponentialGrowth,
     Yule,
 )
-from aspartik.b3.substitutions import HKY
+from aspartik.b3.substitutions import HKY, JC
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
@@ -66,6 +66,8 @@ def b3_config(
         tree.accept()
 
     match substitution_model:
+        case "JC":
+            sub_model = JC()
         case "HKY":
             kappa = Real(2.0)
             items["kappa"] = kappa
