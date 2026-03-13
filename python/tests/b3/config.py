@@ -7,7 +7,7 @@ APES_MSA = read_msa_from_fasta("data/alignments/apes.fasta")
 
 
 @pytest.mark.parametrize("calculator", ["cpu"])
-@pytest.mark.parametrize("substitution_model", ["HKY"])
+@pytest.mark.parametrize("substitution_model", ["JC", "K80", "HKY"])  # TODO: GTR
 @pytest.mark.parametrize("operator_mix", ["classic", "default"])
 @pytest.mark.parametrize("clock_rate", [None, 1.0])
 @pytest.mark.parametrize("tree_prior", ["yule", "constant", "exponential"])

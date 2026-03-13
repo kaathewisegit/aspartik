@@ -27,10 +27,17 @@ from aspartik.b3.priors import (
     ExponentialGrowth,
     Yule,
 )
-from aspartik.b3.substitutions import HKY, JC
+from aspartik.b3.substitutions import HKY, JC, K80
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
+from aspartik.stats.distributions import (
+    Continuous,
+    Gamma,
+    Laplace,
+    LogNormal,
+    Normal,
+    Uniform,
+)
 
 from ._shared import CalculatorKind, SubstitutionModel, TreePrior
 
@@ -65,86 +72,74 @@ def b3_config(
         tree.set_random_heights(0.3, rng)
         tree.accept()
 
+    def create_real(
+        initial: float,
+        name: str,
+        dist: Continuous,
+        weight: int,
+        positive: bool = True,
+    ):
+        param = Real(initial)
+        items[name] = param
+        priors.append(Distribution(param, dist))
+        parameters.append(param)
+        if positive:
+            operators.append(ParamScale(param, 0.75, Uniform(0, 1), rng, weight=weight))
+        else:
+            operators.append(RandomWalk(param, window=1, rng=rng, weight=weight))
+        return param
+
+    def create_frequencies():
+        frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
+        items["frequencies"] = frequencies
+        parameters.append(frequencies)
+        operators.append(DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1))
+        return frequencies
+
     match substitution_model:
         case "JC":
             sub_model = JC()
+        case "K80":
+            kappa = create_real(2.0, "kappa", LogNormal(1.0, 1.25), weight=1)
+            sub_model = K80(kappa)
         case "HKY":
-            kappa = Real(2.0)
-            items["kappa"] = kappa
-            frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-            items["frequencies"] = frequencies
-            parameters.extend([kappa, frequencies])
-
-            priors.extend(
-                [
-                    Distribution(kappa, LogNormal(1.0, 1.25)),
-                ]
-            )
-            operators.extend(
-                [
-                    ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
-                    DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
-                ]
-            )
+            kappa = create_real(2.0, "kappa", LogNormal(1.0, 1.25), weight=1)
+            frequencies = create_frequencies()
 
             sub_model = HKY(frequencies, kappa)
+        case "GTR":
+            raise NotImplementedError("needs Dirichlet prior")
 
     match tree_prior:
         case "yule":
-            birth_rate = Real(1.0)
-            items["birth_rate"] = birth_rate
-            parameters.append(birth_rate)
-            operators.append(
-                ParamScale(birth_rate, 0.75, Uniform(0, 1), rng, weight=3),
-            )
+            birth_rate = create_real(1.0, "birth_rate", LogNormal(1.0, 1.5), weight=3)
             yule = Yule(tree, birth_rate)
             items["prior:yule"] = yule
-            priors.extend([Distribution(birth_rate, LogNormal(1.0, 1.5)), yule])
+            priors.append(yule)
         case "constant":
-            population_size = Real(1.0)
-            items["population_size"] = population_size
-            parameters.append(population_size)
-            operators.append(
-                ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
+            population_size = create_real(
+                1.0, "population_size", Gamma(0.001, 1 / 1000.0), weight=3
             )
             coalescent = ConstantPopulation(tree, population_size)
             items["prior:coalescent"] = coalescent
-            priors.extend(
-                [Distribution(population_size, Gamma(0.001, 1 / 1000.0)), coalescent]
-            )
+            priors.append(coalescent)
         case "exponential":
-            population_size = Real(1.0)
-            items["population_size"] = population_size
-            growth_rate = Real(1.0)
-            items["growth_rate"] = growth_rate
-            parameters.extend([population_size, growth_rate])
+            population_size = create_real(
+                1.0, "population_size", Gamma(0.001, 1 / 1000.0), weight=3
+            )
+            growth_rate = create_real(
+                1.0, "growth_rate", Laplace(0, 100), weight=3, positive=False
+            )
 
-            operators.extend(
-                [
-                    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
-                    RandomWalk(growth_rate, window=1, rng=rng, weight=3),
-                ]
-            )
-            priors.extend(
-                [
-                    Bound(growth_rate),
-                    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
-                    Distribution(growth_rate, Laplace(0, 100)),
-                    ExponentialGrowth(tree, population_size, growth_rate),
-                ]
-            )
+            coalescent = ExponentialGrowth(tree, population_size, growth_rate)
+            items["prior:coalescent"] = coalescent
+            priors.extend([Bound(growth_rate), coalescent])
 
     clock = None
     clock_rate_p = None
     match clock_rate:
         case None:
-            clock_rate_p = Real(1.0)
-            items["clock_rate"] = clock_rate_p
-            operators.append(
-                ParamScale(clock_rate_p, 0.75, Uniform(0, 1), rng, weight=3)
-            )
-            priors.append(Distribution(clock_rate_p, Laplace(0, 0.5)))
-            parameters.append(clock_rate_p)
+            clock_rate_p = create_real(1.0, "clock_rate", Laplace(0, 0.5), weight=3)
             clock = Clock.Strict(clock_rate_p)
         case float(clock_rate):
             clock_rate_p = Real(clock_rate)
