@@ -4,6 +4,7 @@ members = [
 	"crates/aspartik",
 	"crates/b3",
 	"crates/bitmap",
+	"crates/ccalc",
 	"crates/data",
 	"crates/io",
 	"crates/linalg",
@@ -31,6 +32,7 @@ arrow-schema = "58.0.0"
 blake3 = "1.8"
 bytemuck = "1.25"
 bytes = "1.11"
+cc = "1.2.57"
 cudarc = { version = "0.19.3", default-features = false }
 divan = "0.1.21"
 fork_union = "2.3"
@@ -49,6 +51,7 @@ thiserror = "2.0"
 
 b3 = { version = "0.1.0-alpha.10", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.10", path = "crates/bitmap" }
+ccalc = { version = "0.1.0-alpha.10", path = "crates/ccalc" }
 data = { version = "0.1.0-alpha.10", path = "crates/data" }
 io = { version = "0.1.0-alpha.10", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.10", path = "crates/linalg" }

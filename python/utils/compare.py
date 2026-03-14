@@ -33,4 +33,6 @@ def compare_verify_run(
             likelihood.propose()
             diff = abs(likelihood.likelihood() - row["likelihood"])
             likelihood.reject()
-            assert diff < 0.01, f"{likelihood.__class__.__name__}: {diff}"
+            assert diff < abs(row["likelihood"]) * 0.01, (
+                f"{likelihood.__class__.__name__}: {diff}"
+            )

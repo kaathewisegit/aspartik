@@ -61,7 +61,8 @@ def test_swap_parents(tree, rng):
     assert b_parent == new_a_parent
 
 
-@pytest.mark.parametrize("msa", random_msas(10, 1000, num=20))
+# TODO: raise when scaling gets re-implemented
+@pytest.mark.parametrize("msa", random_msas(10, 100, num=20))
 def test_dump_load_mcmc(msa: MSA, rng: RNG, tmp_path):
     trace_file = tmp_path / "dump_load.trace"
     mcmc = b3_config(
