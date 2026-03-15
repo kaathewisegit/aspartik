@@ -112,9 +112,6 @@ void calculate_projection(
 		schedule(static)
 	*/
 	for (u32 u = 0; u < end; u += 4) {
-		__builtin_prefetch(&projections_left[u + 64], 0, 3);
-		__builtin_prefetch(&projections_right[u + 64], 0, 3);
-
 		f64 p0 = projections_left[u + 0] * projections_right[u + 0];
 		f64 p1 = projections_left[u + 1] * projections_right[u + 1];
 		f64 p2 = projections_left[u + 2] * projections_right[u + 2];
