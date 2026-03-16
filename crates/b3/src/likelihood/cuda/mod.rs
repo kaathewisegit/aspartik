@@ -89,9 +89,6 @@ impl Calculator<4, f64> for CudaLikelihood {
 		frequencies: [f64; 4],
 	) -> Result<()> {
 		self.num_updated_nodes = nodes.len() as u32 - 1;
-		if self.num_updated_nodes == 0 {
-			return Ok(());
-		}
 
 		let root_children = children.last().unwrap();
 		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
@@ -143,10 +140,6 @@ impl Calculator<4, f64> for CudaLikelihood {
 	}
 
 	fn accept(&mut self) -> Result<()> {
-		if self.num_updated_nodes == 0 {
-			return Ok(());
-		}
-
 		self.stream.memcpy_dtod(
 			&self.scale_sums,
 			&mut self.scale_sums_backup,
@@ -159,10 +152,6 @@ impl Calculator<4, f64> for CudaLikelihood {
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		if self.num_updated_nodes == 0 {
-			return Ok(());
-		}
-
 		self.stream.memcpy_dtod(
 			&self.scale_sums_backup,
 			&mut self.scale_sums,
