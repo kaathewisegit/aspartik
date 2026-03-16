@@ -10,6 +10,7 @@ use cudarc::{
 use std::sync::Arc;
 
 use super::Calculator;
+use crate::{Transitions, parameters::Tree};
 
 type Row = [f64; 4];
 type Transition = [f64; 16];
@@ -46,6 +47,7 @@ pub struct CudaLikelihood {
 
 	/// `num_sites`-long root likelihoods
 	likelihoods: CudaSlice<f64>,
+	likelihoods_host: Box<[f64]>,
 
 	/// Children of internal nodes updated in current proposal
 	children: CudaSlice<u32>,
@@ -60,13 +62,15 @@ pub struct CudaLikelihood {
 	/// The length is `num_updated_nodes`.
 	nodes: CudaSlice<u32>,
 
+	pattern_weights: Vec<u32>,
+
 	scales: CudaSlice<u8>,
 	scales_backup: CudaSlice<u8>,
 	scale_sums: CudaSlice<u32>,
 	scale_sums_backup: CudaSlice<u32>,
 
 	/// Total number of sites
-	num_sites: u32,
+	num_patterns: u32,
 
 	/// Number of nodes updated in the current proposal
 	///
@@ -75,19 +79,15 @@ pub struct CudaLikelihood {
 }
 
 impl Calculator<4, f64> for CudaLikelihood {
-	/// Propose an edit to the tree
-	///
-	/// Asynchronous.  This method starts the GPU calculations and returns
-	/// right after.  The job synchronization is handled by the [shared
-	/// stream][Self::stream].
-	fn propose(
+	fn likelihood(
 		&mut self,
-		nodes: &[usize],
-		children: &[(usize, usize)],
-		transitions: &[[[f64; 4]; 4]],
-		leaves_end: usize,
-		frequencies: [f64; 4],
-	) -> Result<()> {
+		tree: &Tree,
+		transitions: &Transitions<4, f64>,
+	) -> Result<f64> {
+		let (nodes, leaves_end) = tree.nodes_to_update();
+		let (nodes, children) = tree.to_lists(&nodes);
+		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
+
 		self.num_updated_nodes = nodes.len() as u32 - 1;
 
 		let root_children = children.last().unwrap();
@@ -99,10 +99,8 @@ impl Calculator<4, f64> for CudaLikelihood {
 
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
 		self.stream.memcpy_htod(&children, &mut self.children)?;
-		let transitions: &[Transition] =
-			bytemuck::cast_slice(transitions);
-		self.stream
-			.memcpy_htod(transitions, &mut self.transitions)?;
+		let tms: &[Transition] = bytemuck::cast_slice(&tms);
+		self.stream.memcpy_htod(tms, &mut self.transitions)?;
 
 		let mut leaves_end = leaves_end as u32;
 		let internals_start = leaves_end;
@@ -117,26 +115,26 @@ impl Calculator<4, f64> for CudaLikelihood {
 		self.update_likelihoods(
 			*root,
 			(root_children.0 as u32, root_children.1 as u32),
-			frequencies,
+			transitions.frequencies(),
 		)?;
 
-		Ok(())
-	}
-
-	/// Fetches the likelihoods calculated by [`update_likelihoods`]
-	///
-	/// Synchronous, blocks on the `self.likelihoods` buffer.
-	///
-	/// [`update_likelihoods`]: Self::update_likelihoods
-	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()> {
-		self.stream.memcpy_dtoh(&self.likelihoods, patterns)?;
+		self.stream.memcpy_dtoh(
+			&self.likelihoods,
+			&mut *self.likelihoods_host,
+		)?;
 
 		let scale_sums = self.stream.clone_dtoh(&self.scale_sums)?;
-		for (i, scale) in scale_sums.iter().enumerate() {
-			patterns[i] -= f64::from(*scale);
+		for ((likelihood, scale), weight) in self
+			.likelihoods_host
+			.iter_mut()
+			.zip(scale_sums)
+			.zip(&self.pattern_weights)
+		{
+			*likelihood -= f64::from(scale);
+			*likelihood *= f64::from(*weight);
 		}
 
-		Ok(())
+		Ok(self.likelihoods_host.iter().sum())
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -162,6 +160,10 @@ impl Calculator<4, f64> for CudaLikelihood {
 		self.num_updated_nodes = 0;
 		Ok(())
 	}
+
+	fn num_patterns(&self) -> usize {
+		self.num_patterns as usize
+	}
 }
 
 impl CudaLikelihood {
@@ -176,9 +178,10 @@ impl CudaLikelihood {
 		let mut builder = self.stream.launch_builder(&self.propose_fn);
 
 		let block_size = 16 * 4;
-		let num_site_blocks = (self.num_sites * 4).div_ceil(block_size);
+		let num_pattern_blocks =
+			(self.num_patterns * 4).div_ceil(block_size);
 		let cfg = LaunchConfig {
-			grid_dim: (num_site_blocks, 1, 1),
+			grid_dim: (num_pattern_blocks, 1, 1),
 			block_dim: (block_size, 1, 1),
 			shared_mem_bytes: 0,
 		};
@@ -211,9 +214,9 @@ impl CudaLikelihood {
 			self.stream.launch_builder(&self.update_leaves_fn);
 
 		let block_size = 16;
-		let num_site_blocks = self.num_sites.div_ceil(block_size);
+		let num_pattern_blocks = self.num_patterns.div_ceil(block_size);
 		let cfg = LaunchConfig {
-			grid_dim: (num_site_blocks, leaves_end, 1),
+			grid_dim: (num_pattern_blocks, leaves_end, 1),
 			block_dim: (block_size, 4, 1),
 			shared_mem_bytes: 0,
 		};
@@ -272,10 +275,10 @@ impl CudaLikelihood {
 	fn copy_projections(&mut self, accept: bool) -> Result<()> {
 		let num_updated_nodes = self.num_updated_nodes + 1;
 
-		let num_site_blocks = self.num_sites.div_ceil(128);
+		let num_pattern = self.num_patterns.div_ceil(128);
 		let grid_dim_y = num_updated_nodes.div_ceil(128);
 		let cfg = LaunchConfig {
-			grid_dim: (num_site_blocks, grid_dim_y, 128),
+			grid_dim: (num_pattern, grid_dim_y, 128),
 			block_dim: (128, 1, 1),
 			shared_mem_bytes: 0,
 		};
@@ -309,7 +312,7 @@ impl CudaLikelihood {
 	}
 
 	fn cfg(&self, block_size: u32, dim2: u32) -> LaunchConfig {
-		let num_site_blocks = self.num_sites.div_ceil(block_size);
+		let num_site_blocks = self.num_patterns.div_ceil(block_size);
 		LaunchConfig {
 			grid_dim: (num_site_blocks, dim2, 1),
 			block_dim: (block_size, 1, 1),
@@ -318,7 +321,7 @@ impl CudaLikelihood {
 	}
 
 	pub fn new(
-		num_sites: usize,
+		pattern_weights: Vec<u32>,
 		leaves: Vec<u8>,
 		scale_ln: u32,
 		cuda_device: usize,
@@ -336,7 +339,8 @@ impl CudaLikelihood {
 		let scale_threshold = f64::from(-(scale_ln as i32)).exp();
 		let scale_mult = f64::from(scale_ln).exp();
 
-		let num_leaves = leaves.len() / num_sites;
+		let num_patterns = pattern_weights.len();
+		let num_leaves = leaves.len() / num_patterns;
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
 		let num_edges = num_internals * 2;
@@ -351,28 +355,28 @@ impl CudaLikelihood {
 		let leaves = stream.clone_htod(&leaves)?;
 
 		let projections: CudaSlice<Row> =
-			stream.alloc_zeros(num_nodes * num_sites)?;
+			stream.alloc_zeros(num_nodes * num_patterns)?;
 		let projections_backup: CudaSlice<Row> =
-			stream.alloc_zeros(num_nodes * num_sites)?;
+			stream.alloc_zeros(num_nodes * num_patterns)?;
 
 		let likelihoods: CudaSlice<f64> =
-			stream.alloc_zeros(num_sites)?;
+			stream.alloc_zeros(num_patterns)?;
 		let children = stream.alloc_zeros(num_internals * 2)?;
 		let transitions = stream.alloc_zeros(num_edges)?;
 		let nodes = stream.alloc_zeros(num_nodes)?;
 
-		let scales = stream.alloc_zeros(num_nodes * num_sites)?;
+		let scales = stream.alloc_zeros(num_nodes * num_patterns)?;
 		let scales_backup =
-			stream.alloc_zeros(num_nodes * num_sites)?;
-		let scale_sums = stream.alloc_zeros(num_sites)?;
-		let scale_sums_backup = stream.alloc_zeros(num_sites)?;
+			stream.alloc_zeros(num_nodes * num_patterns)?;
+		let scale_sums = stream.alloc_zeros(num_patterns)?;
+		let scale_sums_backup = stream.alloc_zeros(num_patterns)?;
 
 		let opts = CompileOptions {
 			include_paths: vec![
 				"/usr/local/cuda/include/".to_owned()
 			],
 			options: vec![
-				format!("-DNUM_SITES={num_sites}"),
+				format!("-DNUM_PATTERNS={num_patterns}"),
 				format!("-DNUM_LEAVES={num_leaves}"),
 				format!("-DSCALE_LN={scale_ln}"),
 				format!("-DSCALE_THRESHOLD={scale_threshold}"),
@@ -402,16 +406,19 @@ impl CudaLikelihood {
 			projections,
 			projections_backup,
 			likelihoods,
+			likelihoods_host: vec![0.0; num_patterns].into(),
 			children,
 			transitions,
 			nodes,
+
+			pattern_weights,
 
 			scales,
 			scales_backup,
 			scale_sums,
 			scale_sums_backup,
 
-			num_sites: num_sites as u32,
+			num_patterns: num_patterns as u32,
 
 			num_updated_nodes: 0,
 		})

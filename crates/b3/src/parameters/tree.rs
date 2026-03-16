@@ -293,10 +293,8 @@ impl Tree {
 		out
 	}
 
-	pub fn nodes_to_update(&mut self) -> (Vec<Node>, usize) {
-		let mut nodes = Vec::<Node>::with_capacity(self.num_nodes());
-
-		// mark updated nodes derived from edges
+	pub fn mark_transitively_updated_nodes(&mut self) {
+		// mark updated nodes whose parent edge got updated
 		for edge in self.edges() {
 			if self.updated_edges.at(edge) {
 				let (child, _) = self.edge_nodes(edge);
@@ -321,6 +319,10 @@ impl Tree {
 				}
 			}
 		}
+	}
+
+	pub fn nodes_to_update(&self) -> (Vec<Node>, usize) {
+		let mut nodes = Vec::<Node>::with_capacity(self.num_nodes());
 
 		// Updated leaves, in order
 		for leaf in self.leaves() {

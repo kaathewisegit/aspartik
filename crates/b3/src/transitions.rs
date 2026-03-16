@@ -7,23 +7,29 @@ use crate::{
 };
 use skvec::{SkVec, skvec};
 
-pub struct Transitions<const N: usize, F, S> {
-	substitution: S,
+pub struct Transitions<const N: usize, F> {
+	substitution: Box<dyn SubstitutionModel<N, F> + Sync + Send>,
 	clock: Py<PyClock>,
 
 	transitions: SkVec<[[F; N]; N]>,
 }
 
-impl<const N: usize, F, S> Transitions<N, F, S>
+impl<const N: usize, F> Transitions<N, F>
 where
 	F: Default + Copy + Zero + Default,
-	S: SubstitutionModel<N, F>,
 {
-	pub fn new(length: usize, substitution: S, clock: Py<PyClock>) -> Self {
+	pub fn new<S>(
+		length: usize,
+		substitution: S,
+		clock: Py<PyClock>,
+	) -> Self
+	where
+		S: SubstitutionModel<N, F> + Sync + Send + 'static,
+	{
 		let transitions = skvec![[[F::zero(); N]; N]; length];
 
 		Self {
-			substitution,
+			substitution: Box::new(substitution),
 			clock,
 
 			transitions,

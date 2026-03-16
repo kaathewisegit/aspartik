@@ -22,21 +22,21 @@ __device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
 #define BLOCK_SIZE 16 * 4
 
 #define idx(edge) \
-	((edge) * NUM_SITES + site)
+	((edge) * NUM_PATTERNS + pattern)
 
 #define sidx(edge) \
-	((edge) * NUM_SITES + site) * 4 + sub
+	((edge) * NUM_PATTERNS + pattern) * 4 + sub
 
-// Gets the site index from the thread and block id
-#define SITE_PRELUDE \
-	u32 site = blockIdx.x * blockDim.x + threadIdx.x; \
-	if (site >= NUM_SITES) { \
+// Gets the pattern index from the thread and block id
+#define PATTERN_PRELUDE \
+	u32 pattern = blockIdx.x * blockDim.x + threadIdx.x; \
+	if (pattern >= NUM_PATTERNS) { \
 		return; \
 	} \
 
 // # Variables
 // - i: index of the update
-// - sub: index of the site allele
+// - sub: index of the pattern allele
 #define CALCULATE_LEAF_PROJECTION \
 	u8 leaf = leaves[idx(nodes[i])]; \
 	f64 projection = 0.0; \
@@ -56,8 +56,8 @@ void update_leaves(
 	const u32* restrict nodes,
 	const f64x4* restrict transitions
 ) {
-	u32 site = blockIdx.x * blockDim.x + threadIdx.x;
-	if (site >= NUM_SITES) {
+	u32 pattern = blockIdx.x * blockDim.x + threadIdx.x;
+	if (pattern >= NUM_PATTERNS) {
 		return;
 	}
 	u32 sub = threadIdx.y;
@@ -81,8 +81,8 @@ void propose(
 	const u32 leaves_end,
 	const u32 internals_start
 ) {
-	u32 site = (blockIdx.x * blockDim.x + threadIdx.x) / 4;
-	if (site >= NUM_SITES) {
+	u32 pattern = (blockIdx.x * blockDim.x + threadIdx.x) / 4;
+	if (pattern >= NUM_PATTERNS) {
 		return;
 	}
 	auto g = tiled_partition<4>(this_thread_block());
@@ -95,7 +95,7 @@ void propose(
 		CALCULATE_LEAF_PROJECTION
 	}
 
-	u32 scale_sum = scale_sums[site];
+	u32 scale_sum = scale_sums[pattern];
 
 	for (u32 i = internals_start; i < num_updated_nodes; i++) {
 		u32 left_edge = children[(i - internals_start) * 2];
@@ -148,7 +148,7 @@ void propose(
 	}
 
 	if (sub == 0) {
-		scale_sums[site] = scale_sum;
+		scale_sums[pattern] = scale_sum;
 	}
 }
 
@@ -164,7 +164,7 @@ void update_likelihoods(
 	u32 right_child,
 	f64x4 frequencies
 ) {
-	SITE_PRELUDE
+	PATTERN_PRELUDE
 
 	f64x4 pre_likelihood = hadamard(
 		projections[idx(left_child)],
@@ -176,11 +176,11 @@ void update_likelihoods(
 	);
 
 	f64 sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
-	likelihoods[site] = log(sum);
+	likelihoods[pattern] = log(sum);
 
 	if (scales[idx(root)]) {
 		scales[idx(root)] = 0;
-		scale_sums[site] -= SCALE_LN;
+		scale_sums[pattern] -= SCALE_LN;
 	}
 }
 
@@ -200,7 +200,7 @@ void copy_projections(
 	u32 num_updated_nodes,
 	const u32* restrict nodes
 ) {
-	SITE_PRELUDE
+	PATTERN_PRELUDE
 	u32 i = blockIdx.y * 128 + blockIdx.z;
 	if (i >= num_updated_nodes) {
 		return;

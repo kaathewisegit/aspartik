@@ -30,7 +30,6 @@ def compare_verify_run(
             assert diff < 1e-10
 
         for likelihood in likelihoods:
-            likelihood.propose()
             diff = abs(likelihood.likelihood() - row["likelihood"])
             likelihood.reject()
             assert diff < abs(row["likelihood"]) * 0.01, (

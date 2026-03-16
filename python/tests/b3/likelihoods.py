@@ -23,7 +23,7 @@ def test_cpu(rng: RNG):
     for _ in range(1000):
         match rng.random_int(0, 3):
             case 0:
-                likelihood.propose()
+                likelihood.likelihood()
             case 1:
                 likelihood.accept()
             case 2:

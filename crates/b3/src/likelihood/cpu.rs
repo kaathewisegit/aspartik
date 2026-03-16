@@ -1,16 +1,13 @@
 use anyhow::Result;
-use num_traits::Inv;
-
-use std::{
-	ops::Range,
-	slice::{from_raw_parts, from_raw_parts_mut},
-};
 
 use super::Calculator;
+use crate::{Transitions, parameters::Tree};
 
+#[allow(dead_code)]
 pub struct CpuLikelihood<const N: usize, F> {
 	num_patterns: usize,
-	num_leaves: usize,
+
+	pattern_weights: Vec<u32>,
 
 	selectors: Vec<u8>,
 	selectors_backup: Vec<u8>,
@@ -34,14 +31,16 @@ pub struct CpuLikelihood<const N: usize, F> {
 }
 
 impl Calculator<4, f64> for CpuLikelihood<4, f64> {
-	fn propose(
+	fn likelihood(
 		&mut self,
-		nodes: &[usize],
-		children: &[(usize, usize)],
-		transitions: &[[[f64; 4]; 4]],
-		leaves_end: usize,
-		frequencies: [f64; 4],
-	) -> Result<()> {
+		tree: &Tree,
+		transitions: &Transitions<4, f64>,
+	) -> Result<f64> {
+		let (nodes, leaves_end) = tree.nodes_to_update();
+		let (nodes, children) = tree.to_lists(&nodes);
+		let frequencies = transitions.frequencies();
+		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
+
 		let c_nodes: Vec<u32> =
 			nodes.iter().map(|&n| n as u32).collect();
 		let c_children: Vec<_> = children
@@ -55,7 +54,7 @@ impl Calculator<4, f64> for CpuLikelihood<4, f64> {
 				c_nodes.as_ptr(),
 				c_nodes.len() as u32,
 				c_children.as_ptr() as *const u32,
-				transitions.as_ptr() as *mut f64,
+				tms.as_ptr() as *mut f64,
 				leaves_end as u32,
 				frequencies.into(),
 				//
@@ -67,17 +66,17 @@ impl Calculator<4, f64> for CpuLikelihood<4, f64> {
 			)
 		}
 
-		Ok(())
-	}
-
-	fn likelihood(&mut self, patterns: &mut [f64]) -> Result<()> {
-		patterns.copy_from_slice(&self.likelihoods);
-
-		for (i, scale_sum) in self.scale_sums.iter().enumerate() {
-			patterns[i] -= f64::from(*scale_sum);
+		for ((likelihood, scale), weight) in self
+			.likelihoods
+			.iter_mut()
+			.zip(&self.scale_sums)
+			.zip(&self.pattern_weights)
+		{
+			*likelihood -= f64::from(*scale);
+			*likelihood *= f64::from(*weight);
 		}
 
-		Ok(())
+		Ok(self.likelihoods.iter().sum())
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -93,18 +92,22 @@ impl Calculator<4, f64> for CpuLikelihood<4, f64> {
 
 		Ok(())
 	}
+
+	fn num_patterns(&self) -> usize {
+		self.num_patterns
+	}
 }
 
 impl CpuLikelihood<4, f64> {
 	pub fn new(
-		num_patterns: usize,
+		pattern_weights: Vec<u32>,
 		leaves: Vec<u8>,
 		scale_ln: u32,
 	) -> Self {
+		let num_patterns = pattern_weights.len();
 		let num_leaves = leaves.len() / num_patterns;
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
-		let num_edges = num_internals * 2;
 
 		let projections =
 			vec![Default::default(); num_nodes * num_patterns * 2];
@@ -117,7 +120,7 @@ impl CpuLikelihood<4, f64> {
 
 		Self {
 			num_patterns,
-			num_leaves,
+			pattern_weights,
 
 			selectors: vec![0; num_nodes],
 			selectors_backup: vec![0; num_nodes],

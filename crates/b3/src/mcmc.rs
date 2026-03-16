@@ -208,7 +208,6 @@ impl Mcmc {
 
 		*self.rng.get().inner() = de.rng;
 
-		self.likelihood.propose()?;
 		self.likelihood.likelihood()?;
 		self.likelihood.accept()?;
 
@@ -313,10 +312,7 @@ impl Mcmc {
 			return Ok(PriorReject);
 		}
 
-		let (likelihood, time) = time! {{
-			self.likelihood.propose()?;
-			self.likelihood.likelihood()?
-		}};
+		let (likelihood, time) = time! {self.likelihood.likelihood()?};
 
 		if likelihood == f64::NEG_INFINITY {
 			bail!("Tree likelihood underflowed");
