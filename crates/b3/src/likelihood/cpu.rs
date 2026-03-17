@@ -2,9 +2,10 @@ use anyhow::Result;
 
 use super::Calculator;
 use crate::{Transitions, parameters::Tree};
+use buffer::Buffer;
 
 #[allow(dead_code)]
-pub struct CpuLikelihood<const N: usize, F> {
+pub struct Cpu4 {
 	num_patterns: usize,
 
 	pattern_weights: Vec<u32>,
@@ -14,7 +15,8 @@ pub struct CpuLikelihood<const N: usize, F> {
 
 	/// Have the length of `num_patterns`
 	samples: Vec<u8>,
-	projections: Vec<[F; N]>,
+	/// 32-bit alignment for aligned loads into YMM registers.
+	projections: Buffer<[f64; 4], 32>,
 
 	likelihoods: Vec<f64>,
 
@@ -25,12 +27,12 @@ pub struct CpuLikelihood<const N: usize, F> {
 	/// Scaling threshold on logarithmic scale
 	scale_ln: u32,
 	/// `e^(-scale_ln)`
-	scale_threshold: F,
+	scale_threshold: f64,
 	/// `e^scale_ln`
-	scale_mult: F,
+	scale_mult: f64,
 }
 
-impl Calculator<4, f64> for CpuLikelihood<4, f64> {
+impl Calculator<4, f64> for Cpu4 {
 	fn likelihood(
 		&mut self,
 		tree: &Tree,
@@ -98,7 +100,7 @@ impl Calculator<4, f64> for CpuLikelihood<4, f64> {
 	}
 }
 
-impl CpuLikelihood<4, f64> {
+impl Cpu4 {
 	pub fn new(
 		pattern_weights: Vec<u32>,
 		leaves: Vec<u8>,
@@ -110,7 +112,7 @@ impl CpuLikelihood<4, f64> {
 		let num_nodes = num_leaves + num_internals;
 
 		let projections =
-			vec![Default::default(); num_nodes * num_patterns * 2];
+			Buffer::<_, 32>::new(num_nodes * num_patterns * 2);
 		let scales = vec![false; num_nodes * num_patterns * 2];
 		let scale_sums = vec![0; num_patterns];
 

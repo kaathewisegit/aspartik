@@ -17,7 +17,7 @@ mod cpu;
 mod cuda;
 mod hetero;
 
-use cpu::CpuLikelihood;
+use cpu::Cpu4;
 use cuda::CudaLikelihood;
 pub use hetero::PyHeteroLikelihood;
 
@@ -246,7 +246,7 @@ macro_rules! likelihood_methods {
 /// for alignments larger than 100Kb.
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
-	inner: Mutex<GenericLikelihood<4, f64, CpuLikelihood<4, f64>>>,
+	inner: Mutex<GenericLikelihood<4, f64, Cpu4>>,
 }
 
 #[pymethods]
@@ -261,7 +261,7 @@ impl PyCpu4Likelihood {
 		scale_ln: u32,
 	) -> Result<Self> {
 		let (leaves, weights) = deduplicate(msa.get());
-		let calculator = CpuLikelihood::new(weights, leaves, scale_ln);
+		let calculator = Cpu4::new(weights, leaves, scale_ln);
 		let generic = GenericLikelihood::new(
 			calculator,
 			substitution,
