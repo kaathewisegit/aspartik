@@ -2,7 +2,6 @@ use bytemuck::Zeroable;
 
 use std::{
 	alloc::{Layout, alloc_zeroed, dealloc, handle_alloc_error},
-	mem::needs_drop,
 	ops::{Deref, DerefMut},
 	ptr::{
 		NonNull, drop_in_place, slice_from_raw_parts,
@@ -116,10 +115,8 @@ impl<T, const ALIGN: usize> Drop for Buffer<T, ALIGN> {
 		)
 		.unwrap();
 
-		if needs_drop::<T>() {
-			// SAFETY: `as_raw_mut_slice` is valid
-			unsafe { drop_in_place(self.as_raw_mut_slice()) }
-		}
+		// SAFETY: `as_raw_mut_slice` is valid
+		unsafe { drop_in_place(self.as_raw_mut_slice()) }
 
 		// SAFETY: the layout is the same
 		unsafe { dealloc(self.ptr.as_ptr() as *mut u8, layout) }
