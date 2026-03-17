@@ -128,7 +128,10 @@ where
 			return Ok(self.cache);
 		}
 
-		self.calculator.likelihood(tree, &self.transitions)
+		self.launched_update = true;
+		self.last =
+			self.calculator.likelihood(tree, &self.transitions)?;
+		Ok(self.last)
 	}
 
 	fn accept(&mut self) -> Result<()> {
