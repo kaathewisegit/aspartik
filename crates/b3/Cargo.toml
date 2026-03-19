@@ -9,7 +9,6 @@ authors.workspace = true
 [dependencies]
 bitmap = { workspace = true }
 buffer = { workspace = true }
-ccalc = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
 linalg = { workspace = true, features = ["bytemuck", "cuda"] }

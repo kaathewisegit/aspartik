@@ -5,7 +5,6 @@ members = [
 	"crates/b3",
 	"crates/bitmap",
 	"crates/buffer",
-	"crates/ccalc",
 	"crates/data",
 	"crates/io",
 	"crates/linalg",
@@ -53,7 +52,6 @@ thiserror = "2.0"
 b3 = { version = "0.1.0-alpha.10", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.10", path = "crates/bitmap" }
 buffer = { version = "0.1.0-alpha.10", path = "crates/buffer" }
-ccalc = { version = "0.1.0-alpha.10", path = "crates/ccalc" }
 data = { version = "0.1.0-alpha.10", path = "crates/data" }
 io = { version = "0.1.0-alpha.10", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.10", path = "crates/linalg" }

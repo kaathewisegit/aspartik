@@ -4,6 +4,8 @@ use super::Calculator;
 use crate::{Transitions, parameters::Tree};
 use buffer::Buffer;
 
+mod propagations;
+
 #[allow(dead_code)]
 pub struct Cpu4 {
 	num_patterns: usize,
@@ -11,12 +13,11 @@ pub struct Cpu4 {
 	pattern_weights: Vec<u32>,
 
 	selectors: Vec<u8>,
-	selectors_backup: Vec<u8>,
 
 	/// Have the length of `num_patterns`
 	samples: Vec<u8>,
 	/// 32-bit alignment for aligned loads into YMM registers.
-	projections: Buffer<[f64; 4], 32>,
+	propagations: Buffer<[f64; 4], 32>,
 
 	likelihoods: Vec<f64>,
 
@@ -43,27 +44,21 @@ impl Calculator<4, f64> for Cpu4 {
 		let frequencies = transitions.frequencies();
 		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
 
-		let c_nodes: Vec<u32> =
-			nodes.iter().map(|&n| n as u32).collect();
-		let c_children: Vec<_> = children
-			.iter()
-			.map(|&(l, r)| [l as u32, r as u32])
-			.collect();
+		self.set_selectors(&nodes);
 
-		// SAFETY: TODO
+		// SAFETY: single threaded, we own the buffers
 		unsafe {
-			ccalc::propose(
-				c_nodes.as_ptr(),
-				c_nodes.len() as u32,
-				c_children.as_ptr() as *const u32,
-				tms.as_ptr() as *mut f64,
-				leaves_end as u32,
-				frequencies.into(),
+			propagations::propose(
+				&nodes,
+				&children,
+				tms.as_ptr() as *const f64,
+				leaves_end,
+				frequencies,
 				//
-				self.num_patterns as u32,
+				self.num_patterns,
 				self.samples.as_ptr(),
-				self.projections.as_mut_ptr() as *mut f64,
-				self.selectors.as_mut_ptr(),
+				self.propagations.as_mut_ptr() as *mut f64,
+				self.selectors.as_ptr(),
 				self.likelihoods.as_mut_ptr(),
 			)
 		}
@@ -82,15 +77,33 @@ impl Calculator<4, f64> for Cpu4 {
 	}
 
 	fn accept(&mut self) -> Result<()> {
-		self.selectors_backup.copy_from_slice(&self.selectors);
 		self.scale_sums_backup.copy_from_slice(&self.scale_sums);
+		// TODO: op transform
+		for selector in &mut self.selectors {
+			*selector = match *selector {
+				0b00 => 0b00,
+				0b01 => 0b01,
+				0b10 => 0b01,
+				0b11 => 0b00,
+				_ => unreachable!(),
+			}
+		}
 
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
-		self.selectors.copy_from_slice(&self.selectors_backup);
 		self.scale_sums.copy_from_slice(&self.scale_sums_backup);
+		// TODO: op transform
+		for selector in &mut self.selectors {
+			*selector = match *selector {
+				0b00 => 0b00,
+				0b01 => 0b01,
+				0b10 => 0b00,
+				0b11 => 0b01,
+				_ => unreachable!(),
+			}
+		}
 
 		Ok(())
 	}
@@ -101,17 +114,23 @@ impl Calculator<4, f64> for Cpu4 {
 }
 
 impl Cpu4 {
+	fn set_selectors(&mut self, nodes: &[usize]) {
+		for node in nodes {
+			self.selectors[*node] |= 0b10;
+		}
+	}
+
 	pub fn new(
 		pattern_weights: Vec<u32>,
-		leaves: Vec<u8>,
+		samples: Vec<u8>,
 		scale_ln: u32,
 	) -> Self {
 		let num_patterns = pattern_weights.len();
-		let num_leaves = leaves.len() / num_patterns;
+		let num_leaves = samples.len() / num_patterns;
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
 
-		let projections =
+		let propagations =
 			Buffer::<_, 32>::new(num_nodes * num_patterns * 2);
 		let scales = vec![false; num_nodes * num_patterns * 2];
 		let scale_sums = vec![0; num_patterns];
@@ -125,10 +144,9 @@ impl Cpu4 {
 			pattern_weights,
 
 			selectors: vec![0; num_nodes],
-			selectors_backup: vec![0; num_nodes],
 
-			samples: leaves,
-			projections,
+			samples,
+			propagations,
 
 			likelihoods: vec![f64::NAN; num_patterns],
 

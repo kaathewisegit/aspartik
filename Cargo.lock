@@ -176,7 +176,6 @@ dependencies = [
  "blake3",
  "buffer",
  "bytemuck",
- "ccalc",
  "cudarc",
  "data",
  "fork_union",
@@ -258,13 +257,6 @@ dependencies = [
  "jobserver",
  "libc",
  "shlex",
-]
-
-[[package]]
-name = "ccalc"
-version = "0.1.0-alpha.10"
-dependencies = [
- "cc",
 ]
 
 [[package]]
