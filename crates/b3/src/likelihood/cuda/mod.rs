@@ -6,6 +6,7 @@ use cudarc::{
 	},
 	nvrtc::{CompileOptions, compile_ptx_with_opts},
 };
+use parking_lot::MutexGuard;
 
 use std::sync::Arc;
 
@@ -81,7 +82,7 @@ pub struct CudaLikelihood {
 impl Calculator<4, f64> for CudaLikelihood {
 	fn likelihood(
 		&mut self,
-		tree: &Tree,
+		tree: MutexGuard<Tree>,
 		transitions: &Transitions<4, f64>,
 	) -> Result<f64> {
 		let (nodes, leaves_end) = tree.nodes_to_update();
@@ -118,6 +119,9 @@ impl Calculator<4, f64> for CudaLikelihood {
 			transitions.frequencies(),
 		)?;
 
+		drop(tree);
+
+		// blocks on the running kernels
 		self.stream.memcpy_dtoh(
 			&self.likelihoods,
 			&mut *self.likelihoods_host,

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use num_traits::Float;
-use parking_lot::Mutex;
+use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
 use std::{collections::HashMap, slice};
@@ -46,7 +46,7 @@ pub trait Calculator<const N: usize, F> {
 	/// Calculate tree likelihood
 	fn likelihood(
 		&mut self,
-		tree: &Tree,
+		tree: MutexGuard<Tree>,
 		transitions: &Transitions<N, F>,
 	) -> Result<f64>;
 
@@ -117,8 +117,8 @@ where
 	}
 
 	fn likelihood(&mut self) -> Result<f64> {
-		let tree = &mut self.tree.get().inner();
-		self.transitions.update(tree)?;
+		let mut tree = self.tree.get().inner();
+		self.transitions.update(&mut tree)?;
 		tree.mark_transitively_updated_nodes();
 
 		// no tree update, return the cache

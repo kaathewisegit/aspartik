@@ -1,4 +1,5 @@
 use anyhow::Result;
+use parking_lot::MutexGuard;
 
 use super::Calculator;
 use crate::{Transitions, parameters::Tree};
@@ -36,13 +37,15 @@ pub struct Cpu4 {
 impl Calculator<4, f64> for Cpu4 {
 	fn likelihood(
 		&mut self,
-		tree: &Tree,
+		tree: MutexGuard<Tree>,
 		transitions: &Transitions<4, f64>,
 	) -> Result<f64> {
 		let (nodes, leaves_end) = tree.nodes_to_update();
 		let (nodes, children) = tree.to_lists(&nodes);
 		let frequencies = transitions.frequencies();
 		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
+
+		drop(tree);
 
 		self.set_selectors(&nodes);
 
