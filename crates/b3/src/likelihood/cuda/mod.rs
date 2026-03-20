@@ -82,9 +82,10 @@ pub struct CudaLikelihood {
 impl Calculator<4, f64> for CudaLikelihood {
 	fn likelihood(
 		&mut self,
-		tree: MutexGuard<Tree>,
+		mut tree: MutexGuard<Tree>,
 		transitions: &Transitions<4, f64>,
 	) -> Result<f64> {
+		tree.mark_updated_propagations();
 		let (nodes, leaves_end) = tree.nodes_to_update();
 		let (nodes, children) = tree.to_lists(&nodes);
 		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);

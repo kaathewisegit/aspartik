@@ -293,7 +293,7 @@ impl Tree {
 		out
 	}
 
-	pub fn mark_transitively_updated_nodes(&mut self) {
+	pub fn mark_updated_propagations(&mut self) {
 		// mark updated nodes whose parent edge got updated
 		for edge in self.edges() {
 			if self.updated_edges.at(edge) {

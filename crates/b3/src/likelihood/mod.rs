@@ -119,7 +119,6 @@ where
 	fn likelihood(&mut self) -> Result<f64> {
 		let mut tree = self.tree.get().inner();
 		self.transitions.update(&mut tree)?;
-		tree.mark_transitively_updated_nodes();
 
 		// no tree update, return the cache
 		if !tree.is_changed() {

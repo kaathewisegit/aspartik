@@ -39,9 +39,10 @@ pub struct Cpu4Propagations {
 impl Calculator<4, f64> for Cpu4Propagations {
 	fn likelihood(
 		&mut self,
-		tree: MutexGuard<Tree>,
+		mut tree: MutexGuard<Tree>,
 		transitions: &Transitions<4, f64>,
 	) -> Result<f64> {
+		tree.mark_updated_propagations();
 		let (nodes, leaves_end) = tree.nodes_to_update();
 		let (nodes, children) = tree.to_lists(&nodes);
 		let frequencies = transitions.frequencies();
