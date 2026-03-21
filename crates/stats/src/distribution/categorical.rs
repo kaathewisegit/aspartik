@@ -217,8 +217,7 @@ impl Distribution for Categorical {
 	/// CDF^-1(0.5)
 	/// ```
 	fn median(&self) -> Option<f64> {
-		const HALF: Probability<f64> =
-			Probability::new_const(0.5).unwrap();
+		const HALF: Probability<f64> = Probability::new(0.5).unwrap();
 
 		Some(self.inverse_cdf(HALF) as f64)
 	}

@@ -57,7 +57,7 @@ impl PyRng {
 	/// ## Exceptions
 	///
 	/// Will throw an exception if `ratio` is not in `[0, 1]`.
-	#[pyo3(signature = (ratio = Probability::new_const(0.5).unwrap()))]
+	#[pyo3(signature = (ratio = Probability::new(0.5).unwrap()))]
 	fn random_bool(&self, ratio: Probability<f64>) -> bool {
 		self.inner().random_bool(*ratio)
 	}
