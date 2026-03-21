@@ -2,7 +2,7 @@
 use pyo3::prelude::*;
 use thiserror::Error;
 
-use math::{function::gamma, ulps_eq};
+use math::{Positive, function::gamma, ulps_eq};
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 
@@ -46,7 +46,7 @@ pub struct InverseGamma {
 
 #[cfg(feature = "python")]
 impl_pymethods! {for InverseGamma;
-	new(shape: f64, rate: f64) throws InverseGammaError;
+	new(shape: f64, rate: f64) -> Result<InverseGamma, InverseGammaError>;
 	get(shape: f64 as py_shape);
 	get(rate: f64 as py_rate);
 	repr("Gamma(shape={}, rate={})", shape, rate);
@@ -167,8 +167,9 @@ impl ContinuousCDF for InverseGamma {
 		} else if x.is_infinite() {
 			1.0
 		} else {
-			// XXX: is this infallible?  If not, document panics
-			gamma::gamma_ur(self.shape, self.rate / x).unwrap()
+			let s = Positive::new(self.shape).unwrap();
+			let x = Positive::new(self.rate / x).unwrap();
+			gamma::gamma_ur(s, x)
 		}
 	}
 
@@ -181,8 +182,9 @@ impl ContinuousCDF for InverseGamma {
 		} else if x.is_infinite() {
 			0.0
 		} else {
-			// XXX: is this infallible?  If not, document panics
-			gamma::gamma_lr(self.shape, self.rate / x).unwrap()
+			let s = Positive::new(self.shape).unwrap();
+			let x = Positive::new(self.rate / x).unwrap();
+			gamma::gamma_lr(s, x)
 		}
 	}
 

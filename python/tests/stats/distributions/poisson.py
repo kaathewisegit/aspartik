@@ -2,10 +2,8 @@ import mpmath
 import pytest
 from utils import random_integer
 
-from math import nan
-
 from aspartik.math import is_close
-from aspartik.stats.distributions import Poisson, PoissonError
+from aspartik.stats.distributions import Poisson
 
 mpmath.mp.prec = 1000
 
@@ -17,20 +15,6 @@ def test_basic():
     assert is_close(0.367879441171442, d.pmf(1), relative=1e-15)
     assert d.lower == 0
     assert d.upper == 2**64 - 1  # u64::MAX
-
-
-def test_errors():
-    with pytest.raises(ValueError) as error:
-        Poisson(0)
-    assert error.value.args[0] == PoissonError.LambdaInvalid
-
-    with pytest.raises(ValueError) as error:
-        Poisson(-1)
-    assert error.value.args[0] == PoissonError.LambdaInvalid
-
-    with pytest.raises(ValueError) as error:
-        Poisson(nan)
-    assert error.value.args[0] == PoissonError.LambdaInvalid
 
 
 @pytest.mark.parametrize("lambda_", [1, 4, 10])

@@ -1,8 +1,7 @@
 macro_rules! impl_pymethods {
-	(for $class:ty;) => {};
 	(
 		for $class:ty;
-		new($($arg:ident: $type:ty),* $(,)?) throws $err:ty;
+		new($($arg:ident: $type:ty),* $(,)?) -> $new_res:ty;
 		$(get($field:ident: $get_type:ty as $py_field_name:ident);)*
 		repr($repr_fmt:literal, $($repr_args:tt),* $(,)?);
 		$(Continuous $continuous:literal;)?
@@ -20,7 +19,7 @@ macro_rules! impl_pymethods {
 		#[pymethods]
 		impl $class {
 			#[new]
-			fn py_new($($arg: $type),*) -> Result<$class, $err> {
+			fn py_new($($arg: $type),*) -> $new_res {
 				<$class>::new($($arg),*)
 			}
 

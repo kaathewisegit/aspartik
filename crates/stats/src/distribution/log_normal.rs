@@ -51,7 +51,7 @@ pub struct LogNormal {
 
 #[cfg(feature = "python")]
 impl_pymethods! {for LogNormal;
-	new(location: f64, scale: f64) throws LogNormalError;
+	new(location: f64, scale: f64) -> Result<LogNormal, LogNormalError>;
 	get(location: f64 as py_location);
 	get(scale: f64 as py_scale);
 	repr("LogNormal(location={}, scale={})", location, scale);

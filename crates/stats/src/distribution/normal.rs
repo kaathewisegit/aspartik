@@ -49,7 +49,7 @@ pub struct Normal {
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Normal;
-	new(mean: f64, std_dev: f64) throws NormalError;
+	new(mean: f64, std_dev: f64) -> Result<Normal, NormalError>;
 	repr("Normal(mean={}, std_dev={})", mean, std_dev);
 	Continuous true;
 	ContinuousCDF true;

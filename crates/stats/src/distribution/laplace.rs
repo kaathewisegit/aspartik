@@ -46,7 +46,7 @@ pub struct Laplace {
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Laplace;
-	new(location: f64, scale: f64) throws LaplaceError;
+	new(location: f64, scale: f64) -> Result<Laplace, LaplaceError>;
 	get(location: f64 as py_location);
 	get(scale: f64 as py_scale);
 	repr("Laplace(location={}, scale={})", location, scale);

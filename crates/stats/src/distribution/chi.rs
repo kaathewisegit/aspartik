@@ -1,10 +1,10 @@
-use core::{f64, num::NonZeroU64};
+use core::{f64::consts, num::NonZeroU64};
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::function::gamma;
+use math::{Positive, function::gamma};
 
 /// Implements the [Chi](https://en.wikipedia.org/wiki/Chi_distribution)
 /// distribution
@@ -82,14 +82,10 @@ impl ContinuousCDF for Chi {
 		} else if x <= 0.0 {
 			0.0
 		} else {
-			gamma::gamma_lr(
-				self.freedom() as f64 / 2.0,
-				x * x / 2.0,
-			)
-			// `freedom > 0`, so `s > 0`.  `x^2` is either 0 or
-			// positive, but `x <= 0` is removed earlir, so it must
-			// be positive.  It could overflow, though.
-			.unwrap()
+			let s = Positive::new(self.freedom() as f64 / 2.0)
+				.unwrap();
+			let x = Positive::new(x * x / 2.0).unwrap();
+			gamma::gamma_lr(s, x)
 		}
 	}
 
@@ -101,12 +97,10 @@ impl ContinuousCDF for Chi {
 		} else if x <= 0.0 {
 			1.0
 		} else {
-			gamma::gamma_ur(
-				self.freedom() as f64 / 2.0,
-				x * x / 2.0,
-			)
-			// Infallible, see `cdf` method
-			.unwrap()
+			let s = Positive::new(self.freedom() as f64 / 2.0)
+				.unwrap();
+			let x = Positive::new(x * x / 2.0).unwrap();
+			gamma::gamma_ur(s, x)
 		}
 	}
 
@@ -148,7 +142,7 @@ impl Distribution for Chi {
 						/ (freedom * freedom)) * (1.0 - 0.046875
 					/ (freedom * freedom * freedom))))
 		} else {
-			let mean = f64::consts::SQRT_2
+			let mean = consts::SQRT_2
 				* gamma::gamma((freedom + 1.0) / 2.0)
 				/ gamma::gamma(freedom / 2.0);
 			Some(mean)

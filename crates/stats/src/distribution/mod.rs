@@ -63,7 +63,7 @@ pub use log_normal::{LogNormal, LogNormalError};
 pub use negative_binomial::{NegativeBinomial, NegativeBinomialError};
 pub use normal::{Normal, NormalError};
 pub use pareto::{Pareto, ParetoError};
-pub use poisson::{Poisson, PoissonError};
+pub use poisson::Poisson;
 pub use students_t::{StudentsT, StudentsTError};
 pub use triangular::{Triangular, TriangularError};
 pub use uniform::{Uniform, UniformError};

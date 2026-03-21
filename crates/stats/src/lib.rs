@@ -89,8 +89,6 @@ pub mod pymodule {
 	#[pymodule_export]
 	use distribution::NormalError;
 	#[pymodule_export]
-	use distribution::PoissonError;
-	#[pymodule_export]
 	use distribution::UniformError;
 
 	#[pymodule_init]

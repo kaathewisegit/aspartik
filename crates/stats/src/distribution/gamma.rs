@@ -7,7 +7,7 @@ use pyo3::prelude::*;
 use thiserror::Error;
 
 use math::{
-	Probability,
+	Positive, Probability,
 	function::gamma,
 	tolerance::{ACCURACY, Tolerance},
 	ulps_eq,
@@ -54,7 +54,7 @@ pub struct Gamma {
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Gamma;
-	new(shape: f64, rate: f64) throws GammaError;
+	new(shape: f64, rate: f64) -> Result<Gamma, GammaError>;
 	get(shape: f64 as py_shape);
 	get(rate: f64 as py_rate);
 	repr("Gamma(shape={}, rate={})", shape, rate);
@@ -179,8 +179,9 @@ impl ContinuousCDF for Gamma {
 		} else if x.is_infinite() {
 			1.0
 		} else {
-			// XXX: panics?
-			gamma::gamma_lr(self.shape, x * self.rate).unwrap()
+			let s = Positive::new(self.shape).unwrap();
+			let x = Positive::new(x * self.rate).unwrap();
+			gamma::gamma_lr(s, x)
 		}
 	}
 
@@ -197,8 +198,9 @@ impl ContinuousCDF for Gamma {
 		} else if x.is_infinite() {
 			0.0
 		} else {
-			// XXX: panics?
-			gamma::gamma_ur(self.shape, x * self.rate).unwrap()
+			let s = Positive::new(self.shape).unwrap();
+			let x = Positive::new(x * self.rate).unwrap();
+			gamma::gamma_ur(s, x)
 		}
 	}
 

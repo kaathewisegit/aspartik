@@ -47,7 +47,7 @@ pub struct Beta {
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Beta;
-	new(shape_a: f64, shape_b: f64) throws BetaError;
+	new(shape_a: f64, shape_b: f64) -> Result<Beta, BetaError>;
 	get(shape_a: f64 as py_shape_a);
 	get(shape_b: f64 as py_shape_b);
 	repr("Beta(shape_a={}, shape_b={})", shape_a, shape_b);

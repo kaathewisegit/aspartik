@@ -5,12 +5,11 @@
 use pyo3::prelude::*;
 use thiserror::Error;
 
-use core::f64;
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 
 use crate::{
-	consts,
+	Positive, consts,
 	tolerance::{DEFAULT_F64_ACC, Tolerance},
 };
 
@@ -74,10 +73,9 @@ pub fn ln_gamma(x: f64) -> f64 {
 			.fold(GAMMA_DK[0], |s, t| s + t.1 / (t.0 as f64 - x));
 
 		consts::LN_PI
-			- (f64::consts::PI * x).sin().ln()
+			- (consts::PI * x).sin().ln()
 			- s.ln() - consts::LN_2_SQRT_E_OVER_PI
-			- (0.5 - x)
-				* ((0.5 - x + GAMMA_R) / f64::consts::E).ln()
+			- (0.5 - x) * ((0.5 - x + GAMMA_R) / consts::E).ln()
 	} else {
 		let s = GAMMA_DK
 			.iter()
@@ -88,8 +86,7 @@ pub fn ln_gamma(x: f64) -> f64 {
 			});
 
 		s.ln() + consts::LN_2_SQRT_E_OVER_PI
-			+ (x - 0.5)
-				* ((x - 0.5 + GAMMA_R) / f64::consts::E).ln()
+			+ (x - 0.5) * ((x - 0.5 + GAMMA_R) / consts::E).ln()
 	}
 }
 
@@ -107,10 +104,10 @@ pub fn gamma(x: f64) -> f64 {
 			.skip(1)
 			.fold(GAMMA_DK[0], |s, t| s + t.1 / (t.0 as f64 - x));
 
-		f64::consts::PI
-			/ ((f64::consts::PI * x).sin()
+		consts::PI
+			/ ((consts::PI * x).sin()
 				* s * consts::TWO_SQRT_E_OVER_PI
-				* ((0.5 - x + GAMMA_R) / f64::consts::E)
+				* ((0.5 - x + GAMMA_R) / consts::E)
 					.powf(0.5 - x))
 	} else {
 		let s = GAMMA_DK
@@ -122,7 +119,7 @@ pub fn gamma(x: f64) -> f64 {
 			});
 
 		s * consts::TWO_SQRT_E_OVER_PI
-			* ((x - 0.5 + GAMMA_R) / f64::consts::E).powf(x - 0.5)
+			* ((x - 0.5 + GAMMA_R) / consts::E).powf(x - 0.5)
 	}
 }
 
@@ -130,53 +127,41 @@ pub fn gamma(x: f64) -> f64 {
 ///
 /// The formula is `Γ(s,x) = ∫_x^inf t^(s-1) exp(-t)` for `s > 0` and `x > 0`,
 /// where `a` is the argument for the gamma function and `x` is the lower
-/// intergral limit.  If `s` or `x` are not in `(0, inf)`, returns
-/// [`GammaFuncError`].
+/// intergral limit.
 #[cfg_attr(feature = "python", pyfunction)]
-pub fn gamma_ui(s: f64, x: f64) -> Result<f64, GammaFuncError> {
-	gamma_ur(s, x).map(|x| x * gamma(s))
+pub fn gamma_ui(s: Positive<f64>, x: Positive<f64>) -> f64 {
+	gamma_ur(s, x) * gamma(*s)
 }
 
 /// Lower incomplete gamma function.
 ///
 /// The formula is `Γ(s,x) = ∫_0^s t^(s-1) exp(-t)` for `s > 0` and `x > 0`,
 /// where `a` is the argument for the gamma function and `x` is the lower
-/// intergral limit.  If `s` or `x` are not in `(0, inf)`, returns
-/// [`GammaFuncError`].
+/// intergral limit.
 #[cfg_attr(feature = "python", pyfunction)]
-pub fn gamma_li(s: f64, x: f64) -> Result<f64, GammaFuncError> {
-	gamma_lr(s, x).map(|x| x * gamma(s))
+pub fn gamma_li(s: Positive<f64>, x: Positive<f64>) -> f64 {
+	gamma_lr(s, x) * gamma(*s)
 }
 
 /// Upper incomplete regularized gamma function
 ///
 /// The formula is `gamma_ui(s, x) / gamma(s)`.
-///
-/// If either argument is zero or negative, returns [`GammaFuncError`].  If
-/// either argument is `NaN`, returns `NaN`.
 #[cfg_attr(feature = "python", pyfunction)]
-pub fn gamma_ur(s: f64, x: f64) -> Result<f64, GammaFuncError> {
-	if s.is_nan() || x.is_nan() {
-		return Ok(f64::NAN);
-	}
-	if s <= 0.0 || s == f64::INFINITY {
-		return Err(GammaFuncError::AInvalid);
-	}
-	if x <= 0.0 || x == f64::INFINITY {
-		return Err(GammaFuncError::XInvalid);
-	}
+pub fn gamma_ur(s: Positive<f64>, x: Positive<f64>) -> f64 {
+	let (so, xo) = (s, x);
+	let (s, x) = (*s, *x);
 
 	let eps = 0.000000000000001;
 	let big = 4503599627370496.0;
 	let big_inv = 2.220446049250313e-16;
 
 	if x < 1.0 || x <= s {
-		return Ok(1.0 - gamma_lr(s, x)?);
+		return 1.0 - gamma_lr(so, xo);
 	}
 
 	let mut ax = s * x.ln() - x - ln_gamma(s);
 	if ax < -709.782712893384 {
-		return if s < x { Ok(0.0) } else { Ok(1.0) };
+		return if s < x { 0.0 } else { 1.0 };
 	}
 
 	ax = ax.exp();
@@ -218,44 +203,33 @@ pub fn gamma_ur(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 			}
 		}
 	}
-	Ok(ans * ax)
+	ans * ax
 }
 
-/// lower incomplete regularized gamma function
+/// Lower incomplete regularized gamma function
 ///
 /// The formula is `gamma_li(s, x) / gamma(s)`.
-///
-/// If either argument is zero or negative, returns [`GammaFuncError`].  This
-/// function also propagates NaNs.
 #[cfg_attr(feature = "python", pyfunction)]
-pub fn gamma_lr(s: f64, x: f64) -> Result<f64, GammaFuncError> {
-	if s.is_nan() || x.is_nan() {
-		return Ok(f64::NAN);
-	}
-	if s <= 0.0 || s == f64::INFINITY {
-		return Err(GammaFuncError::AInvalid);
-	}
-	if x <= 0.0 || x == f64::INFINITY {
-		return Err(GammaFuncError::XInvalid);
-	}
+pub fn gamma_lr(s: Positive<f64>, x: Positive<f64>) -> f64 {
+	let (s, x) = (*s, *x);
 
 	let eps = 0.000000000000001;
 	let big = 4503599627370496.0;
 	let big_inv = 2.220446049250313e-16;
 
 	if s.abs_diff(&0.0) <= DEFAULT_F64_ACC {
-		return Ok(1.0);
+		return 1.0;
 	}
 	if x.abs_diff(&0.0) <= DEFAULT_F64_ACC {
-		return Ok(0.0);
+		return 0.0;
 	}
 
 	let ax = s * x.ln() - x - ln_gamma(s);
 	if ax < -709.782712893384 {
 		if s < x {
-			return Ok(1.0);
+			return 1.0;
 		}
-		return Ok(0.0);
+		return 0.0;
 	}
 	if x <= 1.0 || x <= s {
 		let mut r2 = s;
@@ -270,7 +244,7 @@ pub fn gamma_lr(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 				break;
 			}
 		}
-		return Ok(ax.exp() * ans2 / s);
+		return ax.exp() * ans2 / s;
 	}
 
 	let mut y = 1.0 - s;
@@ -314,7 +288,7 @@ pub fn gamma_lr(s: f64, x: f64) -> Result<f64, GammaFuncError> {
 			}
 		}
 	}
-	Ok(1.0 - ax.exp() * ans)
+	1.0 - ax.exp() * ans
 }
 
 /// Digamma function
@@ -341,8 +315,7 @@ pub fn digamma(x: f64) -> f64 {
 		return f64::NEG_INFINITY;
 	}
 	if x < 0.0 {
-		return digamma(1.0 - x)
-			+ f64::consts::PI / (-f64::consts::PI * x).tan();
+		return digamma(1.0 - x) + consts::PI / (-consts::PI * x).tan();
 	}
 	if x <= s {
 		return d1 - 1.0 / x + d2 * x;

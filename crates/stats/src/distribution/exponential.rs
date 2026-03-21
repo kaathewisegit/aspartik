@@ -47,7 +47,7 @@ pub struct Exp {
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Exp;
-	new(rate: f64) throws ExpError;
+	new(rate: f64) -> Result<Exp, ExpError>;
 	get(rate: f64 as py_rate);
 	repr("Exp(rate={})", rate);
 	Continuous true;

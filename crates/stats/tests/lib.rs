@@ -54,6 +54,17 @@ macro_rules! make_test_harness {
 			<$dist>::new($($arg_name),+)
 		}
 
+
+		$crate::make_test_harness!(@common, $dist($($arg_name: $arg_type),+));
+	};
+
+
+	($dist:ident($($arg_name:ident: $arg_type:ty),+)) => {
+		#[allow(unused_parens)]
+		fn new_dist(($($arg_name),+): ($($arg_type),+)) -> $dist {
+			<$dist>::new($($arg_name),+)
+		}
+
 		$crate::make_test_harness!(@common, $dist($($arg_name: $arg_type),+));
 	};
 

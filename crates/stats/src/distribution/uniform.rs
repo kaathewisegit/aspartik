@@ -45,7 +45,7 @@ pub struct Uniform {
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Uniform;
-	new(min: f64, max: f64) throws UniformError;
+	new(min: f64, max: f64) -> Result<Uniform, UniformError>;
 	get(min: f64 as py_min);
 	get(max: f64 as py_max);
 	repr("Uniform(min={}, max={})", min, max);

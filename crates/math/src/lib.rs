@@ -3,10 +3,10 @@
 pub mod consts;
 pub mod float;
 pub mod function;
-mod probability;
+mod ranged;
 pub mod tolerance;
 
-pub use probability::Probability;
+pub use ranged::{Positive, Probability};
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;

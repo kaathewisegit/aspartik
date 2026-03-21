@@ -1,13 +1,13 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use rand::RngExt;
-use thiserror::Error;
 
-use core::f64;
+use core::f64::consts;
 
-use math::function::{factorial, gamma};
-#[cfg(feature = "python")]
-use util::impl_pyerr;
+use math::{
+	Positive,
+	function::{factorial, gamma},
+};
 
 #[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
@@ -24,9 +24,9 @@ use crate::{
 /// ```
 /// use stats::distribution::{Poisson, Discrete};
 /// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
+/// use math::{assert_almost_eq, Positive};
 ///
-/// let n = Poisson::new(1.0).unwrap();
+/// let n = Poisson::new(Positive::new(1.0).unwrap());
 /// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert_almost_eq!(n.pmf(1), 0.367879441171442, epsilon = 1e-15);
 /// ```
@@ -42,12 +42,12 @@ use crate::{
 	)
 )]
 pub struct Poisson {
-	lambda: f64,
+	lambda: Positive<f64>,
 }
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Poisson;
-	new(lambda_: f64) throws PoissonError;
+	new(lambda_: Positive<f64>) -> Poisson;
 	repr("Poisson({})", lambda);
 	Discrete true;
 	DiscreteCDF true;
@@ -57,70 +57,19 @@ impl_pymethods! {for Poisson;
 
 	#[getter(lambda_)]
 	fn py_lambda(&self) -> f64 {
-		self.lambda
+		*self.lambda
 	}
 }
 
-/// Represents the errors that can occur when creating a [`Poisson`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
-#[non_exhaustive]
-#[cfg_attr(
-	feature = "python",
-	pyclass(
-		from_py_object,
-		module = "aspartik.stats.distributions",
-		frozen,
-		eq,
-		str
-	)
-)]
-pub enum PoissonError {
-	#[error("The lambda is NaN, zero or less than zero")]
-	LambdaInvalid,
-}
-
-#[cfg(feature = "python")]
-impl_pyerr!(PoissonError, pyo3::exceptions::PyValueError);
-
 impl Poisson {
-	/// Constructs a new poisson distribution with a rate (λ)
-	/// of `lambda`
-	///
-	/// # Errors
-	///
-	/// Returns an error if `lambda` is `NaN` or `lambda <= 0.0`
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Poisson;
-	///
-	/// let mut result = Poisson::new(1.0);
-	/// assert!(result.is_ok());
-	///
-	/// result = Poisson::new(0.0);
-	/// assert!(result.is_err());
-	/// ```
-	pub fn new(lambda: f64) -> Result<Poisson, PoissonError> {
-		if lambda.is_nan() || lambda <= 0.0 {
-			Err(PoissonError::LambdaInvalid)
-		} else {
-			Ok(Poisson { lambda })
-		}
+	/// Constructs a new poisson distribution with a rate (λ) of `lambda`
+	pub fn new(lambda: Positive<f64>) -> Poisson {
+		Poisson { lambda }
 	}
 
 	/// Returns the rate (λ) of the poisson distribution
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Poisson;
-	///
-	/// let n = Poisson::new(1.0).unwrap();
-	/// assert_eq!(n.lambda(), 1.0);
-	/// ```
 	pub fn lambda(&self) -> f64 {
-		self.lambda
+		*self.lambda
 	}
 }
 
@@ -139,7 +88,7 @@ impl rand::distr::Distribution<u64> for Poisson {
 	/// Series C (Applied Statistics) Vol. 28 No. 1. (1979) pp. 29 - 35
 	/// otherwise
 	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> u64 {
-		sample_unchecked(rng, self.lambda) as u64
+		sample_unchecked(rng, *self.lambda) as u64
 	}
 }
 
@@ -152,7 +101,7 @@ impl rand::distr::Distribution<f64> for Poisson {
 	/// Series C (Applied Statistics) Vol. 28 No. 1. (1979) pp. 29 - 35
 	/// otherwise
 	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-		sample_unchecked(rng, self.lambda)
+		sample_unchecked(rng, *self.lambda)
 	}
 }
 
@@ -164,16 +113,16 @@ impl DiscreteCDF for Poisson {
 	///
 	/// If `x <= 0`.
 	fn cdf(&self, x: u64) -> f64 {
-		// lambda must be `>= 0`
-		gamma::gamma_ur(x as f64 + 1.0, self.lambda)
-			.expect("x must be positive")
+		let s = Positive::new(x as f64 + 1.0).unwrap();
+		gamma::gamma_ur(s, self.lambda)
 	}
 
 	/// `P(x + 1, λ)`, where `λ` is the rate and `P` is the lower
 	/// regularized gamma function
 	fn sf(&self, x: u64) -> f64 {
-		// XXX: panics?
-		gamma::gamma_lr(x as f64 + 1.0, self.lambda).unwrap()
+		// PANIC: `x as f64` is positive, we add 1
+		let x = Positive::new(x as f64 + 1.0).unwrap();
+		gamma::gamma_lr(x, self.lambda)
 	}
 
 	fn lower(&self) -> u64 {
@@ -196,7 +145,7 @@ impl Distribution for Poisson {
 	///
 	/// where `λ` is the rate
 	fn mean(&self) -> Option<f64> {
-		Some(self.lambda)
+		Some(*self.lambda)
 	}
 
 	/// Returns the median of the poisson distribution
@@ -209,7 +158,7 @@ impl Distribution for Poisson {
 	///
 	/// where `λ` is the rate
 	fn median(&self) -> Option<f64> {
-		Some((self.lambda + 1.0 / 3.0 - 0.02 / self.lambda).floor())
+		Some((*self.lambda + 1.0 / 3.0 - 0.02 / *self.lambda).floor())
 	}
 
 	/// Returns the variance of the poisson distribution
@@ -222,7 +171,7 @@ impl Distribution for Poisson {
 	///
 	/// where `λ` is the rate
 	fn variance(&self) -> Option<f64> {
-		Some(self.lambda)
+		Some(*self.lambda)
 	}
 
 	/// Returns the entropy of the poisson distribution
@@ -235,13 +184,12 @@ impl Distribution for Poisson {
 	///
 	/// where `λ` is the rate
 	fn entropy(&self) -> Option<f64> {
-		Some(0.5 * (2.0
-			* f64::consts::PI * f64::consts::E
-			* self.lambda)
-			.ln() - 1.0 / (12.0 * self.lambda)
-			- 1.0 / (24.0 * self.lambda * self.lambda)
+		Some(0.5 * (2.0 * consts::PI * consts::E * *self.lambda).ln()
+			- 1.0 / (12.0 * *self.lambda)
+			- 1.0 / (24.0 * *self.lambda * *self.lambda)
 			- 19.0 / (360.0
-				* self.lambda * self.lambda * self.lambda))
+				* *self.lambda * *self.lambda
+				* *self.lambda))
 	}
 
 	/// Returns the skewness of the poisson distribution
@@ -287,7 +235,7 @@ impl Discrete for Poisson {
 	///
 	/// where `λ` is the rate
 	fn pmf(&self, x: u64) -> f64 {
-		(-self.lambda + x as f64 * self.lambda.ln()
+		(-*self.lambda + x as f64 * self.lambda.ln()
 			- factorial::ln_factorial(x))
 		.exp()
 	}
@@ -304,7 +252,7 @@ impl Discrete for Poisson {
 	///
 	/// where `λ` is the rate
 	fn ln_pmf(&self, x: u64) -> f64 {
-		-self.lambda + x as f64 * self.lambda.ln()
+		-*self.lambda + x as f64 * self.lambda.ln()
 			- factorial::ln_factorial(x)
 	}
 }
@@ -331,7 +279,7 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 		count
 	} else {
 		let c = 0.767 - 3.36 / lambda;
-		let beta = f64::consts::PI / (3.0 * lambda).sqrt();
+		let beta = consts::PI / (3.0 * lambda).sqrt();
 		let alpha = beta * lambda;
 		let k = c.ln() - lambda - beta.ln();
 
