@@ -434,7 +434,7 @@ fn test_cdf() {
 fn test_inverse_cdf() {
 	let exact_cases = [((-0.1, 0.1), 0.0, 0.0)];
 	for (args, p, expected) in exact_cases {
-		let p = Probability::new(p).unwrap();
+		let p = Probability::new(p);
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 
@@ -455,7 +455,7 @@ fn test_inverse_cdf() {
 		((2.5, 2.5), 0.1380201919245312, 0.8, 1e-11),
 	];
 	for (args, p, expected, epsilon) in abs_cases {
-		let p = Probability::new(p).unwrap();
+		let p = Probability::new(p);
 		let inverse_cdf = new_dist(args).inverse_cdf(p);
 		assert_almost_eq!(inverse_cdf, expected, epsilon = epsilon)
 	}

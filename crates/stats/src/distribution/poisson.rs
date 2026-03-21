@@ -26,7 +26,7 @@ use crate::{
 /// use stats::statistics::Distribution;
 /// use math::{assert_almost_eq, Positive};
 ///
-/// let n = Poisson::new(Positive::new(1.0).unwrap());
+/// let n = Poisson::new(Positive::new((1.0)));
 /// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert_almost_eq!(n.pmf(1), 0.367879441171442, epsilon = 1e-15);
 /// ```
@@ -113,16 +113,14 @@ impl DiscreteCDF for Poisson {
 	///
 	/// If `x <= 0`.
 	fn cdf(&self, x: u64) -> f64 {
-		let s = Positive::new(x as f64 + 1.0).unwrap();
-		gamma::gamma_ur(s, self.lambda)
+		gamma::gamma_ur(Positive::new(x as f64 + 1.0), self.lambda)
 	}
 
 	/// `P(x + 1, λ)`, where `λ` is the rate and `P` is the lower
 	/// regularized gamma function
 	fn sf(&self, x: u64) -> f64 {
 		// PANIC: `x as f64` is positive, we add 1
-		let x = Positive::new(x as f64 + 1.0).unwrap();
-		gamma::gamma_lr(x, self.lambda)
+		gamma::gamma_lr(Positive::new(x as f64 + 1.0), self.lambda)
 	}
 
 	fn lower(&self) -> u64 {

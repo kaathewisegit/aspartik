@@ -181,7 +181,7 @@ fn test_inverse_cdf() {
 		(0.004, 0.5, 173),
 	];
 	for (args, p, expected) in cases {
-		let p = Probability::new(p).unwrap();
+		let p = Probability::new(p);
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }
@@ -192,7 +192,7 @@ fn test_inverse_cdf_roundtrip() {
 		for x in 1..50u64 {
 			let d = new_dist(p);
 			let cdf = d.cdf(x);
-			let prob = Probability::new(cdf).unwrap();
+			let prob = Probability::new(cdf);
 			assert_eq!(x, d.inverse_cdf(prob));
 		}
 	}

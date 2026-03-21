@@ -82,10 +82,10 @@ impl ContinuousCDF for Chi {
 		} else if x <= 0.0 {
 			0.0
 		} else {
-			let s = Positive::new(self.freedom() as f64 / 2.0)
-				.unwrap();
-			let x = Positive::new(x * x / 2.0).unwrap();
-			gamma::gamma_lr(s, x)
+			gamma::gamma_lr(
+				Positive::new(self.freedom() as f64 / 2.0),
+				Positive::new(x * x / 2.0),
+			)
 		}
 	}
 
@@ -97,10 +97,10 @@ impl ContinuousCDF for Chi {
 		} else if x <= 0.0 {
 			1.0
 		} else {
-			let s = Positive::new(self.freedom() as f64 / 2.0)
-				.unwrap();
-			let x = Positive::new(x * x / 2.0).unwrap();
-			gamma::gamma_ur(s, x)
+			gamma::gamma_ur(
+				Positive::new(self.freedom() as f64 / 2.0),
+				Positive::new(x * x / 2.0),
+			)
 		}
 	}
 

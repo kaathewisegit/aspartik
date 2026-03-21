@@ -117,8 +117,7 @@ fn test_gamma_lr() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		let (a, x) =
-			(Positive::new(a).unwrap(), Positive::new(x).unwrap());
+		let (a, x) = (Positive::new(a), Positive::new(x));
 		assert_almost_eq!(gamma_lr(a, x), expected, epsilon = epsilon,);
 	}
 }
@@ -141,8 +140,7 @@ fn test_gamma_li() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		let (a, x) =
-			(Positive::new(a).unwrap(), Positive::new(x).unwrap());
+		let (a, x) = (Positive::new(a), Positive::new(x));
 		assert_almost_eq!(gamma_li(a, x), expected, epsilon = epsilon);
 	}
 }
@@ -182,8 +180,7 @@ fn test_gamma_ur() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		let (a, x) =
-			(Positive::new(a).unwrap(), Positive::new(x).unwrap());
+		let (a, x) = (Positive::new(a), Positive::new(x));
 		assert_almost_eq!(gamma_ur(a, x), expected, epsilon = epsilon);
 	}
 }
@@ -206,8 +203,7 @@ fn test_gamma_ui() {
 	];
 
 	for (a, x, expected, epsilon) in cases {
-		let (a, x) =
-			(Positive::new(a).unwrap(), Positive::new(x).unwrap());
+		let (a, x) = (Positive::new(a), Positive::new(x));
 		assert_almost_eq!(gamma_ui(a, x), expected, epsilon = epsilon);
 	}
 }

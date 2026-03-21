@@ -52,8 +52,20 @@ common_impls!(Positive);
 macro_rules! float_impls {
 	($wrapper:ident, $f:ty, $val:ident, $cond:expr, $range:literal) => {
 		impl $wrapper<$f> {
-			pub const fn new($val: $f) -> Option<Self> {
-				if $cond { Some(Self($val)) } else { None }
+			pub const fn is_valid($val: $f) -> bool {
+				$cond
+			}
+
+			pub const fn try_new(p: $f) -> Option<Self> {
+				if Self::is_valid(p) {
+					Some(Self(p))
+				} else {
+					None
+				}
+			}
+
+			pub const fn new(p: $f) -> Self {
+				Self::try_new(p).expect("value out of range")
 			}
 		}
 
@@ -72,7 +84,7 @@ macro_rules! float_impls {
 			) -> PyResult<Self> {
 				let float = obj.extract::<f64>()?;
 
-				let Some(out) = $wrapper::new(float) else {
+				let Some(out) = $wrapper::try_new(float) else {
 					py_bail!(
 						PyValueError,
 						"{} must be in {}, got {}",

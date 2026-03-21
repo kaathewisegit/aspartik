@@ -281,7 +281,7 @@ fn test_inverse_cdf() {
 	];
 	for (args, p) in cases {
 		let d = new_dist(args);
-		let prob = Probability::new(d.cdf(p)).unwrap();
+		let prob = Probability::new(d.cdf(p));
 		assert_almost_eq!(d.inverse_cdf(prob), p, epsilon = 1e-13);
 	}
 }

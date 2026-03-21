@@ -23,7 +23,7 @@ use math::{Positive, Probability};
 /// use stats::statistics::Distribution;
 /// use math::Positive;
 ///
-/// let n = Exp::new(Positive::new(1.0).unwrap());
+/// let n = Exp::new(Positive::new((1.0)));
 /// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert_eq!(n.pdf(1.0), 0.36787944117144233);
 /// ```

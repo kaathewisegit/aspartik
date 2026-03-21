@@ -235,7 +235,7 @@ fn test_sf() {
 fn test_inverse_cdf() {
 	let cases = [((3.0, 0.5), 1.0, u64::MAX)];
 	for (args, p, expected) in cases {
-		let p = Probability::new(p).unwrap();
+		let p = Probability::new(p);
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }

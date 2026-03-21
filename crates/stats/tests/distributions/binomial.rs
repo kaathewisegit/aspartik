@@ -242,7 +242,7 @@ fn test_inverse_cdf() {
 		((0.005, 10), 0.9, 0),       // issue #330
 	];
 	for (args, p, expected) in cases {
-		let p = Probability::new(p).unwrap();
+		let p = Probability::new(p);
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }
@@ -254,11 +254,7 @@ fn test_cdf_inverse_identity() {
 		assert_exact(
 			args,
 			p,
-			|d, p| {
-				d.inverse_cdf(
-					Probability::new(d.cdf(p)).unwrap(),
-				)
-			},
+			|d, p| d.inverse_cdf(Probability::new(d.cdf(p))),
 			p,
 		);
 	}

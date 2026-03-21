@@ -662,7 +662,7 @@ fn test_inverse_cdf() {
 	];
 	for ((p, freedom), expected) in cases {
 		let dist = new_dist((0.0, 1.0, freedom));
-		let p = Probability::new(p).unwrap();
+		let p = Probability::new(p);
 		assert_almost_eq!(
 			dist.inverse_cdf(p),
 			expected,
@@ -725,13 +725,13 @@ fn test_inverse_cdf_high_precision() {
 	for ((p, df), expected) in invcdf_data.iter() {
 		assert_close(
 			(0.0, 1.0, *df),
-			Probability::new(*p).unwrap(),
+			Probability::new(*p),
 			|d, p| d.inverse_cdf(p),
 			*expected,
 		);
 		assert_close(
 			(0.0, 1.0, *df),
-			Probability::new(1.0 - p).unwrap(),
+			Probability::new(1.0 - p),
 			|d, p| d.inverse_cdf(p),
 			-*expected,
 		);
@@ -748,7 +748,7 @@ fn test_inverse_cdf_midpoint() {
 		assert_exact(
 			(loc, 1.0, 12.0),
 			0.5,
-			|d, p| d.inverse_cdf(Probability::new(p).unwrap()),
+			|d, p| d.inverse_cdf(Probability::new(p)),
 			expected,
 		);
 	}
@@ -759,7 +759,7 @@ fn test_inverse_cdf_p0() {
 	assert_exact(
 		(0.0, 1.0, 12.0),
 		0.0,
-		|d, p| d.inverse_cdf(Probability::new(p).unwrap()),
+		|d, p| d.inverse_cdf(Probability::new(p)),
 		f64::NEG_INFINITY,
 	);
 }
@@ -769,7 +769,7 @@ fn test_inverse_cdf_p1() {
 	assert_exact(
 		(0.0, 1.0, 12.0),
 		1.0,
-		|d, p| d.inverse_cdf(Probability::new(p).unwrap()),
+		|d, p| d.inverse_cdf(Probability::new(p)),
 		f64::INFINITY,
 	);
 }

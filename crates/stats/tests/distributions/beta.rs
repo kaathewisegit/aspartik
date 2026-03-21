@@ -226,7 +226,7 @@ fn test_inverse_cdf() {
 			args,
 			p,
 			|d, p| {
-				let prob = Probability::new(d.cdf(p)).unwrap();
+				let prob = Probability::new(d.cdf(p));
 				d.inverse_cdf(prob)
 			},
 			expected,

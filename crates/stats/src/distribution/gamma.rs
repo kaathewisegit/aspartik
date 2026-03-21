@@ -179,9 +179,10 @@ impl ContinuousCDF for Gamma {
 		} else if x.is_infinite() {
 			1.0
 		} else {
-			let s = Positive::new(self.shape).unwrap();
-			let x = Positive::new(x * self.rate).unwrap();
-			gamma::gamma_lr(s, x)
+			gamma::gamma_lr(
+				Positive::new(self.shape),
+				Positive::new(x * self.rate),
+			)
 		}
 	}
 
@@ -198,9 +199,10 @@ impl ContinuousCDF for Gamma {
 		} else if x.is_infinite() {
 			0.0
 		} else {
-			let s = Positive::new(self.shape).unwrap();
-			let x = Positive::new(x * self.rate).unwrap();
-			gamma::gamma_ur(s, x)
+			gamma::gamma_ur(
+				Positive::new(self.shape),
+				Positive::new(x * self.rate),
+			)
 		}
 	}
 

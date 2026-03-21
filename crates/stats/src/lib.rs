@@ -14,7 +14,7 @@
 //! use math::Positive;
 //!
 //! let mut r = rand::rng();
-//! let n = Exp::new(Positive::new(0.5).unwrap());
+//! let n = Exp::new(Positive::new((0.5)));
 //! print!("{}", n.sample(&mut r));
 //! ```
 //!
@@ -29,7 +29,7 @@
 //! use stats::statistics::Distribution; // statistical moments and entropy
 //! use math::Positive;
 //!
-//! let n = Exp::new(Positive::new(1.0).unwrap());
+//! let n = Exp::new(Positive::new((1.0)));
 //! assert_eq!(n.mean(), Some(1.0));
 //! assert_eq!(n.variance(), Some(1.0));
 //! assert_eq!(n.entropy(), Some(1.0));

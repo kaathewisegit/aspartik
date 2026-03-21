@@ -216,7 +216,7 @@ fn test_cdf_inverse_identity() {
 	for args in args {
 		for n in -5..0 {
 			let p = 10.0f64.powi(n);
-			let p = Probability::new(p).unwrap();
+			let p = Probability::new(p);
 			assert_close(
 				args,
 				p,
@@ -234,7 +234,7 @@ fn test_cdf_inverse_identity() {
 		args,
 		p,
 		|d, p| {
-			let prob = Probability::new(d.cdf(p)).unwrap();
+			let prob = Probability::new(d.cdf(p));
 			d.inverse_cdf(prob)
 		},
 		p,
