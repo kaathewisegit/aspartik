@@ -2,7 +2,7 @@
 //!
 //! It's used by `Tree` in b3 to track updated nodes, so it only needs to track
 //! a fixed amount of bits after it is created.  This means I don't need roaring
-//! bitmaps.  And when I used [BitVec] with SkVec, I found it to be too focused
+//! bitmaps.  And when I used [BitVec] with SkBuf, I found it to be too focused
 //! on indexing, which itself was very slow.
 //!
 //! [BitVec]: https://lib.rs/crates/bitvec

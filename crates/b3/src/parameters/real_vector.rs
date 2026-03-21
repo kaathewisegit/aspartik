@@ -7,12 +7,12 @@ use std::{io::Write, ops::Index};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
-use skvec::{Iter, SkVec};
+use sk::{Iter, SkBuf};
 use util::py_bail;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RealVector {
-	values: SkVec<f64>,
+	values: SkBuf<f64>,
 }
 
 #[allow(clippy::len_without_is_empty)]

@@ -1,34 +1,34 @@
-//! # SkVec
+//! # SkBuf
 //!
-//! SkVec is an epoch-versioned [`Vec`]-like structure with epoch versioning.
+//! SkBuf is an epoch-versioned [`Vec`]-like structure with epoch versioning.
 //! It's designed for branchless value access and memory locality between the
 //! data versions.
 //!
 //! The API mostly mirrors that of [`Vec`].  New vectors can be created using
 //! the [`skvec!`] macro, which has the same syntax as [`vec!`].  Value access
-//! can be done via indexing.  Due to implementation details `SkVec` doesn't
+//! can be done via indexing.  Due to implementation details `SkBuf` doesn't
 //! implement [`IndexMut`][std::ops::IndexMut], so value updates have to be done
-//! with [`set`][SkVec::set].
+//! with [`set`][SkBuf::set].
 //!
 //! The core feature, versioning, can be used via two methods.
 //!
-//! - [`accept`][SkVec::accept] confirms all of the edits done since the last
+//! - [`accept`][SkBuf::accept] confirms all of the edits done since the last
 //!   epoch and drops the overwritten items.
 //!
-//! - [`reject`][SkVec::reject] rolls back all of the elements to the values
+//! - [`reject`][SkBuf::reject] rolls back all of the elements to the values
 //!   they had at the start of the last epoch.
 //!
 //! Where an epoch is the time of creation of the vector or the last call to
 //! `accept` or `reject`.  For the precise terminology (i.e. the difference
-//! between elements and items) see the [`SkVec`] type documentation.
+//! between elements and items) see the [`SkBuf`] type documentation.
 //!
 //!
 //! ## Example
 //!
 //! ```
-//! use skvec::{skvec, SkVec};
+//! use sk::{skbuf, SkBuf};
 //!
-//! let mut v = skvec![1, 2, 3];
+//! let mut v = skbuf![1, 2, 3];
 //! assert_eq!(v, [1, 2, 3]);
 //!
 //! v.set(0, 10);
@@ -55,21 +55,21 @@ use std::ops::Index;
 
 /// Epoch-versioned `Vec`-like storage.
 ///
-/// `SkVec` is made up of *elements*.  Each element is addressable by its index
+/// `SkBuf` is made up of *elements*.  Each element is addressable by its index
 /// and is made out of two *items*.  The first item is the original value of the
 /// element in a single epoch.  The second one is the new, edited value, created
-/// with [`set`][SkVec::set].  On [`accept`][SkVec::accept] the second item will
+/// with [`set`][SkBuf::set].  On [`accept`][SkBuf::accept] the second item will
 /// become the primary one and the old one will be erased.  And on
-/// [`reject`][SkVec::reject] the second item will be erased, with the element
+/// [`reject`][SkBuf::reject] the second item will be erased, with the element
 /// falling back to the original one.
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct SkVec<T> {
+pub struct SkBuf<T> {
 	/// The underlying storage.  It's twice as long as the number of items
-	/// `SkVec` can hold at a time.  Each element consist of two items in
+	/// `SkBuf` can hold at a time.  Each element consist of two items in
 	/// `inner`, only one of which is active, determined by the `mask` at
 	/// the index.
-	inner: Vec<T>,
+	items: Vec<T>,
 	/// Metadata associated with each element
 	///
 	/// - The first bit is a pointer to the first or the second element.
@@ -78,7 +78,7 @@ pub struct SkVec<T> {
 }
 
 // Memoization-related methods
-impl<T> SkVec<T> {
+impl<T> SkBuf<T> {
 	/// Returns the offset, which is always 0 or 1
 	///
 	/// # Safety
@@ -100,10 +100,10 @@ impl<T> SkVec<T> {
 		let idx = i * 2 + unsafe { self.offset(i) };
 		// SAFETY: `i < self.len()`, so `i * 2 + 1` is less than
 		// `self.len() * 2`, the length of `inner`
-		unsafe { self.inner.get_unchecked(idx) }
+		unsafe { self.items.get_unchecked(idx) }
 	}
 
-	/// Mutable version of [`active_inner`][SkVec::active_inner].
+	/// Mutable version of [`active_inner`][SkBuf::active_inner].
 	///
 	/// # Safety
 	///
@@ -112,7 +112,7 @@ impl<T> SkVec<T> {
 		// SAFETY: `i < self.len()` invariant
 		let idx = i * 2 + unsafe { self.offset(i) };
 		// SAFETY: see `active_inner`
-		unsafe { self.inner.get_unchecked_mut(idx) }
+		unsafe { self.items.get_unchecked_mut(idx) }
 	}
 
 	fn is_edited(&self, i: usize) -> bool {
@@ -120,7 +120,7 @@ impl<T> SkVec<T> {
 	}
 
 	/// Accept all of the changes made since the creation of the vector or
-	/// the last call to `accept` or [`reject`][SkVec::reject].
+	/// the last call to `accept` or [`reject`][SkBuf::reject].
 	pub fn accept(&mut self) {
 		// zero-out the edited status
 		for m in &mut self.metadata {
@@ -161,7 +161,7 @@ impl<T> SkVec<T> {
 	}
 
 	/// Sets the item at `index` to `value`.  All of the subsequent index
-	/// operations (via [`SkVec::index`] or the `[]` operator) will return
+	/// operations (via [`SkBuf::index`] or the `[]` operator) will return
 	/// the updated item which equals value.
 	pub fn set(&mut self, index: usize, value: T) {
 		assert!(index < self.len());
@@ -186,7 +186,7 @@ impl<T> SkVec<T> {
 
 // Trait implementations
 
-impl<T> Index<usize> for SkVec<T> {
+impl<T> Index<usize> for SkBuf<T> {
 	type Output = T;
 
 	fn index(&self, index: usize) -> &T {
@@ -196,19 +196,13 @@ impl<T> Index<usize> for SkVec<T> {
 	}
 }
 
-impl<T> Default for SkVec<T> {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 // Iterator implementations
 
-/// Immutable iterator over a [`SkVec`].
+/// Immutable iterator over a [`SkBuf`].
 ///
-/// See [`SkVec::iter`].
+/// See [`SkBuf::iter`].
 pub struct Iter<'a, T> {
-	vec: &'a SkVec<T>,
+	vec: &'a SkBuf<T>,
 	index: usize,
 }
 
@@ -254,7 +248,7 @@ impl<T> ExactSizeIterator for Iter<'_, T> {
 	}
 }
 
-impl<T> SkVec<T> {
+impl<T> SkBuf<T> {
 	/// Returns an iterator over the vector, which yields currently active
 	/// item values.
 	pub fn iter(&self) -> Iter<'_, T> {
@@ -265,7 +259,7 @@ impl<T> SkVec<T> {
 	}
 }
 
-impl<'a, T> IntoIterator for &'a SkVec<T> {
+impl<'a, T> IntoIterator for &'a SkBuf<T> {
 	type Item = &'a T;
 	type IntoIter = Iter<'a, T>;
 
@@ -275,72 +269,21 @@ impl<'a, T> IntoIterator for &'a SkVec<T> {
 }
 
 // Methods from `Vec`.
-impl<T> SkVec<T> {
-	/// Constructs a new, empty `SkVec`.
-	pub fn new() -> Self {
-		Self {
-			inner: Vec::new(),
-			metadata: Vec::new(),
-		}
-	}
-
-	/// Constructs a new, empty `SkVec` which can hold at least `capacity`
-	/// elements without additional allocations.
-	pub fn with_capacity(capacity: usize) -> Self {
-		Self {
-			inner: Vec::with_capacity(capacity * 2),
-			metadata: Vec::with_capacity(capacity),
-		}
-	}
-
-	/// Returns the total number of elements the vector can hold without
-	/// reallocating.
-	///
-	/// Note that `SkVec` is made up of several vectors internally, which
-	/// are not guaranteed to reserve memory in the same way.  As such,
-	/// their capacities might diverge.  This method conservatively returns
-	/// the lowest capacity.  Adding more items than that will trigger
-	/// allocations, but their exact size might vary in different
-	/// situations.
-	pub fn capacity(&self) -> usize {
-		(self.inner.capacity() / 2).min(self.metadata.capacity())
-	}
-
-	/// Reserve the space for at least `additional` more items.
-	///
-	/// See [`SkVec::capacity`] for the nuances with handling `SkVec`'s
-	/// allocations.
-	pub fn reserve(&mut self, additional: usize) {
-		self.inner.reserve(additional * 2);
-		self.metadata.reserve(additional);
-	}
-
-	/// Shrinks the capacity of the vector as much as possible.
-	pub fn shrink_to_fit(&mut self) {
-		self.inner.shrink_to_fit();
-		self.metadata.shrink_to_fit();
-	}
-
-	/// Appends the value as an accepted one.
-	pub fn push(&mut self, value: T)
+impl<T> SkBuf<T> {
+	/// Creates a new `SkVec` with `size` default elements
+	pub fn new(length: usize) -> Self
 	where
-		T: Clone,
+		T: Default + Clone,
 	{
-		self.inner.push(value.clone());
-		self.inner.push(value);
+		let metadata = vec![0; length];
+		let items = vec![T::default(); length * 2];
 
-		self.metadata.push(0b00);
+		Self { items, metadata }
 	}
 
-	/// Clears the vector, removing all values.
-	pub fn clear(&mut self) {
-		self.inner.clear();
-		self.metadata.clear();
-	}
-
-	/// Number of items in the `SkVec`.
+	/// Number of items in the `SkBuf`.
 	///
-	/// See [`SkVec` documentation][SkVec] for the distinction between items
+	/// See [`SkBuf` documentation][SkBuf] for the distinction between items
 	/// and values.
 	pub fn len(&self) -> usize {
 		self.metadata.len()
@@ -348,7 +291,7 @@ impl<T> SkVec<T> {
 
 	/// Returns `true` if the vector has no items.
 	pub fn is_empty(&self) -> bool {
-		self.inner.is_empty()
+		self.items.is_empty()
 	}
 
 	/// Returns the last active element, or `None` if the vector is empty.
@@ -376,70 +319,75 @@ impl<T> SkVec<T> {
 }
 
 // Custom
-impl<T> SkVec<T> {
+impl<T> SkBuf<T> {
 	/// Constructs a vector made out of `value` repeated `length` times.
 	pub fn repeat(value: T, length: usize) -> Self
 	where
 		T: Clone,
 	{
-		let mut out = SkVec::with_capacity(length);
+		let metadata = vec![0; length];
+		let mut items = Vec::with_capacity(length * 2);
 
 		for _ in 0..length {
-			out.push(value.clone());
+			items.push(value.clone());
+			items.push(value.clone());
 		}
 
-		out
+		Self { items, metadata }
 	}
 }
 
 // From implementations
 
-impl<T: Clone> From<&[T]> for SkVec<T> {
+impl<T: Clone> From<&[T]> for SkBuf<T> {
 	fn from(values: &[T]) -> Self {
-		let mut out = Self::with_capacity(values.len());
+		let metadata = vec![0; values.len()];
+		let mut items = Vec::with_capacity(values.len() * 2);
 
 		for value in values {
-			out.push(value.clone());
+			items.push(value.clone());
+			items.push(value.clone());
 		}
 
-		out
+		Self { items, metadata }
 	}
 }
 
-impl<T: Clone> From<Vec<T>> for SkVec<T> {
+impl<T: Clone> From<Vec<T>> for SkBuf<T> {
 	fn from(values: Vec<T>) -> Self {
-		let mut out = Self::with_capacity(values.len());
+		let metadata = vec![0; values.len()];
+		let mut items = Vec::with_capacity(values.len() * 2);
 
 		for value in values {
-			out.push(value);
+			items.push(value.clone());
+			items.push(value);
 		}
 
-		out
+		Self { items, metadata }
 	}
 }
 
-impl<T: Clone, const N: usize> From<[T; N]> for SkVec<T> {
+impl<T: Clone, const N: usize> From<[T; N]> for SkBuf<T> {
 	fn from(values: [T; N]) -> Self {
-		let mut out = Self::with_capacity(values.len());
+		let metadata = vec![0; values.len()];
+		let mut items = Vec::with_capacity(values.len() * 2);
 
 		for value in values {
-			out.push(value);
+			items.push(value.clone());
+			items.push(value);
 		}
 
-		out
+		Self { items, metadata }
 	}
 }
 
 /// Works identically to [`vec!`].
 #[macro_export]
-macro_rules! skvec {
-	() => {
-		$crate::SkVec::new()
-	};
+macro_rules! skbuf {
 	($elem:expr; $n:expr) => {
-		$crate::SkVec::repeat($elem, $n)
+		$crate::SkBuf::repeat($elem, $n)
 	};
 	($($x:expr),+ $(,)?) => {
-		$crate::SkVec::from([$($x),+])
+		$crate::SkBuf::from([$($x),+])
 	}
 }

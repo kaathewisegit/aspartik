@@ -10,7 +10,7 @@ members = [
 	"crates/linalg",
 	"crates/math",
 	"crates/rng",
-	"crates/skvec",
+	"crates/sk",
 	"crates/stats",
 	"crates/util",
 ]
@@ -57,7 +57,7 @@ io = { version = "0.1.0-alpha.10", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.10", path = "crates/linalg" }
 math = { version = "0.1.0-alpha.10", path = "crates/math", default-features = false }
 rng = { version = "0.1.0-alpha.10", path = "crates/rng" }
-skvec = { version = "0.1.0-alpha.10", path = "crates/skvec" }
+sk = { version = "0.1.0-alpha.10", path = "crates/sk" }
 stats = { version = "0.1.0-alpha.10", path = "crates/stats" }
 util = { version = "0.1.0-alpha.10", path = "crates/util" }
 

@@ -1,5 +1,5 @@
 [package]
-name = "skvec"
+name = "sk"
 description = "Epoch-versioned dynamic array"
 
 version.workspace = true

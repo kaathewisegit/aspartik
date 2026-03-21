@@ -1,12 +1,9 @@
-use skvec::SkVec;
+use sk::SkBuf;
 
 #[test]
 fn basic() {
-	let mut v = SkVec::<i32>::new();
+	let mut v = SkBuf::<i32>::from([1, 2, 3]);
 
-	v.push(1);
-	v.push(2);
-	v.push(3);
 	assert_eq!([1, 2, 3], v);
 
 	v.set(0, 10);

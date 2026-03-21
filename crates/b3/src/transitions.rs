@@ -5,13 +5,13 @@ use pyo3::prelude::*;
 use crate::{
 	clock::PyClock, parameters::Tree, substitution::SubstitutionModel,
 };
-use skvec::{SkVec, skvec};
+use sk::{SkBuf, skbuf};
 
 pub struct Transitions<const N: usize, F> {
 	substitution: Box<dyn SubstitutionModel<N, F> + Sync + Send>,
 	clock: Py<PyClock>,
 
-	transitions: SkVec<[[F; N]; N]>,
+	transitions: SkBuf<[[F; N]; N]>,
 }
 
 impl<const N: usize, F> Transitions<N, F>
@@ -26,7 +26,7 @@ where
 	where
 		S: SubstitutionModel<N, F> + Sync + Send + 'static,
 	{
-		let transitions = skvec![[[F::zero(); N]; N]; length];
+		let transitions = skbuf![[[F::zero(); N]; N]; length];
 
 		Self {
 			substitution: Box::new(substitution),

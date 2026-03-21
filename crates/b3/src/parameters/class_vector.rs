@@ -7,12 +7,12 @@ use std::{io::Write, ops::Index};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
-use skvec::{Iter, SkVec};
+use sk::{Iter, SkBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClassVector {
 	num_classes: u8,
-	classes: SkVec<u8>,
+	classes: SkBuf<u8>,
 }
 
 #[expect(clippy::len_without_is_empty)]
@@ -20,7 +20,7 @@ impl ClassVector {
 	pub fn new(num_classes: u8, len: usize) -> Self {
 		Self {
 			num_classes,
-			classes: SkVec::repeat(0, len),
+			classes: SkBuf::repeat(0, len),
 		}
 	}
 

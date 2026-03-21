@@ -24,7 +24,7 @@ use data::newick::{
 	Tree as NewickTree,
 };
 use rng::{PyRng, Rng};
-use skvec::{SkVec, skvec};
+use sk::{SkBuf, skbuf};
 use util::py_bail;
 
 const ROOT: usize = 0x524f4f54;
@@ -33,9 +33,9 @@ const ROOT: usize = 0x524f4f54;
 pub struct Tree {
 	names: Vec<String>,
 
-	children: SkVec<usize>,
-	parents: SkVec<usize>,
-	heights: SkVec<f64>,
+	children: SkBuf<usize>,
+	parents: SkBuf<usize>,
+	heights: SkBuf<f64>,
 
 	updated_edges: Bitmap,
 	/// An array of length num_nodes, where `true` means that the node has
@@ -157,9 +157,9 @@ impl Tree {
 		let mut out = Self {
 			names,
 
-			children: skvec![ROOT; num_internals * 2],
-			parents: skvec![ROOT; num_nodes],
-			heights: skvec![0.0; num_nodes],
+			children: skbuf![ROOT; num_internals * 2],
+			parents: skbuf![ROOT; num_nodes],
+			heights: skbuf![0.0; num_nodes],
 
 			updated_edges: Bitmap::new(num_nodes),
 			updated_nodes: Bitmap::new(num_nodes),

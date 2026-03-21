@@ -1,6 +1,6 @@
 use std::cmp::PartialEq;
 
-use crate::SkVec;
+use crate::SkBuf;
 
 macro_rules! impl_eq {
 	($this:ty, $other:ty $(, $($extra:tt)*)?) => {
@@ -22,16 +22,16 @@ macro_rules! impl_eq {
 	};
 }
 
-impl_eq!(SkVec<T>, SkVec<T>);
+impl_eq!(SkBuf<T>, SkBuf<T>);
 
-impl_eq!(SkVec<T>, Vec<T>);
-impl_eq!(SkVec<T>, [T]);
-impl_eq!(SkVec<T>, &[T]);
-impl_eq!(SkVec<T>, [T; N], const N: usize);
+impl_eq!(SkBuf<T>, Vec<T>);
+impl_eq!(SkBuf<T>, [T]);
+impl_eq!(SkBuf<T>, &[T]);
+impl_eq!(SkBuf<T>, [T; N], const N: usize);
 
-impl_eq!(Vec<T>, SkVec<T>);
-impl_eq!([T], SkVec<T>);
-impl_eq!(&[T], SkVec<T>);
-impl_eq!([T; N], SkVec<T>, const N: usize);
+impl_eq!(Vec<T>, SkBuf<T>);
+impl_eq!([T], SkBuf<T>);
+impl_eq!(&[T], SkBuf<T>);
+impl_eq!([T; N], SkBuf<T>, const N: usize);
 
-impl<T: Eq> Eq for SkVec<T> {}
+impl<T: Eq> Eq for SkBuf<T> {}

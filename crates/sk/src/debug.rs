@@ -1,8 +1,8 @@
 use std::fmt::{Debug, Formatter, Result};
 
-use crate::SkVec;
+use crate::SkBuf;
 
-impl<T> Debug for SkVec<T>
+impl<T> Debug for SkBuf<T>
 where
 	T: Debug,
 {
@@ -24,14 +24,14 @@ where
 			}
 
 			if self.is_edited(i) {
-				self.inner[i * 2].fmt(f)?;
+				self.items[i * 2].fmt(f)?;
 				if (self.metadata[i] & 0b01) == 0 {
 					f.write_str(" (active)")?;
 				}
 
 				f.write_str(" / ")?;
 
-				self.inner[i * 2 + 1].fmt(f)?;
+				self.items[i * 2 + 1].fmt(f)?;
 				if (self.metadata[i] & 0b01) == 1 {
 					f.write_str(" (active)")?;
 				}

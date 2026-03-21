@@ -1,8 +1,8 @@
-use skvec::skvec;
+use sk::skbuf;
 
 #[test]
 fn basic_eq() {
-	let v = skvec![1, 2, 3];
+	let v = skbuf![1, 2, 3];
 
 	assert_eq!(v, vec![1, 2, 3]);
 	assert_eq!(v, [1, 2, 3].as_slice());
@@ -15,7 +15,7 @@ fn basic_eq() {
 
 #[test]
 fn basic_partial_eq() {
-	let v = skvec![1.0, 2.0, 3.0];
+	let v = skbuf![1.0, 2.0, 3.0];
 
 	assert_eq!(v, vec![1.0, 2.0, 3.0]);
 	assert_eq!(v, [1.0, 2.0, 3.0].as_slice());

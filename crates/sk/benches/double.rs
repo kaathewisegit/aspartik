@@ -4,12 +4,12 @@ use rand::{RngExt, SeedableRng, rngs::SmallRng};
 
 use std::hint::black_box;
 
-use skvec::SkVec;
+use sk::SkBuf;
 
 type Row = [f64; 4];
 
-fn data(length: usize) -> SkVec<Row> {
-	let mut out = SkVec::with_capacity(length);
+fn data(length: usize) -> SkBuf<Row> {
+	let mut out = SkBuf::with_capacity(length);
 	let mut rng = SmallRng::seed_from_u64(4);
 
 	for _ in 0..length {
@@ -20,7 +20,7 @@ fn data(length: usize) -> SkVec<Row> {
 }
 
 #[inline(always)]
-fn edit(v: &mut SkVec<[f64; 4]>, num: usize, rng: &mut SmallRng) {
+fn edit(v: &mut SkBuf<[f64; 4]>, num: usize, rng: &mut SmallRng) {
 	for _ in 0..num {
 		let i = rng.random_range(0..v.len());
 		v.set(i, rng.random());
