@@ -42,9 +42,7 @@ impl Calculator<4, f64> for Cpu4Propagations {
 		mut tree: MutexGuard<Tree>,
 		transitions: &Transitions<4, f64>,
 	) -> Result<f64> {
-		tree.mark_updated_propagations();
-		let (nodes, leaves_end) = tree.nodes_to_update();
-		let (nodes, children) = tree.to_lists(&nodes);
+		let (nodes, children, leaves_end) = tree.propagation_lists();
 		let frequencies = transitions.frequencies();
 		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
 
@@ -177,7 +175,7 @@ impl Cpu4Propagations {
 unsafe fn propose(
 	state: &mut Cpu4Propagations,
 	nodes: &[usize],
-	children: &[(usize, usize)],
+	children: &[[usize; 2]],
 	transitions: &[[[f64; 4]; 4]],
 	leaves_end: usize,
 	frequencies: [f64; 4],
@@ -219,7 +217,7 @@ unsafe fn propose(
 	for i in leaves_end..nodes.len() - 1 {
 		let node = nodes[i];
 
-		let (left, right) = children[i - leaves_end];
+		let [left, right] = children[i - leaves_end];
 
 		let propagations_left = propagations.add(offset!(left) + start);
 		let propagations_right = propagations.add(offset!(right) + start);
@@ -239,7 +237,7 @@ unsafe fn propose(
 
 	let likelihoods = state.likelihoods.as_mut_ptr();
 
-	let &(root_left, root_right) = children.last().unwrap();
+	let &[root_left, root_right] = children.last().unwrap();
 	let mut propagations_left =
 		propagations.add(offset!(root_left));
 	let mut propagations_right =

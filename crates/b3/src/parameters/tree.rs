@@ -1,5 +1,5 @@
 use anyhow::{Result, bail, ensure};
-use bytemuck::cast_slice;
+use bytemuck::{Pod, Zeroable, allocation::cast_vec, cast_slice};
 use parking_lot::Mutex;
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
@@ -43,7 +43,9 @@ pub struct Tree {
 	updated_nodes: Bitmap,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+	Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Zeroable, Pod,
+)]
 #[repr(transparent)]
 pub struct Node(usize);
 
@@ -87,7 +89,9 @@ impl<'py> FromPyObject<'_, 'py> for Node {
 ///
 /// Internals are the unnamed nodes which represent most recent common ancestors
 /// of leaves and other internals.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+	Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Zeroable, Pod,
+)]
 #[pyclass(from_py_object, module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
 pub struct Internal(usize);
@@ -95,7 +99,9 @@ pub struct Internal(usize);
 /// Leaf node of the phylogenetic tree
 ///
 /// Every leaf node is associated with a concrete sequence.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+	Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Zeroable, Pod,
+)]
 #[pyclass(from_py_object, module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
 pub struct Leaf(usize);
@@ -293,17 +299,9 @@ impl Tree {
 		out
 	}
 
-	pub fn mark_updated_propagations(&mut self) {
-		// mark updated nodes whose parent edge got updated
-		for edge in self.edges() {
-			if self.updated_edges.at(edge) {
-				let (child, _) = self.edge_nodes(edge);
-				self.mark_node_updated(child);
-			}
-		}
-
-		// For each updated node go upwards in the tree until root and
-		// mark nodes as updated
+	/// For each updated node go upwards in the tree until root and
+	/// mark nodes as updated
+	fn mark_updated_parents(&mut self) {
 		for node in self.nodes() {
 			if self.is_node_updated(node) {
 				let mut curr = node;
@@ -321,8 +319,24 @@ impl Tree {
 		}
 	}
 
-	pub fn nodes_to_update(&self) -> (Vec<Node>, usize) {
-		let mut nodes = Vec::<Node>::with_capacity(self.num_nodes());
+	/// Marks nodes whose parent edges have changed as edited
+	fn mark_updated_propagations(&mut self) {
+		// mark updated nodes whose parent edge got updated
+		for edge in self.edges() {
+			if self.updated_edges.at(edge) {
+				let (child, _) = self.edge_nodes(edge);
+				self.mark_node_updated(child);
+			}
+		}
+	}
+
+	pub fn propagation_lists(
+		&mut self,
+	) -> (Vec<usize>, Vec<[usize; 2]>, usize) {
+		self.mark_updated_propagations();
+		self.mark_updated_parents();
+
+		let mut nodes = Vec::<Node>::new();
 
 		// Updated leaves, in order
 		for leaf in self.leaves() {
@@ -333,7 +347,7 @@ impl Tree {
 		let num_updated_leaves = nodes.len();
 
 		let mut queue = VecDeque::from([self.root()]);
-		let mut internals = Vec::<Node>::from([*self.root()]);
+		let mut internals = Vec::from([self.root()]);
 
 		while let Some(node) = queue.pop_front() {
 			let (left, right) = self.children_of(node);
@@ -341,41 +355,28 @@ impl Tree {
 			if self.is_node_updated(left)
 				&& let Some(left) = self.as_internal(left)
 			{
-				internals.push(*left);
+				internals.push(left);
 				queue.push_back(left);
 			}
 			if self.is_node_updated(right)
 				&& let Some(right) = self.as_internal(right)
 			{
-				internals.push(*right);
+				internals.push(right);
 				queue.push_back(right);
 			}
 		}
 
 		internals.reverse();
-		nodes.append(&mut internals);
 
-		(nodes, num_updated_leaves)
-	}
-
-	/// Returns a list of nodes and a list of children for internals
-	pub fn to_lists(
-		&self,
-		nodes: &[Node],
-	) -> (Vec<usize>, Vec<(usize, usize)>) {
-		let num_nodes = nodes.len();
-		let mut out_nodes = Vec::with_capacity(num_nodes);
-		let mut children = Vec::with_capacity(num_nodes);
-
-		for node in nodes {
-			out_nodes.push(node.0);
-			if let Some(internal) = self.as_internal(*node) {
-				let (left, right) = self.children_of(internal);
-				children.push((left.0, right.0));
-			}
+		let mut children = Vec::new();
+		for internal in &internals {
+			let (left, right) = self.children_of(*internal);
+			children.push([left.0, right.0]);
 		}
 
-		(out_nodes, children)
+		nodes.append(&mut cast_vec(internals));
+
+		(cast_vec(nodes), cast_vec(children), num_updated_leaves)
 	}
 
 	fn mark_node_updated(&mut self, node: Node) {

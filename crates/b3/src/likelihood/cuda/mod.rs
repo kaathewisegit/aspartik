@@ -85,18 +85,16 @@ impl Calculator<4, f64> for CudaLikelihood {
 		mut tree: MutexGuard<Tree>,
 		transitions: &Transitions<4, f64>,
 	) -> Result<f64> {
-		tree.mark_updated_propagations();
-		let (nodes, leaves_end) = tree.nodes_to_update();
-		let (nodes, children) = tree.to_lists(&nodes);
+		let (nodes, children, leaves_end) = tree.propagation_lists();
 		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
 
 		self.num_updated_nodes = nodes.len() as u32 - 1;
 
 		let root_children = children.last().unwrap();
-		let nodes: Vec<_> = nodes.iter().map(|n| *n as u32).collect();
+		let nodes: Vec<_> = nodes.iter().map(|&n| n as u32).collect();
 		let children: Vec<_> = children
 			.iter()
-			.flat_map(|&(l, r)| [l as u32, r as u32])
+			.flat_map(|&[l, r]| [l as u32, r as u32])
 			.collect();
 
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
@@ -116,7 +114,7 @@ impl Calculator<4, f64> for CudaLikelihood {
 		let root = nodes.last().unwrap();
 		self.update_likelihoods(
 			*root,
-			(root_children.0 as u32, root_children.1 as u32),
+			(root_children[0] as u32, root_children[1] as u32),
 			transitions.frequencies(),
 		)?;
 

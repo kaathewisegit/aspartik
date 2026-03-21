@@ -21,7 +21,7 @@ arrow-array = { workspace = true }
 arrow-ipc = { workspace = true, features = ["zstd"] }
 arrow-schema = { workspace = true }
 blake3 = { workspace = true }
-bytemuck = { workspace = true, features = ["extern_crate_alloc"] }
+bytemuck = { workspace = true, features = ["derive", "extern_crate_alloc"] }
 cudarc = { workspace = true, features = ["driver", "nvrtc", "dynamic-loading", "cuda-12000", "std"] }
 fork_union = { workspace = true }
 num-traits = { workspace = true }
