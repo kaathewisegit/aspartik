@@ -41,10 +41,11 @@ __device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
 	u8 leaf = leaves[idx(nodes[i])]; \
 	f64 projection = 0.0; \
 	f64x4 tv = transitions[i * 4 + sub]; \
-	if (leaf & 0b0001) projection += tv.x; \
-	if (leaf & 0b0010) projection += tv.y; \
-	if (leaf & 0b0100) projection += tv.z; \
-	if (leaf & 0b1000) projection += tv.w; \
+	if (leaf == 0b0001) projection = tv.x; \
+	else if (leaf == 0b0010) projection = tv.y; \
+	else if (leaf == 0b0100) projection = tv.z; \
+	else if (leaf == 0b1000) projection = tv.w; \
+	else projection = 1.0; \
 	projections[sidx(nodes[i])] = projection; \
 
 // Update partial likelihoods for edges which go to leaves
