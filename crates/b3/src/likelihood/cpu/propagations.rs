@@ -58,7 +58,7 @@ impl Calculator<4, f64> for Cpu4Propagations {
 				self,
 				&nodes,
 				&children,
-				tms.as_ptr() as *const f64,
+				&tms,
 				leaves_end,
 				frequencies,
 			)
@@ -178,7 +178,7 @@ unsafe fn propose(
 	state: &mut Cpu4Propagations,
 	nodes: &[usize],
 	children: &[(usize, usize)],
-	transitions: *const f64,
+	transitions: &[[[f64; 4]; 4]],
 	leaves_end: usize,
 	frequencies: [f64; 4],
 ) {unsafe {
@@ -187,7 +187,6 @@ unsafe fn propose(
 	let samples = state.samples.as_ptr();
 	let propagations = state.propagations.as_mut_ptr();
 
-	let transitions_sync = SyncConstPtr::new(transitions);
 	let propagations_sync = SyncMutPtr::new(propagations);
 	let samples_sync = SyncConstPtr::new(samples);
 
@@ -204,25 +203,22 @@ unsafe fn propose(
 
 	let propagations = propagations_sync.as_ptr();
 	let samples = samples_sync.as_ptr();
-	let transitions = transitions_sync.as_ptr();
 
 	for (i, &leaf) in nodes.iter().enumerate().take(leaves_end) {
-		let transition = transitions.add(i * 16);
 		let samples_leaf = samples.add(leaf * num_patterns);
 		let propagations_leaf = propagations.add(offset!(leaf) + start);
 
 		calc_leaf(
 			count,
-			transition,
+			&transitions[i],
 			samples_leaf,
-			propagations_leaf as *mut f64,
+			propagations_leaf,
 		);
 	}
 
 	for i in leaves_end..nodes.len() - 1 {
 		let node = nodes[i];
 
-		let transition = transitions.add(i * 16);
 		let (left, right) = children[i - leaves_end];
 
 		let propagations_left = propagations.add(offset!(left) + start);
@@ -231,7 +227,7 @@ unsafe fn propose(
 
 		calc_propagation(
 			count,
-			transition,
+			&transitions[i],
 			propagations_left as *mut f64,
 			propagations_right as *mut f64,
 			propagations_node as *mut f64,
@@ -269,58 +265,28 @@ unsafe fn propose(
 #[rustfmt::skip]
 unsafe fn calc_leaf(
 	num_patterns: usize,
-	transition: *const f64,
+	transition: &[[f64; 4]; 4],
 	mut samples: *const u8,
-	mut propagations: *mut f64,
+	mut propagations: *mut [f64; 4],
 ) {unsafe {
-	let m_00 = transition.add(0).read();
-	let m_01 = transition.add(1).read();
-	let m_02 = transition.add(2).read();
-	let m_03 = transition.add(3).read();
-	let m_10 = transition.add(4).read();
-	let m_11 = transition.add(5).read();
-	let m_12 = transition.add(6).read();
-	let m_13 = transition.add(7).read();
-	let m_20 = transition.add(8).read();
-	let m_21 = transition.add(9).read();
-	let m_22 = transition.add(10).read();
-	let m_23 = transition.add(11).read();
-	let m_30 = transition.add(12).read();
-	let m_31 = transition.add(13).read();
-	let m_32 = transition.add(14).read();
-	let m_33 = transition.add(15).read();
+	let t = *transition;
 
 	for _ in 0..num_patterns {
 		let sample = samples.read();
 
 		if sample == 0b0001 {
-			propagations.add(0).write(m_00);
-			propagations.add(1).write(m_10);
-			propagations.add(2).write(m_20);
-			propagations.add(3).write(m_30);
+			propagations.write([t[0][0], t[1][0], t[2][0], t[3][0]]);
 		} else if sample == 0b0010 {
-			propagations.add(0).write(m_01);
-			propagations.add(1).write(m_11);
-			propagations.add(2).write(m_21);
-			propagations.add(3).write(m_31);
+			propagations.write([t[0][1], t[1][1], t[2][1], t[3][1]]);
 		} else if sample == 0b0100 {
-			propagations.add(0).write(m_02);
-			propagations.add(1).write(m_12);
-			propagations.add(2).write(m_22);
-			propagations.add(3).write(m_32);
+			propagations.write([t[0][2], t[1][2], t[2][2], t[3][2]]);
 		} else if sample == 0b1000 {
-			propagations.add(0).write(m_03);
-			propagations.add(1).write(m_13);
-			propagations.add(2).write(m_23);
-			propagations.add(3).write(m_33);
+			propagations.write([t[0][3], t[1][3], t[2][3], t[3][3]]);
 		} else {
-			propagations.add(0).write(1.0);
-			propagations.add(1).write(1.0);
-			propagations.add(2).write(1.0);
-			propagations.add(3).write(1.0);
+			propagations.write([1.0, 1.0, 1.0, 1.0]);
 		}
 
-		propagations = propagations.add(4);
+		propagations = propagations.add(1);
 		samples = samples.add(1);
 	}
 }}
@@ -328,27 +294,12 @@ unsafe fn calc_leaf(
 #[rustfmt::skip]
 unsafe fn calc_propagation(
 	num_patterns: usize,
-	transition: *const f64,
+	transition: &[[f64; 4]; 4],
 	mut propagations_left: *const f64,
 	mut propagations_right: *const f64,
 	mut propagations_node: *mut f64,
 ) {unsafe {
-	let m_00 = transition.add(0).read();
-	let m_01 = transition.add(1).read();
-	let m_02 = transition.add(2).read();
-	let m_03 = transition.add(3).read();
-	let m_10 = transition.add(4).read();
-	let m_11 = transition.add(5).read();
-	let m_12 = transition.add(6).read();
-	let m_13 = transition.add(7).read();
-	let m_20 = transition.add(8).read();
-	let m_21 = transition.add(9).read();
-	let m_22 = transition.add(10).read();
-	let m_23 = transition.add(11).read();
-	let m_30 = transition.add(12).read();
-	let m_31 = transition.add(13).read();
-	let m_32 = transition.add(14).read();
-	let m_33 = transition.add(15).read();
+	let t = *transition;
 
 	for _ in 0..num_patterns {
 		let p0 = propagations_left.add(0).read()
@@ -362,16 +313,16 @@ unsafe fn calc_propagation(
 
 		propagations_node
 			.add(0)
-			.write(p0 * m_00 + p1 * m_01 + p2 * m_02 + p3 * m_03);
+			.write(p0 * t[0][0] + p1 * t[0][1] + p2 * t[0][2] + p3 * t[0][3]);
 		propagations_node
 			.add(1)
-			.write(p0 * m_10 + p1 * m_11 + p2 * m_12 + p3 * m_13);
+			.write(p0 * t[1][0] + p1 * t[1][1] + p2 * t[1][2] + p3 * t[1][3]);
 		propagations_node
 			.add(2)
-			.write(p0 * m_20 + p1 * m_21 + p2 * m_22 + p3 * m_23);
+			.write(p0 * t[2][0] + p1 * t[2][1] + p2 * t[2][2] + p3 * t[2][3]);
 		propagations_node
 			.add(3)
-			.write(p0 * m_30 + p1 * m_31 + p2 * m_32 + p3 * m_33);
+			.write(p0 * t[3][0] + p1 * t[3][1] + p2 * t[3][2] + p3 * t[3][3]);
 
 		propagations_node = propagations_node.add(4);
 		propagations_left = propagations_left.add(4);
