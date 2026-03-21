@@ -11,9 +11,10 @@
 #![cfg_attr(not(feature = "rand"), doc = "```ignore")]
 //! use stats::distribution::Exp;
 //! use rand::distr::Distribution;
+//! use math::Positive;
 //!
 //! let mut r = rand::rng();
-//! let n = Exp::new(0.5).unwrap();
+//! let n = Exp::new(Positive::new(0.5).unwrap());
 //! print!("{}", n.sample(&mut r));
 //! ```
 //!
@@ -26,8 +27,9 @@
 //!     Continuous, ContinuousCDF,
 //! };
 //! use stats::statistics::Distribution; // statistical moments and entropy
+//! use math::Positive;
 //!
-//! let n = Exp::new(1.0).unwrap();
+//! let n = Exp::new(Positive::new(1.0).unwrap());
 //! assert_eq!(n.mean(), Some(1.0));
 //! assert_eq!(n.variance(), Some(1.0));
 //! assert_eq!(n.entropy(), Some(1.0));
@@ -76,8 +78,6 @@ pub mod pymodule {
 
 	#[pymodule_export]
 	use distribution::BetaError;
-	#[pymodule_export]
-	use distribution::ExpError;
 	#[pymodule_export]
 	use distribution::GammaError;
 	#[pymodule_export]

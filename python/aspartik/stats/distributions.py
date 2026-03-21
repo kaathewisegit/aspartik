@@ -4,7 +4,6 @@ from .._aspartik_rust_impl._stats_rust_impl import (
     Beta as Beta,
     BetaError as BetaError,
     Exp as Exp,
-    ExpError as ExpError,
     Gamma as Gamma,
     GammaError as GammaError,
     InverseGamma as InverseGamma,

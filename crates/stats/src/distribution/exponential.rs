@@ -1,8 +1,7 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
-use thiserror::Error;
 
-use core::f64;
+use core::f64::consts;
 
 #[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
@@ -10,12 +9,9 @@ use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::Probability;
-#[cfg(feature = "python")]
-use util::impl_pyerr;
+use math::{Positive, Probability};
 
-/// Implements the
-/// [Exp](https://en.wikipedia.org/wiki/Exp_distribution)
+/// Implements the [Exp](https://en.wikipedia.org/wiki/Exp_distribution)
 /// distribution and is a special case of the
 /// [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) distribution
 /// (referenced [here](./struct.Gamma.html))
@@ -25,8 +21,9 @@ use util::impl_pyerr;
 /// ```
 /// use stats::distribution::{Exp, Continuous};
 /// use stats::statistics::Distribution;
+/// use math::Positive;
 ///
-/// let n = Exp::new(1.0).unwrap();
+/// let n = Exp::new(Positive::new(1.0).unwrap());
 /// assert_eq!(n.mean().unwrap(), 1.0);
 /// assert_eq!(n.pdf(1.0), 0.36787944117144233);
 /// ```
@@ -42,79 +39,28 @@ use util::impl_pyerr;
 	)
 )]
 pub struct Exp {
-	rate: f64,
+	rate: Positive<f64>,
 }
 
 #[cfg(feature = "python")]
 impl_pymethods! {for Exp;
-	new(rate: f64) -> Result<Exp, ExpError>;
-	get(rate: f64 as py_rate);
+	new(rate: Positive<f64>) -> Exp;
+	get(rate: Positive<f64> as py_rate);
 	repr("Exp(rate={})", rate);
 	Continuous true;
 	ContinuousCDF true;
 	Distribution true;
 }
 
-/// Represents the errors that can occur when creating a [`Exp`].
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
-#[non_exhaustive]
-#[cfg_attr(
-	feature = "python",
-	pyclass(
-		from_py_object,
-		module = "aspartik.stats.distributions",
-		frozen,
-		eq,
-		str
-	)
-)]
-pub enum ExpError {
-	#[error("The rate is NaN, zero or less than zero")]
-	RateInvalid,
-}
-
-#[cfg(feature = "python")]
-impl_pyerr!(ExpError, pyo3::exceptions::PyValueError);
-
 impl Exp {
-	/// Constructs a new exponential distribution with a
-	/// rate (λ) of `rate`.
-	///
-	/// # Errors
-	///
-	/// Returns an error if rate is `NaN` or `rate <= 0.0`.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Exp;
-	///
-	/// let mut result = Exp::new(1.0);
-	/// assert!(result.is_ok());
-	///
-	/// result = Exp::new(-1.0);
-	/// assert!(result.is_err());
-	/// ```
-	pub fn new(rate: f64) -> Result<Exp, ExpError> {
-		if rate.is_nan() || rate <= 0.0 {
-			Err(ExpError::RateInvalid)
-		} else {
-			Ok(Exp { rate })
-		}
+	/// Constructs a new exponential distribution with a rate (λ) of `rate`.
+	pub fn new(rate: Positive<f64>) -> Exp {
+		Exp { rate }
 	}
 
 	/// Returns the rate of the exponential distribution
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use stats::distribution::Exp;
-	///
-	/// let n = Exp::new(1.0).unwrap();
-	/// assert_eq!(n.rate(), 1.0);
-	/// ```
 	pub fn rate(&self) -> f64 {
-		self.rate
+		*self.rate
 	}
 }
 
@@ -130,7 +76,7 @@ impl rand::distr::Distribution<f64> for Exp {
 	fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> f64 {
 		use crate::distribution::ziggurat;
 
-		ziggurat::sample_exp_1(r) / self.rate
+		ziggurat::sample_exp_1(r) / *self.rate
 	}
 }
 
@@ -149,7 +95,7 @@ impl ContinuousCDF for Exp {
 		if x < 0.0 {
 			0.0
 		} else {
-			1.0 - (-self.rate * x).exp()
+			1.0 - (-*self.rate * x).exp()
 		}
 	}
 
@@ -164,14 +110,18 @@ impl ContinuousCDF for Exp {
 	///
 	/// where `λ` is the rate
 	fn sf(&self, x: f64) -> f64 {
-		if x < 0.0 { 1.0 } else { (-self.rate * x).exp() }
+		if x < 0.0 {
+			1.0
+		} else {
+			(-*self.rate * x).exp()
+		}
 	}
 
 	/// `-ln(1 - p) / λ`, where `p` is the probability and `λ` is the rate.
 	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
 		let p = *p;
 
-		-(-p).ln_1p() / self.rate
+		-(-p).ln_1p() / *self.rate
 	}
 
 	fn lower(&self) -> f64 {
@@ -194,7 +144,7 @@ impl Distribution for Exp {
 	///
 	/// where `λ` is the rate
 	fn mean(&self) -> Option<f64> {
-		Some(1.0 / self.rate)
+		Some(1.0 / *self.rate)
 	}
 
 	/// Returns the median of the exponential distribution
@@ -207,7 +157,7 @@ impl Distribution for Exp {
 	///
 	/// where `λ` is the rate
 	fn median(&self) -> Option<f64> {
-		Some(f64::consts::LN_2 / self.rate)
+		Some(consts::LN_2 / *self.rate)
 	}
 
 	/// Returns the variance of the exponential distribution
@@ -220,7 +170,7 @@ impl Distribution for Exp {
 	///
 	/// where `λ` is the rate
 	fn variance(&self) -> Option<f64> {
-		Some(1.0 / (self.rate * self.rate))
+		Some(1.0 / (*self.rate * *self.rate))
 	}
 
 	/// Returns the entropy of the exponential distribution
@@ -276,7 +226,7 @@ impl Continuous for Exp {
 		if x < 0.0 {
 			0.0
 		} else {
-			self.rate * (-self.rate * x).exp()
+			*self.rate * (-*self.rate * x).exp()
 		}
 	}
 
@@ -294,7 +244,7 @@ impl Continuous for Exp {
 		if x < 0.0 {
 			f64::NEG_INFINITY
 		} else {
-			self.rate.ln() - self.rate * x
+			self.rate.ln() - *self.rate * x
 		}
 	}
 }

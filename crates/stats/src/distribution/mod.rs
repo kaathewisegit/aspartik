@@ -50,7 +50,7 @@ pub use chi::Chi;
 pub use chi_squared::ChiSquared;
 pub use discrete_uniform::{DiscreteUniform, DiscreteUniformError};
 pub use erlang::Erlang;
-pub use exponential::{Exp, ExpError};
+pub use exponential::Exp;
 pub use fisher_snedecor::{FisherSnedecor, FisherSnedecorError};
 pub use gamma::{Gamma, GammaError};
 pub use geometric::{Geometric, GeometricError};

@@ -27,9 +27,6 @@ class Exp(ContinuousCDF, Continuous, Distribution, Sample[float]):
     @property
     def rate(self) -> float: ...
 
-class ExpError:
-    RateInvalid: Self
-
 class Gamma(ContinuousCDF, Continuous, Distribution, Sample[float]):
     def __init__(self, shape: float, rate: float): ...
     @property

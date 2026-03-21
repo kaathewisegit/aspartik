@@ -1,36 +1,17 @@
-use stats::distribution::{Exp, ExpError};
+use math::Positive;
+use stats::distribution::Exp;
 
 use std::f64::consts::{LN_2, LN_10};
 
 use crate::prelude::*;
 
-make_test_harness!(Exp(rate: f64), ExpError);
-
-#[test]
-fn test_new_is_ok() {
-	let cases = [0.1, 1.0, 10.0];
-	for args in cases {
-		assert_new_is_ok(args);
-	}
-}
-
-#[test]
-fn test_new_is_err() {
-	let cases = [
-		(f64::NAN, ExpError::RateInvalid),
-		(0.0, ExpError::RateInvalid),
-		(-1.0, ExpError::RateInvalid),
-		(-10.0, ExpError::RateInvalid),
-	];
-	for (args, err) in cases {
-		assert_new_is_err(args, err);
-	}
-}
+make_test_harness!(Exp(rate: Positive<f64>));
 
 #[test]
 fn test_mean() {
 	let cases = [(0.1, 10.0), (1.0, 1.0), (10.0, 0.1)];
 	for (args, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_exact(args, (), |d, _| d.mean().unwrap(), expected);
 	}
 }
@@ -39,6 +20,7 @@ fn test_mean() {
 fn test_variance() {
 	let cases = [(0.1, 100.0), (1.0, 1.0), (10.0, 0.01)];
 	for (args, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_close(args, (), |d, _| d.variance().unwrap(), expected);
 	}
 }
@@ -51,6 +33,7 @@ fn test_entropy() {
 		(10.0, -1.3025850929940457),
 	];
 	for (args, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_close(args, (), |d, _| d.entropy().unwrap(), expected);
 	}
 }
@@ -59,6 +42,7 @@ fn test_entropy() {
 fn test_skewness() {
 	let cases = [(0.1, 2.0), (1.0, 2.0), (10.0, 2.0)];
 	for (args, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_exact(args, (), |d, _| d.skewness().unwrap(), expected);
 	}
 }
@@ -71,6 +55,7 @@ fn test_median() {
 		(10.0, 0.06931471805599453),
 	];
 	for (args, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_close(args, (), |d, _| d.median().unwrap(), expected);
 	}
 }
@@ -79,6 +64,7 @@ fn test_median() {
 fn test_mode() {
 	let cases = [(0.1, 0.0), (1.0, 0.0), (10.0, 0.0)];
 	for (args, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_exact(args, (), |d, _| d.mode().unwrap(), expected);
 	}
 }
@@ -87,6 +73,7 @@ fn test_mode() {
 fn test_lower() {
 	let cases = [(0.1, 0.0), (1.0, 0.0), (10.0, 0.0)];
 	for (args, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_exact(args, (), |d, _| d.lower(), expected);
 	}
 }
@@ -99,6 +86,7 @@ fn test_upper() {
 		(10.0, f64::INFINITY),
 	];
 	for (args, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_exact(args, (), |d, _| d.upper(), expected);
 	}
 }
@@ -121,6 +109,7 @@ fn test_pdf() {
 		(0.1, -1.0, 0.0),
 	];
 	for (args, p, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_close(args, p, |d, p_val| d.pdf(p_val), expected);
 	}
 }
@@ -134,6 +123,7 @@ fn test_pdf_nan() {
 		(f64::INFINITY, f64::INFINITY),
 	];
 	for (args, p) in cases {
+		let args = Positive::new(args).unwrap();
 		assert!(new_dist(args).pdf(p).is_nan());
 	}
 }
@@ -156,6 +146,7 @@ fn test_ln_pdf() {
 		(0.1, -1.0, f64::NEG_INFINITY),
 	];
 	for (args, p, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_close(args, p, |d, p_val| d.ln_pdf(p_val), expected);
 	}
 }
@@ -169,6 +160,7 @@ fn test_ln_pdf_nan() {
 		(f64::INFINITY, f64::INFINITY),
 	];
 	for (args, p) in cases {
+		let args = Positive::new(args).unwrap();
 		assert!(new_dist(args).pdf(p).is_nan());
 	}
 }
@@ -194,16 +186,20 @@ fn test_cdf() {
 		(0.1, -1.0, 0.0),
 	];
 	for (args, p, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_close(args, p, |d, p_val| d.cdf(p_val), expected);
 	}
 
-	assert!(new_dist(f64::INFINITY).cdf(0.0).is_nan());
+	assert!(new_dist(Positive::new(f64::INFINITY).unwrap())
+		.cdf(0.0)
+		.is_nan());
 }
 
 #[test]
 fn test_inverse_cdf_identity() {
 	let args = [0.42, 0.042, 0.0042, 0.33, 0.033, 0.0033];
 	for rate in args {
+		let rate = Positive::new(rate).unwrap();
 		let dist = new_dist(rate);
 		let half = Probability::new(0.5).unwrap();
 		assert_close(
@@ -228,15 +224,19 @@ fn test_sf() {
 		(0.1, -1.0, 1.0),
 	];
 	for (args, p, expected) in cases {
+		let args = Positive::new(args).unwrap();
 		assert_close(args, p, |d, p_val| d.sf(p_val), expected);
 	}
 
-	assert!(new_dist(f64::INFINITY).sf(0.0).is_nan());
+	assert!(new_dist(Positive::new(f64::INFINITY).unwrap())
+		.sf(0.0)
+		.is_nan());
 }
 
 #[test]
 fn test_continuous() {
-	check_continuous_distribution(&new_dist(0.5), 0.0, 10.0);
-	check_continuous_distribution(&new_dist(1.5), 0.0, 20.0);
-	check_continuous_distribution(&new_dist(2.5), 0.0, 50.0);
+	for (rate, max) in [(0.5, 10.0), (1.5, 20.0), (2.5, 50.0)] {
+		let rate = Positive::new(rate).unwrap();
+		check_continuous_distribution(&new_dist(rate), 0.0, max);
+	}
 }

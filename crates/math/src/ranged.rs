@@ -85,6 +85,20 @@ macro_rules! float_impls {
 				Ok(out)
 			}
 		}
+
+		#[cfg(feature = "python")]
+		impl<'py> IntoPyObject<'py> for $wrapper<$f> {
+			type Target = pyo3::types::PyFloat;
+			type Output = Bound<'py, pyo3::types::PyFloat>;
+			type Error = PyErr;
+
+			fn into_pyobject(
+				self,
+				py: Python<'py>,
+			) -> Result<Self::Output, Self::Error> {
+				Ok(self.0.into_pyobject(py)?)
+			}
+		}
 	};
 }
 
