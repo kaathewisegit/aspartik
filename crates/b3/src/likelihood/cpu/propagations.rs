@@ -56,8 +56,8 @@ impl Calculator<4, f64> for Cpu4Propagations {
 				self,
 				&nodes,
 				&children,
-				&tms,
 				leaves_end,
+				&tms,
 				frequencies,
 			)
 		}
@@ -68,7 +68,7 @@ impl Calculator<4, f64> for Cpu4Propagations {
 			.zip(&self.scale_sums)
 			.zip(&self.pattern_weights)
 		{
-			*likelihood -= f64::from(*scale);
+			*likelihood -= f64::from(*scale * self.scale_ln);
 			*likelihood *= f64::from(*weight);
 		}
 
@@ -93,6 +93,7 @@ impl Calculator<4, f64> for Cpu4Propagations {
 
 	fn reject(&mut self) -> Result<()> {
 		self.scale_sums.copy_from_slice(&self.scale_sums_backup);
+
 		// TODO: op transform
 		for selector in &mut self.selectors {
 			*selector = match *selector {
@@ -176,8 +177,8 @@ unsafe fn propose(
 	state: &mut Cpu4Propagations,
 	nodes: &[usize],
 	children: &[[usize; 2]],
-	transitions: &[[[f64; 4]; 4]],
 	leaves_end: usize,
+	transitions: &[[[f64; 4]; 4]],
 	frequencies: [f64; 4],
 ) {unsafe {
 	let num_patterns = state.num_patterns;
@@ -187,6 +188,8 @@ unsafe fn propose(
 
 	let propagations_sync = SyncMutPtr::new(propagations);
 	let samples_sync = SyncConstPtr::new(samples);
+	let scale_sums_sync = SyncMutPtr::new(state.scale_sums.as_mut_ptr());
+	let scales_sync = SyncMutPtr::new(state.scales.as_mut_ptr());
 
 	macro_rules! offset {
 		($index:expr) => {{
@@ -195,12 +198,21 @@ unsafe fn propose(
 			($index * 2 + fix as usize) * num_patterns
 		}};
 	}
+	macro_rules! offset_old {
+		($index:expr) => {{
+			let selector = selectors[$index];
+			let fix = (selector >> 1) ^ (selector & 0b01);
+			($index * 2 + (1 - fix as usize)) * num_patterns
+		}};
+	}
 
 	let _ = state.pool.for_slices(num_patterns, |prong, count| {
 	let start = prong.task_index;
 
 	let propagations = propagations_sync.as_ptr();
 	let samples = samples_sync.as_ptr();
+	let scale_sums = scale_sums_sync.as_ptr();
+	let scales = scales_sync.as_ptr();
 
 	for (i, &leaf) in nodes.iter().enumerate().take(leaves_end) {
 		let samples_leaf = samples.add(leaf * num_patterns);
@@ -223,12 +235,20 @@ unsafe fn propose(
 		let propagations_right = propagations.add(offset!(right) + start);
 		let propagations_node = propagations.add(offset!(node) + start);
 
+		let scales_new = scales.add(offset!(node) + start);
+		let scales_old = scales.add(offset_old!(node) + start);
+
 		calc_propagation(
 			count,
 			&transitions[i],
 			propagations_left as *mut f64,
 			propagations_right as *mut f64,
 			propagations_node as *mut f64,
+			scales_new,
+			scales_old,
+			scale_sums.add(start),
+			state.scale_threshold,
+			state.scale_mult,
 		);
 	}
 
@@ -237,11 +257,16 @@ unsafe fn propose(
 
 	let likelihoods = state.likelihoods.as_mut_ptr();
 
+	let root = nodes.last().unwrap();
 	let &[root_left, root_right] = children.last().unwrap();
 	let mut propagations_left =
 		propagations.add(offset!(root_left));
 	let mut propagations_right =
 		propagations.add(offset!(root_right));
+
+	let mut scales_old = scales_sync.as_ptr().add(offset_old!(*root));
+	let mut scales_new = scales_sync.as_ptr().add(offset!(*root));
+	let mut scale_sums = scale_sums_sync.as_ptr();
 
 	for i in 0..num_patterns {
 		let pl = propagations_left.read();
@@ -257,6 +282,15 @@ unsafe fn propose(
 
 		propagations_left = propagations_left.add(1);
 		propagations_right = propagations_right.add(1);
+
+		if *scales_old {
+			*scale_sums -= 1;
+		}
+		*scales_new = false;
+
+		scales_new = scales_new.add(1);
+		scales_old = scales_old.add(1);
+		scale_sums = scale_sums.add(1);
 	}
 }}
 
@@ -290,24 +324,49 @@ unsafe fn calc_leaf(
 }}
 
 #[rustfmt::skip]
+#[expect(clippy::too_many_arguments)]
 unsafe fn calc_propagation(
 	num_patterns: usize,
 	transition: &[[f64; 4]; 4],
 	mut propagations_left: *const f64,
 	mut propagations_right: *const f64,
 	mut propagations_node: *mut f64,
+	mut scales: *mut bool,
+	mut scales_old: *mut bool,
+	mut scale_sums: *mut u32,
+	threshold: f64,
+	mult: f64,
 ) {unsafe {
 	let t = *transition;
 
 	for _ in 0..num_patterns {
-		let p0 = propagations_left.add(0).read()
+		let mut p0 = propagations_left.add(0).read()
 			* propagations_right.add(0).read();
-		let p1 = propagations_left.add(1).read()
+		let mut p1 = propagations_left.add(1).read()
 			* propagations_right.add(1).read();
-		let p2 = propagations_left.add(2).read()
+		let mut p2 = propagations_left.add(2).read()
 			* propagations_right.add(2).read();
-		let p3 = propagations_left.add(3).read()
+		let mut p3 = propagations_left.add(3).read()
 			* propagations_right.add(3).read();
+
+		let old_scale = scales_old.read();
+
+		if p0 < threshold && p1 < threshold && p2 < threshold && p3 < threshold {
+			p0 *= mult;
+			p1 *= mult;
+			p2 *= mult;
+			p3 *= mult;
+
+			if !old_scale {
+				*scale_sums += 1;
+			}
+			*scales = true;
+		} else {
+			if old_scale {
+				*scale_sums -= 1;
+			}
+			*scales = false;
+		}
 
 		propagations_node
 			.add(0)
@@ -325,5 +384,8 @@ unsafe fn calc_propagation(
 		propagations_node = propagations_node.add(4);
 		propagations_left = propagations_left.add(4);
 		propagations_right = propagations_right.add(4);
+		scales_old = scales_old.add(1);
+		scales = scales.add(1);
+		scale_sums = scale_sums.add(1);
 	}
 }}
