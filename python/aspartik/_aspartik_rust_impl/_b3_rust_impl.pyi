@@ -167,6 +167,11 @@ class ClassvecFlip(Operator):
     def __init__(self, classvec: ClassVector, rng: RNG, weight: float): ...
 
 @dataclass
+class SymmetricDirichlet(Prior):
+    vec: RealVector
+    sum: float
+
+@dataclass
 class ConstantPopulation(Prior):
     tree: Tree
     population: Real

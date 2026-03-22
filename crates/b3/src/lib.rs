@@ -43,7 +43,10 @@ pub mod pymodule {
 		ClassvecFlip, EpochScale, FixedHeightSPR, SubtreeLeap,
 	};
 	#[pymodule_export]
-	use priors::{ConstantPopulation, ExponentialGrowth, Monophyly, Yule};
+	use priors::{
+		ConstantPopulation, ExponentialGrowth, Monophyly,
+		SymmetricDirichlet, Yule,
+	};
 
 	#[pymodule_export]
 	use substitution::{PyGTR, PyHKY, PyJC, PyK80};

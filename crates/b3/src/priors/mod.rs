@@ -5,11 +5,13 @@ use pyo3::prelude::*;
 use util::{py_call_method, py_check_method, py_has_method};
 
 mod coalescent;
+mod dirichlet;
 mod monophyly;
 mod skyline;
 mod yule;
 
 pub use coalescent::{ConstantPopulation, ExponentialGrowth};
+pub use dirichlet::SymmetricDirichlet;
 pub use monophyly::Monophyly;
 pub use yule::Yule;
 

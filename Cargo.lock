@@ -181,6 +181,7 @@ dependencies = [
  "fork_union",
  "io",
  "linalg",
+ "math",
  "num-traits",
  "parking_lot",
  "pyo3",
