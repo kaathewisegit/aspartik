@@ -16,7 +16,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0-alpha.10"
+version = "0.1.0-alpha.11"
 edition = "2024"
 license = "AGPL-3.0-only"
 authors = ["Andrej Kolčin <self@kaathewise.net>"]
@@ -49,17 +49,17 @@ serde_json = "1.0"
 serde_verbatim = { version = "0.1.1", default-features = false }
 thiserror = "2.0"
 
-b3 = { version = "0.1.0-alpha.10", path = "crates/b3" }
-bitmap = { version = "0.1.0-alpha.10", path = "crates/bitmap" }
-buffer = { version = "0.1.0-alpha.10", path = "crates/buffer" }
-data = { version = "0.1.0-alpha.10", path = "crates/data" }
-io = { version = "0.1.0-alpha.10", path = "crates/io" }
-linalg = { version = "0.1.0-alpha.10", path = "crates/linalg" }
-math = { version = "0.1.0-alpha.10", path = "crates/math", default-features = false }
-rng = { version = "0.1.0-alpha.10", path = "crates/rng" }
-sk = { version = "0.1.0-alpha.10", path = "crates/sk" }
-stats = { version = "0.1.0-alpha.10", path = "crates/stats" }
-util = { version = "0.1.0-alpha.10", path = "crates/util" }
+b3 = { version = "0.1.0-alpha.11", path = "crates/b3" }
+bitmap = { version = "0.1.0-alpha.11", path = "crates/bitmap" }
+buffer = { version = "0.1.0-alpha.11", path = "crates/buffer" }
+data = { version = "0.1.0-alpha.11", path = "crates/data" }
+io = { version = "0.1.0-alpha.11", path = "crates/io" }
+linalg = { version = "0.1.0-alpha.11", path = "crates/linalg" }
+math = { version = "0.1.0-alpha.11", path = "crates/math", default-features = false }
+rng = { version = "0.1.0-alpha.11", path = "crates/rng" }
+sk = { version = "0.1.0-alpha.11", path = "crates/sk" }
+stats = { version = "0.1.0-alpha.11", path = "crates/stats" }
+util = { version = "0.1.0-alpha.11", path = "crates/util" }
 
 [workspace.lints.clippy]
 branches_sharing_code = "warn"
