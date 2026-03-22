@@ -409,7 +409,7 @@ impl GTR {
 			],
 			[
 				a * p_a,
-				-a * p_a - d * p_g + e * p_t,
+				-a * p_a - d * p_g - e * p_t,
 				d * p_g,
 				e * p_t,
 			],
