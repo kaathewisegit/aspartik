@@ -25,9 +25,10 @@ from aspartik.b3.priors import (
     ConstantPopulation,
     Distribution,
     ExponentialGrowth,
+    SymmetricDirichlet,
     Yule,
 )
-from aspartik.b3.substitutions import HKY, JC, K80
+from aspartik.b3.substitutions import GTR, HKY, JC, K80
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 from aspartik.stats.distributions import (
@@ -94,6 +95,7 @@ def b3_config(
         items["frequencies"] = frequencies
         parameters.append(frequencies)
         operators.append(DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1))
+        priors.append(SymmetricDirichlet(frequencies, 1))
         return frequencies
 
     match substitution_model:
@@ -108,7 +110,14 @@ def b3_config(
 
             sub_model = HKY(frequencies, kappa)
         case "GTR":
-            raise NotImplementedError("needs Dirichlet prior")
+            frequencies = create_frequencies()
+            rates = RealVector(1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+            items["rates"] = rates
+            parameters.append(rates)
+            operators.append(DeltaExchange(rates, factor=0.01, rng=rng, weight=3))
+            priors.append(SymmetricDirichlet(rates, 6))
+
+            sub_model = GTR(frequencies, rates)
 
     match tree_prior:
         case "yule":
