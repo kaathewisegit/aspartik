@@ -201,11 +201,7 @@ class HKY:
 @dataclass
 class GTR:
     frequencies: RealVector
-    a: Real
-    b: Real
-    c: Real
-    d: Real
-    e: Real
+    rates: RealVector
 
 class ClassVector(Sized):
     def into_list(self) -> list[int]: ...

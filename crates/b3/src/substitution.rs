@@ -365,11 +365,8 @@ pub struct GTR {
 	#[pyo3(get)]
 	frequencies: Py<PyRealVector>,
 
-	a: Py<PyReal>,
-	b: Py<PyReal>,
-	c: Py<PyReal>,
-	d: Py<PyReal>,
-	e: Py<PyReal>,
+	#[pyo3(get)]
+	rates: Py<PyRealVector>,
 
 	p: RowMatrix<f64, 4, 4>,
 	inv_p: RowMatrix<f64, 4, 4>,
@@ -379,21 +376,10 @@ pub struct GTR {
 }
 
 impl GTR {
-	fn new(
-		frequencies: Py<PyRealVector>,
-		a: Py<PyReal>,
-		b: Py<PyReal>,
-		c: Py<PyReal>,
-		d: Py<PyReal>,
-		e: Py<PyReal>,
-	) -> Self {
+	fn new(frequencies: Py<PyRealVector>, rates: Py<PyRealVector>) -> Self {
 		let mut out = Self {
 			frequencies,
-			a,
-			b,
-			c,
-			d,
-			e,
+			rates,
 
 			p: RowMatrix::default(),
 			inv_p: RowMatrix::default(),
@@ -405,13 +391,14 @@ impl GTR {
 		out
 	}
 
+	fn get_rates(&self) -> [f64; 6] {
+		let rates = &*self.rates.get().inner();
+		[rates[0], rates[1], rates[2], rates[3], rates[4], rates[5]]
+	}
+
 	fn update_matrices(&mut self) {
 		let [p_a, p_c, p_g, p_t] = self.get_frequencies();
-		let a = self.a.get().inner().value();
-		let b = self.b.get().inner().value();
-		let c = self.c.get().inner().value();
-		let d = self.d.get().inner().value();
-		let e = self.e.get().inner().value();
+		let [a, b, c, d, e, f] = self.get_rates();
 
 		let gtr = RowMatrix::from([
 			[
@@ -426,14 +413,24 @@ impl GTR {
 				d * p_g,
 				e * p_t,
 			],
-			[b * p_a, d * p_c, -b * p_a - d * p_c - p_t, p_t],
-			[c * p_a, e * p_c, p_g, -c * p_a - e * p_c - p_g],
+			[
+				b * p_a,
+				d * p_c,
+				-b * p_a - d * p_c - f * p_t,
+				f * p_t,
+			],
+			[
+				c * p_a,
+				e * p_c,
+				f * p_g,
+				-c * p_a - e * p_c - f * p_g,
+			],
 		]);
 		let div = 2.0
 			* (a * p_a * p_c
 				+ b * p_a * p_g + c * p_a * p_t
 				+ d * p_c * p_g + e * p_c * p_t
-				+ p_g * p_t);
+				+ f * p_g * p_t);
 		let gtr = gtr.map(|e| e / div);
 
 		let (eigenvalues, eigenvectors) = gtr.eigen();
@@ -447,11 +444,7 @@ impl GTR {
 impl SubstitutionModel<4, f64> for GTR {
 	fn update(&mut self) -> Result<bool> {
 		if self.frequencies.get().inner().is_changed()
-			|| self.a.get().inner().is_changed()
-			|| self.b.get().inner().is_changed()
-			|| self.c.get().inner().is_changed()
-			|| self.d.get().inner().is_changed()
-			|| self.e.get().inner().is_changed()
+			|| self.rates.get().inner().is_changed()
 		{
 			self.update_matrices();
 			self.has_changed = true;
@@ -485,6 +478,5 @@ impl SubstitutionModel<4, f64> for GTR {
 
 create_pysubstitution!(
 	PyGTR, GTR, "GTR",
-	frequencies: Py<PyRealVector>,
-	a: Py<PyReal>, b: Py<PyReal>, c: Py<PyReal>, d: Py<PyReal>, e: Py<PyReal>
+	frequencies: Py<PyRealVector>, rates: Py<PyRealVector>
 );
