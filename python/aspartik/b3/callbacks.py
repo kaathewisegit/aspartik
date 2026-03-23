@@ -1,11 +1,48 @@
 import time
 from dataclasses import dataclass, field
+from typing import Optional
 
 from .._aspartik_rust_impl._b3_rust_impl import (
     TraceWriter as TraceWriter,
 )
 from . import MCMC, Callback
 from .parameters import Tree
+
+
+@dataclass(slots=True)
+class PrintLogger(Callback):
+    """
+    Prints the simulation progress onto the screen
+
+    Currently it only supports the step index, posterior/likelihood/total
+    prior, and speed in time per million steps.
+    """
+
+    every: int
+
+    _last_time: Optional[float] = field(init=False, default=None)
+
+    def call(self, mcmc: MCMC):
+        if mcmc.current_step == 0:
+            print(
+                f"{'Step':>10}{'Posterior':>15}{'Likelihood':>15}{'Prior':>15}{'Speed t/m':>15}"
+            )
+
+        current_time = time.perf_counter()
+        if self._last_time:
+            # in seconds
+            speed = (current_time - self._last_time) / self.every * 1_000_000
+
+            speed = f"{speed / 60:.1f}min" if speed >= 60 else f"{speed:.0f}sec"
+        else:
+            speed = "-"
+
+        likelihood = mcmc.likelihood.likelihood()
+        print(
+            f"{mcmc.current_step:>10}{mcmc.posterior:>15.2f}{likelihood:>15.2f}{mcmc.prior:>15.2f}{speed:>15}"
+        )
+
+        self._last_time = current_time
 
 
 @dataclass(slots=True)

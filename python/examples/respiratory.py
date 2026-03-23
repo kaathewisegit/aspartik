@@ -8,9 +8,8 @@ tutorial:
 from datetime import datetime
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.callbacks import Timer, TraceWriter
+from aspartik.b3.callbacks import PrintLogger, Timer, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood
-from aspartik.b3.loggers import PrintLogger, TreeLogger
 from aspartik.b3.operators import (
     FixedHeightSPR,
     ParamScale,
@@ -97,7 +96,6 @@ def make_mcmc(fasta_path: str):
         )
 
     loggers = [
-        TreeLogger(tree=tree, path="target/respiratory.trees", every=1_000),
         PrintLogger(every=1_000),
         TraceWriter(
             {

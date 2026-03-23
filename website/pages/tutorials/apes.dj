@@ -145,24 +145,20 @@ efficiently call Python methods every few steps.
 
 ```python
 loggers = [
-    TreeLogger(tree=tree, path="target/apes.trees", every=1_000),
     PrintLogger(every=10_000),
-    ValueLogger(
+    TraceWriter(
         {
-            "step": lambda: mcmc.current_step,
-            "posterior": lambda: mcmc.posterior,
-            "prior": lambda: mcmc.prior,
-            "likelihood": lambda: mcmc.likelihood.likelihood(),
-            "tree:height": lambda: tree.height_of(tree.root),
-            "tree:length": lambda: tree.total_length(),
             "kappa": kappa,
             "population_size": population_size,
             "frequencies": frequencies,
+            "tree": tree,
             "prior:kappa": priors[0],
             "prior:population_size": priors[1],
             "prior:coalescent": priors[2],
         },
-        path="target/apes.log",
+        "target/apes.trace",
+        overwrite=True,
+        zstd=True,
         every=1_000,
     ),
 ]

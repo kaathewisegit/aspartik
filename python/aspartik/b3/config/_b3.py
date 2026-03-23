@@ -2,9 +2,8 @@ from collections.abc import Sequence
 from typing import Literal, Optional
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.callbacks import Timer, TraceWriter
+from aspartik.b3.callbacks import PrintLogger, Timer, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood
-from aspartik.b3.loggers import PrintLogger
 from aspartik.b3.operators import (
     BeastNarrowExchange,
     BeastWideExchange,

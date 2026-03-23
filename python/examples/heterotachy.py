@@ -5,9 +5,8 @@ Based on the [GHOST paper][g], HKY+H4 version.
 """
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.callbacks import TraceWriter
+from aspartik.b3.callbacks import PrintLogger, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood, HeteroLikelihood
-from aspartik.b3.loggers import PrintLogger, TreeLogger
 from aspartik.b3.operators import (
     ClassvecFlip,
     DeltaExchange,
@@ -67,7 +66,6 @@ operators = [
 ]
 
 loggers = [
-    TreeLogger(tree=tree, path="target/heterotachy.trees", every=1_000),
     PrintLogger(every=10_000),
     TraceWriter(
         {

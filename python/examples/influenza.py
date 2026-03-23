@@ -6,9 +6,8 @@ tutorial][l].
 """
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.callbacks import TraceWriter
+from aspartik.b3.callbacks import PrintLogger, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood
-from aspartik.b3.loggers import PrintLogger, TreeLogger
 from aspartik.b3.operators import (
     DeltaExchange,
     FixedHeightSPR,
@@ -88,7 +87,6 @@ def make_mcmc(fasta_path: str):
     )
 
     loggers = [
-        TreeLogger(tree=tree, path="target/influenza.trees", every=1_000),
         PrintLogger(every=10_000),
         TraceWriter(
             {
