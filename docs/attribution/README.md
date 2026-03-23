@@ -17,9 +17,10 @@ instead of reusing the generic functions from the library.
 
 ## Dependencies
 
-### [`anstyle`](./anstyle-license)
+### [`ahash`](./ahash-license)
 
-Interoperable ANSI style escape codes definitions, used by `clap`.
+Hardware-accelerated (via AES instructions) hash function.  Used by
+Arrow.
 
 
 ### [`anyhow`](./anyhow-license)
@@ -53,6 +54,11 @@ Macros for taking array references to sub-slices.  Used by `blake3`.
 `blake3`.
 
 
+### [`arrow`](./arrow-license)
+
+Rust implementation of Apache Arrow, including a bunch of sub-crates.
+
+
 ### [`autocfg`](./autocfg-license)
 
 A build dependency used by `parking_lot`, `num-traits`, and `memoffset`,
@@ -77,11 +83,6 @@ Byte casting, which I was using for the old Vulkan calculator.  It's no
 longer used anywhere, but I decided to keep it around in `linalg`.
 
 
-### [`byteorder`](./byteorder-license)
-
-A library for endian-aware number encoding used by `rmp`.
-
-
 ### [`bytes`](./bytes-license)
 
 Bytes container type I use for DNA sequences.
@@ -92,15 +93,25 @@ Bytes container type I use for DNA sequences.
 C compiler invocation utility for build scripts, used by `blake3`.
 
 
-### [`clap`, `clap_builder`, `clap_lex`](./clap-license)
-
-Command-line parser, used by `divan`.
-
-
 ### [`cfg-if`](./cfg-if-license)
 
 Provides a macro which allows using `if else` with `cfg` directive.
 Used by `libloading`, `parking_lot_core`, `getrandom`, and `divan`.
+
+
+### [`chrono`](./choro-license)
+
+A dependency of `arrow-array` which cannot be disabled.
+
+
+### [`constant_time_eq`](./constant_time_eq-license)
+
+Used by `blake3`.
+
+
+### [`cpufeatures`](./cpufeatures-license)
+
+Used by `blake3`, a [RustCrypto](https://github.com/RustCrypto) crate.
 
 
 ### [`cudarc`](./cudarc-license)
@@ -109,24 +120,26 @@ A crate which includes `sys`, unsafe idiomatic, and safe abstraction
 APIs for CUDA.
 
 
-### [`equivalent`](./equivalent-license)
+### [`flatbuffers`](./flatbuffers-license)
 
-Traits for key comparison, used by `hashbrown`.
-
-
-### [`fixedbitset`](./fixedbitset-license)
-
-Bit set collection implementation used by `petgraph`.
+Used by Arrow as the metadata is defined as a Flatbuffers schema.
 
 
-### [`foldhash`](./foldhash-license)
+### [`fork_union`](./fork_union-license)
 
-A fast non-DoS resistant hash function used by `hashbrown`.
+Another one of Mr. Vardanian's great libraries, low-latency thread
+comparable with OpenMP in performance, making it suitable for
+parallelising tree likelihood calculations.
 
 
 ### [`getrandom`](./getrandom-license)
 
 A crate which fetches random data from the OS, used by `rand_core`.
+
+
+### [`half`](./half-license)
+
+`f16` and `bf16` types, used by Arrow.
 
 
 ### [`hashbrown`](./hashbrown-license)
@@ -140,11 +153,6 @@ anyways.
 
 Case conversion library used by `pyo3` during build time for case
 conversion attributes on pyclasses.
-
-
-### [`indexmap`](./indexmap-license)
-
-Hash map which preserves insertion order, used by `petgraph`.
 
 
 ### [`libc`](./libc-license)
@@ -169,16 +177,6 @@ A library for implementing Rust-style `Mutex` using `RawMutex` types.
 Used (and developed) by `parking_lot`
 
 
-### [`log`](./log-license)
-
-Unified Rust `log` facade.
-
-
-### [`memchr`](./memchr-license)
-
-SIMD-optimized string search, used by `nom` and `serde_json`.
-
-
 ### [`num-traits`](./num-traits-license)
 
 Unified numerical interfaces.  Used in `linalg` and `stats`.
@@ -198,20 +196,14 @@ non-poisoning `Mutex` for interior mutability in pyclasses.
 ### [`parking_lot_core`](./parking_lot-license)
 
 
-### [`paste`](./paste-license)
+### [`peg`](./peg-license)
 
-**UNMAINTAINED**.  A proc macro which can create new identifiers.
-
-
-### [`petgraph`](./petgraph-license)
-
-The graph library, which will probably power the generic tree API from
-`io`.
+Parser generator I use to parse Newick trees.
 
 
-### [`ppv-lite86`](./ppv-lite86-license)
+### [`pkg-config`](./pkg-config-license)
 
-SIMD for cryptography, used by `rand_chacha`.
+`pkg-config` API for build scripts, used by the `zstd` crate.
 
 
 ### [`proc-macro2`](./proc-macro2-license)
@@ -246,10 +238,9 @@ Randomness crates used by both `b3` and `stats`.  The PCG generator
 powers the `rng` module because it's serializable.
 
 
-### [`rmp`/`rmp-serde`](./rmp-license)
+### [`rustc_version`](./rustc_version-license)
 
-MessagePack implementation I use to implement pickling for Rust-based
-classes.
+Rust compiler version for build scripts, used by Flatbuffers.
 
 
 ### [`scopeguard`](./scopeguard-license)
@@ -257,11 +248,20 @@ classes.
 Panic-resistant `defer`, used in `lock_api`.
 
 
+### [`semver`](./semver-license)
+
+Semver parser used by `rustc_version`.
+
+
 ### [`serde`](./serde-license)
 
 ### [`serde_derive`](./serde-license)
 
-### [`serde_json`](./serde_json-license)
+### [`serde_test`](./serde_test-license)
+
+**UNMAINTANED**.  Token-level serde tester.  I use it to test `SkBuf`
+serialization.
+
 
 ### [`smallvec`](./smallvec-license)
 
@@ -299,11 +299,9 @@ A library for safely casting between bytes and Rust types, used by
 `ppv-lite86`.
 
 
-### [`divan`](./divan-license)
+### [`zstd`](./zstd-license)
 
-A convenient benchmarking library.  I picked it over `criterion` because
-it allowed to set the number of iterations to one, which was useful for
-long-running `b3` tests.
+Bindings to the C ZSTD implementation.
 
 
 [`rand`]: ./rand-license
