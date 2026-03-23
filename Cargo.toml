@@ -34,7 +34,6 @@ bytemuck = "1.25"
 bytes = "1.11"
 cc = "1.2.57"
 cudarc = { version = "0.19.3", default-features = false }
-divan = "0.1.21"
 fork_union = "2.3"
 lapack-static = "0.1.0"
 libc = "0.2.180"

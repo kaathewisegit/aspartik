@@ -11,16 +11,11 @@ authors.workspace = true
 serde = { workspace = true, optional = true, features = ["derive"] }
 
 [dev-dependencies]
-divan = { workspace = true }
 rand = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
 serde = ["dep:serde"]
-
-[[bench]]
-name = "double"
-harness = false
 
 [lints]
 workspace = true
