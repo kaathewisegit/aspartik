@@ -1,29 +1,90 @@
 #[cfg(feature = "serde")]
 mod test {
-	use serde_json::to_string;
+	use serde_test::{Token, assert_tokens};
 	use sk::skbuf;
 
 	#[test]
-	fn serialize() {
+	fn test_skbuf_serialization() {
 		let mut v = skbuf![1, 2, 3];
-		let json = to_string(&v).unwrap();
-		assert_eq!(
-			json,
-			r#"{"items":[1,1,2,2,3,3],"metadata":[0,0,0]}"#
+
+		assert_tokens(
+			&v,
+			&[
+				Token::Struct {
+					name: "SkBuf",
+					len: 2,
+				},
+				Token::Str("items"),
+				Token::Seq { len: Some(6) },
+				Token::I32(1),
+				Token::I32(1),
+				Token::I32(2),
+				Token::I32(2),
+				Token::I32(3),
+				Token::I32(3),
+				Token::SeqEnd,
+				Token::Str("metadata"),
+				Token::Seq { len: Some(3) },
+				Token::U8(0),
+				Token::U8(0),
+				Token::U8(0),
+				Token::SeqEnd,
+				Token::StructEnd,
+			],
 		);
 
 		v.set(0, 10);
-		let json = to_string(&v).unwrap();
-		assert_eq!(
-			json,
-			r#"{"items":[1,10,2,2,3,3],"metadata":[3,0,0]}"#
+		assert_tokens(
+			&v,
+			&[
+				Token::Struct {
+					name: "SkBuf",
+					len: 2,
+				},
+				Token::Str("items"),
+				Token::Seq { len: Some(6) },
+				Token::I32(1),
+				Token::I32(10),
+				Token::I32(2),
+				Token::I32(2),
+				Token::I32(3),
+				Token::I32(3),
+				Token::SeqEnd,
+				Token::Str("metadata"),
+				Token::Seq { len: Some(3) },
+				Token::U8(3),
+				Token::U8(0),
+				Token::U8(0),
+				Token::SeqEnd,
+				Token::StructEnd,
+			],
 		);
 
 		v.accept();
-		let json = to_string(&v).unwrap();
-		assert_eq!(
-			json,
-			r#"{"items":[1,10,2,2,3,3],"metadata":[1,0,0]}"#
+		assert_tokens(
+			&v,
+			&[
+				Token::Struct {
+					name: "SkBuf",
+					len: 2,
+				},
+				Token::Str("items"),
+				Token::Seq { len: Some(6) },
+				Token::I32(1),
+				Token::I32(10),
+				Token::I32(2),
+				Token::I32(2),
+				Token::I32(3),
+				Token::I32(3),
+				Token::SeqEnd,
+				Token::Str("metadata"),
+				Token::Seq { len: Some(3) },
+				Token::U8(1),
+				Token::U8(0),
+				Token::U8(0),
+				Token::SeqEnd,
+				Token::StructEnd,
+			],
 		);
 	}
 }
