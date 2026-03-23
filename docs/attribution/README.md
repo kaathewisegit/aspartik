@@ -15,6 +15,14 @@ Generic string similarity searches, whose code I copied and instantiated
 instead of reusing the generic functions from the library.
 
 
+## Influences
+
+### [`BEAGLE`](./beagle-license)
+
+The current iteration of CPU likelihood calculators is heavily
+influenced by the BEAGLE implementation.
+
+
 ## Dependencies
 
 ### [`ahash`](./ahash-license)
