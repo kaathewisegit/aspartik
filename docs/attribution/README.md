@@ -147,16 +147,6 @@ conversion attributes on pyclasses.
 Hash map which preserves insertion order, used by `petgraph`.
 
 
-### [`inventory`](./inventory-license)
-
-"Distributed plugin registration", which uses platform-specific
-implementations to create a global list of objects, which can be
-populated by different crates.  I use it via `pyo3`'s
-`multiple-pymethods` feature because I create several of those with
-macros.  And `#[pymethods]`, being a proc macro, doesn't support nested
-macros by example.
-
-
 ### [`libc`](./libc-license)
 
 Raw bindings to platform-specific C libraries.

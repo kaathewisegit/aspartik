@@ -29,7 +29,7 @@ pub trait Parameter {
 
 #[macro_export]
 macro_rules! impl_pyparameter_common {
-	($pytype:ty, $type:ty) => {
+	($pytype:ty, $type:ty $(; $($rest:tt)*)?) => {
 		impl $pytype {
 			pub fn inner(
 				&self,
@@ -55,6 +55,8 @@ macro_rules! impl_pyparameter_common {
 			pub fn reject(&self) {
 				self.inner().reject();
 			}
+
+			$($($rest)*)?
 		}
 	};
 }

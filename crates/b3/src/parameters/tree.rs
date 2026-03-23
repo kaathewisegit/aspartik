@@ -955,10 +955,7 @@ pub struct PyTree {
 	inner: Mutex<Tree>,
 }
 
-impl_pyparameter_common!(PyTree, Tree);
-
-#[pymethods]
-impl PyTree {
+impl_pyparameter_common! {PyTree, Tree;
 	#[new]
 	fn new(names: Vec<String>, rng: Py<PyRng>) -> Result<Self> {
 		let tree = Tree::new(names, &mut rng.get().inner())?;

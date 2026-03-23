@@ -76,10 +76,7 @@ pub struct PyReal {
 	inner: Mutex<Real>,
 }
 
-impl_pyparameter_common!(PyReal, Real);
-
-#[pymethods]
-impl PyReal {
+impl_pyparameter_common! {PyReal, Real;
 	#[new]
 	pub fn new(value: f64) -> Self {
 		Self {

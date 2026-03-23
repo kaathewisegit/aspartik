@@ -211,7 +211,7 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 }
 
 macro_rules! likelihood_methods {
-	($type:ty) => {
+	($type:ty $(; $($rest:tt)*)?) => {
 		#[pymethods]
 		impl $type {
 			fn likelihood(&self) -> Result<f64> {
@@ -229,6 +229,8 @@ macro_rules! likelihood_methods {
 			pub fn num_patterns(&self) -> usize {
 				self.inner.lock().num_patterns()
 			}
+
+			$($($rest)*)?
 		}
 
 		impl $type {
@@ -248,8 +250,7 @@ pub struct PyCpu4Likelihood {
 	inner: Mutex<GenericLikelihood<4, f64, Cpu4Propagations>>,
 }
 
-#[pymethods]
-impl PyCpu4Likelihood {
+likelihood_methods! {PyCpu4Likelihood;
 	#[new]
 	#[pyo3(signature = (
 		msa, substitution, clock, tree,
@@ -283,8 +284,6 @@ impl PyCpu4Likelihood {
 	}
 }
 
-likelihood_methods!(PyCpu4Likelihood);
-
 /// Likelihood calculations on NVIDIA graphics cards.
 ///
 /// Only supports 4-state DNA models.  `cuda_device` allows selecting the device
@@ -294,8 +293,7 @@ pub struct PyCudaLikelihood {
 	inner: Mutex<GenericLikelihood<4, f64, CudaLikelihood>>,
 }
 
-#[pymethods]
-impl PyCudaLikelihood {
+likelihood_methods! {PyCudaLikelihood;
 	#[new]
 	#[pyo3(signature = (
 		msa, substitution, clock, tree,
@@ -330,8 +328,6 @@ impl PyCudaLikelihood {
 		})
 	}
 }
-
-likelihood_methods!(PyCudaLikelihood);
 
 #[derive(FromPyObject)]
 pub enum PyLikelihood {

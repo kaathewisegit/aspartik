@@ -27,7 +27,7 @@ cudarc = { workspace = true, features = ["driver", "nvrtc", "dynamic-loading", "
 fork_union = { workspace = true }
 num-traits = { workspace = true }
 parking_lot = { workspace = true }
-pyo3 = { workspace = true, features = ["anyhow", "multiple-pymethods"] }
+pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }
 rand_pcg = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }

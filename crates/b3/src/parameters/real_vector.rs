@@ -72,10 +72,7 @@ pub struct PyRealVector {
 	inner: Mutex<RealVector>,
 }
 
-impl_pyparameter_common!(PyRealVector, RealVector);
-
-#[pymethods]
-impl PyRealVector {
+impl_pyparameter_common! {PyRealVector, RealVector;
 	#[new]
 	#[pyo3(signature = (*values))]
 	fn new(values: Vec<f64>) -> Result<Self> {

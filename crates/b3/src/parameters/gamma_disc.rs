@@ -59,10 +59,7 @@ pub struct PyGammaDisc {
 	inner: Mutex<GammaDisc>,
 }
 
-impl_pyparameter_common!(PyGammaDisc, GammaDisc);
-
-#[pymethods]
-impl PyGammaDisc {
+impl_pyparameter_common! {PyGammaDisc, GammaDisc;
 	#[new]
 	pub fn new(
 		py: Python,

@@ -78,10 +78,7 @@ pub struct PyClassVector {
 	inner: Mutex<ClassVector>,
 }
 
-impl_pyparameter_common!(PyClassVector, ClassVector);
-
-#[pymethods]
-impl PyClassVector {
+impl_pyparameter_common! {PyClassVector, ClassVector;
 	#[new]
 	pub fn new(num_classes: u8, len: usize) -> Self {
 		Self {
