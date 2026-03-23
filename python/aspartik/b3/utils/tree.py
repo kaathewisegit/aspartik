@@ -21,7 +21,7 @@ def trees_to_newick(
 
     for bytes in df["tree"]:
         tree.load(bytes)
-        dest.write(tree.newick())
+        dest.write(tree.to_newick())
         dest.write("\n")
 
     dest.flush()

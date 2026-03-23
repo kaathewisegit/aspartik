@@ -1272,7 +1272,7 @@ impl PyTree {
 	/// Leaf nodes will be labeled with the names passed to the constructor
 	/// while the internal nodes are unlabeled.
 	#[pyo3(signature = (internal_ids = false))]
-	fn newick(&self, internal_ids: bool) -> String {
+	fn to_newick(&self, internal_ids: bool) -> String {
 		self.inner().to_newick(internal_ids)
 	}
 

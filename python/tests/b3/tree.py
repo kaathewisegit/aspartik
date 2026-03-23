@@ -83,6 +83,6 @@ def test_dump_load_mcmc(msa: MSA, rng: RNG, tmp_path):
     deserialized_tree = Tree(msa.sequence_names(), rng)
     deserialized_tree.load(serialized_tree)
 
-    assert tree.newick() == deserialized_tree.newick()
+    assert tree.to_newick() == deserialized_tree.to_newick()
 
     trace_file.unlink()

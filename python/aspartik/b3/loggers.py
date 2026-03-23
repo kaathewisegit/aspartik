@@ -77,7 +77,7 @@ class TreeLogger(Callback):
         self._writer = _LogWriter(self.path, zstd=self.zstd)
 
     def call(self, mcmc: MCMC):
-        newick = self.tree.newick()
+        newick = self.tree.to_newick()
         self._writer.writeln(newick)
 
     def finish(self, mcmc: MCMC):
