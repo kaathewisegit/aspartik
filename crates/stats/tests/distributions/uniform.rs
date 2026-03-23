@@ -207,15 +207,13 @@ fn test_continuous() {
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 #[test]
 fn test_samples_in_range() {
-	use rand::SeedableRng;
-	use rand::distr::Distribution;
-	use rand::rngs::StdRng;
+	use rand::{SeedableRng, distr::Distribution};
 
 	let seed = [
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
 		18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 	];
-	let mut r: StdRng = SeedableRng::from_seed(seed);
+	let mut r = rand_pcg::Pcg64::from_seed(seed);
 
 	let min = -0.5;
 	let max = 0.5;
@@ -223,7 +221,7 @@ fn test_samples_in_range() {
 	let n = new_dist((min, max));
 
 	assert!((0..num_trials)
-		.map(|_| n.sample::<StdRng>(&mut r))
+		.map(|_| n.sample(&mut r))
 		.all(|v| (min <= v) && (v < max)));
 }
 

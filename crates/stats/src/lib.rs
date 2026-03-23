@@ -10,10 +10,10 @@
 #![cfg_attr(feature = "rand", doc = "```")]
 #![cfg_attr(not(feature = "rand"), doc = "```ignore")]
 //! use stats::distribution::Exp;
-//! use rand::distr::Distribution;
+//! use rand::{SeedableRng, distr::Distribution};
 //! use math::Positive;
 //!
-//! let mut r = rand::rng();
+//! let mut r = rand_pcg::Pcg64::seed_from_u64(4);
 //! let n = Exp::new(Positive::new((0.5)));
 //! print!("{}", n.sample(&mut r));
 //! ```

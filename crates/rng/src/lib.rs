@@ -3,11 +3,12 @@ use math::Probability;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 use rand::{
-	RngExt, SeedableRng, TryRng,
+	RngExt, SeedableRng,
 	distr::uniform::{UniformFloat, UniformSampler},
-	rngs::SysRng,
 };
 use rand_pcg::Pcg64;
+
+use util::seconds_since_unix;
 
 pub type Rng = Pcg64;
 
@@ -42,8 +43,9 @@ impl PyRng {
 	#[new]
 	#[pyo3(signature = (seed = None))]
 	pub fn new(seed: Option<u64>) -> PyResult<Self> {
-		let seed =
-			seed.unwrap_or_else(|| SysRng.try_next_u64().unwrap());
+		// This is a guessable, but `RNG` should be treated as a source
+		// of cryptographic randomness anyways.
+		let seed = seed.unwrap_or_else(seconds_since_unix);
 
 		let inner = Pcg64::seed_from_u64(seed);
 

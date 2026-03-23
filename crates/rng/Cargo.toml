@@ -13,6 +13,6 @@ util = { workspace = true }
 anyhow = { workspace = true }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
-rand = { workspace = true, features = ["std", "sys_rng"] }
+rand = { workspace = true }
 rand_pcg = { workspace = true, features = ["serde"] }
 serde_verbatim = { workspace = true, features = ["alloc"] }

@@ -251,11 +251,11 @@ fn test_discrete() {
 #[test]
 #[cfg(feature = "rand")]
 fn test_sample() {
-	use rand::{SeedableRng, distr::Distribution, rngs::StdRng};
+	use rand::{SeedableRng, distr::Distribution};
 
 	let dist = NegativeBinomial::new(4.0, 0.5).unwrap();
-	let mut rng = StdRng::seed_from_u64(1600);
-	let n_samples = 10_000;
+	let mut rng = rand_pcg::Pcg64::seed_from_u64(1600);
+	let n_samples = 100_000;
 	let tol = 0.1;
 
 	let samples: Vec<u64> =

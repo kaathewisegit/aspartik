@@ -240,19 +240,18 @@ fn test_inverse_cdf() {
 #[cfg(feature = "rand")]
 #[test]
 fn test_sample() {
-	use rand::distr::Distribution;
-	use rand::rng;
+	use rand::{SeedableRng, distr::Distribution};
+
+	let mut rng = rand_pcg::Pcg64::seed_from_u64(4);
 
 	let l = new_dist((0.1, 0.5));
-	l.sample(&mut rng());
+	l.sample(&mut rng);
 }
 
 #[cfg(feature = "rand")]
 #[test]
 fn test_sample_distribution() {
-	use rand::SeedableRng;
-	use rand::distr::Distribution;
-	use rand::rngs::StdRng;
+	use rand::{SeedableRng, distr::Distribution};
 
 	let location = 0.0;
 	let scale = 1.0;
@@ -261,7 +260,7 @@ fn test_sample_distribution() {
 	let tolerance = 250;
 
 	for seed in 0..10 {
-		let mut r: StdRng = SeedableRng::seed_from_u64(seed);
+		let mut r = rand_pcg::Pcg64::seed_from_u64(seed);
 
 		let result = (0..trials).map(|_| n.sample(&mut r)).fold(
 			0,
