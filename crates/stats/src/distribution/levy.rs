@@ -1,7 +1,7 @@
 use rand::RngExt;
 use thiserror::Error;
 
-use core::f64;
+use core::f64::consts;
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
@@ -13,24 +13,14 @@ use math::{
 	function::erf::{erf, erfc, erfc_inv},
 };
 
-/// Implements the [Levy](https://en.wikipedia.org/wiki/L%C3%A9vy_distribution) distribution.
-///
-/// # Example
-///
-/// ```
-/// use stats::distribution::{Levy, Continuous};
-/// use stats::statistics::Distribution;
-///
-/// let n = Levy::new(1.0, 1.0).unwrap();
-/// assert_eq!(n.pdf(0.0), 0.0);
-/// ```
+/// [Levy distribution](https://en.wikipedia.org/wiki/L%C3%A9vy_distribution)
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Levy {
 	mu: f64,
 	c: f64,
 }
 
-/// Represents the errors that can occur when creating a [`Levy`].
+/// Errors that can occur when creating [`Levy`].
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, Error)]
 #[non_exhaustive]
 pub enum LevyError {
@@ -45,19 +35,10 @@ impl Levy {
 	///
 	/// # Errors
 	///
-	/// Returns and error if `mu` is NaN or infinite or if `c` is NaN, infinite or nonpositive
+	/// Returns an error:
 	///
-	/// # Example
-	///
-	/// ```
-	/// use stats::distribution::Levy;
-	///
-	/// let mut result = Levy::new(0.0, 1.0);
-	/// assert!(result.is_ok());
-	///
-	/// result = Levy::new(0.0, 0.0);
-	/// assert!(result.is_err());
-	/// ```
+	/// - If `mu` is NaN or infinite
+	/// - If `c` is NaN, infinite or nonpositive
 	pub fn new(mu: f64, c: f64) -> Result<Levy, LevyError> {
 		if mu.is_nan() || mu.is_infinite() {
 			return Err(LevyError::LocationInvalid);
@@ -68,30 +49,12 @@ impl Levy {
 		Ok(Levy { mu, c })
 	}
 
-	/// Returns the location (μ) of the Levy distribution
-	///
-	/// # Example
-	///
-	/// ```
-	/// use stats::distribution::Levy;
-	///
-	/// let n = Levy::new(1.0, 1.0).unwrap();
-	/// assert_eq!(n.mu(), 1.0);
-	/// ```
+	/// Location (μ) of the Levy distribution
 	pub fn mu(&self) -> f64 {
 		self.mu
 	}
 
-	/// Returns the dispersion (c) of the Levy distribution
-	///
-	/// # Example
-	///
-	/// ```
-	/// use stats::distribution::Levy;
-	///
-	/// let n = Levy::new(1.0, 1.0).unwrap();
-	/// assert_eq!(n.c(), 1.0);
-	/// ```
+	/// Dispersion (c) of the Levy distribution
 	pub fn c(&self) -> f64 {
 		self.c
 	}
@@ -99,7 +62,7 @@ impl Levy {
 
 impl core::fmt::Display for Levy {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		write!(f, "Levy(mu = {}, c = {})", self.mu, self.c)
+		write!(f, "Levy({}, {})", self.mu, self.c)
 	}
 }
 
@@ -116,17 +79,7 @@ impl rand::distr::Distribution<f64> for Levy {
 }
 
 impl ContinuousCDF for Levy {
-	/// Calculates the cumulative distribution function for the Levy distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 0 if x <= μ
-	/// erfc(sqrt(c / (2 * (x - μ)))) if x > μ
-	/// ```
-	///
-	/// where `μ` is the location, `c` is the dispersion, and `erfc` is the
-	/// complementary error function.
+	/// `erfc(sqrt(c / (2 ⋅ (x - μ))))` if `x ≤ μ`, else 0
 	fn cdf(&self, x: f64) -> f64 {
 		if x <= self.mu {
 			0.0
@@ -137,17 +90,7 @@ impl ContinuousCDF for Levy {
 		}
 	}
 
-	/// Calculates the survival function for the Levy distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 1 if x <= μ
-	/// erf(sqrt(c / (2 * (x - μ)))) if x > μ
-	/// ```
-	///
-	/// where `μ` is the location, `c` is the dispersion, and `erf` is the error
-	/// function.
+	/// `erf(sqrt(c / (2 ⋅ (x - μ))))` if `x > μ` else 1
 	fn sf(&self, x: f64) -> f64 {
 		if x <= self.mu {
 			1.0
@@ -158,9 +101,7 @@ impl ContinuousCDF for Levy {
 		}
 	}
 
-	/// `μ + c * (erfc_inv(x)^2) / 2`, where `μ` is the mean, `σ` is the
-	/// standard deviation and `erfc_inv` is the inverse of the
-	/// complementary error function.
+	/// `μ + c ⋅ (erfc_inv(x)^2) / 2`
 	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
 		self.mu + 0.5 * self.c / (erfc_inv(*p).powi(2))
 	}
@@ -175,105 +116,55 @@ impl ContinuousCDF for Levy {
 }
 
 impl Distribution for Levy {
-	/// Returns the mean of the Levy distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
+	/// The mean, always infinity
 	fn mean(&self) -> Option<f64> {
 		Some(f64::INFINITY)
 	}
 
-	/// `μ + c / (2 * erfc_inv(0.5)^2)`, where `μ` is the mean, `c` is the
-	/// dispersion and `erfc_inv` is the inverse of the complementary error
-	/// function.
+	/// `μ + c / (2 * erfc_inv(0.5)^2)`
 	fn median(&self) -> Option<f64> {
 		Some(self.mu + self.c / (2.0 * erfc_inv(0.5).powi(2)))
 	}
 
-	/// Returns the variance of the Levy distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
+	/// The variance, always an infinity
 	fn variance(&self) -> Option<f64> {
 		Some(f64::INFINITY)
 	}
 
-	/// Returns the standard deviation of the Levy distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// f64::INFINITY
-	/// ```
+	/// The standard deviation, always an infinity
 	fn std_dev(&self) -> Option<f64> {
 		Some(f64::INFINITY)
 	}
 
-	/// Returns the entropy of the Levy distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (1 + 3γ + ln(16πc^2))/2
-	/// ```
+	/// `(1 + 3γ + ln(16πc^2))/2`
 	fn entropy(&self) -> Option<f64> {
-		/// CONSTANT_PART = 1.5 * EULER_MASCHERONI + 0.5 * (1.0 + LN_PI + 16.0_f64.ln())
+		// CONSTANT_PART = 1.5 * EULER_MASCHERONI + 0.5 * (1.0 + LN_PI + 16.0_f64.ln())
 		const CONSTANT_PART: f64 = 3.32448280139689;
 		Some(CONSTANT_PART + self.c.ln())
 	}
 }
 
 impl Mode<Option<f64>> for Levy {
-	/// Returns the mode of the Levy distribution
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// μ + c/3
-	/// ```
-	///
-	/// where `μ` is the mean and `c` is the dispersion.
+	/// `μ + c/3`
 	fn mode(&self) -> Option<f64> {
 		Some(self.mu + self.c / 3.0)
 	}
 }
 
 impl Continuous for Levy {
-	/// Calculates the probability density function for the Levy distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (sqrt(c / 2 * π)) * e^(-1/2 * (c / (x - μ))) * (1 / (x - μ)^(3/2))
-	/// ```
-	///
-	/// where `μ` is the mean and `c` is the dispersion.
+	/// `(sqrt(c / 2 ⋅ π)) ⋅ e^(-1/2 ⋅ (c / (x - μ))) ⋅ (1 / (x - μ)^(3/2))`
 	fn pdf(&self, x: f64) -> f64 {
 		if x <= self.mu {
 			0.0
 		} else {
 			let diff = x - self.mu;
-			(self.c / f64::consts::TAU).sqrt()
+			(self.c / consts::TAU).sqrt()
 				* (-((0.5 * self.c) / diff)).exp()
 				/ diff.powf(1.5)
 		}
 	}
 
-	/// Calculates the log probability density function for the Levy distribution at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// 1/2 * (ln(c) - ln(2 * π) - (c / (x - μ))) - 3/2 * ln(x - μ)
-	/// ```
-	///
-	/// where `μ` is the mean and `σ` is the standard deviation
+	/// `½ ⋅ (ln(c) - ln(2 * π) - (c / (x - μ))) - 3/2 ⋅ ln(x - μ)`
 	fn ln_pdf(&self, x: f64) -> f64 {
 		if x <= self.mu {
 			f64::NEG_INFINITY
