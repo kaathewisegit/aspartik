@@ -3,7 +3,7 @@
 """
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.callbacks import PrintLogger, TraceWriter
+from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.operators import (
     BeastNarrowExchange,
@@ -80,6 +80,7 @@ def make_mcmc(fasta_path: str):
             zstd=True,
             every=1_000,
         ),
+        StateCheckpoint("target/apes.state", every=10_000),
     ]
 
     mcmc = MCMC(

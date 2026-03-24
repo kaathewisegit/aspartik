@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Literal, Optional
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.callbacks import PrintLogger, Timer, TraceWriter
+from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, Timer, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood
 from aspartik.b3.operators import (
     BeastNarrowExchange,
@@ -54,6 +54,8 @@ def b3_config(
     print_every: Optional[int] = 1_000,
     trace_path: Optional[str] = None,
     trace_every: int = 1_000,
+    state_path: Optional[str] = None,
+    state_every: int = 100_000,
     timer: bool = False,
     seed: int = 4,
 ):
@@ -208,7 +210,8 @@ def b3_config(
         callbacks.append(
             TraceWriter(items, trace_path, overwrite=True, zstd=True, every=trace_every)
         )
-
+    if state_path:
+        callbacks.append(StateCheckpoint(state_path, every=state_every))
     if timer:
         callbacks.append(Timer())
 

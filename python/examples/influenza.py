@@ -6,7 +6,7 @@ tutorial][l].
 """
 
 from aspartik.b3 import MCMC, Clock
-from aspartik.b3.callbacks import PrintLogger, TraceWriter
+from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.operators import (
     DeltaExchange,
@@ -107,6 +107,7 @@ def make_mcmc(fasta_path: str):
             overwrite=True,
             zstd=True,
         ),
+        StateCheckpoint("target/influenza.state", every=100_000),
     ]
 
     mcmc = MCMC(

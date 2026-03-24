@@ -89,3 +89,25 @@ class Timer(Callback):
         duration = time.perf_counter() - self.__start
         speed = duration / (mcmc.current_step - self.__start_index) * 1_000_000
         print(f"Timer: {speed} sec/million steps ({duration} sec total)")
+
+
+@dataclass(slots=True)
+class StateCheckpoint(Callback):
+    """
+    Saves the MCMC state
+    """
+
+    path: str
+    "Path to the file to save the state in"
+
+    every: int
+
+    def save_state(self, mcmc: MCMC):
+        with open(self.path, "wb") as file:
+            file.write(mcmc.dump_state())
+
+    def call(self, mcmc: MCMC) -> None:
+        self.save_state(mcmc)
+
+    def finish(self, mcmc: MCMC) -> None:
+        self.save_state(mcmc)
