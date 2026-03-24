@@ -72,7 +72,7 @@ pub struct SkBuf<T> {
 	/// `SkBuf` can hold at a time.  Each element consist of two items in
 	/// `inner`, only one of which is active, determined by the `mask` at
 	/// the index.
-	items: Vec<T>,
+	items: Box<[T]>,
 	edits: EditBuf,
 }
 
@@ -243,7 +243,7 @@ impl<T> SkBuf<T> {
 		T: Default + Clone,
 	{
 		Self {
-			items: vec![T::default(); length * 2],
+			items: vec![T::default(); length * 2].into(),
 			edits: EditBuf::new(length),
 		}
 	}
@@ -300,7 +300,10 @@ impl<T> SkBuf<T> {
 			items.push(value.clone());
 		}
 
-		Self { items, edits }
+		Self {
+			items: items.into(),
+			edits,
+		}
 	}
 }
 
@@ -316,7 +319,10 @@ impl<T: Clone> From<&[T]> for SkBuf<T> {
 			items.push(value.clone());
 		}
 
-		Self { items, edits }
+		Self {
+			items: items.into(),
+			edits,
+		}
 	}
 }
 
@@ -330,7 +336,10 @@ impl<T: Clone> From<Vec<T>> for SkBuf<T> {
 			items.push(value);
 		}
 
-		Self { items, edits }
+		Self {
+			items: items.into(),
+			edits,
+		}
 	}
 }
 
@@ -344,7 +353,10 @@ impl<T: Clone, const N: usize> From<[T; N]> for SkBuf<T> {
 			items.push(value);
 		}
 
-		Self { items, edits }
+		Self {
+			items: items.into(),
+			edits,
+		}
 	}
 }
 
