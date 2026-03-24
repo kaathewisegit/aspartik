@@ -9,12 +9,12 @@ fn small_float(u: &mut Unstructured) -> Result<f64> {
 	Ok(out)
 }
 
-pub fn vector<const N: usize>(u: &mut Unstructured) -> Result<Vector<f64, N>> {
-	let mut out = Vector::default();
+pub fn vector<const N: usize>(u: &mut Unstructured) -> Result<[f64; N]> {
+	let mut out = <[f64; N]>::from_element(0.0);
 
-	for i in 0..N {
+	for element in out.iter_mut() {
 		if let Ok(new) = small_float(u) {
-			out[i] = new;
+			*element = new;
 		} else {
 			// leave the rest as zeros
 			break;

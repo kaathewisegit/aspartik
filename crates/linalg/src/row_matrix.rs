@@ -1,8 +1,8 @@
-use num_traits::{Num, NumAssign};
+use num_traits::Num;
 
 use std::{
 	fmt::{self, Display},
-	ops::{Add, AddAssign, Index, IndexMut, Mul, MulAssign},
+	ops::{AddAssign, Index, IndexMut, Mul, MulAssign},
 };
 
 use crate::vector::Vector;
@@ -10,23 +10,16 @@ use crate::vector::Vector;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(C)]
 pub struct RowMatrix<T, const N: usize, const M: usize> {
-	m: [Vector<T, M>; N],
+	m: [[T; M]; N],
 }
 
 // Constructors
-impl<T: Copy, const N: usize, const M: usize> From<[Vector<T, M>; N]>
-	for RowMatrix<T, N, M>
-{
-	fn from(value: [Vector<T, M>; N]) -> Self {
-		RowMatrix { m: value }
-	}
-}
 
 impl<T: Copy, const N: usize, const M: usize> From<[[T; M]; N]>
 	for RowMatrix<T, N, M>
 {
 	fn from(value: [[T; M]; N]) -> Self {
-		value.map(|row| -> Vector<T, M> { row.into() }).into()
+		RowMatrix { m: value }
 	}
 }
 
@@ -34,7 +27,7 @@ impl<T: Copy, const N: usize, const M: usize> From<RowMatrix<T, N, M>>
 	for [[T; M]; N]
 {
 	fn from(value: RowMatrix<T, N, M>) -> Self {
-		value.m.map(|row| row.into())
+		value.m
 	}
 }
 
@@ -92,7 +85,7 @@ impl<T: Copy + Num, const N: usize> RowMatrix<T, N, N> {
 		out
 	}
 
-	pub fn from_diagonal(diag: Vector<T, N>) -> Self {
+	pub fn from_diagonal(diag: impl Vector<T, N>) -> Self {
 		let mut out = Self::zeros();
 
 		for i in 0..N {
@@ -106,7 +99,7 @@ impl<T: Copy + Num, const N: usize> RowMatrix<T, N, N> {
 impl<T: Copy, const N: usize, const M: usize> RowMatrix<T, N, M> {
 	/// Creates a new matrix with all of it's elements set to `value`.
 	pub fn from_element(value: T) -> Self {
-		[Vector::from([value; M]); N].into()
+		[[value; M]; N].into()
 	}
 }
 
@@ -136,15 +129,15 @@ impl<T: Copy + Default, const N: usize, const M: usize> Default
 // Operators
 
 impl<T, const N: usize, const M: usize> Index<usize> for RowMatrix<T, N, M> {
-	type Output = Vector<T, M>;
+	type Output = [T; M];
 
-	fn index(&self, i: usize) -> &Vector<T, M> {
+	fn index(&self, i: usize) -> &[T; M] {
 		&self.m[i]
 	}
 }
 
 impl<T, const N: usize, const M: usize> IndexMut<usize> for RowMatrix<T, N, M> {
-	fn index_mut(&mut self, i: usize) -> &mut Vector<T, M> {
+	fn index_mut(&mut self, i: usize) -> &mut [T; M] {
 		&mut self.m[i]
 	}
 }
@@ -167,68 +160,12 @@ impl<T, const N: usize, const M: usize> IndexMut<(usize, usize)>
 	}
 }
 
-impl<T: Copy + AddAssign, const N: usize, const M: usize> AddAssign
-	for RowMatrix<T, N, M>
-{
-	fn add_assign(&mut self, rhs: Self) {
-		for i in 0..M {
-			self[i] += rhs[i];
-		}
-	}
-}
-
-impl<T: Copy + AddAssign, const N: usize, const M: usize> Add
-	for RowMatrix<T, N, M>
-{
-	type Output = Self;
-
-	fn add(mut self, rhs: Self) -> Self {
-		for i in 0..M {
-			self[i] += rhs[i];
-		}
-		self
-	}
-}
-
-impl<T: Copy + MulAssign, const N: usize, const M: usize> RowMatrix<T, N, M> {
-	pub fn component_mul_assign(&mut self, rhs: Self) {
-		for i in 0..M {
-			self[i] *= rhs[i];
-		}
-	}
-
-	pub fn component_mul(mut self, rhs: Self) -> Self {
-		for i in 0..M {
-			self[i] *= rhs[i];
-		}
-		self
-	}
-}
-
 impl<T: Copy + AddAssign, const N: usize> RowMatrix<T, N, N> {
 	pub fn trace(&self) -> T {
 		let mut out = self[(0, 0)];
 		for i in 1..N {
 			out += self[(i, i)];
 		}
-		out
-	}
-}
-
-impl<T, const N: usize, const M: usize> Mul<Vector<T, M>> for RowMatrix<T, N, M>
-where
-	T: Copy + NumAssign + Default,
-{
-	type Output = Vector<T, M>;
-
-	fn mul(self, rhs: Vector<T, M>) -> Vector<T, M> {
-		// TODO: uninitialized
-		let mut out = Vector::default();
-
-		for i in 0..N {
-			out[i] = self[i].dot_product(&rhs);
-		}
-
 		out
 	}
 }
@@ -309,10 +246,11 @@ impl<T, const N: usize, const M: usize> RowMatrix<T, N, M> {
 
 	pub fn apply<F>(&mut self, f: F)
 	where
+		T: Copy,
 		F: Fn(&mut T),
 	{
 		for v in self.m.each_mut() {
-			v.apply(&f);
+			<[T; M] as Vector<T, M>>::for_each(v, &f);
 		}
 	}
 
@@ -337,21 +275,6 @@ impl<T, const N: usize, const M: usize> RowMatrix<T, N, M> {
 		}
 
 		out
-	}
-
-	pub fn truncate<const NX: usize, const MX: usize>(
-		&self,
-	) -> RowMatrix<T, NX, MX>
-	where
-		T: Copy,
-	{
-		assert!(NX < N, "New length must be smaller");
-		assert!(MX < M, "New length must be smaller");
-
-		let subslice: &[Vector<T, M>; NX] =
-			self.m.first_chunk().unwrap();
-
-		subslice.map(|v| v.truncate()).into()
 	}
 
 	pub fn transpose(&self) -> RowMatrix<T, M, N>

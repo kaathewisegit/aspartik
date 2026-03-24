@@ -1,5 +1,5 @@
 use anyhow::Result;
-use linalg::{RowMatrix, Vector};
+use linalg::RowMatrix;
 use pyo3::prelude::*;
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
@@ -245,7 +245,7 @@ pub struct HKY {
 
 	p: RowMatrix<f64, 4, 4>,
 	inv_p: RowMatrix<f64, 4, 4>,
-	diag: Vector<f64, 4>,
+	diag: [f64; 4],
 }
 
 impl HKY {
@@ -264,7 +264,7 @@ impl HKY {
 
 			p: RowMatrix::default(),
 			inv_p: RowMatrix::default(),
-			diag: Vector::default(),
+			diag: [0.0; 4],
 		};
 		out.update_matrices();
 		out
@@ -298,8 +298,7 @@ impl HKY {
 			-1.0 / div,
 			-(y + r * kappa) / div,
 			-(r + y * kappa) / div,
-		]
-		.into();
+		];
 
 		self.inv_p = RowMatrix::from([
 			[a, c, g, t],
@@ -355,7 +354,7 @@ pub struct GTR {
 
 	p: RowMatrix<f64, 4, 4>,
 	inv_p: RowMatrix<f64, 4, 4>,
-	diag: Vector<f64, 4>,
+	diag: [f64; 4],
 
 	has_changed: bool,
 }
@@ -368,7 +367,7 @@ impl GTR {
 
 			p: RowMatrix::default(),
 			inv_p: RowMatrix::default(),
-			diag: Vector::default(),
+			diag: [0.0; 4],
 
 			has_changed: false,
 		};

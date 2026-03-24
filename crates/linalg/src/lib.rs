@@ -4,11 +4,10 @@ pub mod arbitrary;
 mod bytemuck;
 #[cfg(feature = "cuda")]
 mod cuda;
-mod float;
 mod lapack;
 mod row_matrix;
 mod tolerance;
 mod vector;
 
 pub use row_matrix::RowMatrix;
-pub use vector::Vector;
+pub use vector::{Vector, VectorNum};

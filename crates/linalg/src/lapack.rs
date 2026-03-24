@@ -6,11 +6,11 @@ use std::{
 use crate::{RowMatrix, Vector};
 
 impl<const N: usize> RowMatrix<f64, N, N> {
-	pub fn eigen(&self) -> (Vector<f64, N>, RowMatrix<f64, N, N>) {
+	pub fn eigen(&self) -> ([f64; N], RowMatrix<f64, N, N>) {
 		let mut copy = self.transpose();
 
 		let n_i32 = N as c_int;
-		let mut wr = Vector::<f64, N>::default();
+		let mut wr = <[f64; N]>::from_element(0.0);
 		let mut wi = [0.0; N];
 		let vl = null_mut::<f64>(); // not referenced
 		let mut vr = RowMatrix::<f64, N, N>::default();
