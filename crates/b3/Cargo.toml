@@ -11,7 +11,7 @@ bitmap = { workspace = true }
 buffer = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
-linalg = { workspace = true, features = ["bytemuck", "cuda"] }
+linalg = { workspace = true }
 math = { workspace = true }
 rng = { workspace = true }
 sk = { workspace = true, features = ["serde"] }

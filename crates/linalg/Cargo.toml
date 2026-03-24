@@ -21,8 +21,6 @@ arbtest = { workspace = true }
 
 [features]
 arbitrary = ["dep:arbitrary"]
-bytemuck = ["dep:bytemuck"]
-cuda = ["dep:cudarc"]
 
 [lints]
 workspace = true

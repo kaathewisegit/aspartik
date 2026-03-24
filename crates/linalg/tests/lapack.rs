@@ -1,19 +1,23 @@
-use linalg::RowMatrix;
+use linalg::{
+	lapack::{eigen, inverse},
+	matrix::{Matrix, SquareMatrix},
+};
 use math::assert_almost_eq;
 
 #[test]
 fn reconstruction() {
-	let m = linalg::RowMatrix::from([[1.0, 2.0], [3.0, 4.0]]);
+	let m = [[1.0, 2.0], [3.0, 4.0]];
 
-	let (values, vectors) = m.eigen();
-	let inv_vectors = vectors.inverse();
+	let (values, vectors) = eigen(&m);
+	let inv_vectors = inverse(&vectors);
 
-	let reconstructed =
-		vectors * RowMatrix::from_diagonal(values) * inv_vectors;
+	let diag: [[f64; _]; _] = SquareMatrix::from_diagonal(values);
+
+	let reconstructed = vectors.mul(diag).mul(inv_vectors);
 
 	for i in 0..2 {
 		for j in 0..2 {
-			assert_almost_eq!(reconstructed[(i, j)], m[(i, j)]);
+			assert_almost_eq!(*reconstructed.at(i, j), *m.at(i, j));
 		}
 	}
 }

@@ -1,6 +1,6 @@
 use arbitrary::{Result, Unstructured};
 
-use crate::{RowMatrix, Vector};
+use crate::{Vector, matrix::Matrix};
 
 // TODO: dynamic bounds
 fn small_float(u: &mut Unstructured) -> Result<f64> {
@@ -26,13 +26,13 @@ pub fn vector<const N: usize>(u: &mut Unstructured) -> Result<[f64; N]> {
 
 pub fn matrix<const N: usize, const M: usize>(
 	u: &mut Unstructured,
-) -> Result<RowMatrix<f64, N, M>> {
-	let mut out = RowMatrix::default();
+) -> Result<[[f64; M]; N]> {
+	let mut out: [[f64; M]; N] = Matrix::zeros();
 
-	for i in 0..N {
-		for j in 0..M {
+	for row in out.iter_mut() {
+		for element in row.iter_mut() {
 			if let Ok(new) = small_float(u) {
-				out[i][j] = new;
+				*element = new;
 			} else {
 				// leave the rest as zeros
 				break;
@@ -45,9 +45,10 @@ pub fn matrix<const N: usize, const M: usize>(
 
 pub fn symmetric<const N: usize>(
 	u: &mut Unstructured,
-) -> Result<RowMatrix<f64, N, N>> {
-	let mut out = RowMatrix::default();
+) -> Result<[[f64; N]; N]> {
+	let mut out: [[f64; N]; N] = Matrix::zeros();
 
+	#[expect(clippy::needless_range_loop)]
 	for i in 0..N {
 		for j in i..N {
 			if let Ok(new) = small_float(u) {

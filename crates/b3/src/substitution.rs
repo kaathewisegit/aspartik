@@ -1,8 +1,11 @@
 use anyhow::Result;
-use linalg::RowMatrix;
 use pyo3::prelude::*;
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
+use linalg::{
+	lapack::{eigen, inverse},
+	matrix::{Matrix, SquareMatrix},
+};
 
 pub trait SubstitutionModel<const N: usize, F> {
 	fn update(&mut self) -> Result<bool>;
@@ -128,13 +131,12 @@ impl SubstitutionModel<4, f64> for JC {
 		let diagonal = 0.25 + 0.75 * exp;
 		let other = 0.25 - 0.25 * exp;
 
-		RowMatrix::from([
+		[
 			[diagonal, other, other, other],
 			[other, diagonal, other, other],
 			[other, other, diagonal, other],
 			[other, other, other, diagonal],
-		])
-		.into()
+		]
 	}
 
 	fn get_frequencies(&self) -> [f64; 4] {
@@ -198,13 +200,12 @@ impl SubstitutionModel<4, f64> for K80 {
 		let transition = 0.25 + arg1 - arg2;
 		let transversion = 0.25 - arg1;
 
-		RowMatrix::from([
+		[
 			[diagonal, transversion, transition, transversion],
 			[transversion, diagonal, transversion, transition],
 			[transition, transversion, diagonal, transversion],
 			[transversion, transition, transversion, diagonal],
-		])
-		.into()
+		]
 	}
 
 	fn get_frequencies(&self) -> [f64; 4] {
@@ -243,8 +244,8 @@ pub struct HKY {
 	cached_kappa: f64,
 	cached_frequencies: (f64, f64, f64, f64),
 
-	p: RowMatrix<f64, 4, 4>,
-	inv_p: RowMatrix<f64, 4, 4>,
+	p: [[f64; 4]; 4],
+	inv_p: [[f64; 4]; 4],
 	diag: [f64; 4],
 }
 
@@ -262,8 +263,8 @@ impl HKY {
 				f64::NAN,
 			),
 
-			p: RowMatrix::default(),
-			inv_p: RowMatrix::default(),
+			p: [[0.0; 4]; 4],
+			inv_p: [[0.0; 4]; 4],
 			diag: [0.0; 4],
 		};
 		out.update_matrices();
@@ -282,12 +283,12 @@ impl HKY {
 		let r = a + g;
 		let y = c + t;
 
-		self.p = RowMatrix::from([
+		self.p = [
 			[1.0, -y / r, -g / a, 0.0],
 			[1.0, 1.0, 0.0, -t / c],
 			[1.0, -y / r, 1.0, 0.0],
 			[1.0, 1.0, 0.0, 1.0],
-		]);
+		];
 
 		let div = 2.0
 			* (g * t + a * c
@@ -300,12 +301,12 @@ impl HKY {
 			-(r + y * kappa) / div,
 		];
 
-		self.inv_p = RowMatrix::from([
+		self.inv_p = [
 			[a, c, g, t],
 			[-a, c * r / y, -g, t * r / y],
 			[-a / r, 0.0, a / r, 0.0],
 			[0.0, -c / y, 0.0, c / y],
-		]);
+		];
 	}
 }
 
@@ -322,11 +323,11 @@ impl SubstitutionModel<4, f64> for HKY {
 	}
 
 	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
-		let diag = RowMatrix::from_diagonal(
+		let diag: [[f64; 4]; 4] = SquareMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		(self.p * diag * self.inv_p).into()
+		self.p.mul(diag).mul(self.inv_p)
 	}
 
 	fn get_frequencies(&self) -> [f64; 4] {
@@ -352,8 +353,8 @@ pub struct GTR {
 	#[pyo3(get)]
 	rates: Py<PyRealVector>,
 
-	p: RowMatrix<f64, 4, 4>,
-	inv_p: RowMatrix<f64, 4, 4>,
+	p: [[f64; 4]; 4],
+	inv_p: [[f64; 4]; 4],
 	diag: [f64; 4],
 
 	has_changed: bool,
@@ -365,8 +366,8 @@ impl GTR {
 			frequencies,
 			rates,
 
-			p: RowMatrix::default(),
-			inv_p: RowMatrix::default(),
+			p: [[0.0; 4]; 4],
+			inv_p: [[0.0; 4]; 4],
 			diag: [0.0; 4],
 
 			has_changed: false,
@@ -384,7 +385,7 @@ impl GTR {
 		let [p_a, p_c, p_g, p_t] = self.get_frequencies();
 		let [a, b, c, d, e, f] = self.get_rates();
 
-		let gtr = RowMatrix::from([
+		let mut gtr = [
 			[
 				-a * p_c - b * p_g - c * p_t,
 				a * p_c,
@@ -409,19 +410,19 @@ impl GTR {
 				f * p_g,
 				-c * p_a - e * p_c - f * p_g,
 			],
-		]);
+		];
 		let div = 2.0
 			* (a * p_a * p_c
 				+ b * p_a * p_g + c * p_a * p_t
 				+ d * p_c * p_g + e * p_c * p_t
 				+ f * p_g * p_t);
-		let gtr = gtr.map(|e| e / div);
+		gtr.for_each(|e| *e /= div);
 
-		let (eigenvalues, eigenvectors) = gtr.eigen();
+		let (eigenvalues, eigenvectors) = eigen(&gtr);
 
 		self.diag = eigenvalues;
 		self.p = eigenvectors;
-		self.inv_p = eigenvectors.inverse();
+		self.inv_p = inverse(&eigenvectors);
 	}
 }
 
@@ -439,11 +440,11 @@ impl SubstitutionModel<4, f64> for GTR {
 	}
 
 	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
-		let diag = RowMatrix::from_diagonal(
+		let diag: [[f64; 4]; 4] = SquareMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		(self.p * diag * self.inv_p).into()
+		self.p.mul(diag).mul(self.inv_p)
 	}
 
 	fn get_frequencies(&self) -> [f64; 4] {
