@@ -6,6 +6,7 @@ use parking_lot::MutexGuard;
 
 use crate::{Transitions, likelihood::Calculator, parameters::Tree};
 use buffer::Buffer;
+use sk::EditBuf;
 
 #[allow(dead_code)]
 pub struct Cpu4Propagations {
@@ -13,7 +14,7 @@ pub struct Cpu4Propagations {
 
 	pattern_weights: Vec<u32>,
 
-	selectors: Vec<u8>,
+	selectors: EditBuf,
 
 	/// Have the length of `num_patterns`
 	samples: Vec<u8>,
@@ -77,34 +78,14 @@ impl Calculator<4, f64> for Cpu4Propagations {
 
 	fn accept(&mut self) -> Result<()> {
 		self.scale_sums_backup.copy_from_slice(&self.scale_sums);
-		// TODO: op transform
-		for selector in &mut self.selectors {
-			*selector = match *selector {
-				0b00 => 0b00,
-				0b01 => 0b01,
-				0b10 => 0b01,
-				0b11 => 0b00,
-				_ => unreachable!(),
-			}
-		}
+		self.selectors.accept();
 
 		Ok(())
 	}
 
 	fn reject(&mut self) -> Result<()> {
 		self.scale_sums.copy_from_slice(&self.scale_sums_backup);
-
-		// TODO: op transform
-		for selector in &mut self.selectors {
-			*selector = match *selector {
-				0b00 => 0b00,
-				0b01 => 0b01,
-				0b10 => 0b00,
-				0b11 => 0b01,
-				_ => unreachable!(),
-			}
-		}
-
+		self.selectors.reject();
 		Ok(())
 	}
 
@@ -115,8 +96,8 @@ impl Calculator<4, f64> for Cpu4Propagations {
 
 impl Cpu4Propagations {
 	fn set_selectors(&mut self, nodes: &[usize]) {
-		for node in nodes {
-			self.selectors[*node] |= 0b10;
+		for &node in nodes {
+			self.selectors.set_edited(node);
 		}
 	}
 
@@ -151,7 +132,7 @@ impl Cpu4Propagations {
 			num_patterns,
 			pattern_weights,
 
-			selectors: vec![0; num_nodes],
+			selectors: EditBuf::new(num_nodes),
 
 			samples,
 			propagations,
@@ -193,16 +174,14 @@ unsafe fn propose(
 
 	macro_rules! offset {
 		($index:expr) => {{
-			let selector = selectors[$index];
-			let fix = (selector >> 1) ^ (selector & 0b01);
-			($index * 2 + fix as usize) * num_patterns
+			let ptr = selectors.offset($index);
+			($index * 2 + ptr) * num_patterns
 		}};
 	}
 	macro_rules! offset_old {
 		($index:expr) => {{
-			let selector = selectors[$index];
-			let fix = (selector >> 1) ^ (selector & 0b01);
-			($index * 2 + (1 - fix as usize)) * num_patterns
+			let ptr = selectors.offset_other($index);
+			($index * 2 + ptr) * num_patterns
 		}};
 	}
 
