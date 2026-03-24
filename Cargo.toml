@@ -37,6 +37,7 @@ cudarc = { version = "0.19.3", default-features = false }
 fork_union = "2.3"
 lapack-static = "0.1.0"
 libc = "0.2.180"
+libm = "0.2.16"
 num-traits = "0.2.19"
 parking_lot = "0.12.5"
 peg = "0.8.5"

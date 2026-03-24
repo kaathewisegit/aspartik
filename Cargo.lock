@@ -557,6 +557,7 @@ version = "0.1.0-alpha.11"
 dependencies = [
  "arbitrary",
  "arbtest",
+ "libm",
  "num-traits",
  "pyo3",
  "thiserror",

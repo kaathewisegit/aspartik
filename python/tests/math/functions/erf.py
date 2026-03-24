@@ -10,12 +10,12 @@ mpmath.mp.prec = 1000
 
 @pytest.mark.parametrize("x", random_float(0, 5))
 def test_erf(x):
-    assert is_close(erf(x), float(mpmath.erf(x)), relative=1e-10)
+    assert is_close(erf(x), float(mpmath.erf(x)), relative=1e-17)
 
 
 @pytest.mark.parametrize("x", random_float(0, 5))
 def test_erfc(x):
-    assert is_close(erfc(x), float(mpmath.erfc(x)), relative=1e-9)
+    assert is_close(erfc(x), float(mpmath.erfc(x)), relative=1e-17)
 
 
 @pytest.mark.parametrize("x", random_float(0, 1))
