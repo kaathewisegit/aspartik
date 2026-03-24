@@ -5,7 +5,7 @@ from utils import random_float
 from aspartik.math import is_close
 from aspartik.math.functions import erf, erf_inv, erfc, erfc_inv
 
-mpmath.mp.prec = 1000
+mpmath.mp.prec = 500
 
 
 @pytest.mark.parametrize("x", random_float(0, 5))
@@ -20,7 +20,7 @@ def test_erfc(x):
 
 @pytest.mark.parametrize("x", random_float(0, 1))
 def test_erf_inv(x):
-    assert is_close(erf_inv(x), float(mpmath.erfinv(x)))
+    assert is_close(erf_inv(x), float(mpmath.erfinv(x)), relative=1e-17)
 
 
 @pytest.mark.parametrize("x", random_float(0, 1))

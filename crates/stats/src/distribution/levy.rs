@@ -162,7 +162,7 @@ impl ContinuousCDF for Levy {
 	/// standard deviation and `erfc_inv` is the inverse of the
 	/// complementary error function.
 	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		self.mu + 0.5 * self.c / (erfc_inv(*p).powf(2.0))
+		self.mu + 0.5 * self.c / (erfc_inv(*p).powi(2))
 	}
 
 	fn lower(&self) -> f64 {
