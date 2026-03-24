@@ -329,25 +329,11 @@ likelihood_methods! {PyCudaLikelihood;
 	}
 }
 
-#[derive(FromPyObject)]
+#[derive(FromPyObject, IntoPyObject)]
 pub enum PyLikelihood {
 	Cpu(Py<PyCpu4Likelihood>),
 	Cuda(Py<PyCudaLikelihood>),
 	Hetero(Py<PyHeteroLikelihood>),
-}
-
-impl<'py> IntoPyObject<'py> for PyLikelihood {
-	type Target = PyAny;
-	type Output = Bound<'py, PyAny>;
-	type Error = PyErr;
-
-	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		Ok(match self {
-			Self::Cpu(l) => l.into_bound(py).into_any(),
-			Self::Cuda(l) => l.into_bound(py).into_any(),
-			Self::Hetero(l) => l.into_bound(py).into_any(),
-		})
-	}
 }
 
 impl PyLikelihood {

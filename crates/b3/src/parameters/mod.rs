@@ -61,27 +61,12 @@ macro_rules! impl_pyparameter_common {
 	};
 }
 
-#[derive(FromPyObject)]
+#[derive(FromPyObject, IntoPyObject)]
 pub enum PyParameter {
 	ClassVector(Py<PyClassVector>),
 	Real(Py<PyReal>),
 	RealVector(Py<PyRealVector>),
 	Tree(Py<PyTree>),
-}
-
-impl<'py> IntoPyObject<'py> for PyParameter {
-	type Target = PyAny;
-	type Output = Bound<'py, PyAny>;
-	type Error = PyErr;
-
-	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		Ok(match self {
-			Self::ClassVector(p) => p.into_bound(py).into_any(),
-			Self::Real(p) => p.into_bound(py).into_any(),
-			Self::RealVector(p) => p.into_bound(py).into_any(),
-			Self::Tree(p) => p.into_bound(py).into_any(),
-		})
-	}
 }
 
 impl PyParameter {

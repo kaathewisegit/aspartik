@@ -16,27 +16,12 @@ pub trait SubstitutionModel<const N: usize, F> {
 	fn reject(&mut self);
 }
 
-#[derive(FromPyObject)]
+#[derive(FromPyObject, IntoPyObject)]
 pub enum PySubstitution4 {
 	JC(Py<PyJC>),
 	K80(Py<PyK80>),
 	HKY(Py<PyHKY>),
 	GTR(Py<PyGTR>),
-}
-
-impl<'py> IntoPyObject<'py> for PySubstitution4 {
-	type Target = PyAny;
-	type Output = Bound<'py, PyAny>;
-	type Error = PyErr;
-
-	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		Ok(match self {
-			Self::JC(p) => p.into_bound(py).into_any(),
-			Self::K80(p) => p.into_bound(py).into_any(),
-			Self::HKY(p) => p.into_bound(py).into_any(),
-			Self::GTR(p) => p.into_bound(py).into_any(),
-		})
-	}
 }
 
 impl SubstitutionModel<4, f64> for PySubstitution4 {
