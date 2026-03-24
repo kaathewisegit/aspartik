@@ -46,7 +46,10 @@
 //! ```
 
 mod debug;
+mod editbuf;
 mod eq;
+
+pub use editbuf::EditBuf;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -70,26 +73,11 @@ pub struct SkBuf<T> {
 	/// `inner`, only one of which is active, determined by the `mask` at
 	/// the index.
 	items: Vec<T>,
-	/// Metadata associated with each element
-	///
-	/// - The first bit is a pointer to the first or the second element.
-	/// - The second bit is the edited state: 0 if not edited, 1 if edited.
-	metadata: Vec<u8>,
+	edits: EditBuf,
 }
 
 // Memoization-related methods
 impl<T> SkBuf<T> {
-	/// Returns the offset, which is always 0 or 1
-	///
-	/// # Safety
-	///
-	/// `i` must be less than the length of `self`.
-	unsafe fn offset(&self, i: usize) -> usize {
-		// SAFETY: `i < self.len()` invariant
-		let m = unsafe { self.metadata.get_unchecked(i) } & 0b1;
-		usize::from(m)
-	}
-
 	/// Returns the currently active item at index `i`.
 	///
 	/// # Safety
@@ -97,7 +85,7 @@ impl<T> SkBuf<T> {
 	/// `i` must be less than the length of `self`.
 	pub unsafe fn get_unchecked(&self, i: usize) -> &T {
 		// SAFETY: `i < self.len()` invariant
-		let idx = i * 2 + unsafe { self.offset(i) };
+		let idx = i * 2 + unsafe { self.edits.offset(i) };
 		// SAFETY: `i < self.len()`, so `i * 2 + 1` is less than
 		// `self.len() * 2`, the length of `inner`
 		unsafe { self.items.get_unchecked(idx) }
@@ -110,33 +98,20 @@ impl<T> SkBuf<T> {
 	/// `i` must be less than the length of `self`.
 	pub unsafe fn get_unchecked_mut(&mut self, i: usize) -> &mut T {
 		// SAFETY: `i < self.len()` invariant
-		let idx = i * 2 + unsafe { self.offset(i) };
+		let idx = i * 2 + unsafe { self.edits.offset(i) };
 		// SAFETY: see `active_inner`
 		unsafe { self.items.get_unchecked_mut(idx) }
-	}
-
-	fn is_edited(&self, i: usize) -> bool {
-		(self.metadata[i] & 0b10) != 0
 	}
 
 	/// Accept all of the changes made since the creation of the vector or
 	/// the last call to `accept` or [`reject`][SkBuf::reject].
 	pub fn accept(&mut self) {
-		// zero-out the edited status
-		for m in &mut self.metadata {
-			*m &= 0b01;
-		}
+		self.edits.accept()
 	}
 
 	/// Reject all of the changes made this epoch.
 	pub fn reject(&mut self) {
-		for m in &mut self.metadata {
-			// 00 -> 00
-			// 01 -> 01
-			// 10 -> 01
-			// 11 -> 00
-			*m = (*m ^ (*m >> 1)) & 1;
-		}
+		self.edits.reject()
 	}
 
 	/// Version of `set` without bounds checking
@@ -145,15 +120,7 @@ impl<T> SkBuf<T> {
 	///
 	/// `index` must be less than the length of `self`.
 	pub unsafe fn set_unchecked(&mut self, index: usize, value: T) {
-		// - If edited is 0, we set it to 1 and flip offset
-		// - If edited is 1, we keep it and keep the offset
-		// 00 -> 11
-		// 01 -> 10
-		// 10 -> 10
-		// 11 -> 11
-		// SAFETY: `index < self.len()` invariant
-		let m = unsafe { self.metadata.get_unchecked_mut(index) };
-		*m = ((*m & 0b01) ^ !(*m >> 1)) & 0b11;
+		self.edits.set_edited(index);
 
 		// SAFETY: `index < self.len()` invariant
 		let item = unsafe { self.get_unchecked_mut(index) };
@@ -175,12 +142,12 @@ impl<T> SkBuf<T> {
 	/// is overwritten with the same value, `is_changed` will still return
 	/// `true`.
 	pub fn is_changed(&self) -> bool {
-		self.metadata.iter().any(|&e| (e & 0b10) != 0)
+		self.edits.is_any_changed()
 	}
 
 	/// Checks if the element at `index` has been edited during this epoch
 	pub fn is_changed_at(&self, index: usize) -> bool {
-		(self.metadata[index] & 0b10) != 0
+		self.edits.is_changed_at(index)
 	}
 }
 
@@ -275,10 +242,10 @@ impl<T> SkBuf<T> {
 	where
 		T: Default + Clone,
 	{
-		let metadata = vec![0; length];
-		let items = vec![T::default(); length * 2];
-
-		Self { items, metadata }
+		Self {
+			items: vec![T::default(); length * 2],
+			edits: EditBuf::new(length),
+		}
 	}
 
 	/// Number of items in the `SkBuf`.
@@ -286,7 +253,7 @@ impl<T> SkBuf<T> {
 	/// See [`SkBuf` documentation][SkBuf] for the distinction between items
 	/// and values.
 	pub fn len(&self) -> usize {
-		self.metadata.len()
+		self.edits.len()
 	}
 
 	/// Returns `true` if the vector has no items.
@@ -325,7 +292,7 @@ impl<T> SkBuf<T> {
 	where
 		T: Clone,
 	{
-		let metadata = vec![0; length];
+		let edits = EditBuf::new(length);
 		let mut items = Vec::with_capacity(length * 2);
 
 		for _ in 0..length {
@@ -333,7 +300,7 @@ impl<T> SkBuf<T> {
 			items.push(value.clone());
 		}
 
-		Self { items, metadata }
+		Self { items, edits }
 	}
 }
 
@@ -341,7 +308,7 @@ impl<T> SkBuf<T> {
 
 impl<T: Clone> From<&[T]> for SkBuf<T> {
 	fn from(values: &[T]) -> Self {
-		let metadata = vec![0; values.len()];
+		let edits = EditBuf::new(values.len());
 		let mut items = Vec::with_capacity(values.len() * 2);
 
 		for value in values {
@@ -349,13 +316,13 @@ impl<T: Clone> From<&[T]> for SkBuf<T> {
 			items.push(value.clone());
 		}
 
-		Self { items, metadata }
+		Self { items, edits }
 	}
 }
 
 impl<T: Clone> From<Vec<T>> for SkBuf<T> {
 	fn from(values: Vec<T>) -> Self {
-		let metadata = vec![0; values.len()];
+		let edits = EditBuf::new(values.len());
 		let mut items = Vec::with_capacity(values.len() * 2);
 
 		for value in values {
@@ -363,13 +330,13 @@ impl<T: Clone> From<Vec<T>> for SkBuf<T> {
 			items.push(value);
 		}
 
-		Self { items, metadata }
+		Self { items, edits }
 	}
 }
 
 impl<T: Clone, const N: usize> From<[T; N]> for SkBuf<T> {
 	fn from(values: [T; N]) -> Self {
-		let metadata = vec![0; values.len()];
+		let edits = EditBuf::new(values.len());
 		let mut items = Vec::with_capacity(values.len() * 2);
 
 		for value in values {
@@ -377,7 +344,7 @@ impl<T: Clone, const N: usize> From<[T; N]> for SkBuf<T> {
 			items.push(value);
 		}
 
-		Self { items, metadata }
+		Self { items, edits }
 	}
 }
 

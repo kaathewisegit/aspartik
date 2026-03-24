@@ -23,32 +23,28 @@ where
 				f.write_str("    ")?;
 			}
 
-			if self.is_edited(i) {
+			let is_edited = self.is_changed_at(i);
+			// SAFETY: i < self.len()
+			let offset = unsafe { self.edits.offset(i) };
+
+			if is_edited && offset == 0 {
 				self.items[i * 2].fmt(f)?;
-				if (self.metadata[i] & 0b01) == 0 {
-					f.write_str(" (active)")?;
-				}
-
+				f.write_str(" (active)")?;
 				f.write_str(" / ")?;
-
 				self.items[i * 2 + 1].fmt(f)?;
-				if (self.metadata[i] & 0b01) == 1 {
-					f.write_str(" (active)")?;
-				}
-			} else if (self.metadata[i] & 0b01) == 0 {
-				f.write_str("undefined / ")?;
-				self[i].fmt(f)?;
-			} else {
-				self[i].fmt(f)?;
+			} else if is_edited && offset == 1 {
+				self.items[i * 2].fmt(f)?;
+				f.write_str(" / ")?;
+				self.items[i * 2 + 1].fmt(f)?;
+				f.write_str(" (active)")?;
+			} else if !is_edited && offset == 0 {
+				self.items[i * 2].fmt(f)?;
 				f.write_str(" / undefined")?;
+			} else if !is_edited && offset == 1 {
+				f.write_str("undefined / ")?;
+				self.items[i * 2 + 1].fmt(f)?;
 			}
 
-			if f.alternate() || i != self.len() - 1 {
-				f.write_str(",")?;
-				if !f.alternate() {
-					f.write_str(" ")?;
-				}
-			}
 			newline!();
 		}
 
