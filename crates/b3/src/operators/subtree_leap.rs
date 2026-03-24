@@ -81,7 +81,7 @@ impl SubtreeLeap {
 					grandparent,
 					*parent,
 					sibling,
-				);
+				)?;
 			} else if let Some(sibling) = tree.as_internal(sibling)
 			{
 				tree.set_root(sibling);
@@ -94,19 +94,19 @@ impl SubtreeLeap {
 					destination_parent,
 					destination,
 					*parent,
-				);
+				)?;
 
 				tree.replace_child(
 					parent,
 					sibling,
 					destination,
-				);
+				)?;
 			} else {
 				tree.replace_child(
 					parent,
 					sibling,
 					destination,
-				);
+				)?;
 				tree.set_root(parent);
 			}
 		}

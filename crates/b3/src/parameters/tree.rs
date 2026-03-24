@@ -396,7 +396,7 @@ impl Tree {
 		parent: Internal,
 		old_child: Node,
 		new_child: Node,
-	) {
+	) -> Result<()> {
 		self.parents.set(new_child.0, parent.0);
 
 		let (left, right) = self.children_of(parent);
@@ -407,10 +407,14 @@ impl Tree {
 		} else if old_child == right {
 			self.children.set(idx + 1, new_child.0);
 		} else {
-			todo!("error");
+			bail!(
+				"replace_child: {old_child:?} is not a child of {parent:?}"
+			);
 		}
 
 		self.mark_edge_updated(self.edge_index(new_child));
+
+		Ok(())
 	}
 
 	/// Prunes parent of `node` and grafts it as a parent of `other`
@@ -421,11 +425,11 @@ impl Tree {
 
 		let sibling = self.other_child(parent, node)?;
 
-		self.replace_child(grandparent, *parent, sibling);
+		self.replace_child(grandparent, *parent, sibling)?;
 
-		self.replace_child(other_parent, other, *parent);
+		self.replace_child(other_parent, other, *parent)?;
 
-		self.replace_child(parent, sibling, other);
+		self.replace_child(parent, sibling, other)?;
 
 		Ok(())
 	}
@@ -458,8 +462,8 @@ impl Tree {
 			bail!("b must not be root");
 		};
 
-		self.replace_child(a_parent, a, b);
-		self.replace_child(b_parent, b, a);
+		self.replace_child(a_parent, a, b)?;
+		self.replace_child(b_parent, b, a)?;
 
 		ensure!(self.is_node_height_valid(a));
 		ensure!(self.is_node_height_valid(b));
@@ -1011,8 +1015,7 @@ impl_pyparameter_common! {PyTree, Tree;
 		old_child: Node,
 		new_child: Node,
 	) -> Result<()> {
-		self.inner().replace_child(parent, old_child, new_child);
-		Ok(())
+		self.inner().replace_child(parent, old_child, new_child)
 	}
 
 	fn spr(&self, node: Node, other: Node) -> Result<()> {
