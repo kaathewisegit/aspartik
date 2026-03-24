@@ -107,7 +107,7 @@ impl<C: Character> Msa<C> {
 			let b = seq[*b];
 
 			if a != b {
-				let (a_b, b_b) = (a.to_byte(), b.to_byte());
+				let (a_b, b_b) = (a.into_byte(), b.into_byte());
 				return a_b.cmp(&b_b);
 			}
 		}

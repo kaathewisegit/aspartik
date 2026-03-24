@@ -37,8 +37,6 @@ pub unsafe trait Character: Copy + Eq {
 
 	fn from_byte(b: u8) -> Option<Self>;
 
-	fn to_byte(&self) -> u8;
-
 	fn into_byte(self) -> u8;
 }
 
@@ -274,7 +272,7 @@ impl<C: Character> SequenceMut<C> {
 	}
 
 	pub fn push(&mut self, character: C) {
-		self.bytes.put_u8(character.to_byte());
+		self.bytes.put_u8(character.into_byte());
 	}
 
 	pub fn extend(&mut self, characters: &[C]) {

@@ -89,7 +89,7 @@ impl Phred {
 
 	/// The chance of an incorrect base call
 	pub fn probability_incorrect(&self) -> f64 {
-		10.0f64.powf(-f64::from(self.to_byte()) / 10.0)
+		10.0f64.powf(-f64::from(self.into_byte()) / 10.0)
 	}
 }
 
@@ -156,10 +156,6 @@ unsafe impl Character for Phred {
 			}
 			_ => None,
 		}
-	}
-
-	fn to_byte(&self) -> u8 {
-		self.0 as u8
 	}
 
 	fn into_byte(self) -> u8 {

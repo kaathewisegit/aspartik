@@ -164,7 +164,7 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 	let mut hasher = blake3::Hasher::new();
 	for site in 0..msa.num_sites() {
 		for seq in 0..msa.num_sequences() {
-			let byte = msa.sequence(seq)[site].to_byte();
+			let byte = msa.sequence(seq)[site].into_byte();
 			hasher.update(slice::from_ref(&byte));
 		}
 
@@ -196,7 +196,7 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 	fn char_to_u8(ch: DnaNucleotide) -> u8 {
 		match ch {
 			DnaNucleotide::Gap => 0b1111,
-			ch => ch.to_byte(),
+			ch => ch.into_byte(),
 		}
 	}
 

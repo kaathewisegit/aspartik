@@ -278,10 +278,6 @@ unsafe impl Character for DnaNucleotide {
 		})
 	}
 
-	fn to_byte(&self) -> u8 {
-		*self as u8
-	}
-
 	fn into_byte(self) -> u8 {
 		self as u8
 	}
