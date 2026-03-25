@@ -17,7 +17,7 @@ mod cpu;
 mod cuda;
 mod hetero;
 
-use cpu::Cpu4Propagations;
+use cpu::{Cpu4Partials, Cpu4Propagations};
 use cuda::CudaLikelihood;
 pub use hetero::PyHeteroLikelihood;
 
@@ -266,6 +266,49 @@ likelihood_methods! {PyCpu4Likelihood;
 	) -> Result<Self> {
 		let (leaves, weights) = deduplicate(msa.get());
 		let calculator = Cpu4Propagations::new(
+			weights,
+			leaves,
+			num_threads,
+			scale_ln,
+		);
+		let generic = GenericLikelihood::new(
+			calculator,
+			substitution,
+			clock,
+			tree,
+		)?;
+
+		Ok(Self {
+			inner: Mutex::new(generic),
+		})
+	}
+}
+
+#[pyclass(
+	name = "CPU4PartialsLikelihood",
+	module = "aspartik.b3.likelihoods",
+	frozen
+)]
+pub struct PyCpu4PartialsLikelihood {
+	inner: Mutex<GenericLikelihood<4, f64, Cpu4Partials>>,
+}
+
+likelihood_methods! {PyCpu4PartialsLikelihood;
+	#[new]
+	#[pyo3(signature = (
+		msa, substitution, clock, tree,
+		num_threads = 0, scale_ln = 30
+	))]
+	fn new(
+		msa: Py<PyMsa>,
+		substitution: PySubstitution4,
+		clock: Py<PyClock>,
+		tree: Py<PyTree>,
+		num_threads: usize,
+		scale_ln: u32,
+	) -> Result<Self> {
+		let (leaves, weights) = deduplicate(msa.get());
+		let calculator = Cpu4Partials::new(
 			weights,
 			leaves,
 			num_threads,

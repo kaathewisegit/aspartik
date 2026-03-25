@@ -4,4 +4,4 @@ pub mod lapack;
 pub mod matrix;
 mod vector;
 
-pub use vector::{Vector, VectorNum};
+pub use vector::Vector;

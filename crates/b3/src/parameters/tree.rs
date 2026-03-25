@@ -319,35 +319,9 @@ impl Tree {
 		}
 	}
 
-	/// Marks nodes whose parent edges have changed as edited
-	fn mark_updated_propagations(&mut self) {
-		// mark updated nodes whose parent edge got updated
-		for edge in self.edges() {
-			if self.updated_edges.at(edge) {
-				let (child, _) = self.edge_nodes(edge);
-				self.mark_node_updated(child);
-			}
-		}
-	}
-
-	pub fn propagation_lists(
-		&mut self,
-	) -> (Vec<usize>, Vec<[usize; 2]>, usize) {
-		self.mark_updated_propagations();
-		self.mark_updated_parents();
-
-		let mut nodes = Vec::<Node>::new();
-
-		// Updated leaves, in order
-		for leaf in self.leaves() {
-			if self.is_node_updated(*leaf) {
-				nodes.push(*leaf);
-			}
-		}
-		let num_updated_leaves = nodes.len();
-
-		let mut queue = VecDeque::from([self.root()]);
+	fn updated_internals(&self) -> Vec<Internal> {
 		let mut internals = Vec::from([self.root()]);
+		let mut queue = VecDeque::from([self.root()]);
 
 		while let Some(node) = queue.pop_front() {
 			let (left, right) = self.children_of(node);
@@ -367,16 +341,66 @@ impl Tree {
 		}
 
 		internals.reverse();
+		internals
+	}
 
-		let mut children = Vec::new();
-		for internal in &internals {
-			let (left, right) = self.children_of(*internal);
-			children.push([left.0, right.0]);
+	fn children_list(&self, internals: &[Internal]) -> Vec<[Node; 2]> {
+		let mut children = Vec::with_capacity(internals.len() * 2);
+		for &internal in internals {
+			let (left, right) = self.children_of(internal);
+			if left < right {
+				children.push([left, right]);
+			} else {
+				children.push([right, left]);
+			}
 		}
+		children
+	}
+
+	pub fn propagation_lists(
+		&mut self,
+	) -> (Vec<usize>, Vec<[usize; 2]>, usize) {
+		// mark updated nodes whose parent edge got updated
+		for edge in self.edges() {
+			if self.updated_edges.at(edge) {
+				let (child, _) = self.edge_nodes(edge);
+				self.mark_node_updated(child);
+			}
+		}
+		self.mark_updated_parents();
+
+		let mut nodes = Vec::<Node>::new();
+
+		// Updated leaves, in order
+		for leaf in self.leaves() {
+			if self.is_node_updated(*leaf) {
+				nodes.push(*leaf);
+			}
+		}
+		let num_updated_leaves = nodes.len();
+
+		let internals = self.updated_internals();
+		let children = self.children_list(&internals);
 
 		nodes.append(&mut cast_vec(internals));
 
 		(cast_vec(nodes), cast_vec(children), num_updated_leaves)
+	}
+
+	pub fn partials_lists(&mut self) -> (Vec<usize>, Vec<[usize; 2]>) {
+		// mark nodes whose child edges got updated
+		for edge in self.edges() {
+			if self.updated_edges.at(edge) {
+				let (_, parent) = self.edge_nodes(edge);
+				self.mark_node_updated(*parent);
+			}
+		}
+		self.mark_updated_parents();
+
+		let internals = self.updated_internals();
+		let children = self.children_list(&internals);
+
+		(cast_vec(internals), cast_vec(children))
 	}
 
 	fn mark_node_updated(&mut self, node: Node) {

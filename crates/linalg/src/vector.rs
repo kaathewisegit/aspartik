@@ -2,12 +2,12 @@ use num_traits::Num;
 
 use std::ops::{Index, IndexMut};
 
-pub trait Vector<T: Copy, const N: usize>:
-	Index<usize, Output = T> + IndexMut<usize>
+pub trait Vector<T: Copy + Num, const N: usize>:
+	Sized + Index<usize, Output = T> + IndexMut<usize>
 {
 	fn from_element(value: T) -> Self;
 
-	fn map<F, U: Copy>(&self, f: F) -> impl Vector<U, N>
+	fn map<F, U: Copy + Num>(&self, f: F) -> impl Vector<U, N>
 	where
 		F: FnMut(T) -> U;
 
@@ -16,12 +16,15 @@ pub trait Vector<T: Copy, const N: usize>:
 		F: FnMut(&mut T);
 
 	// truncate?
-}
 
-pub trait VectorNum<T, const N: usize>: Vector<T, N>
-where
-	T: Copy + Num,
-{
+	fn mul(&self, rhs: impl Vector<T, N>) -> Self {
+		let mut out = Self::from_element(T::zero());
+		for i in 0..N {
+			out[i] = self[i] * rhs[i];
+		}
+		out
+	}
+
 	fn sum(&self) -> T {
 		let mut out = self[0];
 		for i in 1..N {
@@ -38,7 +41,7 @@ where
 		out
 	}
 
-	fn dot_product(&self, other: impl VectorNum<T, N>) -> T {
+	fn dot_product(&self, other: impl Vector<T, N>) -> T {
 		let mut out = self[0] * other[0];
 
 		for i in 1..N {
@@ -49,7 +52,7 @@ where
 	}
 }
 
-impl<T: Copy, const N: usize> Vector<T, N> for [T; N] {
+impl<T: Copy + Num, const N: usize> Vector<T, N> for [T; N] {
 	fn from_element(value: T) -> Self {
 		[value; N]
 	}

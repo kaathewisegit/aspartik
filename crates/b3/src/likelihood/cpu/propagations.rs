@@ -233,7 +233,6 @@ unsafe fn propose(
 
 	});
 
-
 	let likelihoods = state.likelihoods.as_mut_ptr();
 
 	let root = nodes.last().unwrap();

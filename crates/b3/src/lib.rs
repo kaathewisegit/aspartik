@@ -25,7 +25,8 @@ pub mod pymodule {
 
 	#[pymodule_export]
 	use likelihood::{
-		PyCpu4Likelihood, PyCudaLikelihood, PyHeteroLikelihood,
+		PyCpu4Likelihood, PyCpu4PartialsLikelihood, PyCudaLikelihood,
+		PyHeteroLikelihood,
 	};
 
 	#[pymodule_export]
