@@ -1,5 +1,5 @@
-#![expect(unused)]
 #![expect(clippy::undocumented_unsafe_blocks)]
+#![expect(clippy::too_many_arguments)]
 
 use anyhow::Result;
 use bytemuck::cast_slice;
@@ -12,7 +12,6 @@ use linalg::Vector;
 use sk::EditBuf;
 
 pub struct Cpu4Partials {
-	num_internals: usize,
 	num_leaves: usize,
 	num_patterns: usize,
 
@@ -114,7 +113,6 @@ impl Cpu4Partials {
 		let num_patterns = pattern_weights.len();
 		let num_leaves = samples.len() / num_patterns;
 		let num_internals = num_leaves - 1;
-		let num_nodes = num_leaves + num_internals;
 
 		for sample in &mut samples {
 			*sample = match *sample {
@@ -143,7 +141,6 @@ impl Cpu4Partials {
 		let scale_threshold = (-scale_ln_f64).exp();
 
 		Self {
-			num_internals,
 			num_leaves,
 			num_patterns,
 			pattern_weights,
@@ -215,6 +212,9 @@ unsafe fn propose(
 		let transition_left = &transitions[i * 2];
 		let transition_right = &transitions[i * 2 + 1];
 
+		let scales_new = scales.add(offset!(internal - state.num_leaves) + start);
+		let scales_old = scales.add(offset_old!(internal - state.num_leaves) + start);
+
 		if right < state.num_leaves { // both are children
 			let samples_left = samples.add(left * num_patterns + start);
 			let samples_right = samples.add(right * num_patterns + start);
@@ -226,6 +226,10 @@ unsafe fn propose(
 				samples_right,
 				transition_left,
 				transition_right,
+
+				scales_new,
+				scales_old,
+				scale_sums.add(start),
 			);
 		} else if left < state.num_leaves && right >= state.num_leaves {
 			let samples_left = samples.add(left * num_patterns + start);
@@ -238,6 +242,12 @@ unsafe fn propose(
 				partials_right,
 				transition_left,
 				transition_right,
+
+				scales_new,
+				scales_old,
+				scale_sums.add(start),
+				state.scale_threshold,
+				state.scale_mult,
 			);
 		} else {
 			let partials_left = partials.add(offset!(left - state.num_leaves) + start);
@@ -250,6 +260,12 @@ unsafe fn propose(
 				partials_right,
 				transition_left,
 				transition_right,
+
+				scales_new,
+				scales_old,
+				scale_sums.add(start),
+				state.scale_threshold,
+				state.scale_mult,
 			);
 		}
 	}
@@ -273,6 +289,10 @@ unsafe fn calc_sample_sample(
 	samples_right: *const u8,
 	transition_left: &[[f64; 5]; 4],
 	transition_right: &[[f64; 5]; 4],
+
+	scales: *mut bool,
+	scales_old: *mut bool,
+	scale_sums: *mut u32,
 ) {unsafe {
 	let tl = *transition_left;
 	let tr = *transition_right;
@@ -280,6 +300,12 @@ unsafe fn calc_sample_sample(
 	for i in 0..num_patterns {
 		let sample_left = samples_left.add(i).read() as usize;
 		let sample_right = samples_right.add(i).read() as usize;
+
+		let scales_old = scales_old.add(i).read();
+		if scales_old {
+			*scale_sums.add(i) -= 1;
+		}
+		scales.add(i).write(false);
 
 		let out = partials.add(i);
 		for j in 0..4 {
@@ -296,6 +322,12 @@ unsafe fn calc_sample_partial(
 	partials_right: *const [f64; 4],
 	transition_left: &[[f64; 5]; 4],
 	transition_right: &[[f64; 5]; 4],
+
+	scales: *mut bool,
+	scales_old: *mut bool,
+	scale_sums: *mut u32,
+	threshold: f64,
+	mult: f64,
 ) { unsafe {
 	let tl = *transition_left;
 	let tr = *transition_right;
@@ -311,10 +343,14 @@ unsafe fn calc_sample_partial(
 			}
 		}
 
-		let out = partials.add(i);
+		let mut prod = [0.0; 4];
 		for j in 0..4 {
-			(*out)[j] = tl[j][sample_left] * res_r[j];
+			prod[j] = tl[j][sample_left] * res_r[j];
 		}
+
+		scale(i, &mut prod, scales, scales_old, scale_sums, threshold, mult);
+
+		partials.add(i).write(prod);
 	}
 }}
 
@@ -326,6 +362,12 @@ unsafe fn calc_partial_partial(
 	partials_right: *const [f64; 4],
 	transition_left: &[[f64; 5]; 4],
 	transition_right: &[[f64; 5]; 4],
+
+	scales: *mut bool,
+	scales_old: *mut bool,
+	scale_sums: *mut u32,
+	threshold: f64,
+	mult: f64,
 ) {unsafe {
 	let tl = *transition_left;
 	let tr = *transition_right;
@@ -344,9 +386,45 @@ unsafe fn calc_partial_partial(
 			}
 		}
 
-		let out = partials.add(i);
+		let mut prod = [0.0; 4];
 		for j in 0..4 {
-			(*out)[j] = res_l[j] * res_r[j];
+			prod[j] = res_l[j] * res_r[j];
 		}
+
+		scale(i, &mut prod, scales, scales_old, scale_sums, threshold, mult);
+
+		partials.add(i).write(prod);
 	}
 }}
+
+unsafe fn scale<const N: usize>(
+	i: usize,
+	prod: &mut [f64; N],
+	scales: *mut bool,
+	scales_old: *mut bool,
+	scale_sums: *mut u32,
+	threshold: f64,
+	mult: f64,
+) {
+	unsafe {
+		let old_scale = scales_old.add(i).read();
+		if prod[0] < threshold
+			&& prod[1] < threshold
+			&& prod[2] < threshold
+			&& prod[3] < threshold
+		{
+			for el in prod {
+				*el *= mult;
+			}
+			if !old_scale {
+				*scale_sums.add(i) += 1;
+			}
+			*scales.add(i) = true;
+		} else {
+			if old_scale {
+				*scale_sums.add(i) -= 1;
+			}
+			*scales.add(i) = false;
+		}
+	}
+}
