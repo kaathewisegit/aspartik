@@ -96,4 +96,8 @@ impl EditBuf {
 	pub fn is_changed_at(&self, index: usize) -> bool {
 		(self.0[index] & 0b10) != 0
 	}
+
+	pub fn as_slice(&self) -> &[u8] {
+		&self.0
+	}
 }
