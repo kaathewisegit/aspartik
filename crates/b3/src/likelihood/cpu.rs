@@ -11,7 +11,7 @@ use buffer::Buffer;
 use linalg::Vector;
 use sk::EditBuf;
 
-pub struct Cpu4Partials {
+pub struct Cpu4Calculator {
 	num_leaves: usize,
 	num_patterns: usize,
 
@@ -39,7 +39,7 @@ pub struct Cpu4Partials {
 	pool: ThreadPool,
 }
 
-impl Calculator<4, f64> for Cpu4Partials {
+impl Calculator<4, f64> for Cpu4Calculator {
 	fn likelihood(
 		&mut self,
 		mut tree: MutexGuard<Tree>,
@@ -97,7 +97,7 @@ impl Calculator<4, f64> for Cpu4Partials {
 	}
 }
 
-impl Cpu4Partials {
+impl Cpu4Calculator {
 	fn set_selectors(&mut self, nodes: &[usize]) {
 		for &node in nodes {
 			self.selectors.set_edited(node - self.num_leaves);
@@ -168,7 +168,7 @@ impl Cpu4Partials {
 #[inline(never)]
 #[rustfmt::skip]
 unsafe fn propose(
-	state: &mut Cpu4Partials,
+	state: &mut Cpu4Calculator,
 	internals: &[usize],
 	children: &[[usize; 2]],
 	transitions: &[[[f64; 5]; 4]],

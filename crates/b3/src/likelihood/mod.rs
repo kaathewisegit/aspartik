@@ -17,7 +17,7 @@ mod cpu;
 mod cuda;
 mod hetero;
 
-use cpu::{Cpu4Partials, Cpu4Propagations};
+use cpu::Cpu4Calculator;
 use cuda::CudaLikelihood;
 pub use hetero::PyHeteroLikelihood;
 
@@ -247,7 +247,7 @@ macro_rules! likelihood_methods {
 /// for alignments larger than 100Kb.
 #[pyclass(name = "CPU4Likelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct PyCpu4Likelihood {
-	inner: Mutex<GenericLikelihood<4, f64, Cpu4Propagations>>,
+	inner: Mutex<GenericLikelihood<4, f64, Cpu4Calculator>>,
 }
 
 likelihood_methods! {PyCpu4Likelihood;
@@ -265,50 +265,7 @@ likelihood_methods! {PyCpu4Likelihood;
 		scale_ln: u32,
 	) -> Result<Self> {
 		let (leaves, weights) = deduplicate(msa.get());
-		let calculator = Cpu4Propagations::new(
-			weights,
-			leaves,
-			num_threads,
-			scale_ln,
-		);
-		let generic = GenericLikelihood::new(
-			calculator,
-			substitution,
-			clock,
-			tree,
-		)?;
-
-		Ok(Self {
-			inner: Mutex::new(generic),
-		})
-	}
-}
-
-#[pyclass(
-	name = "CPU4PartialsLikelihood",
-	module = "aspartik.b3.likelihoods",
-	frozen
-)]
-pub struct PyCpu4PartialsLikelihood {
-	inner: Mutex<GenericLikelihood<4, f64, Cpu4Partials>>,
-}
-
-likelihood_methods! {PyCpu4PartialsLikelihood;
-	#[new]
-	#[pyo3(signature = (
-		msa, substitution, clock, tree,
-		num_threads = 0, scale_ln = 30
-	))]
-	fn new(
-		msa: Py<PyMsa>,
-		substitution: PySubstitution4,
-		clock: Py<PyClock>,
-		tree: Py<PyTree>,
-		num_threads: usize,
-		scale_ln: u32,
-	) -> Result<Self> {
-		let (leaves, weights) = deduplicate(msa.get());
-		let calculator = Cpu4Partials::new(
+		let calculator = Cpu4Calculator::new(
 			weights,
 			leaves,
 			num_threads,
@@ -375,7 +332,6 @@ likelihood_methods! {PyCudaLikelihood;
 #[derive(FromPyObject, IntoPyObject)]
 pub enum PyLikelihood {
 	Cpu(Py<PyCpu4Likelihood>),
-	CpuP(Py<PyCpu4PartialsLikelihood>),
 	Cuda(Py<PyCudaLikelihood>),
 	Hetero(Py<PyHeteroLikelihood>),
 }
@@ -384,7 +340,6 @@ impl PyLikelihood {
 	pub fn clone_ref(&self, py: Python) -> Self {
 		match self {
 			Self::Cpu(l) => Self::Cpu(l.clone_ref(py)),
-			Self::CpuP(l) => Self::CpuP(l.clone_ref(py)),
 			Self::Cuda(l) => Self::Cuda(l.clone_ref(py)),
 			Self::Hetero(l) => Self::Hetero(l.clone_ref(py)),
 		}
@@ -393,7 +348,6 @@ impl PyLikelihood {
 	pub fn likelihood(&self) -> Result<f64> {
 		match self {
 			Self::Cpu(l) => l.get().likelihood(),
-			Self::CpuP(l) => l.get().likelihood(),
 			Self::Cuda(l) => l.get().likelihood(),
 			Self::Hetero(l) => l.get().likelihood(),
 		}
@@ -402,7 +356,6 @@ impl PyLikelihood {
 	pub fn accept(&self) -> Result<()> {
 		match self {
 			Self::Cpu(l) => l.get().accept(),
-			Self::CpuP(l) => l.get().accept(),
 			Self::Cuda(l) => l.get().accept(),
 			Self::Hetero(l) => l.get().accept(),
 		}
@@ -411,7 +364,6 @@ impl PyLikelihood {
 	pub fn reject(&self) -> Result<()> {
 		match self {
 			Self::Cpu(l) => l.get().reject(),
-			Self::CpuP(l) => l.get().reject(),
 			Self::Cuda(l) => l.get().reject(),
 			Self::Hetero(l) => l.get().reject(),
 		}
@@ -420,7 +372,6 @@ impl PyLikelihood {
 	pub fn num_patterns(&self) -> usize {
 		match self {
 			Self::Cpu(l) => l.get().num_patterns(),
-			Self::CpuP(l) => l.get().num_patterns(),
 			Self::Cuda(l) => l.get().num_patterns(),
 			Self::Hetero(l) => l.get().num_patterns(),
 		}
@@ -429,7 +380,6 @@ impl PyLikelihood {
 	pub fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
 		match self {
 			Self::Cpu(l) => l.get().pattern_likelihoods(),
-			Self::CpuP(l) => l.get().pattern_likelihoods(),
 			Self::Cuda(l) => l.get().pattern_likelihoods(),
 			Self::Hetero(_l) => todo!(),
 		}

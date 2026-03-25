@@ -3,7 +3,6 @@ from utils.compare import compare_verify_run
 from aspartik.b3 import Clock
 from aspartik.b3.likelihoods import (
     CPU4Likelihood,
-    CPU4PartialsLikelihood,
     CUDALikelihood,
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
@@ -25,18 +24,8 @@ def test_compare_likelihood():
     clock_rate = Real(1.0)
     frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
 
-    cpu_propagations = [
+    cpu_calculators = [
         CPU4Likelihood(
-            msa=msa,
-            substitution=HKY(frequencies, kappa),
-            clock=Clock.Strict(clock_rate),
-            tree=tree,
-            scale_ln=scale,
-        )
-        for scale in SCALES
-    ]
-    cpu_partials = [
-        CPU4PartialsLikelihood(
             msa=msa,
             substitution=HKY(frequencies, kappa),
             clock=Clock.Strict(clock_rate),
@@ -55,7 +44,7 @@ def test_compare_likelihood():
     except Exception:
         cuda_calculator = None
 
-    calculators = [*cpu_propagations, *cpu_partials]
+    calculators = [*cpu_calculators]
     if cuda_calculator:
         calculators.insert(0, cuda_calculator)
 

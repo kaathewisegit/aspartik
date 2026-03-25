@@ -6,7 +6,6 @@ from typing import Protocol
 
 from .._aspartik_rust_impl._b3_rust_impl import (
     CPU4Likelihood as CPU4Likelihood,
-    CPU4PartialsLikelihood as CPU4PartialsLikelihood,
     CUDALikelihood as CUDALikelihood,
     HeteroLikelihood as HeteroLikelihood,
 )
