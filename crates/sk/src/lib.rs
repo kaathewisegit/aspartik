@@ -5,7 +5,7 @@
 //! data versions.
 //!
 //! The API mostly mirrors that of [`Vec`].  New vectors can be created using
-//! the [`skvec!`] macro, which has the same syntax as [`vec!`].  Value access
+//! the [`skbuf!`] macro, which has the same syntax as [`vec!`].  Value access
 //! can be done via indexing.  Due to implementation details `SkBuf` doesn't
 //! implement [`IndexMut`][std::ops::IndexMut], so value updates have to be done
 //! with [`set`][SkBuf::set].
@@ -91,7 +91,7 @@ impl<T> SkBuf<T> {
 		unsafe { self.items.get_unchecked(idx) }
 	}
 
-	/// Mutable version of [`active_inner`][SkBuf::active_inner].
+	/// Mutable version of [`get_unchecked`][SkBuf::get_unchecked].
 	///
 	/// # Safety
 	///
