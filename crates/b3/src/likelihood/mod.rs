@@ -375,6 +375,7 @@ likelihood_methods! {PyCudaLikelihood;
 #[derive(FromPyObject, IntoPyObject)]
 pub enum PyLikelihood {
 	Cpu(Py<PyCpu4Likelihood>),
+	CpuP(Py<PyCpu4PartialsLikelihood>),
 	Cuda(Py<PyCudaLikelihood>),
 	Hetero(Py<PyHeteroLikelihood>),
 }
@@ -383,6 +384,7 @@ impl PyLikelihood {
 	pub fn clone_ref(&self, py: Python) -> Self {
 		match self {
 			Self::Cpu(l) => Self::Cpu(l.clone_ref(py)),
+			Self::CpuP(l) => Self::CpuP(l.clone_ref(py)),
 			Self::Cuda(l) => Self::Cuda(l.clone_ref(py)),
 			Self::Hetero(l) => Self::Hetero(l.clone_ref(py)),
 		}
@@ -391,6 +393,7 @@ impl PyLikelihood {
 	pub fn likelihood(&self) -> Result<f64> {
 		match self {
 			Self::Cpu(l) => l.get().likelihood(),
+			Self::CpuP(l) => l.get().likelihood(),
 			Self::Cuda(l) => l.get().likelihood(),
 			Self::Hetero(l) => l.get().likelihood(),
 		}
@@ -399,6 +402,7 @@ impl PyLikelihood {
 	pub fn accept(&self) -> Result<()> {
 		match self {
 			Self::Cpu(l) => l.get().accept(),
+			Self::CpuP(l) => l.get().accept(),
 			Self::Cuda(l) => l.get().accept(),
 			Self::Hetero(l) => l.get().accept(),
 		}
@@ -407,6 +411,7 @@ impl PyLikelihood {
 	pub fn reject(&self) -> Result<()> {
 		match self {
 			Self::Cpu(l) => l.get().reject(),
+			Self::CpuP(l) => l.get().reject(),
 			Self::Cuda(l) => l.get().reject(),
 			Self::Hetero(l) => l.get().reject(),
 		}
@@ -415,6 +420,7 @@ impl PyLikelihood {
 	pub fn num_patterns(&self) -> usize {
 		match self {
 			Self::Cpu(l) => l.get().num_patterns(),
+			Self::CpuP(l) => l.get().num_patterns(),
 			Self::Cuda(l) => l.get().num_patterns(),
 			Self::Hetero(l) => l.get().num_patterns(),
 		}
@@ -423,6 +429,7 @@ impl PyLikelihood {
 	pub fn pattern_likelihoods(&self) -> Result<Vec<f64>> {
 		match self {
 			Self::Cpu(l) => l.get().pattern_likelihoods(),
+			Self::CpuP(l) => l.get().pattern_likelihoods(),
 			Self::Cuda(l) => l.get().pattern_likelihoods(),
 			Self::Hetero(_l) => todo!(),
 		}
