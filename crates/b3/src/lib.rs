@@ -18,38 +18,27 @@ pub mod pymodule {
 	use super::*;
 
 	#[pymodule_export]
-	use callback::TraceWriter;
-
-	#[pymodule_export]
-	use clock::PyClock;
-
-	#[pymodule_export]
-	use likelihood::{
-		PyCpu4Likelihood, PyCudaLikelihood, PyHeteroLikelihood,
+	use crate::{
+		callback::TraceWriter,
+		clock::PyClock,
+		likelihood::{
+			PyCpu4Likelihood, PyCudaLikelihood, PyHeteroLikelihood,
+		},
+		mcmc::Mcmc,
+		operators::{
+			ClassvecFlip, EpochScale, FixedHeightSPR, PyProposal,
+			SubtreeLeap,
+		},
+		parameters::{
+			Internal, Leaf, PyClassVector, PyReal, PyRealVector,
+			PyTree,
+		},
+		priors::{
+			ConstantPopulation, ExponentialGrowth, Monophyly,
+			SymmetricDirichlet, Yule,
+		},
+		substitution::{PyGTR, PyHKY, PyJC, PyK80},
 	};
-
-	#[pymodule_export]
-	use mcmc::Mcmc;
-	#[pymodule_export]
-	use operators::PyProposal;
-
-	#[pymodule_export]
-	use parameters::{
-		Internal, Leaf, PyClassVector, PyReal, PyRealVector, PyTree,
-	};
-
-	#[pymodule_export]
-	use operators::{
-		ClassvecFlip, EpochScale, FixedHeightSPR, SubtreeLeap,
-	};
-	#[pymodule_export]
-	use priors::{
-		ConstantPopulation, ExponentialGrowth, Monophyly,
-		SymmetricDirichlet, Yule,
-	};
-
-	#[pymodule_export]
-	use substitution::{PyGTR, PyHKY, PyJC, PyK80};
 
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {

@@ -5,17 +5,11 @@ pub mod pymodule {
 	use super::*;
 
 	#[pymodule_export]
-	use b3::pymodule as b3;
-	#[pymodule_export]
-	use data::pymodule as data;
-	#[pymodule_export]
-	use io::pymodule as io;
-	#[pymodule_export]
-	use math::pymodule as math;
-	#[pymodule_export]
-	use rng::pymodule as rng;
-	#[pymodule_export]
-	use stats::pymodule as stats;
+	use {
+		b3::pymodule as b3, data::pymodule as data, io::pymodule as io,
+		math::pymodule as math, rng::pymodule as rng,
+		stats::pymodule as stats,
+	};
 
 	#[pymodule_init]
 	fn init(_: &Bound<'_, PyModule>) -> PyResult<()> {

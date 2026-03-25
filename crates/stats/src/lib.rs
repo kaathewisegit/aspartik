@@ -58,38 +58,12 @@ pub mod pymodule {
 	use super::*;
 
 	#[pymodule_export]
-	use distribution::Beta;
-	#[pymodule_export]
-	use distribution::Exp;
-	#[pymodule_export]
-	use distribution::Gamma;
-	#[pymodule_export]
-	use distribution::InverseGamma;
-	#[pymodule_export]
-	use distribution::Laplace;
-	#[pymodule_export]
-	use distribution::LogNormal;
-	#[pymodule_export]
-	use distribution::Normal;
-	#[pymodule_export]
-	use distribution::Poisson;
-	#[pymodule_export]
-	use distribution::Uniform;
-
-	#[pymodule_export]
-	use distribution::BetaError;
-	#[pymodule_export]
-	use distribution::GammaError;
-	#[pymodule_export]
-	use distribution::InverseGammaError;
-	#[pymodule_export]
-	use distribution::LaplaceError;
-	#[pymodule_export]
-	use distribution::LogNormalError;
-	#[pymodule_export]
-	use distribution::NormalError;
-	#[pymodule_export]
-	use distribution::UniformError;
+	use distribution::{
+		Beta, BetaError, Exp, Gamma, GammaError, InverseGamma,
+		InverseGammaError, Laplace, LaplaceError, LogNormal,
+		LogNormalError, Normal, NormalError, Poisson, Uniform,
+		UniformError,
+	};
 
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {

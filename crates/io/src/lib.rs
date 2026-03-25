@@ -18,10 +18,9 @@ pub mod pymodule {
 	use super::*;
 
 	#[pymodule_export]
-	use fasta::PyFastaDnaReader;
-
-	#[pymodule_export]
-	use format_readers::py_read_msa_from_fasta;
+	use crate::{
+		fasta::PyFastaDnaReader, format_readers::py_read_msa_from_fasta,
+	};
 
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
