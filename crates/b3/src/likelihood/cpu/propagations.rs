@@ -194,7 +194,7 @@ unsafe fn propose(
 	let scales = scales_sync.as_ptr();
 
 	for (i, &leaf) in nodes.iter().enumerate().take(leaves_end) {
-		let samples_leaf = samples.add(leaf * num_patterns);
+		let samples_leaf = samples.add(leaf * num_patterns + start);
 		let propagations_leaf = propagations.add(offset!(leaf) + start);
 
 		calc_leaf(
