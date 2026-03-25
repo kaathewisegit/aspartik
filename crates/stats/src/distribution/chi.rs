@@ -6,20 +6,7 @@ use crate::{
 };
 use math::{Positive, function::gamma};
 
-/// Implements the [Chi](https://en.wikipedia.org/wiki/Chi_distribution)
-/// distribution
-///
-/// # Examples
-///
-/// ```
-/// use std::num::NonZeroU64;
-/// use stats::{distribution::{Chi, Continuous}, statistics::Distribution};
-/// use math::assert_almost_eq;
-///
-/// let n = Chi::new(NonZeroU64::new(2).unwrap());
-/// assert_almost_eq!(n.mean().unwrap(), 1.2533141373155003, epsilon = 1e-14);
-/// assert_almost_eq!(n.pdf(1.0), 0.6065306597126334, epsilon = 1e-15);
-/// ```
+/// [Chi distribution](https://en.wikipedia.org/wiki/Chi_distribution)
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Chi {
 	freedom: NonZeroU64,
@@ -45,7 +32,7 @@ impl Chi {
 
 impl core::fmt::Display for Chi {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		write!(f, "χ_{}", self.freedom)
+		write!(f, "Chi({})", self.freedom)
 	}
 }
 
@@ -65,17 +52,9 @@ impl rand::distr::Distribution<f64> for Chi {
 }
 
 impl ContinuousCDF for Chi {
-	/// Calculates the cumulative distribution function for the chi
-	/// distribution at `x`.
+	/// `P(k / 2, x^2 / 2)`
 	///
-	/// # Formula
-	///
-	/// ```text
-	/// P(k / 2, x^2 / 2)
-	/// ```
-	///
-	/// where `k` is the degrees of freedom and `P` is
-	/// the regularized lower incomplete Gamma function
+	/// `P` is the regularized lower incomplete Gamma function.
 	fn cdf(&self, x: f64) -> f64 {
 		if x == f64::INFINITY {
 			1.0
@@ -89,8 +68,9 @@ impl ContinuousCDF for Chi {
 		}
 	}
 
-	/// `P(k / 2, x^2 / 2)`, where `k` is the degrees of freedom and `P` is
-	/// the regularized upper incomplete Gamma function.
+	/// `P(k / 2, x^2 / 2)`
+	///
+	/// Where `P` is the regularized upper incomplete Gamma function.
 	fn sf(&self, x: f64) -> f64 {
 		if x == f64::INFINITY {
 			0.0
@@ -104,29 +84,19 @@ impl ContinuousCDF for Chi {
 		}
 	}
 
+	/// Always 0
 	fn lower(&self) -> f64 {
 		0.0
 	}
 
+	/// Always infinity
 	fn upper(&self) -> f64 {
 		f64::INFINITY
 	}
 }
 
 impl Distribution for Chi {
-	/// Returns the mean of the chi distribution
-	///
-	/// # Remarks
-	///
-	/// Returns `NaN` if `freedom` is `INF`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// sqrt2 * Γ((k + 1) / 2) / Γ(k / 2)
-	/// ```
-	///
-	/// where `k` is degrees of freedom and `Γ` is the gamma function
+	/// `sqrt2 * Γ((k + 1) / 2) / Γ(k / 2)`
 	fn mean(&self) -> Option<f64> {
 		let freedom = self.freedom() as f64;
 
@@ -149,39 +119,18 @@ impl Distribution for Chi {
 		}
 	}
 
-	/// Returns the variance of the chi distribution
+	/// `k - μ^2`, where `μ` is the [mean]
 	///
-	/// # Remarks
-	///
-	/// Returns `NaN` if `freedom` is `INF`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// k - μ^2
-	/// ```
-	///
-	/// where `k` is degrees of freedom and `μ` is the mean
-	/// of the distribution
+	/// [mean]: [Self::mean]
 	fn variance(&self) -> Option<f64> {
 		let mean = self.mean()?;
 		Some(self.freedom() as f64 - mean * mean)
 	}
 
-	/// Returns the entropy of the chi distribution
+	/// `ln(Γ(k / 2)) + 0.5 * (k - ln2 - (k - 1) * ψ(k / 2))`
 	///
-	/// # Remarks
-	///
-	/// Returns `None` if `freedom` is `INF`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// ln(Γ(k / 2)) + 0.5 * (k - ln2 - (k - 1) * ψ(k / 2))
-	/// ```
-	///
-	/// where `k` is degrees of freedom, `Γ` is the gamma function,
-	/// and `ψ` is the digamma function
+	/// Where `k` is degrees of freedom, `Γ` is the gamma function, and `ψ`
+	/// is the digamma function.
 	fn entropy(&self) -> Option<f64> {
 		let freedom = self.freedom() as f64;
 		let entr = gamma::ln_gamma(freedom / 2.0)
@@ -192,19 +141,10 @@ impl Distribution for Chi {
 		Some(entr)
 	}
 
-	/// Returns the skewness of the chi distribution
+	/// `(μ / σ^3) * (1 - 2σ^2)`
 	///
-	/// # Remarks
-	///
-	/// Returns `NaN` if `freedom` is `INF`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// (μ / σ^3) * (1 - 2σ^2)
-	/// ```
-	/// where `μ` is the mean and `σ` the standard deviation
-	/// of the distribution
+	/// Where `μ` is the mean and `σ` the standard deviation of the
+	/// distribution.
 	fn skewness(&self) -> Option<f64> {
 		let sigma = self.std_dev()?;
 		let skew = self.mean()? * (1.0 - 2.0 * sigma * sigma)
@@ -214,35 +154,16 @@ impl Distribution for Chi {
 }
 
 impl Mode<Option<f64>> for Chi {
-	/// Returns the mode for the chi distribution
-	///
-	/// # Panics
-	///
-	/// If `freedom < 1.0`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// sqrt(k - 1)
-	/// ```
-	///
-	/// where `k` is the degrees of freedom
+	/// `sqrt(k - 1)`
 	fn mode(&self) -> Option<f64> {
 		Some(((self.freedom() - 1) as f64).sqrt())
 	}
 }
 
 impl Continuous for Chi {
-	/// Calculates the probability density function for the chi
-	/// distribution at `x`
+	/// `(2^(1 - (k / 2)) * x^(k - 1) * e^(-x^2 / 2)) / Γ(k / 2)`
 	///
-	/// # Formula
-	///
-	/// ```text
-	/// (2^(1 - (k / 2)) * x^(k - 1) * e^(-x^2 / 2)) / Γ(k / 2)
-	/// ```
-	///
-	/// where `k` is the degrees of freedom and `Γ` is the gamma function
+	/// Where `k` is the degrees of freedom and `Γ` is the gamma function.
 	fn pdf(&self, x: f64) -> f64 {
 		if x == f64::INFINITY || x <= 0.0 {
 			0.0
@@ -256,14 +177,7 @@ impl Continuous for Chi {
 		}
 	}
 
-	/// Calculates the log probability density function for the chi distribution
-	/// at `x`
-	///
-	/// # Formula
-	///
-	/// ```text
-	/// ln((2^(1 - (k / 2)) * x^(k - 1) * e^(-x^2 / 2)) / Γ(k / 2))
-	/// ```
+	/// `ln((2^(1 - (k / 2)) * x^(k - 1) * e^(-x^2 / 2)) / Γ(k / 2))`
 	fn ln_pdf(&self, x: f64) -> f64 {
 		if x == f64::INFINITY || x <= 0.0 {
 			f64::NEG_INFINITY
