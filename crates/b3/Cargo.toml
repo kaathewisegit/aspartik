@@ -14,7 +14,7 @@ io = { workspace = true }
 linalg = { workspace = true }
 math = { workspace = true }
 rng = { workspace = true }
-sk = { workspace = true, features = ["serde"] }
+sk = { workspace = true }
 util = { workspace = true }
 
 anyhow = { workspace = true }
@@ -29,9 +29,8 @@ num-traits = { workspace = true }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true, features = ["alloc"] }
-rand_pcg = { workspace = true, features = ["serde"] }
-serde = { workspace = true, features = ["derive"] }
-serde_verbatim = { workspace = true, features = ["std"] }
+rand_pcg = { workspace = true }
+rmp = { workspace = true }
 
 [lints]
 workspace = true

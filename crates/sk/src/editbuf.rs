@@ -1,13 +1,9 @@
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
 /// Buffer with metadata for tracking edit status of items without copies
 ///
 /// It consists of `len` bytes, for each of them:
 ///
 /// - The first bit is a pointer to the first or the second element.
 /// - The second bit is the edited state: 0 if not edited, 1 if edited.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct EditBuf(Box<[u8]>);
 

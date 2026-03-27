@@ -1,5 +1,4 @@
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
 
 use std::{cmp::Ordering, ops::Range};
 
@@ -12,7 +11,7 @@ use crate::{
 #[cfg(feature = "python")]
 pub mod python;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Msa<C: Character> {
 	num_sequences: usize,
 	num_sites: usize,

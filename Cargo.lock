@@ -181,9 +181,8 @@ dependencies = [
  "pyo3",
  "rand",
  "rand_pcg",
+ "rmp",
  "rng",
- "serde",
- "serde_verbatim",
  "sk",
  "util",
 ]
@@ -200,7 +199,6 @@ version = "0.1.0-alpha.11"
 dependencies = [
  "rand",
  "rand_pcg",
- "serde",
 ]
 
 [[package]]
@@ -352,7 +350,6 @@ dependencies = [
  "parking_lot",
  "peg",
  "pyo3",
- "serde",
  "thiserror",
  "util",
 ]
@@ -771,11 +768,9 @@ checksum = "0c8d0fd677905edcbeedbf2edb6494d676f0e98d54d5cf9bda0b061cb8fb8aba"
 [[package]]
 name = "rand_pcg"
 version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a36dd10a879f5c16e363eed24471b321b114ce3112c2d5d8df06545fcf48152"
+source = "git+https://github.com/kaathewisegit/rust-random-rngs?branch=pcg-state#969d0d24c50f9d8ad959cd73bddd0135c4fc85bd"
 dependencies = [
  "rand_core",
- "serde",
 ]
 
 [[package]]
@@ -788,6 +783,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rmp"
+version = "0.8.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ba8be72d372b2c9b35542551678538b562e7cf86c3315773cae48dfbfe7790c"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "rng"
 version = "0.1.0-alpha.11"
 dependencies = [
@@ -797,7 +801,7 @@ dependencies = [
  "pyo3",
  "rand",
  "rand_pcg",
- "serde_verbatim",
+ "rmp",
  "util",
 ]
 
@@ -829,54 +833,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
 
 [[package]]
-name = "serde"
-version = "1.0.228"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
-dependencies = [
- "serde_core",
- "serde_derive",
-]
-
-[[package]]
-name = "serde_core"
-version = "1.0.228"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
-dependencies = [
- "serde_derive",
-]
-
-[[package]]
-name = "serde_derive"
-version = "1.0.228"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "serde_test"
-version = "1.0.177"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f901ee573cab6b3060453d2d5f0bae4e6d628c23c0a962ff9b5f1d7c8d4f1ed"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde_verbatim"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4c92f479a1bb747473852ef3257b78fa188791fec4e3c6cb22ec8af50dba098"
-dependencies = [
- "serde_core",
-]
-
-[[package]]
 name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -887,8 +843,6 @@ name = "sk"
 version = "0.1.0-alpha.11"
 dependencies = [
  "rand",
- "serde",
- "serde_test",
 ]
 
 [[package]]

@@ -8,6 +8,8 @@ use rand::{
 };
 use rand_pcg::Pcg64;
 
+use std::io::Write;
+
 use util::seconds_since_unix;
 
 pub type Rng = Pcg64;
@@ -31,6 +33,34 @@ pub struct PyRng {
 impl PyRng {
 	pub fn inner(&self) -> MutexGuard<'_, Pcg64> {
 		self.inner.lock()
+	}
+
+	pub fn dump(&self, mut dst: &mut dyn Write) -> Result<()> {
+		fn write_u128<W: Write>(v: u128, dst: &mut W) -> Result<()> {
+			let [upper, lower] = [(v >> 64) as u64, v as u64];
+			rmp::encode::write_u64(dst, upper)?;
+			rmp::encode::write_u64(dst, lower)?;
+			Ok(())
+		}
+
+		let (state, increment) = self.inner().to_state();
+		write_u128(state, &mut dst)?;
+		write_u128(increment, &mut dst)?;
+		Ok(())
+	}
+
+	pub fn load(&self, mut bytes: &[u8]) -> Result<()> {
+		fn read_u128(src: &mut &[u8]) -> Result<u128> {
+			let upper = rmp::decode::read_u64(src)?;
+			let lower = rmp::decode::read_u64(src)?;
+			Ok(((upper as u128) << 64) + lower as u128)
+		}
+
+		let state = read_u128(&mut bytes)?;
+		let increment = read_u128(&mut bytes)?;
+		let inner = &mut *self.inner();
+		*inner = Pcg64::from_state(state, increment);
+		Ok(())
 	}
 }
 
@@ -96,16 +126,6 @@ impl PyRng {
 			let d = UniformFloat::<f64>::new(lower, upper)?;
 			d.sample(&mut self.inner())
 		})
-	}
-
-	pub fn dump(&self) -> Result<Vec<u8>> {
-		Ok(serde_verbatim::to_vec(&*self.inner())?)
-	}
-
-	pub fn load(&self, bytes: &[u8]) -> Result<()> {
-		let inner = &mut *self.inner();
-		*inner = serde_verbatim::from_slice(bytes)?;
-		Ok(())
 	}
 }
 

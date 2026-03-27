@@ -1,7 +1,6 @@
 use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
-use serde::{Deserialize, Serialize};
 
 use std::{io::Write, ops::Index};
 
@@ -9,7 +8,7 @@ use super::Parameter;
 use crate::impl_pyparameter_common;
 use sk::{Iter, SkBuf};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ClassVector {
 	num_classes: u8,
 	classes: SkBuf<u8>,
@@ -47,12 +46,23 @@ impl Parameter for ClassVector {
 		self.classes.is_changed()
 	}
 
-	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
-		Ok(serde_verbatim::to_writer(&self, dst)?)
+	fn dump(&self, mut dst: &mut dyn Write) -> Result<()> {
+		for i in 0..self.len() {
+			rmp::encode::write_uint(&mut dst, u64::from(self[i]))?;
+		}
+		Ok(())
 	}
 
-	fn load(&mut self, bytes: &[u8]) -> Result<()> {
-		*self = serde_verbatim::from_slice(bytes)?;
+	fn load(&mut self, mut bytes: &[u8]) -> Result<()> {
+		for i in 0..self.len() {
+			self.set(i, 0);
+		}
+		self.accept();
+
+		for i in 0..self.len() {
+			let c = rmp::decode::read_int::<u8, _>(&mut bytes)?;
+			self.set(i, c);
+		}
 		Ok(())
 	}
 

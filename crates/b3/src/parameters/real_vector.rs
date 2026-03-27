@@ -1,7 +1,6 @@
 use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, exceptions::PyIndexError, prelude::*};
-use serde::{Deserialize, Serialize};
 
 use std::{io::Write, ops::Index};
 
@@ -10,7 +9,7 @@ use crate::impl_pyparameter_common;
 use sk::{Iter, SkBuf};
 use util::py_bail;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct RealVector {
 	values: SkBuf<f64>,
 }
@@ -49,12 +48,24 @@ impl Parameter for RealVector {
 		self.values.is_changed()
 	}
 
-	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
-		Ok(serde_verbatim::to_writer(&self, dst)?)
+	fn dump(&self, mut dst: &mut dyn Write) -> Result<()> {
+		for i in 0..self.len() {
+			rmp::encode::write_f64(&mut dst, self[i])?;
+		}
+		Ok(())
 	}
 
-	fn load(&mut self, bytes: &[u8]) -> Result<()> {
-		*self = serde_verbatim::from_slice(bytes)?;
+	fn load(&mut self, mut bytes: &[u8]) -> Result<()> {
+		for i in 0..self.len() {
+			self.set(i, f64::NAN);
+		}
+		self.accept();
+
+		for i in 0..self.len() {
+			let value = rmp::decode::read_f64(&mut bytes)?;
+			self.set(i, value);
+		}
+
 		Ok(())
 	}
 

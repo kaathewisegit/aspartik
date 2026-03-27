@@ -7,7 +7,6 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 rand = { workspace = true }

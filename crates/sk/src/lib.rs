@@ -51,9 +51,6 @@ mod eq;
 
 pub use editbuf::EditBuf;
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
 use std::ops::Index;
 
 /// Epoch-versioned `Vec`-like storage.
@@ -66,7 +63,6 @@ use std::ops::Index;
 /// [`reject`][SkBuf::reject] the second item will be erased, with the element
 /// falling back to the original one.
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SkBuf<T> {
 	/// The underlying storage.  It's twice as long as the number of items
 	/// `SkBuf` can hold at a time.  Each element consist of two items in

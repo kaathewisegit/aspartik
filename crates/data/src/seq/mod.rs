@@ -16,7 +16,6 @@ pub mod distance;
 mod parse;
 #[cfg(feature = "python")]
 pub mod python;
-mod serde;
 mod write;
 
 pub use parse::{parse_append_bytes, parse_append_str, parse_bytes, parse_str};

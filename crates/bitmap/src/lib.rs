@@ -7,10 +7,8 @@
 //!
 //! [BitVec]: https://lib.rs/crates/bitvec
 
-use serde::{Deserialize, Serialize};
-
 /// A basic contiguous byte slice bitmap
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Bitmap {
 	inner: Box<[u8]>,
 }

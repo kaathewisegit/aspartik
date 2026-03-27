@@ -2,7 +2,6 @@ use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
 use pyo3::{IntoPyObjectExt, prelude::*, types::PyList};
 use rand::RngExt;
-use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 
 use std::{fs, path::Path};
 
@@ -13,7 +12,7 @@ use crate::{
 	parameters::PyParameter,
 	priors::PyPrior,
 };
-use rng::{PyRng, Rng};
+use rng::PyRng;
 use util::{seconds_since_unix, time};
 
 /// The main object which runs the analysis
@@ -165,47 +164,41 @@ impl Mcmc {
 	}
 
 	fn dump_state(&self) -> Result<Vec<u8>> {
-		let mut ser = serde_verbatim::Serializer::new(Vec::new());
+		use rmp::encode::{write_bin, write_f64, write_u64};
+
+		let mut out = Vec::new();
 		let mut scratch = Vec::new();
 
-		ser.serialize_u64(*self.current_step.lock() as u64)?;
-		ser.serialize_f64(*self.posterior.lock())?;
+		write_u64(&mut out, *self.current_step.lock() as u64)?;
+		write_f64(&mut out, *self.posterior.lock())?;
 
-		let mut seq = ser.serialize_seq(Some(self.state.len()))?;
 		for param in &self.state {
 			let param = &*param.as_ref();
+
 			param.dump(&mut scratch)?;
-			seq.serialize_element(&scratch)?;
+			write_bin(&mut out, &scratch)?;
 			scratch.clear();
 		}
-		seq.end()?;
 
-		self.rng.get().inner().serialize(&mut ser)?;
+		self.rng.get().dump(&mut out)?;
 
-		Ok(ser.into_inner())
+		Ok(out)
 	}
 
-	fn load_state(&self, py: Python, bytes: &[u8]) -> Result<()> {
-		#[derive(Deserialize)]
-		struct De<'a> {
-			current_step: u64,
-			posterior: f64,
-			#[serde(borrow)]
-			params: Vec<&'a [u8]>,
-			rng: Rng,
-		}
-		let mut deserializer = serde_verbatim::Deserializer::new(bytes);
-		let de = De::deserialize(&mut deserializer)?;
+	fn load_state(&self, py: Python, mut bytes: &[u8]) -> Result<()> {
+		use rmp::decode::{read_bin_len, read_f64, read_u64};
 
-		*self.current_step.lock() = de.current_step as usize;
-		*self.posterior.lock() = de.posterior;
+		*self.current_step.lock() = read_u64(&mut bytes)? as usize;
+		*self.posterior.lock() = read_f64(&mut bytes)?;
 
-		for (i, bytes) in de.params.iter().enumerate() {
-			let param = &mut *self.state[i].as_ref();
-			param.load(bytes)?;
+		for param in &self.state {
+			let param = &mut *param.as_ref();
+			let len = read_bin_len(&mut bytes)? as usize;
+			param.load(&bytes[..len])?;
+			bytes = &bytes[len..];
 		}
 
-		*self.rng.get().inner() = de.rng;
+		self.rng.get().load(bytes)?;
 
 		// update calculators
 		self.likelihood.likelihood()?;

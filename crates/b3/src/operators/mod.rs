@@ -6,7 +6,6 @@ use pyo3::{
 	types::{PyList, PyString, PyType},
 };
 use rand::distr::{Distribution, weighted::WeightedIndex};
-use serde::Serialize;
 
 use std::time::Duration;
 
@@ -27,7 +26,7 @@ pub use epoch_scale::EpochScale;
 pub use fhspr::FixedHeightSPR;
 pub use subtree_leap::SubtreeLeap;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Proposal {
 	Reject(),
 	Hastings(f64),

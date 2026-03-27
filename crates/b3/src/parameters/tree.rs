@@ -1,5 +1,5 @@
 use anyhow::{Result, bail, ensure};
-use bytemuck::{Pod, Zeroable, allocation::cast_vec, cast_slice};
+use bytemuck::{Pod, Zeroable, allocation::cast_vec};
 use parking_lot::Mutex;
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
@@ -837,31 +837,21 @@ impl Parameter for Tree {
 		self.updated_edges.is_any_on()
 	}
 
-	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
-		for height in &self.heights {
-			dst.write_all(&height.to_le_bytes())?;
+	fn dump(&self, mut dst: &mut dyn Write) -> Result<()> {
+		for &height in &self.heights {
+			rmp::encode::write_f64(&mut dst, height)?;
 		}
-		for child in &self.children {
-			let child = *child as u32;
-			dst.write_all(&child.to_le_bytes())?;
+		for &child in &self.children {
+			rmp::encode::write_uint(&mut dst, child as u64)?;
 		}
 
 		Ok(())
 	}
 
-	fn load(&mut self, bytes: &[u8]) -> Result<()> {
-		let num_nodes = self.num_nodes();
-		ensure!(bytes.len()
-			== num_nodes * size_of::<f64>()
-				+ self.num_edges() * size_of::<u32>());
-
-		let (heights, children) =
-			bytes.split_at(num_nodes * size_of::<f64>());
-		let heights: &[f64] = cast_slice(heights);
-		let children: &[u32] = cast_slice(children);
-
-		for (i, height) in heights.iter().enumerate() {
-			self.heights.set(i, *height);
+	fn load(&mut self, mut bytes: &[u8]) -> Result<()> {
+		for i in 0..self.num_nodes() {
+			let height = rmp::decode::read_f64(&mut bytes)?;
+			self.heights.set(i, height);
 		}
 
 		// overwrite all parents as one of them will be left as root
@@ -870,15 +860,14 @@ impl Parameter for Tree {
 		}
 
 		let num_leaves = self.num_leaves();
-		for (i, child) in children.iter().enumerate() {
-			let child = *child as usize;
+		for i in 0..self.num_edges() {
+			let child =
+				rmp::decode::read_int::<usize, _>(&mut bytes)?;
 			self.children.set(i, child);
 			let parent = i / 2 + num_leaves;
 			self.parents.set(child, parent);
 		}
 
-		// TODO: saner MCMC.load in regards to likelihood
-		// initialization
 		self.mark_all_edges_updated();
 		Ok(())
 	}

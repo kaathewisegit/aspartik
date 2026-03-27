@@ -216,7 +216,7 @@ Parser generator I use to parse Newick trees.
 
 ### [`proc-macro2`](./proc-macro2-license)
 
-Part of Tolnay's macro suite, used by derives in `thiserror`, `serde`,
+Part of Mr. Tolnay's macro suite, used by derives in `thiserror`,
 `pyo3`, and `divan`.
 
 
@@ -261,16 +261,6 @@ Panic-resistant `defer`, used in `lock_api`.
 Semver parser used by `rustc_version`.
 
 
-### [`serde`](./serde-license)
-
-### [`serde_derive`](./serde-license)
-
-### [`serde_test`](./serde_test-license)
-
-**UNMAINTANED**.  Token-level serde tester.  I use it to test `SkBuf`
-serialization.
-
-
 ### [`smallvec`](./smallvec-license)
 
 One-word `Vec` which stores its length and capacity in the allocation,
@@ -298,7 +288,7 @@ Currently only used in data because `stats` still supports `no_std`.
 
 ### [`unicode-indent`](./unicode-ident-license)
 
-Unicode-aware identifiers check, used by `serde_derive`.
+Unicode-aware identifiers check, used by `proc-macro2` and `syn`.
 
 
 ### [`zerocopy`](./zerocopy-license)

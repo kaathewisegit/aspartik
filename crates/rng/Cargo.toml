@@ -14,5 +14,5 @@ anyhow = { workspace = true }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }
-rand_pcg = { workspace = true, features = ["serde"] }
-serde_verbatim = { workspace = true, features = ["alloc"] }
+rand_pcg = { workspace = true }
+rmp = { workspace = true }

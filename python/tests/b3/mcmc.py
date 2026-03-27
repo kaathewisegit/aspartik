@@ -1,4 +1,5 @@
 from aspartik.b3 import MCMC, Clock
+from aspartik.b3.config import b3_config
 from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.operators import ParamScale, TreeScale
 from aspartik.b3.parameters import Real, Tree
@@ -46,3 +47,29 @@ def test_mcmc():
     assert mcmc.rng == rng
 
     assert mcmc.current_step == 4
+
+
+def test_dump_restore():
+    msa = read_msa_from_fasta("data/alignments/apes.fasta")
+
+    def get_mcmc():
+        return b3_config(
+            msa,
+            calculator="cpu",
+            substitution_model="GTR",
+            tree_prior="constant",
+        )
+
+    mcmc0 = get_mcmc()
+    mcmc0.run(10_000)
+    state = mcmc0.dump_state()
+    mcmc0.run(10_000)
+
+    mcmc1 = get_mcmc()
+    mcmc1.load_state(state)
+    mcmc1.run(10_000)
+
+    tree0, tree1 = mcmc0.parameters[0], mcmc1.parameters[0]
+    assert isinstance(tree0, Tree)
+    assert isinstance(tree1, Tree)
+    assert tree0.to_newick() == tree1.to_newick()

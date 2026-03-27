@@ -16,7 +16,6 @@ bytes = { workspace = true }
 parking_lot = { workspace = true, optional = true }
 peg = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
-serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 
 [dev-dependencies]
