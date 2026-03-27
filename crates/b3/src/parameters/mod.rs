@@ -48,6 +48,12 @@ macro_rules! impl_pyparameter_common {
 				self.inner().load(bytes)
 			}
 
+			pub fn dump(&self) -> Result<Vec<u8>> {
+				let mut out = Vec::new();
+				self.inner().dump(&mut out)?;
+				Ok(out)
+			}
+
 			pub fn accept(&self) {
 				self.inner().accept();
 			}

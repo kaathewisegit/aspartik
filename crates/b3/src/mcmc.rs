@@ -254,8 +254,7 @@ impl StepResult {
 impl Mcmc {
 	fn try_run(this: Py<Self>, py: Python, n: usize) -> Result<()> {
 		let self_ = this.get();
-		let end = self_.current_step() + n;
-		loop {
+		for _ in 0..n {
 			let current_step = *self_.current_step.lock();
 
 			let operator_index =
@@ -277,9 +276,6 @@ impl Mcmc {
 				current_step,
 			)?;
 
-			if current_step == end {
-				break;
-			}
 			*self_.current_step.lock() += 1;
 		}
 

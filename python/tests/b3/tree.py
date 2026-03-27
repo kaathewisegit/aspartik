@@ -1,4 +1,3 @@
-import pandas as pd
 import pytest
 from utils import random_msas, random_trees
 
@@ -63,26 +62,19 @@ def test_swap_parents(tree, rng):
 
 # TODO: raise when scaling gets re-implemented
 @pytest.mark.parametrize("msa", random_msas(10, 100, num=20))
-def test_dump_load_mcmc(msa: MSA, rng: RNG, tmp_path):
-    trace_file = tmp_path / "dump_load.trace"
+def test_dump_load_mcmc(msa: MSA, rng: RNG):
     mcmc = b3_config(
         msa,
         tree_prior="constant",
         substitution_model="JC",
-        trace_path=trace_file,
-        trace_every=100,
         print_every=None,
     )
     mcmc.run(100)
     tree = mcmc.parameters[0]
     assert isinstance(tree, Tree)
+    tree_state = tree.dump()
 
-    df = pd.read_feather(trace_file)
-
-    serialized_tree = df.iloc[-1]["tree"]
     deserialized_tree = Tree(msa.sequence_names(), rng)
-    deserialized_tree.load(serialized_tree)
+    deserialized_tree.load(tree_state)
 
     assert tree.to_newick() == deserialized_tree.to_newick()
-
-    trace_file.unlink()
