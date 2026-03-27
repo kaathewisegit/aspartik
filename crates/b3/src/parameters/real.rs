@@ -1,14 +1,13 @@
 use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, prelude::*};
-use serde::{Deserialize, Serialize};
 
 use std::io::Write;
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy)]
 pub struct Real {
 	value: f64,
 	backup: f64,
@@ -42,11 +41,16 @@ impl Parameter for Real {
 	}
 
 	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
-		Ok(serde_verbatim::to_writer(&self, dst)?)
+		dst.write_all(&self.value.to_le_bytes())?;
+		Ok(())
 	}
 
 	fn load(&mut self, bytes: &[u8]) -> Result<()> {
-		*self = serde_verbatim::from_slice(bytes)?;
+		let Some(bytes) = bytes.as_array::<8>() else {
+			todo!()
+		};
+		self.value = f64::from_le_bytes(*bytes);
+		self.backup = f64::NAN; // so that is_changed is true
 		Ok(())
 	}
 
