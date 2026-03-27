@@ -2,7 +2,7 @@ use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
 use pyo3::{IntoPyObjectExt, prelude::*, types::PyList};
 use rand::RngExt;
-use serde::{Deserialize, Serializer, ser::SerializeSeq};
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 
 use std::{fs, path::Path};
 
@@ -180,13 +180,12 @@ impl Mcmc {
 		}
 		seq.end()?;
 
-		let bytes = self.rng.get().dump()?;
-		ser.serialize_bytes(&bytes)?;
+		self.rng.get().inner().serialize(&mut ser)?;
 
 		Ok(ser.into_inner())
 	}
 
-	fn load_state(&self, bytes: &[u8]) -> Result<()> {
+	fn load_state(&self, py: Python, bytes: &[u8]) -> Result<()> {
 		#[derive(Deserialize)]
 		struct De<'a> {
 			current_step: u64,
@@ -209,6 +208,15 @@ impl Mcmc {
 		*self.rng.get().inner() = de.rng;
 
 		self.likelihood.likelihood()?;
+		for parameter in &self.state {
+			let parameter = &mut *parameter.as_ref();
+			parameter.accept();
+		}
+
+		for prior in &self.priors {
+			prior.accept(py)?;
+		}
+
 		self.likelihood.accept()?;
 
 		Ok(())
