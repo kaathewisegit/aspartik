@@ -207,7 +207,13 @@ impl Mcmc {
 
 		*self.rng.get().inner() = de.rng;
 
+		// update calculators
 		self.likelihood.likelihood()?;
+		// update priors
+		for py_prior in &self.priors {
+			py_prior.probability(py)?;
+		}
+
 		for parameter in &self.state {
 			let parameter = &mut *parameter.as_ref();
 			parameter.accept();
