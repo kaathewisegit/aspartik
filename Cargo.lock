@@ -843,6 +843,7 @@ name = "sk"
 version = "0.1.0-alpha.11"
 dependencies = [
  "rand",
+ "rand_pcg",
 ]
 
 [[package]]

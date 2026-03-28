@@ -25,5 +25,3 @@ fn basic_partial_eq() {
 	assert_eq!([1.0, 2.0, 3.0].as_slice(), v);
 	assert_eq!([1.0, 2.0, 3.0], v);
 }
-
-// TODO: run the vector through a few epochs and check the same thing
