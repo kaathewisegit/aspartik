@@ -24,8 +24,17 @@ __device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
 #define idx(edge) \
 	((edge) * NUM_PATTERNS + pattern)
 
+// Selector index
 #define sidx(edge) \
-	((edge) * NUM_PATTERNS + pattern) * 4 + sub
+	((edge) * 2 + (selectors[edge] & 1)) * NUM_PATTERNS + pattern
+
+// Selector index, other half
+#define soidx(edge) \
+	((edge) * 2 + (selectors[edge] & 1 ^ 1)) * NUM_PATTERNS + pattern
+
+// Selector for propagations
+#define spidx(edge) \
+	(sidx(edge)) * 4 + sub
 
 // Gets the pattern index from the thread and block id
 #define PATTERN_PRELUDE \
@@ -46,13 +55,14 @@ __device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
 	else if (leaf == 0b0100) projection = tv.z; \
 	else if (leaf == 0b1000) projection = tv.w; \
 	else projection = 1.0; \
-	projections[sidx(nodes[i])] = projection; \
+	projections[spidx(nodes[i])] = projection; \
 
 // Update partial likelihoods for edges which go to leaves
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void update_leaves(
 	const u8* restrict leaves,
 	f64* restrict projections,
+	const u8* restrict selectors,
 
 	const u32* restrict nodes,
 	const f64x4* restrict transitions
@@ -72,7 +82,8 @@ void propose(
 	const u8* restrict leaves,
 	f64* restrict projections,
 	u8* restrict scales,
-	u32* scale_sums,
+	u32* restrict scale_sums,
+	const u8* restrict selectors,
 
 	const u32 num_updated_nodes,
 	const u32* restrict nodes,
@@ -102,12 +113,11 @@ void propose(
 		u32 left_edge = children[(i - internals_start) * 2];
 		u32 right_edge = children[(i - internals_start) * 2 + 1];
 		u32 this_edge = nodes[i];
-		u32 scale_idx = idx(this_edge);
-		u32 old_scale = scales[scale_idx];
+		u32 old_scale = scales[soidx(this_edge)];
 
 		// thread-local likelihood
-		f64 l_likelihood = projections[sidx(left_edge)] *
-			projections[sidx(right_edge)];
+		f64 l_likelihood = projections[spidx(left_edge)] *
+			projections[spidx(right_edge)];
 		s_likelihood[tile * 4 + sub] = l_likelihood;
 
 		g.sync();
@@ -123,11 +133,11 @@ void propose(
 			g.sync();
 		}
 
-		if (sub == 0 && should_scale != old_scale) {
-			scales[scale_idx] = should_scale;
-			if (old_scale == 0) {
+		if (sub == 0) {
+			scales[sidx(this_edge)] = should_scale;
+			if (old_scale == 0 && should_scale == 1) {
 				scale_sum += SCALE_LN;
-			} else {
+			} else if (old_scale == 1 && should_scale == 0) {
 				scale_sum -= SCALE_LN;
 			}
 		}
@@ -145,7 +155,7 @@ void propose(
 			likelihood
 		);
 
-		projections[sidx(this_edge)] = projection;
+		projections[spidx(this_edge)] = projection;
 	}
 
 	if (sub == 0) {
@@ -159,6 +169,7 @@ void update_likelihoods(
 	f64* restrict likelihoods,
 	u8* restrict scales,
 	u32* scale_sums,
+	const u8* restrict selectors,
 
 	u32 root,
 	u32 left_child,
@@ -168,8 +179,8 @@ void update_likelihoods(
 	PATTERN_PRELUDE
 
 	f64x4 pre_likelihood = hadamard(
-		projections[idx(left_child)],
-		projections[idx(right_child)]
+		projections[sidx(left_child)],
+		projections[sidx(right_child)]
 	);
 	f64x4 likelihood = hadamard(
 		pre_likelihood,
@@ -179,35 +190,8 @@ void update_likelihoods(
 	f64 sum = likelihood.x + likelihood.y + likelihood.z + likelihood.w;
 	likelihoods[pattern] = log(sum);
 
-	if (scales[idx(root)]) {
-		scales[idx(root)] = 0;
+	scales[sidx(root)] = 0;
+	if (scales[soidx(root)]) {
 		scale_sums[pattern] -= SCALE_LN;
 	}
-}
-
-// Updates the backups or resets the working arrays
-//
-// TODO: it might make sense to separate it into two kernels: one for
-// projections and one for scales.  I can't use the default memcpy because it
-// needs to sample by nodes.
-entrypoint __launch_bounds__(128)
-void copy_projections(
-	const f64x4* restrict p_src,
-	f64x4* restrict p_dst,
-
-	const u8* restrict s_src,
-	u8* restrict s_dst,
-
-	u32 num_updated_nodes,
-	const u32* restrict nodes
-) {
-	PATTERN_PRELUDE
-	u32 i = blockIdx.y * 128 + blockIdx.z;
-	if (i >= num_updated_nodes) {
-		return;
-	}
-
-	u32 proj_idx = idx(nodes[i]);
-	p_dst[proj_idx] = p_src[proj_idx];
-	s_dst[proj_idx] = s_src[proj_idx];
 }

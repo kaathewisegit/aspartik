@@ -7,6 +7,7 @@ use cudarc::{
 	nvrtc::{CompileOptions, compile_ptx_with_opts},
 };
 use parking_lot::MutexGuard;
+use sk::EditBuf;
 
 use std::sync::Arc;
 
@@ -23,9 +24,11 @@ pub struct CudaLikelihood {
 	stream: Arc<CudaStream>,
 
 	propose_fn: CudaFunction,
-	copy_projections_fn: CudaFunction,
 	update_leaves_fn: CudaFunction,
 	update_likelihoods_fn: CudaFunction,
+
+	selectors: EditBuf,
+	selectors_device: CudaSlice<u8>,
 
 	/// Leaf likelihoods
 	///
@@ -38,13 +41,9 @@ pub struct CudaLikelihood {
 
 	/// A contiguous array which stores projection likelihoods
 	///
-	/// It has the length of `num_nodes * num_sites`, with each likelihood
-	/// being associated with a particular edge.  Stored in the same way as
-	/// `leaves`, except grouped by edges.
+	/// It has the length of `num_nodes * num_sites * 2`.  Each node has two
+	/// `num_sites` long buffers, determined by the selector.
 	projections: CudaSlice<Row>,
-
-	/// A copy of `projections`
-	projections_backup: CudaSlice<Row>,
 
 	/// `num_sites`-long root likelihoods
 	likelihoods: CudaSlice<f64>,
@@ -66,17 +65,11 @@ pub struct CudaLikelihood {
 	pattern_weights: Vec<u32>,
 
 	scales: CudaSlice<u8>,
-	scales_backup: CudaSlice<u8>,
 	scale_sums: CudaSlice<u32>,
 	scale_sums_backup: CudaSlice<u32>,
 
 	/// Total number of sites
 	num_patterns: u32,
-
-	/// Number of nodes updated in the current proposal
-	///
-	/// Changes on each step.
-	num_updated_nodes: u32,
 }
 
 impl Calculator<4, f64> for CudaLikelihood {
@@ -88,14 +81,20 @@ impl Calculator<4, f64> for CudaLikelihood {
 		let (nodes, children, leaves_end) = tree.propagation_lists();
 		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
 
-		self.num_updated_nodes = nodes.len() as u32 - 1;
-
 		let root_children = children.last().unwrap();
 		let nodes: Vec<_> = nodes.iter().map(|&n| n as u32).collect();
 		let children: Vec<_> = children
 			.iter()
 			.flat_map(|&[l, r]| [l as u32, r as u32])
 			.collect();
+
+		for &node in &nodes {
+			self.selectors.set_edited(node as usize);
+		}
+		self.stream.memcpy_htod(
+			self.selectors.as_slice(),
+			&mut self.selectors_device,
+		)?;
 
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
 		self.stream.memcpy_htod(&children, &mut self.children)?;
@@ -109,7 +108,11 @@ impl Calculator<4, f64> for CudaLikelihood {
 			self.update_leaves(leaves_end)?;
 			leaves_end = 0;
 		}
-		self.update_all(leaves_end, internals_start)?;
+		self.update_all(
+			nodes.len() as u32 - 1,
+			leaves_end,
+			internals_start,
+		)?;
 
 		let root = nodes.last().unwrap();
 		self.update_likelihoods(
@@ -146,9 +149,8 @@ impl Calculator<4, f64> for CudaLikelihood {
 			&mut self.scale_sums_backup,
 		)?;
 
-		self.copy_projections(true)?;
+		self.selectors.accept();
 
-		self.num_updated_nodes = 0;
 		Ok(())
 	}
 
@@ -158,9 +160,8 @@ impl Calculator<4, f64> for CudaLikelihood {
 			&mut self.scale_sums,
 		)?;
 
-		self.copy_projections(false)?;
+		self.selectors.reject();
 
-		self.num_updated_nodes = 0;
 		Ok(())
 	}
 
@@ -175,6 +176,7 @@ impl CudaLikelihood {
 	/// Asynchronous.
 	fn update_all(
 		&self,
+		num_updated_nodes: u32,
 		leaves_end: u32,
 		internals_start: u32,
 	) -> Result<()> {
@@ -193,8 +195,9 @@ impl CudaLikelihood {
 		builder.arg(&self.projections);
 		builder.arg(&self.scales);
 		builder.arg(&self.scale_sums);
+		builder.arg(&self.selectors_device);
 
-		builder.arg(&self.num_updated_nodes);
+		builder.arg(&num_updated_nodes);
 		builder.arg(&self.nodes);
 		builder.arg(&self.children);
 		builder.arg(&self.transitions);
@@ -226,6 +229,7 @@ impl CudaLikelihood {
 
 		builder.arg(&self.leaves);
 		builder.arg(&self.projections);
+		builder.arg(&self.selectors_device);
 
 		builder.arg(&self.nodes);
 		builder.arg(&self.transitions);
@@ -255,6 +259,7 @@ impl CudaLikelihood {
 		builder.arg(&self.likelihoods);
 		builder.arg(&self.scales);
 		builder.arg(&self.scale_sums);
+		builder.arg(&self.selectors_device);
 
 		builder.arg(&root);
 		builder.arg(&left);
@@ -264,51 +269,6 @@ impl CudaLikelihood {
 		// SAFETY: TODO
 		unsafe { builder.launch(cfg) }.with_context(|| {
 			anyhow!("update_likelihoods: {cfg:?}")
-		})?;
-
-		Ok(())
-	}
-
-	/// Applies a copy function to all of the updated edges.
-	///
-	/// This is an abstraction which unifies `accept` and `reject`, since
-	/// they are basically the same.
-	///
-	/// Asynchronous.
-	fn copy_projections(&mut self, accept: bool) -> Result<()> {
-		let num_updated_nodes = self.num_updated_nodes + 1;
-
-		let num_pattern = self.num_patterns.div_ceil(128);
-		let grid_dim_y = num_updated_nodes.div_ceil(128);
-		let cfg = LaunchConfig {
-			grid_dim: (num_pattern, grid_dim_y, 128),
-			block_dim: (128, 1, 1),
-			shared_mem_bytes: 0,
-		};
-
-		let mut builder =
-			self.stream.launch_builder(&self.copy_projections_fn);
-
-		if accept {
-			builder.arg(&self.projections);
-			builder.arg(&self.projections_backup);
-
-			builder.arg(&self.scales);
-			builder.arg(&self.scales_backup);
-		} else {
-			builder.arg(&self.projections_backup);
-			builder.arg(&self.projections);
-
-			builder.arg(&self.scales_backup);
-			builder.arg(&self.scales);
-		}
-
-		builder.arg(&num_updated_nodes);
-		builder.arg(&self.nodes);
-
-		// SAFETY: TODO
-		unsafe { builder.launch(cfg) }.with_context(|| {
-			anyhow!("copy_projections({accept}): {cfg:#?}")
 		})?;
 
 		Ok(())
@@ -358,9 +318,7 @@ impl CudaLikelihood {
 		let leaves = stream.clone_htod(&leaves)?;
 
 		let projections: CudaSlice<Row> =
-			stream.alloc_zeros(num_nodes * num_patterns)?;
-		let projections_backup: CudaSlice<Row> =
-			stream.alloc_zeros(num_nodes * num_patterns)?;
+			stream.alloc_zeros(num_nodes * num_patterns * 2)?;
 
 		let likelihoods: CudaSlice<f64> =
 			stream.alloc_zeros(num_patterns)?;
@@ -368,9 +326,12 @@ impl CudaLikelihood {
 		let transitions = stream.alloc_zeros(num_edges)?;
 		let nodes = stream.alloc_zeros(num_nodes)?;
 
-		let scales = stream.alloc_zeros(num_nodes * num_patterns)?;
-		let scales_backup =
-			stream.alloc_zeros(num_nodes * num_patterns)?;
+		let selectors = EditBuf::new(num_nodes);
+		let selectors_device =
+			stream.clone_htod(selectors.as_slice())?;
+
+		let scales =
+			stream.alloc_zeros(num_nodes * num_patterns * 2)?;
 		let scale_sums = stream.alloc_zeros(num_patterns)?;
 		let scale_sums_backup = stream.alloc_zeros(num_patterns)?;
 
@@ -391,8 +352,6 @@ impl CudaLikelihood {
 
 		let module = context.load_module(ptx)?;
 		let propose_fn = module.load_function("propose")?;
-		let copy_projections_fn =
-			module.load_function("copy_projections")?;
 		let update_leaves_fn = module.load_function("update_leaves")?;
 		let update_likelihoods_fn =
 			module.load_function("update_likelihoods")?;
@@ -401,13 +360,14 @@ impl CudaLikelihood {
 			stream,
 
 			propose_fn,
-			copy_projections_fn,
 			update_leaves_fn,
 			update_likelihoods_fn,
 
+			selectors,
+			selectors_device,
+
 			leaves,
 			projections,
-			projections_backup,
 			likelihoods,
 			likelihoods_host: vec![0.0; num_patterns].into(),
 			children,
@@ -417,13 +377,10 @@ impl CudaLikelihood {
 			pattern_weights,
 
 			scales,
-			scales_backup,
 			scale_sums,
 			scale_sums_backup,
 
 			num_patterns: num_patterns as u32,
-
-			num_updated_nodes: 0,
 		})
 	}
 }
