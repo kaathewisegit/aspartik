@@ -2,30 +2,18 @@
 
 ## `b3`
 
-- [x] Partial likelihood scaling
-
-- [x] Dated tree tips
-
-  - [x] Adjust all operators to respect (or check for) dated tips
-
-- [ ] Deterministic tests with approximate tree comparisons
+- [x] Deterministic tests with approximate tree comparisons
 
 - [ ] More birth-death models
-
-- [x] Python calculator objects
 
 
 ## `data`
 
-- [ ] FASTA/FASTQ
+- [ ] FASTQ
 
-  - [ ] Python-friendly record types
-  - [ ] Faster per-line streaming parsing
-  - [ ] Fast parsing from whole slices?
+- [/] A general tree type for use with Newick (extended Newick?)
 
-- [ ] A general tree type for use with Newick
-
-- [ ] Newick parser (Sans IO, non-recursive)
+- [ ] New Newick parser (Sans IO, non-recursive)
 
 - [ ] Variant call format
 
@@ -40,21 +28,18 @@
 
 - [ ] Multiple sequence alignment
 
-  - [x] Core data type format
-  - [ ] Parsing/constructors
-  - [/] Views
+  - [ ] Mutable MSA?
+  - [ ] Views?
 
 - [ ] NEXUS
 
-  - [ ] Data structure (arbitrary blocks?)
+  - [ ] Data structure
   - [ ] Parser
 
 
 ## `io`
 
-- [ ] Python reader/writer type (from `rw`)
-
-- [ ] A list of web APIs
+- [ ] FASTA to MSA parsing without intermediary allocations
 
 
 ## `linalg`
@@ -66,12 +51,8 @@
 
 ## `math`
 
-- [x] Tests for `float`
-
 
 ## `skvec`
-
-- [ ] Unchecked indexing
 
 
 ## `stats`
