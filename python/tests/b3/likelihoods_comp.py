@@ -4,6 +4,7 @@ from aspartik.b3 import Clock
 from aspartik.b3.likelihoods import (
     CPU4Likelihood,
     CUDALikelihood,
+    Likelihood,
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.substitutions import HKY
@@ -44,7 +45,7 @@ def test_compare_likelihood():
     except Exception:
         cuda_calculator = None
 
-    calculators = [*cpu_calculators]
+    calculators: list[Likelihood] = [*cpu_calculators]
     if cuda_calculator:
         calculators.insert(0, cuda_calculator)
 

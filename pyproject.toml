@@ -16,16 +16,16 @@ keywords = ["bioinformatics"]
 
 [project.optional-dependencies]
 dev = [
-	"maturin[patchelf]~=1.10 ; sys_platform == 'linux'",
-	"maturin~=1.10 ; sys_platform != 'linux'",
+	"maturin[patchelf]~=1.12 ; sys_platform == 'linux'",
+	"maturin~=1.12 ; sys_platform != 'linux'",
 	"mpmath~=1.4",
-	"numpy~=2.3",
-	"pandas~=2.3",
+	"numpy~=2.4",
+	"pandas~=3.0",
 	"pyarrow~=23.0.1",
 	"pdoc~=16.0",
-	"ty~=0.0.19",
+	"ty~=0.0.26",
 	"pytest~=9.0",
-	"ruff~=0.14.5",
+	"ruff~=0.15.8",
 	"delvewheel~=1.12.0",
 ]
 

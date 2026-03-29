@@ -15,21 +15,21 @@ def is_ci():
     return os.environ.get("CI") is not None
 
 
-def is_changed(dir):
+def is_changed(dirs: list[str]):
     changed = execute("git status --porcelain", capture_output=True, text=True)
     changed = [line[3:] for line in changed.stdout.splitlines()]
-    return any(line.startswith(dir) for line in changed)
+    return any(any(line.startswith(dir) for dir in dirs) for line in changed)
 
 
 def should_run(kind: Literal["rust", "python", "website"]):
     changed = False
     match kind:
         case "rust":
-            changed = is_changed("crates/")
+            changed = is_changed(["crates/", "Cargo"])
         case "python":
-            changed = is_changed("crates/") or is_changed("python/")
+            changed = is_changed(["crates/", "Cargo", "python/", "pyproject"])
         case "website":
-            changed = is_changed("website/")
+            changed = is_changed(["website/"])
     return is_ci() or changed
 
 
