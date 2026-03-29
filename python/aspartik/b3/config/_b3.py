@@ -51,6 +51,7 @@ def b3_config(
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
+    param_priors: dict[str, Continuous] = {},
     print_every: Optional[int] = 1_000,
     trace_path: Optional[str] = None,
     trace_every: int = 1_000,
@@ -81,6 +82,9 @@ def b3_config(
         weight: int,
         positive: bool = True,
     ):
+        if name in param_priors:
+            dist = param_priors[name]
+
         param = Real(initial)
         items[name] = param
         priors.append(Distribution(param, dist))
