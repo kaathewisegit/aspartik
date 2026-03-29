@@ -6,12 +6,52 @@ from argparse import ArgumentParser, Namespace
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
+from typing import Literal
 
 from . import doc
 
 
 def is_ci():
     return os.environ.get("CI") is not None
+
+
+def is_changed(dir):
+    changed = execute("git status --porcelain", capture_output=True, text=True)
+    changed = [line[3:] for line in changed.stdout.splitlines()]
+    return any(line.startswith(dir) for line in changed)
+
+
+def should_run(kind: Literal["rust", "python", "website"]):
+    changed = False
+    match kind:
+        case "rust":
+            changed = is_changed("crates/")
+        case "python":
+            changed = is_changed("crates/") or is_changed("python/")
+        case "website":
+            changed = is_changed("website/")
+    return is_ci() or changed
+
+
+@contextmanager
+def chdir(dir: str):
+    old_dir = os.getcwd()
+
+    os.chdir(dir)
+
+    try:
+        yield
+    finally:
+        os.chdir(old_dir)
+
+
+def execute(cmd: str, **kwargs):
+    result = subprocess.run(cmd, shell=True, **kwargs)
+
+    if result.returncode != 0:
+        sys.exit(f"Command `{cmd}` failed with exit code {result.returncode}")
+
+    return result
 
 
 def add_langopts(parser: ArgumentParser):
@@ -64,25 +104,6 @@ def make_parser():
     return parser
 
 
-@contextmanager
-def chdir(dir: str):
-    old_dir = os.getcwd()
-
-    os.chdir(dir)
-
-    try:
-        yield
-    finally:
-        os.chdir(old_dir)
-
-
-def execute(cmd: str):
-    result = subprocess.run(cmd, shell=True)
-
-    if result.returncode != 0:
-        sys.exit(f"Command `{cmd}` failed with exit code {result.returncode}")
-
-
 def fix(args: Namespace):
     if args.rust:
         execute("cargo fmt")
@@ -98,28 +119,28 @@ def fix(args: Namespace):
 
 
 def lint(args: Namespace):
-    if args.rust:
+    if args.rust and should_run("rust"):
         execute("cargo fmt --check")
         execute(
             "cargo clippy --workspace --tests --features arbitrary -- -D warnings",
         )
 
-    if args.python:
+    if args.python and should_run("python"):
         execute("ruff format --check")
         execute("ruff check --extend-select F401")
 
         execute("ty check")
 
-    if args.website:
+    if args.website and should_run("website"):
         with chdir("website/"):
             execute("npm run check")
 
 
 def test(args: Namespace):
-    if args.rust:
+    if args.rust and should_run("rust"):
         execute("cargo test --workspace --features arbitrary")
 
-    if args.python:
+    if args.python and should_run("python"):
         execute("pytest")
 
 
@@ -143,7 +164,9 @@ ARTIFACTS = [
 def check(args: Namespace):
     lint(args)
     test(args)
-    run()
+
+    if args.rust or args.python:
+        run()
 
 
 def clean():
