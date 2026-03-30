@@ -49,11 +49,9 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 
 {clock}
 
-{substitution_model}
-
     <siteModel id="siteModel">
         <substitutionModel>
-            <HKYModel idref="hky"/>
+{substitution_model}
         </substitutionModel>
     </siteModel>
 
@@ -205,7 +203,7 @@ def beast1_config(
         <scaleOperator scaleFactor="0.75" weight="1">
             <parameter idref="kappa"/>
         </scaleOperator>
-        <deltaExchange delta="0.01" weight="3">
+        <deltaExchange delta="0.01" weight="1">
             <parameter idref="frequencies"/>
         </deltaExchange>
             """
@@ -214,10 +212,51 @@ def beast1_config(
                 <logNormalPrior id="prior.kappa" mu="1.0" sigma="1.25" offset="0.0">
                     <parameter idref="kappa"/>
                 </logNormalPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="frequencies"/>
+				</dirichletPrior>
             """
 
             log += """
             <parameter idref="kappa"/>
+            <parameter idref="frequencies"/>
+            """
+
+        case "GTR":
+            substitution_model_s = """
+    <gtrModel id="gtr">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="gtr.rates" dimension="6" value="1.0" lower="0.0"/>
+        </rates>
+    </gtrModel>
+"""
+            operators += """
+		<deltaExchange delta="0.01" weight="1">
+			<parameter idref="gtr.rates"/>
+		</deltaExchange>
+        <deltaExchange delta="0.01" weight="1">
+            <parameter idref="frequencies"/>
+        </deltaExchange>
+            """
+
+            priors += """
+				<dirichletPrior alpha="1.0" sumsTo="6.0">
+					<parameter idref="gtr.rates"/>
+				</dirichletPrior>
+				<dirichletPrior alpha="1.0" sumsTo="1.0">
+					<parameter idref="frequencies"/>
+				</dirichletPrior>
+            """
+
+            log += """
+            <parameter idref="gtr.rates"/>
             <parameter idref="frequencies"/>
             """
 

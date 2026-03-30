@@ -119,7 +119,7 @@ def b3_config(
             rates = RealVector(1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
             items["rates"] = rates
             parameters.append(rates)
-            operators.append(DeltaExchange(rates, factor=0.01, rng=rng, weight=3))
+            operators.append(DeltaExchange(rates, factor=0.01, rng=rng, weight=1))
             priors.append(SymmetricDirichlet(rates, 6))
 
             sub_model = GTR(frequencies, rates)
