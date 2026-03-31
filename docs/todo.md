@@ -56,5 +56,3 @@
 
 
 ## `stats`
-
-- [ ] Find the Ziggurat generation script

@@ -1,10 +1,6 @@
 #![expect(clippy::excessive_precision)]
-// TODO: find the original or some other source for them.  It'd make sense to
-// inline the script
 //! Generated ziggurat tables borrowed from
-//! `https://github.com/rust-lang-nursery/rand/blob/0.8/src/distributions/ziggurat_tables.rs`
-
-pub type ZigTable = &'static [f64; 257];
+//! `https://github.com/rust-random/rand_distr/blob/master/src/ziggurat_tables.rs`
 
 pub const ZIG_NORM_R: f64 = 3.654152885361008796;
 

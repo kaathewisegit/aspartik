@@ -56,16 +56,15 @@ pub fn sample_exp_1<R: Rng + ?Sized>(rng: &mut R) -> f64 {
 	)
 }
 
-// Ziggurat method for sampling a random number based on the ZIGNOR
-// variant from Doornik 2005. Code borrowed from
-// https://github.com/rust-lang-nursery/rand/blob/master/src/distributions/mod.
-// rs#L223
+// Ziggurat method for sampling a random number based on the ZIGNOR variant from
+// Doornik 2005. Code borrowed from (TODO find)
 #[inline(always)]
 fn ziggurat<R: Rng + ?Sized, P, Z>(
 	rng: &mut R,
 	symmetric: bool,
-	x_tab: ziggurat_tables::ZigTable,
-	f_tab: ziggurat_tables::ZigTable,
+	// Ziggurat tables
+	x_tab: &'static [f64; 257],
+	f_tab: &'static [f64; 257],
 	mut pdf: P,
 	mut zero_case: Z,
 ) -> f64
