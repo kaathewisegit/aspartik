@@ -20,12 +20,12 @@ use super::Tree;
 #[derive(Debug)]
 #[pyclass(name = "Tree", module = "aspartik.data.newick", frozen)]
 #[repr(transparent)]
-pub(crate) struct PyTree {
+pub struct PyTree {
 	inner: Mutex<Tree>,
 }
 
 impl PyTree {
-	fn inner(&self) -> MutexGuard<'_, Tree> {
+	pub fn inner(&self) -> MutexGuard<'_, Tree> {
 		self.inner.lock()
 	}
 }

@@ -21,7 +21,7 @@ use crate::impl_pyparameter_common;
 use bitmap::Bitmap;
 use data::newick::{
 	Edge as NewickEdge, Node as NewickNode, NodeIdx as NewickNodeIndex,
-	Tree as NewickTree,
+	Tree as NewickTree, python::PyTree as PyNewickTree,
 };
 use rng::{PyRng, Rng};
 use sk::{SkBuf, skbuf};
@@ -248,6 +248,93 @@ impl Tree {
 		}
 
 		self.accept();
+	}
+
+	pub fn load_newick(&mut self, newick: &NewickTree) -> Result<()> {
+		ensure!(newick.leaves().count() == self.num_leaves());
+		ensure!(newick.num_nodes() == self.num_nodes());
+
+		let mut mapping = HashMap::<NewickNodeIndex, usize>::new();
+		for n_leaf_idx in newick.leaves() {
+			let name = newick.get_node(n_leaf_idx).name();
+			let Some(s_idx) =
+				self.names().iter().position(|n| *n == name)
+			else {
+				bail!("Node {name} not found in tree");
+			};
+			mapping.insert(n_leaf_idx, s_idx);
+		}
+
+		let mut queue = VecDeque::from_iter(newick.leaves());
+
+		for i in 0..self.num_edges() {
+			self.children.set(i, ROOT);
+		}
+
+		let num_leaves = self.num_leaves();
+		let mut internal_idx = self.num_leaves();
+		while let Some(n_idx) = queue.pop_front() {
+			let Some(parent) = newick.parent_of(n_idx) else {
+				self.set_root(Internal(mapping[&n_idx]));
+				continue;
+			};
+			let s_parent_idx =
+				*mapping.entry(parent).or_insert_with(|| {
+					let idx = internal_idx;
+					internal_idx += 1;
+					idx
+				});
+
+			let current_idx = mapping[&n_idx];
+			self.parents.set(current_idx, s_parent_idx);
+			let child_offset = (s_parent_idx - num_leaves) * 2;
+			if self.children[child_offset] == ROOT {
+				self.children.set(child_offset, current_idx);
+			} else {
+				self.children
+					.set(child_offset + 1, current_idx);
+			}
+			queue.push_back(parent);
+		}
+
+		let rmapping: HashMap<Node, NewickNodeIndex> = mapping
+			.into_iter()
+			.map(|(k, v)| (Node(v), k))
+			.collect();
+
+		self.set_height(*self.root(), 0.0);
+		let mut queue = VecDeque::from([*self.root()]);
+		while let Some(node) = queue.pop_front() {
+			if let Some(node) = self.as_internal(node) {
+				let (left, right) = self.children_of(node);
+				queue.push_back(left);
+				queue.push_back(right);
+			}
+
+			let Some(parent) = self.parent_of(node) else {
+				continue;
+			};
+			let parent_height = self.height_of(*parent);
+			let edge =
+				newick.edge_to_parent(rmapping[&node]).unwrap();
+			let Some(edge_length) = edge.distance() else {
+				bail!("Encountered Newick node without length");
+			};
+
+			self.set_height(node, parent_height - edge_length);
+		}
+		let mut min = 0.0;
+		for &height in self.heights.iter() {
+			if height < min {
+				min = height;
+			}
+		}
+
+		for node in self.nodes() {
+			self.set_height(node, self.height_of(node) - min);
+		}
+
+		Ok(())
 	}
 
 	pub fn names(&self) -> Vec<String> {
@@ -1001,6 +1088,10 @@ impl_pyparameter_common! {PyTree, Tree;
 	fn set_random_heights(&self, diff: f64, rng: Py<PyRng>) {
 		self.inner()
 			.set_random_heights(diff, &mut rng.get().inner());
+	}
+
+	fn load_newick(&self, newick: &PyNewickTree) -> Result<()> {
+		self.inner().load_newick(&newick.inner())
 	}
 
 	/// A list of all leaf names.

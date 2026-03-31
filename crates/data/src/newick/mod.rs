@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 mod parse;
 #[cfg(feature = "python")]
-pub(crate) mod python;
+pub mod python;
 mod serialize;
 
 pub type NodeIdx = u32;
