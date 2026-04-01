@@ -9,10 +9,10 @@ authors.workspace = true
 [dependencies]
 math = { workspace = true, features = ["python"] }
 util = { workspace = true }
+verbatim = { workspace = true }
 
 anyhow = { workspace = true }
 parking_lot = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true }
 rand_pcg = { workspace = true }
-rmp = { workspace = true }

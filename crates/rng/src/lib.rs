@@ -8,9 +8,8 @@ use rand::{
 };
 use rand_pcg::Pcg64;
 
-use std::io::Write;
-
 use util::seconds_since_unix;
+use verbatim::{Deserialize, DeserializeFrom, Serialize};
 
 pub type Rng = Pcg64;
 
@@ -30,37 +29,29 @@ pub struct PyRng {
 	inner: Mutex<Rng>,
 }
 
+impl Serialize for PyRng {
+	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
+		let (state, increment) = self.inner().to_state();
+		state.serialize(writer)?;
+		increment.serialize(writer)
+	}
+}
+
+impl DeserializeFrom for &PyRng {
+	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
+	where
+		R: verbatim::Read<'r>,
+	{
+		let state = u128::deserialize(reader)?;
+		let increment = u128::deserialize(reader)?;
+		*self.inner() = Pcg64::from_state(state, increment);
+		Ok(())
+	}
+}
+
 impl PyRng {
 	pub fn inner(&self) -> MutexGuard<'_, Pcg64> {
 		self.inner.lock()
-	}
-
-	pub fn dump(&self, mut dst: &mut dyn Write) -> Result<()> {
-		fn write_u128<W: Write>(v: u128, dst: &mut W) -> Result<()> {
-			let [upper, lower] = [(v >> 64) as u64, v as u64];
-			rmp::encode::write_u64(dst, upper)?;
-			rmp::encode::write_u64(dst, lower)?;
-			Ok(())
-		}
-
-		let (state, increment) = self.inner().to_state();
-		write_u128(state, &mut dst)?;
-		write_u128(increment, &mut dst)?;
-		Ok(())
-	}
-
-	pub fn load(&self, mut bytes: &[u8]) -> Result<()> {
-		fn read_u128(src: &mut &[u8]) -> Result<u128> {
-			let upper = rmp::decode::read_u64(src)?;
-			let lower = rmp::decode::read_u64(src)?;
-			Ok(((upper as u128) << 64) + lower as u128)
-		}
-
-		let state = read_u128(&mut bytes)?;
-		let increment = read_u128(&mut bytes)?;
-		let inner = &mut *self.inner();
-		*inner = Pcg64::from_state(state, increment);
-		Ok(())
 	}
 }
 

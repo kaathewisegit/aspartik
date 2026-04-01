@@ -1,8 +1,7 @@
 use anyhow::Result;
-use parking_lot::{MappedMutexGuard, MutexGuard};
 use pyo3::prelude::*;
 
-use std::io::Write;
+use verbatim::{DeserializeFrom, Read, Serialize};
 
 mod class_vector;
 mod gamma_disc;
@@ -15,12 +14,12 @@ pub use real::{PyReal, Real};
 pub use real_vector::{PyRealVector, RealVector};
 pub use tree::{Internal, Leaf, Node, PyTree, Tree};
 
-pub trait Parameter {
+pub trait Parameter
+where
+	Self: Serialize,
+	for<'a> &'a mut Self: DeserializeFrom,
+{
 	fn is_changed(&self) -> bool;
-
-	fn dump(&self, dst: &mut dyn Write) -> Result<()>;
-
-	fn load(&mut self, bytes: &[u8]) -> Result<()>;
 
 	fn accept(&mut self);
 
@@ -44,13 +43,13 @@ macro_rules! impl_pyparameter_common {
 				self.inner().is_changed()
 			}
 
-			pub fn load(&self, bytes: &[u8]) -> Result<()> {
-				self.inner().load(bytes)
+			pub fn load(&self, mut bytes: &[u8]) -> Result<()> {
+				self.inner().deserialize_from(&mut bytes)
 			}
 
 			pub fn dump(&self) -> Result<Vec<u8>> {
 				let mut out = Vec::new();
-				self.inner().dump(&mut out)?;
+				self.inner().serialize(&mut out)?;
 				Ok(out)
 			}
 
@@ -85,27 +84,56 @@ impl PyParameter {
 		}
 	}
 
-	pub fn as_ref(&self) -> MappedMutexGuard<'_, dyn Parameter> {
+	pub fn accept(&self) {
+		match self {
+			Self::ClassVector(p) => p.get().accept(),
+			Self::Real(p) => p.get().accept(),
+			Self::RealVector(p) => p.get().accept(),
+			Self::Tree(p) => p.get().accept(),
+		}
+	}
+
+	pub fn reject(&self) {
+		match self {
+			Self::ClassVector(p) => p.get().reject(),
+			Self::Real(p) => p.get().reject(),
+			Self::RealVector(p) => p.get().reject(),
+			Self::Tree(p) => p.get().reject(),
+		}
+	}
+
+	pub fn serialize<W: verbatim::Write>(
+		&self,
+		writer: &mut W,
+	) -> Result<()> {
 		match self {
 			Self::ClassVector(p) => {
-				MutexGuard::map(p.get().inner(), |r| {
-					r as &mut dyn Parameter
-				})
+				p.get().inner().serialize(writer)
+			}
+			Self::Real(p) => p.get().inner().serialize(writer),
+			Self::RealVector(p) => {
+				p.get().inner().serialize(writer)
+			}
+			Self::Tree(p) => p.get().inner().serialize(writer),
+		}
+	}
+
+	pub fn deserialize_from<'r, R>(&self, reader: &mut R) -> Result<()>
+	where
+		R: Read<'r>,
+	{
+		match self {
+			Self::ClassVector(p) => {
+				p.get().inner().deserialize_from(reader)
 			}
 			Self::Real(p) => {
-				MutexGuard::map(p.get().inner(), |r| {
-					r as &mut dyn Parameter
-				})
+				p.get().inner().deserialize_from(reader)
 			}
 			Self::RealVector(p) => {
-				MutexGuard::map(p.get().inner(), |r| {
-					r as &mut dyn Parameter
-				})
+				p.get().inner().deserialize_from(reader)
 			}
 			Self::Tree(p) => {
-				MutexGuard::map(p.get().inner(), |r| {
-					r as &mut dyn Parameter
-				})
+				p.get().inner().deserialize_from(reader)
 			}
 		}
 	}

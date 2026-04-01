@@ -1,19 +1,23 @@
 use anyhow::Result;
 
+use std::io;
+
 pub trait Write {
 	fn write_array<const N: usize>(&mut self, data: [u8; N]) -> Result<()>;
 
 	fn write_slice(&mut self, data: &[u8]) -> Result<()>;
 }
 
-impl Write for Vec<u8> {
+// XXX: specialization + Vec<u8>
+
+impl<T: io::Write> Write for T {
 	fn write_array<const N: usize>(&mut self, data: [u8; N]) -> Result<()> {
-		self.extend_from_slice(&data);
+		self.write_all(&data)?;
 		Ok(())
 	}
 
 	fn write_slice(&mut self, data: &[u8]) -> Result<()> {
-		self.extend_from_slice(data);
+		self.write_all(data)?;
 		Ok(())
 	}
 }

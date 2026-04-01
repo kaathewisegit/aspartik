@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 
 use super::{Parameter, PyReal};
 use crate::impl_pyparameter_common;
+use verbatim::{DeserializeFrom, Serialize};
 
 #[derive(Debug)]
 pub struct GammaDisc {
@@ -12,6 +13,21 @@ pub struct GammaDisc {
 	derived: Box<[Py<PyReal>]>,
 	#[expect(dead_code)]
 	shape: Py<PyReal>,
+}
+
+impl Serialize for GammaDisc {
+	fn serialize<W: verbatim::Write>(&self, _writer: &mut W) -> Result<()> {
+		todo!()
+	}
+}
+
+impl DeserializeFrom for &mut GammaDisc {
+	fn deserialize_from<'r, R>(self, _reader: &mut R) -> Result<()>
+	where
+		R: verbatim::Read<'r>,
+	{
+		todo!()
+	}
 }
 
 impl Parameter for GammaDisc {
@@ -31,14 +47,6 @@ impl Parameter for GammaDisc {
 		for real in &self.derived {
 			real.get().reject();
 		}
-	}
-
-	fn dump(&self, _dst: &mut dyn std::io::Write) -> Result<()> {
-		todo!()
-	}
-
-	fn load(&mut self, _bytes: &[u8]) -> Result<()> {
-		todo!()
 	}
 }
 

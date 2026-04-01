@@ -14,6 +14,7 @@ use crate::{
 };
 use rng::PyRng;
 use util::{seconds_since_unix, time};
+use verbatim::{Deserialize, DeserializeFrom, Serialize, Write as VWrite};
 
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
@@ -164,41 +165,13 @@ impl Mcmc {
 	}
 
 	fn dump_state(&self) -> Result<Vec<u8>> {
-		use rmp::encode::{write_bin, write_f64, write_u64};
-
 		let mut out = Vec::new();
-		let mut scratch = Vec::new();
-
-		write_u64(&mut out, *self.current_step.lock() as u64)?;
-		write_f64(&mut out, *self.posterior.lock())?;
-
-		for param in &self.state {
-			let param = &*param.as_ref();
-
-			param.dump(&mut scratch)?;
-			write_bin(&mut out, &scratch)?;
-			scratch.clear();
-		}
-
-		self.rng.get().dump(&mut out)?;
-
+		self.serialize(&mut out)?;
 		Ok(out)
 	}
 
 	fn load_state(&self, py: Python, mut bytes: &[u8]) -> Result<()> {
-		use rmp::decode::{read_bin_len, read_f64, read_u64};
-
-		*self.current_step.lock() = read_u64(&mut bytes)? as usize;
-		*self.posterior.lock() = read_f64(&mut bytes)?;
-
-		for param in &self.state {
-			let param = &mut *param.as_ref();
-			let len = read_bin_len(&mut bytes)? as usize;
-			param.load(&bytes[..len])?;
-			bytes = &bytes[len..];
-		}
-
-		self.rng.get().load(bytes)?;
+		self.deserialize_from(&mut bytes)?;
 
 		// update calculators
 		self.likelihood.likelihood()?;
@@ -208,7 +181,6 @@ impl Mcmc {
 		}
 
 		for parameter in &self.state {
-			let parameter = &mut *parameter.as_ref();
 			parameter.accept();
 		}
 
@@ -219,6 +191,37 @@ impl Mcmc {
 		self.likelihood.accept()?;
 
 		Ok(())
+	}
+}
+
+impl Serialize for Mcmc {
+	fn serialize<W>(&self, writer: &mut W) -> Result<()>
+	where
+		W: VWrite,
+	{
+		(*self.current_step.lock() as u64).serialize(writer)?;
+		self.posterior.lock().serialize(writer)?;
+
+		for param in &self.state {
+			param.serialize(writer)?;
+		}
+
+		self.rng.get().serialize(writer)
+	}
+}
+
+impl DeserializeFrom for &Mcmc {
+	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
+	where
+		R: verbatim::Read<'r>,
+	{
+		*self.current_step.lock() = u64::deserialize(reader)? as usize;
+		*self.posterior.lock() = f64::deserialize(reader)?;
+
+		for param in &self.state {
+			param.deserialize_from(reader)?;
+		}
+		self.rng.get().deserialize_from(reader)
 	}
 }
 
@@ -350,7 +353,6 @@ impl Mcmc {
 
 		if status.is_accept() {
 			for parameter in &self.state {
-				let parameter = &mut *parameter.as_ref();
 				parameter.accept();
 			}
 
@@ -361,7 +363,6 @@ impl Mcmc {
 			self.likelihood.accept()?;
 		} else {
 			for parameter in &self.state {
-				let parameter = &mut *parameter.as_ref();
 				parameter.reject();
 			}
 

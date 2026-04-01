@@ -11,7 +11,6 @@ use rand::{RngExt, seq::SliceRandom};
 use std::{
 	cmp::Reverse,
 	collections::{BinaryHeap, HashMap, VecDeque},
-	io::Write,
 	mem,
 	ops::Deref,
 };
@@ -26,6 +25,7 @@ use data::newick::{
 use rng::{PyRng, Rng};
 use sk::{SkBuf, skbuf};
 use util::py_bail;
+use verbatim::{Deserialize, DeserializeFrom, Serialize};
 
 const ROOT: usize = 0x524f4f54;
 
@@ -919,26 +919,26 @@ impl Tree {
 	}
 }
 
-impl Parameter for Tree {
-	fn is_changed(&self) -> bool {
-		self.updated_edges.is_any_on()
-	}
-
-	fn dump(&self, mut dst: &mut dyn Write) -> Result<()> {
+impl Serialize for Tree {
+	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
 		for &height in &self.heights {
-			rmp::encode::write_f64(&mut dst, height)?;
+			height.serialize(writer)?;
 		}
 		for &child in &self.children {
-			rmp::encode::write_uint(&mut dst, child as u64)?;
+			(child as u32).serialize(writer)?;
 		}
 
 		Ok(())
 	}
+}
 
-	fn load(&mut self, mut bytes: &[u8]) -> Result<()> {
+impl DeserializeFrom for &mut Tree {
+	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
+	where
+		R: verbatim::Read<'r>,
+	{
 		for i in 0..self.num_nodes() {
-			let height = rmp::decode::read_f64(&mut bytes)?;
-			self.heights.set(i, height);
+			self.heights.set(i, f64::deserialize(reader)?);
 		}
 
 		// overwrite all parents as one of them will be left as root
@@ -948,8 +948,7 @@ impl Parameter for Tree {
 
 		let num_leaves = self.num_leaves();
 		for i in 0..self.num_edges() {
-			let child =
-				rmp::decode::read_int::<usize, _>(&mut bytes)?;
+			let child = u32::deserialize(reader)? as usize;
 			self.children.set(i, child);
 			let parent = i / 2 + num_leaves;
 			self.parents.set(child, parent);
@@ -957,6 +956,12 @@ impl Parameter for Tree {
 
 		self.mark_all_edges_updated();
 		Ok(())
+	}
+}
+
+impl Parameter for Tree {
+	fn is_changed(&self) -> bool {
+		self.updated_edges.is_any_on()
 	}
 
 	fn accept(&mut self) {

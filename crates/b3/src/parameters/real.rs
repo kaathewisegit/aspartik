@@ -2,10 +2,9 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, prelude::*};
 
-use std::io::Write;
-
 use super::Parameter;
 use crate::impl_pyparameter_common;
+use verbatim::{Deserialize, DeserializeFrom, Serialize};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Real {
@@ -35,23 +34,26 @@ impl Real {
 	}
 }
 
+impl Serialize for Real {
+	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
+		self.value.serialize(writer)
+	}
+}
+
+impl DeserializeFrom for &mut Real {
+	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
+	where
+		R: verbatim::Read<'r>,
+	{
+		self.value = f64::deserialize(reader)?;
+		self.backup = f64::NAN; // so that is_changed is true
+		Ok(())
+	}
+}
+
 impl Parameter for Real {
 	fn is_changed(&self) -> bool {
 		self.value != self.backup
-	}
-
-	fn dump(&self, dst: &mut dyn Write) -> Result<()> {
-		dst.write_all(&self.value.to_le_bytes())?;
-		Ok(())
-	}
-
-	fn load(&mut self, bytes: &[u8]) -> Result<()> {
-		let Some(bytes) = bytes.as_array::<8>() else {
-			todo!()
-		};
-		self.value = f64::from_le_bytes(*bytes);
-		self.backup = f64::NAN; // so that is_changed is true
-		Ok(())
 	}
 
 	fn accept(&mut self) {

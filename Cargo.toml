@@ -44,7 +44,6 @@ parking_lot = "0.12.5"
 peg = "0.8.5"
 pyo3 = "0.28.2"
 rand = { version = "0.10.0", default-features = false }
-rmp = "0.8.15"
 thiserror = "2.0"
 
 rand_pcg = {

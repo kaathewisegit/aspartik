@@ -25,10 +25,12 @@ impl_le_bytes!(u8);
 impl_le_bytes!(u16);
 impl_le_bytes!(u32);
 impl_le_bytes!(u64);
+impl_le_bytes!(u128);
 impl_le_bytes!(i8);
 impl_le_bytes!(i16);
 impl_le_bytes!(i32);
 impl_le_bytes!(i64);
+impl_le_bytes!(i128);
 impl_le_bytes!(f32);
 impl_le_bytes!(f64);
 

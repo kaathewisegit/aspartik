@@ -2,16 +2,45 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, exceptions::PyIndexError, prelude::*};
 
-use std::{io::Write, ops::Index};
+use std::ops::Index;
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
 use sk::{Iter, SkBuf};
 use util::py_bail;
+use verbatim::{Deserialize, DeserializeFrom, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct RealVector {
 	values: SkBuf<f64>,
+}
+
+impl Serialize for RealVector {
+	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
+		for i in 0..self.len() {
+			self[i].serialize(writer)?;
+		}
+		Ok(())
+	}
+}
+
+impl DeserializeFrom for &mut RealVector {
+	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
+	where
+		R: verbatim::Read<'r>,
+	{
+		for i in 0..self.len() {
+			self.set(i, f64::NAN);
+		}
+		self.accept();
+
+		for i in 0..self.len() {
+			let value = f64::deserialize(reader)?;
+			self.set(i, value);
+		}
+
+		Ok(())
+	}
 }
 
 #[allow(clippy::len_without_is_empty)]
@@ -46,27 +75,6 @@ impl Index<usize> for RealVector {
 impl Parameter for RealVector {
 	fn is_changed(&self) -> bool {
 		self.values.is_changed()
-	}
-
-	fn dump(&self, mut dst: &mut dyn Write) -> Result<()> {
-		for i in 0..self.len() {
-			rmp::encode::write_f64(&mut dst, self[i])?;
-		}
-		Ok(())
-	}
-
-	fn load(&mut self, mut bytes: &[u8]) -> Result<()> {
-		for i in 0..self.len() {
-			self.set(i, f64::NAN);
-		}
-		self.accept();
-
-		for i in 0..self.len() {
-			let value = rmp::decode::read_f64(&mut bytes)?;
-			self.set(i, value);
-		}
-
-		Ok(())
 	}
 
 	fn accept(&mut self) {

@@ -11,6 +11,12 @@ pub trait Deserialize<'r>: Sized {
 pub trait DeserializeOwned: for<'r> Deserialize<'r> {}
 impl<T> DeserializeOwned for T where T: for<'r> Deserialize<'r> {}
 
+pub trait DeserializeFrom {
+	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
+	where
+		R: Read<'r>;
+}
+
 macro_rules! impl_de_from_bytes {
 	($type:ty, $num_bytes:literal) => {
 		impl<'r> Deserialize<'r> for $type {
@@ -30,10 +36,12 @@ impl_de_from_bytes!(u8, 1);
 impl_de_from_bytes!(u16, 2);
 impl_de_from_bytes!(u32, 4);
 impl_de_from_bytes!(u64, 8);
+impl_de_from_bytes!(u128, 16);
 impl_de_from_bytes!(i8, 1);
 impl_de_from_bytes!(i16, 2);
 impl_de_from_bytes!(i32, 4);
 impl_de_from_bytes!(i64, 8);
+impl_de_from_bytes!(i128, 16);
 impl_de_from_bytes!(f32, 4);
 impl_de_from_bytes!(f64, 8);
 

@@ -24,9 +24,10 @@ use std::{
 
 use crate::{
 	mcmc::Mcmc,
-	parameters::{Parameter, PyClassVector, PyReal, PyRealVector, PyTree},
+	parameters::{PyClassVector, PyReal, PyRealVector, PyTree},
 	priors::PyPrior,
 };
+use verbatim::Serialize;
 
 type Arrays = HashMap<String, Box<dyn ArrayBuilder>>;
 
@@ -215,7 +216,7 @@ fn write_value(
 		let tree = &*tree.get().inner();
 
 		let array = get::<BinaryBuilder>(arrays, name);
-		tree.dump(array)?;
+		tree.serialize(array)?;
 		array.append_value("");
 		size = *array.offsets_slice().last().unwrap() as usize;
 
