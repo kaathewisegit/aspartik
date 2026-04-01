@@ -13,6 +13,7 @@ members = [
 	"crates/sk",
 	"crates/stats",
 	"crates/util",
+	"crates/verbatim",
 ]
 
 [workspace.package]
@@ -62,6 +63,7 @@ rng = { version = "0.1.0-alpha.12", path = "crates/rng" }
 sk = { version = "0.1.0-alpha.12", path = "crates/sk" }
 stats = { version = "0.1.0-alpha.12", path = "crates/stats" }
 util = { version = "0.1.0-alpha.12", path = "crates/util" }
+verbatim = { version = "0.1.0-alpha.12", path = "crates/verbatim" }
 
 [workspace.lints.clippy]
 branches_sharing_code = "warn"
