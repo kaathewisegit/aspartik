@@ -26,8 +26,7 @@ pub fn eigen<const N: usize>(
 	let ldvl = n_i32;
 	let ldvr = n_i32;
 
-	// TODO: get rid of the allocation
-	let mut work = vec![0.0; N * 4];
+	let mut work = [[0.0; 4]; N]; // has the length of N * 4
 	let lwork = (N * 4) as c_int;
 
 	// SAFETY:
@@ -52,7 +51,7 @@ pub fn eigen<const N: usize>(
 			&ldvl,
 			vr.as_mut_ptr() as *mut f64,
 			&ldvr,
-			work.as_mut_ptr(),
+			work.as_mut_ptr() as *mut f64,
 			&lwork,
 			&mut info,
 		);
@@ -87,7 +86,7 @@ pub fn inverse<const N: usize>(m: &impl Matrix<f64, N, N>) -> [[f64; N]; N] {
 	}
 	assert_eq!(info, 0);
 
-	let mut work = vec![0.0; N * N];
+	let mut work = [[0.0; N]; N];
 	let lwork = work.len() as c_int;
 
 	// SAFETY:
@@ -102,7 +101,7 @@ pub fn inverse<const N: usize>(m: &impl Matrix<f64, N, N>) -> [[f64; N]; N] {
 			copy.as_mut_ptr() as *mut f64,
 			&n_i32,
 			ipiv.as_ptr(),
-			work.as_mut_ptr(),
+			work.as_mut_ptr() as *mut f64,
 			&lwork,
 			&mut info,
 		)
