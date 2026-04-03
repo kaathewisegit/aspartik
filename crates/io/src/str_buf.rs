@@ -27,7 +27,9 @@ impl<R: Read> StrBufReader<R> {
 		}
 
 		let Some(first_chunk) = new_slice.utf8_chunks().next() else {
-			todo!();
+			// if `new_slice` is empty, `str::from_utf8` returns
+			// `Ok("")` and the function exists above
+			unreachable!();
 		};
 
 		let new_valid_len = first_chunk.valid().len();
