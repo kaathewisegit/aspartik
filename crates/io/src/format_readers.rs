@@ -2,15 +2,15 @@ use anyhow::Result;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-use std::path::Path;
+use std::{fs::File, path::Path};
 
-use crate::{reader::StrReader, rw::AnyReader};
+use crate::reader::StrReader;
 use data::{DnaNucleotide, Msa, PyMsa, fasta::FastaParser};
 
 pub fn read_msa_from_fasta<P: AsRef<Path>>(
 	path: P,
 ) -> Result<Msa<DnaNucleotide>> {
-	let io = AnyReader::from_file(path)?;
+	let io = File::open(path)?;
 	let parser = FastaParser::<DnaNucleotide>::new();
 	let reader = StrReader::new(parser, io);
 

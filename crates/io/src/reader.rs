@@ -1,16 +1,18 @@
+use std::io::Read;
+
 use anyhow::Result;
 
-use crate::{StrBufReader, rw::AnyReader};
+use crate::StrBufReader;
 use data::Parser;
 
-pub struct StrReader<P> {
+pub struct StrReader<P, R> {
 	parser: P,
-	reader: StrBufReader<AnyReader>,
+	reader: StrBufReader<R>,
 	finished: bool,
 }
 
-impl<P: Parser<str>> StrReader<P> {
-	pub fn new(parser: P, reader: AnyReader) -> Self {
+impl<P: Parser<str>, R: Read> StrReader<P, R> {
+	pub fn new(parser: P, reader: R) -> Self {
 		Self {
 			parser,
 			reader: StrBufReader::new(reader),
@@ -28,7 +30,7 @@ macro_rules! bubble {
 	};
 }
 
-impl<P: Parser<str>> Iterator for StrReader<P> {
+impl<P: Parser<str>, R: Read> Iterator for StrReader<P, R> {
 	type Item = Result<P::Output>;
 
 	fn next(&mut self) -> Option<Self::Item> {
