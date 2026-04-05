@@ -253,6 +253,8 @@ pub struct HKY {
 
 impl HKY {
 	fn new(frequencies: Py<PyRealVector>, kappa: Py<PyReal>) -> Self {
+		assert_eq!(frequencies.get().inner().len(), 4);
+
 		let mut out = Self {
 			kappa,
 			frequencies,
@@ -364,6 +366,9 @@ pub struct GTR {
 
 impl GTR {
 	fn new(frequencies: Py<PyRealVector>, rates: Py<PyRealVector>) -> Self {
+		assert_eq!(frequencies.get().inner().len(), 4);
+		assert_eq!(rates.get().inner().len(), 6);
+
 		let mut out = Self {
 			frequencies,
 			rates,
