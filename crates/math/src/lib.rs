@@ -33,7 +33,7 @@ pub mod pymodule {
 	use tolerance::is_close;
 
 	#[pymodule_export]
-	use float::{exponent, exponent_bits, mantissa, mantissa_bits, sign};
+	use float::{exponent_bits, mantissa_bits, sign};
 
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {

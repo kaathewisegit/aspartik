@@ -1,5 +1,4 @@
 //! Utility functions for working with 64-bit floats
-// TODO: tests
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
@@ -24,37 +23,10 @@ pub fn exponent_bits(x: f64) -> u16 {
 	exponent.try_into().expect("infallible")
 }
 
-/// The mathematical exponent
-///
-/// This is the value of the exponent.  It's the absolute value of the exponent
-/// shifted by 1023, and further by 52 to account for the implicit leading 1 in
-/// mantissa.  The value of the float is thus `mantissa * 2^exponent`.
-#[cfg_attr(feature = "python", pyfunction)]
-pub fn exponent(x: f64) -> i16 {
-	exponent_bits(x) as i16 - 1023 - 52
-}
-
 /// Mantissa as raw bits
 ///
 /// This is the raw value.  For the mathematical mantissa use [`mantissa`].
 #[cfg_attr(feature = "python", pyfunction)]
 pub fn mantissa_bits(x: f64) -> u64 {
 	x.to_bits() & MANTISSA_MASK
-}
-
-/// Mathematical mantissa
-///
-/// It's 53 bits, because denormals are shifted by one and regular values have
-/// the implicit one added.
-#[cfg_attr(feature = "python", pyfunction)]
-pub fn mantissa(x: f64) -> u64 {
-	let mut mantissa = mantissa_bits(x);
-	if exponent_bits(x) == 0 {
-		// denormals
-		mantissa <<= 1;
-	} else {
-		mantissa |= 0x10000000000000; // 2^52
-	}
-
-	mantissa
 }

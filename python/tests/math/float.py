@@ -1,4 +1,3 @@
-# ruff: noqa: E712
 import pytest
 
 import math
@@ -8,6 +7,7 @@ from aspartik.math.float import exponent_bits, mantissa_bits, sign
 MAX = 1.7976931348623157e308
 
 
+# ruff: noqa: E712
 def test_sign():
     assert sign(1.0) == False
     assert sign(-1.0) == True
@@ -46,9 +46,6 @@ def test_exponent_bits(x, expected):
     assert exponent_bits(-x) == expected
 
 
-# TODO: property testing for exponent
-
-
 @pytest.mark.parametrize(
     "x,expected",
     [
@@ -59,14 +56,11 @@ def test_exponent_bits(x, expected):
         (1.5, 1 << 51),
         (0.75, 1 << 51),
         (0.1, 0x999999999999A),
-        # CPython implementation detail, empty quiet NaN.  If this case starts
-        # failing, it should be removed
+        # CPython implementation detail, the NaN is empty and quiet.  If this
+        # case starts failing, it should be removed
         (math.nan, 0x8000000000000),
     ],
 )
 def test_mantissa_bits(x, expected):
     assert mantissa_bits(x) == expected
     assert mantissa_bits(-x) == expected
-
-
-# TODO: property testing for mantissa
