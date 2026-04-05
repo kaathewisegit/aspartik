@@ -1,5 +1,6 @@
 #[cfg(feature = "python")]
 use pyo3::{exceptions::PyValueError, prelude::*};
+#[cfg(feature = "python")]
 use util::py_bail;
 
 use std::{cmp::PartialOrd, fmt, ops::Deref};

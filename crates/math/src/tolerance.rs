@@ -23,7 +23,7 @@ macro_rules! almost_eq {
 
 		$(c.$opt = $val;)*
 
-		use $crate::tolerance::{is_close, Tolerance};
+		use $crate::tolerance::Tolerance;
 
 		$a.is_close(&$b, c.epsilon, c.relative, c.ulps)
 	}};
