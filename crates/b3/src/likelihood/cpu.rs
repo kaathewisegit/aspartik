@@ -277,7 +277,8 @@ unsafe fn propose(
 
 	for i in 0..num_patterns {
 		let partial = partials_root.add(i).read();
-		state.likelihoods[i] = partial.mul(frequencies).sum().ln();
+		let prod: [f64; 4] = partial.hadamard(frequencies);
+		state.likelihoods[i] = prod.sum().ln();
 	}
 }}
 

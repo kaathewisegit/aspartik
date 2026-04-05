@@ -3,15 +3,12 @@ use std::{
 	ptr::null_mut,
 };
 
-use crate::{
-	Vector,
-	matrix::{Matrix, transpose},
-};
+use crate::{Vector, matrix::Matrix};
 
 pub fn eigen<const N: usize>(
 	m: &impl Matrix<f64, N, N>,
 ) -> ([f64; N], [[f64; N]; N]) {
-	let mut copy: [[f64; N]; N] = transpose(m);
+	let mut copy: [[f64; N]; N] = m.transpose();
 
 	let n_i32 = N as c_int;
 	let mut wr = <[f64; N]>::from_element(0.0);
@@ -57,11 +54,11 @@ pub fn eigen<const N: usize>(
 		);
 	}
 
-	(wr, transpose(&vr))
+	(wr, vr.transpose())
 }
 
 pub fn inverse<const N: usize>(m: &impl Matrix<f64, N, N>) -> [[f64; N]; N] {
-	let mut copy: [[f64; N]; N] = transpose(m);
+	let mut copy: [[f64; N]; N] = m.transpose();
 
 	let n_i32 = N as c_int;
 	let lda = n_i32;
@@ -108,5 +105,5 @@ pub fn inverse<const N: usize>(m: &impl Matrix<f64, N, N>) -> [[f64; N]; N] {
 	}
 	assert_eq!(info, 0);
 
-	transpose(&copy)
+	copy.transpose()
 }

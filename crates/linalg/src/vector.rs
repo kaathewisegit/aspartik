@@ -5,26 +5,36 @@ use std::ops::{Index, IndexMut};
 pub trait Vector<T: Copy + Num, const N: usize>:
 	Sized + Index<usize, Output = T> + IndexMut<usize>
 {
+	/// Create a new vector by repeating (splatting) `value`
 	fn from_element(value: T) -> Self;
 
-	fn map<F, U: Copy + Num>(&self, f: F) -> impl Vector<U, N>
-	where
-		F: FnMut(T) -> U;
+	/// Creates a vector of zeros
+	fn zeros() -> Self {
+		Self::from_element(T::zero())
+	}
 
+	/// Map the vector into a new one
+	fn map<F, U, V>(&self, f: F) -> V
+	where
+		F: FnMut(T) -> U,
+		U: Num + Copy,
+		V: Vector<U, N>;
+
+	/// Edit every element in place
 	fn for_each<F>(&mut self, f: F)
 	where
 		F: FnMut(&mut T);
 
-	// truncate?
-
-	fn mul(&self, rhs: impl Vector<T, N>) -> Self {
-		let mut out = Self::from_element(T::zero());
+	/// Per-element product of two vectors
+	fn hadamard<V: Vector<T, N>>(&self, rhs: impl Vector<T, N>) -> V {
+		let mut out = V::zeros();
 		for i in 0..N {
 			out[i] = self[i] * rhs[i];
 		}
 		out
 	}
 
+	/// Sum of all elements in a vector
 	fn sum(&self) -> T {
 		let mut out = self[0];
 		for i in 1..N {
@@ -33,6 +43,7 @@ pub trait Vector<T: Copy + Num, const N: usize>:
 		out
 	}
 
+	/// Product of all elements in a vector
 	fn product(&self) -> T {
 		let mut out = self[0];
 		for i in 1..N {
@@ -41,7 +52,8 @@ pub trait Vector<T: Copy + Num, const N: usize>:
 		out
 	}
 
-	fn dot_product(&self, other: impl Vector<T, N>) -> T {
+	/// Dot product of two vectors which can have different types
+	fn dot_product(&self, other: &impl Vector<T, N>) -> T {
 		let mut out = self[0] * other[0];
 
 		for i in 1..N {
@@ -57,12 +69,17 @@ impl<T: Copy + Num, const N: usize> Vector<T, N> for [T; N] {
 		[value; N]
 	}
 
-	#[expect(refining_impl_trait)]
-	fn map<F, U: Copy>(&self, f: F) -> [U; N]
+	fn map<F, U, V>(&self, mut f: F) -> V
 	where
 		F: FnMut(T) -> U,
+		U: Num + Copy,
+		V: Vector<U, N>,
 	{
-		<[T; N]>::map(*self, f)
+		let mut out = V::zeros();
+		for i in 0..N {
+			out[i] = f(self[i]);
+		}
+		out
 	}
 
 	fn for_each<F>(&mut self, f: F)

@@ -105,6 +105,8 @@ macro_rules! create_pysubstitution {
 	};
 }
 
+type M4 = [[f64; 4]; 4];
+
 /// Jukes-Cantor
 ///
 /// A simple model with equal state transition rates.
@@ -187,7 +189,7 @@ impl SubstitutionModel<4, f64> for K80 {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
+	fn get_transition(&self, distance: f64) -> M4 {
 		let kappa = self.cached_kappa;
 
 		let frac1 = -4.0 / (kappa + 2.0);
@@ -244,8 +246,8 @@ pub struct HKY {
 	cached_kappa: f64,
 	cached_frequencies: (f64, f64, f64, f64),
 
-	p: [[f64; 4]; 4],
-	inv_p: [[f64; 4]; 4],
+	p: M4,
+	inv_p: M4,
 	diag: [f64; 4],
 }
 
@@ -263,8 +265,8 @@ impl HKY {
 				f64::NAN,
 			),
 
-			p: [[0.0; 4]; 4],
-			inv_p: [[0.0; 4]; 4],
+			p: M4::zeros(),
+			inv_p: M4::zeros(),
 			diag: [0.0; 4],
 		};
 		out.update_matrices();
@@ -322,12 +324,12 @@ impl SubstitutionModel<4, f64> for HKY {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
-		let diag: [[f64; 4]; 4] = SquareMatrix::from_diagonal(
+	fn get_transition(&self, distance: f64) -> M4 {
+		let diag: M4 = SquareMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		self.p.mul(diag).mul(self.inv_p)
+		self.p.mul::<_, M4>(diag).mul(self.inv_p)
 	}
 
 	fn get_frequencies(&self) -> [f64; 4] {
@@ -353,8 +355,8 @@ pub struct GTR {
 	#[pyo3(get)]
 	rates: Py<PyRealVector>,
 
-	p: [[f64; 4]; 4],
-	inv_p: [[f64; 4]; 4],
+	p: M4,
+	inv_p: M4,
 	diag: [f64; 4],
 
 	has_changed: bool,
@@ -366,8 +368,8 @@ impl GTR {
 			frequencies,
 			rates,
 
-			p: [[0.0; 4]; 4],
-			inv_p: [[0.0; 4]; 4],
+			p: M4::zeros(),
+			inv_p: M4::zeros(),
 			diag: [0.0; 4],
 
 			has_changed: false,
@@ -439,12 +441,12 @@ impl SubstitutionModel<4, f64> for GTR {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
-		let diag: [[f64; 4]; 4] = SquareMatrix::from_diagonal(
+	fn get_transition(&self, distance: f64) -> M4 {
+		let diag: M4 = SquareMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		self.p.mul(diag).mul(self.inv_p)
+		self.p.mul::<_, M4>(diag).mul(self.inv_p)
 	}
 
 	fn get_frequencies(&self) -> [f64; 4] {

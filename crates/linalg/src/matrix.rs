@@ -20,8 +20,26 @@ where
 		Self::from_element(T::zero())
 	}
 
-	fn mul<const P: usize>(self, rhs: impl Matrix<T, M, P>) -> Self {
-		let mut out = Self::zeros();
+	fn transpose<O>(&self) -> O
+	where
+		O: Matrix<T, M, N>,
+	{
+		let mut out = O::zeros();
+
+		for i in 0..N {
+			for j in 0..M {
+				*out.at_mut(j, i) = *self.at(i, j);
+			}
+		}
+
+		out
+	}
+
+	fn mul<const P: usize, O>(self, rhs: impl Matrix<T, M, P>) -> O
+	where
+		O: Matrix<T, N, P>,
+	{
+		let mut out = O::zeros();
 
 		for i in 0..N {
 			for j in 0..P {
@@ -36,17 +54,20 @@ where
 		out
 	}
 
-	// fn mul_scalar(self, rhs: T) -> Self {
-	// 	let mut out = self;
+	fn mul_scalar<O>(self, rhs: T) -> O
+	where
+		O: Matrix<T, N, M>,
+	{
+		let mut out = O::zeros();
 
-	// 	for i in 0..N {
-	// 		for j in 0..M {
-	// 			out[(i, j)] *= rhs;
-	// 		}
-	// 	}
+		for i in 0..N {
+			for j in 0..M {
+				*out.at_mut(i, j) = *out.at(i, j) * rhs;
+			}
+		}
 
-	// 	out
-	// }
+		out
+	}
 }
 
 pub trait SquareMatrix<T, const N: usize>: Matrix<T, N, N>
@@ -54,7 +75,7 @@ where
 	T: Copy + Num,
 {
 	fn from_diagonal(diag: impl Vector<T, N>) -> Self {
-		let mut out = Self::from_element(T::zero());
+		let mut out = Self::zeros();
 		for i in 0..N {
 			*out.at_mut(i, i) = diag[i];
 		}
@@ -107,22 +128,4 @@ where
 			}
 		}
 	}
-}
-
-pub fn transpose<T: Copy + Num, const N: usize, const M: usize, S, D>(
-	src: &S,
-) -> D
-where
-	S: Matrix<T, N, M>,
-	D: Matrix<T, M, N>,
-{
-	let mut out = D::zeros();
-
-	for i in 0..N {
-		for j in 0..M {
-			*out.at_mut(j, i) = *src.at(i, j);
-		}
-	}
-
-	out
 }
