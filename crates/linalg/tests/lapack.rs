@@ -15,7 +15,8 @@ fn reconstruct<const N: usize>(m: M<N>) {
 
 	let diag: M<N> = SquareMatrix::from_diagonal(values);
 
-	let reconstructed: M<N> = vectors.mul::<_, M<N>>(diag).mul(inv_vectors);
+	let reconstructed: M<N> =
+		vectors.mul::<_, M<N>>(&diag).mul(&inv_vectors);
 
 	for i in 0..N {
 		for j in 0..N {

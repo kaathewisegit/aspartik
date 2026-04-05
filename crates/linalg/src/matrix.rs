@@ -35,7 +35,7 @@ where
 		out
 	}
 
-	fn mul<const P: usize, O>(self, rhs: impl Matrix<T, M, P>) -> O
+	fn mul<const P: usize, O>(self, rhs: &impl Matrix<T, M, P>) -> O
 	where
 		O: Matrix<T, N, P>,
 	{

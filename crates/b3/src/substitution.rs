@@ -329,7 +329,7 @@ impl SubstitutionModel<4, f64> for HKY {
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		self.p.mul::<_, M4>(diag).mul(self.inv_p)
+		self.p.mul::<_, M4>(&diag).mul(&self.inv_p)
 	}
 
 	fn get_frequencies(&self) -> [f64; 4] {
@@ -446,7 +446,7 @@ impl SubstitutionModel<4, f64> for GTR {
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		self.p.mul::<_, M4>(diag).mul(self.inv_p)
+		self.p.mul::<_, M4>(&diag).mul(&self.inv_p)
 	}
 
 	fn get_frequencies(&self) -> [f64; 4] {
