@@ -166,8 +166,8 @@ def b3_config(
     match operator_mix:
         case "default":
             num = min(msa.num_sequences, 1000)
-            operators.extend(
-                [
+            if clock_rate is None:
+                operators.append(
                     UpDown(
                         Internals(tree),
                         clock_rate_p,
@@ -175,7 +175,12 @@ def b3_config(
                         Uniform(0, 1),
                         rng,
                         weight=3,
-                    ),
+                    )
+                )
+            else:
+                operators.append(TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3))
+            operators.extend(
+                [
                     SubtreeLeap(tree, Normal(0, 1), rng, weight=num),
                     FixedHeightSPR(tree, rng, weight=num / 10),
                 ]
