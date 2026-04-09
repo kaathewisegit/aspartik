@@ -4,7 +4,7 @@ use parking_lot::Mutex;
 use pyo3::{
 	exceptions::{PyTypeError, PyValueError},
 	prelude::*,
-	types::PyAny,
+	types::{PyAny, PyType},
 };
 use rand::{RngExt, seq::SliceRandom};
 
@@ -335,6 +335,91 @@ impl Tree {
 		}
 
 		Ok(())
+	}
+
+	pub fn simulate_coalescent(
+		names: Vec<String>,
+		heights: Vec<f64>,
+		population_size: f64,
+		rng: &mut Rng,
+	) -> Result<Self> {
+		ensure!(names.len() == heights.len());
+		ensure!(heights.iter().all(|&h| h >= 0.0 && !h.is_nan()));
+
+		let mut tree = Self::new(names.clone(), rng)?;
+		for internal in tree.internals() {
+			tree.parents.set(internal.0, ROOT);
+		}
+
+		for (leaf, &height) in tree.leaves().zip(&heights) {
+			tree.set_height(*leaf, height)
+		}
+
+		let mut nodes: Vec<_> =
+			heights.into_iter().enumerate().collect();
+
+		nodes.sort_unstable_by_key(|(_, height)| height.to_bits());
+
+		let mut current_lineages: Vec<usize> = Vec::new();
+		let mut sorted_tips =
+			VecDeque::from_iter(nodes.iter().map(|(idx, _)| *idx));
+		let mut current_height = 0.0;
+
+		while sorted_tips.len() + current_lineages.len() > 1 {
+			// move tips below current heights to the pool
+			while let Some(&next_tip) = sorted_tips.front()
+				&& nodes[next_tip].1 <= current_height
+			{
+				current_lineages
+					.push(sorted_tips.pop_front().unwrap());
+			}
+
+			if current_lineages.len() < 2 {
+				if let Some(&next_tip) = sorted_tips.front() {
+					current_height = nodes[next_tip].1;
+					continue;
+				} else {
+					bail!("Failed to merge lineages");
+				}
+			}
+
+			// TODO: proper demographic functions
+			let k = current_lineages.len();
+			let rate =
+				(k * (k - 1)) as f64 / (2.0 * population_size);
+			let interval = -rng.random::<f64>().ln() / rate;
+			let next_event_height = current_height + interval;
+
+			if let Some(&next_tip) = sorted_tips.front()
+				&& next_event_height > nodes[next_tip].1
+			{
+				// there's a sample ahead, loopback to tip move
+				current_height = nodes[next_tip].1;
+				continue;
+			}
+
+			current_height = next_event_height;
+
+			let i = rng.random_range(0..current_lineages.len());
+			let child_left = current_lineages.swap_remove(i);
+			let i = rng.random_range(0..current_lineages.len());
+			let child_right = current_lineages.swap_remove(i);
+
+			let new_idx = nodes.len();
+			nodes.push((new_idx, current_height));
+
+			tree.heights.set(new_idx, current_height);
+			let offset = (new_idx - tree.num_leaves()) * 2;
+			tree.children.set(offset, child_left);
+			tree.children.set(offset + 1, child_right);
+			tree.parents.set(child_left, new_idx);
+			tree.parents.set(child_right, new_idx);
+
+			current_lineages.push(new_idx);
+		}
+
+		tree.accept();
+		Ok(tree)
 	}
 
 	pub fn names(&self) -> Vec<String> {
@@ -1098,6 +1183,26 @@ impl_pyparameter_common! {PyTree, Tree;
 	fn load_newick(&self, newick: &PyNewickTree) -> Result<()> {
 		self.inner().load_newick(&newick.inner())
 	}
+
+	#[classmethod]
+	fn simulate_coalescent(
+		_cls: Py<PyType>,
+		names: Vec<String>,
+		heights: Vec<f64>,
+		population_size: f64,
+		rng: Py< PyRng >,
+	) -> Result<Self> {
+		let tree = Tree::simulate_coalescent(
+			names,
+			heights,
+			population_size,
+			&mut rng.get().inner()
+		)?;
+		Ok(Self {
+			inner: Mutex::new(tree),
+		})
+	 }
+
 
 	/// A list of all leaf names.
 	///

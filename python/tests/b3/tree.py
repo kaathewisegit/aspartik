@@ -1,5 +1,5 @@
 import pytest
-from utils import random_msas, random_trees
+from utils import random_float, random_msas, random_trees
 
 from aspartik.b3.config import b3_config
 from aspartik.b3.parameters import Tree
@@ -77,3 +77,12 @@ def test_dump_load_mcmc(msa: MSA, rng: RNG):
     deserialized_tree.load(tree_state)
 
     assert tree.to_newick() == deserialized_tree.to_newick()
+
+
+@pytest.mark.parametrize("pop_size", random_float(0, 1000, num=5))
+def test_simulate_coalescent(pop_size: float, rng: RNG):
+    for i in range(3, 1000):
+        names = list(map(str, range(i)))
+        heights = [rng.random_float(0, 100) for _ in range(i)]
+        tree = Tree.simulate_coalescent(names, heights, pop_size, rng)
+        tree.validate()
