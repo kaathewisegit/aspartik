@@ -97,12 +97,12 @@ _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 """
 
 
-def _file_log(log: str, log_path: Optional[str]) -> str:
-    if not log_path:
+def _file_log(log: str, file_log_path: Optional[str], file_log_every: int) -> str:
+    if not file_log_path:
         return ""
 
     return f"""
-            <log id="fileLog" logEvery="1000" fileName="{log_path}">
+            <log id="fileLog" logEvery="{file_log_every}" fileName="{file_log_path}">
                 <posterior idref="posterior"/>
                 <prior idref="prior"/>
                 <likelihood idref="likelihood"/>
@@ -156,7 +156,8 @@ def beast1_config(
     operator_mix: Literal["default", "classic"] = "default",
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
-    log_path: Optional[str] = None,
+    file_log_every: int = 1_000,
+    file_log_path: Optional[str] = None,
     tree_log_path: Optional[str] = None,
     tree_log_every: int = 1_000,
     screen_log_every: Optional[int] = 1_000,
@@ -451,7 +452,7 @@ def beast1_config(
         operators=operators,
         tree_prior=tree_prior_s,
         priors=priors,
-        file_log=_file_log(log, log_path),
+        file_log=_file_log(log, file_log_path, file_log_every),
         screen_log=_screen_log(screen_log_every),
         tree_log=_tree_log(tree_log_path, tree_log_every),
         length=length,

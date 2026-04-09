@@ -39,7 +39,7 @@ def compare_beast1(
 
     beast1_xml_config = beast1_config(
         msa,
-        log_path=beast1_path,
+        file_log_path=beast1_path,
         substitution_model="HKY",
         tree_prior=tree_prior,
         length=length,

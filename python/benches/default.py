@@ -47,7 +47,7 @@ def run_beast1(msa: MSA, length: int, kind: CalculatorKind):
         msa,
         tree_prior="constant",
         substitution_model="HKY",
-        log_path="target/bench.beast1.log",
+        file_log_path="target/bench.beast1.log",
         tree_log_path="target/bench.beast1.trees",
         length=length,
     )
