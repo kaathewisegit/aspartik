@@ -5,12 +5,17 @@ from ...rng import RNG
 from ...stats.distributions import Sample
 from .. import Operator, Proposal
 from ..parameters import Internal, Node, Tree
-from ._util import family
+from ._util import assert_two_internals, family
 
 
 @dataclass(slots=True)
 class SubtreeSlide(Operator):
-    """"""
+    """
+    Analogous to BEAST's `SubtreeSlide`, changes the height of a subtree
+
+    This operator can change the topology if a subtree slides past its parent
+    or below its children.
+    """
 
     tree: Tree
     """The tree to edit."""
@@ -22,20 +27,14 @@ class SubtreeSlide(Operator):
     rng: RNG
     weight: float = 1
 
-    def propose(self) -> Proposal:
-        """
-        If there are no non-root internal nodes, the operator will bail with
-        `Proposal.Reject`.
-        """
+    def __post_init__(self):
+        assert_two_internals(self)
 
+    def propose(self) -> Proposal:
         rng = self.rng
         tree = self.tree
 
         ratio = 0.0
-
-        # automatically fail on trees without non-root internal nodes
-        if tree.num_internals == 1:
-            return Proposal.Reject()
 
         node, sibling, parent, grandparent = family(tree, rng)
         delta = self.distribution.sample(rng)
