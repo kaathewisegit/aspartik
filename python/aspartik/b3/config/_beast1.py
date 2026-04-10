@@ -185,6 +185,23 @@ def beast1_config(
 
     substitution_model_s = None
     match substitution_model:
+        case "JC":
+            # BEAST represents JC as a fixed HKY model
+            substitution_model_s = """
+    <HKYModel id="jc">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa" value="1.0" />
+        </kappa>
+    </HKYModel>
+"""
+
         case "HKY":
             substitution_model_s = """
     <HKYModel id="hky">
