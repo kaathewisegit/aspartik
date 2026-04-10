@@ -1,11 +1,11 @@
 import subprocess
 import tempfile
 from collections.abc import Sequence
-from typing import Literal, Optional
+from typing import Optional
 
 from aspartik.data.msa import MSA
 
-from ._shared import CalculatorKind, SubstitutionModel, TreePrior
+from ._shared import CalculatorKind, OperatorMix, SubstitutionModel, TreePrior
 
 _beast1_default_template = """<?xml version="1.0" standalone="yes"?>
 
@@ -153,7 +153,7 @@ def beast1_config(
     *,
     heights: Optional[Sequence] = None,
     substitution_model: SubstitutionModel,
-    operator_mix: Literal["default", "classic"] = "default",
+    operator_mix: OperatorMix = "scalable",
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
     file_log_every: int = 1_000,
@@ -279,7 +279,21 @@ def beast1_config(
             """
 
     match operator_mix:
-        case "default":
+        case "scalable":
+            num = min(msa.num_sequences, 1000)
+            operators += f"""
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="tree.rootHeight"/>
+		</scaleOperator>
+        <subtreeLeap size="1.0" weight="{num}">
+            <treeModel idref="tree"/>
+        </subtreeLeap>
+        <fixedHeightSubtreePruneRegraft weight="{num / 10}">
+            <treeModel idref="tree"/>
+        </fixedHeightSubtreePruneRegraft>
+            """
+            pass
+        case "beauti1_default":
             num = min(msa.num_sequences, 1000)
             operators += f"""
         <upDownOperator scaleFactor="0.75" weight="3">
@@ -297,7 +311,7 @@ def beast1_config(
             <treeModel idref="tree"/>
         </fixedHeightSubtreePruneRegraft>
             """
-        case "classic":
+        case "beauti1_classic":
             operators += """
 		<scaleOperator scaleFactor="0.75" scaleAll="true" ignoreBounds="true" weight="3">
 			<parameter idref="tree.allInternalNodeHeights"/>

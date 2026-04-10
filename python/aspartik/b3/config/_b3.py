@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Optional
+from typing import Optional
 
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, Timer, TraceWriter
@@ -39,7 +39,7 @@ from aspartik.stats.distributions import (
     Uniform,
 )
 
-from ._shared import CalculatorKind, SubstitutionModel, TreePrior
+from ._shared import CalculatorKind, OperatorMix, SubstitutionModel, TreePrior
 
 
 def b3_config(
@@ -49,7 +49,7 @@ def b3_config(
     tree_sim_pop_size: float = 100.0,
     calculator: CalculatorKind = "cpu",
     substitution_model: SubstitutionModel,
-    operator_mix: Literal["default", "classic"] = "default",
+    operator_mix: OperatorMix = "scalable",
     clock_rate: Optional[float] = None,
     tree_prior: TreePrior,
     param_priors: dict[str, Continuous] = {},
@@ -163,10 +163,23 @@ def b3_config(
     assert clock_rate_p is not None
 
     match operator_mix:
-        case "default":
+        case "scalable":
             num = min(msa.num_sequences, 1000)
-            if clock_rate is None:
-                operators.append(
+            operators.extend(
+                [
+                    RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
+                    SubtreeLeap(tree, Normal(0, 1), rng, weight=num),
+                    FixedHeightSPR(tree, rng, weight=num / 10),
+                ]
+            )
+        case "beauti1_default":
+            assert clock_rate is not None, (
+                "BEAUti default operator mix doesn't support fixed clock rate"
+            )
+
+            num = min(msa.num_sequences, 1000)
+            operators.extend(
+                [
                     UpDown(
                         Internals(tree),
                         clock_rate_p,
@@ -174,17 +187,12 @@ def b3_config(
                         Uniform(0, 1),
                         rng,
                         weight=3,
-                    )
-                )
-            else:
-                operators.append(TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3))
-            operators.extend(
-                [
+                    ),
                     SubtreeLeap(tree, Normal(0, 1), rng, weight=num),
                     FixedHeightSPR(tree, rng, weight=num / 10),
                 ]
             )
-        case "classic":
+        case "beauti1_classic":
             operators.extend(
                 [
                     TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
