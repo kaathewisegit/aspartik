@@ -297,6 +297,30 @@ def beast1_config(
             <treeModel idref="tree"/>
         </fixedHeightSubtreePruneRegraft>
             """
+        case "classic":
+            operators += """
+		<scaleOperator scaleFactor="0.75" scaleAll="true" ignoreBounds="true" weight="3">
+			<parameter idref="tree.allInternalNodeHeights"/>
+		</scaleOperator>
+		<subtreeSlide size="1.0" gaussian="true" weight="30">
+			<treeModel idref="tree"/>
+		</subtreeSlide>
+		<narrowExchange weight="30">
+			<treeModel idref="tree"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="tree"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="tree"/>
+		</wilsonBalding>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="tree.rootHeight"/>
+		</scaleOperator>
+		<uniformOperator weight="30">
+			<parameter idref="tree.internalNodeHeights"/>
+		</uniformOperator>
+            """
 
     clock_s = None
     match clock_rate:
