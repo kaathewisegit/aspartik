@@ -2,6 +2,8 @@ use anyhow::Result;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
+#[cfg(feature = "python")]
+use std::path::PathBuf;
 use std::{fs::File, path::Path};
 
 use crate::reader::StrReader;
@@ -19,6 +21,6 @@ pub fn read_msa_from_fasta<P: AsRef<Path>>(
 
 #[cfg(feature = "python")]
 #[pyfunction(name = "read_msa_from_fasta")]
-pub fn py_read_msa_from_fasta(path: &str) -> Result<PyMsa> {
+pub fn py_read_msa_from_fasta(path: PathBuf) -> Result<PyMsa> {
 	read_msa_from_fasta(path).map(PyMsa)
 }
