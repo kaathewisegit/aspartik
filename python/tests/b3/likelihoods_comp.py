@@ -17,7 +17,7 @@ SCALES = [3, 30, 300]
 def test_compare_likelihood():
     rng = RNG(4)
 
-    msa = read_msa_from_fasta("data/alignments/influenza.fasta")
+    msa = read_msa_from_fasta("data/alignments/H1N1pdm_2009.fasta")
 
     tree = Tree(msa.sequence_names(), rng)
 

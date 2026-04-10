@@ -1,9 +1,14 @@
+from pathlib import Path
+
 from aspartik.io import read_msa_from_fasta
 
 
 def test_eq():
-    for name in ["apes", "influenza", "respiratory"]:
-        a = read_msa_from_fasta(f"data/alignments/{name}.fasta")
-        b = read_msa_from_fasta(f"data/alignments/{name}.fasta")
+    alignments = Path("data/alignments/")
+
+    for fasta_file in alignments.glob("*.fasta"):
+        # TODO: accept paths and pathlike objects
+        a = read_msa_from_fasta(str(fasta_file))
+        b = read_msa_from_fasta(str(fasta_file))
 
         assert a == b
