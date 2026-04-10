@@ -22,7 +22,11 @@ class Tree:
     def load_newick(self, newick: NewickTree): ...
     @classmethod
     def simulate_coalescent(
-        cls, names: list[str], heights: list[float], population_size: float, rng: RNG
+        cls,
+        names: Sequence[str],
+        heights: Sequence[float],
+        population_size: float,
+        rng: RNG,
     ): ...
     @property
     def names(self) -> list[str]: ...

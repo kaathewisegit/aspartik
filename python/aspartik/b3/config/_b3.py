@@ -45,7 +45,8 @@ from ._shared import CalculatorKind, SubstitutionModel, TreePrior
 def b3_config(
     msa: MSA,
     *,
-    heights: Optional[Sequence] = None,
+    heights: Optional[Sequence[float]] = None,
+    tree_sim_pop_size: float = 100.0,
     calculator: CalculatorKind = "cpu",
     substitution_model: SubstitutionModel,
     operator_mix: Literal["default", "classic"] = "default",
@@ -65,15 +66,13 @@ def b3_config(
     parameters, operators, priors = [], [], []
     items = {}
 
-    tree = Tree(msa.sequence_names(), rng)
+    if heights is None:
+        heights = [0.0] * msa.num_sequences
+    tree = Tree.simulate_coalescent(
+        msa.sequence_names(), heights, tree_sim_pop_size, rng
+    )
     items["tree"] = tree
     parameters.append(tree)
-
-    if heights:
-        for leaf, height in zip(tree.leaves(), heights):
-            tree.set_height(leaf, height)
-        tree.set_random_heights(0.3, rng)
-        tree.accept()
 
     def create_real(
         initial: float,
