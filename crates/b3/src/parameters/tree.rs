@@ -265,12 +265,11 @@ impl Tree {
 			mapping.insert(n_leaf_idx, s_idx);
 		}
 
-		let mut queue = VecDeque::from_iter(newick.leaves());
-
 		for i in 0..self.num_edges() {
 			self.children.set(i, ROOT);
 		}
 
+		let mut queue = VecDeque::from_iter(newick.leaves());
 		let num_leaves = self.num_leaves();
 		let mut internal_idx = self.num_leaves();
 		while let Some(n_idx) = queue.pop_front() {
@@ -280,6 +279,7 @@ impl Tree {
 			};
 			let s_parent_idx =
 				*mapping.entry(parent).or_insert_with(|| {
+					queue.push_back(parent);
 					let idx = internal_idx;
 					internal_idx += 1;
 					idx
@@ -294,7 +294,6 @@ impl Tree {
 				self.children
 					.set(child_offset + 1, current_idx);
 			}
-			queue.push_back(parent);
 		}
 
 		let rmapping: HashMap<Node, NewickNodeIndex> = mapping
