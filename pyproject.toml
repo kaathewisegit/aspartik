@@ -15,6 +15,7 @@ classifiers = [
 keywords = ["bioinformatics"]
 
 [project.optional-dependencies]
+cli = ["clypi~=1.8.2"]
 dev = [
 	"maturin[patchelf]~=1.12 ; sys_platform == 'linux'",
 	"maturin~=1.12 ; sys_platform != 'linux'",
@@ -27,6 +28,7 @@ dev = [
 	"pytest~=9.0",
 	"ruff~=0.15.8",
 	"delvewheel~=1.12.0",
+	"clypi~=1.8.2",  # duplicated from `cli`
 ]
 
 [build-system]

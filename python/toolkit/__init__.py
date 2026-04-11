@@ -1,14 +1,37 @@
+from clypi import ClypiConfig, ClypiFormatter, Command, arg, configure
+from typing_extensions import override
+
 import os
 import platform
 import subprocess
 import sys
-from argparse import ArgumentParser, Namespace
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
 from typing import Literal
 
 from . import doc
+
+
+@contextmanager
+def chdir(dir: str):
+    old_dir = os.getcwd()
+
+    os.chdir(dir)
+
+    try:
+        yield
+    finally:
+        os.chdir(old_dir)
+
+
+def execute(cmd: str, **kwargs):
+    result = subprocess.run(cmd, shell=True, **kwargs)
+
+    if result.returncode != 0:
+        sys.exit(f"Command `{cmd}` failed with exit code {result.returncode}")
+
+    return result
 
 
 def is_ci():
@@ -33,206 +56,178 @@ def should_run(kind: Literal["rust", "python", "website"]):
     return is_ci() or changed
 
 
-@contextmanager
-def chdir(dir: str):
-    old_dir = os.getcwd()
+class Fix(Command):
+    """Automatically fix code"""
 
-    os.chdir(dir)
+    rust: bool = arg(inherited=True)
+    python: bool = arg(inherited=True)
+    website: bool = arg(inherited=True)
 
-    try:
-        yield
-    finally:
-        os.chdir(old_dir)
+    @override
+    async def run(self):
+        if self.rust:
+            execute("cargo fmt")
+            execute("cargo clippy --fix --allow-dirty")
 
+        if self.python:
+            execute("ruff format")
+            execute("ruff check --extend-select F401 --fix")
 
-def execute(cmd: str, **kwargs):
-    result = subprocess.run(cmd, shell=True, **kwargs)
-
-    if result.returncode != 0:
-        sys.exit(f"Command `{cmd}` failed with exit code {result.returncode}")
-
-    return result
-
-
-def add_langopts(parser: ArgumentParser):
-    parser.add_argument("--rust", action="store_true", help="run Rust commands")
-    parser.add_argument("--python", action="store_true", help="run Python commands")
-    parser.add_argument(
-        "--website", action="store_true", help="run JavaScript commands"
-    )
+        if self.website:
+            with chdir("website/"):
+                execute("npm run fix")
 
 
-def set_lang_args(args: Namespace):
-    if "rust" not in args:
-        return
+class Lint(Command):
+    """Validate with linters and formatters"""
 
-    if not args.rust and not args.python and not args.website:
-        args.rust = True
-        args.python = True
-        args.website = True
+    rust: bool = arg(inherited=True)
+    python: bool = arg(inherited=True)
+    website: bool = arg(inherited=True)
 
+    @override
+    async def run(self):
+        if self.rust:
+            execute("cargo fmt --check")
+            execute(
+                "cargo clippy --workspace --tests --features arbitrary -- -D warnings"
+            )
 
-def make_parser():
-    parser = ArgumentParser(
-        prog="toolkit",
-        description="Command runner for working on Aspartik",
-    )
-    subparsers = parser.add_subparsers(dest="subcommand")
+        if self.python:
+            execute("ruff format --check")
+            execute("ruff check --extend-select F401")
+            execute("ty check")
 
-    fix = subparsers.add_parser("fix", help="automatically fix code")
-    add_langopts(fix)
-
-    lint = subparsers.add_parser("lint", help="validate with linters and formatters")
-    add_langopts(lint)
-
-    test = subparsers.add_parser("test", help="run tests")
-    add_langopts(test)
-
-    subparsers.add_parser("run", help="run a minimal `b3` simulation")
-
-    check = subparsers.add_parser("check", help="run all checks")
-    add_langopts(check)
-
-    subparsers.add_parser("clean", help="remove temporary files and `b3` output")
-
-    subparsers.add_parser("pdoc", help="build the pdoc HTML files")
-
-    subparsers.add_parser("build", help="build the platform wheel")
-
-    subparsers.add_parser("sdist", help="build sdist")
-
-    return parser
+        if self.website:
+            with chdir("website/"):
+                execute("npm run check")
 
 
-def fix(args: Namespace):
-    if args.rust:
-        execute("cargo fmt")
-        execute("cargo clippy --fix --allow-dirty")
+class Test(Command):
+    """Run tests"""
 
-    if args.python:
-        execute("ruff format")
-        execute("ruff check --extend-select F401 --fix")
+    rust: bool = arg(inherited=True)
+    python: bool = arg(inherited=True)
 
-    if args.website:
-        with chdir("website/"):
-            execute("npm run fix")
+    @override
+    async def run(self):
+        if self.rust and should_run("rust"):
+            execute("cargo test --workspace --features arbitrary")
 
-
-def lint(args: Namespace):
-    if args.rust and should_run("rust"):
-        execute("cargo fmt --check")
-        execute(
-            "cargo clippy --workspace --tests --features arbitrary -- -D warnings",
-        )
-
-    if args.python and should_run("python"):
-        execute("ruff format --check")
-        execute("ruff check --extend-select F401")
-
-        execute("ty check")
-
-    if args.website and should_run("website"):
-        with chdir("website/"):
-            execute("npm run check")
+        if self.python and should_run("python"):
+            execute("pytest")
 
 
-def test(args: Namespace):
-    if args.rust and should_run("rust"):
-        execute("cargo test --workspace --features arbitrary")
+class Run(Command):
+    """Run a minimal `b3` simulation"""
 
-    if args.python and should_run("python"):
-        execute("pytest")
-
-
-def run():
-    execute("uv run --no-sync python/examples/apes.py")
-
-    influenza_len = 100 if is_ci() else 20_000
-    execute(f"uv run --no-sync python/examples/influenza.py {influenza_len}")
+    @override
+    async def run(self):
+        execute("uv run --no-sync python/examples/apes.py")
+        influenza_len = 100 if is_ci() else 20_000
+        execute(f"uv run --no-sync python/examples/influenza.py {influenza_len}")
 
 
-ARTIFACTS = [
-    "flamegraph.svg",
-    "perf.data",
-    "perf.data.old",
-    "b3.trees",
-    "b3.log",
-    ".pytest_cache",
-]
+class Check(Command):
+    """Run all checks"""
+
+    rust: bool = arg(inherited=True)
+    python: bool = arg(inherited=True)
+    website: bool = arg(inherited=True)
+
+    @override
+    async def run(self):
+        await Lint(self.rust, self.python, self.website).run()
+        await Test(self.rust, self.python).run()
+
+        if self.rust or self.python:
+            await Run().run()
 
 
-def check(args: Namespace):
-    lint(args)
-    test(args)
+class Clean(Command):
+    """Remove temporary files"""
 
-    if args.rust or args.python:
-        run()
+    target: bool = arg(False, help="Cleanup Rust's `target/` dir too")
 
+    @override
+    async def run(self):
+        execute("ruff clean")
 
-def clean():
-    execute("ruff clean")
-
-    for path in Path(".").glob("python/**/__pycache__/"):
-        rmtree(path)
-
-    for path in Path(".").glob("b3-error-*.state"):
-        path.unlink()
-
-    for path in map(Path, ARTIFACTS):
-        if path.is_file():
-            path.unlink()
-        elif path.is_dir():
+        for path in Path(".").glob("python/**/__pycache__/"):
             rmtree(path)
 
+        for path in Path(".").glob("b3-error-*.state"):
+            path.unlink()
 
-def build(args: Namespace):
-    rmtree("target/wheels/", ignore_errors=True)
+        artifacts = [
+            "flamegraph.svg",
+            "perf.data",
+            "perf.data.old",
+            ".pytest_cache",
+        ]
+        for path in map(Path, artifacts):
+            if path.is_file():
+                path.unlink()
+            elif path.is_dir():
+                rmtree(path)
 
-    execute("maturin build --release")
-
-    if platform.system() == "Windows":
-        wheel_dir = Path("target/wheels/")
-        wheel_path = next(wheel_dir.iterdir())
-
-        paths = "C:/mingw64/bin/;C:/msys64/ucrt64/bin/;C:/msys64/mingw64/bin/"
-        execute(
-            f"delvewheel repair --add-path {paths} --include libgfortran-5.dll {wheel_path}"
-        )
-        execute(f"uv pip install wheelhouse/{wheel_path.name}")
-
-
-def sdist():
-    rmtree("target/sdist/", ignore_errors=True)
-    execute("maturin sdist --out target/sdist/")
+        if self.target:
+            execute("cargo clean")
 
 
-def pdoc():
-    doc.dump_json("aspartik")
+class Build(Command):
+    """Build a wheel for the host platform"""
+
+    @override
+    async def run(self):
+        rmtree("target/wheels/", ignore_errors=True)
+        execute("maturin build --release")
+
+        if platform.system() == "Windows":
+            wheel_dir = Path("target/wheels/")
+            wheel_path = next(wheel_dir.iterdir())
+            paths = "C:/mingw64/bin/;C:/msys64/ucrt64/bin/;C:/msys64/mingw64/bin/"
+            execute(
+                f"delvewheel repair --add-path {paths} --include libgfortran-5.dll {wheel_path}"
+            )
+            execute(f"uv pip install wheelhouse/{wheel_path.name}")
+
+
+class Sdist(Command):
+    """Build sdist"""
+
+    @override
+    async def run(self):
+        rmtree("target/sdist/", ignore_errors=True)
+        execute("maturin sdist --out target/sdist/")
+
+
+class Pdoc(Command):
+    """Generate pdoc json dump"""
+
+    @override
+    async def run(self):
+        doc.dump_json("aspartik")
+
+
+class Toolkit(Command):
+    """Aspartik development helper"""
+
+    subcommand: Fix | Lint | Test | Run | Check | Clean | Build | Sdist | Pdoc | None
+
+    rust: bool = arg(default=should_run("rust"))
+    python: bool = arg(default=should_run("python"))
+    website: bool = arg(default=should_run("website"))
+
+    @override
+    async def run(self):
+        self.print_help()
 
 
 def main():
-    parser = make_parser()
-    args = parser.parse_args()
-    set_lang_args(args)
+    configure(
+        ClypiConfig(help_formatter=ClypiFormatter(boxed=False, show_option_types=False))
+    )
 
-    match args.subcommand:
-        case "fix":
-            fix(args)
-        case "lint":
-            lint(args)
-        case "test":
-            test(args)
-        case "run":
-            run()
-        case "check":
-            check(args)
-        case "clean":
-            clean()
-        case "pdoc":
-            pdoc()
-        case "build":
-            build(args)
-        case "sdist":
-            sdist()
-        case None:
-            parser.print_help()
+    cli = Toolkit.parse()
+    cli.start()
