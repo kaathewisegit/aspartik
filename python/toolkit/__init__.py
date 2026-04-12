@@ -1,11 +1,11 @@
-from clypi import ClypiConfig, ClypiFormatter, Command, arg, configure
-from typing_extensions import override
+from cliclass import CliCommand
 
 import os
 import platform
 import subprocess
 import sys
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
 from shutil import rmtree
 from typing import Literal
@@ -56,15 +56,18 @@ def should_run(kind: Literal["rust", "python", "website"]):
     return is_ci() or changed
 
 
-class Fix(Command):
+@dataclass(kw_only=True)
+class Langopts:
+    rust: bool = field(default=should_run("rust"))
+    python: bool = field(default=should_run("python"))
+    website: bool = field(default=should_run("website"))
+
+
+@dataclass
+class Fix(Langopts):
     """Automatically fix code"""
 
-    rust: bool = arg(inherited=True)
-    python: bool = arg(inherited=True)
-    website: bool = arg(inherited=True)
-
-    @override
-    async def run(self):
+    def run(self):
         if self.rust:
             execute("cargo fmt")
             execute("cargo clippy --fix --allow-dirty")
@@ -78,15 +81,11 @@ class Fix(Command):
                 execute("npm run fix")
 
 
-class Lint(Command):
+@dataclass
+class Lint(Langopts):
     """Validate with linters and formatters"""
 
-    rust: bool = arg(inherited=True)
-    python: bool = arg(inherited=True)
-    website: bool = arg(inherited=True)
-
-    @override
-    async def run(self):
+    def run(self):
         if self.rust:
             execute("cargo fmt --check")
             execute(
@@ -103,14 +102,11 @@ class Lint(Command):
                 execute("npm run check")
 
 
-class Test(Command):
+@dataclass
+class Test(Langopts):
     """Run tests"""
 
-    rust: bool = arg(inherited=True)
-    python: bool = arg(inherited=True)
-
-    @override
-    async def run(self):
+    def run(self):
         if self.rust and should_run("rust"):
             execute("cargo test --workspace --features arbitrary")
 
@@ -118,39 +114,36 @@ class Test(Command):
             execute("pytest")
 
 
-class Run(Command):
+@dataclass
+class Run:
     """Run a minimal `b3` simulation"""
 
-    @override
-    async def run(self):
+    def run(self):
         execute("uv run --no-sync python/examples/apes.py")
         influenza_len = 100 if is_ci() else 20_000
         execute(f"uv run --no-sync python/examples/influenza.py {influenza_len}")
 
 
-class Check(Command):
+@dataclass
+class Check(Langopts):
     """Run all checks"""
 
-    rust: bool = arg(inherited=True)
-    python: bool = arg(inherited=True)
-    website: bool = arg(inherited=True)
-
-    @override
-    async def run(self):
-        await Lint(self.rust, self.python, self.website).run()
-        await Test(self.rust, self.python).run()
+    def run(self):
+        Lint().run()
+        Test().run()
 
         if self.rust or self.python:
-            await Run().run()
+            Run().run()
 
 
-class Clean(Command):
+@dataclass
+class Clean:
     """Remove temporary files"""
 
-    target: bool = arg(False, help="Cleanup Rust's `target/` dir too")
+    target: bool = field(default=False, kw_only=True)
+    "Cleanup Rust's `target/` dir too"
 
-    @override
-    async def run(self):
+    def run(self):
         execute("ruff clean")
 
         for path in Path(".").glob("python/**/__pycache__/"):
@@ -175,11 +168,11 @@ class Clean(Command):
             execute("cargo clean")
 
 
-class Build(Command):
+@dataclass
+class Build:
     """Build a wheel for the host platform"""
 
-    @override
-    async def run(self):
+    def run(self):
         rmtree("target/wheels/", ignore_errors=True)
         execute("maturin build --release")
 
@@ -193,41 +186,36 @@ class Build(Command):
             execute(f"uv pip install wheelhouse/{wheel_path.name}")
 
 
-class Sdist(Command):
+@dataclass
+class Sdist:
     """Build sdist"""
 
-    @override
-    async def run(self):
+    def run(self):
         rmtree("target/sdist/", ignore_errors=True)
         execute("maturin sdist --out target/sdist/")
 
 
-class Pdoc(Command):
+@dataclass
+class Pdoc:
     """Generate pdoc json dump"""
 
-    @override
-    async def run(self):
+    def run(self):
         doc.dump_json("aspartik")
 
 
-class Toolkit(Command):
+@dataclass
+class Toolkit:
     """Aspartik development helper"""
 
-    subcommand: Fix | Lint | Test | Run | Check | Clean | Build | Sdist | Pdoc | None
+    subcommand: Fix | Lint | Test | Run | Check | Clean | Build | Sdist | Pdoc = field(
+        metadata={"cli": {"subcommand": True}}
+    )
 
-    rust: bool = arg(default=should_run("rust"))
-    python: bool = arg(default=should_run("python"))
-    website: bool = arg(default=should_run("website"))
-
-    @override
-    async def run(self):
-        self.print_help()
+    def run(self):
+        self.subcommand.run()
 
 
 def main():
-    configure(
-        ClypiConfig(help_formatter=ClypiFormatter(boxed=False, show_option_types=False))
-    )
-
-    cli = Toolkit.parse()
-    cli.start()
+    cli = CliCommand(Toolkit)
+    toolkit = cli.parse()
+    toolkit.run()
