@@ -12,12 +12,12 @@ def trees_to_newick(
     *,
     tree_key: str = "tree",
 ):
-    import pandas as pd
+    import polars as pl
 
     dest = _to_io(dest)
 
     tree = Tree(names, RNG(4))
-    df = pd.read_feather(trace_path)
+    df = pl.read_ipc(trace_path)
 
     for bytes in df["tree"]:
         tree.load(bytes)

@@ -1,4 +1,4 @@
-import pandas as pd
+import polars as pl
 
 from aspartik.b3 import Prior
 from aspartik.b3.likelihoods import Likelihood
@@ -12,9 +12,9 @@ def compare_b3(
     priors: dict[str, Prior] = {},
     likelihoods: list[Likelihood] = [],
 ):
-    trace = pd.read_feather(trace_path)
+    trace = pl.read_ipc(trace_path)
 
-    for _, row in trace.iterrows():
+    for row in trace.iter_rows(named=True):
         for name, param in parameters.items():
             match param:
                 case Tree():
@@ -35,10 +35,10 @@ def compare_beast1(
     priors: dict[str, Prior] = {},
     likelihoods: list[Likelihood] = [],
 ):
-    log = pd.read_csv(log_path, skiprows=3, sep="\t")
+    log = pl.read_csv(log_path, separator="\t", skip_lines=3)
     trees = open(trees_path, "r")
 
-    for (_, row), tree in zip(log.iterrows(), trees):
+    for row, tree in zip(log.iter_rows(named=True), trees):
         for name, param in parameters.items():
             match param:
                 case Tree():

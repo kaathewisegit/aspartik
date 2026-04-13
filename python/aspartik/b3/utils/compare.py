@@ -1,4 +1,4 @@
-import pandas as pd
+import polars as pl
 
 from typing import Literal
 
@@ -46,8 +46,8 @@ def compare_beast1(
     )
     beast1_run(beast1_xml_config, "cpu")
 
-    b3 = burnin(pd.read_feather(b3_path))
-    beast1 = burnin(pd.read_csv(beast1_path, sep="\t", skiprows=3))
+    b3 = burnin(pl.read_ipc(b3_path))
+    beast1 = burnin(pl.read_csv(beast1_path, separator="\t", skip_lines=3))
 
     columns = ["clock_rate"]
     match model:
