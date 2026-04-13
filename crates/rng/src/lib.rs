@@ -31,9 +31,9 @@ pub struct PyRng {
 
 impl Serialize for PyRng {
 	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
-		let (state, increment) = self.inner().to_state();
-		state.serialize(writer)?;
-		increment.serialize(writer)
+		let inner = self.inner();
+		inner.state().serialize(writer)?;
+		inner.stream().serialize(writer)
 	}
 }
 
