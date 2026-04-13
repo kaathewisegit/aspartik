@@ -5,12 +5,12 @@ use pyo3::prelude::*;
 use crate::parameters::{Node, PyReal, PyTree, Tree};
 
 #[derive(Debug)]
-struct Coalescent {
+pub struct Intervals {
 	state: Vec<(Node, f64)>,
 	state_backup: Vec<(Node, f64)>,
 }
 
-impl Coalescent {
+impl Intervals {
 	fn new(tree: &Tree) -> Mutex<Self> {
 		let num_nodes = tree.num_nodes();
 		let state = Vec::<(Node, f64)>::with_capacity(num_nodes);
@@ -74,44 +74,6 @@ impl Coalescent {
 		}
 	}
 
-	fn calculate<FP, FI>(
-		&mut self,
-		tree: &Tree,
-		population_size_at: FP,
-		integral: FI,
-	) -> Result<f64>
-	where
-		FP: Fn(f64) -> f64,
-		FI: Fn(f64, f64) -> f64,
-	{
-		self.update(tree);
-
-		let mut out = 0.0; // log-likelihood
-		let mut last_height = self.state[0].1;
-		let mut num: usize = 1; // number of active lineages
-
-		for (node, height) in self.state.iter().skip(1) {
-			let binomial = (num * (num - 1) / 2) as f64;
-			let area = integral(last_height, *height);
-			out -= binomial * area;
-
-			if tree.is_internal(*node) {
-				// merge event
-				let pop = population_size_at(*height);
-				out -= pop.ln();
-				num -= 1;
-			} else {
-				// the node is a leaf, increase the number of
-				// linages
-				num += 1;
-			}
-
-			last_height = *height;
-		}
-
-		Ok(out)
-	}
-
 	fn accept(&mut self) {
 		self.state_backup.copy_from_slice(&self.state);
 	}
@@ -121,19 +83,40 @@ impl Coalescent {
 	}
 }
 
-/// All nodes (leaves and internals) of a tree sorted by height
-pub fn sorted_nodes(tree: &Tree) -> Vec<(Node, f64)> {
-	let mut nodes = Vec::with_capacity(tree.num_nodes());
+fn calculate<FP, FI>(
+	intervals: &Intervals,
+	tree: &Tree,
+	population_size_at: FP,
+	integral: FI,
+) -> Result<f64>
+where
+	FP: Fn(f64) -> f64,
+	FI: Fn(f64, f64) -> f64,
+{
+	let mut out = 0.0; // log-likelihood
+	let mut last_height = intervals.state[0].1;
+	let mut num: usize = 1; // number of active lineages
 
-	for node in tree.nodes() {
-		let height = tree.height_of(node);
-		nodes.push((node, height));
+	for (node, height) in intervals.state.iter().skip(1) {
+		let binomial = (num * (num - 1) / 2) as f64;
+		let area = integral(last_height, *height);
+		out -= binomial * area;
+
+		if tree.is_internal(*node) {
+			// merge event
+			let pop = population_size_at(*height);
+			out -= pop.ln();
+			num -= 1;
+		} else {
+			// the node is a leaf, increase the number of
+			// linages
+			num += 1;
+		}
+
+		last_height = *height;
 	}
 
-	// sort by height
-	nodes.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-
-	nodes
+	Ok(out)
 }
 
 /// Constant population coalescent
@@ -144,25 +127,29 @@ pub struct ConstantPopulation {
 	tree: Py<PyTree>,
 	#[pyo3(get)]
 	population_size: Py<PyReal>,
-	coalescent: Mutex<Coalescent>,
+	intervals: Mutex<Intervals>,
 }
 
 #[pymethods]
 impl ConstantPopulation {
 	#[new]
 	fn new(tree: Py<PyTree>, population_size: Py<PyReal>) -> Result<Self> {
-		let coalescent = Coalescent::new(&tree.get().inner());
+		let intervals = Intervals::new(&tree.get().inner());
 		Ok(Self {
-			coalescent,
 			tree,
 			population_size,
+			intervals,
 		})
 	}
 
 	fn probability(&self) -> Result<f64> {
+		let mut intervals = self.intervals.lock();
 		let tree = self.tree.get().inner();
 		let pop_size = self.population_size.get().inner().value();
-		self.coalescent.lock().calculate(
+
+		intervals.update(&tree);
+		calculate(
+			&intervals,
 			&tree,
 			|_point| pop_size,
 			|start, end| (end - start) / pop_size,
@@ -170,10 +157,10 @@ impl ConstantPopulation {
 	}
 
 	fn accept(&self) {
-		self.coalescent.lock().accept();
+		self.intervals.lock().accept();
 	}
 	fn reject(&self) {
-		self.coalescent.lock().reject();
+		self.intervals.lock().reject();
 	}
 }
 
@@ -186,7 +173,7 @@ pub struct ExponentialGrowth {
 	population_size: Py<PyReal>,
 	#[pyo3(get)]
 	growth_rate: Py<PyReal>,
-	coalescent: Mutex<Coalescent>,
+	intervals: Mutex<Intervals>,
 }
 
 #[pymethods]
@@ -197,21 +184,25 @@ impl ExponentialGrowth {
 		population_size: Py<PyReal>,
 		growth_rate: Py<PyReal>,
 	) -> Result<Self> {
-		let coalescent = Coalescent::new(&tree.get().inner());
+		let intervals = Intervals::new(&tree.get().inner());
 		Ok(Self {
 			tree,
 			population_size,
 			growth_rate,
-			coalescent,
+			intervals,
 		})
 	}
 
 	fn probability(&self) -> Result<f64> {
+		let mut intervals = self.intervals.lock();
 		let tree = self.tree.get().inner();
 		let pop = self.population_size.get().inner().value();
 		let gr = self.growth_rate.get().inner().value();
 
-		self.coalescent.lock().calculate(
+		intervals.update(&tree);
+
+		calculate(
+			&intervals,
 			&tree,
 			|point| pop * (-point * gr).exp(),
 			|start, end| {
@@ -226,9 +217,9 @@ impl ExponentialGrowth {
 	}
 
 	fn accept(&self) {
-		self.coalescent.lock().accept();
+		self.intervals.lock().accept();
 	}
 	fn reject(&self) {
-		self.coalescent.lock().reject();
+		self.intervals.lock().reject();
 	}
 }

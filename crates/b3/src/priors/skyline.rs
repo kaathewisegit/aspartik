@@ -4,8 +4,7 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use super::coalescent::sorted_nodes;
-use crate::parameters::{PyTree, Tree};
+use crate::parameters::{Node, PyTree, Tree};
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
@@ -44,7 +43,8 @@ impl Skyline {
 		let mut out = 0.0;
 
 		let tree = self.tree.get().inner();
-		let nodes = sorted_nodes(&tree);
+		#[expect(clippy::diverging_sub_expression)]
+		let nodes: Vec<(Node, f64)> = todo!("intervals");
 		let mut num_lineages = tree.num_leaves();
 
 		let population_sizes = self.population_sizes.lock();
