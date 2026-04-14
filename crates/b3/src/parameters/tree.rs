@@ -33,6 +33,9 @@ const ROOT: usize = 0x524f4f54;
 pub struct Tree {
 	names: Vec<String>,
 
+	/// `(value, backup)`
+	root: (usize, usize),
+
 	children: SkBuf<usize>,
 	parents: SkBuf<usize>,
 	heights: SkBuf<f64>,
@@ -157,6 +160,8 @@ impl Tree {
 		let mut out = Self {
 			names,
 
+			root: (0, 0),
+
 			children: skbuf![ROOT; num_internals * 2],
 			parents: skbuf![ROOT; num_nodes],
 			heights: skbuf![0.0; num_nodes],
@@ -181,7 +186,7 @@ impl Tree {
 		let internals = num_leaves..num_nodes;
 		let mut prüfer: Vec<usize> =
 			internals.clone().chain(internals).collect();
-		prüfer.pop(); // remove the last node
+		let root = prüfer.pop().unwrap(); // remove the last node
 		prüfer.shuffle(rng); // random shuffle
 
 		let mut parents = vec![ROOT; num_nodes];
@@ -215,12 +220,12 @@ impl Tree {
 		}
 		// last node, which should be connected to the root
 		let child = unused.pop().unwrap().0;
-		let root = num_nodes - 1;
 		parents[child] = root;
 		children[(root - num_leaves) * 2 + 1] = child;
 
 		self.parents = parents.into();
 		self.children = children.into();
+		self.root = (root, root);
 	}
 
 	// Sets the heights of internal nodes by walking upwards breadth-first
@@ -331,6 +336,13 @@ impl Tree {
 
 		for node in self.nodes() {
 			self.set_height(node, self.height_of(node) - min);
+		}
+
+		// set root
+		for internal in self.internals() {
+			if self.parents[internal.0] == ROOT {
+				self.set_root(internal);
+			}
 		}
 
 		Ok(())
@@ -646,6 +658,7 @@ impl Tree {
 
 	/// Doesn't overwrite the old root.
 	pub fn set_root(&mut self, node: Internal) {
+		self.root.0 = node.0;
 		self.parents.set(node.0, ROOT);
 	}
 
@@ -751,14 +764,16 @@ impl Tree {
 		let roots: Vec<usize> = self
 			.parents
 			.iter()
-			.copied()
-			.filter(|p| *p == ROOT)
+			.enumerate()
+			.filter(|&(_, &parent)| parent == ROOT)
+			.map(|(idx, _)| idx)
 			.collect();
 		ensure!(
 			roots.len() == 1,
 			"The tree has more than one root: {:?}",
 			roots
 		);
+		ensure!(roots[0] == self.root.0);
 
 		use std::collections::HashSet;
 		let mut children = HashSet::new();
@@ -817,9 +832,7 @@ impl Tree {
 	/// Panics if the tree is malformed and has no root.  This can happen
 	/// between the calls to `root` and `update_edge`, for example.
 	pub fn root(&self) -> Internal {
-		// There must always be a rooted element in the tree.
-		let i = self.parents.iter().position(|p| *p == ROOT).unwrap();
-		Internal(i)
+		Internal(self.root.0)
 	}
 
 	pub fn height_of(&self, node: Node) -> f64 {
@@ -1038,6 +1051,12 @@ impl DeserializeFrom for &mut Tree {
 			self.parents.set(child, parent);
 		}
 
+		for internal in self.internals() {
+			if self.parents[internal.0] == ROOT {
+				self.set_root(internal);
+			}
+		}
+
 		self.mark_all_edges_updated();
 		Ok(())
 	}
@@ -1053,6 +1072,7 @@ impl Parameter for Tree {
 		self.parents.accept();
 		self.heights.accept();
 		self.clear_updated();
+		self.root.1 = self.root.0;
 	}
 
 	fn reject(&mut self) {
@@ -1060,6 +1080,7 @@ impl Parameter for Tree {
 		self.parents.reject();
 		self.heights.reject();
 		self.clear_updated();
+		self.root.0 = self.root.1;
 	}
 }
 
