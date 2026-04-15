@@ -31,3 +31,13 @@ def test_random(rng: RNG):
             assert msa.num_sequences == num_sequences
             assert msa.num_sites == num_sites
             assert msa.sequence_names() == names
+
+
+def test_reproducible():
+    rng_a = RNG(4)
+    msa_a = MSA.random(100, 1000, [str(i) for i in range(100)], rng_a)
+
+    rng_b = RNG(4)
+    msa_b = MSA.random(100, 1000, [str(i) for i in range(100)], rng_b)
+
+    assert msa_a == msa_b

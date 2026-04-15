@@ -3,25 +3,21 @@ from typing import Optional, get_args
 
 from aspartik.b3.config import CalculatorKind, b3_config, beast1_config, beast1_run
 from aspartik.data.msa import MSA
-from aspartik.io import FastaReader
+from aspartik.rng import RNG
 
 
 def run_mcmc(
     toolkit: str,
-    fasta_path: str,
-    num_sequences: Optional[int],
+    num_sequences: int,
+    num_sites: int,
     kind: CalculatorKind,
     length: int,
+    seed: int = 4,
 ) -> Optional[float]:
-    records = list(FastaReader.from_file(fasta_path))
-    if num_sequences:
-        if num_sequences > len(records):
-            raise Exception(
-                f"Not enough sequences: the alignment only has {len(records)}"
-            )
-        msa = MSA.from_fasta(records[:num_sequences])
-    else:
-        msa = MSA.from_fasta(records)
+    rng = RNG(seed)
+    msa = MSA.random(
+        num_sequences, num_sites, [str(i) for i in range(num_sequences)], rng
+    )
 
     match toolkit:
         case "b3":
@@ -58,13 +54,12 @@ def run_beast1(msa: MSA, length: int, kind: CalculatorKind):
 def parse_cli_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("fasta_path", type=str)
-
     parser.add_argument("--toolkit", choices=("b3", "beast1"), default="b3")
     parser.add_argument(
         "--kind", choices=get_args(CalculatorKind.__value__), required=True
     )
-    parser.add_argument("--num_sequences", type=int)
+    parser.add_argument("--num-sequences", type=int, required=True)
+    parser.add_argument("--num-sites", type=int, required=True)
     parser.add_argument("--length", type=int, default=1_000_000)
 
     return parser.parse_args()
@@ -75,8 +70,8 @@ def main():
 
     run_mcmc(
         args.toolkit,
-        args.fasta_path,
         args.num_sequences,
+        args.num_sites,
         args.kind,
         args.length,
     )
