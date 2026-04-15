@@ -1,7 +1,7 @@
 import pytest
 from utils import random_float, random_msas, random_trees
 
-from aspartik.b3.config import b3_config
+from aspartik.b3.config import MCMCConfig
 from aspartik.b3.parameters import Tree
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
@@ -62,16 +62,17 @@ def test_swap_parents(tree, rng):
 
 @pytest.mark.parametrize("msa", random_msas(10, 1000, num=20))
 def test_dump_load_mcmc(msa: MSA, rng: RNG):
-    mcmc = b3_config(
+    mcmc = MCMCConfig(
         msa,
         tree_prior="constant",
         substitution_model="JC",
         print_every=None,
-    )
+    ).b3_mcmc()
     mcmc.run(100)
     tree = mcmc.parameters[0]
     assert isinstance(tree, Tree)
     tree_state = tree.dump()
+    print(tree_state)
 
     deserialized_tree = Tree(msa.sequence_names(), rng)
     deserialized_tree.load(tree_state)

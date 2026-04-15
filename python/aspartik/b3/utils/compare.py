@@ -3,7 +3,7 @@ import polars as pl
 from typing import Literal
 
 from ...io import read_msa_from_fasta
-from ..config import b3_config, beast1_config, beast1_run
+from ..config import MCMCConfig
 
 
 def burnin(df, share: float = 0.5):
@@ -28,23 +28,25 @@ def compare_beast1(
     b3_path = f"target/{name}.trace"
     beast1_path = f"target/{name}.beast1.log"
 
-    msa = read_msa_from_fasta(fasta_path)
-    b3 = b3_config(
-        msa,
-        trace_path=b3_path,
-        substitution_model="HKY",
-        tree_prior=tree_prior,
-    )
-    b3.run(length)
-
-    beast1_xml_config = beast1_config(
-        msa,
-        file_log_path=beast1_path,
+    b3_c = MCMCConfig(
+        msa=read_msa_from_fasta(fasta_path),
         substitution_model="HKY",
         tree_prior=tree_prior,
         length=length,
+        calculator="cpu",
+        trace_path=b3_path,
     )
-    beast1_run(beast1_xml_config, "cpu")
+    b3_c.b3_make_and_run()
+
+    beast1_c = MCMCConfig(
+        msa=read_msa_from_fasta(fasta_path),
+        substitution_model="HKY",
+        tree_prior=tree_prior,
+        length=length,
+        calculator="cpu",
+        trace_path=beast1_path,
+    )
+    beast1_c.beast1_make_and_run()
 
     b3 = burnin(pl.read_ipc(b3_path))
     beast1 = burnin(pl.read_csv(beast1_path, separator="\t", skip_lines=3))

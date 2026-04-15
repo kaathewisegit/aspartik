@@ -2,7 +2,7 @@ import pytest
 from utils import random_msas
 
 from aspartik.b3 import MCMC
-from aspartik.b3.config import b3_config
+from aspartik.b3.config import MCMCConfig
 from aspartik.data.msa import MSA
 
 
@@ -11,14 +11,14 @@ def test_state_restore(msa: MSA, tmp_path):
     state_path = tmp_path / "test.state"
 
     def make_mcmc() -> MCMC:
-        return b3_config(
+        return MCMCConfig(
             msa,
             calculator="cpu",
             tree_prior="constant",
             substitution_model="HKY",
             state_path=state_path,
             state_every=100,
-        )
+        ).b3_mcmc()
 
     mcmc = make_mcmc()
     mcmc.run(10_000)

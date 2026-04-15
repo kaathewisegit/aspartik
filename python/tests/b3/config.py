@@ -1,6 +1,6 @@
 import pytest
 
-from aspartik.b3.config import b3_config
+from aspartik.b3.config import MCMCConfig
 from aspartik.io import read_msa_from_fasta
 
 APES_MSA = read_msa_from_fasta("data/alignments/apes.fasta")
@@ -24,7 +24,7 @@ def test_config(
     trace_path,
     timer,
 ):
-    mcmc = b3_config(
+    mcmc = MCMCConfig(
         APES_MSA,
         calculator=calculator,
         substitution_model=substitution_model,
@@ -33,6 +33,6 @@ def test_config(
         print_every=print_every,
         trace_path=trace_path,
         timer=timer,
-    )
+    ).b3_mcmc()
 
     mcmc.run(10)
