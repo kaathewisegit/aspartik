@@ -8,6 +8,7 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+rng = { workspace = true, optional = true }
 util = { workspace = true }
 
 anyhow = { workspace = true }
@@ -16,6 +17,7 @@ bytes = { workspace = true }
 parking_lot = { workspace = true, optional = true }
 peg = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
+rand = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
@@ -24,7 +26,7 @@ arbtest = { workspace = true }
 
 [features]
 default = ["python"]
-python = ["dep:pyo3", "dep:parking_lot"]
+python = ["dep:rng", "dep:pyo3", "dep:parking_lot"]
 arbitrary = ["dep:arbitrary"]
 
 [lints]

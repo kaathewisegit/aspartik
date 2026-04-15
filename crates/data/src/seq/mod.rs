@@ -1,6 +1,7 @@
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Result as ArbResult, Unstructured};
 use bytes::{BufMut, Bytes, BytesMut};
+use rand::{Rng, RngExt};
 
 use std::{
 	fmt,
@@ -183,6 +184,20 @@ impl<C: Character> Sequence<C> {
 }
 
 impl Sequence<DnaNucleotide> {
+	pub fn random<R: Rng>(len: usize, rng: &mut R) -> Self {
+		let mut seq = SequenceMut::with_capacity(len);
+		for __ in 0..len {
+			seq.push(match rng.random_range(0..4) {
+				0 => DnaNucleotide::Adenine,
+				1 => DnaNucleotide::Cytosine,
+				2 => DnaNucleotide::Guanine,
+				3 => DnaNucleotide::Thymine,
+				_ => unreachable!(),
+			})
+		}
+		seq.into()
+	}
+
 	pub fn complement(&self) -> Self {
 		let mut seq = SequenceMut::from_characters(self);
 		seq.complement();

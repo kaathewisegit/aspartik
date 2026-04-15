@@ -1,4 +1,5 @@
 use anyhow::{Result, ensure};
+use rand::Rng;
 
 use std::{cmp::Ordering, ops::Range};
 
@@ -121,6 +122,16 @@ fn add_assign_arr(to: &mut [f64; 4], from: [f64; 4]) {
 }
 
 impl Msa<DnaNucleotide> {
+	pub fn random<R: Rng>(
+		num_sequences: usize,
+		num_sites: usize,
+		names: Box<[String]>,
+		rng: &mut R,
+	) -> Result<Self> {
+		let seq = Sequence::random(num_sequences * num_sites, rng);
+		Self::new(num_sequences, num_sites, names, seq)
+	}
+
 	pub fn base_frequencies(&self) -> [f64; 4] {
 		let mut counts = [0.0; 4];
 		let num_chars = self.num_characters();

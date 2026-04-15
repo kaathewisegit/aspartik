@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Optional
 
+from ..rng import RNG
+
 class DNANucleotide:
     Adenine: DNANucleotide
     Cytosine: DNANucleotide
@@ -59,6 +61,12 @@ class MSA:
 
         All records must have the same length.
         """
+
+    @classmethod
+    def random(
+        _cls, num_sequences: int, num_sites: int, names: list[str], rng: RNG
+    ) -> MSA:
+        """A random alignment of given dimensions"""
 
     @property
     def num_sites(self) -> int:

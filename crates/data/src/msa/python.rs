@@ -8,6 +8,7 @@ use crate::{
 	fasta::{Record, python::PyFastaDnaRecord},
 	seq::python::PyDnaSeq,
 };
+use rng::PyRng;
 
 /// DNA multiple sequence alignment
 ///
@@ -51,6 +52,23 @@ impl PyMsa {
 	) -> Result<Self> {
 		let msa = Msa::from_fasta(
 			records.into_iter().map(|r| Ok(r.get().0.clone())),
+		)?;
+		Ok(Self(msa))
+	}
+
+	#[classmethod]
+	fn random(
+		_cls: Py<PyType>,
+		num_sequences: usize,
+		num_sites: usize,
+		names: Vec<String>,
+		rng: Py<PyRng>,
+	) -> Result<Self> {
+		let msa = Msa::random(
+			num_sequences,
+			num_sites,
+			names.into(),
+			&mut rng.get().inner(),
 		)?;
 		Ok(Self(msa))
 	}

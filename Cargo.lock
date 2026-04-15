@@ -350,6 +350,8 @@ dependencies = [
  "parking_lot",
  "peg",
  "pyo3",
+ "rand",
+ "rng",
  "thiserror",
  "util",
 ]
