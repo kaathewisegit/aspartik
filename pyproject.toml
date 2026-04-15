@@ -16,17 +16,19 @@ keywords = ["bioinformatics"]
 
 [project.optional-dependencies]
 cli = ["cliclass~=0.1.0a1"]
+
+[dependency-groups]
 dev = [
-	"maturin[patchelf]~=1.12 ; sys_platform == 'linux'",
-	"maturin~=1.12 ; sys_platform != 'linux'",
+	"maturin[patchelf]~=1.13 ; sys_platform == 'linux'",
+	"maturin~=1.13 ; sys_platform != 'linux'",
 	"mpmath~=1.4",
 	"polars~=1.39",
 	"pyarrow~=23.0.1",
 	"pdoc~=16.0",
-	"ty~=0.0.29",
+	"ty~=0.0.30",
 	"pytest~=9.0",
-	"ruff~=0.15.8",
-	"delvewheel~=1.12.0",
+	"ruff~=0.15.10",
+	"delvewheel~=1.12",
 	"cliclass~=0.1.0a1", # duplicated from `cli`
 ]
 

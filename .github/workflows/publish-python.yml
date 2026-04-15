@@ -28,7 +28,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Pull dependencies
         run: |
-          uv sync --no-install-project --extra dev
+          uv sync --no-install-project
 
       - name: Build wheels
         run: |
@@ -56,7 +56,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Pull dependencies
         run: |
-          uv sync --no-install-project --extra dev
+          uv sync --no-install-project
 
       - name: Build wheels
         run: |
@@ -84,7 +84,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Pull dependencies
         run: |
-          uv sync --no-install-project --extra dev
+          uv sync --no-install-project
 
       - name: Fortran setup on macOS
         run: |
@@ -111,7 +111,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Pull dependencies
         run: |
-          uv sync --no-install-project --extra dev
+          uv sync --no-install-project
 
       - name: Build wheels
         run: |

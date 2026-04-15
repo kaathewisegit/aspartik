@@ -44,7 +44,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          uv sync --extra dev
+          uv sync
           uv pip install gmpy2
           uv run -m python.toolkit build
 

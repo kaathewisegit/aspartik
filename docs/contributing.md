@@ -5,8 +5,8 @@
 To build Aspartik you'll need a recent version Rust/Cargo (1.91 as of
 the time of writing)[^rt] and uv ([installation instructions][uv]).
 
-After cloning the repository run `uv sync --extra dev` to setup
-everything.  This might take awhile, as it'll compile the Rust package.
+After cloning the repository run `uv sync` to setup everything.  This
+might take awhile, as it'll build the Rust package.
 
 `uv -m python.toolkit` provides a number of utilities: linting, running
 tests, etc.
