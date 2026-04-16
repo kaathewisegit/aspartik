@@ -51,7 +51,7 @@ mod eq;
 
 pub use editbuf::EditBuf;
 
-use std::{ops::Index, ptr::slice_from_raw_parts_mut};
+use std::ops::Index;
 
 /// Epoch-versioned `Vec`-like storage.
 ///
@@ -74,34 +74,6 @@ pub struct SkBuf<T> {
 
 // Memoization-related methods
 impl<T> SkBuf<T> {
-	/// Creates a new `SkBuf` from raw pointers
-	///
-	/// # Safety
-	///
-	/// - `items_ptr` must be aligned to the alignment of `T` and point to
-	///   an unaliased region of memory with the length of `size_of::<T>() *
-	///   len * 2`.  Additionally, it must either be a standalone
-	///   allocation, or the resulting `SkBuf` must never be dropped.
-	///
-	/// - `edits_ptr` and `len` must satisfy the safety conditions of
-	///   [`EditBuf::from_raw_parts`] .
-	pub unsafe fn from_raw_parts(
-		items_ptr: *mut T,
-		edits_ptr: *mut u8,
-		len: usize,
-	) -> Self {
-		// SAFETY: function safety invariants
-		let items = unsafe {
-			Box::from_raw(slice_from_raw_parts_mut(
-				items_ptr,
-				len * 2,
-			))
-		};
-		// SAFETY: function safety invariants
-		let edits = unsafe { EditBuf::from_raw_parts(edits_ptr, len) };
-		Self { items, edits }
-	}
-
 	/// Returns the currently active item at index `i`.
 	///
 	/// # Safety

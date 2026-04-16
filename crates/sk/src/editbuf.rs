@@ -1,5 +1,3 @@
-use std::ptr::slice_from_raw_parts_mut;
-
 /// Buffer with metadata for tracking edit status of items without copies
 ///
 /// It consists of `len` bytes, for each of them:
@@ -12,22 +10,6 @@ pub struct EditBuf(Box<[u8]>);
 impl EditBuf {
 	pub fn new(len: usize) -> Self {
 		Self(vec![0; len].into_boxed_slice())
-	}
-
-	/// Creates a new `EditBuf` from a raw pointer
-	///
-	/// # Safety
-	///
-	/// - `ptr` must point to an unaliased region of heap memory the size of
-	///   `len` bytes.  It must either be a separate allocation or the
-	///   resulting `EditBuf` must never be dropped.
-	pub unsafe fn from_raw_parts(ptr: *mut u8, len: usize) -> Self {
-		// SAFETY: function invariants
-		let mut inner = unsafe {
-			Box::from_raw(slice_from_raw_parts_mut(ptr, len))
-		};
-		inner.iter_mut().for_each(|v| *v = 0);
-		Self(inner)
 	}
 
 	#[expect(clippy::len_without_is_empty)]
