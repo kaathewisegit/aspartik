@@ -95,10 +95,10 @@ where
 {
 	let mut out = 0.0; // log-likelihood
 	let mut last_height = intervals.state[0].1;
-	let mut num: usize = 1; // number of active lineages
+	let mut num_lineages = 1.0;
 
 	for (node, height) in intervals.state.iter().skip(1) {
-		let binomial = (num * (num - 1) / 2) as f64;
+		let binomial = num_lineages * (num_lineages - 1.0) / 2.0;
 		let area = integral(last_height, *height);
 		out -= binomial * area;
 
@@ -106,11 +106,11 @@ where
 			// merge event
 			let pop = population_size_at(*height);
 			out -= pop.ln();
-			num -= 1;
+			num_lineages -= 1.0;
 		} else {
 			// the node is a leaf, increase the number of
 			// linages
-			num += 1;
+			num_lineages += 1.0;
 		}
 
 		last_height = *height;
