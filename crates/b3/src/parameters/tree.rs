@@ -475,7 +475,7 @@ impl Tree {
 	pub fn edges_to_update(&self) -> Vec<usize> {
 		let mut out = Vec::new();
 		for edge in self.edges() {
-			if self.updated_edges.at(edge) {
+			if self.is_edge_updated(edge) {
 				out.push(edge);
 			}
 		}
@@ -545,7 +545,7 @@ impl Tree {
 	) -> (Vec<usize>, Vec<[usize; 2]>, usize) {
 		// mark updated nodes whose parent edge got updated
 		for edge in self.edges() {
-			if self.updated_edges.at(edge) {
+			if self.is_edge_updated(edge) {
 				let (child, _) = self.edge_nodes(edge);
 				self.mark_node_updated(child);
 			}
@@ -573,7 +573,7 @@ impl Tree {
 	pub fn partials_lists(&mut self) -> (Vec<usize>, Vec<[usize; 2]>) {
 		// mark nodes whose child edges got updated
 		for edge in self.edges() {
-			if self.updated_edges.at(edge) {
+			if self.is_edge_updated(edge) {
 				let (_, parent) = self.edge_nodes(edge);
 				self.mark_node_updated(*parent);
 			}
@@ -592,6 +592,10 @@ impl Tree {
 
 	fn is_node_updated(&self, node: Node) -> bool {
 		self.updated_nodes.at(node.0)
+	}
+
+	fn is_edge_updated(&self, edge: usize) -> bool {
+		self.updated_edges.at(edge)
 	}
 
 	pub fn is_node_height_updated(&self, node: Node) -> bool {
