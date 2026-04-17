@@ -152,14 +152,6 @@ class MCMC:
     def dump_state(self) -> bytes: ...
     def load_state(self, state: bytes) -> None: ...
 
-@dataclass
-class EpochScale(Operator):
-    tree: Tree
-    factor: float
-    distribution: Sample[float]
-    rng: RNG
-    weight: float = 1
-
 @dataclass(slots=True)
 class SubtreeLeap(Operator):
     tree: Tree

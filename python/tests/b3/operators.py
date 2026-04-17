@@ -1,7 +1,6 @@
 from utils import check_tree_operator
 
 from aspartik.b3.operators import (
-    EpochScale,
     FixedHeightSPR,
     NarrowExchange,
     NodeSlide,
@@ -10,12 +9,6 @@ from aspartik.b3.operators import (
     WilsonBalding,
 )
 from aspartik.stats.distributions import Uniform
-
-
-def test_epoch_scale(rng):
-    check_tree_operator(
-        lambda tree: EpochScale(tree, 0.9, Uniform(0, 1), rng, weight=1.0)
-    )
 
 
 def test_narrow_exchange(rng):

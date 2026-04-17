@@ -1,6 +1,5 @@
 from ..._aspartik_rust_impl._b3_rust_impl import (
     ClassvecFlip as ClassvecFlip,
-    EpochScale as EpochScale,
     FixedHeightSPR as FixedHeightSPR,
     SubtreeLeap as SubtreeLeap,
 )
