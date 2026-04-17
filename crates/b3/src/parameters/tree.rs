@@ -13,6 +13,7 @@ use std::{
 	collections::{BinaryHeap, HashMap, VecDeque},
 	mem,
 	ops::Deref,
+	sync::atomic::{AtomicUsize, Ordering},
 };
 
 use super::Parameter;
@@ -433,8 +434,8 @@ impl Tree {
 		Ok(tree)
 	}
 
-	pub fn names(&self) -> Vec<String> {
-		self.names.clone()
+	pub fn names(&self) -> &[String] {
+		&self.names
 	}
 
 	pub fn scale(&mut self, scale: f64) -> Result<()> {
@@ -712,15 +713,7 @@ impl Tree {
 	}
 
 	pub fn total_length(&self) -> f64 {
-		let mut out = 0.0;
-		let root = self.root();
-		for node in self.nodes() {
-			if node == *root {
-				continue;
-			}
-			out += self.edge_length(self.edge_index(node));
-		}
-		out
+		self.edges().map(|e| self.edge_length(e)).sum()
 	}
 
 	pub fn validate(&self) -> Result<()> {
@@ -831,21 +824,12 @@ impl Tree {
 		}
 	}
 
-	/// # Panics
-	///
-	/// Panics if the tree is malformed and has no root.  This can happen
-	/// between the calls to `root` and `update_edge`, for example.
 	pub fn root(&self) -> Internal {
 		Internal(self.root.0)
 	}
 
 	pub fn height_of(&self, node: Node) -> f64 {
 		self.heights[node.0]
-	}
-
-	pub fn parent_edge_len(&self, node: Node) -> Option<f64> {
-		let parent = self.parent_of(node)?;
-		Some(self.height_of(*parent) - self.height_of(node))
 	}
 
 	pub fn children_of(&self, node: Internal) -> (Node, Node) {
@@ -944,11 +928,6 @@ impl Tree {
 		}
 	}
 
-	pub fn random_leaf(&self, rng: &mut Rng) -> Leaf {
-		let i = rng.random_range(0..self.num_leaves());
-		Leaf(i)
-	}
-
 	pub fn leaf_by_name(&self, name: &str) -> Option<Leaf> {
 		for (i, leaf_name) in self.names.iter().enumerate() {
 			if name == leaf_name {
@@ -973,7 +952,7 @@ impl Tree {
 
 	pub fn edges(&self) -> impl Iterator<Item = usize> + use<> {
 		let root = self.root().0;
-		(0..self.num_nodes()).filter(move |&e| e != root)
+		(0..root).chain(root + 1..self.num_nodes())
 	}
 
 	pub fn to_newick(&self, internal_ids: bool) -> String {
@@ -996,24 +975,17 @@ impl Tree {
 			map.insert(node, newick_node);
 		}
 
-		for parent in self.internals() {
-			let (left, right) = self.children_of(parent);
-			let (left_len, right_len) = (
-				self.parent_edge_len(left),
-				self.parent_edge_len(right),
-			);
-			let (left_edge, right_edge) = (
-				NewickEdge::new(left_len, String::new()),
-				NewickEdge::new(right_len, String::new()),
-			);
+		for node in self.nodes() {
+			let Some(parent) = self.parent_of(node) else {
+				tree.set_root(map[&node]);
+				continue;
+			};
 
-			tree.add_edge(map[&parent], map[&left], left_edge);
-			tree.add_edge(map[&parent], map[&right], right_edge);
+			let edge_len = self.edge_length(node.0);
+			let edge =
+				NewickEdge::new(Some(edge_len), String::new());
 
-			// set root
-			if self.parent_of(*parent).is_none() {
-				tree.set_root(map[&parent]);
-			}
+			tree.add_edge(map[&parent], map[&node], edge);
 		}
 
 		tree.into_string()
@@ -1092,14 +1064,14 @@ macro_rules! make_iterator {
 	($name: ident, $t: tt) => {
 		#[pyclass(frozen, module = "aspartik.b3.tree")]
 		struct $name {
-			current: Mutex<usize>,
+			current: AtomicUsize,
 			end: usize,
 		}
 
 		impl $name {
 			fn new(start: usize, end: usize) -> Self {
 				Self {
-					current: Mutex::new(start),
+					current: start.into(),
 					end,
 				}
 			}
@@ -1112,13 +1084,11 @@ macro_rules! make_iterator {
 			}
 
 			fn __next__(&self) -> Option<$t> {
-				let mut current = self.current.lock();
-				if *current == self.end {
+				let out = self.current.load(Ordering::Relaxed);
+				if out == self.end {
 					return None;
 				}
-
-				let out = *current;
-				*current += 1;
+				self.current.fetch_add(1, Ordering::Relaxed);
 				Some($t(out))
 			}
 		}
@@ -1234,7 +1204,7 @@ impl_pyparameter_common! {PyTree, Tree;
 	/// `Leaf(0)`, the second one is `Leaf(1)`, and so on.
 	#[getter]
 	fn names(&self) -> Vec<String> {
-		self.inner().names()
+		self.inner().names().to_vec()
 	}
 
 	/// Multiplies the heights of all internal nodes by `scale`
@@ -1468,11 +1438,6 @@ impl_pyparameter_common! {PyTree, Tree;
 	/// Samples a random non-root internal node
 	fn random_nonroot_internal(&self, rng: &PyRng) -> (Internal, Internal) {
 		self.inner().random_nonroot_internal(&mut rng.inner())
-	}
-
-	/// Samples a random leaf node from a tree.
-	fn random_leaf(&self, rng: &PyRng) -> Leaf {
-		self.inner().random_leaf(&mut rng.inner())
 	}
 
 	/// Gets a named leaf or `None` if the name is not found
