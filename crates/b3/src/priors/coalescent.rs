@@ -83,16 +83,12 @@ impl Intervals {
 	}
 }
 
-fn calculate<FP, FI>(
+fn calculate(
 	intervals: &Intervals,
 	tree: &Tree,
-	population_size_at: FP,
-	integral: FI,
-) -> Result<f64>
-where
-	FP: Fn(f64) -> f64,
-	FI: Fn(f64, f64) -> f64,
-{
+	population_size_at: impl Fn(f64) -> f64,
+	integral: impl Fn(f64, f64) -> f64,
+) -> f64 {
 	let mut out = 0.0; // log-likelihood
 	let mut last_height = intervals.state[0].1;
 	let mut num_lineages = 1.0;
@@ -116,7 +112,7 @@ where
 		last_height = *height;
 	}
 
-	Ok(out)
+	out
 }
 
 /// Constant population coalescent
@@ -148,12 +144,12 @@ impl ConstantPopulation {
 		let pop_size = self.population_size.get().inner().value();
 
 		intervals.update(&tree);
-		calculate(
+		Ok(calculate(
 			&intervals,
 			&tree,
 			|_point| pop_size,
 			|start, end| (end - start) / pop_size,
-		)
+		))
 	}
 
 	fn accept(&self) {
@@ -201,7 +197,7 @@ impl ExponentialGrowth {
 
 		intervals.update(&tree);
 
-		calculate(
+		Ok(calculate(
 			&intervals,
 			&tree,
 			|point| pop * (-point * gr).exp(),
@@ -213,7 +209,7 @@ impl ExponentialGrowth {
 						/ pop / gr
 				}
 			},
-		)
+		))
 	}
 
 	fn accept(&self) {
