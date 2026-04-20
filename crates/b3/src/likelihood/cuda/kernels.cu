@@ -60,12 +60,12 @@ __device__ f64x4 hadamard(const f64x4 a, const f64x4 b) {
 // Update partial likelihoods for edges which go to leaves
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void update_leaves(
-	const u8* restrict leaves,
-	f64* restrict projections,
-	const u8* restrict selectors,
+	const u8* __restrict__ leaves,
+	f64* __restrict__ projections,
+	const u8* __restrict__ selectors,
 
-	const u32* restrict nodes,
-	const f64x4* restrict transitions
+	const u32* __restrict__ nodes,
+	const f64x4* __restrict__ transitions
 ) {
 	u32 pattern = blockIdx.x * blockDim.x + threadIdx.x;
 	if (pattern >= NUM_PATTERNS) {
@@ -79,16 +79,16 @@ void update_leaves(
 
 entrypoint __launch_bounds__(BLOCK_SIZE)
 void propose(
-	const u8* restrict leaves,
-	f64* restrict projections,
-	u8* restrict scales,
-	u32* restrict scale_sums,
-	const u8* restrict selectors,
+	const u8* __restrict__ leaves,
+	f64* __restrict__ projections,
+	u8* __restrict__ scales,
+	u32* __restrict__ scale_sums,
+	const u8* __restrict__ selectors,
 
 	const u32 num_updated_nodes,
-	const u32* restrict nodes,
-	const u32* restrict children,
-	const f64x4* restrict transitions,
+	const u32* __restrict__ nodes,
+	const u32* __restrict__ children,
+	const f64x4* __restrict__ transitions,
 
 	const u32 leaves_end,
 	const u32 internals_start
@@ -165,11 +165,11 @@ void propose(
 
 entrypoint __launch_bounds__(32)
 void update_likelihoods(
-	const f64x4* restrict projections,
-	f64* restrict likelihoods,
-	u8* restrict scales,
+	const f64x4* __restrict__ projections,
+	f64* __restrict__ likelihoods,
+	u8* __restrict__ scales,
 	u32* scale_sums,
-	const u8* restrict selectors,
+	const u8* __restrict__ selectors,
 
 	u32 root,
 	u32 left_child,

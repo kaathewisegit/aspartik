@@ -11,8 +11,7 @@ typedef signed long long i64;
 typedef float f32;
 typedef double f64;
 
-typedef double4 f64x4;
-#define make_f64x4 make_double4
+typedef double4_32a f64x4;
+#define make_f64x4 make_double4_32a
 
-#define restrict __restrict__
 #define entrypoint extern "C" __global__

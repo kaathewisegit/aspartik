@@ -9,7 +9,7 @@ use cudarc::{
 use parking_lot::MutexGuard;
 use sk::EditBuf;
 
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use super::Calculator;
 use crate::{Transitions, parameters::Tree};
@@ -337,7 +337,8 @@ impl CudaLikelihood {
 
 		let opts = CompileOptions {
 			include_paths: vec![
-				"/usr/local/cuda/include/".to_owned()
+				format!("{}/include", cuda_path()),
+				cccl_path(),
 			],
 			options: vec![
 				format!("-DNUM_PATTERNS={num_patterns}"),
@@ -383,4 +384,19 @@ impl CudaLikelihood {
 			num_patterns: num_patterns as u32,
 		})
 	}
+}
+
+fn cuda_path() -> String {
+	env::var("CUDA_PATH")
+		.or_else(|_| env::var("CUDA_HOME"))
+		.unwrap_or_else(|_| "/usr/local/cuda".to_string())
+}
+
+fn cccl_path() -> String {
+	let arch = match env::consts::ARCH {
+		"x86_64" => "x86_64",
+		_ => unimplemented!(),
+	};
+	let os = env::consts::OS;
+	format!("{}/targets/{arch}-{os}/include/cccl/", cuda_path())
 }
