@@ -70,3 +70,12 @@ impl<'r> Deserialize<'r> for &'r [u8] {
 		reader.read_slice(len)
 	}
 }
+
+impl<'r> Deserialize<'r> for &'r str {
+	fn deserialize<R: Read<'r>>(reader: &mut R) -> Result<Self> {
+		// TODO: length size?
+		let len = u32::deserialize(reader)? as usize;
+		let bytes = reader.read_slice(len)?;
+		Ok(str::from_utf8(bytes)?)
+	}
+}

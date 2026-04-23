@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use parking_lot::Mutex;
 use pyo3::{IntoPyObjectExt, prelude::*, types::PyList};
 use rand::RngExt;
@@ -194,11 +194,14 @@ impl Mcmc {
 	}
 }
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 impl Serialize for Mcmc {
 	fn serialize<W>(&self, writer: &mut W) -> Result<()>
 	where
 		W: VWrite,
 	{
+		VERSION.serialize(writer)?;
 		(*self.current_step.lock() as u64).serialize(writer)?;
 		self.posterior.lock().serialize(writer)?;
 
@@ -215,6 +218,11 @@ impl DeserializeFrom for &Mcmc {
 	where
 		R: verbatim::Read<'r>,
 	{
+		let version = <&str>::deserialize(reader)?;
+		ensure!(
+			version == VERSION,
+			"Tried to load state made by Aspartik version {version}, which is incompatible with {VERSION}"
+		);
 		*self.current_step.lock() = u64::deserialize(reader)? as usize;
 		*self.posterior.lock() = f64::deserialize(reader)?;
 

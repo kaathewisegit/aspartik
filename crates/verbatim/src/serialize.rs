@@ -52,3 +52,10 @@ impl Serialize for &[u8] {
 		writer.write_slice(self)
 	}
 }
+
+impl Serialize for &str {
+	fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+		(self.len() as u32).serialize(writer)?;
+		writer.write_slice(self.as_bytes())
+	}
+}

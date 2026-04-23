@@ -1,3 +1,5 @@
+import pytest
+
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.config import MCMCConfig
 from aspartik.b3.likelihoods import CPU4Likelihood
@@ -49,17 +51,18 @@ def test_mcmc():
     assert mcmc.current_step == 4
 
 
-def test_dump_restore():
+def get_mcmc():
     msa = read_msa_from_fasta("data/alignments/apes.fasta")
 
-    def get_mcmc():
-        return MCMCConfig(
-            msa,
-            calculator="cpu",
-            substitution_model="GTR",
-            tree_prior="constant",
-        ).b3_mcmc()
+    return MCMCConfig(
+        msa,
+        calculator="cpu",
+        substitution_model="GTR",
+        tree_prior="constant",
+    ).b3_mcmc()
 
+
+def test_dump_restore():
     mcmc0 = get_mcmc()
     mcmc0.run(10_000)
     state = mcmc0.dump_state()
@@ -73,3 +76,14 @@ def test_dump_restore():
     assert isinstance(tree0, Tree)
     assert isinstance(tree1, Tree)
     assert tree0.to_newick() == tree1.to_newick()
+
+
+def test_version_assertion():
+    mcmc = get_mcmc()
+    mcmc.run(10_000)
+    state = mcmc.dump_state()
+
+    state = state[:4] + b"9" + state[5:]
+
+    with pytest.raises(match="Tried to load state made by Aspartik version 9"):
+        mcmc.load_state(state)
