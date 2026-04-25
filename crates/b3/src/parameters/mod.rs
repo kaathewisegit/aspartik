@@ -5,7 +5,6 @@ use pyo3::prelude::*;
 use std::io::Write;
 
 mod class_vector;
-mod gamma_disc;
 mod real;
 mod real_vector;
 mod tree;
