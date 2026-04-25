@@ -8,39 +8,11 @@ use super::Parameter;
 use crate::impl_pyparameter_common;
 use sk::{Iter, SkBuf};
 use util::py_bail;
-use verbatim::{Deserialize, DeserializeFrom, Serialize};
+use verbatim::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct RealVector {
 	values: SkBuf<f64>,
-}
-
-impl Serialize for RealVector {
-	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
-		for i in 0..self.len() {
-			self[i].serialize(writer)?;
-		}
-		Ok(())
-	}
-}
-
-impl DeserializeFrom for &mut RealVector {
-	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
-	where
-		R: verbatim::Read<'r>,
-	{
-		for i in 0..self.len() {
-			self.set(i, f64::NAN);
-		}
-		self.accept();
-
-		for i in 0..self.len() {
-			let value = f64::deserialize(reader)?;
-			self.set(i, value);
-		}
-
-		Ok(())
-	}
 }
 
 #[allow(clippy::len_without_is_empty)]
@@ -83,6 +55,27 @@ impl Parameter for RealVector {
 
 	fn reject(&mut self) {
 		self.values.reject()
+	}
+
+	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
+		for i in 0..self.len() {
+			self.set(i, f64::NAN);
+		}
+		self.accept();
+
+		for i in 0..self.len() {
+			let value = f64::deserialize(bytes)?;
+			self.set(i, value);
+		}
+
+		Ok(())
+	}
+
+	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+		for i in 0..self.len() {
+			self[i].serialize(writer)?;
+		}
+		Ok(())
 	}
 }
 

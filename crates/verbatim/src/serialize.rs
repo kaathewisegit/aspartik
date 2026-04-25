@@ -8,16 +8,6 @@ pub trait Serialize {
 		W: Write + ?Sized;
 }
 
-pub trait SerializeDyn {
-	fn serialize_dyn(&self, writer: &mut dyn Write) -> Result<()>;
-}
-
-impl<S: Serialize> SerializeDyn for S {
-	fn serialize_dyn(&self, writer: &mut dyn Write) -> Result<()> {
-		self.serialize(writer)
-	}
-}
-
 macro_rules! impl_le_bytes {
 	($type:ty) => {
 		impl Serialize for $type {

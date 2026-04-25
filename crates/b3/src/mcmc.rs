@@ -14,7 +14,7 @@ use crate::{
 };
 use rng::PyRng;
 use util::{seconds_since_unix, time};
-use verbatim::{Deserialize, DeserializeFrom, Serialize};
+use verbatim::{Deserialize, Serialize};
 
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
@@ -166,12 +166,24 @@ impl Mcmc {
 
 	fn dump_state(&self) -> Result<Vec<u8>> {
 		let mut out = Vec::new();
-		self.serialize(&mut out)?;
+		self.dump(&mut out)?;
 		Ok(out)
 	}
 
 	fn load_state(&self, py: Python, mut bytes: &[u8]) -> Result<()> {
-		self.deserialize_from(&mut bytes)?;
+		let version = <&str>::deserialize(&mut bytes)?;
+		ensure!(
+			version == VERSION,
+			"Tried to load state made by Aspartik version {version}, which is incompatible with {VERSION}"
+		);
+		*self.current_step.lock() =
+			u64::deserialize(&mut bytes)? as usize;
+		*self.posterior.lock() = f64::deserialize(&mut bytes)?;
+
+		for param in &self.state {
+			param.as_dyn().load(&mut bytes)?;
+		}
+		self.rng.get().load(&mut bytes)?;
 
 		// update calculators
 		self.likelihood.likelihood()?;
@@ -181,7 +193,7 @@ impl Mcmc {
 		}
 
 		for parameter in &self.state {
-			parameter.accept();
+			parameter.as_dyn().accept();
 		}
 
 		for prior in &self.priors {
@@ -195,40 +207,6 @@ impl Mcmc {
 }
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-impl Serialize for Mcmc {
-	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
-		VERSION.serialize(writer)?;
-		(*self.current_step.lock() as u64).serialize(writer)?;
-		self.posterior.lock().serialize(writer)?;
-
-		for param in &self.state {
-			param.serialize(writer)?;
-		}
-
-		self.rng.get().serialize(writer)
-	}
-}
-
-impl DeserializeFrom for &Mcmc {
-	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
-	where
-		R: verbatim::Read<'r>,
-	{
-		let version = <&str>::deserialize(reader)?;
-		ensure!(
-			version == VERSION,
-			"Tried to load state made by Aspartik version {version}, which is incompatible with {VERSION}"
-		);
-		*self.current_step.lock() = u64::deserialize(reader)? as usize;
-		*self.posterior.lock() = f64::deserialize(reader)?;
-
-		for param in &self.state {
-			param.deserialize_from(reader)?;
-		}
-		self.rng.get().deserialize_from(reader)
-	}
-}
 
 #[derive(Debug, Clone, Copy)]
 pub enum StepResult {
@@ -259,6 +237,18 @@ impl StepResult {
 }
 
 impl Mcmc {
+	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+		VERSION.serialize(writer)?;
+		(*self.current_step.lock() as u64).serialize(writer)?;
+		self.posterior.lock().serialize(writer)?;
+
+		for parameter in &self.state {
+			parameter.as_dyn().dump(writer)?;
+		}
+
+		self.rng.get().dump(writer)
+	}
+
 	fn try_run(this: Py<Self>, py: Python, n: usize) -> Result<()> {
 		let self_ = this.get();
 		for _ in 0..n {
@@ -358,7 +348,7 @@ impl Mcmc {
 
 		if status.is_accept() {
 			for parameter in &self.state {
-				parameter.accept();
+				parameter.as_dyn().accept();
 			}
 
 			for prior in &self.priors {
@@ -368,7 +358,7 @@ impl Mcmc {
 			self.likelihood.accept()?;
 		} else {
 			for parameter in &self.state {
-				parameter.reject();
+				parameter.as_dyn().reject();
 			}
 
 			for prior in &self.priors {

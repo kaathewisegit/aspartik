@@ -27,7 +27,7 @@ use data::newick::{
 use rng::{PyRng, Rng};
 use sk::{SkBuf, skbuf};
 use util::py_bail;
-use verbatim::{Deserialize, DeserializeFrom, Serialize};
+use verbatim::{Deserialize, Serialize};
 
 const ROOT: usize = 0x524f4f54;
 
@@ -993,52 +993,6 @@ impl Tree {
 	}
 }
 
-impl Serialize for Tree {
-	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
-		for &height in &self.heights {
-			height.serialize(writer)?;
-		}
-		for &child in &self.children {
-			(child as u32).serialize(writer)?;
-		}
-
-		Ok(())
-	}
-}
-
-impl DeserializeFrom for &mut Tree {
-	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
-	where
-		R: verbatim::Read<'r>,
-	{
-		for i in 0..self.num_nodes() {
-			self.heights.set(i, f64::deserialize(reader)?);
-		}
-
-		// overwrite all parents as one of them will be left as root
-		for internal in self.internals() {
-			self.parents.set(internal.0, ROOT);
-		}
-
-		let num_leaves = self.num_leaves();
-		for i in 0..self.num_edges() {
-			let child = u32::deserialize(reader)? as usize;
-			self.children.set(i, child);
-			let parent = i / 2 + num_leaves;
-			self.parents.set(child, parent);
-		}
-
-		for internal in self.internals() {
-			if self.parents[internal.0] == ROOT {
-				self.set_root(internal);
-			}
-		}
-
-		self.mark_all_edges_updated();
-		Ok(())
-	}
-}
-
 impl Parameter for Tree {
 	fn is_changed(&self) -> bool {
 		self.updated_edges.is_any_on()
@@ -1058,6 +1012,45 @@ impl Parameter for Tree {
 		self.heights.reject();
 		self.clear_updated();
 		self.root.0 = self.root.1;
+	}
+
+	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
+		for i in 0..self.num_nodes() {
+			self.heights.set(i, f64::deserialize(bytes)?);
+		}
+
+		// overwrite all parents as one of them will be left as root
+		for internal in self.internals() {
+			self.parents.set(internal.0, ROOT);
+		}
+
+		let num_leaves = self.num_leaves();
+		for i in 0..self.num_edges() {
+			let child = u32::deserialize(bytes)? as usize;
+			self.children.set(i, child);
+			let parent = i / 2 + num_leaves;
+			self.parents.set(child, parent);
+		}
+
+		for internal in self.internals() {
+			if self.parents[internal.0] == ROOT {
+				self.set_root(internal);
+			}
+		}
+
+		self.mark_all_edges_updated();
+		Ok(())
+	}
+
+	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+		for &height in &self.heights {
+			height.serialize(writer)?;
+		}
+		for &child in &self.children {
+			(child as u32).serialize(writer)?;
+		}
+
+		Ok(())
 	}
 }
 

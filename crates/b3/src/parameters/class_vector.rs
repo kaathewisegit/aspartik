@@ -7,39 +7,12 @@ use std::{io::Write, ops::Index};
 use super::Parameter;
 use crate::impl_pyparameter_common;
 use sk::{Iter, SkBuf};
-use verbatim::{Deserialize, DeserializeFrom, Serialize};
+use verbatim::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct ClassVector {
 	num_classes: u8,
 	classes: SkBuf<u8>,
-}
-
-impl Serialize for ClassVector {
-	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
-		for i in 0..self.len() {
-			self[i].serialize(writer)?;
-		}
-		Ok(())
-	}
-}
-
-impl DeserializeFrom for &mut ClassVector {
-	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
-	where
-		R: verbatim::Read<'r>,
-	{
-		for i in 0..self.len() {
-			self.set(i, 0);
-		}
-		self.accept();
-
-		for i in 0..self.len() {
-			let c = u8::deserialize(reader)?;
-			self.set(i, c);
-		}
-		Ok(())
-	}
 }
 
 #[expect(clippy::len_without_is_empty)]
@@ -80,6 +53,26 @@ impl Parameter for ClassVector {
 
 	fn reject(&mut self) {
 		self.classes.reject()
+	}
+
+	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
+		for i in 0..self.len() {
+			self.set(i, 0);
+		}
+		self.accept();
+
+		for i in 0..self.len() {
+			let c = u8::deserialize(bytes)?;
+			self.set(i, c);
+		}
+		Ok(())
+	}
+
+	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+		for i in 0..self.len() {
+			self[i].serialize(writer)?;
+		}
+		Ok(())
 	}
 }
 

@@ -11,7 +11,7 @@ use rand_pcg::Pcg64;
 use std::io::Write;
 
 use util::seconds_since_unix;
-use verbatim::{Deserialize, DeserializeFrom, Serialize};
+use verbatim::{Deserialize, Serialize};
 
 pub type Rng = Pcg64;
 
@@ -31,29 +31,22 @@ pub struct PyRng {
 	inner: Mutex<Rng>,
 }
 
-impl Serialize for PyRng {
-	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
-		let inner = self.inner();
-		inner.state().serialize(writer)?;
-		inner.stream().serialize(writer)
-	}
-}
-
-impl DeserializeFrom for &PyRng {
-	fn deserialize_from<'r, R>(self, reader: &mut R) -> Result<()>
-	where
-		R: verbatim::Read<'r>,
-	{
-		let state = u128::deserialize(reader)?;
-		let increment = u128::deserialize(reader)?;
-		*self.inner() = Pcg64::from_state(state, increment);
-		Ok(())
-	}
-}
-
 impl PyRng {
 	pub fn inner(&self) -> MutexGuard<'_, Pcg64> {
 		self.inner.lock()
+	}
+
+	pub fn load(&self, bytes: &mut &[u8]) -> Result<()> {
+		let state = u128::deserialize(bytes)?;
+		let increment = u128::deserialize(bytes)?;
+		*self.inner() = Pcg64::from_state(state, increment);
+		Ok(())
+	}
+
+	pub fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+		let inner = self.inner();
+		inner.state().serialize(writer)?;
+		inner.stream().serialize(writer)
 	}
 }
 
