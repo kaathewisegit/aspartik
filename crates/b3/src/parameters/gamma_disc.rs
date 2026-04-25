@@ -2,6 +2,8 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
+use std::io::Write;
+
 use super::{Parameter, PyReal};
 use crate::impl_pyparameter_common;
 use verbatim::{DeserializeFrom, Serialize};
@@ -16,7 +18,7 @@ pub struct GammaDisc {
 }
 
 impl Serialize for GammaDisc {
-	fn serialize<W: verbatim::Write>(&self, _writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, _writer: &mut W) -> Result<()> {
 		todo!()
 	}
 }

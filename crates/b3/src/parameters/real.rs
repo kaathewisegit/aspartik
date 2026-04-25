@@ -2,6 +2,8 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, prelude::*};
 
+use std::io::Write;
+
 use super::Parameter;
 use crate::impl_pyparameter_common;
 use verbatim::{Deserialize, DeserializeFrom, Serialize};
@@ -35,7 +37,7 @@ impl Real {
 }
 
 impl Serialize for Real {
-	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		self.value.serialize(writer)
 	}
 }

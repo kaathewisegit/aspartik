@@ -1,6 +1,8 @@
 use anyhow::Result;
 use pyo3::prelude::*;
 
+use std::io::Write;
+
 use verbatim::{DeserializeFrom, Read, Serialize};
 
 mod class_vector;
@@ -102,7 +104,7 @@ impl PyParameter {
 		}
 	}
 
-	pub fn serialize<W: verbatim::Write>(
+	pub fn serialize<W: Write + ?Sized>(
 		&self,
 		writer: &mut W,
 	) -> Result<()> {

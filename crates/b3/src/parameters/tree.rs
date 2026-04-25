@@ -11,6 +11,7 @@ use rand::{RngExt, seq::SliceRandom};
 use std::{
 	cmp::Reverse,
 	collections::{BinaryHeap, HashMap, VecDeque},
+	io::Write,
 	mem,
 	ops::Deref,
 	sync::atomic::{AtomicUsize, Ordering},
@@ -993,7 +994,7 @@ impl Tree {
 }
 
 impl Serialize for Tree {
-	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		for &height in &self.heights {
 			height.serialize(writer)?;
 		}

@@ -1,21 +1,31 @@
 use anyhow::Result;
 
-use crate::Write;
+use std::io::Write;
 
 pub trait Serialize {
 	fn serialize<W>(&self, writer: &mut W) -> Result<()>
 	where
-		W: Write;
+		W: Write + ?Sized;
+}
+
+pub trait SerializeDyn {
+	fn serialize_dyn(&self, writer: &mut dyn Write) -> Result<()>;
+}
+
+impl<S: Serialize> SerializeDyn for S {
+	fn serialize_dyn(&self, writer: &mut dyn Write) -> Result<()> {
+		self.serialize(writer)
+	}
 }
 
 macro_rules! impl_le_bytes {
 	($type:ty) => {
 		impl Serialize for $type {
-			fn serialize<W: Write>(
+			fn serialize<W: Write + ?Sized>(
 				&self,
 				writer: &mut W,
 			) -> Result<()> {
-				writer.write_array(self.to_le_bytes())
+				Ok(writer.write_all(&self.to_le_bytes())?)
 			}
 		}
 	};
@@ -35,27 +45,27 @@ impl_le_bytes!(f32);
 impl_le_bytes!(f64);
 
 impl Serialize for bool {
-	fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		u8::from(*self).serialize(writer)
 	}
 }
 
 impl Serialize for char {
-	fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		u32::from(*self).serialize(writer)
 	}
 }
 
 impl Serialize for &[u8] {
-	fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		(self.len() as u32).serialize(writer)?;
-		writer.write_slice(self)
+		Ok(writer.write_all(self)?)
 	}
 }
 
 impl Serialize for &str {
-	fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		(self.len() as u32).serialize(writer)?;
-		writer.write_slice(self.as_bytes())
+		Ok(writer.write_all(self.as_bytes())?)
 	}
 }

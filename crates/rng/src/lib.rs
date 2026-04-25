@@ -8,6 +8,8 @@ use rand::{
 };
 use rand_pcg::Pcg64;
 
+use std::io::Write;
+
 use util::seconds_since_unix;
 use verbatim::{Deserialize, DeserializeFrom, Serialize};
 
@@ -30,7 +32,7 @@ pub struct PyRng {
 }
 
 impl Serialize for PyRng {
-	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		let inner = self.inner();
 		inner.state().serialize(writer)?;
 		inner.stream().serialize(writer)

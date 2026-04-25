@@ -2,7 +2,7 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, exceptions::PyIndexError, prelude::*};
 
-use std::ops::Index;
+use std::{io::Write, ops::Index};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
@@ -16,7 +16,7 @@ pub struct RealVector {
 }
 
 impl Serialize for RealVector {
-	fn serialize<W: verbatim::Write>(&self, writer: &mut W) -> Result<()> {
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		for i in 0..self.len() {
 			self[i].serialize(writer)?;
 		}

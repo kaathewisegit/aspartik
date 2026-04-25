@@ -3,7 +3,7 @@ use parking_lot::Mutex;
 use pyo3::{IntoPyObjectExt, prelude::*, types::PyList};
 use rand::RngExt;
 
-use std::{fs, path::Path};
+use std::{fs, io::Write, path::Path};
 
 use crate::{
 	PyCallback,
@@ -14,7 +14,7 @@ use crate::{
 };
 use rng::PyRng;
 use util::{seconds_since_unix, time};
-use verbatim::{Deserialize, DeserializeFrom, Serialize, Write as VWrite};
+use verbatim::{Deserialize, DeserializeFrom, Serialize};
 
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
@@ -197,10 +197,7 @@ impl Mcmc {
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 impl Serialize for Mcmc {
-	fn serialize<W>(&self, writer: &mut W) -> Result<()>
-	where
-		W: VWrite,
-	{
+	fn serialize<W: Write + ?Sized>(&self, writer: &mut W) -> Result<()> {
 		VERSION.serialize(writer)?;
 		(*self.current_step.lock() as u64).serialize(writer)?;
 		self.posterior.lock().serialize(writer)?;
