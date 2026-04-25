@@ -80,7 +80,7 @@ class Operator(Protocol):
 
         It is presumed that the operator will store all the references to
         parameters and trees it wants to edit and will change them accordingly.
-        If a move cannot be proposed for any reason `Proposal.Reject` should be
+        If a move cannot be proposed for any reason `Proposal.Abort` should be
         returned.  `MCMC` will deal with rolling back the state.
         """
         ...

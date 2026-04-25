@@ -64,11 +64,11 @@ impl FixedHeightSPR {
 			.choose(rng);
 
 		let Some(other) = other else {
-			return Ok(Proposal::Reject());
+			return Ok(Proposal::abort());
 		};
 
 		tree.spr(node, other)?;
 
-		Ok(Proposal::Hastings(0.0))
+		Ok(Proposal::hastings(0.0))
 	}
 }

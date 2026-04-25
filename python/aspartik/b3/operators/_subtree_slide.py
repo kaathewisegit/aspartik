@@ -67,14 +67,14 @@ class SubtreeSlide(Operator):
                 ratio = -log(num_reverse_sources)
         else:
             if tree.height_of(node) > new_height:
-                return Proposal.Reject()
+                return Proposal.Abort()
 
             if tree.height_of(sibling) > new_height:
                 # topological changes
 
                 destinations = intersections(tree, sibling, new_height)
                 if len(destinations) == 0:
-                    return Proposal.Reject()
+                    return Proposal.Abort()
                 random_idx = rng.random_int(0, len(destinations))
                 new_child = destinations[random_idx]
                 new_parent = tree.parent_of(new_child)

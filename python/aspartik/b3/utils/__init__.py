@@ -9,15 +9,14 @@ def print_operator_stats(mcmc: MCMC) -> None:
 
     for operator, results, _, _ in mcmc.operator_statistics:
         (
-            _unconditional_accepts,
-            unconditional_rejects,
+            aborts,
             prior_rejects,
             accepts,
             _rejects,
         ) = results
         total = sum(results)
         accepts_share = accepts / total
-        aborts_share = unconditional_rejects / total
+        aborts_share = aborts / total
         prior_share = prior_rejects / total
         print(
             f"{type(operator).__name__: <20}{accepts_share: >20.0%}{aborts_share: >20.0%}{prior_share: >20.0%}"
@@ -32,8 +31,7 @@ def print_operator_timings(mcmc: MCMC) -> None:
 
     for operator, results, propose, likelihood in mcmc.operator_statistics:
         (
-            _unconditional_accepts,
-            _unconditional_rejects,
+            _aborts,
             prior_rejects,
             accepts,
             rejects,

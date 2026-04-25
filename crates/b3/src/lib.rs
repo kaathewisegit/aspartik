@@ -26,7 +26,7 @@ pub mod pymodule {
 		},
 		mcmc::Mcmc,
 		operators::{
-			ClassvecFlip, FixedHeightSPR, PyProposal, SubtreeLeap,
+			ClassvecFlip, FixedHeightSPR, Proposal, SubtreeLeap,
 		},
 		parameters::{
 			Internal, Leaf, PyClassVector, PyReal, PyRealVector,

@@ -24,56 +24,34 @@ pub use classvec_flip::ClassvecFlip;
 pub use fhspr::FixedHeightSPR;
 pub use subtree_leap::SubtreeLeap;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub enum Proposal {
-	Reject(),
-	Hastings(f64),
-	Accept(),
-}
-
-impl<'py> FromPyObject<'_, 'py> for Proposal {
-	type Error = PyErr;
-
-	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
-		let py_proposal = obj.extract::<PyProposal>()?;
-		Ok(py_proposal.0)
-	}
-}
-
-impl<'py> IntoPyObject<'py> for Proposal {
-	type Target = PyProposal;
-	type Output = Bound<'py, PyProposal>;
-	type Error = PyErr;
-
-	fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, PyErr> {
-		Bound::new(py, PyProposal(self))
-	}
-}
-
 /// A result of the move proposed by an operator
 ///
 /// While the operators edit the tree directly, they need to communicate the
 /// status of their move to `MCMC`.  This is the class used for that.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-#[pyclass(
-	from_py_object,
-	module = "aspartik.b3",
-	name = "Proposal",
-	frozen,
-	eq
-)]
-pub struct PyProposal(Proposal);
+#[pyclass(from_py_object, module = "aspartik.b3", frozen, eq)]
+pub struct Proposal(pub f64);
+
+impl Proposal {
+	pub fn abort() -> Proposal {
+		Self(f64::NEG_INFINITY)
+	}
+
+	pub fn hastings(ratio: f64) -> Proposal {
+		Self(ratio)
+	}
+}
 
 #[pymethods]
-impl PyProposal {
+impl Proposal {
 	/// Aborts the move unconditionally
 	///
 	/// All of the trees and parameters are rolled back.  This is relatively
 	/// fast, as it typically skips recalculating the likelihoods.
 	#[classmethod]
-	#[pyo3(name = "Reject")]
-	fn reject(_cls: Py<PyType>) -> Proposal {
-		Proposal::Reject()
+	#[pyo3(name = "Abort")]
+	fn py_abort(_cls: Py<PyType>) -> Proposal {
+		Self::abort()
 	}
 
 	/// Proposes the move with the `ratio`
@@ -81,24 +59,16 @@ impl PyProposal {
 	/// This is the ratio from the Metropolis–Hastings algorithm.
 	#[classmethod]
 	#[pyo3(name = "Hastings")]
-	fn hastings(_cls: Py<PyType>, ratio: f64) -> Proposal {
-		Proposal::Hastings(ratio)
-	}
-
-	/// Accepts the move unconditionally
-	#[classmethod]
-	#[pyo3(name = "Accept")]
-	fn accept(_cls: Py<PyType>) -> Proposal {
-		Proposal::Accept()
+	fn py_hastings(_cls: Py<PyType>, ratio: f64) -> Proposal {
+		Proposal(ratio)
 	}
 
 	fn __repr__(&self) -> String {
 		match self.0 {
-			Proposal::Reject() => "Proposal.Reject()".to_owned(),
-			Proposal::Hastings(r) => {
+			f64::NEG_INFINITY => "Proposal.Abort()".to_owned(),
+			r => {
 				format!("Proposal.Hastings({r})")
 			}
-			Proposal::Accept() => "Proposal.Accept()".to_owned(),
 		}
 	}
 }
@@ -134,7 +104,7 @@ impl PyOperator {
 
 	pub fn propose(&self, py: Python) -> Result<Proposal> {
 		let proposal = py_call_method!(py, self.inner, "propose")?;
-		let proposal = proposal.extract::<Proposal>(py)?;
+		let proposal = proposal.extract::<Proposal>(py).expect("TODO");
 
 		Ok(proposal)
 	}
@@ -176,8 +146,7 @@ pub struct WeightedScheduler {
 	statistics: Mutex<Statistics>,
 }
 
-type ResultStatistic = [usize; 5];
-const EMPTY_RESULT_STATISTIC: ResultStatistic = [0; 5];
+type ResultStatistic = [usize; 4];
 
 #[derive(Debug)]
 struct Statistics {
@@ -189,7 +158,7 @@ struct Statistics {
 impl Statistics {
 	fn new(len: usize) -> Self {
 		Self {
-			results: vec![EMPTY_RESULT_STATISTIC; len],
+			results: vec![Default::default(); len],
 			propose: vec![Duration::default(); len],
 			likelihood: vec![Duration::default(); len],
 		}

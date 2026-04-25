@@ -43,7 +43,7 @@ class TreeScale(Operator):
         try:
             tree.scale(scale)
         except Exception:
-            return Proposal.Reject()
+            return Proposal.Abort()
 
         ratio = log(scale) * (tree.num_internals - 2)
         return Proposal.Hastings(ratio)

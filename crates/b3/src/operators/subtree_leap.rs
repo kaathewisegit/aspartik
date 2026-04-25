@@ -124,7 +124,7 @@ impl SubtreeLeap {
 		let num_dest = destinations.len() as f64;
 		let rev_num_dest = reverse_destinations.len() as f64;
 
-		Ok(Proposal::Hastings(num_dest.ln() - rev_num_dest.ln()))
+		Ok(Proposal::hastings(num_dest.ln() - rev_num_dest.ln()))
 	}
 }
 

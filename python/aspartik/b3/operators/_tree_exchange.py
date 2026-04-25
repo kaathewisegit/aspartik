@@ -31,7 +31,7 @@ class NarrowExchange(Operator):
         num_grandparents_before = tree.num_grandparents()
         if num_grandparents_before == 0:
             # no grandparents to pick `grandparent` from
-            return Proposal.Reject()
+            return Proposal.Abort()
 
         while True:
             grandparent = tree.random_internal(self.rng)
@@ -44,7 +44,7 @@ class NarrowExchange(Operator):
         elif tree.height_of(right) > tree.height_of(left):
             parent, uncle = right, left
         else:
-            return Proposal.Reject()
+            return Proposal.Abort()
 
         # guaranteed because `grandparent` is a grandparent
         assert isinstance(parent, Internal)
@@ -75,7 +75,7 @@ class WideExchange(Operator):
     leaves or internals) and swaps their parents.
 
     If a randomly selected move is impossible (a parent would be younger than
-    its child) the operator aborts with `Proposal.Reject`.
+    its child) the operator aborts with `Proposal.Abort`.
     """
 
     tree: Tree
@@ -98,10 +98,10 @@ class WideExchange(Operator):
 
         i_parent = tree.parent_of(i)
         if i_parent is None:
-            return Proposal.Reject()
+            return Proposal.Abort()
         j_parent = tree.parent_of(j)
         if j_parent is None:
-            return Proposal.Reject()
+            return Proposal.Abort()
 
         # Abort if j and i are parent-child or if one of the parents would be
         # younger than its new child or if the two selected nodes.
@@ -115,7 +115,7 @@ class WideExchange(Operator):
 
             return Proposal.Hastings(0.0)
         else:
-            return Proposal.Reject()
+            return Proposal.Abort()
 
 
 @dataclass(slots=True)
@@ -147,7 +147,7 @@ class BeastNarrowExchange(Operator):
             tree.swap_parents(node, uncle)
             return Proposal.Hastings(0.0)
         else:
-            return Proposal.Reject()
+            return Proposal.Abort()
 
 
 @dataclass(slots=True)
@@ -188,4 +188,4 @@ class BeastWideExchange(Operator):
             tree.swap_parents(node_a, node_b)
             return Proposal.Hastings(0.0)
         else:
-            return Proposal.Reject()
+            return Proposal.Abort()

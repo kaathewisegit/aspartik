@@ -42,6 +42,6 @@ impl ClassvecFlip {
 			classvec.set(index, new_class);
 		}
 
-		Proposal::Hastings(0.0)
+		Proposal::hastings(0.0)
 	}
 }

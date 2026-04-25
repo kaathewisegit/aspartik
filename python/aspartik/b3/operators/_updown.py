@@ -48,7 +48,7 @@ class UpDown(Operator):
             num_scaling_up = self.up.scale(scale)
             num_scaling_down = self.down.scale(1 / scale)
         except Exception:
-            return Proposal.Reject()
+            return Proposal.Abort()
 
         ratio = log(scale) * (num_scaling_up - num_scaling_down - 2)
         return Proposal.Hastings(ratio)

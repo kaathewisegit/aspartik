@@ -208,12 +208,10 @@ impl Mcmc {
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StepResult {
 	/// Operator returned `Proposal::Reject`
-	UnconditionalAccept = 0,
-	/// Operator returned `Proposal::Accept`
-	UnconditionalReject,
+	Abort,
 	/// A prior returned negative infinity
 	PriorReject,
 	/// Regular MCMC accept
@@ -224,7 +222,7 @@ pub enum StepResult {
 
 impl StepResult {
 	pub fn is_accept(&self) -> bool {
-		matches!(self, Self::UnconditionalAccept | Self::Accept)
+		*self == Self::Accept
 	}
 
 	pub fn is_reject(&self) -> bool {
@@ -298,13 +296,10 @@ impl Mcmc {
 			self.scheduler.make_proposal(py, operator_index)?;
 
 		let hastings = match proposal {
-			Proposal::Accept() => {
-				return Ok(UnconditionalAccept);
+			Proposal(f64::NEG_INFINITY) => {
+				return Ok(Abort);
 			}
-			Proposal::Reject() => {
-				return Ok(UnconditionalReject);
-			}
-			Proposal::Hastings(ratio) => ratio,
+			Proposal(ratio) => ratio,
 		};
 
 		let prior = self.prior(py)?;
