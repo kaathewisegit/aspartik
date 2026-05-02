@@ -11,6 +11,7 @@ use std::time::Duration;
 
 use crate::mcmc::StepResult;
 use rng::Rng;
+use util::atomic::MonotonicU32;
 use util::{
 	py_bail, py_call_method, py_check_method, py_extract_attr,
 	py_has_method, time,
@@ -79,6 +80,8 @@ pub struct PyOperator {
 
 	has_accept_reject: bool,
 	tuning: Option<f64>,
+	accepts: MonotonicU32,
+	rejects: MonotonicU32,
 }
 
 impl<'py> FromPyObject<'_, 'py> for PyOperator {
@@ -101,6 +104,8 @@ impl<'py> FromPyObject<'_, 'py> for PyOperator {
 			inner: obj.to_owned().unbind(),
 			has_accept_reject,
 			tuning,
+			accepts: 0.into(),
+			rejects: 0.into(),
 		};
 		out.tune(obj.py())?;
 		Ok(out)
@@ -148,6 +153,7 @@ impl PyOperator {
 		if self.has_accept_reject {
 			py_call_method!(py, self.inner, "accept")?;
 		}
+		self.accepts.add(1);
 		Ok(())
 	}
 
@@ -155,6 +161,7 @@ impl PyOperator {
 		if self.has_accept_reject {
 			py_call_method!(py, self.inner, "reject")?;
 		}
+		self.rejects.add(1);
 		Ok(())
 	}
 }
