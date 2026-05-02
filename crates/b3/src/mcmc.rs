@@ -13,13 +13,13 @@ use crate::{
 	priors::PyPrior,
 };
 use rng::PyRng;
-use util::{seconds_since_unix, time};
+use util::{atomic::MonotonicF64, seconds_since_unix, time};
 use verbatim::{Deserialize, Serialize};
 
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
 pub struct Mcmc {
-	posterior: Mutex<f64>,
+	posterior: MonotonicF64,
 
 	current_step: Mutex<usize>,
 
@@ -51,7 +51,7 @@ impl Mcmc {
 		let scheduler = WeightedScheduler::new(py, operators)?;
 
 		Ok(Mcmc {
-			posterior: Mutex::new(f64::NEG_INFINITY),
+			posterior: f64::NEG_INFINITY.into(),
 			current_step: Mutex::new(0),
 
 			state,
@@ -125,7 +125,7 @@ impl Mcmc {
 	/// Posterior probability for the last accepted step
 	#[getter]
 	pub fn posterior(&self) -> f64 {
-		*self.posterior.lock()
+		self.posterior.load()
 	}
 
 	#[getter]
@@ -178,7 +178,7 @@ impl Mcmc {
 		);
 		*self.current_step.lock() =
 			u64::deserialize(&mut bytes)? as usize;
-		*self.posterior.lock() = f64::deserialize(&mut bytes)?;
+		self.posterior.store(f64::deserialize(&mut bytes)?);
 
 		for param in &self.state {
 			param.as_dyn().load(&mut bytes)?;
@@ -241,7 +241,7 @@ impl Mcmc {
 	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
 		VERSION.serialize(writer)?;
 		(*self.current_step.lock() as u64).serialize(writer)?;
-		self.posterior.lock().serialize(writer)?;
+		self.posterior.load().serialize(writer)?;
 
 		for parameter in &self.state {
 			parameter.as_dyn().dump(writer)?;
@@ -328,13 +328,13 @@ impl Mcmc {
 
 		let new_posterior = likelihood + prior;
 
-		let old_posterior = *self.posterior.lock();
+		let old_posterior = self.posterior.load();
 
 		let ratio = new_posterior - old_posterior + hastings;
 
 		let random_0_1 = self.rng.get().inner().random::<f64>();
 		if ratio > random_0_1.ln() {
-			*self.posterior.lock() = new_posterior;
+			self.posterior.store(new_posterior);
 
 			Ok(Accept)
 		} else {

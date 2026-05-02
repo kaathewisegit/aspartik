@@ -12,8 +12,9 @@ use std::{io::Write, time::Duration};
 use crate::mcmc::StepResult;
 use rng::Rng;
 use util::{
-	atomic::MonotonicU32, py_bail, py_call_method, py_check_method,
-	py_extract_attr, py_has_method, time,
+	atomic::{MonotonicF64, MonotonicU32},
+	py_bail, py_call_method, py_check_method, py_extract_attr,
+	py_has_method, time,
 };
 use verbatim::{Deserialize, Serialize};
 
@@ -80,7 +81,7 @@ pub struct PyOperator {
 
 	has_accept_reject: bool,
 	has_tuning: bool,
-	tuning: Mutex<f64>,
+	tuning: MonotonicF64,
 	accepts: MonotonicU32,
 	rejects: MonotonicU32,
 }
@@ -128,7 +129,7 @@ impl PyOperator {
 				py,
 				self.inner,
 				"set_tuning",
-				*self.tuning.lock()
+				self.tuning.load()
 			)?;
 		}
 		Ok(())
@@ -147,7 +148,7 @@ impl PyOperator {
 			return Ok(());
 		}
 
-		let old_tuning = *self.tuning.lock();
+		let old_tuning = self.tuning.load();
 
 		// This is a somewhat odd optimization routine because it
 		// doesn't decrease step size over time.  The idea is very
@@ -156,8 +157,9 @@ impl PyOperator {
 		// acceptance.  And visa-versa.
 		//
 		// The rate of change (0.05) is tied to how often we tune.
-		*self.tuning.lock() =
+		let new_tuning =
 			(old_tuning - 0.05 * (ratio - 0.234)).clamp(0.1, 0.99);
+		self.tuning.store(new_tuning);
 
 		self.set_tuning(py)?;
 
@@ -170,14 +172,14 @@ impl PyOperator {
 	pub fn load(&self, bytes: &mut &[u8]) -> Result<()> {
 		self.accepts.store(u32::deserialize(bytes)?);
 		self.rejects.store(u32::deserialize(bytes)?);
-		*self.tuning.lock() = f64::deserialize(bytes)?;
+		self.tuning.store(f64::deserialize(bytes)?);
 		Ok(())
 	}
 
 	pub fn dump(&self, writer: &mut dyn Write) -> Result<()> {
 		self.accepts.load().serialize(writer)?;
 		self.rejects.load().serialize(writer)?;
-		self.tuning.lock().serialize(writer)?;
+		self.tuning.load().serialize(writer)?;
 		Ok(())
 	}
 
