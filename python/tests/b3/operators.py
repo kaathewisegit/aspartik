@@ -28,9 +28,7 @@ def test_node_slide(rng):
 
 
 def test_tree_scale(rng):
-    check_tree_operator(
-        lambda tree: TreeScale(tree, 0.9, Uniform(0, 1), rng, weight=1.0)
-    )
+    check_tree_operator(lambda tree: TreeScale(tree, Uniform(0, 1), rng, weight=1.0))
 
 
 def test_spr(rng):

@@ -67,12 +67,12 @@ priors = [
 ]
 
 operators = [
-    ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
-    ParamScale(clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
-    UpDown(Internals(tree), clock_rate, 0.75, Uniform(0, 1), rng, weight=3),
+    ParamScale(kappa, Uniform(0, 1), rng, weight=1),
+    ParamScale(clock_rate, Uniform(0, 1), rng, weight=3),
+    UpDown(Internals(tree), clock_rate, Uniform(0, 1), rng, weight=3),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=50),
     FixedHeightSPR(tree, rng, weight=5),
-    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
+    ParamScale(population_size, Uniform(0, 1), rng, weight=3),
     RandomWalk(growth_rate, window=1, rng=rng, weight=3),
     DeltaExchange(frequencies, 0.01, rng, weight=3),
 ]

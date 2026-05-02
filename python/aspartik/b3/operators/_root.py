@@ -1,15 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import log
 
 from ...rng import RNG
 from ...stats.distributions import Distribution
-from .. import Operator, Proposal
+from .. import Operator, Proposal, TunableOperator
 from ..parameters import Tree
-from ._util import assert_factor, sample_range
+from ._util import sample_range
 
 
 @dataclass(slots=True)
-class RootSlide(Operator):
+class RootSlide(Operator, TunableOperator):
     """
     Scales the height of the root node
 
@@ -20,21 +20,19 @@ class RootSlide(Operator):
 
     tree: Tree
     """The tree to edit."""
-    factor: float
     distribution: Distribution
     """The distribution to draw the height move distance from"""
     rng: RNG
     weight: float = 1
 
-    def __post_init__(self):
-        assert_factor(self)
+    _factor: float = field(init=False, default=0.75)
 
     def propose(self) -> Proposal:
         tree = self.tree
         rng = self.rng
         root = tree.root
 
-        low, high = self.factor, 1 / self.factor
+        low, high = self._factor, 1 / self._factor
         scale = sample_range(low, high, self.distribution, rng)
 
         old_height = tree.height_of(root)
@@ -47,3 +45,6 @@ class RootSlide(Operator):
         tree.set_height(root, new_height)
 
         return Proposal.Hastings(-log(scale))
+
+    def set_tuning(self, parameter: float) -> None:
+        self._factor = parameter

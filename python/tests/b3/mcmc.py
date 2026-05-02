@@ -22,8 +22,8 @@ def test_mcmc():
 
     prior_a = Bound(a, 0, 10)
 
-    op_param_scale = ParamScale(a, 0.75, Uniform(0, 1), rng, weight=1)
-    op_tree_scale = TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3)
+    op_param_scale = ParamScale(a, Uniform(0, 1), rng, weight=1)
+    op_tree_scale = TreeScale(tree, Uniform(0, 1), rng, weight=3)
 
     likelihood = CPU4Likelihood(
         msa=msa,

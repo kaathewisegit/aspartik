@@ -639,7 +639,7 @@ def _b3_config(c: MCMCConfig):
         priors.append(Distribution(param, dist))
         parameters.append(param)
         if positive:
-            operators.append(ParamScale(param, 0.75, Uniform(0, 1), rng, weight=weight))
+            operators.append(ParamScale(param, Uniform(0, 1), rng, weight=weight))
         else:
             operators.append(RandomWalk(param, window=1, rng=rng, weight=weight))
         return param
@@ -717,7 +717,7 @@ def _b3_config(c: MCMCConfig):
             num = min(c.msa.num_sequences, 1000)
             operators.extend(
                 [
-                    RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
+                    RootSlide(tree, Uniform(0, 1), rng, weight=3),
                     SubtreeLeap(tree, Normal(0, 1), rng, weight=num),
                     FixedHeightSPR(tree, rng, weight=num / 10),
                 ]
@@ -733,7 +733,6 @@ def _b3_config(c: MCMCConfig):
                     UpDown(
                         Internals(tree),
                         clock_rate_p,
-                        0.75,
                         Uniform(0, 1),
                         rng,
                         weight=3,
@@ -745,11 +744,11 @@ def _b3_config(c: MCMCConfig):
         case "beauti1_classic":
             operators.extend(
                 [
-                    TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
+                    TreeScale(tree, Uniform(0, 1), rng, weight=3),
                     SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
                     BeastNarrowExchange(tree, rng, weight=30),
                     BeastWideExchange(tree, rng, weight=3),
-                    RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
+                    RootSlide(tree, Uniform(0, 1), rng, weight=3),
                     NodeSlide(tree, rng, weight=30),
                 ]
             )

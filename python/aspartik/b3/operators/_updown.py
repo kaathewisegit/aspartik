@@ -1,15 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import log
 
 from ...rng import RNG
 from ...stats.distributions import Distribution
-from .. import Operator, Proposal
+from .. import Operator, Proposal, TunableOperator
 from ..parameters import Scalable
-from ._util import assert_factor, sample_range
+from ._util import sample_range
 
 
 @dataclass(slots=True)
-class UpDown(Operator):
+class UpDown(Operator, TunableOperator):
     """
     Scales `up` by factor and `down` by inverse factor on each step
 
@@ -26,22 +26,15 @@ class UpDown(Operator):
     """The parameter to scale up."""
     down: Scalable
     """The parameter to scale down."""
-    factor: float
-    """
-    The scale ratio will be sampled from `(factor, 1 / factor)`.  So, the
-    smaller the factor, the larger the moves proposed by this operator are.
-    This also means that `factor` must be within `(0, 1)`.
-    """
     distribution: Distribution
     """The distribution from which to sample the scaling factor."""
     rng: RNG
     weight: float = 1
 
-    def __post_init__(self):
-        assert_factor(self)
+    _factor: float = field(init=False, default=0.75)
 
     def propose(self) -> Proposal:
-        low, high = self.factor, 1 / self.factor
+        low, high = self._factor, 1 / self._factor
         scale = sample_range(low, high, self.distribution, self.rng)
 
         try:
@@ -52,3 +45,6 @@ class UpDown(Operator):
 
         ratio = log(scale) * (num_scaling_up - num_scaling_down - 2)
         return Proposal.Hastings(ratio)
+
+    def set_tuning(self, parameter: float) -> None:
+        self._factor = parameter

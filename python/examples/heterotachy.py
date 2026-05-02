@@ -57,10 +57,10 @@ likelihood = HeteroLikelihood(
 )
 
 operators = [
-    *(ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1) for kappa in kappas),
+    *(ParamScale(kappa, Uniform(0, 1), rng, weight=1) for kappa in kappas),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
     FixedHeightSPR(tree, rng, weight=4 * N),
-    ParamScale(birth_rate, 0.75, Uniform(0, 1), rng, weight=3 * N),
+    ParamScale(birth_rate, Uniform(0, 1), rng, weight=3 * N),
     *(DeltaExchange(freq, 0.01, rng, weight=3) for freq in freqs),
     ClassvecFlip(likelihood.class_vector, rng, weight=3),
 ]

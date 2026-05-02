@@ -39,19 +39,19 @@ priors = [
 ]
 
 operators = [
-    ParamScale(kappa, 0.75, Uniform(0, 1), rng, weight=1),
+    ParamScale(kappa, Uniform(0, 1), rng, weight=1),
     DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
-    TreeScale(tree, 0.75, Uniform(0, 1), rng, weight=3),
+    TreeScale(tree, Uniform(0, 1), rng, weight=3),
     SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
     BeastNarrowExchange(tree, rng, weight=30),
     BeastWideExchange(tree, rng, weight=3),
-    RootSlide(tree, 0.75, Uniform(0, 1), rng, weight=3),
+    RootSlide(tree, Uniform(0, 1), rng, weight=3),
     # BEAST's `UniformOperator` picks one of the parameter dimensions moves it
     # randomly within bounds.  Using it on `nodeHeights` is equivalent to
     # selecting a random node and moving it uniformly between it's maximum and
     # minimum heights, which is what `NodeSlide` with `Uniform` does.
     NodeSlide(tree, rng, weight=30),
-    ParamScale(population_size, 0.75, Uniform(0, 1), rng, weight=3),
+    ParamScale(population_size, Uniform(0, 1), rng, weight=3),
 ]
 
 likelihood = CPU4Likelihood(

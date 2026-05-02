@@ -78,6 +78,7 @@ pub struct PyOperator {
 	inner: Py<PyAny>,
 
 	has_accept_reject: bool,
+	tuning: Option<f64>,
 }
 
 impl<'py> FromPyObject<'_, 'py> for PyOperator {
@@ -90,10 +91,19 @@ impl<'py> FromPyObject<'_, 'py> for PyOperator {
 		let has_accept_reject = py_has_method!(obj, "accept")
 			&& py_has_method!(obj, "reject");
 
-		Ok(Self {
+		let tuning = if py_has_method!(obj, "set_tuning") {
+			Some(0.75)
+		} else {
+			None
+		};
+
+		let out = Self {
 			inner: obj.to_owned().unbind(),
 			has_accept_reject,
-		})
+			tuning,
+		};
+		out.tune(obj.py())?;
+		Ok(out)
 	}
 }
 
@@ -107,6 +117,16 @@ impl PyOperator {
 		let proposal = proposal.extract::<Proposal>(py).expect("TODO");
 
 		Ok(proposal)
+	}
+
+	pub fn tune(&self, py: Python) -> Result<()> {
+		let Some(tuning_param) = self.tuning else {
+			return Ok(());
+		};
+
+		py_call_method!(py, self.inner, "set_tuning", tuning_param)?;
+
+		Ok(())
 	}
 
 	pub fn repr<'py>(

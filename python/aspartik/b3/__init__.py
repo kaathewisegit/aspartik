@@ -86,6 +86,21 @@ class Operator(Protocol):
         ...
 
 
+class TunableOperator(Protocol):
+    """
+    Operators whose proposal boldness can be tweaked
+    """
+
+    def set_tuning(self, parameter: float) -> None:
+        """
+        Changes the tuning parameter which defines the reach of the steps
+
+        The parameter must be in `(0, 1)`, with 0 meaning infinite reach and 1
+        meaning a no-op step (note that the range is not inclusive).
+        """
+        ...
+
+
 class Callback(Protocol):
     """
     Custom callbacks
