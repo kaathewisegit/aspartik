@@ -28,16 +28,16 @@ macro_rules! py_bail {
 /// [`call_method`]: https://docs.rs/pyo3/latest/pyo3/struct.Py.html#method.call_method
 #[macro_export]
 macro_rules! py_call_method {
-	($py:ident, $obj:expr, $name:literal) => {{
+	($py:expr, $obj:expr, $name:literal) => {{
 		use pyo3::intern;
 		$obj.call_method0($py, intern!($py, $name))
 	}};
-	($py:ident, $obj:expr, $name:literal, $($arg:expr),+ $(,)?) => {{
+	($py:expr, $obj:expr, $name:literal, $($arg:expr),+ $(,)?) => {{
 		use pyo3::intern;
 		$obj.call_method1($py, intern!($py, $name), ($($arg,)+))
 	}};
 	(
-		$py:ident, $obj:expr, $name:literal,
+		$py:expr, $obj:expr, $name:literal,
 		$($arg:expr,)* /,
 		$($key:expr => $value:expr),+
 		$(,)?

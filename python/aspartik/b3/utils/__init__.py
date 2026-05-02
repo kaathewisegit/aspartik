@@ -1,10 +1,12 @@
 import argparse
 
-from .. import MCMC
+from .. import MCMC, TunableOperator
 
 
 def print_operator_stats(mcmc: MCMC) -> None:
-    print(f"{'Operator': <20}{'%accepts': >20}{'%aborts': >20}{'%prior rejects': >20}")
+    print(
+        f"{'Operator': <20}{'accepts%': >15}{'aborts%': >15}{'prior r.%': >15}{'tuning p.': >15}"
+    )
     print("-" * 80)
 
     for operator, results, _, _ in mcmc.operator_statistics:
@@ -18,8 +20,14 @@ def print_operator_stats(mcmc: MCMC) -> None:
         accepts_share = accepts / total
         aborts_share = aborts / total
         prior_share = prior_rejects / total
+
+        if isinstance(operator, TunableOperator):
+            tuning = f"{operator.get_tuning():.2f}"
+        else:
+            tuning = "-"
+
         print(
-            f"{type(operator).__name__: <20}{accepts_share: >20.0%}{aborts_share: >20.0%}{prior_share: >20.0%}"
+            f"{type(operator).__name__: <20}{accepts_share: >15.0%}{aborts_share: >15.0%}{prior_share: >15.0%}{tuning: >15}"
         )
 
 

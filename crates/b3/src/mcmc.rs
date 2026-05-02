@@ -183,6 +183,9 @@ impl Mcmc {
 		for param in &self.state {
 			param.as_dyn().load(&mut bytes)?;
 		}
+
+		self.scheduler.load(&mut bytes)?;
+
 		self.rng.get().load(&mut bytes)?;
 
 		// update calculators
@@ -244,6 +247,8 @@ impl Mcmc {
 			parameter.as_dyn().dump(writer)?;
 		}
 
+		self.scheduler.dump(writer)?;
+
 		self.rng.get().dump(writer)
 	}
 
@@ -264,6 +269,10 @@ impl Mcmc {
 				})?;
 
 			self_.finalize_step(py, operator_index, result)?;
+
+			if current_step.is_multiple_of(10_000) {
+				self_.scheduler.tune(py)?;
+			}
 
 			Self::call_callbacks(
 				this.clone_ref(py),

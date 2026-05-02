@@ -86,6 +86,7 @@ class Operator(Protocol):
         ...
 
 
+@runtime_checkable
 class TunableOperator(Protocol):
     """
     Operators whose proposal boldness can be tweaked
@@ -98,6 +99,10 @@ class TunableOperator(Protocol):
         The parameter must be in `(0, 1)`, with 0 meaning infinite reach and 1
         meaning a no-op step (note that the range is not inclusive).
         """
+        ...
+
+    def get_tuning(self) -> float:
+        """Get the current tuning parameter value"""
         ...
 
 

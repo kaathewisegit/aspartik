@@ -48,3 +48,6 @@ class RootSlide(Operator, TunableOperator):
 
     def set_tuning(self, parameter: float) -> None:
         self._factor = parameter
+
+    def get_tuning(self) -> float:
+        return self._factor
