@@ -3,6 +3,8 @@
 //! Currently they mostly contain PyO3 helpers.  Perhaps it would make sense to
 //! upstream some of them.
 
+pub mod atomic;
+
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Returns a Python exception of `$type` with a given message
