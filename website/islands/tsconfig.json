@@ -1,10 +1,12 @@
 {
 	"compilerOptions": {
-		"jsx": "preserve",
-		"jsxImportSource": "solid-js",
 		"target": "ESNext",
 		"lib": ["DOM", "DOM.Iterable", "ESNext"],
 
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact",
+
+		"skipLibCheck": true,
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
 		"isolatedModules": true,

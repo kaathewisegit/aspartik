@@ -1,10 +1,10 @@
+import preact from "@preact/preset-vite"
 import tailwindcss from "@tailwindcss/vite"
 import { build, defineConfig } from "vite"
-import solid from "vite-plugin-solid"
 
 const makeConfig = (name: string, entry: string) =>
 	defineConfig({
-		plugins: [solid(), tailwindcss()],
+		plugins: [preact(), tailwindcss()],
 		build: {
 			rollupOptions: {
 				input: {

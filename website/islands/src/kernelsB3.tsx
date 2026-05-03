@@ -1,44 +1,74 @@
-import { createContext, createEffect, Index, onMount } from "solid-js"
-import { createStore, type SetStoreFunction } from "solid-js/store"
-import { render } from "solid-js/web"
+import {
+	computed,
+	createModel,
+	type ReadonlySignal,
+	signal,
+	useSignalEffect,
+} from "@preact/signals"
+import { render } from "preact"
+import { useEffect, useRef } from "preact/hooks"
 import Tree10 from "./components/Tree10"
 import { getElementById } from "./utils"
-
 import "./index.css"
 
-export const [state, setState] = createStore({
-	kernelRowStart: 0,
-	kernelRowEnd: 0,
-	currentStep: -1,
+const Model = createModel(() => {
+	const currentStep = signal(-1)
+	const kernelRowStart = computed(() => (currentStep.value <= 0 ? 0 : 6))
+	const kernelRowEnd = computed(() => (currentStep.value <= 0 ? 5 : 9))
+	const kernelName = computed(() =>
+		currentStep.value <= 0 ? "update_leaves" : "propose",
+	)
+	const selectedEdges: ReadonlySignal<boolean[]> = computed(() => {
+		const edges = Array(10).fill(false)
+		if (currentStep.value === 0) {
+			return edges.map((_, i) => i < 6)
+		} else if (currentStep.value > 0) {
+			edges[currentStep.value + 5] = true
+		}
+		return edges
+	})
+	const selectedNodes: ReadonlySignal<boolean[]> = computed(() =>
+		Array(11).fill(false),
+	)
 
-	kernelName: "update_leaves",
+	return {
+		currentStep,
 
-	selectedNodes: Array(11).fill(false) as boolean[],
-	selectedEdges: Array(10).fill(false) as boolean[],
+		kernelRowStart,
+		kernelRowEnd,
+
+		kernelName,
+
+		selectedEdges,
+		selectedNodes,
+
+		prev() {
+			if (currentStep.value > -1) currentStep.value -= 1
+		},
+
+		next() {
+			if (currentStep.value < 4) currentStep.value += 1
+		},
+	}
 })
-
-export const Context = createContext<{
-	state: typeof state
-	setState: SetStoreFunction<typeof state>
-}>({ state, setState })
+const model = new Model()
 
 export default function Main() {
-	const handler = (e: KeyboardEvent) => {
-		if (e.key === "ArrowLeft") {
-			prev()
-		} else if (e.key === "ArrowRight") {
-			next()
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			if (e.key === "ArrowLeft") model.prev()
+			else if (e.key === "ArrowRight") model.next()
 		}
-	}
-
-	onMount(() => window.addEventListener("keydown", handler))
+		window.addEventListener("keydown", handler)
+		return () => window.removeEventListener("keydown", handler)
+	}, [])
 
 	return (
 		<div class="flex flex-col items-center [&_*]:duration-300">
 			<figure class="h-54 w-64">
 				<Tree10
-					selectedNodes={state.selectedNodes}
-					selectedEdges={state.selectedEdges}
+					selectedNodes={model.selectedNodes}
+					selectedEdges={model.selectedEdges}
 				/>
 			</figure>
 			<Visualization />
@@ -51,7 +81,7 @@ function Visualization() {
 	return (
 		<div class="m-4 flex w-fit">
 			<RowsInfo />
-			<Elements rows={10} columns={10} />
+			<Elements rows={10} numColumns={10} />
 			<ActiveKernel />
 		</div>
 	)
@@ -77,65 +107,36 @@ function RowsInfo() {
 	)
 }
 
-function ActiveKernel() {
-	let element!: HTMLSpanElement
-
-	createEffect(() => {
-		const pos = (state.kernelRowStart + state.kernelRowEnd) / 2
-		const posPx = pos * 22
-		element.style.transform = `translate(0px, ${posPx}px)`
-	})
-
-	return (
-		<span
-			ref={element}
-			class="ml-[10px] w-[80px] text-[16px] leading-none transition-all"
-		>
-			<code>{state.kernelName}</code>
-		</span>
-	)
-}
-
-function Controls() {
-	return (
-		<div class="m-2 flex w-fit space-x-6">
-			<button class="border px-2" type="button" on:click={prev}>
-				← Previous
-			</button>
-			<button class="border px-2" type="button" on:click={next}>
-				Next →
-			</button>
-		</div>
-	)
-}
-
-function Elements(props: { rows: number; columns: number }) {
+function Elements(props: { rows: number; numColumns: number }) {
 	return (
 		<div class="flex flex-col space-y-[6px]">
 			<Active />
 
-			<Index each={Array(props.rows)}>
-				{(_, index) => <Row edge={index} numColumns={props.columns} />}
-			</Index>
+			{Array.from({ length: props.rows }).map((_, i) => (
+				<Row key={i} edge={i} numColumns={props.numColumns} />
+			))}
 		</div>
 	)
 }
 
 function Active() {
-	let element!: HTMLDivElement
+	const elementRef = useRef<HTMLDivElement>(null)
 
-	createEffect(() => {
-		const startPx = state.kernelRowStart * 22 - 3
-		const num = state.kernelRowEnd - state.kernelRowStart
+	useSignalEffect(() => {
+		const el = elementRef.current
+		if (!el) return
+
+		const startPx = model.kernelRowStart.value * 22 - 3
+		const num = model.kernelRowEnd.value - model.kernelRowStart.value
 		const widthPx = (num + 1) * 16 + num * 6 + 6
 
-		element.style.transform = `translate(-5px, ${startPx}px)`
-		element.style.height = `${widthPx}px`
+		el.style.transform = `translate(-5px, ${startPx}px)`
+		el.style.height = `${widthPx}px`
 	})
 
 	return (
 		<div
-			ref={element}
+			ref={elementRef}
 			class="absolute -z-10 w-[224px] bg-gray-400 transition-all"
 		></div>
 	)
@@ -144,61 +145,53 @@ function Active() {
 function Row(props: { edge: number; numColumns: number }) {
 	return (
 		<div class="flex space-x-[6px]">
-			<Index each={Array(props.numColumns)}>
-				{() => <Block edge={props.edge} />}
-			</Index>
+			{Array.from({ length: props.numColumns }).map((_, i) => (
+				<Block key={i} edge={props.edge} />
+			))}
 		</div>
 	)
 }
 
 function Block(props: { edge: number }) {
 	const color = () =>
-		state.selectedEdges[props.edge] ? "bg-black" : "bg-white"
+		model.selectedEdges.value[props.edge] ? "bg-black" : "bg-white"
 
 	return <div class={`size-[16px] border ${color()} transition-colors`}></div>
 }
 
-function prev() {
-	if (state.currentStep === -1) {
-		return
-	} else {
-		setState("currentStep", (step) => step - 1)
-	}
+function ActiveKernel() {
+	const elementRef = useRef<HTMLSpanElement>(null)
+
+	useSignalEffect(() => {
+		const el = elementRef.current
+		if (!el) return
+
+		const pos = (model.kernelRowStart.value + model.kernelRowEnd.value) / 2
+		const posPx = pos * 22
+		el.style.transform = `translate(0px, ${posPx}px)`
+	})
+
+	return (
+		<span
+			ref={elementRef}
+			class="ml-[10px] w-[80px] text-[16px] leading-none transition-all"
+		>
+			<code>{model.kernelName}</code>
+		</span>
+	)
 }
 
-function next() {
-	if (state.currentStep === 4) {
-		return
-	} else {
-		setState("currentStep", (step) => step + 1)
-	}
+function Controls() {
+	return (
+		<div class="m-2 flex w-fit space-x-6">
+			<button class="border px-2" type="button" onClick={model.prev}>
+				← Previous
+			</button>
+			<button class="border px-2" type="button" onClick={model.next}>
+				Next →
+			</button>
+		</div>
+	)
 }
 
-createEffect(() => {
-	if (state.currentStep <= 0) {
-		setState("kernelName", "update_leaves")
-	} else {
-		setState("kernelName", "propose")
-	}
-})
-
-createEffect(() => {
-	if (state.currentStep <= 0) {
-		setState("kernelRowStart", 0)
-		setState("kernelRowEnd", 5)
-	} else {
-		setState("kernelRowStart", 6)
-		setState("kernelRowEnd", 9)
-	}
-})
-
-createEffect(() => {
-	setState("selectedEdges", Array(10).fill(false))
-	if (state.currentStep === 0) {
-		setState("selectedEdges", (_, index) => index < 6, true)
-	} else if (state.currentStep > 0) {
-		setState("selectedEdges", state.currentStep + 5, true)
-	}
-})
-
-render(() => <Main />, getElementById("kernelsB3"))
+render(<Main />, getElementById("kernelsB3"))

@@ -1,5 +1,4 @@
-import { Index } from "solid-js"
-import type { Store } from "solid-js/store"
+import type { Signal } from "@preact/signals"
 
 const NODES = [
 	{ x: 0, y: 100 },
@@ -28,31 +27,32 @@ const LINES = [
 	[9, 10],
 ]
 
-export default function Tree10(props: {
-	selectedNodes: Store<boolean[]>
-	selectedEdges: Store<boolean[]>
+export default function Tree10({
+	selectedNodes,
+	selectedEdges,
+}: {
+	selectedNodes: Signal<boolean[]>
+	selectedEdges: Signal<boolean[]>
 }) {
 	return (
 		<svg viewBox="-10 10 120 100" xmlns="http://www.w3.org/2000/svg">
 			<title>A phylogenetic tree with 10 nodes</title>
-			<Index each={LINES}>
-				{(value, index) => (
-					<Line
-						from={NODES[value()[0]]}
-						to={NODES[value()[1]]}
-						selected={props.selectedEdges[index]}
-					/>
-				)}
-			</Index>
-			<Index each={NODES}>
-				{(node, index) => (
-					<Node
-						index={index}
-						selected={props.selectedNodes[index]}
-						{...node()}
-					/>
-				)}
-			</Index>
+			{LINES.map((value, index) => (
+				<Line
+					key={index}
+					from={NODES[value[0]]}
+					to={NODES[value[1]]}
+					selected={selectedEdges.value[index]}
+				/>
+			))}
+			{NODES.map((node, index) => (
+				<Node
+					key={index}
+					index={index}
+					selected={selectedNodes.value[index]}
+					{...node}
+				/>
+			))}
 		</svg>
 	)
 }
@@ -63,8 +63,8 @@ function Node(props: {
 	index: number
 	selected: boolean
 }) {
-	const fill = () => (props.selected ? "#000" : "#fff")
-	const fillR = () => (props.selected ? "#fff" : "#000")
+	const fill = props.selected ? "#000" : "#fff"
+	const fillR = props.selected ? "#fff" : "#000"
 
 	return (
 		<>
@@ -75,7 +75,7 @@ function Node(props: {
 				r="6"
 				stroke="#333"
 				stroke-width="0.5"
-				fill={fill()}
+				fill={fill}
 			/>
 			<text
 				class="transition-all"
@@ -84,7 +84,7 @@ function Node(props: {
 				font-size="8"
 				text-anchor="middle"
 				dominant-baseline="central"
-				fill={fillR()}
+				fill={fillR}
 			>
 				{props.index}
 			</text>
@@ -97,8 +97,6 @@ function Line(props: {
 	to: { x: number; y: number }
 	selected: boolean
 }) {
-	const width = () => (props.selected ? "1.5" : "0.5")
-
 	return (
 		<line
 			class="transition-all"
@@ -107,7 +105,7 @@ function Line(props: {
 			x2={props.to.x}
 			y2={props.to.y}
 			stroke="#333"
-			stroke-width={width()}
+			stroke-width={props.selected ? "1.5" : "0.5"}
 		/>
 	)
 }
