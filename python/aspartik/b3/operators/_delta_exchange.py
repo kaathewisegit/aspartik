@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ...rng import RNG
 from .. import Operator, Proposal
@@ -20,12 +20,21 @@ class DeltaExchange(Operator):
     The multidimensional parameter to edit.  Two random dimensions ones will be
     changed for each proposal.
     """
-    factor: float
-    """
-    The move size is a random value between 0 and 1 multiplied by `factor`.
-    """
     rng: RNG
+    factor: float = 0.1
+    """
+    Step size multiplier
+
+    The tuning parameter could range from 0 to 1, but in the current
+    implementation it'll always be between 0.25 and 0.99.  The tuning parameter
+    steps are also pretty large, so the tuning parameter isn't very precise in
+    the 0.98-0.99 range.  This mulitplier is used to offset the parameter for
+    the cases where steps must be smaller, such as in the nucleotide frequency
+    vector.
+    """
     weight: float = 1
+
+    _tuning: float = field(init=False, default=0.75)
 
     def __post_init__(self):
         if len(self.param) <= 1:
@@ -34,7 +43,7 @@ class DeltaExchange(Operator):
     def propose(self) -> Proposal:
         rng = self.rng
 
-        delta = rng.random_float() * self.factor
+        delta = rng.random_float() * (1 - self._tuning) / 10
 
         dim_1 = rng.random_int(0, len(self.param))
         dim_2 = dim_1
@@ -46,3 +55,9 @@ class DeltaExchange(Operator):
 
         # The move is symmetrical, so the Hastings ratio is 0
         return Proposal.Hastings(0)
+
+    def set_tuning(self, parameter: float) -> None:
+        self._tuning = parameter
+
+    def get_tuning(self) -> float:
+        return self._tuning

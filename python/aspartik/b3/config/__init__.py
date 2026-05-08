@@ -648,7 +648,7 @@ def _b3_config(c: MCMCConfig):
         frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
         items["frequencies"] = frequencies
         parameters.append(frequencies)
-        operators.append(DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1))
+        operators.append(DeltaExchange(frequencies, rng=rng, weight=1))
         priors.append(SymmetricDirichlet(frequencies, 1))
         return frequencies
 
@@ -668,7 +668,7 @@ def _b3_config(c: MCMCConfig):
             rates = RealVector(1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
             items["rates"] = rates
             parameters.append(rates)
-            operators.append(DeltaExchange(rates, factor=0.01, rng=rng, weight=1))
+            operators.append(DeltaExchange(rates, rng=rng, weight=1))
             priors.append(SymmetricDirichlet(rates, 6))
 
             sub_model = GTR(frequencies, rates)

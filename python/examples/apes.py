@@ -40,7 +40,7 @@ priors = [
 
 operators = [
     ParamScale(kappa, Uniform(0, 1), rng, weight=1),
-    DeltaExchange(frequencies, factor=0.01, rng=rng, weight=1),
+    DeltaExchange(frequencies, rng=rng, weight=1),
     TreeScale(tree, Uniform(0, 1), rng, weight=3),
     SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
     BeastNarrowExchange(tree, rng, weight=30),

@@ -74,7 +74,7 @@ operators = [
     FixedHeightSPR(tree, rng, weight=5),
     ParamScale(population_size, Uniform(0, 1), rng, weight=3),
     RandomWalk(growth_rate, window=1, rng=rng, weight=3),
-    DeltaExchange(frequencies, 0.01, rng, weight=3),
+    DeltaExchange(frequencies, rng, weight=3),
 ]
 
 likelihood = CPU4Likelihood(
