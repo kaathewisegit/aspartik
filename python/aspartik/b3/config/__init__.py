@@ -641,7 +641,8 @@ def _b3_config(c: MCMCConfig):
         if positive:
             operators.append(ParamScale(param, Uniform(0, 1), rng, weight=weight))
         else:
-            operators.append(RandomWalk(param, window=1, rng=rng, weight=weight))
+            # a bigger window for the tuning parameter to do its work
+            operators.append(RandomWalk(param, window=10, rng=rng, weight=weight))
         return param
 
     def create_frequencies():

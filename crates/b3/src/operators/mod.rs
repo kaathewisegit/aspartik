@@ -158,7 +158,7 @@ impl PyOperator {
 		//
 		// The rate of change (0.05) is tied to how often we tune.
 		let new_tuning =
-			(old_tuning - 0.05 * (ratio - 0.234)).clamp(0.1, 0.99);
+			(old_tuning - 0.05 * (ratio - 0.234)).clamp(0.01, 0.99);
 		self.tuning.store(new_tuning);
 
 		self.set_tuning(py)?;

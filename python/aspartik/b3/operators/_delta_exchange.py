@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
 
 from ...rng import RNG
-from .. import Operator, Proposal
+from .. import Operator, Proposal, TunableOperator
 from ..parameters import RealVector
 
 
 @dataclass(slots=True)
-class DeltaExchange(Operator):
+class DeltaExchange(Operator, TunableOperator):
     """Scales a multidimensional parameter without changing its sum
 
     This operator is analogous to BEAST's `DeltaExchangeOperator`.  It picks
@@ -26,7 +26,7 @@ class DeltaExchange(Operator):
     Step size multiplier
 
     The tuning parameter could range from 0 to 1, but in the current
-    implementation it'll always be between 0.25 and 0.99.  The tuning parameter
+    implementation it'll always be between 0.1 and 0.99.  The tuning parameter
     steps are also pretty large, so the tuning parameter isn't very precise in
     the 0.98-0.99 range.  This mulitplier is used to offset the parameter for
     the cases where steps must be smaller, such as in the nucleotide frequency

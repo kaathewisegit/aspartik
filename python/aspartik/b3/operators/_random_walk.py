@@ -4,13 +4,14 @@ from typing import Literal
 
 from ...rng import RNG
 from ...stats.distributions import Uniform
-from .. import Operator, Proposal
+from .. import Operator, Proposal, TunableOperator
 from ..parameters import Real
-from ._util import sample_range
+
+UNIFORM01 = Uniform(0, 1)
 
 
 @dataclass(slots=True)
-class RandomWalk(Operator):
+class RandomWalk(Operator, TunableOperator):
     """
     Adds or subtracts values to a parameter irrespective of its value
 
@@ -29,14 +30,14 @@ class RandomWalk(Operator):
     boundary: Literal["reflect"] = "reflect"
     weight: float = 1
 
-    _dist: Uniform = field(default_factory=lambda: Uniform(0, 1), init=False)
+    _tuning: float = field(init=False, default=0.75)
 
     def propose(self) -> Proposal:
         lower, upper = self.lower, self.upper
         rng = self.rng
         param = self.param
 
-        diff = sample_range(0, self.window, self._dist, rng)
+        diff = UNIFORM01.sample(rng) * self.window * (1 - self._tuning)
         if rng.random_bool():
             diff *= -1
 
@@ -61,3 +62,9 @@ class RandomWalk(Operator):
         self.param.set(new_value)
 
         return Proposal.Hastings(0.0)
+
+    def set_tuning(self, parameter: float) -> None:
+        self._tuning = parameter
+
+    def get_tuning(self) -> float:
+        return self._tuning

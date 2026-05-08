@@ -73,7 +73,7 @@ operators = [
     SubtreeLeap(tree, Normal(0, 1), rng, weight=50),
     FixedHeightSPR(tree, rng, weight=5),
     ParamScale(population_size, Uniform(0, 1), rng, weight=3),
-    RandomWalk(growth_rate, window=1, rng=rng, weight=3),
+    RandomWalk(growth_rate, window=10, rng=rng, weight=3),
     DeltaExchange(frequencies, rng, weight=3),
 ]
 

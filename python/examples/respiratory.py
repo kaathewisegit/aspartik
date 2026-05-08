@@ -74,7 +74,7 @@ operators = [
     SubtreeLeap(tree, Normal(0, 1), rng, weight=1000),
     FixedHeightSPR(tree, rng, weight=100),
     ParamScale(population_size, Uniform(0, 1), rng, weight=3),
-    RandomWalk(growth_rate, window=1.0, rng=rng, weight=3),
+    RandomWalk(growth_rate, window=10, rng=rng, weight=3),
 ]
 
 try:
