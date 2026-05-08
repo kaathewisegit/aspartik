@@ -5,7 +5,7 @@ use rand::seq::IndexedRandom;
 use super::Proposal;
 use crate::parameters::{Internal, Node, PyTree, Tree};
 use rng::PyRng;
-use util::py_call_method;
+use util::{atomic::MonotonicF64, py_call_method};
 
 /// Moves a node a distance, changing the topology randomly
 ///
@@ -27,6 +27,8 @@ pub struct SubtreeLeap {
 	rng: Py<PyRng>,
 	#[pyo3(get)]
 	weight: f64,
+
+	factor: MonotonicF64,
 }
 
 #[pymethods]
@@ -43,7 +45,17 @@ impl SubtreeLeap {
 			distribution,
 			rng,
 			weight,
+
+			factor: 0.75.into(),
 		})
+	}
+
+	fn set_tuning(&self, parameter: f64) {
+		self.factor.store(parameter);
+	}
+
+	fn get_tuning(&self) -> f64 {
+		self.factor.load()
 	}
 
 	fn propose(&self, py: Python) -> Result<Proposal> {
@@ -56,7 +68,7 @@ impl SubtreeLeap {
 			self.rng.clone_ref(py)
 		)?
 		.extract(py)?;
-		let delta = delta.abs();
+		let delta = delta.abs() * (1.0 - self.factor.load());
 
 		let rng = &mut *self.rng.get().inner();
 
