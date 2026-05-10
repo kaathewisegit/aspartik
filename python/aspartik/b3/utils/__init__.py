@@ -1,4 +1,5 @@
 import argparse
+from math import nan
 
 from .. import MCMC, TunableOperator
 
@@ -17,9 +18,15 @@ def print_operator_stats(mcmc: MCMC) -> None:
             _rejects,
         ) = results
         total = sum(results)
-        accepts_share = accepts / total
-        aborts_share = aborts / total
-        prior_share = prior_rejects / total
+
+        if total > 0:
+            accepts_share = accepts / total
+            aborts_share = aborts / total
+            prior_share = prior_rejects / total
+        else:
+            accepts_share = nan
+            aborts_share = nan
+            prior_share = nan
 
         if isinstance(operator, TunableOperator):
             tuning = f"{operator.get_tuning():.2f}"
@@ -45,8 +52,14 @@ def print_operator_timings(mcmc: MCMC) -> None:
             rejects,
         ) = results
         name = type(operator).__name__
-        propose = (propose / (prior_rejects + accepts + rejects)).microseconds
-        likelihood = (likelihood / (accepts + rejects)).microseconds
+
+        if accepts + rejects > 0:
+            propose = (propose / (prior_rejects + accepts + rejects)).microseconds
+            likelihood = (likelihood / (accepts + rejects)).microseconds
+        else:
+            propose = nan
+            likelihood = nan
+
         total = propose + likelihood
 
         print(f"{name: <20}{propose: >20.0f}{likelihood: >20.0f}{total: >20.0f}")
