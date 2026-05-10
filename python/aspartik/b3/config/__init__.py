@@ -31,6 +31,7 @@ from aspartik.b3.priors import (
     Yule,
 )
 from aspartik.b3.substitutions import GTR, HKY, JC, K80
+from aspartik.b3.utils import print_operator_stats, print_operator_timings
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 from aspartik.stats.distributions import (
@@ -73,9 +74,17 @@ class MCMCConfig:
     state_path: Optional[str] = None
     state_every: int = 100_000
 
-    timer: bool = False
-
     length: Optional[int] = None
+
+    # printing
+    print_stats: bool = False
+    """b3-only setting to print acceptance/rejection stats per operator
+
+    BEAST will always print stats regardless of this setting
+    """
+    print_timings: bool = False
+    "b3-only setting to print the mean times of execution per operator"
+    timer: bool = False
 
     seed: int = 4
 
@@ -86,6 +95,15 @@ class MCMCConfig:
         mcmc = self.b3_mcmc()
         assert self.length is not None
         mcmc.run(self.length)
+
+        if self.print_stats or self.print_timings:
+            print()
+        if self.print_stats:
+            print_operator_stats(mcmc)
+        if self.print_stats and self.print_timings:
+            print()
+        if self.print_timings:
+            print_operator_timings(mcmc)
 
     def b3_make_and_run(self):
         self.b3_run(self.b3_mcmc())

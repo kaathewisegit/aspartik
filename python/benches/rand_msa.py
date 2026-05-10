@@ -27,6 +27,7 @@ def run_mcmc(
         trace_path="target/rand_msa.trace",
         trees_path="target/rand_msa.trees",
         length=length,
+        print_timings=True,
         timer=True,
     )
 
