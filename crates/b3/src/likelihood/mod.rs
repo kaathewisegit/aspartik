@@ -3,7 +3,7 @@ use num_traits::Float;
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::prelude::*;
 
-use std::{collections::HashMap, slice};
+use std::collections::HashMap;
 
 use crate::{
 	Transitions,
@@ -161,12 +161,14 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 	let mut hashes =
 		Vec::<(usize, blake3::Hash)>::with_capacity(msa.num_sites());
 
+	let mut scratch = Vec::<u8>::with_capacity(msa.num_sequences());
 	let mut hasher = blake3::Hasher::new();
 	for site in 0..msa.num_sites() {
 		for seq in msa.sequences() {
-			let byte = seq[site].into_byte();
-			hasher.update(slice::from_ref(&byte));
+			scratch.push(seq[site].into_byte());
 		}
+		hasher.update(&scratch);
+		scratch.clear();
 
 		hashes.push((site, hasher.finalize()));
 		hasher.reset();
