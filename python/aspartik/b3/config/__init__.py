@@ -92,7 +92,6 @@ class MCMCConfig:
         return _b3_config(self)
 
     def b3_run(self, mcmc: MCMC):
-        mcmc = self.b3_mcmc()
         assert self.length is not None
         mcmc.run(self.length)
 
