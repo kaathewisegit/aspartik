@@ -163,8 +163,8 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 
 	let mut hasher = blake3::Hasher::new();
 	for site in 0..msa.num_sites() {
-		for seq in 0..msa.num_sequences() {
-			let byte = msa.sequence(seq)[site].into_byte();
+		for seq in msa.sequences() {
+			let byte = seq[site].into_byte();
 			hasher.update(slice::from_ref(&byte));
 		}
 
@@ -200,9 +200,9 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 		}
 	}
 
-	for seq in 0..msa.num_sequences() {
+	for seq in msa.sequences() {
 		for site in indices.iter().copied() {
-			let char = msa.sequence(seq)[site];
+			let char = seq[site];
 			leaves.push(char_to_u8(char))
 		}
 	}

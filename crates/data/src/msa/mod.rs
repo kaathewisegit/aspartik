@@ -96,6 +96,10 @@ impl<C: Character> Msa<C> {
 		self.data.slice(start..end)
 	}
 
+	pub fn sequences(&self) -> impl Iterator<Item = Sequence<C>> {
+		(0..self.num_sequences()).map(|i| self.sequence(i))
+	}
+
 	pub fn sites(&self) -> Range<usize> {
 		0..self.num_sites
 	}
