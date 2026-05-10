@@ -97,7 +97,7 @@ impl PyMsa {
 
 	/// `index`'th sequence
 	fn sequence(&self, index: usize) -> PyDnaSeq {
-		PyDnaSeq(self.0.sequence(index))
+		PyDnaSeq(self.0.sequence_owned(index))
 	}
 
 	/// The shares each DNA base takes up in the total alignment

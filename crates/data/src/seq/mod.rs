@@ -4,7 +4,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use rand::{Rng, RngExt};
 
 use std::{
-	fmt,
+	fmt::{self, Write as _},
 	marker::PhantomData,
 	mem,
 	ops::{Deref, DerefMut, RangeBounds},
@@ -103,12 +103,9 @@ impl<C: Character> AsRef<[C]> for Sequence<C> {
 
 impl<C: Character> fmt::Display for Sequence<C> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		use fmt::Write;
-
 		for character in self.as_ref() {
 			f.write_char(character.to_ascii() as char)?;
 		}
-
 		Ok(())
 	}
 }
@@ -162,7 +159,17 @@ impl<C: Character> Sequence<C> {
 		self.bytes.is_empty()
 	}
 
-	pub fn slice(&self, range: impl RangeBounds<usize>) -> Self {
+	pub fn slice(
+		&self,
+		range: impl std::slice::SliceIndex<[u8], Output = [u8]>,
+	) -> SequenceRef<'_, C> {
+		let bytes = &self.bytes.as_ref()[range];
+		// SAFETY: `Sequence`'s bytes are all valid characters
+		let seq = unsafe { b2c(bytes) };
+		SequenceRef(seq)
+	}
+
+	pub fn slice_owned(&self, range: impl RangeBounds<usize>) -> Self {
 		Self {
 			bytes: self.bytes.slice(range),
 			marker: PhantomData,
@@ -208,6 +215,33 @@ impl Sequence<DnaNucleotide> {
 		let mut seq = SequenceMut::from_characters(self);
 		seq.reverse_complement();
 		seq.into()
+	}
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct SequenceRef<'a, C: Character>(&'a [C]);
+
+impl<'a, C: Character> Deref for SequenceRef<'a, C> {
+	type Target = [C];
+
+	fn deref(&self) -> &'a [C] {
+		self.0
+	}
+}
+
+impl<'a, C: Character> AsRef<[C]> for SequenceRef<'a, C> {
+	fn as_ref(&self) -> &'a [C] {
+		self.0
+	}
+}
+
+impl<C: Character> fmt::Display for SequenceRef<'_, C> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		for character in self.as_ref() {
+			f.write_char(character.to_ascii() as char)?;
+		}
+		Ok(())
 	}
 }
 

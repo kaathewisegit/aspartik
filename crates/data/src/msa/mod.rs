@@ -6,7 +6,7 @@ use std::{cmp::Ordering, ops::Range};
 use crate::{
 	DnaNucleotide,
 	fasta::Record,
-	seq::{Character, Sequence, SequenceMut},
+	seq::{Character, Sequence, SequenceMut, SequenceRef},
 };
 
 #[cfg(feature = "python")]
@@ -90,13 +90,19 @@ impl<C: Character> Msa<C> {
 		&self.names
 	}
 
-	pub fn sequence(&self, index: usize) -> Sequence<C> {
+	pub fn sequence(&self, index: usize) -> SequenceRef<'_, C> {
 		let start = index * self.num_sites;
 		let end = start + self.num_sites;
 		self.data.slice(start..end)
 	}
 
-	pub fn sequences(&self) -> impl Iterator<Item = Sequence<C>> {
+	pub fn sequence_owned(&self, index: usize) -> Sequence<C> {
+		let start = index * self.num_sites;
+		let end = start + self.num_sites;
+		self.data.slice_owned(start..end)
+	}
+
+	pub fn sequences(&self) -> impl Iterator<Item = SequenceRef<'_, C>> {
 		(0..self.num_sequences()).map(|i| self.sequence(i))
 	}
 
@@ -106,7 +112,7 @@ impl<C: Character> Msa<C> {
 
 	pub fn compare_sites(&self, a: &usize, b: &usize) -> Ordering {
 		for seq in 0..self.num_sequences {
-			let seq = self.sequence(seq);
+			let seq = self.sequence_owned(seq);
 			let a = seq[*a];
 			let b = seq[*b];
 
@@ -141,7 +147,7 @@ impl Msa<DnaNucleotide> {
 		let num_chars = self.num_characters();
 
 		for seq in 0..self.num_sequences {
-			let seq = self.sequence(seq);
+			let seq = self.sequence_owned(seq);
 
 			for char in seq.iter() {
 				add_assign_arr(
