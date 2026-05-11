@@ -15,7 +15,7 @@ pub fn sign(x: f64) -> bool {
 /// Exponent as raw bits
 ///
 /// This is the unbiased raw value.  To get the mathematical exponent, use
-/// [`exponent`].
+/// `math.frexp`.
 #[cfg_attr(feature = "python", pyfunction)]
 pub fn exponent_bits(x: f64) -> u16 {
 	let bits = x.to_bits();
@@ -25,7 +25,8 @@ pub fn exponent_bits(x: f64) -> u16 {
 
 /// Mantissa as raw bits
 ///
-/// This is the raw value.  For the mathematical mantissa use [`mantissa`].
+/// This is the raw bitwise value.  The numeric value of the mantissa can be
+/// obtained via `math.frexp`.
 #[cfg_attr(feature = "python", pyfunction)]
 pub fn mantissa_bits(x: f64) -> u64 {
 	x.to_bits() & MANTISSA_MASK
