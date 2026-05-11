@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use cudarc::{
 	driver::{
 		CudaContext, CudaFunction, CudaSlice, CudaStream, LaunchConfig,
@@ -309,6 +309,15 @@ impl CudaLikelihood {
 		let num_edges = num_internals * 2;
 
 		let context = CudaContext::new(cuda_device)?;
+		// ensure there's enough space
+		let required =
+			num_patterns * (num_leaves + num_nodes * 8 * 4 * 2);
+		let available = context.total_mem()?;
+		ensure!(
+			required < available,
+			"The calculator requires at least {required}b of memory, but the device only has {available}b"
+		);
+
 		let stream = context.new_stream()?;
 
 		// SAFETY: `CudaLikelihood` only uses a single stream, so
