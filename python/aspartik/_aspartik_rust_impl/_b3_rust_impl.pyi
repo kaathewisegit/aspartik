@@ -8,7 +8,7 @@ from typing import Optional, Sized, SupportsFloat
 from ..b3 import Callback, Operator, Prior, TunableOperator
 from ..b3.likelihoods import Likelihood
 from ..b3.parameters import Node, Parameter, Scalable
-from ..b3.substitutions import Substiution4
+from ..b3.substitutions import Substitution4
 from ..data.msa import MSA
 from ..data.newick import Tree as NewickTree
 from ..rng import RNG
@@ -90,7 +90,7 @@ class CPU4Likelihood(Likelihood):
     def __init__(
         self,
         msa: MSA,
-        substitution: Substiution4,
+        substitution: Substitution4,
         clock: Clock,
         tree: Tree,
         scale_ln: int = 30,
@@ -100,7 +100,7 @@ class CUDALikelihood(Likelihood):
     def __init__(
         self,
         msa: MSA,
-        substitution: Substiution4,
+        substitution: Substitution4,
         clock: Clock,
         tree: Tree,
         *,
