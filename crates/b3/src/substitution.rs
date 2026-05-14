@@ -3,7 +3,8 @@ use pyo3::prelude::*;
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
-	lapack::{eigen, inverse},
+	eigen,
+	lapack::inverse,
 	matrix::{Matrix, SquareMatrix},
 };
 
@@ -425,11 +426,11 @@ impl GTR {
 				+ f * p_g * p_t);
 		gtr.for_each(|e| *e /= div);
 
-		let (eigenvalues, eigenvectors) = eigen(&gtr);
+		let decomp = eigen(&gtr);
 
-		self.diag = eigenvalues;
-		self.p = eigenvectors;
-		self.inv_p = inverse(&eigenvectors);
+		self.diag = decomp.eigenvalues;
+		self.p = decomp.eigenvectors;
+		self.inv_p = inverse(&self.p);
 	}
 }
 

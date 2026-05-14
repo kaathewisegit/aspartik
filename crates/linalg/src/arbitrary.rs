@@ -63,3 +63,20 @@ pub fn symmetric<const N: usize>(
 
 	Ok(out)
 }
+
+pub fn normalized_array<const N: usize>(
+	u: &mut Unstructured,
+) -> Result<[f64; N]> {
+	let mut out = [0.0; N];
+
+	for value in &mut out {
+		*value = f64::from(u.arbitrary::<u32>()?);
+	}
+	let sum: f64 = out.iter().sum();
+
+	for value in &mut out {
+		*value /= sum;
+	}
+
+	Ok(out)
+}
