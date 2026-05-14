@@ -2,7 +2,7 @@ use num_traits::Num;
 
 use crate::vector::Vector;
 
-pub trait Matrix<T, const N: usize, const M: usize>: Sized
+pub trait Matrix<T, const N: usize, const M: usize>: Sized + Clone
 where
 	T: Copy + Num,
 {
@@ -35,7 +35,7 @@ where
 		out
 	}
 
-	fn mul<const P: usize, O>(self, rhs: &impl Matrix<T, M, P>) -> O
+	fn mul<const P: usize, O>(&self, rhs: &impl Matrix<T, M, P>) -> O
 	where
 		O: Matrix<T, N, P>,
 	{
@@ -54,7 +54,7 @@ where
 		out
 	}
 
-	fn mul_scalar<O>(self, rhs: T) -> O
+	fn mul_scalar<O>(&self, rhs: T) -> O
 	where
 		O: Matrix<T, N, M>,
 	{
@@ -62,7 +62,39 @@ where
 
 		for i in 0..N {
 			for j in 0..M {
-				*out.at_mut(i, j) = *out.at(i, j) * rhs;
+				*out.at_mut(i, j) = *self.at(i, j) * rhs;
+			}
+		}
+
+		out
+	}
+
+	fn add<O>(&self, rhs: &impl Matrix<T, N, M>) -> O
+	where
+		O: Matrix<T, N, M>,
+	{
+		let mut out = O::zeros();
+
+		for i in 0..N {
+			for j in 0..M {
+				*out.at_mut(i, j) =
+					*self.at(i, j) + *rhs.at(i, j);
+			}
+		}
+
+		out
+	}
+
+	fn sub<O>(&self, rhs: &impl Matrix<T, N, M>) -> O
+	where
+		O: Matrix<T, N, M>,
+	{
+		let mut out = O::zeros();
+
+		for i in 0..N {
+			for j in 0..M {
+				*out.at_mut(i, j) =
+					*self.at(i, j) - *rhs.at(i, j);
 			}
 		}
 
