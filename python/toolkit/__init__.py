@@ -1,7 +1,6 @@
 from cliclass import CliCommand
 
 import os
-import platform
 import subprocess
 import sys
 from contextlib import contextmanager
@@ -11,6 +10,8 @@ from shutil import rmtree
 from typing import Literal
 
 from . import doc
+
+FEATURES = f"--features arbitrary{',lapack' if sys.platform == 'linux' else ''}"
 
 
 @contextmanager
@@ -88,9 +89,7 @@ class Lint(Langopts):
     def run(self):
         if self.rust:
             execute("cargo fmt --check")
-            execute(
-                "cargo clippy --workspace --tests --features arbitrary -- -D warnings"
-            )
+            execute(f"cargo clippy --workspace --tests {FEATURES} -- -D warnings")
 
         if self.python:
             execute("ruff format --check")
@@ -108,7 +107,7 @@ class Test(Langopts):
 
     def run(self):
         if self.rust and should_run("rust"):
-            execute("cargo test --workspace --features arbitrary")
+            execute(f"cargo test --workspace {FEATURES}")
 
         if self.python and should_run("python"):
             execute("pytest")
@@ -175,15 +174,6 @@ class Build:
     def run(self):
         rmtree("target/wheels/", ignore_errors=True)
         execute("maturin build --release")
-
-        if platform.system() == "Windows":
-            wheel_dir = Path("target/wheels/")
-            wheel_path = next(wheel_dir.iterdir())
-            paths = "C:/mingw64/bin/;C:/msys64/ucrt64/bin/;C:/msys64/mingw64/bin/"
-            execute(
-                f"delvewheel repair --add-path {paths} --include libgfortran-5.dll {wheel_path}"
-            )
-            execute(f"uv pip install wheelhouse/{wheel_path.name}")
 
 
 @dataclass

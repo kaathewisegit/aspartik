@@ -3,7 +3,7 @@ use arbtest::arbtest;
 
 use linalg::{
 	arbitrary::{normalized_array, symmetric},
-	eigen, lapack,
+	eigen,
 	lu::inverse,
 	matrix::{Matrix, SquareMatrix},
 };
@@ -81,7 +81,20 @@ fn gtr(u: &mut Unstructured) -> Result<M<4>> {
 }
 
 #[test]
+fn can_invert() {
+	arbtest(|u| {
+		let gtr = gtr(u)?;
+		let eigenvectors = eigen(&gtr).eigenvectors;
+		let _: M<4> = inverse(&eigenvectors);
+		Ok(())
+	});
+}
+
+#[test]
+#[cfg(feature = "lapack")]
 fn compare() {
+	use linalg::lapack;
+
 	arbtest(|u| {
 		let gtr = gtr(u)?;
 		let (mut lapack_values, _) = lapack::eigen(&gtr);

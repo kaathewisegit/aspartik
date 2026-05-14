@@ -28,7 +28,6 @@ dev = [
 	"ty~=0.0.30",
 	"pytest~=9.0",
 	"ruff~=0.15.10",
-	"delvewheel~=1.12",
 	"cliclass~=0.1.0a1", # duplicated from `cli`
 ]
 

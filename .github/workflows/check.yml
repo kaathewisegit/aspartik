@@ -21,11 +21,6 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Fortran setup on macOS
-        if: runner.os == 'macOS'
-        run: |
-          ln -fs /opt/homebrew/bin/gfortran-15 /usr/local/bin/gfortran
-
       - name: Install Python
         uses: actions/setup-python@v5
         with:
