@@ -3,8 +3,8 @@ use arbtest::arbtest;
 
 use linalg::{
 	arbitrary::{normalized_array, symmetric},
-	eigen,
-	lapack::{self, inverse},
+	eigen, lapack,
+	lu::inverse,
 	matrix::{Matrix, SquareMatrix},
 };
 use math::assert_almost_eq;

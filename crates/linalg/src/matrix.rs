@@ -14,7 +14,20 @@ where
 
 	fn for_each<F>(&mut self, f: F)
 	where
-		F: Fn(&mut T);
+		F: FnMut(&mut T);
+
+	fn convert<O>(&self) -> O
+	where
+		O: Matrix<T, N, M>,
+	{
+		let mut out = O::zeros();
+		for i in 0..N {
+			for j in 0..M {
+				*out.at_mut(i, j) = *self.at(i, j);
+			}
+		}
+		out
+	}
 
 	fn zeros() -> Self {
 		Self::from_element(T::zero())
@@ -100,6 +113,13 @@ where
 
 		out
 	}
+
+	fn swap_rows(&mut self, a: usize, b: usize) {
+		for col in 0..M {
+			(*self.at_mut(a, col), *self.at_mut(b, col)) =
+				(*self.at(b, col), *self.at(a, col));
+		}
+	}
 }
 
 pub trait SquareMatrix<T, const N: usize>: Matrix<T, N, N>
@@ -150,9 +170,9 @@ where
 		[[value; M]; N]
 	}
 
-	fn for_each<F>(&mut self, f: F)
+	fn for_each<F>(&mut self, mut f: F)
 	where
-		F: Fn(&mut T),
+		F: FnMut(&mut T),
 	{
 		for i in 0..N {
 			for j in 0..M {

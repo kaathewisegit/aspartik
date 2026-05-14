@@ -3,7 +3,7 @@ use num_traits::Num;
 use std::ops::{Index, IndexMut};
 
 pub trait Vector<T: Copy + Num, const N: usize>:
-	Sized + Index<usize, Output = T> + IndexMut<usize>
+	Sized + Index<usize, Output = T> + IndexMut<usize> + Clone
 {
 	/// Create a new vector by repeating (splatting) `value`
 	fn from_element(value: T) -> Self;
@@ -24,6 +24,18 @@ pub trait Vector<T: Copy + Num, const N: usize>:
 	fn for_each<F>(&mut self, f: F)
 	where
 		F: FnMut(&mut T);
+
+	fn swap(&mut self, a: usize, b: usize) {
+		self[a] = self[b]
+	}
+
+	fn convert<O: Vector<T, N>>(&self) -> O {
+		let mut out = O::zeros();
+		for i in 0..N {
+			out[i] = self[i];
+		}
+		out
+	}
 
 	/// Per-element product of two vectors
 	fn hadamard<V: Vector<T, N>>(&self, rhs: impl Vector<T, N>) -> V {

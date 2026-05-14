@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
 	eigen,
-	lapack::inverse,
+	lu::inverse,
 	matrix::{Matrix, SquareMatrix},
 };
 
