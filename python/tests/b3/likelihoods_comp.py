@@ -7,7 +7,7 @@ from aspartik.b3.likelihoods import (
     Likelihood,
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
-from aspartik.b3.substitutions import HKY
+from aspartik.b3.substitutions import GTR
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
 
@@ -21,14 +21,14 @@ def test_compare_likelihood():
 
     tree = Tree(msa.sequence_names(), rng)
 
-    kappa = Real(1.0)
     clock_rate = Real(1.0)
     frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
+    rates = RealVector(1, 1, 1, 1, 1, 1)
 
     cpu_calculators = [
         CPU4Likelihood(
             msa=msa,
-            substitution=HKY(frequencies, kappa),
+            substitution=GTR(frequencies, rates),
             clock=Clock.Strict(clock_rate),
             tree=tree,
             scale_ln=scale,
@@ -38,7 +38,7 @@ def test_compare_likelihood():
     try:
         cuda_calculator = CUDALikelihood(
             msa=msa,
-            substitution=HKY(frequencies, kappa),
+            substitution=GTR(frequencies, rates),
             clock=Clock.Strict(clock_rate),
             tree=tree,
         )
@@ -53,9 +53,9 @@ def test_compare_likelihood():
         "data/runs/influenza/b3.trace",
         parameters={
             "tree": tree,
-            "kappa": kappa,
             "clock_rate": clock_rate,
             "frequencies": frequencies,
+            "rates": rates,
         },
         likelihoods=calculators,
     )

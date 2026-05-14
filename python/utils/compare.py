@@ -60,5 +60,9 @@ def _check(row, priors: dict[str, Prior] = {}, likelihoods: list[Likelihood] = [
     for likelihood in likelihoods:
         expected = float(row["likelihood"])
         diff = abs(likelihood.likelihood() - expected)
-        assert diff < 0.1, f"{likelihood.__class__.__name__}: {diff}"
+        # print("frequencies", row["frequencies"])
+        # print("rates", row["rates"])
+        assert diff < 0.001 * abs(expected), (
+            f"{likelihood.__class__.__name__}: {diff} ({diff / abs(expected):.2%})"
+        )
         likelihood.reject()

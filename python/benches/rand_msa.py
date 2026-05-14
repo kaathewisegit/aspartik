@@ -23,7 +23,7 @@ def run_mcmc(
         msa,
         calculator=kind,
         tree_prior="constant",
-        substitution_model="HKY",
+        substitution_model="GTR",
         trace_path="target/rand_msa.trace",
         trees_path="target/rand_msa.trees",
         length=length,
