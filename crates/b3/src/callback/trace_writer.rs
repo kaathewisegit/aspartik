@@ -1,25 +1,19 @@
 use anyhow::{Context, Result, bail};
-use arrow_array::{
-	RecordBatch,
-	builder::{
-		ArrayBuilder, BinaryBuilder, Float64Builder, ListBuilder,
-		UInt8Builder, UInt64Builder,
-	},
-};
-use arrow_ipc::{
-	CompressionType,
-	writer::{FileWriter, IpcWriteOptions},
-};
-use arrow_schema::{DataType, Field, SchemaBuilder, SchemaRef};
 use parking_lot::Mutex;
+use picoarrow::{
+	Field, Schema,
+	array::{
+		Array, ArrayBinary, ArrayF64, ArrayFixedSizeList, ArrayU8,
+		ArrayU64, NonNullable,
+	},
+	ipc::{Compression, FileWriter},
+};
 use pyo3::{prelude::*, types::PyDict};
 
 use std::{
-	collections::HashMap,
 	fs::{File, OpenOptions},
 	io::BufWriter,
 	path::PathBuf,
-	sync::Arc,
 };
 
 use crate::{
@@ -28,14 +22,115 @@ use crate::{
 	priors::PyPrior,
 };
 
-type Arrays = HashMap<String, Box<dyn ArrayBuilder>>;
+enum LoggedArray {
+	Real {
+		real: Py<PyReal>,
+		array: ArrayF64<NonNullable>,
+	},
+	RealVector {
+		vector: Py<PyRealVector>,
+		array: ArrayFixedSizeList<ArrayF64<NonNullable>, NonNullable>,
+	},
+	ClassVector {
+		classvec: Py<PyClassVector>,
+		array: ArrayFixedSizeList<ArrayU8<NonNullable>, NonNullable>,
+	},
+	Tree {
+		tree: Py<PyTree>,
+		binary: ArrayBinary<NonNullable>,
+		length: ArrayF64<NonNullable>,
+		height: ArrayF64<NonNullable>,
+	},
+	Prior {
+		prior: PyPrior,
+		array: ArrayF64<NonNullable>,
+	},
+}
+
+struct Item {
+	name: String,
+	array: LoggedArray,
+}
+
+impl Item {
+	fn update(&mut self, py: Python) -> Result<()> {
+		match &mut self.array {
+			LoggedArray::Real { real, array } => {
+				array.push(real.get().inner().value());
+			}
+			LoggedArray::RealVector { vector, array } => {
+				let vector = vector.get().inner();
+				array.push(|n| {
+					for i in 0..vector.len() {
+						n.push(vector[i]);
+					}
+				})?;
+			}
+			LoggedArray::ClassVector { classvec, array } => {
+				let classvec = classvec.get().inner();
+				array.push(|n| {
+					for i in 0..classvec.len() {
+						n.push(classvec[i]);
+					}
+				})?;
+			}
+			LoggedArray::Prior { prior, array } => {
+				let value = prior.probability(py)?;
+				array.push(value);
+			}
+			LoggedArray::Tree {
+				tree,
+				binary,
+				length,
+				height,
+			} => {
+				let tree = &*tree.get().inner();
+				length.push(tree.total_length());
+				height.push(tree.height_of(*tree.root()));
+
+				let mut out = Vec::new();
+				tree.dump(&mut out)?;
+				binary.push(&out);
+			}
+		}
+
+		Ok(())
+	}
+
+	fn memory_size(&self) -> usize {
+		match &self.array {
+			LoggedArray::Real { array, .. } => array.memory_size(),
+			LoggedArray::RealVector { array, .. } => {
+				array.memory_size()
+			}
+			LoggedArray::ClassVector { array, .. } => {
+				array.memory_size()
+			}
+			LoggedArray::Prior { array, .. } => array.memory_size(),
+			LoggedArray::Tree {
+				binary,
+				length,
+				height,
+				..
+			} => {
+				length.memory_size()
+					+ height.memory_size() + binary.memory_size()
+			}
+		}
+	}
+}
 
 #[pyclass(module = "aspartik.b3.callbacks", frozen)]
 pub struct TraceWriter {
-	items: Vec<(String, Py<PyAny>)>,
-	arrays: Mutex<Arrays>,
-	schema: SchemaRef,
+	items: Mutex<Vec<Item>>,
+
+	step: Mutex<ArrayU64<NonNullable>>,
+	posterior: Mutex<ArrayF64<NonNullable>>,
+	prior: Mutex<ArrayF64<NonNullable>>,
+	likelihood: Mutex<ArrayF64<NonNullable>>,
+
 	writer: Mutex<FileWriter<BufWriter<File>>>,
+
 	#[pyo3(get)]
 	every: usize,
 }
@@ -43,57 +138,79 @@ pub struct TraceWriter {
 #[pymethods]
 impl TraceWriter {
 	#[new]
-	#[pyo3(signature = (
-		items, path,
+	#[pyo3(signature = (items, path,
 		*,
-		zstd = false, overwrite = false, every
+        	zstd = false, overwrite = false, every
 	))]
 	fn new(
-		py: Python,
 		items: Bound<'_, PyDict>,
 		path: PathBuf,
 		zstd: bool,
 		overwrite: bool,
 		every: usize,
 	) -> Result<Self> {
-		let items = dict_to_vec(items)?;
+		let mut items_v = Vec::new();
 
-		let mut arrays = HashMap::new();
-		let mut schema = SchemaBuilder::new();
+		for (key, val) in items {
+			let name = key.extract::<String>()?;
 
-		schema.push(field("step", DataType::UInt64));
-		arrays.insert(
-			"step".to_owned(),
-			dyn_builder(UInt64Builder::new()),
-		);
-		for name in ["posterior", "prior", "likelihood"] {
-			schema.push(field(name, DataType::Float64));
-			arrays.insert(
-				name.to_owned(),
-				dyn_builder(Float64Builder::new()),
-			);
+			let array = if let Ok(real) = val.cast::<PyReal>() {
+				LoggedArray::Real {
+					real: real.clone().unbind(),
+					array: ArrayF64::new(),
+				}
+			} else if let Ok(real_vector) =
+				val.cast::<PyRealVector>()
+			{
+				let size =
+					real_vector.get().inner().len() as i32;
+				LoggedArray::RealVector {
+					vector: real_vector.clone().unbind(),
+					array: ArrayFixedSizeList::new(
+						ArrayF64::new(),
+						size,
+					),
+				}
+			} else if let Ok(class_vector) =
+				val.cast::<PyClassVector>()
+			{
+				let size =
+					class_vector.get().inner().len() as i32;
+				LoggedArray::ClassVector {
+					classvec: class_vector.clone().unbind(),
+					array: ArrayFixedSizeList::new(
+						ArrayU8::new(),
+						size,
+					),
+				}
+			} else if let Ok(tree) = val.cast::<PyTree>() {
+				LoggedArray::Tree {
+					tree: tree.clone().unbind(),
+					binary: ArrayBinary::new(),
+					length: ArrayF64::new(),
+					height: ArrayF64::new(),
+				}
+			} else if let Ok(prior) = val.extract::<PyPrior>() {
+				LoggedArray::Prior {
+					prior,
+					array: ArrayF64::new(),
+				}
+			} else {
+				unimplemented!();
+			};
+
+			items_v.push(Item { name, array });
 		}
-
-		for (name, value) in &items {
-			init_value(
-				name,
-				value.bind(py),
-				&mut schema,
-				&mut arrays,
-			)?;
-		}
-
-		let schema = schema.finish();
 
 		let compression = if zstd {
-			Some(CompressionType::ZSTD)
+			Compression::Zstd(5)
 		} else {
-			None
+			Compression::None
 		};
 
 		if path.is_file() && path.exists() && !overwrite {
 			bail!(
-				"File {path:?} already exists.  Add `overwrite=True` to replace it"
+				"File {path:?} already exists. Add `overwrite=True` to replace it"
 			);
 		}
 
@@ -110,49 +227,50 @@ impl TraceWriter {
 				)
 			})?;
 		let writer = BufWriter::new(file);
-		let writer = FileWriter::try_new_with_options(
-			writer,
-			&schema,
-			IpcWriteOptions::default()
-				.try_with_compression(compression)?,
-		)?;
-		let writer = Mutex::new(writer);
+
+		let step = ArrayU64::new();
+		let posterior = ArrayF64::new();
+		let prior = ArrayF64::new();
+		let likelihood = ArrayF64::new();
+
+		let mut fields: Vec<Field> = vec![
+			step.make_field("step"),
+			posterior.make_field("posterior"),
+			prior.make_field("prior"),
+			likelihood.make_field("likelihood"),
+		];
+		items_to_fields(&items_v, &mut fields);
+
+		let schema = Schema::from_fields(fields);
+		let writer = FileWriter::new(writer, schema, compression)?;
 
 		Ok(Self {
-			items,
-			arrays: Mutex::new(arrays),
-			schema: schema.into(),
-			writer,
+			items: Mutex::new(items_v),
+			step: Mutex::new(step),
+			posterior: Mutex::new(posterior),
+			prior: Mutex::new(prior),
+			likelihood: Mutex::new(likelihood),
+			writer: Mutex::new(writer),
 			every,
 		})
 	}
 
 	fn call(&self, py: Python, mcmc: &Mcmc) -> Result<()> {
-		let mut arrays_lock = self.arrays.lock();
-		let arrays = &mut *arrays_lock;
+		self.step.lock().push(mcmc.current_step() as u64);
+		self.posterior.lock().push(mcmc.posterior());
+		self.prior.lock().push(mcmc.prior(py)?);
+		self.likelihood.lock().push(mcmc.likelihood_value()?);
 
-		let array = get::<UInt64Builder>(arrays, "step");
-		array.append_value(mcmc.current_step() as u64);
+		let mut total_mem: usize = 0;
 
-		let array = get::<Float64Builder>(arrays, "posterior");
-		array.append_value(mcmc.posterior());
-
-		let array = get::<Float64Builder>(arrays, "prior");
-		array.append_value(mcmc.prior(py)?);
-
-		let array = get::<Float64Builder>(arrays, "likelihood");
-		array.append_value(mcmc.likelihood_value()?);
-
-		let mut max_size = 0;
-		for (name, value) in &self.items {
-			let size = write_value(name, value.bind(py), arrays)?;
-			max_size = max_size.max(size);
+		let mut items = self.items.lock();
+		for item in &mut *items {
+			item.update(py)?;
+			total_mem += item.memory_size();
 		}
+		drop(items);
 
-		drop(arrays_lock);
-
-		// 64MB
-		if max_size > 64_000_000 {
+		if total_mem >= 100_000_000 {
 			self.write_batch()?;
 		}
 
@@ -168,179 +286,116 @@ impl TraceWriter {
 
 impl TraceWriter {
 	fn write_batch(&self) -> Result<()> {
-		let arrays = &mut *self.arrays.lock();
-		let mut columns = Vec::new();
-		for field in self.schema.fields() {
-			columns.push(arrays
-				.get_mut(field.name())
-				.unwrap()
-				.finish());
+		let mut step = self.step.lock();
+		let mut posterior = self.posterior.lock();
+		let mut prior = self.prior.lock();
+		let mut likelihood = self.likelihood.lock();
+
+		let mut batch_arrays: Vec<&dyn Array> = vec![
+			&*step as &dyn Array,
+			&*posterior as &dyn Array,
+			&*prior as &dyn Array,
+			&*likelihood as &dyn Array,
+		];
+
+		let mut items = self.items.lock();
+		for item in items.iter() {
+			match &item.array {
+				LoggedArray::Real { array, .. } => {
+					batch_arrays.push(array as &dyn Array)
+				}
+				LoggedArray::RealVector { array, .. } => {
+					batch_arrays.push(array as &dyn Array)
+				}
+				LoggedArray::ClassVector { array, .. } => {
+					batch_arrays.push(array as &dyn Array)
+				}
+				LoggedArray::Prior { array, .. } => {
+					batch_arrays.push(array as &dyn Array)
+				}
+				LoggedArray::Tree {
+					binary,
+					length,
+					height,
+					..
+				} => {
+					batch_arrays.push(binary as &dyn Array);
+					batch_arrays.push(length as &dyn Array);
+					batch_arrays.push(height as &dyn Array);
+				}
+			}
 		}
 
-		let batch = RecordBatch::try_new(self.schema.clone(), columns)?;
+		let mut writer = self.writer.lock();
+		writer.write_batch(batch_arrays)?;
 
-		self.writer.lock().write(&batch)?;
+		step.clear();
+		posterior.clear();
+		prior.clear();
+		likelihood.clear();
+
+		for item in items.iter_mut() {
+			match &mut item.array {
+				LoggedArray::Real { array, .. } => {
+					array.clear();
+				}
+				LoggedArray::RealVector { array, .. } => {
+					array.clear();
+				}
+				LoggedArray::ClassVector { array, .. } => {
+					array.clear();
+				}
+				LoggedArray::Prior { array, .. } => {
+					array.clear();
+				}
+				LoggedArray::Tree {
+					binary,
+					length,
+					height,
+					..
+				} => {
+					binary.clear();
+					length.clear();
+					height.clear();
+				}
+			}
+		}
 
 		Ok(())
 	}
 }
 
-fn write_value(
-	name: &str,
-	value: &Bound<'_, PyAny>,
-	arrays: &mut Arrays,
-) -> Result<usize> {
-	let size: usize;
-
-	if let Ok(real) = value.cast_exact::<PyReal>() {
-		let array = get::<Float64Builder>(arrays, name);
-		array.append_value(real.get().inner().value());
-		size = array.len() * 8;
-	} else if let Ok(real_vector) = value.cast_exact::<PyRealVector>() {
-		let array = get::<ListBuilder<Float64Builder>>(arrays, name);
-		let subarr = array.values();
-		for value in real_vector.get().inner().iter() {
-			subarr.append_value(*value);
+fn items_to_fields(items: &[Item], fields: &mut Vec<Field>) {
+	for item in items {
+		match &item.array {
+			LoggedArray::Real { array, .. } => {
+				fields.push(array.make_field(&item.name))
+			}
+			LoggedArray::RealVector { array, .. } => {
+				fields.push(array.make_field(&item.name))
+			}
+			LoggedArray::ClassVector { array, .. } => {
+				fields.push(array.make_field(&item.name))
+			}
+			LoggedArray::Prior { array, .. } => {
+				fields.push(array.make_field(&item.name))
+			}
+			LoggedArray::Tree {
+				binary,
+				length,
+				height,
+				..
+			} => {
+				fields.push(binary.make_field(&item.name));
+				fields.push(length.make_field(&format!(
+					"{}:length",
+					item.name
+				)));
+				fields.push(height.make_field(&format!(
+					"{}:height",
+					item.name
+				)));
+			}
 		}
-		array.append(true);
-		size = *array.offsets_slice().last().unwrap() as usize;
-	} else if let Ok(class_vector) = value.cast_exact::<PyClassVector>() {
-		let array = get::<ListBuilder<UInt8Builder>>(arrays, name);
-		for value in class_vector.get().inner().iter() {
-			array.values().append_value(*value);
-		}
-		array.append(true);
-		size = *array.offsets_slice().last().unwrap() as usize;
-	} else if let Ok(tree) = value.cast_exact::<PyTree>() {
-		let tree = &*tree.get().inner();
-
-		let array = get::<BinaryBuilder>(arrays, name);
-		tree.dump(array)?;
-		array.append_value("");
-		size = *array.offsets_slice().last().unwrap() as usize;
-
-		let name_length = format!("{name}:length");
-		let array = get::<Float64Builder>(arrays, &name_length);
-		array.append_value(tree.total_length());
-
-		let name_height = format!("{name}:height");
-		let array = get::<Float64Builder>(arrays, &name_height);
-		array.append_value(tree.height_of(*tree.root()));
-	} else if let Ok(prior) = value.extract::<PyPrior>() {
-		let array = get::<Float64Builder>(arrays, name);
-		array.append_value(prior.probability(value.py())?);
-		size = array.len() * 8;
-	} else {
-		unreachable!();
 	}
-
-	Ok(size)
-}
-
-fn init_value(
-	name: &str,
-	value: &Bound<'_, PyAny>,
-	schema: &mut SchemaBuilder,
-	arrays: &mut Arrays,
-) -> Result<()> {
-	if value.is_exact_instance_of::<PyReal>() {
-		schema.push(field(name, DataType::Float64));
-		arrays.insert(
-			name.to_owned(),
-			dyn_builder(Float64Builder::new()),
-		);
-	} else if value.is_exact_instance_of::<PyRealVector>() {
-		schema.push(list_field(name, DataType::Float64));
-		arrays.insert(
-			name.to_owned(),
-			dyn_builder(ListBuilder::new(Float64Builder::new())),
-		);
-	} else if value.is_exact_instance_of::<PyClassVector>() {
-		schema.push(list_field(name, DataType::UInt8));
-		arrays.insert(
-			name.to_owned(),
-			dyn_builder(ListBuilder::new(UInt8Builder::new())),
-		);
-	} else if value.is_exact_instance_of::<PyTree>() {
-		schema.push(field(name, DataType::Binary));
-		arrays.insert(
-			name.to_owned(),
-			dyn_builder(BinaryBuilder::new()),
-		);
-
-		let name_length = format!("{name}:length");
-		schema.push(field(&name_length, DataType::Float64));
-		arrays.insert(name_length, dyn_builder(Float64Builder::new()));
-
-		let name_height = format!("{name}:height");
-		schema.push(field(&name_height, DataType::Float64));
-		arrays.insert(name_height, dyn_builder(Float64Builder::new()));
-	} else if let Ok(_value) = value.extract::<PyPrior>() {
-		schema.push(field(name, DataType::Float64));
-		arrays.insert(
-			name.to_owned(),
-			dyn_builder(Float64Builder::new()),
-		);
-	} else {
-		bail!(
-			"Unsupported logging target: {}",
-			value.get_type().name()?,
-		);
-	}
-
-	Ok(())
-}
-
-fn dyn_builder<B: ArrayBuilder>(b: B) -> Box<dyn ArrayBuilder> {
-	Box::new(b) as Box<dyn ArrayBuilder>
-}
-
-/// All fields are marked as nullable.  Now, in practice they will never be
-/// null, so it'd be nice to mark them as such.  Unfortunately, trying to do so
-/// causes a chain reaction of poorly designed Box<dyn> dominoes to fall through
-/// this entire implementation:
-///
-/// - List builders store field information inside them, so they must also be
-///   marked as non-nullable.
-///
-/// - There are no methods to mark builders as non-nullable, one must use
-///   `with_field`.
-///
-/// - This means that a function creating a list builder must take both a
-///   DataType, and a builder for that data type, which is redundant.
-///
-/// - `make_builder` doesn't help, because it returns `Box<dyn ArrayBuilder>`,
-///   and so the return type for a list data type will be
-///   `ListBuilder<Box<DtBuilder>>` with added `dyn` indirection.
-///
-/// - The latter makes working with `Box<dyn ArrayBuilder>` even more painful.
-fn field(name: &str, dt: DataType) -> Field {
-	Field::new(name, dt, true)
-}
-
-fn list_field(name: &str, dt: DataType) -> Field {
-	field(name, DataType::List(Arc::new(field("item", dt))))
-}
-
-fn get<'a, T: 'static>(
-	arrays: &'a mut HashMap<String, Box<dyn ArrayBuilder>>,
-	name: &str,
-) -> &'a mut T {
-	arrays.get_mut(name)
-		.unwrap()
-		.as_any_mut()
-		.downcast_mut::<T>()
-		.unwrap()
-}
-
-fn dict_to_vec(dict: Bound<'_, PyDict>) -> Result<Vec<(String, Py<PyAny>)>> {
-	let mut out = vec![];
-
-	for (key, value) in dict {
-		let key = key.extract::<String>()?;
-
-		out.push((key, value.unbind()))
-	}
-
-	Ok(out)
 }
