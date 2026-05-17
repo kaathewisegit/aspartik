@@ -22,12 +22,11 @@ dev = [
 	"maturin[patchelf]~=1.13 ; sys_platform == 'linux'",
 	"maturin~=1.13 ; sys_platform != 'linux'",
 	"mpmath~=1.4",
-	"polars~=1.39",
-	"pyarrow~=23.0.1",
+	"polars~=1.40",
 	"pdoc~=16.0",
-	"ty~=0.0.30",
+	"ty~=0.0.37",
 	"pytest~=9.0",
-	"ruff~=0.15.10",
+	"ruff~=0.15",
 	"cliclass~=0.1.0a1", # duplicated from `cli`
 ]
 
