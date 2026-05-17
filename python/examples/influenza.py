@@ -57,18 +57,19 @@ clock_rate = Real(0.001)
 frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
 rates = RealVector(1, 1, 1, 1, 1, 1)
 
-params = [population_size, growth_rate, clock_rate, frequencies, tree]
+params = [population_size, growth_rate, clock_rate, frequencies, rates, tree]
 
 priors = [
-    Bound(population_size),
-    Bound(clock_rate),
-    Bound(frequencies),
     Distribution(clock_rate, Laplace(0, 0.5)),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     Distribution(growth_rate, Laplace(0, 100)),
+    ExponentialGrowth(tree, population_size, growth_rate),
+    Bound(population_size),
+    Bound(clock_rate),
+    Bound(frequencies),
+    Bound(rates),
     SymmetricDirichlet(frequencies, 1),
     SymmetricDirichlet(rates, 6),
-    ExponentialGrowth(tree, population_size, growth_rate),
 ]
 
 operators = [
@@ -99,17 +100,17 @@ loggers = [
             "frequencies": frequencies,
             "rates": rates,
             "tree": tree,
-            "prior:clock_rate": priors[4],
-            "prior:population_size": priors[5],
-            "prior:growth_rate": priors[6],
-            "prior:coalescent": priors[8],
+            "prior:clock_rate": priors[0],
+            "prior:population_size": priors[1],
+            "prior:growth_rate": priors[2],
+            "prior:coalescent": priors[3],
         },
         path="target/influenza.trace",
-        every=100,
+        every=10_000,
         overwrite=True,
         zstd=True,
     ),
-    StateCheckpoint("target/influenza.state", every=100_000),
+    StateCheckpoint("target/influenza.state", every=500_000),
 ]
 
 mcmc = MCMC(
