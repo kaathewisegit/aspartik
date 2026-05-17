@@ -82,7 +82,6 @@ loggers = [
 ]
 
 mcmc = MCMC(
-    state=[tree, kappa, population_size, frequencies],
     priors=priors,
     operators=operators,
     likelihood=likelihood,

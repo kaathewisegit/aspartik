@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use rand::seq::IteratorRandom;
 
 use super::Proposal;
-use crate::parameters::PyTree;
+use crate::parameters::{PyParameter, PyTree};
 use rng::PyRng;
 
 /// Fixed height subtree and regraft move.
@@ -70,5 +70,9 @@ impl FixedHeightSPR {
 		tree.spr(node, other)?;
 
 		Ok(Proposal::hastings(0.0))
+	}
+
+	fn parameters(&self, py: Python) -> Vec<PyParameter> {
+		vec![PyParameter::Tree(self.tree.clone_ref(py))]
 	}
 }

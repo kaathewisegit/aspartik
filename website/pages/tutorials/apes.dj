@@ -41,8 +41,8 @@ msa = read_msa_from_fasta("<local path to the alignment>")
 ### Parameters
 
 Next we can create the parameters of our model.  These are the objects
-which will be edited by operators, so they all have to support the
-`Stateful` protocol.
+which will be edited by operators, so they all support the `Stateful`
+protocol.
 
 ```python
 from aspartik.b3 import Tree
@@ -53,17 +53,12 @@ tree = Tree(msa.sequence_names(), rng)
 kappa = Real(2.0)
 population_size = Real(2.0)
 frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-
-parameters = [tree, kappa, population_size, frequencies]
 ```
 
 As `Tree`'s starting structure and edge lengths are randomized, we must
 pass `rng` to it.  The sequence names are taken from `msa`.  All other
 parameters are created from `Real` and `Weights`: the former is scalar
 while the latter can have any number of dimensions.
-
-We'll use the `parameters` list later on when creating the final `MCMC`
-object.
 
 
 ### Priors
@@ -134,7 +129,7 @@ likelihood = CPU4Likelihood(
 
 A base calculator takes 4 essential parameters: an MSA, a substitution
 model, a clock model[^clock], and a tree.  Some calculators have
-additional parameters needed for performance tuning and there are also
+additional settings useful for performance tuning and there are also
 higher-level calculators which wrap several others.
 
 
@@ -175,7 +170,6 @@ instance and launch it:
 
 ```python
 mcmc = MCMC(
-    state=parameters,
     priors=priors,
     operators=operators,
     likelihood=likelihood,

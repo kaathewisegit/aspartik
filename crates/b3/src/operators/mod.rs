@@ -7,9 +7,9 @@ use pyo3::{
 };
 use rand::distr::{Distribution, weighted::WeightedIndex};
 
-use std::{io::Write, time::Duration};
+use std::{collections::HashSet, io::Write, time::Duration};
 
-use crate::mcmc::StepResult;
+use crate::{mcmc::StepResult, parameters::PyParameter};
 use rng::Rng;
 use util::{
 	atomic::{MonotonicF64, MonotonicU32},
@@ -91,6 +91,7 @@ impl<'py> FromPyObject<'_, 'py> for PyOperator {
 
 	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
 		py_check_method!(obj, "propose");
+		py_check_method!(obj, "parameters");
 		py_extract_attr!(obj, "weight", f64)?;
 
 		let has_accept_reject = py_has_method!(obj, "accept")
@@ -121,6 +122,13 @@ impl PyOperator {
 		let proposal = proposal.extract::<Proposal>(py).expect("TODO");
 
 		Ok(proposal)
+	}
+
+	pub fn parameters(&self, py: Python) -> Result<Vec<PyParameter>> {
+		let params = py_call_method!(py, self.inner, "parameters")?;
+		let params =
+			params.extract::<Vec<PyParameter>>(py).expect("TODO");
+		Ok(params)
 	}
 
 	pub fn set_tuning(&self, py: Python) -> Result<()> {
@@ -268,6 +276,21 @@ impl WeightedScheduler {
 			weights,
 			statistics: Statistics::new(num_operators).into(),
 		})
+	}
+
+	pub fn parameters(&self, py: Python) -> Result<Vec<PyParameter>> {
+		let mut out = Vec::new();
+		let mut set = HashSet::new();
+
+		for operator in &self.operators {
+			for parameter in operator.parameters(py)? {
+				if set.insert(parameter.as_ptr()) {
+					out.push(parameter);
+				}
+			}
+		}
+
+		Ok(out)
 	}
 
 	pub fn get_operator(&self, index: usize) -> &PyOperator {

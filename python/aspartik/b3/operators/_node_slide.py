@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from ...rng import RNG
 from .. import Operator, Proposal
-from ..parameters import Tree
+from ..parameters import Parameter, Tree
 from ._util import assert_two_internals
 
 
@@ -37,3 +37,6 @@ class NodeSlide(Operator):
         tree.set_height(node, new_height)
 
         return Proposal.Hastings(0.0)
+
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]

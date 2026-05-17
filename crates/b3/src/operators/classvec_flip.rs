@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 use rand::RngExt;
 
 use super::Proposal;
-use crate::parameters::PyClassVector;
+use crate::parameters::{PyClassVector, PyParameter};
 use rng::PyRng;
 
 #[pyclass(module = "aspartik.b3.operators", frozen)]
@@ -43,5 +43,9 @@ impl ClassvecFlip {
 		}
 
 		Proposal::hastings(0.0)
+	}
+
+	fn parameters(&self, py: Python) -> Vec<PyParameter> {
+		vec![PyParameter::ClassVector(self.classvec.clone_ref(py))]
 	}
 }

@@ -5,6 +5,7 @@ from .._aspartik_rust_impl._b3_rust_impl import (
     Clock as Clock,
     Proposal as Proposal,
 )
+from .parameters import Parameter
 
 
 @runtime_checkable
@@ -83,6 +84,10 @@ class Operator(Protocol):
         If a move cannot be proposed for any reason `Proposal.Abort` should be
         returned.  `MCMC` will deal with rolling back the state.
         """
+        ...
+
+    def parameters(self) -> list[Parameter]:
+        """Returns a list of parameters this operator can edit"""
         ...
 
 

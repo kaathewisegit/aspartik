@@ -4,7 +4,7 @@ from math import log
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, TunableOperator
-from ..parameters import Real
+from ..parameters import Parameter, Real
 from ._util import sample_range
 
 
@@ -37,6 +37,9 @@ class ParamScale(Operator, TunableOperator):
 
         ratio = -log(scale)
         return Proposal.Hastings(ratio)
+
+    def parameters(self) -> list[Parameter]:
+        return [self.param]
 
     def set_tuning(self, parameter: float) -> None:
         self._factor = parameter

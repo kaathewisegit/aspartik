@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use rand::seq::IndexedRandom;
 
 use super::Proposal;
-use crate::parameters::{Internal, Node, PyTree, Tree};
+use crate::parameters::{Internal, Node, PyParameter, PyTree, Tree};
 use rng::PyRng;
 use util::{atomic::MonotonicF64, py_call_method};
 
@@ -137,6 +137,10 @@ impl SubtreeLeap {
 		let rev_num_dest = reverse_destinations.len() as f64;
 
 		Ok(Proposal::hastings(num_dest.ln() - rev_num_dest.ln()))
+	}
+
+	fn parameters(&self, py: Python) -> Vec<PyParameter> {
+		vec![PyParameter::Tree(self.tree.clone_ref(py))]
 	}
 }
 

@@ -23,25 +23,25 @@ pub struct Mcmc {
 
 	current_step: Mutex<usize>,
 
-	state: Vec<PyParameter>,
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
 	likelihood: PyLikelihood,
 	callbacks: Vec<PyCallback>,
 	#[pyo3(get)]
 	rng: Py<PyRng>,
+
+	parameters: Vec<PyParameter>,
 }
 
 #[pymethods]
 impl Mcmc {
 	#[new]
 	#[pyo3(signature = (
-		state, priors, operators, likelihood, callbacks, rng,
+		priors, operators, likelihood, callbacks, rng,
 	))]
 	fn new(
 		py: Python,
 
-		state: Vec<PyParameter>,
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
 		likelihood: PyLikelihood,
@@ -49,17 +49,18 @@ impl Mcmc {
 		rng: Py<PyRng>,
 	) -> Result<Mcmc> {
 		let scheduler = WeightedScheduler::new(py, operators)?;
+		let parameters = scheduler.parameters(py)?;
 
 		Ok(Mcmc {
 			posterior: f64::NEG_INFINITY.into(),
 			current_step: Mutex::new(0),
 
-			state,
 			priors,
 			scheduler,
 			likelihood,
 			callbacks,
 			rng,
+			parameters,
 		})
 	}
 
@@ -72,12 +73,8 @@ impl Mcmc {
 	}
 
 	#[getter]
-	fn parameters(&self, py: Python) -> Result<Vec<Py<PyAny>>> {
-		let mut out = Vec::with_capacity(self.state.len());
-		for param in &self.state {
-			out.push(param.into_py_any(py));
-		}
-		Ok(out)
+	fn parameters(&self, py: Python) -> Vec<Py<PyAny>> {
+		self.parameters.iter().map(|p| p.into_py_any(py)).collect()
 	}
 
 	/// All priors
@@ -180,7 +177,7 @@ impl Mcmc {
 			u64::deserialize(&mut bytes)? as usize;
 		self.posterior.store(f64::deserialize(&mut bytes)?);
 
-		for param in &self.state {
+		for param in &self.parameters {
 			param.as_dyn().load(&mut bytes)?;
 		}
 
@@ -195,7 +192,7 @@ impl Mcmc {
 			py_prior.probability(py)?;
 		}
 
-		for parameter in &self.state {
+		for parameter in &self.parameters {
 			parameter.as_dyn().accept();
 		}
 
@@ -243,7 +240,7 @@ impl Mcmc {
 		(*self.current_step.lock() as u64).serialize(writer)?;
 		self.posterior.load().serialize(writer)?;
 
-		for parameter in &self.state {
+		for parameter in &self.parameters {
 			parameter.as_dyn().dump(writer)?;
 		}
 
@@ -351,7 +348,7 @@ impl Mcmc {
 		self.scheduler.finalize(py, operator_index, status)?;
 
 		if status.is_accept() {
-			for parameter in &self.state {
+			for parameter in &self.parameters {
 				parameter.as_dyn().accept();
 			}
 
@@ -361,7 +358,7 @@ impl Mcmc {
 
 			self.likelihood.accept()?;
 		} else {
-			for parameter in &self.state {
+			for parameter in &self.parameters {
 				parameter.as_dyn().reject();
 			}
 

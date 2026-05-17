@@ -3,7 +3,7 @@ from math import log
 
 from ...rng import RNG
 from .. import Operator, Proposal
-from ..parameters import Tree
+from ..parameters import Parameter, Tree
 
 
 @dataclass(slots=True)
@@ -64,3 +64,6 @@ class WilsonBalding(Operator):
         tree.replace_child(i_parent, i_brother, j)
 
         return Proposal.Hastings(ratio)
+
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]

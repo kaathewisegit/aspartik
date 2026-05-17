@@ -69,7 +69,7 @@ def test_dump_load_mcmc(msa: MSA, rng: RNG):
         print_every=None,
     ).b3_mcmc()
     mcmc.run(100)
-    tree = mcmc.parameters[0]
+    tree = mcmc.parameters[2]
     assert isinstance(tree, Tree)
     tree_state = tree.dump()
     print(tree_state)

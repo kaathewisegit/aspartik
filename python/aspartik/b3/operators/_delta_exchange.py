@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from ...rng import RNG
 from .. import Operator, Proposal, TunableOperator
-from ..parameters import RealVector
+from ..parameters import Parameter, RealVector
 
 
 @dataclass(slots=True)
@@ -55,6 +55,9 @@ class DeltaExchange(Operator, TunableOperator):
 
         # The move is symmetrical, so the Hastings ratio is 0
         return Proposal.Hastings(0)
+
+    def parameters(self) -> list[Parameter]:
+        return [self.param]
 
     def set_tuning(self, parameter: float) -> None:
         self._tuning = parameter

@@ -83,7 +83,6 @@ loggers = [
 ]
 
 mcmc = MCMC(
-    state=[*kappas, *freqs, birth_rate, clock_rate, tree, likelihood.class_vector],
     priors=priors,
     operators=operators,
     likelihood=likelihood,

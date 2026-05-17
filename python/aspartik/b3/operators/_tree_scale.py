@@ -4,7 +4,7 @@ from math import log
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, TunableOperator
-from ..parameters import Tree
+from ..parameters import Parameter, Tree
 from ._util import sample_range
 
 
@@ -40,6 +40,9 @@ class TreeScale(Operator, TunableOperator):
 
         ratio = log(scale) * (tree.num_internals - 2)
         return Proposal.Hastings(ratio)
+
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]
 
     def set_tuning(self, parameter: float) -> None:
         self._factor = parameter

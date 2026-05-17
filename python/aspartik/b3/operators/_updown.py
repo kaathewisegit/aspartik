@@ -4,7 +4,7 @@ from math import log
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, TunableOperator
-from ..parameters import Scalable
+from ..parameters import Parameter, Real, Tree
 from ._util import sample_range
 
 
@@ -22,9 +22,9 @@ class UpDown(Operator, TunableOperator):
     accounting for rejections).
     """
 
-    up: Scalable
+    up: Real | Tree
     """The parameter to scale up."""
-    down: Scalable
+    down: Real | Tree
     """The parameter to scale down."""
     distribution: Distribution
     """The distribution from which to sample the scaling factor."""
@@ -45,6 +45,9 @@ class UpDown(Operator, TunableOperator):
 
         ratio = log(scale) * (num_scaling_up - num_scaling_down - 2)
         return Proposal.Hastings(ratio)
+
+    def parameters(self) -> list[Parameter]:
+        return [self.up, self.down]
 
     def set_tuning(self, parameter: float) -> None:
         self._factor = parameter

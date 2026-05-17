@@ -114,7 +114,6 @@ class HeteroLikelihood(Likelihood):
 class MCMC:
     def __init__(
         self,
-        state: Sequence[Parameter],
         priors: Sequence[Prior],
         operators: Sequence[Operator],
         likelihood: Likelihood,

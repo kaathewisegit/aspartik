@@ -5,7 +5,7 @@ from typing import Literal
 from ...rng import RNG
 from ...stats.distributions import Uniform
 from .. import Operator, Proposal, TunableOperator
-from ..parameters import Real
+from ..parameters import Parameter, Real
 
 UNIFORM01 = Uniform(0, 1)
 
@@ -62,6 +62,9 @@ class RandomWalk(Operator, TunableOperator):
         self.param.set(new_value)
 
         return Proposal.Hastings(0.0)
+
+    def parameters(self) -> list[Parameter]:
+        return [self.param]
 
     def set_tuning(self, parameter: float) -> None:
         self._tuning = parameter

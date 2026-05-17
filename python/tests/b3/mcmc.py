@@ -33,7 +33,6 @@ def test_mcmc():
     )
 
     mcmc = MCMC(
-        state=[a, tree],
         priors=[prior_a],
         operators=[op_param_scale, op_tree_scale],
         likelihood=likelihood,
@@ -72,7 +71,7 @@ def test_dump_restore():
     mcmc1.load_state(state)
     mcmc1.run(10_000)
 
-    tree0, tree1 = mcmc0.parameters[0], mcmc1.parameters[0]
+    tree0, tree1 = mcmc0.parameters[4], mcmc1.parameters[4]
     assert isinstance(tree0, Tree)
     assert isinstance(tree1, Tree)
     assert tree0.to_newick() == tree1.to_newick()

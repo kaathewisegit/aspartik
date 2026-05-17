@@ -1,6 +1,6 @@
 use anyhow::Result;
 use parking_lot::{MappedMutexGuard, MutexGuard};
-use pyo3::prelude::*;
+use pyo3::{ffi::PyObject, prelude::*};
 
 use std::io::Write;
 
@@ -81,6 +81,15 @@ impl PyParameter {
 			Self::Real(p) => p.clone_ref(py).into(),
 			Self::RealVector(p) => p.clone_ref(py).into(),
 			Self::Tree(p) => p.clone_ref(py).into(),
+		}
+	}
+
+	pub fn as_ptr(&self) -> *mut PyObject {
+		match self {
+			Self::ClassVector(p) => p.as_ptr(),
+			Self::Real(p) => p.as_ptr(),
+			Self::RealVector(p) => p.as_ptr(),
+			Self::Tree(p) => p.as_ptr(),
 		}
 	}
 

@@ -3,7 +3,7 @@ from math import log
 
 from ...rng import RNG
 from .. import Operator, Proposal
-from ..parameters import Internal, Tree
+from ..parameters import Internal, Parameter, Tree
 from ._util import assert_two_internals
 
 
@@ -65,6 +65,9 @@ class NarrowExchange(Operator):
 
         return Proposal.Hastings(ratio)
 
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]
+
 
 @dataclass(slots=True)
 class WideExchange(Operator):
@@ -117,6 +120,9 @@ class WideExchange(Operator):
         else:
             return Proposal.Abort()
 
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]
+
 
 @dataclass(slots=True)
 class BeastNarrowExchange(Operator):
@@ -148,6 +154,9 @@ class BeastNarrowExchange(Operator):
             return Proposal.Hastings(0.0)
         else:
             return Proposal.Abort()
+
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]
 
 
 @dataclass(slots=True)
@@ -189,3 +198,6 @@ class BeastWideExchange(Operator):
             return Proposal.Hastings(0.0)
         else:
             return Proposal.Abort()
+
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]

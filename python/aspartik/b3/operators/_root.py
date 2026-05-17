@@ -4,7 +4,7 @@ from math import log
 from ...rng import RNG
 from ...stats.distributions import Distribution
 from .. import Operator, Proposal, TunableOperator
-from ..parameters import Tree
+from ..parameters import Parameter, Tree
 from ._util import sample_range
 
 
@@ -45,6 +45,9 @@ class RootSlide(Operator, TunableOperator):
         tree.set_height(root, new_height)
 
         return Proposal.Hastings(-log(scale))
+
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]
 
     def set_tuning(self, parameter: float) -> None:
         self._factor = parameter

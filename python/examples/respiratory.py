@@ -118,7 +118,6 @@ loggers = [
 ]
 
 mcmc = MCMC(
-    state=params,
     priors=priors,
     operators=operators,
     likelihood=likelihood,

@@ -4,7 +4,7 @@ from math import log
 from ...rng import RNG
 from ...stats.distributions import Sample
 from .. import Operator, Proposal
-from ..parameters import Internal, Node, Tree
+from ..parameters import Internal, Node, Parameter, Tree
 from ._util import assert_two_internals, family
 
 
@@ -95,6 +95,9 @@ class SubtreeSlide(Operator):
         tree.set_height(parent, new_height)
 
         return Proposal.Hastings(ratio)
+
+    def parameters(self) -> list[Parameter]:
+        return [self.tree]
 
 
 def intersections(tree: Tree, node: Node, height: float) -> list[Node]:

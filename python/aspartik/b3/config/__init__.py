@@ -800,7 +800,6 @@ def _b3_config(c: MCMCConfig):
         callbacks.append(Timer())
 
     mcmc = MCMC(
-        state=parameters,
         priors=priors,
         operators=operators,
         likelihood=likelihood,
