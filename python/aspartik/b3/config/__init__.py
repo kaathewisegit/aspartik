@@ -21,7 +21,7 @@ from aspartik.b3.operators import (
     TreeScale,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, RealVector, Tree
+from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import (
     Bound,
     ConstantPopulation,
@@ -749,7 +749,7 @@ def _b3_config(c: MCMCConfig):
             operators.extend(
                 [
                     UpDown(
-                        Internals(tree),
+                        tree,
                         clock_rate_p,
                         Uniform(0, 1),
                         rng,

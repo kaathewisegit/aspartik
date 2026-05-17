@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from .._aspartik_rust_impl._b3_rust_impl import (
@@ -29,13 +28,3 @@ class Scalable(Protocol):
         """
 
         ...
-
-
-@dataclass
-class Internals(Scalable):
-    tree: Tree
-
-    def scale(self, factor: float) -> int:
-        self.tree.scale(factor)
-
-        return self.tree.num_internals

@@ -17,7 +17,7 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, RealVector, Tree
+from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import Bound, Distribution, ExponentialGrowth
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
@@ -70,7 +70,7 @@ priors = [
 operators = [
     ParamScale(kappa, Uniform(0, 1), rng, weight=1),
     ParamScale(clock_rate, Uniform(0, 1), rng, weight=3),
-    UpDown(Internals(tree), clock_rate, Uniform(0, 1), rng, weight=3),
+    UpDown(tree, clock_rate, Uniform(0, 1), rng, weight=3),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=1000),
     FixedHeightSPR(tree, rng, weight=100),
     ParamScale(population_size, Uniform(0, 1), rng, weight=3),

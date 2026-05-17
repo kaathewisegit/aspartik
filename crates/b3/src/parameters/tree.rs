@@ -439,7 +439,7 @@ impl Tree {
 		&self.names
 	}
 
-	pub fn scale(&mut self, scale: f64) -> Result<()> {
+	pub fn scale(&mut self, scale: f64) -> Result<usize> {
 		for node in self.internals() {
 			let new_height = self.height_of(*node) * scale;
 			self.set_height(*node, new_height);
@@ -451,7 +451,7 @@ impl Tree {
 			}
 		}
 
-		Ok(())
+		Ok(self.num_internals())
 	}
 
 	fn clear_updated(&mut self) {
@@ -1207,7 +1207,7 @@ impl_pyparameter_common! {PyTree, Tree;
 	///
 	/// Throws a `RuntimeError` if any of the internal nodes would be moved
 	/// below either of its children.
-	fn scale(&self, scale: f64) -> Result<()> {
+	fn scale(&self, scale: f64) -> Result<usize> {
 		self.inner().scale(scale)
 	}
 

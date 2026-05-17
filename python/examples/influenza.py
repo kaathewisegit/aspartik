@@ -16,7 +16,7 @@ from aspartik.b3.operators import (
     SubtreeLeap,
     UpDown,
 )
-from aspartik.b3.parameters import Internals, Real, RealVector, Tree
+from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import (
     Bound,
     Distribution,
@@ -74,7 +74,7 @@ priors = [
 
 operators = [
     ParamScale(clock_rate, Uniform(0, 1), rng, weight=3),
-    UpDown(Internals(tree), clock_rate, Uniform(0, 1), rng, weight=3),
+    UpDown(tree, clock_rate, Uniform(0, 1), rng, weight=3),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=50),
     FixedHeightSPR(tree, rng, weight=5),
     ParamScale(population_size, Uniform(0, 1), rng, weight=3),
