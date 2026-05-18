@@ -87,6 +87,7 @@ mcmc = MCMC(
     likelihood=likelihood,
     callbacks=loggers,
     rng=rng,
+    optimization_cutoff=100_000,
 )
 
 

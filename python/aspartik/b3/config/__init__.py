@@ -60,6 +60,7 @@ class MCMCConfig:
 
     calculator: Literal["cpu", "cuda"] = "cpu"
     operator_mix: Literal["scalable", "beauti1_classic", "beauti1_default"] = "scalable"
+    optimization_cutoff: int = 1_000_000
 
     overwrite: bool = True
 
@@ -805,6 +806,7 @@ def _b3_config(c: MCMCConfig):
         likelihood=likelihood,
         callbacks=callbacks,
         rng=rng,
+        optimization_cutoff=c.optimization_cutoff,
     )
 
     return mcmc
