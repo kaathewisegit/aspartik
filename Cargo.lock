@@ -410,7 +410,7 @@ checksum = "7011d97b484a5ebdc4b1fdb3b12d5e4bbbea56e9d22b688f2e79e04b65a7d8a6"
 [[package]]
 name = "picoarrow"
 version = "0.1.0"
-source = "git+https://github.com/kaathewisegit/picoarrow#c3df28eae7596819568c2facd3ff6ab2b4ddcf68"
+source = "git+https://github.com/kaathewisegit/picoarrow#0c2505fedecfea65f843ca44024c67a2f8c77ee4"
 dependencies = [
  "bytemuck",
  "flatbuffers",

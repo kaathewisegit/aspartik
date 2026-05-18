@@ -90,7 +90,7 @@ impl Item {
 
 				let mut out = Vec::new();
 				tree.dump(&mut out)?;
-				binary.push(&out);
+				binary.push(&out)?;
 			}
 		}
 
