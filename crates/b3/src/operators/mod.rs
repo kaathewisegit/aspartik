@@ -227,6 +227,7 @@ impl PyOperator {
 pub struct WeightedScheduler {
 	operators: Vec<PyOperator>,
 	weights: Vec<f64>,
+	optimization_cutoff: usize,
 	statistics: Mutex<Statistics>,
 }
 
@@ -250,7 +251,11 @@ impl Statistics {
 }
 
 impl WeightedScheduler {
-	pub fn new(py: Python, operators: Vec<PyOperator>) -> Result<Self> {
+	pub fn new(
+		py: Python,
+		operators: Vec<PyOperator>,
+		optimization_cutoff: usize,
+	) -> Result<Self> {
 		let num_operators = operators.len();
 
 		let mut weights = Vec::with_capacity(num_operators);
@@ -274,6 +279,7 @@ impl WeightedScheduler {
 		Ok(Self {
 			operators,
 			weights,
+			optimization_cutoff,
 			statistics: Statistics::new(num_operators).into(),
 		})
 	}
@@ -375,7 +381,11 @@ impl WeightedScheduler {
 		Ok(out.unbind())
 	}
 
-	pub fn tune(&self, py: Python) -> Result<()> {
+	pub fn tune(&self, py: Python, step: usize) -> Result<()> {
+		if step > self.optimization_cutoff {
+			return Ok(());
+		}
+
 		for operator in &self.operators {
 			operator.tune(py)?;
 		}

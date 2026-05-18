@@ -119,6 +119,7 @@ class MCMC:
         likelihood: Likelihood,
         callbacks: Sequence[Callback],
         rng: RNG,
+        optimization_cutoff: int = 1_000_000,
     ): ...
     @property
     def current_step(self) -> int: ...

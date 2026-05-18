@@ -38,6 +38,7 @@ impl Mcmc {
 	#[new]
 	#[pyo3(signature = (
 		priors, operators, likelihood, callbacks, rng,
+		optimization_cutoff = 1_000_000,
 	))]
 	fn new(
 		py: Python,
@@ -47,8 +48,14 @@ impl Mcmc {
 		likelihood: PyLikelihood,
 		callbacks: Vec<PyCallback>,
 		rng: Py<PyRng>,
+
+		optimization_cutoff: usize,
 	) -> Result<Mcmc> {
-		let scheduler = WeightedScheduler::new(py, operators)?;
+		let scheduler = WeightedScheduler::new(
+			py,
+			operators,
+			optimization_cutoff,
+		)?;
 		let parameters = scheduler.parameters(py)?;
 
 		Ok(Mcmc {
@@ -268,7 +275,7 @@ impl Mcmc {
 			self_.finalize_step(py, operator_index, result)?;
 
 			if current_step.is_multiple_of(10_000) {
-				self_.scheduler.tune(py)?;
+				self_.scheduler.tune(py, current_step)?;
 			}
 
 			Self::call_callbacks(
