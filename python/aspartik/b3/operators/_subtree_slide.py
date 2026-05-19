@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import log
 
 from ...rng import RNG
@@ -26,6 +26,7 @@ class SubtreeSlide(Operator):
     """
     rng: RNG
     weight: float = 1
+    _factor: float = field(init=False, default=0.75)
 
     def __post_init__(self):
         assert_two_internals(self)
@@ -37,7 +38,7 @@ class SubtreeSlide(Operator):
         ratio = 0.0
 
         node, sibling, parent, grandparent = family(tree, rng)
-        delta = self.distribution.sample(rng)
+        delta = self.distribution.sample(rng) * self._factor
         old_height = tree.height_of(parent)
         new_height = old_height + delta
 
@@ -98,6 +99,12 @@ class SubtreeSlide(Operator):
 
     def parameters(self) -> list[Parameter]:
         return [self.tree]
+
+    def set_tuning(self, parameter: float) -> None:
+        self._factor = parameter
+
+    def get_tuning(self) -> float:
+        return self._factor
 
 
 def intersections(tree: Tree, node: Node, height: float) -> list[Node]:
