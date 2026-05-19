@@ -4,6 +4,7 @@ from utils import random_float, random_msas, random_trees
 from aspartik.b3.config import MCMCConfig
 from aspartik.b3.parameters import Tree
 from aspartik.data.msa import MSA
+from aspartik.data.newick import Tree as NewickTree
 from aspartik.rng import RNG
 
 
@@ -87,3 +88,31 @@ def test_simulate_coalescent(pop_size: float, rng: RNG):
         heights = [rng.random_float(0, 100) for _ in range(i)]
         tree = Tree.simulate_coalescent(names, heights, pop_size, rng)
         tree.validate()
+
+
+def test_ola(rng: RNG):
+    # figure 1
+    tree = Tree([str(i) for i in range(4)], rng)
+
+    newick = NewickTree("(((0:0,1:0):0,3:0):0,2:0);")
+    tree.load_newick(newick)
+    assert tree.ola() == [0, -1, -1]
+
+    newick = NewickTree("(((0:0,2:0):0,3:0):0,1:0);")
+    tree.load_newick(newick)
+    assert tree.ola() == [0, 0, -2]
+
+    newick = NewickTree("(((1:0,2:0):0,3:0):0,0:0);")
+    tree.load_newick(newick)
+    assert tree.ola() == [0, 1, -2]
+
+    # figure 2
+    tree = Tree([str(i) for i in range(6)], rng)
+
+    newick = NewickTree("(((0:0,(1:0,5:0):0):0,(3:0,4:0):0):0,2:0);")
+    tree.load_newick(newick)
+    assert tree.ola() == [0, -1, -1, 3, 1]
+
+    newick = NewickTree("((0:0,1:0):0,(((5:0,3:0):0,4:0):0,2:0):0);")
+    tree.load_newick(newick)
+    assert tree.ola() == [0, -1, 2, 3, 3]

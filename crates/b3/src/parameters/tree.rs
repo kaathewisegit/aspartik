@@ -435,6 +435,78 @@ impl Tree {
 		Ok(tree)
 	}
 
+	pub fn ola(&self) -> Vec<i32> {
+		let num_nodes = self.num_nodes();
+		let num_leaves = self.num_leaves(); // n in the paper
+
+		let mut queue = VecDeque::new();
+		// min{σ(l) | l ∈ L(T_v)}
+		// Smallest child index in the subtree (or 0 if grandparent).
+		// It is used for linear DFS which can descend towards any leaf
+		// `i` by knowing in which of the two branches it is via μ.
+		let mut μ = vec![usize::MAX; num_nodes];
+		// max{μ(v_l), μ(v_r)}, biggest child index in the subtree
+		let mut σ = vec![0; num_nodes];
+
+		for leaf in self.leaves() {
+			μ[leaf.0] = leaf.0;
+			queue.push_back(*leaf);
+		}
+
+		let mut out_degree = vec![0; num_nodes];
+		for internal in self.internals() {
+			out_degree[internal.0] = 2;
+		}
+
+		while let Some(node) = queue.pop_front() {
+			let Some(parent) = self.parent_of(node) else {
+				continue;
+			};
+			out_degree[parent.0] -= 1;
+			if out_degree[parent.0] == 0 {
+				let (left, right) = self.children_of(parent);
+
+				μ[parent.0] = μ[left.0].min(μ[right.0]);
+				σ[parent.0] = μ[left.0].max(μ[right.0]);
+
+				queue.push_back(*parent);
+			}
+		}
+
+		let mut node_with_σ = vec![Internal(0); num_leaves];
+		for internal in self.internals() {
+			node_with_σ[σ[internal.0]] = internal;
+		}
+
+		let mut ola = Vec::with_capacity(num_leaves - 1);
+		#[expect(clippy::needless_range_loop)]
+		for i in 1..num_leaves {
+			let internal = node_with_σ[i];
+			let (left, right) = self.children_of(internal);
+
+			// child branch that does not contain leaf i
+			let mut curr =
+				if μ[left.0] < i { left } else { right };
+
+			// find the first node to be created before step i
+			// that'll be the graft point
+			while self.is_internal(curr) && σ[curr.0] > i {
+				let curr_internal =
+					self.as_internal(curr).unwrap();
+				let (l, r) = self.children_of(curr_internal);
+				curr = if μ[l.0] < i { l } else { r };
+			}
+
+			if self.is_leaf(curr) {
+				ola.push(curr.0 as i32);
+			} else {
+				ola.push(-(σ[curr.0] as i32));
+			}
+		}
+
+		ola
+	}
+
 	pub fn names(&self) -> &[String] {
 		&self.names
 	}
@@ -1471,5 +1543,9 @@ impl_pyparameter_common! {PyTree, Tree;
 	#[pyo3(signature = (internal_ids = false))]
 	fn to_newick(&self, internal_ids: bool) -> String {
 		self.inner().to_newick(internal_ids)
+	}
+
+	fn ola(&self) -> Vec<i32> {
+		self.inner().ola()
 	}
 }
