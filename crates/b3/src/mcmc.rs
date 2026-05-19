@@ -58,7 +58,7 @@ impl Mcmc {
 		)?;
 		let parameters = scheduler.parameters(py)?;
 
-		Ok(Mcmc {
+		let out = Mcmc {
 			posterior: f64::NEG_INFINITY.into(),
 			current_step: Mutex::new(0),
 
@@ -68,7 +68,10 @@ impl Mcmc {
 			callbacks,
 			rng,
 			parameters,
-		})
+		};
+		out.posterior
+			.store(out.likelihood.likelihood()? + out.prior(py)?);
+		Ok(out)
 	}
 
 	/// Index of the current MCMC step
