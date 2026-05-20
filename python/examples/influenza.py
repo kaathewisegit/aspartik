@@ -11,8 +11,8 @@ from aspartik.b3.likelihoods import CPU4Likelihood
 from aspartik.b3.operators import (
     DeltaExchange,
     FixedHeightSPR,
-    ParamScale,
     RandomWalk,
+    ScaleReal,
     SubtreeLeap,
     UpDown,
 )
@@ -73,11 +73,11 @@ priors = [
 ]
 
 operators = [
-    ParamScale(clock_rate, Uniform(0, 1), rng, weight=3),
+    ScaleReal(clock_rate, Uniform(0, 1), rng, weight=3),
     UpDown(tree, clock_rate, Uniform(0, 1), rng, weight=3),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=50),
     FixedHeightSPR(tree, rng, weight=5),
-    ParamScale(population_size, Uniform(0, 1), rng, weight=3),
+    ScaleReal(population_size, Uniform(0, 1), rng, weight=3),
     RandomWalk(growth_rate, window=10, rng=rng, weight=3),
     DeltaExchange(frequencies, rng, weight=3),
     DeltaExchange(rates, rng, weight=1),

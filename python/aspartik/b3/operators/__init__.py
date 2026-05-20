@@ -5,7 +5,7 @@ from ..._aspartik_rust_impl._b3_rust_impl import (
 )
 from ._delta_exchange import DeltaExchange as DeltaExchange
 from ._node_slide import NodeSlide as NodeSlide
-from ._param_scale import ParamScale as ParamScale
+from ._param_scale import ScaleReal as ScaleReal, ScaleRealVector as ScaleRealVector
 from ._random_walk import RandomWalk as RandomWalk
 from ._root import RootSlide as RootSlide
 from ._subtree_slide import SubtreeSlide as SubtreeSlide

@@ -12,8 +12,8 @@ from aspartik.b3.callbacks import PrintLogger, Timer, TraceWriter
 from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood
 from aspartik.b3.operators import (
     FixedHeightSPR,
-    ParamScale,
     RandomWalk,
+    ScaleReal,
     SubtreeLeap,
     UpDown,
 )
@@ -68,12 +68,12 @@ priors = [
 ]
 
 operators = [
-    ParamScale(kappa, Uniform(0, 1), rng, weight=1),
-    ParamScale(clock_rate, Uniform(0, 1), rng, weight=3),
+    ScaleReal(kappa, Uniform(0, 1), rng, weight=1),
+    ScaleReal(clock_rate, Uniform(0, 1), rng, weight=3),
     UpDown(tree, clock_rate, Uniform(0, 1), rng, weight=3),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=1000),
     FixedHeightSPR(tree, rng, weight=100),
-    ParamScale(population_size, Uniform(0, 1), rng, weight=3),
+    ScaleReal(population_size, Uniform(0, 1), rng, weight=3),
     RandomWalk(growth_rate, window=10, rng=rng, weight=3),
 ]
 

@@ -3,7 +3,7 @@ import pytest
 from aspartik.b3 import MCMC, Clock
 from aspartik.b3.config import MCMCConfig
 from aspartik.b3.likelihoods import CPU4Likelihood
-from aspartik.b3.operators import ParamScale, TreeScale
+from aspartik.b3.operators import ScaleReal, TreeScale
 from aspartik.b3.parameters import Real, Tree
 from aspartik.b3.priors import Bound
 from aspartik.b3.substitutions import K80
@@ -22,7 +22,7 @@ def test_mcmc():
 
     prior_a = Bound(a, 0, 10)
 
-    op_param_scale = ParamScale(a, Uniform(0, 1), rng, weight=1)
+    op_param_scale = ScaleReal(a, Uniform(0, 1), rng, weight=1)
     op_tree_scale = TreeScale(tree, Uniform(0, 1), rng, weight=3)
 
     likelihood = CPU4Likelihood(

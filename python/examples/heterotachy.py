@@ -11,7 +11,7 @@ from aspartik.b3.operators import (
     ClassvecFlip,
     DeltaExchange,
     FixedHeightSPR,
-    ParamScale,
+    ScaleReal,
     SubtreeLeap,
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
@@ -57,10 +57,10 @@ likelihood = HeteroLikelihood(
 )
 
 operators = [
-    *(ParamScale(kappa, Uniform(0, 1), rng, weight=1) for kappa in kappas),
+    *(ScaleReal(kappa, Uniform(0, 1), rng, weight=1) for kappa in kappas),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
     FixedHeightSPR(tree, rng, weight=4 * N),
-    ParamScale(birth_rate, Uniform(0, 1), rng, weight=3 * N),
+    ScaleReal(birth_rate, Uniform(0, 1), rng, weight=3 * N),
     *(DeltaExchange(freq, rng, weight=3) for freq in freqs),
     ClassvecFlip(likelihood.class_vector, rng, weight=3),
 ]

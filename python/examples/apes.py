@@ -10,8 +10,8 @@ from aspartik.b3.operators import (
     BeastWideExchange,
     DeltaExchange,
     NodeSlide,
-    ParamScale,
     RootSlide,
+    ScaleReal,
     SubtreeSlide,
     TreeScale,
 )
@@ -39,7 +39,7 @@ priors = [
 ]
 
 operators = [
-    ParamScale(kappa, Uniform(0, 1), rng, weight=1),
+    ScaleReal(kappa, Uniform(0, 1), rng, weight=1),
     DeltaExchange(frequencies, rng=rng, weight=1),
     TreeScale(tree, Uniform(0, 1), rng, weight=3),
     SubtreeSlide(tree, Uniform(-0.5, 0.5), rng, weight=30),
@@ -51,7 +51,7 @@ operators = [
     # selecting a random node and moving it uniformly between it's maximum and
     # minimum heights, which is what `NodeSlide` with `Uniform` does.
     NodeSlide(tree, rng, weight=30),
-    ParamScale(population_size, Uniform(0, 1), rng, weight=3),
+    ScaleReal(population_size, Uniform(0, 1), rng, weight=3),
 ]
 
 likelihood = CPU4Likelihood(

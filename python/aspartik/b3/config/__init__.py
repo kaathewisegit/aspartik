@@ -13,9 +13,9 @@ from aspartik.b3.operators import (
     DeltaExchange,
     FixedHeightSPR,
     NodeSlide,
-    ParamScale,
     RandomWalk,
     RootSlide,
+    ScaleReal,
     SubtreeLeap,
     SubtreeSlide,
     TreeScale,
@@ -657,7 +657,7 @@ def _b3_config(c: MCMCConfig):
         priors.append(Distribution(param, dist))
         parameters.append(param)
         if positive:
-            operators.append(ParamScale(param, Uniform(0, 1), rng, weight=weight))
+            operators.append(ScaleReal(param, Uniform(0, 1), rng, weight=weight))
         else:
             # a bigger window for the tuning parameter to do its work
             operators.append(RandomWalk(param, window=10, rng=rng, weight=weight))
