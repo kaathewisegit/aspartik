@@ -5,7 +5,7 @@ use parking_lot::Mutex;
 use pyo3::prelude::*;
 
 use super::coalescent::Intervals;
-use crate::parameters::{Parameter, PyRealVector, PyTree};
+use crate::parameters::{Parameter, PyIntVector, PyRealVector, PyTree};
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
@@ -15,7 +15,7 @@ pub struct BayesianSkyline {
 	#[pyo3(get)]
 	pop_sizes: Py<PyRealVector>,
 	#[pyo3(get)]
-	group_sizes: Py<PyRealVector>,
+	group_sizes: Py<PyIntVector>,
 	intervals: Mutex<Intervals>,
 }
 
@@ -25,11 +25,24 @@ impl BayesianSkyline {
 	fn new(
 		tree: Py<PyTree>,
 		pop_sizes: Py<PyRealVector>,
-		group_sizes: Py<PyRealVector>,
+		group_sizes: Py<PyIntVector>,
 	) -> Result<Self> {
 		let intervals = Intervals::new(&tree.get().inner());
 
-		// TODO: set group sizes
+		let num_events = tree.get().inner().num_internals();
+		let mut group_sizes_m = group_sizes.get().inner();
+		let num_groups = group_sizes_m.len();
+
+		for i in 0..num_groups {
+			let mut size = num_events / num_groups;
+			if i == num_groups - 1 {
+				size += num_events % num_groups;
+			}
+			group_sizes_m.set(i, size as i64);
+		}
+		group_sizes_m.accept();
+
+		drop(group_sizes_m);
 
 		Ok(Self {
 			tree,
