@@ -1078,6 +1078,15 @@ impl Tree {
 			stack: vec![*self.root()],
 		}
 	}
+
+	fn internal_heights(&self) -> Vec<f64> {
+		let mut out = Vec::new();
+		for internal in self.internals() {
+			out.push(self.height_of(*internal));
+		}
+		out.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+		out
+	}
 }
 
 struct Postorder<'a> {
@@ -1611,5 +1620,13 @@ impl_pyparameter_common! {PyTree, Tree;
 
 	fn ola(&self) -> Vec<i32> {
 		self.inner().ola()
+	}
+
+	/// Sorted heights of internal nodes
+	///
+	/// This method is inefficient and should only be used for post-run
+	/// analysis.
+	fn internal_heights(&self) -> Vec<f64> {
+		self.inner().internal_heights()
 	}
 }
