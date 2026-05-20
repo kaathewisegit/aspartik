@@ -29,8 +29,8 @@ pub mod pymodule {
 			ClassvecFlip, FixedHeightSPR, Proposal, SubtreeLeap,
 		},
 		parameters::{
-			Internal, Leaf, PyClassVector, PyReal, PyRealVector,
-			PyTree,
+			Internal, Leaf, PyClassVector, PyIntVector, PyReal,
+			PyRealVector, PyTree,
 		},
 		priors::{
 			BayesianSkyline, ConstantPopulation, ExponentialGrowth,

@@ -3,6 +3,7 @@ from typing import Protocol, runtime_checkable
 from .._aspartik_rust_impl._b3_rust_impl import (
     ClassVector as ClassVector,
     Internal as Internal,
+    IntVector as IntVector,
     Leaf as Leaf,
     Proposal as Proposal,
     Real as Real,
@@ -17,7 +18,7 @@ Used for type hints in places where there isn't a need to distinguish between
 internal and leaf nodes.
 """
 
-type Parameter = ClassVector | Real | RealVector | Tree
+type Parameter = ClassVector | Real | RealVector | IntVector | Tree
 
 
 @runtime_checkable

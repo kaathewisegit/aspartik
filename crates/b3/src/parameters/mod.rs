@@ -5,11 +5,13 @@ use pyo3::{ffi::PyObject, prelude::*};
 use std::io::Write;
 
 mod class_vector;
+mod int_vector;
 mod real;
 mod real_vector;
 mod tree;
 
 pub use class_vector::{ClassVector, PyClassVector};
+pub use int_vector::{IntVector, PyIntVector};
 pub use real::{PyReal, Real};
 pub use real_vector::{PyRealVector, RealVector};
 pub use tree::{Internal, Leaf, Node, PyTree, Tree};
