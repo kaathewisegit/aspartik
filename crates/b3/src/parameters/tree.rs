@@ -9,7 +9,7 @@ use pyo3::{
 use rand::{RngExt, seq::SliceRandom};
 
 use std::{
-	cmp::Reverse,
+	cmp::{Reverse, max, min},
 	collections::{BinaryHeap, HashMap, VecDeque},
 	io::Write,
 	mem,
@@ -435,74 +435,75 @@ impl Tree {
 		Ok(tree)
 	}
 
+	/// Ordered leaf attachement vector
+	///
+	/// From [Vector Encoding of Phylogenetic Trees by Ordered Leaf
+	/// Attachment][doi].
+	///
+	/// [doi]: https://doi.org/10.1007/s11538-026-01611-9
 	pub fn ola(&self) -> Vec<i32> {
 		let num_nodes = self.num_nodes();
 		let num_leaves = self.num_leaves(); // n in the paper
 
-		let mut queue = VecDeque::new();
-		// min{σ(l) | l ∈ L(T_v)}
-		// Smallest child index in the subtree (or 0 if grandparent).
-		// It is used for linear DFS which can descend towards any leaf
-		// `i` by knowing in which of the two branches it is via μ.
-		let mut μ = vec![usize::MAX; num_nodes];
-		// max{μ(v_l), μ(v_r)}, biggest child index in the subtree
-		let mut σ = vec![0; num_nodes];
+		let mut labels = Vec::from_iter(0..num_leaves as i32);
+		labels.resize(num_nodes, 0);
 
-		for leaf in self.leaves() {
-			μ[leaf.0] = leaf.0;
-			queue.push_back(*leaf);
+		let mut clade_founder = vec![0; num_nodes];
+
+		for node in self.postorder() {
+			if let Some(leaf) = self.as_leaf(node) {
+				clade_founder[leaf.0] = leaf.0
+			} else if let Some(internal) = self.as_internal(node) {
+				let (left, right) = self.children_of(internal);
+				clade_founder[internal.0] = min(
+					clade_founder[left.0],
+					clade_founder[right.0],
+				);
+			} else {
+				unreachable!()
+			}
 		}
 
-		let mut out_degree = vec![0; num_nodes];
-		for internal in self.internals() {
-			out_degree[internal.0] = 2;
-		}
-
-		while let Some(node) = queue.pop_front() {
-			let Some(parent) = self.parent_of(node) else {
+		let mut clade_splitter = vec![0usize; num_nodes];
+		let mut splitter_to_node = vec![0; num_leaves];
+		for node in self.preorder() {
+			let Some(internal) = self.as_internal(node) else {
 				continue;
 			};
-			out_degree[parent.0] -= 1;
-			if out_degree[parent.0] == 0 {
-				let (left, right) = self.children_of(parent);
 
-				μ[parent.0] = μ[left.0].min(μ[right.0]);
-				σ[parent.0] = μ[left.0].max(μ[right.0]);
-
-				queue.push_back(*parent);
-			}
-		}
-
-		let mut node_with_σ = vec![Internal(0); num_leaves];
-		for internal in self.internals() {
-			node_with_σ[σ[internal.0]] = internal;
-		}
-
-		let mut ola = Vec::with_capacity(num_leaves - 1);
-		#[expect(clippy::needless_range_loop)]
-		for i in 1..num_leaves {
-			let internal = node_with_σ[i];
 			let (left, right) = self.children_of(internal);
 
-			// child branch that does not contain leaf i
-			let mut curr =
-				if μ[left.0] < i { left } else { right };
-
-			// find the first node to be created before step i
-			// that'll be the graft point
-			while self.is_internal(curr) && σ[curr.0] > i {
-				let curr_internal =
-					self.as_internal(curr).unwrap();
-				let (l, r) = self.children_of(curr_internal);
-				curr = if μ[l.0] < i { l } else { r };
-			}
-
-			if self.is_leaf(curr) {
-				ola.push(curr.0 as i32);
-			} else {
-				ola.push(-(σ[curr.0] as i32));
-			}
+			let splitter = max(
+				clade_founder[left.0],
+				clade_founder[right.0],
+			);
+			clade_splitter[node.0] = splitter;
+			labels[node.0] = -(splitter as i32);
+			splitter_to_node[splitter] = node.0;
 		}
+
+		let mut ola = Vec::new();
+		let mut forward_to = Vec::from_iter(0..num_nodes);
+
+		for label in (1..num_leaves).rev() {
+			let splitter_node = Internal(splitter_to_node[label]);
+			let (left, right) = self.children_of(splitter_node);
+
+			let sibling = if clade_founder[left.0] == label {
+				right
+			} else {
+				left
+			};
+
+			let mut curr = sibling;
+			while forward_to[curr.0] != curr.0 {
+				curr = Node(forward_to[curr.0]);
+			}
+
+			ola.push(labels[curr.0]);
+			forward_to[splitter_node.0] = curr.0;
+		}
+		ola.reverse();
 
 		ola
 	}
@@ -1062,6 +1063,69 @@ impl Tree {
 		}
 
 		tree.into_string()
+	}
+
+	fn postorder(&self) -> Postorder<'_> {
+		Postorder {
+			tree: self,
+			stack: vec![(*self.root(), false)],
+		}
+	}
+
+	fn preorder(&self) -> Preorder<'_> {
+		Preorder {
+			tree: self,
+			stack: vec![*self.root()],
+		}
+	}
+}
+
+struct Postorder<'a> {
+	tree: &'a Tree,
+	stack: Vec<(Node, bool)>,
+}
+
+impl Iterator for Postorder<'_> {
+	type Item = Node;
+
+	fn next(&mut self) -> Option<Node> {
+		while let Some((node, children_visited)) = self.stack.pop() {
+			if children_visited {
+				return Some(node);
+			}
+
+			self.stack.push((node, true));
+
+			let Some(internal) = self.tree.as_internal(node) else {
+				continue;
+			};
+
+			let (left, right) = self.tree.children_of(internal);
+			self.stack.push((right, false));
+			self.stack.push((left, false));
+		}
+		None
+	}
+}
+
+struct Preorder<'a> {
+	tree: &'a Tree,
+	stack: Vec<Node>,
+}
+
+impl Iterator for Preorder<'_> {
+	type Item = Node;
+
+	fn next(&mut self) -> Option<Node> {
+		let node = self.stack.pop()?;
+
+		if let Some(internal) = self.tree.as_internal(node) {
+			let (left, right) = self.tree.children_of(internal);
+			self.stack.push(right);
+			self.stack.push(left);
+		}
+
+		Some(node)
 	}
 }
 

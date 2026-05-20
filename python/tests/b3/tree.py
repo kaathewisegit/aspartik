@@ -91,6 +91,7 @@ def test_simulate_coalescent(pop_size: float, rng: RNG):
 
 
 def test_ola(rng: RNG):
+    # Paper: https://arxiv.org/abs/2509.16405v1
     # figure 1
     tree = Tree([str(i) for i in range(4)], rng)
 
@@ -116,3 +117,16 @@ def test_ola(rng: RNG):
     newick = NewickTree("((0:0,1:0):0,(((5:0,3:0):0,4:0):0,2:0):0);")
     tree.load_newick(newick)
     assert tree.ola() == [0, -1, 2, 3, 3]
+
+    # Paper: https://doi.org/10.1007/s11538-026-01611-9
+    tree = Tree([str(i) for i in range(5)], rng)
+
+    # figure 1
+    newick = NewickTree("((0:0,(2:0,3:0):0):0,(1:0,4:0):0);")
+    tree.load_newick(newick)
+    assert tree.ola() == [0, 0, 2, 1]
+
+    # figure 2
+    newick = NewickTree("((0:0,((1:0,3:0):0,4:0):0):0,2:0);")
+    tree.load_newick(newick)
+    assert tree.ola() == [0, -1, 1, -3]
