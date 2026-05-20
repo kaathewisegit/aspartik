@@ -3,8 +3,8 @@ use parking_lot::Mutex;
 use picoarrow::{
 	Field, Schema,
 	array::{
-		Array, ArrayBinary, ArrayF64, ArrayFixedSizeList, ArrayU8,
-		ArrayU64, NonNullable,
+		Array, ArrayBinary, ArrayF64, ArrayFixedSizeList, ArrayI64,
+		ArrayU8, ArrayU64, NonNullable,
 	},
 	ipc::{Compression, FileWriter},
 };
@@ -18,7 +18,10 @@ use std::{
 
 use crate::{
 	mcmc::Mcmc,
-	parameters::{Parameter, PyClassVector, PyReal, PyRealVector, PyTree},
+	parameters::{
+		Parameter, PyClassVector, PyIntVector, PyReal, PyRealVector,
+		PyTree,
+	},
 	priors::PyPrior,
 };
 
@@ -30,6 +33,10 @@ enum LoggedArray {
 	RealVector {
 		vector: Py<PyRealVector>,
 		array: ArrayFixedSizeList<ArrayF64<NonNullable>, NonNullable>,
+	},
+	IntVector {
+		vector: Py<PyIntVector>,
+		array: ArrayFixedSizeList<ArrayI64<NonNullable>, NonNullable>,
 	},
 	ClassVector {
 		classvec: Py<PyClassVector>,
@@ -74,6 +81,14 @@ impl Item {
 					}
 				})?;
 			}
+			LoggedArray::IntVector { vector, array } => {
+				let vector = vector.get().inner();
+				array.push(|n| {
+					for i in 0..vector.len() {
+						n.push(vector[i]);
+					}
+				})?;
+			}
 			LoggedArray::Prior { prior, array } => {
 				let value = prior.probability(py)?;
 				array.push(value);
@@ -101,6 +116,9 @@ impl Item {
 		match &self.array {
 			LoggedArray::Real { array, .. } => array.memory_size(),
 			LoggedArray::RealVector { array, .. } => {
+				array.memory_size()
+			}
+			LoggedArray::IntVector { array, .. } => {
 				array.memory_size()
 			}
 			LoggedArray::ClassVector { array, .. } => {
@@ -168,6 +186,18 @@ impl TraceWriter {
 					vector: real_vector.clone().unbind(),
 					array: ArrayFixedSizeList::new(
 						ArrayF64::new(),
+						size,
+					),
+				}
+			} else if let Ok(int_vector) = val.cast::<PyIntVector>()
+			{
+				let size =
+					int_vector.get().inner().len() as i32;
+
+				LoggedArray::IntVector {
+					vector: int_vector.clone().unbind(),
+					array: ArrayFixedSizeList::new(
+						ArrayI64::new(),
 						size,
 					),
 				}
@@ -307,6 +337,9 @@ impl TraceWriter {
 				LoggedArray::RealVector { array, .. } => {
 					batch_arrays.push(array as &dyn Array)
 				}
+				LoggedArray::IntVector { array, .. } => {
+					batch_arrays.push(array as &dyn Array)
+				}
 				LoggedArray::ClassVector { array, .. } => {
 					batch_arrays.push(array as &dyn Array)
 				}
@@ -342,6 +375,9 @@ impl TraceWriter {
 				LoggedArray::RealVector { array, .. } => {
 					array.clear();
 				}
+				LoggedArray::IntVector { array, .. } => {
+					array.clear();
+				}
 				LoggedArray::ClassVector { array, .. } => {
 					array.clear();
 				}
@@ -372,6 +408,9 @@ fn items_to_fields(items: &[Item], fields: &mut Vec<Field>) {
 				fields.push(array.make_field(&item.name))
 			}
 			LoggedArray::RealVector { array, .. } => {
+				fields.push(array.make_field(&item.name))
+			}
+			LoggedArray::IntVector { array, .. } => {
 				fields.push(array.make_field(&item.name))
 			}
 			LoggedArray::ClassVector { array, .. } => {

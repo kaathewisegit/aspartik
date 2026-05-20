@@ -73,6 +73,7 @@ pub enum PyParameter {
 	ClassVector(Py<PyClassVector>),
 	Real(Py<PyReal>),
 	RealVector(Py<PyRealVector>),
+	IntVector(Py<PyIntVector>),
 	Tree(Py<PyTree>),
 }
 
@@ -82,6 +83,7 @@ impl PyParameter {
 			Self::ClassVector(p) => p.clone_ref(py).into(),
 			Self::Real(p) => p.clone_ref(py).into(),
 			Self::RealVector(p) => p.clone_ref(py).into(),
+			Self::IntVector(p) => p.clone_ref(py).into(),
 			Self::Tree(p) => p.clone_ref(py).into(),
 		}
 	}
@@ -91,6 +93,7 @@ impl PyParameter {
 			Self::ClassVector(p) => p.as_ptr(),
 			Self::Real(p) => p.as_ptr(),
 			Self::RealVector(p) => p.as_ptr(),
+			Self::IntVector(p) => p.as_ptr(),
 			Self::Tree(p) => p.as_ptr(),
 		}
 	}
@@ -108,6 +111,11 @@ impl PyParameter {
 				})
 			}
 			Self::RealVector(p) => {
+				MutexGuard::map(p.get().inner(), |m| {
+					m as &mut dyn Parameter
+				})
+			}
+			Self::IntVector(p) => {
 				MutexGuard::map(p.get().inner(), |m| {
 					m as &mut dyn Parameter
 				})
