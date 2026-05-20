@@ -33,8 +33,8 @@ pub mod pymodule {
 			PyTree,
 		},
 		priors::{
-			ConstantPopulation, ExponentialGrowth, Monophyly,
-			SymmetricDirichlet, Yule,
+			BayesianSkyline, ConstantPopulation, ExponentialGrowth,
+			Monophyly, SymmetricDirichlet, Yule,
 		},
 		substitution::{PyGTR, PyHKY, PyJC, PyK80},
 	};

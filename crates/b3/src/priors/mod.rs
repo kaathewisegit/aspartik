@@ -13,6 +13,7 @@ mod yule;
 pub use coalescent::{ConstantPopulation, ExponentialGrowth};
 pub use dirichlet::SymmetricDirichlet;
 pub use monophyly::Monophyly;
+pub use skyline::BayesianSkyline;
 pub use yule::Yule;
 
 pub struct PyPrior {

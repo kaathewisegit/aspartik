@@ -11,7 +11,7 @@ pub struct Intervals {
 }
 
 impl Intervals {
-	fn new(tree: &Tree) -> Mutex<Self> {
+	pub fn new(tree: &Tree) -> Mutex<Self> {
 		let num_nodes = tree.num_nodes();
 		let state = Vec::<(Node, f64)>::with_capacity(num_nodes);
 		let mut out = Self {
@@ -24,7 +24,7 @@ impl Intervals {
 	}
 
 	// Rebuilds `nodes` and `heights` from scratch
-	fn rebuild(&mut self, tree: &Tree) {
+	pub fn rebuild(&mut self, tree: &Tree) {
 		self.state.clear();
 
 		for node in tree.nodes() {
@@ -36,7 +36,7 @@ impl Intervals {
 			.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
 	}
 
-	fn update(&mut self, tree: &Tree) {
+	pub fn update(&mut self, tree: &Tree) {
 		let mut changed = Vec::new();
 		for node in tree.internals() {
 			if tree.is_node_height_updated(*node) {
@@ -74,12 +74,16 @@ impl Intervals {
 		}
 	}
 
-	fn accept(&mut self) {
+	pub fn accept(&mut self) {
 		self.state_backup.copy_from_slice(&self.state);
 	}
 
-	fn reject(&mut self) {
+	pub fn reject(&mut self) {
 		self.state.copy_from_slice(&self.state_backup);
+	}
+
+	pub fn state(&self) -> &[(Node, f64)] {
+		&self.state
 	}
 }
 
