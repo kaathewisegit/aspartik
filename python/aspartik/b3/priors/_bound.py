@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from math import inf
+from typing import Optional
 
 from .. import Prior
-from ..parameters import Real, RealVector
+from ..parameters import IntVector, Real, RealVector
 
 
 @dataclass(slots=True)
@@ -31,3 +32,17 @@ class Bound(Prior):
             return -inf
         else:
             return 0
+
+
+@dataclass(slots=True)
+class BoundInt(Prior):
+    param: IntVector
+
+    lower: Optional[int] = 0
+    upper: Optional[int] = None
+
+    def probability(self) -> float:
+        if self.param.is_bound(self.lower, self.upper):
+            return 0
+        else:
+            return -inf

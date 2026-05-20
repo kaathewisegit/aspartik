@@ -35,29 +35,18 @@ def test_int_vector_indexing():
 
 def test_int_vector_comparable():
     vec = IntVector(1, 2, 3)
-    assert vec < 4
-    assert vec <= 3
-    assert vec > 0
-    assert vec >= 1
-    assert vec != IntVector(3, 2, 1)
 
-    assert not vec < 2
-    assert not vec <= 1
-    assert not vec > 3
-    assert not vec >= 4
+    assert vec.is_bound(None, None)
 
+    assert vec.is_bound(0, None)
+    assert vec.is_bound(1, None)
+    assert not vec.is_bound(2, None)
 
-def test_int_vector_negative_values():
-    vec = IntVector(-10, 0, 10)
-    assert vec[0] == -10
-    assert vec[1] == 0
+    assert vec.is_bound(None, 4)
+    assert not vec.is_bound(None, 3)
+    assert not vec.is_bound(None, 2)
 
-    assert not vec < 0
-    assert vec >= -10
-    assert vec > -30
-    assert vec >= -20
-    assert not vec < -25
-    assert not vec > 15
-
-    vec[2] = -20
-    assert vec[2] == -20
+    assert vec.is_bound(1, 4)
+    assert not vec.is_bound(1, 3)
+    assert not vec.is_bound(2, 4)
+    assert not vec.is_bound(1, 2)

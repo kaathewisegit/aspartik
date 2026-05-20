@@ -5,5 +5,5 @@ from ..._aspartik_rust_impl._b3_rust_impl import (
     SymmetricDirichlet as SymmetricDirichlet,
     Yule as Yule,
 )
-from ._bound import Bound as Bound
+from ._bound import Bound as Bound, BoundInt as BoundInt
 from ._distribution import Distribution as Distribution
