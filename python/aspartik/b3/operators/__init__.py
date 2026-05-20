@@ -3,7 +3,10 @@ from ..._aspartik_rust_impl._b3_rust_impl import (
     FixedHeightSPR as FixedHeightSPR,
     SubtreeLeap as SubtreeLeap,
 )
-from ._delta_exchange import DeltaExchange as DeltaExchange
+from ._delta_exchange import (
+    DeltaExchange as DeltaExchange,
+    DeltaExchangeInt as DeltaExchangeInt,
+)
 from ._node_slide import NodeSlide as NodeSlide
 from ._param_scale import ScaleReal as ScaleReal, ScaleRealVector as ScaleRealVector
 from ._random_walk import RandomWalk as RandomWalk
