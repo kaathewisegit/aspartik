@@ -19,7 +19,7 @@ class MarkovChainDistribution(Prior):
             x = self.param[i]
 
             scale = mean / self.shape
-            gamma = Gamma(self.shape, scale)
+            gamma = Gamma(self.shape, 1 / scale)
 
             out += gamma.ln_pdf(x)
 
