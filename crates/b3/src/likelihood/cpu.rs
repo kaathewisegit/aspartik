@@ -398,9 +398,9 @@ unsafe fn calc_partial_partial(
 	}
 }}
 
-unsafe fn scale<const N: usize>(
+unsafe fn scale(
 	i: usize,
-	prod: &mut [f64; N],
+	prod: &mut [f64; 4],
 	scales: *mut bool,
 	scales_old: *mut bool,
 	scale_sums: *mut u32,
