@@ -19,7 +19,7 @@ pub struct MatrixRef<'a, T> {
 	marker: PhantomData<&'a T>,
 }
 
-impl<'a, T> MatrixRef<'a, T> {
+impl<'a, T: Copy> MatrixRef<'a, T> {
 	pub fn from_array<const N: usize, const M: usize>(
 		arr: &'a [[T; M]; N],
 	) -> Self {
@@ -32,8 +32,41 @@ impl<'a, T> MatrixRef<'a, T> {
 		}
 	}
 
-	pub fn is_square(&self) -> bool {
+	pub fn from_slice(slice: &'a [T], rows: usize, cols: usize) -> Self {
+		assert!(slice.len() <= rows * cols);
+		Self {
+			ptr: slice.as_ptr(),
+			rows: rows as u32,
+			cols: cols as u32,
+			stride: cols as u32,
+			marker: PhantomData,
+		}
+	}
+
+	pub fn num_rows(self) -> usize {
+		self.rows as usize
+	}
+
+	pub fn num_cols(self) -> usize {
+		self.cols as usize
+	}
+
+	pub fn is_square(self) -> bool {
 		self.cols == self.rows
+	}
+
+	pub fn to_boxed_slice(self) -> Box<[T]> {
+		let mut out = Vec::with_capacity(self.num_elements());
+		for i in 0..self.rows {
+			for j in 0..self.cols {
+				out.push(self[(i, j)]);
+			}
+		}
+		out.into_boxed_slice()
+	}
+
+	pub fn num_elements(&self) -> usize {
+		(self.rows * self.cols) as usize
 	}
 
 	/// Total number of item slots, including padding
@@ -42,7 +75,7 @@ impl<'a, T> MatrixRef<'a, T> {
 	}
 }
 
-impl<'a, T, const N: usize, const M: usize> From<&'a [[T; M]; N]>
+impl<'a, T: Copy, const N: usize, const M: usize> From<&'a [[T; M]; N]>
 	for MatrixRef<'a, T>
 {
 	fn from(arr: &'a [[T; M]; N]) -> Self {
@@ -54,8 +87,21 @@ impl<T> Index<(usize, usize)> for MatrixRef<'_, T> {
 	type Output = T;
 
 	fn index(&self, (row, col): (usize, usize)) -> &T {
+		assert!(row < self.rows as usize && col < self.cols as usize);
+		let idx = row * self.stride as usize + col;
 		// SAFETY: TODO
-		unsafe { &*self.ptr.add(row * self.stride as usize + col) }
+		unsafe { &*self.ptr.add(idx) }
+	}
+}
+
+impl<T> Index<(u32, u32)> for MatrixRef<'_, T> {
+	type Output = T;
+
+	fn index(&self, (row, col): (u32, u32)) -> &T {
+		assert!(row < self.rows && col < self.cols);
+		let idx = row * self.stride + col;
+		// SAFETY: TODO
+		unsafe { &*self.ptr.add(idx as usize) }
 	}
 }
 
@@ -68,7 +114,7 @@ pub struct MatrixMut<'a, T> {
 	marker: PhantomData<&'a mut T>,
 }
 
-impl<'a, T> MatrixMut<'a, T> {
+impl<'a, T: Copy> MatrixMut<'a, T> {
 	pub fn from_array<const N: usize, const M: usize>(
 		arr: &'a mut [[T; M]; N],
 	) -> Self {
@@ -77,6 +123,21 @@ impl<'a, T> MatrixMut<'a, T> {
 			rows: N as u32,
 			cols: M as u32,
 			stride: M as u32,
+			marker: PhantomData,
+		}
+	}
+
+	pub fn from_slice(
+		slice: &'a mut [T],
+		rows: usize,
+		cols: usize,
+	) -> Self {
+		assert!(slice.len() <= rows * cols);
+		Self {
+			ptr: slice.as_mut_ptr(),
+			rows: rows as u32,
+			cols: cols as u32,
+			stride: cols as u32,
 			marker: PhantomData,
 		}
 	}
@@ -105,7 +166,7 @@ impl<'a, T> MatrixMut<'a, T> {
 	where
 		T: Zeroable + One,
 	{
-		assert!(self.is_square());
+		assert!(self.reborrow().is_square());
 		self.reborrow().zero();
 
 		for i in 0..self.cols {
@@ -137,7 +198,7 @@ impl<'a, T> MatrixMut<'a, T> {
 	}
 }
 
-impl<'a, T, const N: usize, const M: usize> From<&'a mut [[T; M]; N]>
+impl<'a, T: Copy, const N: usize, const M: usize> From<&'a mut [[T; M]; N]>
 	for MatrixMut<'a, T>
 {
 	fn from(arr: &'a mut [[T; M]; N]) -> Self {
