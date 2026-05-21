@@ -1,73 +1,81 @@
-#![expect(clippy::needless_range_loop)]
+use crate::{MatrixMut, MatrixRef, mul};
 
-use crate::{ConstMatrix, ConstSquareMatrix};
-
-#[derive(Debug)]
-pub struct EigenDecomposition<M, const N: usize>
-where
-	M: ConstMatrix<f64, N, N>,
+pub fn eigen<'a, I, V>(
+	matrix: I,
+	eigenvalues: &mut [f64],
+	eigenvalues_img: &mut [f64],
+	eigenvectors: V,
+) where
+	I: Into<MatrixRef<'a, f64>>,
+	V: Into<MatrixMut<'a, f64>>,
 {
-	pub eigenvalues: [f64; N],
-	pub eigenvalues_img: [f64; N],
-	pub eigenvectors: M,
+	eigen_inner(
+		matrix.into(),
+		eigenvalues,
+		eigenvalues_img,
+		eigenvectors.into(),
+	)
 }
 
-pub fn eigen<M, const N: usize>(matrix: &M) -> EigenDecomposition<M, N>
-where
-	M: ConstSquareMatrix<f64, N>,
-{
-	let (mut h, mut z): (M, M) = hessenberg_reduce_with_z(matrix);
+fn eigen_inner(
+	matrix: MatrixRef<f64>,
 
-	francis_qr(&mut h, &mut z);
+	eigenvalues: &mut [f64],
+	eigenvalues_img: &mut [f64],
+	eigenvectors: MatrixMut<f64>,
+) {
+	assert!(matrix.is_square());
+	let n = matrix.num_rows();
 
-	let (eigenvalues_real, eigenvalues_imag) = tung_tung_tung_schur(&h);
+	let (mut h_box, mut z_box) = hessenberg_reduce_with_z(matrix);
+	let mut h = MatrixMut::from_slice(&mut h_box, n, n);
+	let mut z = MatrixMut::from_slice(&mut z_box, n, n);
 
-	let mut evecs_schur = M::zeros();
+	francis_qr(h.reborrow(), z.reborrow());
+	let h = *h;
+
+	tung_tung_tung_schur(h, eigenvalues, eigenvalues_img);
+
+	let mut evecs_schur = vec![0.0; n * n];
+	let mut evecs_schur = MatrixMut::from_slice(&mut evecs_schur, n, n);
 	let mut i = 0;
-	while i < N {
-		if eigenvalues_imag[i].abs() > 1e-10 {
+	while i < n {
+		if eigenvalues_img[i].abs() > 1e-10 {
 			let (yr, yi) = schur_complex_eigenvec(
-				&h,
+				h,
 				i,
-				eigenvalues_real[i],
-				eigenvalues_imag[i],
+				eigenvalues[i],
+				eigenvalues_img[i],
 			);
-			for r in 0..N {
-				*evecs_schur.at_mut(r, i) = yr[r];
-				*evecs_schur.at_mut(r, i + 1) = yi[r];
+			for r in 0..n {
+				evecs_schur[(r, i)] = yr[r];
+				evecs_schur[(r, i + 1)] = yi[r];
 			}
 			i += 2;
 		} else {
-			let y = schur_real_eigenvec(&h, i);
-			for r in 0..N {
-				*evecs_schur.at_mut(r, i) = y[r];
+			let y = schur_real_eigenvec(h, i);
+			for r in 0..n {
+				evecs_schur[(r, i)] = y[r];
 			}
 			i += 1;
 		}
 	}
 
-	let eigenvectors: M = z.mul(&evecs_schur);
-
-	EigenDecomposition {
-		eigenvalues: eigenvalues_real,
-		eigenvalues_img: eigenvalues_imag,
-		eigenvectors,
-	}
+	mul(*z, *evecs_schur, eigenvectors);
 }
 
-fn schur_real_eigenvec<M, const N: usize>(t: &M, p: usize) -> [f64; N]
-where
-	M: ConstMatrix<f64, N, N>,
-{
-	let lambda = *t.at(p, p);
-	let mut y = [0.0f64; N];
+fn schur_real_eigenvec(t: MatrixRef<f64>, p: usize) -> Vec<f64> {
+	let n = t.num_rows();
+	let lambda = t[(p, p)];
+	let mut y = vec![0.0f64; n];
 	y[p] = 1.0;
+
 	for i in (0..p).rev() {
 		let mut acc = 0.0f64;
 		for j in (i + 1)..=p {
-			acc -= *t.at(i, j) * y[j];
+			acc -= t[(i, j)] * y[j];
 		}
-		let diag = *t.at(i, i) - lambda;
+		let diag = t[(i, i)] - lambda;
 		y[i] = if diag.abs() > 1e-14 { acc / diag } else { 0.0 };
 	}
 
@@ -80,29 +88,27 @@ where
 	y
 }
 
-fn schur_complex_eigenvec<M, const N: usize>(
-	t: &M,
+fn schur_complex_eigenvec(
+	t: MatrixRef<f64>,
 	p: usize,
 	re: f64,
 	im: f64,
-) -> ([f64; N], [f64; N])
-where
-	M: ConstMatrix<f64, N, N>,
-{
-	let mut yr = [0.0f64; N];
-	let mut yi = [0.0f64; N];
+) -> (Vec<f64>, Vec<f64>) {
+	let n = t.num_rows();
+	let mut yr = vec![0.0f64; n];
+	let mut yi = vec![0.0f64; n];
 	yr[p] = 1.0;
 	yi[p + 1] = 1.0;
 
 	for i in (0..p).rev() {
 		let mut accr = 0.0f64;
 		let mut acci = 0.0f64;
-		for j in (i + 1)..N {
-			let tij = *t.at(i, j);
+		for j in (i + 1)..n {
+			let tij = t[(i, j)];
 			accr -= tij * yr[j];
 			acci -= tij * yi[j];
 		}
-		let dre = *t.at(i, i) - re;
+		let dre = t[(i, i)] - re;
 		let det = dre * dre + im * im;
 		if det > 1e-28 {
 			yr[i] = (dre * accr + im * acci) / det;
@@ -110,7 +116,11 @@ where
 		}
 	}
 
-	let norm = (yr.iter().chain(yi.iter()).map(|x| x * x).sum::<f64>())
+	let norm = yr
+		.iter()
+		.chain(yi.iter())
+		.map(|x| x * x)
+		.sum::<f64>()
 		.sqrt()
 		.max(f64::EPSILON);
 	yr.iter_mut().for_each(|x| *x /= norm);
@@ -118,91 +128,101 @@ where
 	(yr, yi)
 }
 
-fn hessenberg_reduce_with_z<M, const N: usize>(a: &M) -> (M, M)
-where
-	M: ConstSquareMatrix<f64, N> + ConstMatrix<f64, N, N>,
-{
-	let mut h = a.clone();
-	let mut z = M::identity();
+fn hessenberg_reduce_with_z(a: MatrixRef<f64>) -> (Box<[f64]>, Box<[f64]>) {
+	let n = a.num_rows();
+	let mut h_box = a.to_boxed_slice();
+	let mut z_box = vec![0.0f64; n * n].into_boxed_slice();
 
-	for k in 0..N.saturating_sub(2) {
+	let mut h = MatrixMut::from_slice(&mut h_box, n, n);
+	let mut z = MatrixMut::from_slice(&mut z_box, n, n);
+
+	z.reborrow().identity();
+
+	for k in 0..n.saturating_sub(2) {
 		let mut norm_sq = 0.0f64;
-		for i in (k + 1)..N {
-			norm_sq += *h.at(i, k) * *h.at(i, k);
+		for i in (k + 1)..n {
+			norm_sq += h[(i, k)] * h[(i, k)];
 		}
 		let norm = norm_sq.sqrt();
 		if norm < f64::EPSILON {
 			continue;
 		}
 
-		let mut v = [0.0f64; N];
-		for i in (k + 1)..N {
-			v[i] = *h.at(i, k);
+		let mut v = vec![0.0f64; n];
+		for i in (k + 1)..n {
+			v[i] = h[(i, k)];
 		}
 		let sign = if v[k + 1] >= 0.0 { 1.0 } else { -1.0 };
 		v[k + 1] += sign * norm;
 
-		let vv: f64 = ((k + 1)..N).map(|i| v[i] * v[i]).sum();
+		let vv: f64 = ((k + 1)..n).map(|i| v[i] * v[i]).sum();
 		if vv < f64::EPSILON {
 			continue;
 		}
 		let two_over_vv = 2.0 / vv;
 
-		for j in k..N {
+		for j in k..n {
 			let mut dot = 0.0f64;
-			for i in (k + 1)..N {
-				dot += v[i] * *h.at(i, j);
+			for i in (k + 1)..n {
+				dot += v[i] * h[(i, j)];
 			}
 			let f = two_over_vv * dot;
-			for i in (k + 1)..N {
-				*h.at_mut(i, j) -= f * v[i];
+			for i in (k + 1)..n {
+				h[(i, j)] -= f * v[i];
 			}
 		}
 
-		for i in 0..N {
+		for i in 0..n {
 			let mut dot = 0.0f64;
-			for j in (k + 1)..N {
-				dot += *h.at(i, j) * v[j];
+			for j in (k + 1)..n {
+				dot += h[(i, j)] * v[j];
 			}
 			let f = two_over_vv * dot;
-			for j in (k + 1)..N {
-				*h.at_mut(i, j) -= f * v[j];
+			for j in (k + 1)..n {
+				h[(i, j)] -= f * v[j];
 			}
 		}
 
-		for i in 0..N {
+		for i in 0..n {
 			let mut dot = 0.0f64;
-			for j in (k + 1)..N {
-				dot += *z.at(i, j) * v[j];
+			for j in (k + 1)..n {
+				dot += z[(i, j)] * v[j];
 			}
 			let f = two_over_vv * dot;
-			for j in (k + 1)..N {
-				*z.at_mut(i, j) -= f * v[j];
+			for j in (k + 1)..n {
+				z[(i, j)] -= f * v[j];
 			}
 		}
 	}
-	(h, z)
+	(h_box, z_box)
 }
 
-fn francis_qr<M, const N: usize>(h: &mut M, z: &mut M)
-where
-	M: ConstSquareMatrix<f64, N> + ConstMatrix<f64, N, N>,
-{
-	let mut zt: M = z.transpose();
-	let mut active_end = N;
+fn francis_qr(mut h: MatrixMut<f64>, mut z: MatrixMut<f64>) {
+	let n = h.num_rows();
+	let mut zt_box = vec![0.0f64; n * n].into_boxed_slice();
+	let mut zt = MatrixMut::from_slice(&mut zt_box, n, n);
+
+	for i in 0..n {
+		for j in 0..n {
+			zt[(j, i)] = z[(i, j)];
+		}
+	}
+
+	let mut active_end = n;
 	let mut iter = 0;
-	let max_iter = 100 * N;
+	let max_iter = 100 * n;
 
 	while active_end > 1 && iter < max_iter {
-		let active_start = find_deflation_point(h, active_end);
+		let active_start =
+			find_deflation_point(h.reborrow(), active_end);
 
 		if active_end - active_start <= 2 {
 			if active_end - active_start == 2 {
 				let p = active_start;
-				let a = *h.at(p, p);
-				let b = *h.at(p, p + 1);
-				let c = *h.at(p + 1, p);
-				let d = *h.at(p + 1, p + 1);
+				let a = h[(p, p)];
+				let b = h[(p, p + 1)];
+				let c = h[(p + 1, p)];
+				let d = h[(p + 1, p + 1)];
 				if c.abs() > f64::EPSILON * (a.abs() + d.abs())
 				{
 					let tr = a + d;
@@ -210,7 +230,9 @@ where
 					let disc = tr * tr - 4.0 * det;
 					if disc >= 0.0 {
 						standardize_2x2_real(
-							h, &mut zt, p,
+							h.reborrow(),
+							zt.reborrow(),
+							p,
 						);
 					}
 				}
@@ -220,39 +242,49 @@ where
 		}
 
 		let (sigma_sum, sigma_prod) = if iter % 10 == 9 {
-			let s1 = h.at(active_end - 1, active_end - 2).abs();
+			let s1 = h[(active_end - 1, active_end - 2)].abs();
 			let s2 = if active_end >= 3 {
-				h.at(active_end - 2, active_end - 3).abs()
+				h[(active_end - 2, active_end - 3)].abs()
 			} else {
 				0.0
 			};
 			let t = s1 + s2;
 			(1.5 * t, 0.8125 * t * t)
 		} else {
-			wilkinson_shift(h, active_end)
+			wilkinson_shift(h.reborrow(), active_end)
 		};
 
-		francis_double_step(
-			h,
-			&mut zt,
-			active_start,
-			active_end,
-			sigma_sum,
-			sigma_prod,
-		);
+		{
+			francis_double_step(
+				h.reborrow(),
+				zt.reborrow(),
+				active_start,
+				active_end,
+				sigma_sum,
+				sigma_prod,
+			);
+		}
 		iter += 1;
 	}
-	*z = zt.transpose();
+
+	let zt = MatrixRef::from_slice(&zt_box, n, n);
+	for i in 0..n {
+		for j in 0..n {
+			z[(i, j)] = zt[(j, i)];
+		}
+	}
 }
 
-fn standardize_2x2_real<M, const N: usize>(h: &mut M, zt: &mut M, p: usize)
-where
-	M: ConstMatrix<f64, N, N>,
-{
-	let a = *h.at(p, p);
-	let b = *h.at(p, p + 1);
-	let c = *h.at(p + 1, p);
-	let d = *h.at(p + 1, p + 1);
+fn standardize_2x2_real(
+	mut h: MatrixMut<f64>,
+	mut zt: MatrixMut<f64>,
+	p: usize,
+) {
+	let n = h.num_rows();
+	let a = h[(p, p)];
+	let b = h[(p, p + 1)];
+	let c = h[(p + 1, p)];
+	let d = h[(p + 1, p + 1)];
 	let tr = a + d;
 	let det = a * d - b * c;
 	let disc = tr * tr - 4.0 * det;
@@ -270,74 +302,61 @@ where
 	let cs = vx / norm;
 	let sn = vy / norm;
 
-	for j in 0..N {
-		let t0 = cs * *h.at(p, j) + sn * *h.at(p + 1, j);
-		let t1 = -sn * *h.at(p, j) + cs * *h.at(p + 1, j);
-		*h.at_mut(p, j) = t0;
-		*h.at_mut(p + 1, j) = t1;
+	for j in 0..n {
+		let t0 = cs * h[(p, j)] + sn * h[(p + 1, j)];
+		let t1 = -sn * h[(p, j)] + cs * h[(p + 1, j)];
+		h[(p, j)] = t0;
+		h[(p + 1, j)] = t1;
 	}
-	for i in 0..N {
-		let t0 = cs * *h.at(i, p) + sn * *h.at(i, p + 1);
-		let t1 = -sn * *h.at(i, p) + cs * *h.at(i, p + 1);
-		*h.at_mut(i, p) = t0;
-		*h.at_mut(i, p + 1) = t1;
+	for i in 0..n {
+		let t0 = cs * h[(i, p)] + sn * h[(i, p + 1)];
+		let t1 = -sn * h[(i, p)] + cs * h[(i, p + 1)];
+		h[(i, p)] = t0;
+		h[(i, p + 1)] = t1;
 	}
-	*h.at_mut(p + 1, p) = 0.0;
-	for j in 0..N {
-		let t0 = cs * *zt.at(p, j) + sn * *zt.at(p + 1, j);
-		let t1 = -sn * *zt.at(p, j) + cs * *zt.at(p + 1, j);
-		*zt.at_mut(p, j) = t0;
-		*zt.at_mut(p + 1, j) = t1;
+	h[(p + 1, p)] = 0.0;
+	for j in 0..n {
+		let t0 = cs * zt[(p, j)] + sn * zt[(p + 1, j)];
+		let t1 = -sn * zt[(p, j)] + cs * zt[(p + 1, j)];
+		zt[(p, j)] = t0;
+		zt[(p + 1, j)] = t1;
 	}
 }
 
-fn find_deflation_point<M, const N: usize>(
-	h: &mut M,
-	active_end: usize,
-) -> usize
-where
-	M: ConstMatrix<f64, N, N>,
-{
+fn find_deflation_point(mut h: MatrixMut<f64>, active_end: usize) -> usize {
 	for i in (0..active_end.saturating_sub(1)).rev() {
-		let sub = h.at(i + 1, i).abs();
-		let scale = h.at(i, i).abs() + h.at(i + 1, i + 1).abs();
+		let sub = h[(i + 1, i)].abs();
+		let scale = h[(i, i)].abs() + h[(i + 1, i + 1)].abs();
 		if sub <= f64::EPSILON * scale {
-			*h.at_mut(i + 1, i) = 0.0;
+			h[(i + 1, i)] = 0.0;
 			return i + 1;
 		}
 	}
 	0
 }
 
-fn wilkinson_shift<M, const N: usize>(h: &M, end: usize) -> (f64, f64)
-where
-	M: ConstMatrix<f64, N, N>,
-{
-	let a = *h.at(end - 2, end - 2);
-	let d = *h.at(end - 1, end - 1);
-	(
-		a + d,
-		a * d - *h.at(end - 2, end - 1) * *h.at(end - 1, end - 2),
-	)
+fn wilkinson_shift(h: MatrixMut<f64>, end: usize) -> (f64, f64) {
+	let a = h[(end - 2, end - 2)];
+	let d = h[(end - 1, end - 1)];
+	(a + d, a * d - h[(end - 2, end - 1)] * h[(end - 1, end - 2)])
 }
 
-fn francis_double_step<M, const N: usize>(
-	h: &mut M,
-	zt: &mut M,
+fn francis_double_step(
+	mut h: MatrixMut<f64>,
+	mut zt: MatrixMut<f64>,
 	start: usize,
 	end: usize,
 	shift_sum: f64,
 	shift_prod: f64,
-) where
-	M: ConstMatrix<f64, N, N>,
-{
+) {
+	let n = h.num_rows();
 	let (s, e) = (start, end);
-	let sub = *h.at(s + 1, s);
-	let p0 = *h.at(s, s) * *h.at(s, s) + *h.at(s, s + 1) * sub
-		- shift_sum * *h.at(s, s)
+	let sub = h[(s + 1, s)];
+	let p0 = h[(s, s)] * h[(s, s)] + h[(s, s + 1)] * sub
+		- shift_sum * h[(s, s)]
 		+ shift_prod;
-	let p1 = sub * (*h.at(s, s) + *h.at(s + 1, s + 1) - shift_sum);
-	let p2 = *h.at(s + 2, s + 1) * sub;
+	let p1 = sub * (h[(s, s)] + h[(s + 1, s + 1)] - shift_sum);
+	let p2 = h[(s + 2, s + 1)] * sub;
 	let mut x = [p0, p1, p2];
 
 	for k in 0..(e - s - 2) {
@@ -347,9 +366,9 @@ fn francis_double_step<M, const N: usize>(
 		if norm < f64::EPSILON {
 			if k + 1 < e - s - 2 {
 				x = [
-					*h.at(r + 1, r),
-					*h.at(r + 2, r),
-					*h.at(r + 3, r),
+					h[(r + 1, r)],
+					h[(r + 2, r)],
+					h[(r + 3, r)],
 				];
 			}
 			continue;
@@ -361,84 +380,79 @@ fn francis_double_step<M, const N: usize>(
 
 		let col_start = if k == 0 { r } else { r - 1 };
 		for j in col_start..e {
-			let dot = v[0] * *h.at(r, j)
-				+ v[1] * *h.at(r + 1, j) + v[2] * *h
-				.at(r + 2, j);
+			let dot = v[0] * h[(r, j)]
+				+ v[1] * h[(r + 1, j)] + v[2] * h[(r + 2, j)];
 			let f = two_over_vv * dot;
-			*h.at_mut(r, j) -= f * v[0];
-			*h.at_mut(r + 1, j) -= f * v[1];
-			*h.at_mut(r + 2, j) -= f * v[2];
+			h[(r, j)] -= f * v[0];
+			h[(r + 1, j)] -= f * v[1];
+			h[(r + 2, j)] -= f * v[2];
 		}
 		for i in 0..(r + 4).min(e) {
-			let dot = v[0] * *h.at(i, r)
-				+ v[1] * *h.at(i, r + 1) + v[2] * *h
-				.at(i, r + 2);
+			let dot = v[0] * h[(i, r)]
+				+ v[1] * h[(i, r + 1)] + v[2] * h[(i, r + 2)];
 			let f = two_over_vv * dot;
-			*h.at_mut(i, r) -= f * v[0];
-			*h.at_mut(i, r + 1) -= f * v[1];
-			*h.at_mut(i, r + 2) -= f * v[2];
+			h[(i, r)] -= f * v[0];
+			h[(i, r + 1)] -= f * v[1];
+			h[(i, r + 2)] -= f * v[2];
 		}
-		for j in 0..N {
-			let dot = v[0] * *zt.at(r, j)
-				+ v[1] * *zt.at(r + 1, j) + v[2] * *zt
-				.at(r + 2, j);
+		for j in 0..n {
+			let dot = v[0] * zt[(r, j)]
+				+ v[1] * zt[(r + 1, j)] + v[2] * zt
+				[(r + 2, j)];
 			let f = two_over_vv * dot;
-			*zt.at_mut(r, j) -= f * v[0];
-			*zt.at_mut(r + 1, j) -= f * v[1];
-			*zt.at_mut(r + 2, j) -= f * v[2];
+			zt[(r, j)] -= f * v[0];
+			zt[(r + 1, j)] -= f * v[1];
+			zt[(r + 2, j)] -= f * v[2];
 		}
 		if k + 1 < e - s - 2 {
-			x = [*h.at(r + 1, r), *h.at(r + 2, r), *h.at(r + 3, r)];
+			x = [h[(r + 1, r)], h[(r + 2, r)], h[(r + 3, r)]];
 		}
 	}
 
 	let (rt, rb, cf) = (e - 2, e - 1, e - 3);
-	let (x0, v1) = (*h.at(rt, cf), *h.at(rb, cf));
+	let (x0, v1) = (h[(rt, cf)], h[(rb, cf)]);
 	let n2 = (x0 * x0 + v1 * v1).sqrt();
 	if n2 > f64::EPSILON {
 		let v0 = x0 + (if x0 >= 0.0 { 1.0 } else { -1.0 }) * n2;
 		let two_over_vv = 2.0 / (v0 * v0 + v1 * v1);
-		for j in cf..N {
-			let dot = v0 * *h.at(rt, j) + v1 * *h.at(rb, j);
+		for j in cf..n {
+			let dot = v0 * h[(rt, j)] + v1 * h[(rb, j)];
 			let f = two_over_vv * dot;
-			*h.at_mut(rt, j) -= f * v0;
-			*h.at_mut(rb, j) -= f * v1;
+			h[(rt, j)] -= f * v0;
+			h[(rb, j)] -= f * v1;
 		}
 		for i in 0..e {
-			let dot = v0 * *h.at(i, rt) + v1 * *h.at(i, rb);
+			let dot = v0 * h[(i, rt)] + v1 * h[(i, rb)];
 			let f = two_over_vv * dot;
-			*h.at_mut(i, rt) -= f * v0;
-			*h.at_mut(i, rb) -= f * v1;
+			h[(i, rt)] -= f * v0;
+			h[(i, rb)] -= f * v1;
 		}
-		for j in 0..N {
-			let dot = v0 * *zt.at(rt, j) + v1 * *zt.at(rb, j);
+		for j in 0..n {
+			let dot = v0 * zt[(rt, j)] + v1 * zt[(rb, j)];
 			let f = two_over_vv * dot;
-			*zt.at_mut(rt, j) -= f * v0;
-			*zt.at_mut(rb, j) -= f * v1;
+			zt[(rt, j)] -= f * v0;
+			zt[(rb, j)] -= f * v1;
 		}
 	}
 }
 
-fn tung_tung_tung_schur<M, const N: usize>(t: &M) -> ([f64; N], [f64; N])
-where
-	M: ConstMatrix<f64, N, N>,
-{
-	let (mut re, mut im) = ([0.0; N], [0.0; N]);
+fn tung_tung_tung_schur(t: MatrixRef<f64>, re: &mut [f64], im: &mut [f64]) {
+	let n = t.num_rows();
 	let mut i = 0;
-	while i < N {
-		let is_2x2 = i + 1 < N
-			&& t.at(i + 1, i).abs()
+	while i < n {
+		let is_2x2 = i + 1 < n
+			&& t[(i + 1, i)].abs()
 				> f64::EPSILON
-					* (t.at(i, i).abs()
-						+ t.at(i + 1, i + 1).abs());
+					* (t[(i, i)].abs()
+						+ t[(i + 1, i + 1)].abs());
 		if is_2x2 {
-			let (a, d) = (*t.at(i, i), *t.at(i + 1, i + 1));
-			let det = a * d - *t.at(i, i + 1) * *t.at(i + 1, i);
+			let (a, d) = (t[(i, i)], t[(i + 1, i + 1)]);
+			let det = a * d - t[(i, i + 1)] * t[(i + 1, i)];
 			let tr = a + d;
 			let disc = tr * tr - 4.0 * det;
 			if disc >= 0.0 {
-				re[i] = *t.at(i, i);
-				re[i + 1] = *t.at(i + 1, i + 1);
+				re[i] = t[(i, i)];
+				re[i + 1] = t[(i + 1, i + 1)];
 			} else {
 				re[i] = tr * 0.5;
 				re[i + 1] = tr * 0.5;
@@ -447,9 +461,8 @@ where
 			}
 			i += 2;
 		} else {
-			re[i] = *t.at(i, i);
+			re[i] = t[(i, i)];
 			i += 1;
 		}
 	}
-	(re, im)
 }

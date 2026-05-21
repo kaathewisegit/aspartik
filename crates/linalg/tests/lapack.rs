@@ -12,8 +12,11 @@ use math::assert_almost_eq;
 type M<const N: usize> = [[f64; N]; N];
 
 fn reconstruct<const N: usize>(m: M<N>, relative: f64) {
-	let decomp = eigen(&m);
-	let (values, vectors) = (decomp.eigenvalues, decomp.eigenvectors);
+	let mut values = [0.0; N];
+	let mut img = [0.0; N];
+	let mut vectors = [[0.0; N]; N];
+	eigen(&m, &mut values, &mut img, &mut vectors);
+
 	let mut inv_vectors = [[0.0; N]; N];
 	inverse(&vectors, &mut inv_vectors);
 
@@ -53,8 +56,9 @@ fn reconstruction_symmetric() {
 #[test]
 fn simple_complex_eigenvalues() {
 	let m = [[0.0, -1.0], [1.0, 0.0]];
-	let decomp = eigen(&m);
-	let (re, im) = (decomp.eigenvalues, decomp.eigenvalues_img);
+	let (mut re, mut im) = ([0.0; 2], [0.0; 2]);
+	let mut eigenvectors = [[0.0; 2]; 2];
+	eigen(&m, &mut re, &mut im, &mut eigenvectors);
 
 	assert_almost_eq!(re[0], 0.0);
 	assert_almost_eq!(re[1], 0.0);
@@ -85,9 +89,15 @@ fn gtr(u: &mut Unstructured) -> Result<M<4>> {
 fn can_invert() {
 	arbtest(|u| {
 		let gtr = gtr(u)?;
-		let eigenvectors = eigen(&gtr).eigenvectors;
+
+		let mut values = [0.0; 4];
+		let mut img = [0.0; 4];
+		let mut eigenvectors = [[0.0; 4]; 4];
+		eigen(&gtr, &mut values, &mut img, &mut eigenvectors);
+
 		let mut dst = [[0.0; 4]; 4];
 		inverse(&eigenvectors, &mut dst);
+
 		Ok(())
 	});
 }
@@ -99,14 +109,15 @@ fn compare() {
 
 	arbtest(|u| {
 		let gtr = gtr(u)?;
+
 		let (mut lapack_values, _) = lapack::eigen(&gtr);
-		let decomp = eigen(&gtr);
-		let mut our_values = decomp.eigenvalues;
-
 		lapack_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
-		our_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-		// TODO: compare vectors too
+		let mut our_values = [0.0; 4];
+		let mut im = [0.0; 4];
+		let mut eigenvectors = [[0.0; 4]; 4];
+		eigen(&gtr, &mut our_values, &mut im, &mut eigenvectors);
+		our_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
 		for i in 0..4 {
 			assert_almost_eq!(

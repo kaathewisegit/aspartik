@@ -422,10 +422,8 @@ impl GTR {
 				+ f * p_g * p_t);
 		gtr.for_each(|e| *e /= div);
 
-		let decomp = eigen(&gtr);
-
-		self.diag = decomp.eigenvalues;
-		self.p = decomp.eigenvectors;
+		let mut imaginary = [0.0; 4];
+		eigen(&gtr, &mut self.diag, &mut imaginary, &mut self.p);
 		inverse(&self.p, &mut self.inv_p);
 	}
 }

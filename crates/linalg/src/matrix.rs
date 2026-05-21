@@ -1,7 +1,5 @@
-#![allow(unused)]
-
 use bytemuck::Zeroable;
-use num_traits::One;
+use num_traits::{Num, One};
 
 use std::{
 	marker::PhantomData,
@@ -174,7 +172,7 @@ impl<'a, T: Copy> MatrixMut<'a, T> {
 		}
 	}
 
-	pub fn swap_rows(mut self, a: usize, b: usize) {
+	pub fn swap_rows(self, a: usize, b: usize) {
 		assert!(a < self.rows as usize);
 		assert!(b < self.rows as usize);
 		if a == b {
@@ -254,5 +252,41 @@ impl<T> IndexMut<(u32, u32)> for MatrixMut<'_, T> {
 		let idx = row * self.stride + col;
 		// SAFETY: TODO
 		unsafe { &mut *self.ptr.add(idx as usize) }
+	}
+}
+
+pub fn mul<'a, T, L, R, D>(lhs: L, rhs: R, dst: D)
+where
+	T: Copy + Num + Zeroable + 'a,
+	L: Into<MatrixRef<'a, T>>,
+	R: Into<MatrixRef<'a, T>>,
+	D: Into<MatrixMut<'a, T>>,
+{
+	mul_inner(lhs.into(), rhs.into(), dst.into())
+}
+
+pub fn mul_inner<T>(
+	lhs: MatrixRef<'_, T>,
+	rhs: MatrixRef<'_, T>,
+	mut dst: MatrixMut<'_, T>,
+) where
+	T: Copy + Num + Zeroable,
+{
+	assert_eq!(lhs.num_cols(), rhs.num_rows());
+	assert_eq!(dst.num_rows(), lhs.num_rows());
+	assert_eq!(dst.num_cols(), rhs.num_cols());
+
+	let rows = dst.num_rows();
+	let cols = dst.num_cols();
+	let inner = lhs.num_cols();
+
+	for i in 0..rows {
+		for j in 0..cols {
+			let mut sum = T::zeroed();
+			for k in 0..inner {
+				sum = sum + lhs[(i, k)] * rhs[(k, j)];
+			}
+			dst[(i, j)] = sum;
+		}
 	}
 }

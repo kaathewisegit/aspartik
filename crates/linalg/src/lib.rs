@@ -10,5 +10,5 @@ mod vector;
 
 pub use const_matrix::{ConstMatrix, ConstSquareMatrix};
 pub use eigen::eigen;
-pub use matrix::{MatrixMut, MatrixRef};
+pub use matrix::{MatrixMut, MatrixRef, mul};
 pub use vector::Vector;
