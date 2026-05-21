@@ -1,11 +1,11 @@
 #![expect(clippy::needless_range_loop)]
 
-use crate::matrix::{Matrix, SquareMatrix};
+use crate::{ConstMatrix, ConstSquareMatrix};
 
 #[derive(Debug)]
 pub struct EigenDecomposition<M, const N: usize>
 where
-	M: Matrix<f64, N, N>,
+	M: ConstMatrix<f64, N, N>,
 {
 	pub eigenvalues: [f64; N],
 	pub eigenvalues_img: [f64; N],
@@ -14,7 +14,7 @@ where
 
 pub fn eigen<M, const N: usize>(matrix: &M) -> EigenDecomposition<M, N>
 where
-	M: SquareMatrix<f64, N>,
+	M: ConstSquareMatrix<f64, N>,
 {
 	let (mut h, mut z): (M, M) = hessenberg_reduce_with_z(matrix);
 
@@ -57,7 +57,7 @@ where
 
 fn schur_real_eigenvec<M, const N: usize>(t: &M, p: usize) -> [f64; N]
 where
-	M: Matrix<f64, N, N>,
+	M: ConstMatrix<f64, N, N>,
 {
 	let lambda = *t.at(p, p);
 	let mut y = [0.0f64; N];
@@ -87,7 +87,7 @@ fn schur_complex_eigenvec<M, const N: usize>(
 	im: f64,
 ) -> ([f64; N], [f64; N])
 where
-	M: Matrix<f64, N, N>,
+	M: ConstMatrix<f64, N, N>,
 {
 	let mut yr = [0.0f64; N];
 	let mut yi = [0.0f64; N];
@@ -120,7 +120,7 @@ where
 
 fn hessenberg_reduce_with_z<M, const N: usize>(a: &M) -> (M, M)
 where
-	M: SquareMatrix<f64, N> + Matrix<f64, N, N>,
+	M: ConstSquareMatrix<f64, N> + ConstMatrix<f64, N, N>,
 {
 	let mut h = a.clone();
 	let mut z = M::identity();
@@ -186,7 +186,7 @@ where
 
 fn francis_qr<M, const N: usize>(h: &mut M, z: &mut M)
 where
-	M: SquareMatrix<f64, N> + Matrix<f64, N, N>,
+	M: ConstSquareMatrix<f64, N> + ConstMatrix<f64, N, N>,
 {
 	let mut zt: M = z.transpose();
 	let mut active_end = N;
@@ -247,7 +247,7 @@ where
 
 fn standardize_2x2_real<M, const N: usize>(h: &mut M, zt: &mut M, p: usize)
 where
-	M: Matrix<f64, N, N>,
+	M: ConstMatrix<f64, N, N>,
 {
 	let a = *h.at(p, p);
 	let b = *h.at(p, p + 1);
@@ -296,7 +296,7 @@ fn find_deflation_point<M, const N: usize>(
 	active_end: usize,
 ) -> usize
 where
-	M: Matrix<f64, N, N>,
+	M: ConstMatrix<f64, N, N>,
 {
 	for i in (0..active_end.saturating_sub(1)).rev() {
 		let sub = h.at(i + 1, i).abs();
@@ -311,7 +311,7 @@ where
 
 fn wilkinson_shift<M, const N: usize>(h: &M, end: usize) -> (f64, f64)
 where
-	M: Matrix<f64, N, N>,
+	M: ConstMatrix<f64, N, N>,
 {
 	let a = *h.at(end - 2, end - 2);
 	let d = *h.at(end - 1, end - 1);
@@ -329,7 +329,7 @@ fn francis_double_step<M, const N: usize>(
 	shift_sum: f64,
 	shift_prod: f64,
 ) where
-	M: Matrix<f64, N, N>,
+	M: ConstMatrix<f64, N, N>,
 {
 	let (s, e) = (start, end);
 	let sub = *h.at(s + 1, s);
@@ -421,7 +421,7 @@ fn francis_double_step<M, const N: usize>(
 
 fn tung_tung_tung_schur<M, const N: usize>(t: &M) -> ([f64; N], [f64; N])
 where
-	M: Matrix<f64, N, N>,
+	M: ConstMatrix<f64, N, N>,
 {
 	let (mut re, mut im) = ([0.0; N], [0.0; N]);
 	let mut i = 0;

@@ -3,10 +3,10 @@ use std::{
 	ptr::null_mut,
 };
 
-use crate::{Vector, matrix::Matrix};
+use crate::{ConstMatrix, Vector};
 
 pub fn eigen<const N: usize>(
-	m: &impl Matrix<f64, N, N>,
+	m: &impl ConstMatrix<f64, N, N>,
 ) -> ([f64; N], [[f64; N]; N]) {
 	let mut copy: [[f64; N]; N] = m.transpose();
 
@@ -14,7 +14,7 @@ pub fn eigen<const N: usize>(
 	let mut wr = <[f64; N]>::from_element(0.0);
 	let mut wi = [0.0; N];
 	let vl = null_mut::<f64>(); // not referenced
-	let mut vr: [[f64; N]; N] = Matrix::zeros();
+	let mut vr: [[f64; N]; N] = ConstMatrix::zeros();
 	let mut info: c_int = 0;
 
 	let ljob = b'N' as c_char;
@@ -57,7 +57,9 @@ pub fn eigen<const N: usize>(
 	(wr, vr.transpose())
 }
 
-pub fn inverse<const N: usize>(m: &impl Matrix<f64, N, N>) -> [[f64; N]; N] {
+pub fn inverse<const N: usize>(
+	m: &impl ConstMatrix<f64, N, N>,
+) -> [[f64; N]; N] {
 	let mut copy: [[f64; N]; N] = m.transpose();
 
 	let n_i32 = N as c_int;

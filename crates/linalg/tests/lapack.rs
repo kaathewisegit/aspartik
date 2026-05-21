@@ -2,10 +2,10 @@ use arbitrary::{Result, Unstructured};
 use arbtest::arbtest;
 
 use linalg::{
+	ConstMatrix, ConstSquareMatrix,
 	arbitrary::{normalized_array, symmetric},
 	eigen,
 	lu::inverse,
-	matrix::{Matrix, SquareMatrix},
 };
 use math::assert_almost_eq;
 
@@ -16,7 +16,7 @@ fn reconstruct<const N: usize>(m: M<N>, relative: f64) {
 	let (values, vectors) = (decomp.eigenvalues, decomp.eigenvectors);
 	let inv_vectors: M<N> = inverse(&vectors);
 
-	let diag: M<N> = SquareMatrix::from_diagonal(values);
+	let diag: M<N> = ConstSquareMatrix::from_diagonal(values);
 
 	let reconstructed: M<N> =
 		vectors.mul::<_, M<N>>(&diag).mul(&inv_vectors);

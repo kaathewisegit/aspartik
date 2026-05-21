@@ -2,7 +2,7 @@ use num_traits::Float;
 
 use std::marker::PhantomData;
 
-use crate::{Vector, matrix::SquareMatrix};
+use crate::{ConstSquareMatrix, Vector};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LuError {
@@ -13,7 +13,7 @@ pub enum LuError {
 pub struct LU<T, M, const N: usize>
 where
 	T: Float,
-	M: SquareMatrix<T, N>,
+	M: ConstSquareMatrix<T, N>,
 {
 	pub(crate) lu: M,
 	pub(crate) piv: [usize; N],
@@ -24,9 +24,11 @@ where
 impl<T, M, const N: usize> LU<T, M, N>
 where
 	T: Float,
-	M: SquareMatrix<T, N>,
+	M: ConstSquareMatrix<T, N>,
 {
-	pub fn factor(a: &impl SquareMatrix<T, N>) -> Result<Self, LuError> {
+	pub fn factor(
+		a: &impl ConstSquareMatrix<T, N>,
+	) -> Result<Self, LuError> {
 		let mut lu: M = a.convert();
 		let mut piv = [0usize; N];
 		let mut sign_negative = false;
@@ -163,8 +165,8 @@ where
 
 pub fn inverse<const N: usize, T: Float, I, O>(m: &I) -> O
 where
-	I: SquareMatrix<T, N>,
-	O: SquareMatrix<T, N>,
+	I: ConstSquareMatrix<T, N>,
+	O: ConstSquareMatrix<T, N>,
 {
 	let lu = LU::<T, O, N>::factor(m).unwrap();
 	lu.inverse()

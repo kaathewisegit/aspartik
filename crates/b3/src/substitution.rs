@@ -2,11 +2,7 @@ use anyhow::Result;
 use pyo3::prelude::*;
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
-use linalg::{
-	eigen,
-	lu::inverse,
-	matrix::{Matrix, SquareMatrix},
-};
+use linalg::{ConstMatrix, ConstSquareMatrix, eigen, lu::inverse};
 
 pub trait SubstitutionModel<const N: usize, F> {
 	fn update(&mut self) -> Result<bool>;
@@ -328,7 +324,7 @@ impl SubstitutionModel<4, f64> for HKY {
 	}
 
 	fn get_transition(&self, distance: f64) -> M4 {
-		let diag: M4 = SquareMatrix::from_diagonal(
+		let diag: M4 = ConstSquareMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
@@ -448,7 +444,7 @@ impl SubstitutionModel<4, f64> for GTR {
 	}
 
 	fn get_transition(&self, distance: f64) -> M4 {
-		let diag: M4 = SquareMatrix::from_diagonal(
+		let diag: M4 = ConstSquareMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 

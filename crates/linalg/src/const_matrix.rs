@@ -2,7 +2,8 @@ use num_traits::Num;
 
 use crate::vector::Vector;
 
-pub trait Matrix<T, const N: usize, const M: usize>: Sized + Clone
+pub trait ConstMatrix<T, const N: usize, const M: usize>:
+	Sized + Clone
 where
 	T: Copy + Num,
 {
@@ -18,7 +19,7 @@ where
 
 	fn convert<O>(&self) -> O
 	where
-		O: Matrix<T, N, M>,
+		O: ConstMatrix<T, N, M>,
 	{
 		let mut out = O::zeros();
 		for i in 0..N {
@@ -35,7 +36,7 @@ where
 
 	fn transpose<O>(&self) -> O
 	where
-		O: Matrix<T, M, N>,
+		O: ConstMatrix<T, M, N>,
 	{
 		let mut out = O::zeros();
 
@@ -48,9 +49,9 @@ where
 		out
 	}
 
-	fn mul<const P: usize, O>(&self, rhs: &impl Matrix<T, M, P>) -> O
+	fn mul<const P: usize, O>(&self, rhs: &impl ConstMatrix<T, M, P>) -> O
 	where
-		O: Matrix<T, N, P>,
+		O: ConstMatrix<T, N, P>,
 	{
 		let mut out = O::zeros();
 
@@ -69,7 +70,7 @@ where
 
 	fn mul_scalar<O>(&self, rhs: T) -> O
 	where
-		O: Matrix<T, N, M>,
+		O: ConstMatrix<T, N, M>,
 	{
 		let mut out = O::zeros();
 
@@ -82,9 +83,9 @@ where
 		out
 	}
 
-	fn add<O>(&self, rhs: &impl Matrix<T, N, M>) -> O
+	fn add<O>(&self, rhs: &impl ConstMatrix<T, N, M>) -> O
 	where
-		O: Matrix<T, N, M>,
+		O: ConstMatrix<T, N, M>,
 	{
 		let mut out = O::zeros();
 
@@ -98,9 +99,9 @@ where
 		out
 	}
 
-	fn sub<O>(&self, rhs: &impl Matrix<T, N, M>) -> O
+	fn sub<O>(&self, rhs: &impl ConstMatrix<T, N, M>) -> O
 	where
-		O: Matrix<T, N, M>,
+		O: ConstMatrix<T, N, M>,
 	{
 		let mut out = O::zeros();
 
@@ -122,7 +123,7 @@ where
 	}
 }
 
-pub trait SquareMatrix<T, const N: usize>: Matrix<T, N, N>
+pub trait ConstSquareMatrix<T, const N: usize>: ConstMatrix<T, N, N>
 where
 	T: Copy + Num,
 {
@@ -147,14 +148,14 @@ where
 	}
 }
 
-impl<T, const N: usize, M> SquareMatrix<T, N> for M
+impl<T, const N: usize, M> ConstSquareMatrix<T, N> for M
 where
 	T: Copy + Num,
-	M: Matrix<T, N, N>,
+	M: ConstMatrix<T, N, N>,
 {
 }
 
-impl<T, const N: usize, const M: usize> Matrix<T, N, M> for [[T; M]; N]
+impl<T, const N: usize, const M: usize> ConstMatrix<T, N, M> for [[T; M]; N]
 where
 	T: Copy + Num,
 {
