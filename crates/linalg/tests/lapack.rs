@@ -14,7 +14,8 @@ type M<const N: usize> = [[f64; N]; N];
 fn reconstruct<const N: usize>(m: M<N>, relative: f64) {
 	let decomp = eigen(&m);
 	let (values, vectors) = (decomp.eigenvalues, decomp.eigenvectors);
-	let inv_vectors: M<N> = inverse(&vectors);
+	let mut inv_vectors = [[0.0; N]; N];
+	inverse(&vectors, &mut inv_vectors);
 
 	let diag: M<N> = ConstSquareMatrix::from_diagonal(values);
 
@@ -85,7 +86,8 @@ fn can_invert() {
 	arbtest(|u| {
 		let gtr = gtr(u)?;
 		let eigenvectors = eigen(&gtr).eigenvectors;
-		let _: M<4> = inverse(&eigenvectors);
+		let mut dst = [[0.0; 4]; 4];
+		inverse(&eigenvectors, &mut dst);
 		Ok(())
 	});
 }

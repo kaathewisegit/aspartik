@@ -1,8 +1,9 @@
+use bytemuck::Zeroable;
 use num_traits::Float;
 
 use std::marker::PhantomData;
 
-use crate::{ConstSquareMatrix, Vector};
+use crate::{ConstSquareMatrix, MatrixMut, Vector};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LuError {
@@ -23,7 +24,7 @@ where
 
 impl<T, M, const N: usize> LU<T, M, N>
 where
-	T: Float,
+	T: Float + Zeroable,
 	M: ConstSquareMatrix<T, N>,
 {
 	pub fn factor(
@@ -125,12 +126,12 @@ where
 		det
 	}
 
-	pub fn inverse(&self) -> M {
-		let mut inv = M::identity();
+	pub fn inverse(&self, mut dst: MatrixMut<T>) {
+		dst.reborrow().identity();
 
 		// permutation
 		for k in 0..N {
-			inv.swap_rows(k, self.piv[k]);
+			dst.reborrow().swap_rows(k, self.piv[k]);
 		}
 
 		// forward substitution
@@ -138,8 +139,8 @@ where
 			for j in 0..i {
 				let factor = *self.lu.at(i, j);
 				for col in 0..N {
-					*inv.at_mut(i, col) = *inv.at(i, col)
-						- factor * *inv.at(j, col);
+					dst[(i, col)] = dst[(i, col)]
+						- factor * dst[(j, col)];
 				}
 			}
 		}
@@ -149,25 +150,24 @@ where
 			for j in i + 1..N {
 				let factor = *self.lu.at(i, j);
 				for col in 0..N {
-					*inv.at_mut(i, col) = *inv.at(i, col)
-						- factor * *inv.at(j, col);
+					dst[(i, col)] = dst[(i, col)]
+						- factor * dst[(j, col)];
 				}
 			}
 			let diag = *self.lu.at(i, i);
 			for col in 0..N {
-				*inv.at_mut(i, col) = *inv.at(i, col) / diag;
+				dst[(i, col)] = dst[(i, col)] / diag;
 			}
 		}
-
-		inv
 	}
 }
 
-pub fn inverse<const N: usize, T: Float, I, O>(m: &I) -> O
+pub fn inverse<'a, const N: usize, T, I, O>(m: &I, dst: O)
 where
+	T: Float + Zeroable + 'a,
 	I: ConstSquareMatrix<T, N>,
-	O: ConstSquareMatrix<T, N>,
+	O: Into<MatrixMut<'a, T>>,
 {
-	let lu = LU::<T, O, N>::factor(m).unwrap();
-	lu.inverse()
+	let lu = LU::<T, I, N>::factor(m).unwrap();
+	lu.inverse(dst.into())
 }

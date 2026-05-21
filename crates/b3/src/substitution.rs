@@ -426,7 +426,7 @@ impl GTR {
 
 		self.diag = decomp.eigenvalues;
 		self.p = decomp.eigenvectors;
-		self.inv_p = inverse(&self.p);
+		inverse(&self.p, &mut self.inv_p);
 	}
 }
 

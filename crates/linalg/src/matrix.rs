@@ -1,0 +1,197 @@
+#![allow(unused)]
+
+use bytemuck::Zeroable;
+use num_traits::One;
+
+use std::{
+	marker::PhantomData,
+	ops::{Deref, Index, IndexMut},
+	ptr,
+};
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct MatrixRef<'a, T> {
+	ptr: *const T,
+	rows: u32,
+	cols: u32,
+	stride: u32,
+	marker: PhantomData<&'a T>,
+}
+
+impl<'a, T> MatrixRef<'a, T> {
+	pub fn from_array<const N: usize, const M: usize>(
+		arr: &'a [[T; M]; N],
+	) -> Self {
+		Self {
+			ptr: arr.as_ptr() as *const T,
+			rows: N as u32,
+			cols: M as u32,
+			stride: M as u32,
+			marker: PhantomData,
+		}
+	}
+
+	pub fn is_square(&self) -> bool {
+		self.cols == self.rows
+	}
+
+	/// Total number of item slots, including padding
+	fn num_slots(&self) -> usize {
+		(self.rows * self.stride) as usize
+	}
+}
+
+impl<'a, T, const N: usize, const M: usize> From<&'a [[T; M]; N]>
+	for MatrixRef<'a, T>
+{
+	fn from(arr: &'a [[T; M]; N]) -> Self {
+		Self::from_array(arr)
+	}
+}
+
+impl<T> Index<(usize, usize)> for MatrixRef<'_, T> {
+	type Output = T;
+
+	fn index(&self, (row, col): (usize, usize)) -> &T {
+		// SAFETY: TODO
+		unsafe { &*self.ptr.add(row * self.stride as usize + col) }
+	}
+}
+
+#[repr(C)]
+pub struct MatrixMut<'a, T> {
+	ptr: *mut T,
+	rows: u32,
+	cols: u32,
+	stride: u32,
+	marker: PhantomData<&'a mut T>,
+}
+
+impl<'a, T> MatrixMut<'a, T> {
+	pub fn from_array<const N: usize, const M: usize>(
+		arr: &'a mut [[T; M]; N],
+	) -> Self {
+		Self {
+			ptr: arr.as_mut_ptr() as *mut T,
+			rows: N as u32,
+			cols: M as u32,
+			stride: M as u32,
+			marker: PhantomData,
+		}
+	}
+
+	pub fn reborrow<'b>(&'b mut self) -> MatrixMut<'b, T> {
+		MatrixMut {
+			ptr: self.ptr,
+			rows: self.rows,
+			cols: self.cols,
+			stride: self.stride,
+			marker: PhantomData,
+		}
+	}
+
+	/// Zeroes out the matrix
+	pub fn zero(self)
+	where
+		T: Zeroable,
+	{
+		// SAFETY: The matrix points to an allocation at least
+		// `num_slots` large.
+		unsafe { ptr::write_bytes(self.ptr, 0, self.num_slots()) }
+	}
+
+	pub fn identity(mut self)
+	where
+		T: Zeroable + One,
+	{
+		assert!(self.is_square());
+		self.reborrow().zero();
+
+		for i in 0..self.cols {
+			self[(i, i)] = T::one();
+		}
+	}
+
+	pub fn swap_rows(mut self, a: usize, b: usize) {
+		assert!(a < self.rows as usize);
+		assert!(b < self.rows as usize);
+		if a == b {
+			return;
+		}
+
+		// SAFETY: `a` checked above
+		let ptr_a = unsafe { self.ptr.add(self.stride as usize * a) };
+		// SAFETY: `b` checked above
+		let ptr_b = unsafe { self.ptr.add(self.stride as usize * b) };
+
+		// SAFETY: `a` != `b`, each slice has a length of `rows`, so
+		// they don't overlap.
+		unsafe {
+			ptr::swap_nonoverlapping(
+				ptr_a,
+				ptr_b,
+				self.rows as usize,
+			)
+		}
+	}
+}
+
+impl<'a, T, const N: usize, const M: usize> From<&'a mut [[T; M]; N]>
+	for MatrixMut<'a, T>
+{
+	fn from(arr: &'a mut [[T; M]; N]) -> Self {
+		Self::from_array(arr)
+	}
+}
+
+impl<'a, T> Deref for MatrixMut<'a, T> {
+	type Target = MatrixRef<'a, T>;
+
+	fn deref(&self) -> &Self::Target {
+		// SAFETY: `MatrixRef` has the same layout as `MatrixMut`,
+		// except for `ptr` and `marker`.  `*const T` has the same
+		// layout as `*mut T`.  And the marker has mutable and immutable
+		// references, but both of those are covariant.
+		unsafe { &*(self as *const Self as *const Self::Target) }
+	}
+}
+
+impl<T> Index<(usize, usize)> for MatrixMut<'_, T> {
+	type Output = T;
+
+	fn index(&self, (row, col): (usize, usize)) -> &T {
+		assert!(row < self.rows as usize && col < self.cols as usize);
+		let idx = row * self.stride as usize + col;
+		// SAFETY: TODO
+		unsafe { &*self.ptr.add(idx) }
+	}
+}
+
+impl<T> IndexMut<(usize, usize)> for MatrixMut<'_, T> {
+	fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
+		assert!(row < self.rows as usize && col < self.cols as usize);
+		// SAFETY: TODO
+		unsafe { &mut *self.ptr.add(row * self.stride as usize + col) }
+	}
+}
+
+impl<T> Index<(u32, u32)> for MatrixMut<'_, T> {
+	type Output = T;
+
+	fn index(&self, (row, col): (u32, u32)) -> &T {
+		assert!(row < self.rows && col < self.cols);
+		let idx = row * self.stride + col;
+		// SAFETY: TODO
+		unsafe { &*self.ptr.add(idx as usize) }
+	}
+}
+
+impl<T> IndexMut<(u32, u32)> for MatrixMut<'_, T> {
+	fn index_mut(&mut self, (row, col): (u32, u32)) -> &mut T {
+		assert!(row < self.rows && col < self.cols);
+		let idx = row * self.stride + col;
+		// SAFETY: TODO
+		unsafe { &mut *self.ptr.add(idx as usize) }
+	}
+}
