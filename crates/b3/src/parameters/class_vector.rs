@@ -89,7 +89,7 @@ pub struct PyClassVector {
 	inner: Mutex<ClassVector>,
 }
 
-impl_pyparameter_common! {PyClassVector, ClassVector;
+impl_pyparameter_common!(PyClassVector, ClassVector, {
 	#[new]
 	pub fn new(num_classes: u8, len: usize) -> Self {
 		Self {
@@ -100,4 +100,4 @@ impl_pyparameter_common! {PyClassVector, ClassVector;
 	pub fn into_list(&self) -> Vec<usize> {
 		self.inner().classes.iter().map(|&c| c as usize).collect()
 	}
-}
+});

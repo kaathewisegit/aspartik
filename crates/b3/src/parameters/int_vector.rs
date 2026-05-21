@@ -84,7 +84,7 @@ pub struct PyIntVector {
 	inner: Mutex<IntVector>,
 }
 
-impl_pyparameter_common! {PyIntVector, IntVector;
+impl_pyparameter_common!(PyIntVector, IntVector, {
 	#[new]
 	#[pyo3(signature = (*values))]
 	fn new(values: Vec<i64>) -> Result<Self> {
@@ -121,4 +121,4 @@ impl_pyparameter_common! {PyIntVector, IntVector;
 	fn __setitem__(&self, index: usize, value: i64) {
 		self.inner().set(index, value);
 	}
-}
+});

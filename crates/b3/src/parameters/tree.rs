@@ -1282,7 +1282,7 @@ pub struct PyTree {
 	inner: Mutex<Tree>,
 }
 
-impl_pyparameter_common! {PyTree, Tree;
+impl_pyparameter_common!(PyTree, Tree, {
 	#[new]
 	fn new(names: Vec<String>, rng: Py<PyRng>) -> Result<Self> {
 		let tree = Tree::new(names, &mut rng.get().inner())?;
@@ -1323,19 +1323,18 @@ impl_pyparameter_common! {PyTree, Tree;
 		names: Vec<String>,
 		heights: Vec<f64>,
 		population_size: f64,
-		rng: Py< PyRng >,
+		rng: Py<PyRng>,
 	) -> Result<Self> {
 		let tree = Tree::simulate_coalescent(
 			names,
 			heights,
 			population_size,
-			&mut rng.get().inner()
+			&mut rng.get().inner(),
 		)?;
 		Ok(Self {
 			inner: Mutex::new(tree),
 		})
-	 }
-
+	}
 
 	/// A list of all leaf names.
 	///
@@ -1629,4 +1628,4 @@ impl_pyparameter_common! {PyTree, Tree;
 	fn internal_heights(&self) -> Vec<f64> {
 		self.inner().internal_heights()
 	}
-}
+});

@@ -77,7 +77,7 @@ pub struct PyReal {
 	inner: Mutex<Real>,
 }
 
-impl_pyparameter_common! {PyReal, Real;
+impl_pyparameter_common!(PyReal, Real, {
 	#[new]
 	pub fn new(value: f64) -> Self {
 		Self {
@@ -108,4 +108,4 @@ impl_pyparameter_common! {PyReal, Real;
 	fn __float__(&self) -> f64 {
 		self.inner().value()
 	}
-}
+});
