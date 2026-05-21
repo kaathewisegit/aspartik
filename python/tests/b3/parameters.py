@@ -1,27 +1,44 @@
+from math import inf
+
 from aspartik.b3.parameters import IntVector, Real, RealVector
 
 
-def test_eq():
-    assert Real(0.1) == 0.1
-    assert Real(0.1) != Real(0.2)
+def test_real_comparisons():
+    val = Real(0.2)
+
+    assert val == 0.2
+    assert val == Real(0.2)
+    assert val != 0.1
+    assert val != Real(0.1)
+
+    assert val < 0.3
+    assert val <= 0.2
+    assert val > 0.1
+    assert val >= 0.2
+
+    assert not val < 0.1
+    assert not val <= 0.1
+    assert not val > 0.3
+    assert not val >= 0.3
 
 
-def test_comparison_value():
-    assert Real(1e-40) < 1
-    assert Real(0) <= 0
-    assert Real(2.0) > 1.0
+def test_real_vector_bound():
+    vec = RealVector(0.1, 0.2, 0.3)
 
+    assert vec.is_bound(-inf, inf)
 
-def test_weights_comparable():
-    assert RealVector(0.1, 0.2, 0.3) < 0.4
-    assert RealVector(0.1, 0.2, 0.3) <= 0.3
-    assert RealVector(0.1, 0.2, 0.3) > 0.0
-    assert RealVector(0.1, 0.2, 0.3) >= 0.1
+    assert vec.is_bound(0.0, inf)
+    assert vec.is_bound(0.1, inf)
+    assert not vec.is_bound(0.2, inf)
 
-    assert not RealVector(0.1, 0.2, 0.3) < 0.2
-    assert not RealVector(0.1, 0.2, 0.3) <= 0.2
-    assert not RealVector(0.1, 0.2, 0.3) > 0.2
-    assert not RealVector(0.1, 0.2, 0.3) >= 0.2
+    assert vec.is_bound(-inf, 0.4)
+    assert not vec.is_bound(-inf, 0.3)
+    assert not vec.is_bound(-inf, 0.2)
+
+    assert vec.is_bound(0.1, 0.4)
+    assert not vec.is_bound(0.1, 0.3)
+    assert not vec.is_bound(0.2, 0.4)
+    assert not vec.is_bound(0.1, 0.2)
 
 
 def test_int_vector_indexing():
@@ -33,7 +50,7 @@ def test_int_vector_indexing():
     assert len(vec) == 3
 
 
-def test_int_vector_comparable():
+def test_int_vector_bound():
     vec = IntVector(1, 2, 3)
 
     assert vec.is_bound(None, None)

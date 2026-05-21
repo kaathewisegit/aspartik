@@ -1,6 +1,6 @@
 use anyhow::Result;
 use parking_lot::Mutex;
-use pyo3::{basic::CompareOp, exceptions::PyIndexError, prelude::*};
+use pyo3::{exceptions::PyIndexError, prelude::*};
 
 use std::{io::Write, ops::Index};
 
@@ -93,16 +93,10 @@ impl_pyparameter_common! {PyRealVector, RealVector;
 		})
 	}
 
-	fn __richcmp__(&self, rhs: f64, op: CompareOp) -> bool {
+	fn is_bound(&self, lower: f64, upper: f64) -> bool {
 		let this = &*self.inner();
-		match op {
-			CompareOp::Lt => this.values.iter().all(|&f| f < rhs),
-			CompareOp::Le => this.values.iter().all(|&f| f <= rhs),
-			CompareOp::Eq => this.values.iter().all(|&f| f == rhs),
-			CompareOp::Ne => this.values.iter().all(|&f| f != rhs),
-			CompareOp::Gt => this.values.iter().all(|&f| f > rhs),
-			CompareOp::Ge => this.values.iter().all(|&f| f >= rhs),
-		}
+		this.values.iter().all(|&v| v >= lower)
+			&& this.values.iter().all(|&v| v < upper)
 	}
 
 	fn __len__(&self) -> usize {

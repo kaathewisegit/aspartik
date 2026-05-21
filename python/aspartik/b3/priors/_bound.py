@@ -28,10 +28,10 @@ class Bound(Prior):
     """Maximum value of the parameter, exclusive (strictly compared)."""
 
     def probability(self) -> float:
-        if not (self.lower <= self.param < self.upper):
-            return -inf
-        else:
-            return 0
+        if isinstance(self.param, Real):
+            return 0 if self.lower <= self.param < self.upper else -inf
+        elif isinstance(self.param, RealVector):
+            return 0 if self.param.is_bound(self.lower, self.upper) else -inf
 
 
 @dataclass(slots=True)
