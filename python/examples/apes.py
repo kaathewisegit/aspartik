@@ -30,7 +30,7 @@ tree = Tree(msa.sequence_names(), rng)
 
 kappa = Real(2.0)
 population_size = Real(2.0)
-frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
+frequencies = RealVector.repeat(0.25, 4)
 
 priors = [
     Distribution(kappa, LogNormal(1.0, 1.25)),

@@ -30,10 +30,12 @@ tree = Tree(msa.sequence_names(), rng)
 tree.set_random_heights(0.1, rng)
 tree.accept()
 
-population_sizes = RealVector(1.0, 1.0, 1.0, 1.0)
-group_sizes = IntVector(0, 0, 0, 0)  # will be overwritten by BayesianSkyline
-frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-rates = RealVector(1, 1, 1, 1, 1, 1)
+NUM_GROUPS = 4
+population_sizes = RealVector.repeat(1.0, NUM_GROUPS)
+group_sizes = IntVector.repeat(0, NUM_GROUPS)  # will be overwritten by BayesianSkyline
+
+frequencies = RealVector.repeat(0.25, 4)
+rates = RealVector.repeat(1, 6)
 
 
 priors = [

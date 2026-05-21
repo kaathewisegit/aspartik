@@ -22,8 +22,8 @@ def test_compare_likelihood():
     tree = Tree(msa.sequence_names(), rng)
 
     clock_rate = Real(1.0)
-    frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-    rates = RealVector(1, 1, 1, 1, 1, 1)
+    frequencies = RealVector.repeat(0.25, 4)
+    rates = RealVector.repeat(1, 6)
 
     cpu_calculators = [
         CPU4Likelihood(

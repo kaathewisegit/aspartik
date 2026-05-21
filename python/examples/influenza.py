@@ -54,8 +54,8 @@ tree.accept()
 population_size = Real(1.0)
 growth_rate = Real(0)
 clock_rate = Real(0.001)
-frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-rates = RealVector(1, 1, 1, 1, 1, 1)
+frequencies = RealVector.repeat(0.25, 4)
+rates = RealVector.repeat(1, 6)
 
 params = [population_size, growth_rate, clock_rate, frequencies, rates, tree]
 

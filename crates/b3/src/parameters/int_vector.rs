@@ -1,6 +1,6 @@
 use anyhow::Result;
 use parking_lot::Mutex;
-use pyo3::{exceptions::PyIndexError, prelude::*};
+use pyo3::{exceptions::PyIndexError, prelude::*, types::PyType};
 
 use std::{io::Write, ops::Index};
 
@@ -90,6 +90,13 @@ impl_pyparameter_common!(PyIntVector, IntVector, {
 	fn new(values: Vec<i64>) -> Result<Self> {
 		Ok(Self {
 			inner: Mutex::new(IntVector::new(values)),
+		})
+	}
+
+	#[classmethod]
+	fn repeat(_cls: Py<PyType>, value: i64, length: usize) -> Result<Self> {
+		Ok(Self {
+			inner: Mutex::new(IntVector::new(vec![value; length])),
 		})
 	}
 

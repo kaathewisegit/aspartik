@@ -664,7 +664,7 @@ def _b3_config(c: MCMCConfig):
         return param
 
     def create_frequencies():
-        frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
+        frequencies = RealVector.repeat(0.25, 4)
         items["frequencies"] = frequencies
         parameters.append(frequencies)
         operators.append(DeltaExchange(frequencies, rng=rng, weight=1))
@@ -684,7 +684,7 @@ def _b3_config(c: MCMCConfig):
             sub_model = HKY(frequencies, kappa)
         case "GTR":
             frequencies = create_frequencies()
-            rates = RealVector(1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+            rates = RealVector.repeat(1.0, 6)
             items["rates"] = rates
             parameters.append(rates)
             operators.append(DeltaExchange(rates, rng=rng, weight=1))

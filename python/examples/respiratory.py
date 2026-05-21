@@ -52,8 +52,7 @@ kappa = Real(2.0)
 population_size = Real(1.0)
 growth_rate = Real(0.0)
 clock_rate = Real(0.001)
-frequencies = RealVector(0.25, 0.25, 0.25, 0.25)
-params = [kappa, population_size, growth_rate, clock_rate, tree]
+frequencies = RealVector.repeat(0.25, 4)
 
 priors = [
     Bound(kappa),

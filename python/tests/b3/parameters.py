@@ -22,6 +22,13 @@ def test_real_comparisons():
     assert not val >= 0.3
 
 
+def test_real_vector_repeat():
+    for length in range(100):
+        vec = RealVector.repeat(0.5, length)
+        for i in range(length):
+            assert vec[i] == 0.5
+
+
 def test_real_vector_bound():
     vec = RealVector(0.1, 0.2, 0.3)
 
@@ -39,6 +46,13 @@ def test_real_vector_bound():
     assert not vec.is_bound(0.1, 0.3)
     assert not vec.is_bound(0.2, 0.4)
     assert not vec.is_bound(0.1, 0.2)
+
+
+def test_int_vector_repeat():
+    for length in range(100):
+        vec = IntVector.repeat(10, length)
+        for i in range(length):
+            assert vec[i] == 10
 
 
 def test_int_vector_indexing():

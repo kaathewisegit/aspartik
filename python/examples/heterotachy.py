@@ -30,7 +30,7 @@ N = 4
 
 tree = Tree(msa.sequence_names(), rng)
 kappas = [Real(2.0) for _ in range(N)]
-freqs = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
+freqs = [RealVector.repeat(0.25, 4) for _ in range(N)]
 birth_rate = Real(1.0)
 clock_rate = Real(0.001)  # TODO
 
