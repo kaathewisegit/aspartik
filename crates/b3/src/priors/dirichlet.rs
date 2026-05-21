@@ -34,4 +34,8 @@ impl SymmetricDirichlet {
 
 		out
 	}
+
+	fn is_changed(&self) -> bool {
+		self.vec.get().is_changed()
+	}
 }

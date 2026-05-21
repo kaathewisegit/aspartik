@@ -33,6 +33,9 @@ class Bound(Prior):
         elif isinstance(self.param, RealVector):
             return 0 if self.param.is_bound(self.lower, self.upper) else -inf
 
+    def is_changed(self) -> bool:
+        return self.param.is_changed()
+
 
 @dataclass(slots=True)
 class BoundInt(Prior):
@@ -46,3 +49,6 @@ class BoundInt(Prior):
             return 0
         else:
             return -inf
+
+    def is_changed(self) -> bool:
+        return self.param.is_changed()

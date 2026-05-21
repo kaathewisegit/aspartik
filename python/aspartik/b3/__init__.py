@@ -56,6 +56,13 @@ class Prior(Protocol):
         """
         ...
 
+    def is_changed(self) -> bool:
+        """Returns `True` if the prior has to be recalculated
+
+        The prior probabilities will be transparently cached based on this
+        method.
+        """
+
 
 class Operator(Protocol):
     """

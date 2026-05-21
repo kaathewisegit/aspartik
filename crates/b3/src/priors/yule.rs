@@ -38,4 +38,9 @@ impl Yule {
 
 		Ok(out)
 	}
+
+	fn is_changed(&self) -> bool {
+		self.tree.get().is_changed()
+			|| self.birth_rate.get().is_changed()
+	}
 }

@@ -226,7 +226,10 @@ impl TraceWriter {
 					array: ArrayF64::new(),
 				}
 			} else {
-				unimplemented!();
+				bail!(
+					"`TraceWriter` doesn't support type {}",
+					val.get_type().name()?
+				);
 			};
 
 			items_v.push(Item { name, array });

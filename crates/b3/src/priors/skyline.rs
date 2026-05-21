@@ -99,6 +99,12 @@ impl BayesianSkyline {
 		Ok(out)
 	}
 
+	fn is_changed(&self) -> bool {
+		self.tree.get().is_changed()
+			|| self.pop_sizes.get().is_changed()
+			|| self.group_sizes.get().is_changed()
+	}
+
 	fn accept(&self) {
 		self.intervals.lock().accept();
 	}

@@ -24,3 +24,6 @@ class MarkovChainDistribution(Prior):
             out += gamma.ln_pdf(x)
 
         return out
+
+    def is_changed(self) -> bool:
+        return self.param.is_changed()

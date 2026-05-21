@@ -156,6 +156,11 @@ impl ConstantPopulation {
 		))
 	}
 
+	fn is_changed(&self) -> bool {
+		self.tree.get().is_changed()
+			|| self.population_size.get().is_changed()
+	}
+
 	fn accept(&self) {
 		self.intervals.lock().accept();
 	}
@@ -214,6 +219,12 @@ impl ExponentialGrowth {
 				}
 			},
 		))
+	}
+
+	fn is_changed(&self) -> bool {
+		self.tree.get().is_changed()
+			|| self.population_size.get().is_changed()
+			|| self.growth_rate.get().is_changed()
 	}
 
 	fn accept(&self) {

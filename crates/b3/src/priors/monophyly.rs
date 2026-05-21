@@ -64,6 +64,10 @@ impl Monophyly {
 
 		Ok(0.0)
 	}
+
+	fn is_changed(&self) -> bool {
+		self.tree.get().is_changed()
+	}
 }
 
 fn common_ancestor(
