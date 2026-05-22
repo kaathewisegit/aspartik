@@ -6,8 +6,10 @@ use super::deduplicate;
 use crate::{
 	Transitions,
 	calculator::{Calculator, CalculatorConfig},
+	clock::PyClock,
 	parameters::{Parameter, PyReal, PyTree},
 	substitution::PySubstitution4,
+	substitution::SubstitutionModel,
 };
 use data::PyMsa;
 use util::atomic::{MonotonicBool, MonotonicF64};
@@ -16,6 +18,8 @@ use util::atomic::{MonotonicBool, MonotonicF64};
 pub struct GammaLikelihood {
 	calculators: Mutex<Vec<Box<dyn Calculator<4, f64> + Send>>>,
 
+	substitution: Mutex<Box<dyn SubstitutionModel<4, f64> + Send>>,
+	clock: Py<PyClock>,
 	transitions: Mutex<Vec<Transitions<4, f64>>>,
 	tree: Py<PyTree>,
 
@@ -51,17 +55,15 @@ impl GammaLikelihood {
 			calculators.push(calculator.make4(samples, weights)?);
 
 			let clock = todo!();
-			let transition = Transitions::new(
-				num_nodes,
-				substitution.clone_ref(py),
-				clock,
-			);
+			let transition = Transitions::new(num_nodes);
 			transitions.push(transition);
 		}
 
 		let out = Self {
 			calculators: Mutex::new(calculators),
 
+			clock: todo!(),
+			substitution: Mutex::new(Box::new(substitution)),
 			transitions: Mutex::new(transitions),
 			tree,
 
@@ -79,8 +81,14 @@ impl GammaLikelihood {
 	pub fn likelihood(&self) -> Result<f64> {
 		let mut tree = self.tree.get().inner();
 		let mut transitions = self.transitions.lock();
-		for transition in transitions.iter_mut() {
-			transition.update(&mut tree)?;
+		let mut clock = self.clock.get().inner();
+		let mut substitution = self.substitution.lock();
+
+		clock.update()?;
+		clock.mark_tree(&mut tree);
+
+		if substitution.update()? {
+			tree.mark_all_edges_updated();
 		}
 
 		// no tree update, return the cache
@@ -88,6 +96,18 @@ impl GammaLikelihood {
 			self.last.store(self.cache.load());
 			return Ok(self.cache.load());
 		}
+
+		for transition in transitions.iter_mut() {
+			transition.update(
+				&mut tree,
+				&clock,
+				&**substitution,
+			)?;
+		}
+
+		let frequencies = substitution.get_frequencies();
+		drop(clock);
+		drop(substitution);
 		drop(tree);
 
 		self.launched_update.store(true);
@@ -98,8 +118,11 @@ impl GammaLikelihood {
 			calculators.iter_mut().zip(transitions.iter())
 		{
 			let tree = self.tree.get().inner();
-			likelihood +=
-				calculator.likelihood(tree, transition)?;
+			likelihood += calculator.likelihood(
+				tree,
+				transition,
+				frequencies,
+			)?;
 		}
 
 		self.last.store(likelihood);
@@ -115,6 +138,8 @@ impl GammaLikelihood {
 			for transition in self.transitions.lock().iter_mut() {
 				transition.accept();
 			}
+			self.substitution.lock().accept();
+			self.clock.get().inner().accept();
 		}
 		self.launched_update.store(false);
 		Ok(())
@@ -128,6 +153,8 @@ impl GammaLikelihood {
 			for transition in self.transitions.lock().iter_mut() {
 				transition.reject();
 			}
+			self.substitution.lock().reject();
+			self.clock.get().inner().reject();
 		}
 		self.launched_update.store(false);
 		Ok(())

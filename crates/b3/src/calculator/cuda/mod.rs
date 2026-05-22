@@ -77,6 +77,7 @@ impl Calculator<4, f64> for CudaCalculator {
 		&mut self,
 		mut tree: MutexGuard<Tree>,
 		transitions: &Transitions<4, f64>,
+		frequencies: [f64; 4],
 	) -> Result<f64> {
 		let (nodes, children, leaves_end) = tree.propagation_lists();
 		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
@@ -118,7 +119,7 @@ impl Calculator<4, f64> for CudaCalculator {
 		self.update_likelihoods(
 			*root,
 			(root_children[0] as u32, root_children[1] as u32),
-			transitions.frequencies(),
+			frequencies,
 		)?;
 
 		drop(tree);

@@ -24,17 +24,6 @@ pub enum PySubstitution4 {
 	GTR(Py<PyGTR>),
 }
 
-impl PySubstitution4 {
-	pub fn clone_ref(&self, py: Python) -> Self {
-		match self {
-			Self::JC(m) => Self::JC(m.clone_ref(py)),
-			Self::K80(m) => Self::K80(m.clone_ref(py)),
-			Self::HKY(m) => Self::HKY(m.clone_ref(py)),
-			Self::GTR(m) => Self::GTR(m.clone_ref(py)),
-		}
-	}
-}
-
 impl SubstitutionModel<4, f64> for PySubstitution4 {
 	fn update(&mut self) -> Result<bool> {
 		match self {

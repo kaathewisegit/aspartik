@@ -39,6 +39,7 @@ pub trait Calculator<const N: usize, F> {
 		&mut self,
 		tree: MutexGuard<Tree>,
 		transitions: &Transitions<N, F>,
+		frequencies: [F; N],
 	) -> Result<f64>;
 
 	/// Accept the changes made in `likelihood`

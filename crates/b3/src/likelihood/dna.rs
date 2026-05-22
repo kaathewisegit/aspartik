@@ -8,7 +8,7 @@ use crate::{
 	calculator::{Calculator, CalculatorConfig},
 	clock::PyClock,
 	parameters::{Parameter, PyTree},
-	substitution::PySubstitution4,
+	substitution::{PySubstitution4, SubstitutionModel},
 };
 use data::PyMsa;
 use util::atomic::{MonotonicBool, MonotonicF64};
@@ -17,6 +17,8 @@ use util::atomic::{MonotonicBool, MonotonicF64};
 pub struct DnaLikelihood {
 	calculator: Mutex<Box<dyn Calculator<4, f64> + Send>>,
 
+	substitution: Mutex<Box<dyn SubstitutionModel<4, f64> + Send>>,
+	clock: Py<PyClock>,
 	transitions: Mutex<Transitions<4, f64>>,
 	tree: Py<PyTree>,
 
@@ -38,15 +40,13 @@ impl DnaLikelihood {
 		let (samples, weights) = deduplicate(msa.get());
 		let calculator = calculator.make4(samples, weights)?;
 
-		let transitions = Transitions::new(
-			tree.get().num_nodes(),
-			substitution,
-			clock,
-		);
+		let transitions = Transitions::new(tree.get().num_nodes());
 
 		let out = Self {
 			calculator: Mutex::new(calculator),
 
+			substitution: Mutex::new(Box::new(substitution)),
+			clock,
 			transitions: Mutex::new(transitions),
 			tree,
 
@@ -63,7 +63,15 @@ impl DnaLikelihood {
 
 	pub fn likelihood(&self) -> Result<f64> {
 		let mut tree = self.tree.get().inner();
-		self.transitions.lock().update(&mut tree)?;
+		let mut clock = self.clock.get().inner();
+		let mut substitution = self.substitution.lock();
+
+		clock.update()?;
+		clock.mark_tree(&mut tree);
+
+		if substitution.update()? {
+			tree.mark_all_edges_updated();
+		}
 
 		// no tree update, return the cache
 		if !tree.is_changed() {
@@ -71,11 +79,22 @@ impl DnaLikelihood {
 			return Ok(self.cache.load());
 		}
 
+		self.transitions.lock().update(
+			&mut tree,
+			&clock,
+			&**substitution,
+		)?;
+
+		let frequencies = substitution.get_frequencies();
+		drop(clock);
+		drop(substitution);
+
 		self.launched_update.store(true);
-		let likelihood = self
-			.calculator
-			.lock()
-			.likelihood(tree, &self.transitions.lock())?;
+		let likelihood = self.calculator.lock().likelihood(
+			tree,
+			&self.transitions.lock(),
+			frequencies,
+		)?;
 		self.last.store(likelihood);
 		Ok(likelihood)
 	}
@@ -85,6 +104,8 @@ impl DnaLikelihood {
 		if self.launched_update.load() {
 			self.calculator.lock().accept()?;
 			self.transitions.lock().accept();
+			self.substitution.lock().accept();
+			self.clock.get().inner().accept();
 		}
 		self.launched_update.store(false);
 		Ok(())
@@ -94,6 +115,8 @@ impl DnaLikelihood {
 		if self.launched_update.load() {
 			self.calculator.lock().reject()?;
 			self.transitions.lock().reject();
+			self.substitution.lock().reject();
+			self.clock.get().inner().reject();
 		}
 		self.launched_update.store(false);
 		Ok(())

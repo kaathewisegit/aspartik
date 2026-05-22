@@ -44,9 +44,9 @@ impl Calculator<4, f64> for Cpu4Calculator {
 		&mut self,
 		mut tree: MutexGuard<Tree>,
 		transitions: &Transitions<4, f64>,
+		frequencies: [f64; 4],
 	) -> Result<f64> {
 		let (internals, children) = tree.partials_lists();
-		let frequencies = transitions.frequencies();
 		let tms = transitions.matrices(cast_slice(&children));
 		let tms: Vec<[[f64; 5]; 4]> = tms
 			.into_iter()
