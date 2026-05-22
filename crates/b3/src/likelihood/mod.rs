@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use data::{DnaNucleotide, Msa, seq::Character};
 
 mod dna;
+mod gamma;
 
 pub use dna::DnaLikelihood;
 
