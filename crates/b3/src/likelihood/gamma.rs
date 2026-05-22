@@ -1,4 +1,5 @@
 use anyhow::Result;
+use fork_union::{SyncMutPtr, ThreadPool};
 use math::Probability;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
@@ -19,7 +20,7 @@ use util::atomic::{MonotonicBool, MonotonicF64};
 
 #[pyclass(module = "aspartik.b3.likelihoods", frozen)]
 pub struct GammaLikelihood {
-	calculators: Mutex<Vec<Box<dyn Calculator<4, f64> + Send>>>,
+	calculators: Mutex<Vec<Box<dyn Calculator<4, f64> + Send + Sync>>>,
 
 	substitution: Mutex<Box<dyn SubstitutionModel<4, f64> + Send>>,
 	clock: Py<PyClock>,
@@ -28,6 +29,8 @@ pub struct GammaLikelihood {
 	tree: Py<PyTree>,
 
 	categories: Mutex<SkBuf<f64>>,
+
+	pool: Mutex<ThreadPool>,
 
 	cache: MonotonicF64,
 	last: MonotonicF64,
@@ -64,6 +67,8 @@ impl GammaLikelihood {
 		let mut categories = SkBuf::repeat(0.0, num_categories);
 		update_categories(&alpha.get().inner(), &mut categories);
 
+		let pool = ThreadPool::try_spawn(categories.len())?;
+
 		let out = Self {
 			calculators: Mutex::new(calculators),
 
@@ -74,6 +79,8 @@ impl GammaLikelihood {
 			tree,
 
 			categories: Mutex::new(categories),
+
+			pool: Mutex::new(pool),
 
 			cache: f64::NAN.into(),
 			last: f64::NAN.into(),
@@ -132,18 +139,27 @@ impl GammaLikelihood {
 
 		self.launched_update.store(true);
 
-		let mut calculators = self.calculators.lock();
-		let mut likelihood = 0.0;
-		for (calculator, transition) in
-			calculators.iter_mut().zip(transitions.iter())
-		{
+		let likelihood = Mutex::new(0.0);
+
+		let calculators = &mut *self.calculators.lock();
+		let calc_ptr = SyncMutPtr::new(calculators.as_mut_ptr());
+
+		self.pool.lock().for_n(categories.len(), |prong| {
+			let i = prong.task_index;
+			let transition = &transitions[i];
 			let tree = self.tree.get().inner();
-			likelihood += calculator.likelihood(
-				tree,
-				transition,
-				frequencies,
-			)?;
-		}
+
+			// SAFETY: `i` is less thant `calculator.len()`, all
+			// accesses will be disjoint due to `for_n`.
+			let calculator = unsafe { &mut *calc_ptr.get(i) };
+
+			let out = calculator
+				.likelihood(tree, transition, frequencies)
+				.unwrap();
+			*likelihood.lock() += out;
+		});
+
+		let likelihood = *likelihood.lock();
 
 		self.last.store(likelihood);
 		Ok(likelihood)

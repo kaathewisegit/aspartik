@@ -102,7 +102,7 @@ impl CalculatorConfig {
 		&self,
 		samples: Vec<u8>,
 		weights: Vec<u32>,
-	) -> Result<Box<dyn Calculator<4, f64> + Send>> {
+	) -> Result<Box<dyn Calculator<4, f64> + Send + Sync>> {
 		match self.kind {
 			CalculatorKind::Cpu { num_threads } => {
 				let calc = Cpu4Calculator::new(
