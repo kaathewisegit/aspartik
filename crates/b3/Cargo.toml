@@ -15,6 +15,7 @@ linalg = { workspace = true }
 math = { workspace = true }
 rng = { workspace = true }
 sk = { workspace = true }
+stats = { workspace = true }
 util = { workspace = true }
 verbatim = { workspace = true }
 

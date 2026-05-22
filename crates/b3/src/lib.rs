@@ -23,7 +23,7 @@ pub mod pymodule {
 		calculator::CalculatorConfig,
 		callback::TraceWriter,
 		clock::PyClock,
-		likelihood::DnaLikelihood,
+		likelihood::{DnaLikelihood, GammaLikelihood},
 		mcmc::Mcmc,
 		operators::{
 			ClassvecFlip, FixedHeightSPR, Proposal, SubtreeLeap,

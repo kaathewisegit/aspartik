@@ -81,7 +81,7 @@ impl DnaLikelihood {
 
 		self.transitions.lock().update(
 			&mut tree,
-			&clock,
+			clock.get_rate(),
 			&**substitution,
 		)?;
 

@@ -109,6 +109,21 @@ class DNALikelihood:
     def accept(self) -> None: ...
     def reject(self) -> None: ...
 
+class GammaLikelihood:
+    def __init__(
+        self,
+        msa: MSA,
+        substitution: Substitution4,
+        num_categories: int,
+        alpha: Real,
+        clock: Clock,
+        tree: Tree,
+        calculator: Calculator,
+    ): ...
+    def likelihood(self) -> float: ...
+    def accept(self) -> None: ...
+    def reject(self) -> None: ...
+
 class MCMC:
     def __init__(
         self,

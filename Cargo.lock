@@ -80,6 +80,7 @@ dependencies = [
  "rand_pcg",
  "rng",
  "sk",
+ "stats",
  "util",
  "verbatim",
 ]

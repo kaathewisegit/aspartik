@@ -9,34 +9,40 @@ mod dna;
 mod gamma;
 
 pub use dna::DnaLikelihood;
+pub use gamma::GammaLikelihood;
 
 #[derive(FromPyObject, IntoPyObject)]
 pub enum Likelihood {
 	Dna(Py<DnaLikelihood>),
+	Gamma(Py<GammaLikelihood>),
 }
 
 impl Likelihood {
 	pub fn likelihood(&self) -> Result<f64> {
 		match self {
 			Likelihood::Dna(l) => l.get().likelihood(),
+			Likelihood::Gamma(l) => l.get().likelihood(),
 		}
 	}
 
 	pub fn accept(&self) -> Result<()> {
 		match self {
 			Likelihood::Dna(l) => l.get().accept(),
+			Likelihood::Gamma(l) => l.get().accept(),
 		}
 	}
 
 	pub fn reject(&self) -> Result<()> {
 		match self {
 			Likelihood::Dna(l) => l.get().reject(),
+			Likelihood::Gamma(l) => l.get().reject(),
 		}
 	}
 
 	pub fn clone_ref(&self, py: Python) -> Self {
 		match self {
 			Self::Dna(l) => Self::Dna(l.clone_ref(py)),
+			Self::Gamma(l) => Self::Gamma(l.clone_ref(py)),
 		}
 	}
 }

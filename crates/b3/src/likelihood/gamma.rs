@@ -1,4 +1,5 @@
 use anyhow::Result;
+use math::Probability;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
@@ -7,11 +8,13 @@ use crate::{
 	Transitions,
 	calculator::{Calculator, CalculatorConfig},
 	clock::PyClock,
-	parameters::{Parameter, PyReal, PyTree},
+	parameters::{Parameter, PyReal, PyTree, Real},
 	substitution::PySubstitution4,
 	substitution::SubstitutionModel,
 };
 use data::PyMsa;
+use sk::SkBuf;
+use stats::distribution::{ContinuousCDF, Gamma};
 use util::atomic::{MonotonicBool, MonotonicF64};
 
 #[pyclass(module = "aspartik.b3.likelihoods", frozen)]
@@ -20,8 +23,11 @@ pub struct GammaLikelihood {
 
 	substitution: Mutex<Box<dyn SubstitutionModel<4, f64> + Send>>,
 	clock: Py<PyClock>,
+	alpha: Py<PyReal>,
 	transitions: Mutex<Vec<Transitions<4, f64>>>,
 	tree: Py<PyTree>,
+
+	categories: Mutex<SkBuf<f64>>,
 
 	cache: MonotonicF64,
 	last: MonotonicF64,
@@ -31,17 +37,13 @@ pub struct GammaLikelihood {
 #[pymethods]
 impl GammaLikelihood {
 	#[new]
-	#[expect(unused)]
-	// TODO: roll num_categories and alpha into the clock
-	#[expect(clippy::too_many_arguments)]
 	fn new(
-		py: Python,
 		msa: Py<PyMsa>,
 		tree: Py<PyTree>,
 		substitution: PySubstitution4,
 		num_categories: usize,
-		clock_rate: Py<PyReal>,
 		alpha: Py<PyReal>,
+		clock: Py<PyClock>,
 		calculator: CalculatorConfig,
 	) -> Result<Self> {
 		let (samples, weights) = deduplicate(msa.get());
@@ -52,20 +54,26 @@ impl GammaLikelihood {
 		let num_nodes = tree.get().num_nodes();
 
 		for _ in 0..num_categories {
-			calculators.push(calculator.make4(samples, weights)?);
+			calculators.push(calculator
+				.make4(samples.clone(), weights.clone())?);
 
-			let clock = todo!();
 			let transition = Transitions::new(num_nodes);
 			transitions.push(transition);
 		}
 
+		let mut categories = SkBuf::repeat(0.0, num_categories);
+		update_categories(&alpha.get().inner(), &mut categories);
+
 		let out = Self {
 			calculators: Mutex::new(calculators),
 
-			clock: todo!(),
+			clock,
 			substitution: Mutex::new(Box::new(substitution)),
+			alpha,
 			transitions: Mutex::new(transitions),
 			tree,
+
+			categories: Mutex::new(categories),
 
 			cache: f64::NAN.into(),
 			last: f64::NAN.into(),
@@ -83,6 +91,7 @@ impl GammaLikelihood {
 		let mut transitions = self.transitions.lock();
 		let mut clock = self.clock.get().inner();
 		let mut substitution = self.substitution.lock();
+		let alpha = self.alpha.get().inner();
 
 		clock.update()?;
 		clock.mark_tree(&mut tree);
@@ -91,16 +100,27 @@ impl GammaLikelihood {
 			tree.mark_all_edges_updated();
 		}
 
-		// no tree update, return the cache
-		if !tree.is_changed() {
+		let is_changed = tree.is_changed() || alpha.is_changed();
+
+		if !is_changed {
 			self.last.store(self.cache.load());
 			return Ok(self.cache.load());
 		}
 
-		for transition in transitions.iter_mut() {
+		let clock_rate = clock.get_rate();
+		let mut categories = self.categories.lock();
+
+		// recalculate categories if alpha has changed
+		if alpha.is_changed() {
+			update_categories(&alpha, &mut categories);
+		}
+
+		for (transition, category) in
+			transitions.iter_mut().zip(categories.iter())
+		{
 			transition.update(
 				&mut tree,
-				&clock,
+				clock_rate * category,
 				&**substitution,
 			)?;
 		}
@@ -158,5 +178,27 @@ impl GammaLikelihood {
 		}
 		self.launched_update.store(false);
 		Ok(())
+	}
+}
+
+fn update_categories(alpha: &Real, categories: &mut SkBuf<f64>) {
+	let alpha = alpha.value();
+	let dist = Gamma::new(alpha, 1.0 / alpha).unwrap();
+	let mut sum = 0.0;
+	let num_categories = categories.len();
+
+	for i in 0..num_categories {
+		let p = (2.0 * i as f64 + 1.0) / (2.0 * num_categories as f64);
+		let modifier = dist.inverse_cdf(Probability::new(p));
+		sum += modifier;
+
+		categories.set(i, modifier);
+	}
+
+	let mean = sum / num_categories as f64;
+
+	for i in 0..num_categories {
+		let modifier = categories[i];
+		categories.set(i, modifier / mean);
 	}
 }

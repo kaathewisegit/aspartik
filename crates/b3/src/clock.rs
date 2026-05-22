@@ -55,7 +55,7 @@ impl Clock {
 		}
 	}
 
-	pub fn get_rate(&self, _edge: usize) -> f64 {
+	pub fn get_rate(&self) -> f64 {
 		match self {
 			Self::Strict(clock) => clock.get_rate(),
 		}

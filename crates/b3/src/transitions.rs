@@ -1,7 +1,7 @@
 use anyhow::Result;
 use num_traits::Zero;
 
-use crate::{clock::Clock, parameters::Tree, substitution::SubstitutionModel};
+use crate::{parameters::Tree, substitution::SubstitutionModel};
 use sk::{SkBuf, skbuf};
 
 pub struct Transitions<const N: usize, F> {
@@ -22,13 +22,12 @@ where
 	pub fn update(
 		&mut self,
 		tree: &mut Tree,
-		clock: &Clock,
+		clock_rate: f64,
 		substitution: &dyn SubstitutionModel<N, F>,
 	) -> Result<()> {
 		for edge in tree.edges_to_update() {
-			let rate = clock.get_rate(edge);
 			let time_length = tree.edge_length(edge);
-			let length = time_length * rate;
+			let length = time_length * clock_rate;
 
 			let transition = substitution.get_transition(length);
 
