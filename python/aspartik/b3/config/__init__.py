@@ -4,9 +4,9 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass, field
 from typing import Literal, Optional
 
-from aspartik.b3 import MCMC, Clock
+from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, Timer, TraceWriter
-from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood
+from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import (
     BeastNarrowExchange,
     BeastWideExchange,
@@ -774,12 +774,20 @@ def _b3_config(c: MCMCConfig):
 
     match c.calculator:
         case "cpu":
-            likelihood = CPU4Likelihood(
-                msa=c.msa, substitution=sub_model, clock=clock, tree=tree
+            likelihood = DNALikelihood(
+                msa=c.msa,
+                substitution=sub_model,
+                clock=clock,
+                tree=tree,
+                calculator=Calculator.CPU(),
             )
         case "cuda":
-            likelihood = CUDALikelihood(
-                msa=c.msa, substitution=sub_model, clock=clock, tree=tree
+            likelihood = DNALikelihood(
+                msa=c.msa,
+                substitution=sub_model,
+                clock=clock,
+                tree=tree,
+                calculator=Calculator.CUDA(),
             )
 
     callbacks = []

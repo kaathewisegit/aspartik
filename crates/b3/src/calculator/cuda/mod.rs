@@ -20,7 +20,7 @@ type Transition = [f64; 16];
 const CUDA_SRC: &str =
 	concat!(include_str!("typedefs.h"), include_str!("kernels.cu"),);
 
-pub struct CudaLikelihood {
+pub struct CudaCalculator {
 	stream: Arc<CudaStream>,
 
 	propose_fn: CudaFunction,
@@ -72,7 +72,7 @@ pub struct CudaLikelihood {
 	num_patterns: u32,
 }
 
-impl Calculator<4, f64> for CudaLikelihood {
+impl Calculator<4, f64> for CudaCalculator {
 	fn likelihood(
 		&mut self,
 		mut tree: MutexGuard<Tree>,
@@ -170,7 +170,7 @@ impl Calculator<4, f64> for CudaLikelihood {
 	}
 }
 
-impl CudaLikelihood {
+impl CudaCalculator {
 	/// Updates both leaves and internal nodes
 	///
 	/// Asynchronous.

@@ -1,3 +1,4 @@
+pub mod calculator;
 pub mod callback;
 pub mod clock;
 pub mod likelihood;
@@ -19,11 +20,10 @@ pub mod pymodule {
 
 	#[pymodule_export]
 	use crate::{
+		calculator::CalculatorConfig,
 		callback::TraceWriter,
 		clock::PyClock,
-		likelihood::{
-			PyCpu4Likelihood, PyCudaLikelihood, PyHeteroLikelihood,
-		},
+		likelihood::DnaLikelihood,
 		mcmc::Mcmc,
 		operators::{
 			ClassvecFlip, FixedHeightSPR, Proposal, SubtreeLeap,

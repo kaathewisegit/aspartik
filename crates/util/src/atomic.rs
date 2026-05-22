@@ -4,7 +4,31 @@
 //!
 //! [m]: https://llvm.org/docs/Atomics.html#monotonic
 
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
+
+/// An atomic `bool` on which all operations are relaxed
+#[derive(Debug, Default)]
+pub struct MonotonicBool(AtomicBool);
+
+impl From<bool> for MonotonicBool {
+	fn from(value: bool) -> Self {
+		Self(value.into())
+	}
+}
+
+impl MonotonicBool {
+	pub fn new(value: bool) -> Self {
+		value.into()
+	}
+
+	pub fn load(&self) -> bool {
+		self.0.load(Ordering::Relaxed)
+	}
+
+	pub fn store(&self, value: bool) {
+		self.0.store(value, Ordering::Relaxed)
+	}
+}
 
 /// An atomic `u32` on which all operations are relaxed
 #[derive(Debug, Default)]

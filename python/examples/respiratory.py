@@ -7,9 +7,9 @@ tutorial:
 
 from datetime import datetime
 
-from aspartik.b3 import MCMC, Clock
+from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.callbacks import PrintLogger, Timer, TraceWriter
-from aspartik.b3.likelihoods import CPU4Likelihood, CUDALikelihood
+from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import (
     FixedHeightSPR,
     RandomWalk,
@@ -77,19 +77,21 @@ operators = [
 ]
 
 try:
-    likelihood = CUDALikelihood(
+    likelihood = DNALikelihood(
         msa=msa,
         substitution=HKY(frequencies, kappa),
         clock=Clock.Strict(clock_rate),
         tree=tree,
+        calculator=Calculator.CUDA(),
     )
 except Exception as e:
     print(f"failed to create CUDALikelihood: {e}")
-    likelihood = CPU4Likelihood(
+    likelihood = DNALikelihood(
         msa=msa,
         substitution=HKY(frequencies, kappa),
         clock=Clock.Strict(clock_rate),
         tree=tree,
+        calculator=Calculator.CPU(),
     )
 
 loggers = [

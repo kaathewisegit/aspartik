@@ -1,11 +1,7 @@
 from utils.compare import compare_b3
 
-from aspartik.b3 import Clock
-from aspartik.b3.likelihoods import (
-    CPU4Likelihood,
-    CUDALikelihood,
-    Likelihood,
-)
+from aspartik.b3 import Calculator, Clock
+from aspartik.b3.likelihoods import DNALikelihood, Likelihood
 from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.substitutions import GTR
 from aspartik.io import read_msa_from_fasta
@@ -26,21 +22,22 @@ def test_compare_likelihood():
     rates = RealVector.repeat(1, 6)
 
     cpu_calculators = [
-        CPU4Likelihood(
+        DNALikelihood(
             msa=msa,
             substitution=GTR(frequencies, rates),
             clock=Clock.Strict(clock_rate),
             tree=tree,
-            scale_ln=scale,
+            calculator=Calculator.CPU().with_scale(scale),
         )
         for scale in SCALES
     ]
     try:
-        cuda_calculator = CUDALikelihood(
+        cuda_calculator = DNALikelihood(
             msa=msa,
             substitution=GTR(frequencies, rates),
             clock=Clock.Strict(clock_rate),
             tree=tree,
+            calculator=Calculator.CUDA(),
         )
     except Exception:
         cuda_calculator = None

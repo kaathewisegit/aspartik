@@ -1,8 +1,8 @@
 import pytest
 
-from aspartik.b3 import MCMC, Clock
+from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.config import MCMCConfig
-from aspartik.b3.likelihoods import CPU4Likelihood
+from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import ScaleReal, TreeScale
 from aspartik.b3.parameters import Real, Tree
 from aspartik.b3.priors import Bound
@@ -25,11 +25,12 @@ def test_mcmc():
     op_param_scale = ScaleReal(a, Uniform(0, 1), rng, weight=1)
     op_tree_scale = TreeScale(tree, Uniform(0, 1), rng, weight=3)
 
-    likelihood = CPU4Likelihood(
+    likelihood = DNALikelihood(
         msa=msa,
         substitution=K80(Real(1.0)),
         clock=Clock.Strict(Real(1.0)),
         tree=tree,
+        calculator=Calculator.CPU(),
     )
 
     mcmc = MCMC(

@@ -2,9 +2,9 @@
 <https://beast.community/first_tutorial>
 """
 
-from aspartik.b3 import MCMC, Clock
+from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, TraceWriter
-from aspartik.b3.likelihoods import CPU4Likelihood
+from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import (
     BeastNarrowExchange,
     BeastWideExchange,
@@ -54,11 +54,12 @@ operators = [
     ScaleReal(population_size, Uniform(0, 1), rng, weight=3),
 ]
 
-likelihood = CPU4Likelihood(
+likelihood = DNALikelihood(
     msa=msa,
     substitution=HKY(frequencies, kappa),
     clock=Clock.Strict(Real(1.0)),
     tree=tree,
+    calculator=Calculator.CPU(),
 )
 
 loggers = [

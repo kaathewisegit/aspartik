@@ -5,9 +5,9 @@ tutorial][l].
 [l]: https://beast.community/workshop_influenza_phylodynamics
 """
 
-from aspartik.b3 import MCMC, Clock
+from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, TraceWriter
-from aspartik.b3.likelihoods import CPU4Likelihood
+from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import (
     DeltaExchange,
     FixedHeightSPR,
@@ -83,11 +83,12 @@ operators = [
     DeltaExchange(rates, rng, weight=1),
 ]
 
-likelihood = CPU4Likelihood(
+likelihood = DNALikelihood(
     msa=msa,
     substitution=GTR(frequencies, rates),
     clock=Clock.Strict(clock_rate),
     tree=tree,
+    calculator=Calculator.CPU(),
 )
 
 loggers = [

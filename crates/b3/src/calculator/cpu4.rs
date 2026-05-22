@@ -6,7 +6,7 @@ use bytemuck::cast_slice;
 use fork_union::{SyncConstPtr, SyncMutPtr, ThreadPool, count_logical_cores};
 use parking_lot::MutexGuard;
 
-use crate::{Transitions, likelihood::Calculator, parameters::Tree};
+use crate::{Transitions, calculator::Calculator, parameters::Tree};
 use buffer::Buffer;
 use linalg::Vector;
 use sk::EditBuf;
@@ -107,8 +107,8 @@ impl Cpu4Calculator {
 	pub fn new(
 		pattern_weights: Vec<u32>,
 		mut samples: Vec<u8>,
-		num_threads: usize,
 		scale_ln: u32,
+		num_threads: usize,
 	) -> Self {
 		let num_patterns = pattern_weights.len();
 		let num_leaves = samples.len() / num_patterns;

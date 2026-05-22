@@ -1,7 +1,7 @@
 from utils.compare import compare_beast1
 
-from aspartik.b3 import Clock
-from aspartik.b3.likelihoods import CPU4Likelihood
+from aspartik.b3 import Calculator, Clock
+from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.parameters import Real, Tree
 from aspartik.b3.priors import ConstantPopulation, ExponentialGrowth
 from aspartik.b3.substitutions import JC
@@ -24,11 +24,12 @@ def test_constant_population(rng: RNG):
         },
         priors={"prior:coalescent": ConstantPopulation(tree, population_size)},
         likelihoods=[
-            CPU4Likelihood(
+            DNALikelihood(
                 msa=msa,
                 substitution=JC(),
                 clock=Clock.Strict(Real(1.0)),
                 tree=tree,
+                calculator=Calculator.CPU(),
             )
         ],
     )
@@ -53,11 +54,12 @@ def test_exponential_growth(rng: RNG):
             "prior:coalescent": ExponentialGrowth(tree, population_size, growth_rate)
         },
         likelihoods=[
-            CPU4Likelihood(
+            DNALikelihood(
                 msa=msa,
                 substitution=JC(),
                 clock=Clock.Strict(Real(1.0)),
                 tree=tree,
+                calculator=Calculator.CPU(),
             )
         ],
     )

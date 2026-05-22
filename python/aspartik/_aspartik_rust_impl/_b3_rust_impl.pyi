@@ -89,31 +89,25 @@ class Proposal:
     @classmethod
     def Hastings(cls, ratio: float) -> Proposal: ...
 
-class CPU4Likelihood(Likelihood):
+class Calculator:
+    @classmethod
+    def CPU(cls, num_threads: int = 0) -> Calculator: ...
+    @classmethod
+    def CUDA(cls, device: int = 0) -> Calculator: ...
+    def with_scale(self, scale: int) -> Calculator: ...
+
+class DNALikelihood:
     def __init__(
         self,
         msa: MSA,
         substitution: Substitution4,
         clock: Clock,
         tree: Tree,
-        scale_ln: int = 30,
+        calculator: Calculator,
     ): ...
-
-class CUDALikelihood(Likelihood):
-    def __init__(
-        self,
-        msa: MSA,
-        substitution: Substitution4,
-        clock: Clock,
-        tree: Tree,
-        *,
-        cuda_device: int = 0,
-    ): ...
-
-class HeteroLikelihood(Likelihood):
-    def __init__(self, likelihoods: list[Likelihood]): ...
-    @property
-    def class_vector(self) -> ClassVector: ...
+    def likelihood(self) -> float: ...
+    def accept(self) -> None: ...
+    def reject(self) -> None: ...
 
 class MCMC:
     def __init__(

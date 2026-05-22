@@ -7,7 +7,7 @@ use std::{fs, io::Write, path::Path};
 
 use crate::{
 	PyCallback,
-	likelihood::PyLikelihood,
+	likelihood::Likelihood,
 	operators::{Proposal, PyOperator, WeightedScheduler},
 	parameters::PyParameter,
 	priors::PyPrior,
@@ -25,7 +25,7 @@ pub struct Mcmc {
 
 	priors: Vec<PyPrior>,
 	scheduler: WeightedScheduler,
-	likelihood: PyLikelihood,
+	likelihood: Likelihood,
 	callbacks: Vec<PyCallback>,
 	#[pyo3(get)]
 	rng: Py<PyRng>,
@@ -45,7 +45,7 @@ impl Mcmc {
 
 		priors: Vec<PyPrior>,
 		operators: Vec<PyOperator>,
-		likelihood: PyLikelihood,
+		likelihood: Likelihood,
 		callbacks: Vec<PyCallback>,
 		rng: Py<PyRng>,
 
