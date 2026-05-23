@@ -2,7 +2,10 @@ use anyhow::Result;
 use pyo3::prelude::*;
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
-use linalg::{ConstMatrix, ConstSquareMatrix, eigen, lu::inverse};
+use linalg::{
+	ConstMatrix, ConstSquareMatrix, MatrixMut, MatrixRef, eigen,
+	lu::inverse,
+};
 
 pub trait SubstitutionModel<const N: usize, F> {
 	fn update(&mut self) -> Result<bool>;
@@ -454,7 +457,9 @@ impl SubstitutionModel<4, f64> for GTR {
 		[freqs[0], freqs[1], freqs[2], freqs[3]]
 	}
 
-	fn accept(&mut self) {}
+	fn accept(&mut self) {
+		self.has_changed = false;
+	}
 
 	fn reject(&mut self) {
 		if self.has_changed {
@@ -467,3 +472,87 @@ create_pysubstitution!(
 	PyGTR, GTR, "GTR",
 	frequencies: Py<PyRealVector>, rates: Py<PyRealVector>
 );
+
+struct Substitution {
+	frequencies: Py<PyRealVector>,
+	rates: Py<PyRealVector>,
+
+	p: Vec<f64>,
+	inv_p: Vec<f64>,
+	diag: Vec<f64>,
+	has_changed: bool,
+}
+
+#[expect(unused)]
+impl Substitution {
+	fn new(frequencies: Py<PyRealVector>, rates: Py<PyRealVector>) -> Self {
+		let n = frequencies.get().inner().len();
+		let expected_rates = n * (n - 1) / 2;
+		assert_eq!(rates.get().inner().len(), expected_rates);
+
+		let mut out = Self {
+			frequencies,
+			rates,
+			p: vec![0.0; n * n],
+			inv_p: vec![0.0; n * n],
+			diag: vec![0.0; n],
+			has_changed: false,
+		};
+		out.update_matrices();
+		out
+	}
+
+	fn update_matrices(&mut self) {
+		let n = self.diag.len();
+		let freqs = self.frequencies.get().inner();
+		let rates = self.rates.get().inner();
+
+		let mut q = vec![0.0; n * n];
+		let mut scale_factor = 0.0;
+
+		// TODO: fill out the matrix
+
+		for val in q.iter_mut() {
+			*val /= scale_factor;
+		}
+
+		let mut imaginary = vec![0.0; n];
+		let q_ref = MatrixRef::from_slice(&q, n, n);
+		let p_ref = MatrixMut::from_slice(&mut self.p, n, n);
+		eigen(q_ref, &mut self.diag, &mut imaginary, p_ref);
+
+		let p_ref = MatrixRef::from_slice(&self.p, n, n);
+		let inv_p_ref = MatrixMut::from_slice(&mut self.inv_p, n, n);
+		inverse(p_ref, inv_p_ref);
+	}
+
+	fn update(&mut self) -> Result<bool> {
+		if self.frequencies.get().inner().is_changed()
+			|| self.rates.get().inner().is_changed()
+		{
+			self.update_matrices();
+			self.has_changed = true;
+			Ok(true)
+		} else {
+			Ok(false)
+		}
+	}
+
+	fn get_transition(&self, distance: f64) -> Vec<f64> {
+		let n = self.diag.len();
+		let mut result = vec![0.0; n * n];
+
+		todo!("Diagonal")
+	}
+
+	fn accept(&mut self) {
+		self.has_changed = false;
+	}
+
+	fn reject(&mut self) {
+		if self.has_changed {
+			self.update_matrices();
+			self.has_changed = false;
+		}
+	}
+}
