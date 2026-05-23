@@ -1,6 +1,6 @@
 # License attribution
 
-## Forks
+## Vendoring
 
 ### [`statrs`](./statrs-license)
 
@@ -15,12 +15,26 @@ Generic string similarity searches, whose code I copied and instantiated
 instead of reusing the generic functions from the library.
 
 
-## Influences
+### [`fast_linalg`](./fast_linalg-license)
 
-### [`BEAGLE`](./beagle-license)
+Linear algebra routines (LU and eigendecomposition) implemented by Anton
+Merenkov.  They are optimized for small matrices and power `b3` instead
+of LAPACK.
 
-The current iteration of CPU likelihood calculators is heavily
-influenced by the BEAGLE implementation.
+
+## Borrowing
+
+### [BEAST X](./beast-license), [BEAST 2](./beast2-license)
+
+Aside from the obvious fact that b3 is modeled after the BEAST packages,
+a lot of operators and priors are 1-for-1 rewrites of their Java
+counterparts.
+
+
+### [BEAGLE](./beagle-license)
+
+The current iteration of CPU likelihood calculators is basically the
+BEAGLE implementation with some tweaks.
 
 
 ## Dependencies
