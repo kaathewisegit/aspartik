@@ -7,13 +7,13 @@ use std::{
 	ptr,
 };
 
+use crate::Dim;
+
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct MatrixRef<'a, T> {
 	ptr: *const T,
-	rows: u32,
-	cols: u32,
-	stride: u32,
+	dim: Dim,
 	marker: PhantomData<&'a T>,
 }
 
@@ -23,9 +23,11 @@ impl<'a, T: Copy> MatrixRef<'a, T> {
 	) -> Self {
 		Self {
 			ptr: arr.as_ptr() as *const T,
-			rows: N as u32,
-			cols: M as u32,
-			stride: M as u32,
+			dim: Dim {
+				rows: N as u32,
+				cols: M as u32,
+				row_stride: M as u32,
+			},
 			marker: PhantomData,
 		}
 	}
@@ -34,29 +36,31 @@ impl<'a, T: Copy> MatrixRef<'a, T> {
 		assert!(slice.len() <= rows * cols);
 		Self {
 			ptr: slice.as_ptr(),
-			rows: rows as u32,
-			cols: cols as u32,
-			stride: cols as u32,
+			dim: Dim {
+				rows: rows as u32,
+				cols: cols as u32,
+				row_stride: rows as u32,
+			},
 			marker: PhantomData,
 		}
 	}
 
 	pub fn num_rows(self) -> usize {
-		self.rows as usize
+		self.dim.rows as usize
 	}
 
 	pub fn num_cols(self) -> usize {
-		self.cols as usize
+		self.dim.cols as usize
 	}
 
 	pub fn is_square(self) -> bool {
-		self.cols == self.rows
+		self.dim.is_square()
 	}
 
 	pub fn to_boxed_slice(self) -> Box<[T]> {
 		let mut out = Vec::with_capacity(self.num_elements());
-		for i in 0..self.rows {
-			for j in 0..self.cols {
+		for i in 0..self.num_rows() {
+			for j in 0..self.num_cols() {
 				out.push(self[(i, j)]);
 			}
 		}
@@ -64,12 +68,19 @@ impl<'a, T: Copy> MatrixRef<'a, T> {
 	}
 
 	pub fn num_elements(&self) -> usize {
-		(self.rows * self.cols) as usize
+		self.num_rows() * self.num_cols()
 	}
 
-	/// Total number of item slots, including padding
-	fn num_slots(&self) -> usize {
-		(self.rows * self.stride) as usize
+	/// Get a reference to the element at the index `(row, col)`
+	///
+	/// # Safety
+	///
+	/// - `row < self.num_rows()`
+	/// - `col < self.num_cols()`
+	pub unsafe fn at_unchecked(self, row: usize, col: usize) -> &'a T {
+		debug_assert!(self.dim.is_index_valid(row, col));
+		// SAFETY: unsafe function with invariants
+		unsafe { &*self.ptr.add(self.dim.offset(row, col)) }
 	}
 }
 
@@ -81,34 +92,20 @@ impl<'a, T: Copy, const N: usize, const M: usize> From<&'a [[T; M]; N]>
 	}
 }
 
-impl<T> Index<(usize, usize)> for MatrixRef<'_, T> {
+impl<T: Copy> Index<(usize, usize)> for MatrixRef<'_, T> {
 	type Output = T;
 
 	fn index(&self, (row, col): (usize, usize)) -> &T {
-		assert!(row < self.rows as usize && col < self.cols as usize);
-		let idx = row * self.stride as usize + col;
-		// SAFETY: TODO
-		unsafe { &*self.ptr.add(idx) }
-	}
-}
-
-impl<T> Index<(u32, u32)> for MatrixRef<'_, T> {
-	type Output = T;
-
-	fn index(&self, (row, col): (u32, u32)) -> &T {
-		assert!(row < self.rows && col < self.cols);
-		let idx = row * self.stride + col;
-		// SAFETY: TODO
-		unsafe { &*self.ptr.add(idx as usize) }
+		assert!(self.dim.is_index_valid(row, col));
+		// SAFETY: invariant checked above
+		unsafe { self.at_unchecked(row, col) }
 	}
 }
 
 #[repr(C)]
 pub struct MatrixMut<'a, T> {
 	ptr: *mut T,
-	rows: u32,
-	cols: u32,
-	stride: u32,
+	dim: Dim,
 	marker: PhantomData<&'a mut T>,
 }
 
@@ -118,9 +115,11 @@ impl<'a, T: Copy> MatrixMut<'a, T> {
 	) -> Self {
 		Self {
 			ptr: arr.as_mut_ptr() as *mut T,
-			rows: N as u32,
-			cols: M as u32,
-			stride: M as u32,
+			dim: Dim {
+				rows: N as u32,
+				cols: M as u32,
+				row_stride: M as u32,
+			},
 			marker: PhantomData,
 		}
 	}
@@ -133,9 +132,11 @@ impl<'a, T: Copy> MatrixMut<'a, T> {
 		assert!(slice.len() <= rows * cols);
 		Self {
 			ptr: slice.as_mut_ptr(),
-			rows: rows as u32,
-			cols: cols as u32,
-			stride: cols as u32,
+			dim: Dim {
+				rows: rows as u32,
+				cols: cols as u32,
+				row_stride: cols as u32,
+			},
 			marker: PhantomData,
 		}
 	}
@@ -143,9 +144,7 @@ impl<'a, T: Copy> MatrixMut<'a, T> {
 	pub fn reborrow<'b>(&'b mut self) -> MatrixMut<'b, T> {
 		MatrixMut {
 			ptr: self.ptr,
-			rows: self.rows,
-			cols: self.cols,
-			stride: self.stride,
+			dim: self.dim,
 			marker: PhantomData,
 		}
 	}
@@ -157,7 +156,7 @@ impl<'a, T: Copy> MatrixMut<'a, T> {
 	{
 		// SAFETY: The matrix points to an allocation at least
 		// `num_slots` large.
-		unsafe { ptr::write_bytes(self.ptr, 0, self.num_slots()) }
+		unsafe { ptr::write_bytes(self.ptr, 0, self.dim.num_slots()) }
 	}
 
 	pub fn identity(mut self)
@@ -167,32 +166,45 @@ impl<'a, T: Copy> MatrixMut<'a, T> {
 		assert!(self.reborrow().is_square());
 		self.reborrow().zero();
 
-		for i in 0..self.cols {
+		for i in 0..self.num_cols() {
 			self[(i, i)] = T::one();
 		}
 	}
 
 	pub fn swap_rows(self, a: usize, b: usize) {
-		assert!(a < self.rows as usize);
-		assert!(b < self.rows as usize);
+		assert!(a < self.num_rows());
+		assert!(b < self.num_rows());
 		if a == b {
 			return;
 		}
 
+		let row_stride = self.dim.row_stride as usize;
 		// SAFETY: `a` checked above
-		let ptr_a = unsafe { self.ptr.add(self.stride as usize * a) };
+		let ptr_a = unsafe { self.ptr.add(row_stride * a) };
 		// SAFETY: `b` checked above
-		let ptr_b = unsafe { self.ptr.add(self.stride as usize * b) };
+		let ptr_b = unsafe { self.ptr.add(row_stride * b) };
 
 		// SAFETY: `a` != `b`, each slice has a length of `rows`, so
 		// they don't overlap.
 		unsafe {
-			ptr::swap_nonoverlapping(
-				ptr_a,
-				ptr_b,
-				self.rows as usize,
-			)
+			ptr::swap_nonoverlapping(ptr_a, ptr_b, self.num_rows())
 		}
+	}
+
+	/// Get a mutable reference to the element at the index `(row, col)`
+	///
+	/// # Safety
+	///
+	/// - `row < self.num_rows()`
+	/// - `col < self.num_cols()`
+	pub unsafe fn at_mut_unchecked(
+		self,
+		row: usize,
+		col: usize,
+	) -> &'a mut T {
+		debug_assert!(self.dim.is_index_valid(row, col));
+		// SAFETY: unsafe function with invariants
+		unsafe { &mut *self.ptr.add(self.dim.offset(row, col)) }
 	}
 }
 
@@ -216,42 +228,21 @@ impl<'a, T> Deref for MatrixMut<'a, T> {
 	}
 }
 
-impl<T> Index<(usize, usize)> for MatrixMut<'_, T> {
+impl<T: Copy> Index<(usize, usize)> for MatrixMut<'_, T> {
 	type Output = T;
 
 	fn index(&self, (row, col): (usize, usize)) -> &T {
-		assert!(row < self.rows as usize && col < self.cols as usize);
-		let idx = row * self.stride as usize + col;
-		// SAFETY: TODO
-		unsafe { &*self.ptr.add(idx) }
+		assert!(self.dim.is_index_valid(row, col));
+		// SAFETY: invariant checked above
+		unsafe { self.at_unchecked(row, col) }
 	}
 }
 
-impl<T> IndexMut<(usize, usize)> for MatrixMut<'_, T> {
+impl<T: Copy> IndexMut<(usize, usize)> for MatrixMut<'_, T> {
 	fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
-		assert!(row < self.rows as usize && col < self.cols as usize);
-		// SAFETY: TODO
-		unsafe { &mut *self.ptr.add(row * self.stride as usize + col) }
-	}
-}
-
-impl<T> Index<(u32, u32)> for MatrixMut<'_, T> {
-	type Output = T;
-
-	fn index(&self, (row, col): (u32, u32)) -> &T {
-		assert!(row < self.rows && col < self.cols);
-		let idx = row * self.stride + col;
-		// SAFETY: TODO
-		unsafe { &*self.ptr.add(idx as usize) }
-	}
-}
-
-impl<T> IndexMut<(u32, u32)> for MatrixMut<'_, T> {
-	fn index_mut(&mut self, (row, col): (u32, u32)) -> &mut T {
-		assert!(row < self.rows && col < self.cols);
-		let idx = row * self.stride + col;
-		// SAFETY: TODO
-		unsafe { &mut *self.ptr.add(idx as usize) }
+		assert!(self.dim.is_index_valid(row, col));
+		// SAFETY: invariant checked above
+		unsafe { self.reborrow().at_mut_unchecked(row, col) }
 	}
 }
 
