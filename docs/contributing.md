@@ -3,7 +3,8 @@
 ## Setup
 
 To build Aspartik you'll need a recent version Rust/Cargo (1.91 as of
-the time of writing)[^rt] and uv ([installation instructions][uv]).
+the time of writing)[^rt] and uv ([installation instructions][uv]).  On
+Linux You will also need `gfortran`.
 
 After cloning the repository run `uv sync` to setup everything.  This
 might take awhile, as it'll build the Rust package.
@@ -14,10 +15,11 @@ tests, etc.
 To activate the uv virtual environment run `source .venv/bin/activate`
 on Linux/macOS and `.venv\Scripts\activate` on Windows[^venv].
 
-There are currently 3 example configurations at `python/examples`.  All
-tests can be ran with `uv -m python.toolkit test`.  Both tests and
-examples use data from another repository in a submodule.  Run `git
-submodule update --init` to fetch it.
+There are several example configurations at `python/examples` which I
+often use as smoke tests.  All other checks (linting, formatting, tests)
+can be ran with `uv -m python.toolkit test`.  Both tests and examples
+use data from another repository in a submodule.  Run `git submodule
+update --init` to fetch it.
 
 
 [^rt]: I'm not using `rust-toolchain.toml` because it's not forward
