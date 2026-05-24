@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
 	ConstMatrix, ConstSquareMatrix, MatrixMut, MatrixRef, eigen,
-	lu::inverse,
+	lu::inverse, mul,
 };
 
 pub trait SubstitutionModel<const N: usize, F> {
@@ -479,7 +479,7 @@ struct Substitution {
 
 	p: Vec<f64>,
 	inv_p: Vec<f64>,
-	diag: Vec<f64>,
+	eigenvalues: Vec<f64>,
 	has_changed: bool,
 }
 
@@ -495,7 +495,7 @@ impl Substitution {
 			rates,
 			p: vec![0.0; n * n],
 			inv_p: vec![0.0; n * n],
-			diag: vec![0.0; n],
+			eigenvalues: vec![0.0; n],
 			has_changed: false,
 		};
 		out.update_matrices();
@@ -503,23 +503,53 @@ impl Substitution {
 	}
 
 	fn update_matrices(&mut self) {
-		let n = self.diag.len();
+		let n = self.eigenvalues.len();
 		let freqs = self.frequencies.get().inner();
 		let rates = self.rates.get().inner();
 
 		let mut q = vec![0.0; n * n];
-		let mut scale_factor = 0.0;
+		let mut q_ref = MatrixMut::from_slice(&mut q, n, n);
 
-		// TODO: fill out the matrix
+		let mut rate_idx = 0;
+		// upper triangular
+		for i in 0..n {
+			for j in (i + 1)..n {
+				q_ref[(i, j)] = freqs[j] * rates[rate_idx];
+				rate_idx += 1;
+			}
+		}
+
+		let mut rate_idx = 0;
+		// lower triangular
+		for i in 0..n {
+			for j in 0..i {
+				q_ref[(i, j)] = freqs[j] * rates[rate_idx];
+				rate_idx += 1;
+			}
+		}
+
+		let mut scale = 0.0;
+		// diagonal
+		for i in 0..n {
+			let mut sum = 0.0;
+			for j in 0..n {
+				if j == i {
+					continue;
+				}
+				sum += q_ref[(i, j)];
+			}
+			q_ref[(i, i)] = -sum;
+			scale += sum * freqs[i];
+		}
 
 		for val in q.iter_mut() {
-			*val /= scale_factor;
+			*val /= scale;
 		}
 
 		let mut imaginary = vec![0.0; n];
 		let q_ref = MatrixRef::from_slice(&q, n, n);
 		let p_ref = MatrixMut::from_slice(&mut self.p, n, n);
-		eigen(q_ref, &mut self.diag, &mut imaginary, p_ref);
+		eigen(q_ref, &mut self.eigenvalues, &mut imaginary, p_ref);
 
 		let p_ref = MatrixRef::from_slice(&self.p, n, n);
 		let inv_p_ref = MatrixMut::from_slice(&mut self.inv_p, n, n);
@@ -538,11 +568,25 @@ impl Substitution {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> Vec<f64> {
-		let n = self.diag.len();
-		let mut result = vec![0.0; n * n];
+	// TODO: get rid of allocations
+	fn write_transition(&self, distance: f64, dst: MatrixMut<'_, f64>) {
+		let n = self.eigenvalues.len();
 
-		todo!("Diagonal")
+		let mut inter = vec![0.0; n * n];
+		let mut inter_ref = MatrixMut::from_slice(&mut inter, n, n);
+
+		let p_ref = MatrixRef::from_slice(&self.p, n, n);
+		let inv_p_ref = MatrixRef::from_slice(&self.inv_p, n, n);
+
+		let mut diag = vec![0.0; n * n];
+		let mut diag_ref = MatrixMut::from_slice(&mut diag, n, n);
+		for i in 0..n {
+			diag_ref[(i, i)] =
+				(self.eigenvalues[i] * distance).exp();
+		}
+
+		mul(p_ref, *diag_ref, inter_ref.reborrow());
+		mul(*inter_ref, inv_p_ref, dst);
 	}
 
 	fn accept(&mut self) {

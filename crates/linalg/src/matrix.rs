@@ -197,6 +197,19 @@ impl<'a, T> MatrixMut<'a, T> {
 		}
 	}
 
+	/// Sets the diagonal elements to `values`
+	///
+	/// Does not zero out other elements of the matrix.
+	pub fn set_diagonal(mut self, values: &[T])
+	where
+		T: Copy,
+	{
+		assert!(self.reborrow().is_square());
+		for i in 0..self.num_rows() {
+			self[(i, i)] = values[i];
+		}
+	}
+
 	pub fn swap_rows(self, a: usize, b: usize) {
 		assert!(a < self.num_rows());
 		assert!(b < self.num_rows());
