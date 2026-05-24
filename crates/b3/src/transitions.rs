@@ -1,105 +1,69 @@
 use anyhow::Result;
 use linalg::MatrixMut;
-use num_traits::Zero;
 
-use crate::{
-	parameters::Tree,
-	substitution::{Substitution, SubstitutionModel},
-};
-use sk::{EditBuf, SkBuf, skbuf};
+use std::ops::Range;
 
-pub struct Transitions<const N: usize, F> {
-	transitions: SkBuf<[[F; N]; N]>,
-}
+use crate::{parameters::Tree, substitution::SubstitutionModel};
+use sk::EditBuf;
 
-impl<const N: usize, F> Transitions<N, F>
-where
-	F: Copy + Zero,
-{
-	pub fn new(length: usize) -> Self {
-		let transitions = skbuf![[[F::zero(); N]; N]; length];
-
-		Self { transitions }
-	}
-
-	pub fn update(
-		&mut self,
-		tree: &mut Tree,
-		substitution: &dyn SubstitutionModel<N, F>,
-		clock_rate: impl Fn(usize) -> f64,
-	) -> Result<()> {
-		for edge in tree.edges_to_update() {
-			let time_length = tree.edge_length(edge);
-			let length = time_length * clock_rate(edge);
-
-			let transition = substitution.get_transition(length);
-
-			self.transitions.set(edge, transition);
-		}
-
-		Ok(())
-	}
-
-	pub fn accept(&mut self) {
-		self.transitions.accept();
-	}
-
-	pub fn reject(&mut self) {
-		self.transitions.reject();
-	}
-
-	pub fn matrices(&self, edges: &[usize]) -> Vec<[[F; N]; N]> {
-		let mut out = Vec::with_capacity(edges.len());
-
-		for edge in edges {
-			out.push(self.transitions[*edge])
-		}
-
-		out
-	}
-}
-
-pub struct TransitionsDyn {
+pub struct Transitions {
 	size: usize,
 	edits: EditBuf,
 	data: Box<[f64]>,
+	frequencies: Box<[f64]>,
 }
 
-impl TransitionsDyn {
+impl Transitions {
 	pub fn new(size: usize, len: usize) -> Self {
-		let values = vec![0.0; size * size * len].into_boxed_slice();
+		let data = vec![0.0; size * size * len * 2].into_boxed_slice();
+		let frequencies = vec![0.0; size].into_boxed_slice();
 		let edits = EditBuf::new(len);
 
 		Self {
 			size,
-			data: values,
 			edits,
+			data,
+			frequencies,
 		}
+	}
+
+	fn get_range(&self, edge: usize) -> Range<usize> {
+		let ms = self.size * self.size;
+		let bit = self.edits.offset(edge);
+
+		let offset = ms * (edge * 2 + bit);
+		offset..offset + ms
 	}
 
 	pub fn update(
 		&mut self,
 		tree: &mut Tree,
-		substitution: &Substitution,
+		substitution: &mut dyn SubstitutionModel,
 		clock_rate: impl Fn(usize) -> f64,
 	) -> Result<()> {
 		let size = self.size;
-		let ms = size * size;
 		for edge in tree.edges_to_update() {
 			let time_length = tree.edge_length(edge);
 			let length = time_length * clock_rate(edge);
 
 			self.edits.set_edited(edge);
-			let bit = self.edits.offset(edge);
 
-			let offset = ms * (edge * 2 + bit);
-			let slice = &mut self.data[offset..offset + ms];
-			let m_ref = MatrixMut::from_slice(slice, size, size);
-
+			let range = self.get_range(edge);
+			let m_ref = MatrixMut::from_slice(
+				&mut self.data[range],
+				size,
+				size,
+			);
 			substitution.write_transition(length, m_ref);
 		}
 
+		substitution.write_frequencies(&mut self.frequencies);
+
 		Ok(())
+	}
+
+	pub fn frequencies(&self) -> &[f64] {
+		&self.frequencies
 	}
 
 	pub fn accept(&mut self) {
@@ -108,5 +72,20 @@ impl TransitionsDyn {
 
 	pub fn reject(&mut self) {
 		self.edits.reject();
+	}
+
+	pub fn write_matrices(&self, edges: &[usize], dst: &mut [f64]) {
+		let size = self.size;
+		let ms = size * size;
+
+		let mut offset = 0;
+		for edge in edges {
+			let range = self.get_range(*edge);
+			let src_slice = &self.data[range];
+
+			let dst_slice = &mut dst[offset..offset + ms];
+			dst_slice.copy_from_slice(src_slice);
+			offset += ms;
+		}
 	}
 }

@@ -6,11 +6,11 @@ use parking_lot::Mutex;
 use pyo3::prelude::*;
 
 use crate::{
-	TransitionsDyn,
+	Transitions,
 	calculator::StateCalculator,
 	clock::PyClock,
 	parameters::{Parameter, PyTree},
-	substitution::Substitution,
+	substitution::{self, Substitution, SubstitutionModel},
 };
 use util::atomic::{MonotonicBool, MonotonicF64};
 
@@ -20,7 +20,7 @@ pub struct StateLikelihood {
 
 	substitution: Mutex<Substitution>,
 	clock: Py<PyClock>,
-	transitions: Mutex<TransitionsDyn>,
+	transitions: Mutex<Transitions>,
 	tree: Py<PyTree>,
 
 	cache: MonotonicF64,
@@ -36,12 +36,12 @@ impl StateLikelihood {
 		values: Vec<u8>,
 		tree: Py<PyTree>,
 		clock: Py<PyClock>,
+		substitution: Substitution,
 	) -> Result<Self> {
 		let calculator = StateCalculator::new(size, values);
-		let substitution = todo!();
 
 		let transitions =
-			TransitionsDyn::new(size, tree.get().num_nodes());
+			Transitions::new(size, tree.get().num_nodes());
 
 		let out = Self {
 			calculator: Mutex::new(calculator),
@@ -82,7 +82,7 @@ impl StateLikelihood {
 
 		self.transitions.lock().update(
 			&mut tree,
-			&substitution,
+			&mut **substitution,
 			|edge| clock.get_rate(edge),
 		)?;
 

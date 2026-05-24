@@ -1,5 +1,9 @@
+#![allow(unused_variables)]
+
 use anyhow::Result;
 use pyo3::prelude::*;
+
+use std::ops::{Deref, DerefMut};
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
@@ -7,102 +11,55 @@ use linalg::{
 	lu::inverse, mul,
 };
 
-pub trait SubstitutionModel<const N: usize, F> {
+pub trait SubstitutionModel {
 	fn update(&mut self) -> Result<bool>;
 
-	fn get_transition(&self, distance: f64) -> [[F; N]; N];
+	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>);
 
-	fn get_frequencies(&self) -> [F; N];
+	fn write_frequencies(&self, dst: &mut [f64]);
 
 	fn accept(&mut self);
 
 	fn reject(&mut self);
 }
 
-#[derive(FromPyObject, IntoPyObject)]
-pub enum PySubstitution4 {
-	JC(Py<PyJC>),
-	K80(Py<PyK80>),
-	HKY(Py<PyHKY>),
-	GTR(Py<PyGTR>),
-}
+pub struct Substitution(Box<dyn SubstitutionModel + Send + Sync>);
 
-impl SubstitutionModel<4, f64> for PySubstitution4 {
-	fn update(&mut self) -> Result<bool> {
-		match self {
-			Self::JC(m) => m.get().inner().update(),
-			Self::K80(m) => m.get().inner().update(),
-			Self::HKY(m) => m.get().inner().update(),
-			Self::GTR(m) => m.get().inner().update(),
-		}
-	}
+impl<'py> FromPyObject<'_, 'py> for Substitution {
+	type Error = PyErr;
 
-	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
-		match self {
-			Self::JC(m) => m.get().inner().get_transition(distance),
-			Self::K80(m) => {
-				m.get().inner().get_transition(distance)
-			}
-			Self::HKY(m) => {
-				m.get().inner().get_transition(distance)
-			}
-			Self::GTR(m) => {
-				m.get().inner().get_transition(distance)
-			}
-		}
-	}
+	fn extract(obj: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+		let py = obj.py();
 
-	fn get_frequencies(&self) -> [f64; 4] {
-		match self {
-			Self::JC(m) => m.get().inner().get_frequencies(),
-			Self::K80(m) => m.get().inner().get_frequencies(),
-			Self::HKY(m) => m.get().inner().get_frequencies(),
-			Self::GTR(m) => m.get().inner().get_frequencies(),
-		}
-	}
-
-	fn accept(&mut self) {
-		match self {
-			Self::JC(m) => m.get().inner().accept(),
-			Self::K80(m) => m.get().inner().accept(),
-			Self::HKY(m) => m.get().inner().accept(),
-			Self::GTR(m) => m.get().inner().accept(),
-		}
-	}
-
-	fn reject(&mut self) {
-		match self {
-			Self::JC(m) => m.get().inner().reject(),
-			Self::K80(m) => m.get().inner().reject(),
-			Self::HKY(m) => m.get().inner().reject(),
-			Self::GTR(m) => m.get().inner().reject(),
-		}
+		Ok(Self(if let Ok(jc) = obj.extract::<Py<JC>>() {
+			Box::new(jc.get().clone_ref(py))
+		} else if let Ok(k80) = obj.extract::<Py<K80>>() {
+			Box::new(k80.get().clone_ref(py))
+		} else if let Ok(hky) = obj.extract::<Py<HKY>>() {
+			Box::new(hky.get().clone_ref(py))
+		} else if let Ok(gtr) = obj.extract::<Py<GTR>>() {
+			Box::new(gtr.get().clone_ref(py))
+		} else if let Ok(sub) = obj.extract::<Py<GenericSubstitution>>()
+		{
+			Box::new(sub.get().clone_ref(py))
+		} else {
+			unimplemented!("error");
+		}))
 	}
 }
 
-macro_rules! create_pysubstitution {
-	($pytype:tt, $type:ty, $str:literal, $($v:ident: $t:ty),*) => {
-		#[pyclass(name = $str, module = "aspartik.b3.substitutions", frozen)]
-		pub struct $pytype {
-			inner: parking_lot::Mutex<$type>,
-		}
+impl Deref for Substitution {
+	type Target = dyn SubstitutionModel;
 
-		impl $pytype {
-			pub fn inner(&self) -> parking_lot::MutexGuard<'_, $type> {
-				self.inner.lock()
-			}
-		}
+	fn deref(&self) -> &Self::Target {
+		self.0.as_ref()
+	}
+}
 
-		#[pymethods]
-		impl $pytype {
-			#[new]
-			fn new($($v: $t),*) -> Self {
-				Self {
-					inner: <$type>::new($($v),*).into(),
-				}
-			}
-		}
-	};
+impl DerefMut for Substitution {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		self.0.as_mut()
+	}
 }
 
 type M4 = [[f64; 4]; 4];
@@ -114,42 +71,50 @@ type M4 = [[f64; 4]; 4];
 /// Jukes and Cantor 1969, Evolution of Protein Molecules,
 /// <https://doi.org/10.1016/b978-1-4832-3211-9.50009-7>.
 #[derive(Debug, Clone, Copy)]
+#[pyclass(module = "aspartik.b3.substitutions", frozen, from_py_object)]
 pub struct JC;
 
+#[pymethods]
 impl JC {
+	#[new]
 	fn new() -> Self {
 		Self
 	}
 }
 
-impl SubstitutionModel<4, f64> for JC {
+impl JC {
+	fn clone_ref(&self, _: Python) -> JC {
+		JC
+	}
+}
+
+impl SubstitutionModel for JC {
 	fn update(&mut self) -> Result<bool> {
 		Ok(false)
 	}
 
-	fn get_transition(&self, distance: f64) -> [[f64; 4]; 4] {
+	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
 		let exp = (-4.0 / 3.0 * distance).exp();
 
 		let diagonal = 0.25 + 0.75 * exp;
 		let other = 0.25 - 0.25 * exp;
 
-		[
+		let out = [
 			[diagonal, other, other, other],
 			[other, diagonal, other, other],
 			[other, other, diagonal, other],
 			[other, other, other, diagonal],
-		]
+		];
+		dst.copy_from(MatrixRef::from_array(&out));
 	}
 
-	fn get_frequencies(&self) -> [f64; 4] {
-		[0.25; 4]
+	fn write_frequencies(&self, dst: &mut [f64]) {
+		dst.fill(0.25)
 	}
 
 	fn accept(&mut self) {}
 	fn reject(&mut self) {}
 }
-
-create_pysubstitution!(PyJC, JC, "JC",);
 
 /// Kimura 80
 ///
@@ -160,6 +125,7 @@ create_pysubstitution!(PyJC, JC, "JC",);
 /// substitutions through comparative studies of nucleotide sequences,
 /// <https://doi.org/10.1007/BF01731581>.
 #[derive(Debug)]
+#[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct K80 {
 	/// A transition is taken to be kappa times more likely than a
 	/// transversion.
@@ -167,7 +133,9 @@ pub struct K80 {
 	cached_kappa: f64,
 }
 
+#[pymethods]
 impl K80 {
+	#[new]
 	fn new(kappa: Py<PyReal>) -> Self {
 		let cached_kappa = kappa.get().inner().value();
 		Self {
@@ -177,7 +145,16 @@ impl K80 {
 	}
 }
 
-impl SubstitutionModel<4, f64> for K80 {
+impl K80 {
+	fn clone_ref(&self, py: Python) -> K80 {
+		K80 {
+			kappa: self.kappa.clone_ref(py),
+			cached_kappa: self.cached_kappa,
+		}
+	}
+}
+
+impl SubstitutionModel for K80 {
 	fn update(&mut self) -> Result<bool> {
 		let kappa = &*self.kappa.get().inner();
 
@@ -189,7 +166,7 @@ impl SubstitutionModel<4, f64> for K80 {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> M4 {
+	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
 		let kappa = self.cached_kappa;
 
 		let frac1 = -4.0 / (kappa + 2.0);
@@ -202,16 +179,17 @@ impl SubstitutionModel<4, f64> for K80 {
 		let transition = 0.25 + arg1 - arg2;
 		let transversion = 0.25 - arg1;
 
-		[
+		let out = [
 			[diagonal, transversion, transition, transversion],
 			[transversion, diagonal, transversion, transition],
 			[transition, transversion, diagonal, transversion],
 			[transversion, transition, transversion, diagonal],
-		]
+		];
+		dst.copy_from(MatrixRef::from_array(&out));
 	}
 
-	fn get_frequencies(&self) -> [f64; 4] {
-		[0.25; 4]
+	fn write_frequencies(&self, dst: &mut [f64]) {
+		dst.fill(0.25)
 	}
 
 	fn accept(&mut self) {}
@@ -220,8 +198,6 @@ impl SubstitutionModel<4, f64> for K80 {
 		self.cached_kappa = self.kappa.get().inner().value();
 	}
 }
-
-create_pysubstitution!(PyK80, K80, "K80", kappa: Py<PyReal>);
 
 /// Hasegawa et al. 1985
 ///
@@ -234,24 +210,24 @@ create_pysubstitution!(PyK80, K80, "K80", kappa: Py<PyReal>);
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct HKY {
 	/// Transition/transversion ratio
-	#[pyo3(get)]
 	kappa: Py<PyReal>,
 	/// DNA nucleotide frequencies
 	///
 	/// Must have the length of 4, with each element corresponding to
 	/// Adenine, Cytosine, Guanine, and Thymine respectively.
-	#[pyo3(get)]
 	frequencies: Py<PyRealVector>,
 
 	cached_kappa: f64,
-	cached_frequencies: (f64, f64, f64, f64),
+	cached_frequencies: [f64; 4],
 
 	p: M4,
 	inv_p: M4,
 	diag: [f64; 4],
 }
 
+#[pymethods]
 impl HKY {
+	#[new]
 	fn new(frequencies: Py<PyRealVector>, kappa: Py<PyReal>) -> Self {
 		assert_eq!(frequencies.get().inner().len(), 4);
 
@@ -260,12 +236,7 @@ impl HKY {
 			frequencies,
 
 			cached_kappa: f64::NAN,
-			cached_frequencies: (
-				f64::NAN,
-				f64::NAN,
-				f64::NAN,
-				f64::NAN,
-			),
+			cached_frequencies: [f64::NAN; 4],
 
 			p: M4::zeros(),
 			inv_p: M4::zeros(),
@@ -274,16 +245,30 @@ impl HKY {
 		out.update_matrices();
 		out
 	}
+}
+
+impl HKY {
+	fn clone_ref(&self, py: Python<'_>) -> Self {
+		Self {
+			kappa: self.kappa.clone_ref(py),
+			frequencies: self.frequencies.clone_ref(py),
+			cached_kappa: self.cached_kappa,
+			cached_frequencies: self.cached_frequencies,
+			p: self.p,
+			inv_p: self.inv_p,
+			diag: self.diag,
+		}
+	}
 
 	fn update_matrices(&mut self) {
 		self.cached_frequencies = {
 			let freqs = &*self.frequencies.get().inner();
-			(freqs[0], freqs[1], freqs[2], freqs[3])
+			[freqs[0], freqs[1], freqs[2], freqs[3]]
 		};
 		self.cached_kappa = self.kappa.get().inner().value();
 
 		let kappa = self.cached_kappa;
-		let (a, c, g, t) = self.cached_frequencies;
+		let [a, c, g, t] = self.cached_frequencies;
 		let r = a + g;
 		let y = c + t;
 
@@ -314,7 +299,7 @@ impl HKY {
 	}
 }
 
-impl SubstitutionModel<4, f64> for HKY {
+impl SubstitutionModel for HKY {
 	fn update(&mut self) -> Result<bool> {
 		if self.kappa.get().inner().is_changed()
 			|| self.frequencies.get().inner().is_changed()
@@ -326,16 +311,17 @@ impl SubstitutionModel<4, f64> for HKY {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> M4 {
+	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
 		let diag: M4 = ConstSquareMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		self.p.mul::<_, M4>(&diag).mul(&self.inv_p)
+		let out: M4 = self.p.mul::<_, M4>(&diag).mul(&self.inv_p);
+		dst.copy_from(MatrixRef::from_array(&out));
 	}
 
-	fn get_frequencies(&self) -> [f64; 4] {
-		self.cached_frequencies.into()
+	fn write_frequencies(&self, dst: &mut [f64]) {
+		dst.copy_from_slice(&self.cached_frequencies);
 	}
 
 	fn accept(&mut self) {}
@@ -345,16 +331,12 @@ impl SubstitutionModel<4, f64> for HKY {
 	}
 }
 
-create_pysubstitution!(PyHKY, HKY, "HKY", frequencies: Py<PyRealVector>, kappa: Py<PyReal>);
-
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.substitutions", frozen)]
 pub struct GTR {
 	/// DNA nucleotide frequencies
-	#[pyo3(get)]
 	frequencies: Py<PyRealVector>,
 
-	#[pyo3(get)]
 	rates: Py<PyRealVector>,
 
 	p: M4,
@@ -364,7 +346,9 @@ pub struct GTR {
 	has_changed: bool,
 }
 
+#[pymethods]
 impl GTR {
+	#[new]
 	fn new(frequencies: Py<PyRealVector>, rates: Py<PyRealVector>) -> Self {
 		assert_eq!(frequencies.get().inner().len(), 4);
 		assert_eq!(rates.get().inner().len(), 6);
@@ -382,10 +366,28 @@ impl GTR {
 		out.update_matrices();
 		out
 	}
+}
+
+impl GTR {
+	fn clone_ref(&self, py: Python<'_>) -> Self {
+		Self {
+			frequencies: self.frequencies.clone_ref(py),
+			rates: self.rates.clone_ref(py),
+			p: self.p,
+			inv_p: self.inv_p,
+			diag: self.diag,
+			has_changed: self.has_changed,
+		}
+	}
 
 	fn get_rates(&self) -> [f64; 6] {
 		let rates = &*self.rates.get().inner();
 		[rates[0], rates[1], rates[2], rates[3], rates[4], rates[5]]
+	}
+
+	fn get_frequencies(&self) -> [f64; 4] {
+		let freqs = &*self.frequencies.get().inner();
+		[freqs[0], freqs[1], freqs[2], freqs[3]]
 	}
 
 	fn update_matrices(&mut self) {
@@ -431,7 +433,7 @@ impl GTR {
 	}
 }
 
-impl SubstitutionModel<4, f64> for GTR {
+impl SubstitutionModel for GTR {
 	fn update(&mut self) -> Result<bool> {
 		if self.frequencies.get().inner().is_changed()
 			|| self.rates.get().inner().is_changed()
@@ -444,17 +446,17 @@ impl SubstitutionModel<4, f64> for GTR {
 		}
 	}
 
-	fn get_transition(&self, distance: f64) -> M4 {
+	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
 		let diag: M4 = ConstSquareMatrix::from_diagonal(
 			self.diag.map(|v| (v * distance).exp()),
 		);
 
-		self.p.mul::<_, M4>(&diag).mul(&self.inv_p)
+		let out: M4 = self.p.mul::<_, M4>(&diag).mul(&self.inv_p);
+		dst.copy_from(MatrixRef::from_array(&out));
 	}
 
-	fn get_frequencies(&self) -> [f64; 4] {
-		let freqs = &*self.frequencies.get().inner();
-		[freqs[0], freqs[1], freqs[2], freqs[3]]
+	fn write_frequencies(&self, dst: &mut [f64]) {
+		dst.copy_from_slice(&self.get_frequencies());
 	}
 
 	fn accept(&mut self) {
@@ -468,12 +470,9 @@ impl SubstitutionModel<4, f64> for GTR {
 	}
 }
 
-create_pysubstitution!(
-	PyGTR, GTR, "GTR",
-	frequencies: Py<PyRealVector>, rates: Py<PyRealVector>
-);
-
-pub struct Substitution {
+#[derive(Debug)]
+#[pyclass(module = "aspartik.b3.substitutions", frozen)]
+pub struct GenericSubstitution {
 	frequencies: Py<PyRealVector>,
 	rates: Py<PyRealVector>,
 
@@ -483,8 +482,9 @@ pub struct Substitution {
 	has_changed: bool,
 }
 
-#[expect(unused)]
-impl Substitution {
+#[pymethods]
+impl GenericSubstitution {
+	#[new]
 	fn new(frequencies: Py<PyRealVector>, rates: Py<PyRealVector>) -> Self {
 		let n = frequencies.get().inner().len();
 		let expected_rates = n * (n - 1) / 2;
@@ -500,6 +500,19 @@ impl Substitution {
 		};
 		out.update_matrices();
 		out
+	}
+}
+
+impl GenericSubstitution {
+	fn clone_ref(&self, py: Python<'_>) -> Self {
+		Self {
+			frequencies: self.frequencies.clone_ref(py),
+			rates: self.rates.clone_ref(py),
+			p: self.p.clone(),
+			inv_p: self.inv_p.clone(),
+			eigenvalues: self.eigenvalues.clone(),
+			has_changed: self.has_changed,
+		}
 	}
 
 	fn update_matrices(&mut self) {
@@ -555,8 +568,10 @@ impl Substitution {
 		let inv_p_ref = MatrixMut::from_slice(&mut self.inv_p, n, n);
 		inverse(p_ref, inv_p_ref);
 	}
+}
 
-	pub fn update(&mut self) -> Result<bool> {
+impl SubstitutionModel for GenericSubstitution {
+	fn update(&mut self) -> Result<bool> {
 		if self.frequencies.get().inner().is_changed()
 			|| self.rates.get().inner().is_changed()
 		{
@@ -569,8 +584,10 @@ impl Substitution {
 	}
 
 	// TODO: get rid of allocations
-	pub fn write_transition(&self, distance: f64, dst: MatrixMut<'_, f64>) {
+	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
 		let n = self.eigenvalues.len();
+		assert!((*dst).is_square());
+		assert_eq!((*dst).num_cols(), n);
 
 		let mut inter = vec![0.0; n * n];
 		let mut inter_ref = MatrixMut::from_slice(&mut inter, n, n);
@@ -589,11 +606,18 @@ impl Substitution {
 		mul(*inter_ref, inv_p_ref, dst);
 	}
 
-	pub fn accept(&mut self) {
+	fn write_frequencies(&self, dst: &mut [f64]) {
+		let frequencies = self.frequencies.get().inner();
+		for i in 0..frequencies.len() {
+			dst[i] = frequencies[i];
+		}
+	}
+
+	fn accept(&mut self) {
 		self.has_changed = false;
 	}
 
-	pub fn reject(&mut self) {
+	fn reject(&mut self) {
 		if self.has_changed {
 			self.update_matrices();
 			self.has_changed = false;

@@ -34,13 +34,12 @@ pub use state::StateCalculator;
 /// asynchronous implementations.  Some higher-level likelihoods compose over
 /// several calculators.  In this case, they'll first call `propose` on each
 /// calculator and then block on `likelihood` calls.
-pub trait Calculator<const N: usize, F> {
+pub trait Calculator<F> {
 	/// Calculate tree likelihood
 	fn likelihood(
 		&mut self,
 		tree: &Tree,
-		transitions: &Transitions<N, F>,
-		frequencies: [F; N],
+		transitions: &Transitions,
 	) -> Result<f64>;
 
 	/// Accept the changes made in `likelihood`
@@ -106,7 +105,7 @@ impl CalculatorConfig {
 		&self,
 		samples: Vec<u8>,
 		weights: Vec<u32>,
-	) -> Result<Box<dyn Calculator<4, f64> + Send + Sync>> {
+	) -> Result<Box<dyn Calculator<f64> + Send + Sync>> {
 		match self.kind {
 			CalculatorKind::Cpu { num_threads } => {
 				let calc = Cpu4Calculator::new(

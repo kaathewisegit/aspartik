@@ -8,18 +8,18 @@ use crate::{
 	calculator::{Calculator, CalculatorConfig},
 	clock::PyClock,
 	parameters::{Parameter, PyTree},
-	substitution::{PySubstitution4, SubstitutionModel},
+	substitution::Substitution,
 };
 use data::PyMsa;
 use util::atomic::{MonotonicBool, MonotonicF64};
 
 #[pyclass(name = "DNALikelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct DnaLikelihood {
-	calculator: Mutex<Box<dyn Calculator<4, f64> + Send>>,
+	calculator: Mutex<Box<dyn Calculator<f64> + Send>>,
 
-	substitution: Mutex<Box<dyn SubstitutionModel<4, f64> + Send>>,
+	substitution: Mutex<Substitution>,
 	clock: Py<PyClock>,
-	transitions: Mutex<Transitions<4, f64>>,
+	transitions: Mutex<Transitions>,
 	tree: Py<PyTree>,
 
 	cache: MonotonicF64,
@@ -33,19 +33,19 @@ impl DnaLikelihood {
 	fn new(
 		msa: Py<PyMsa>,
 		tree: Py<PyTree>,
-		substitution: PySubstitution4,
+		substitution: Substitution,
 		clock: Py<PyClock>,
 		calculator: CalculatorConfig,
 	) -> Result<Self> {
 		let (samples, weights) = deduplicate(msa.get());
 		let calculator = calculator.make4(samples, weights)?;
 
-		let transitions = Transitions::new(tree.get().num_nodes());
+		let transitions = Transitions::new(4, tree.get().num_nodes());
 
 		let out = Self {
 			calculator: Mutex::new(calculator),
 
-			substitution: Mutex::new(Box::new(substitution)),
+			substitution: Mutex::new(substitution),
 			clock,
 			transitions: Mutex::new(transitions),
 			tree,
@@ -81,20 +81,17 @@ impl DnaLikelihood {
 
 		self.transitions.lock().update(
 			&mut tree,
-			&**substitution,
+			&mut **substitution,
 			|edge| clock.get_rate(edge),
 		)?;
 
-		let frequencies = substitution.get_frequencies();
 		drop(clock);
-		drop(substitution);
 
 		self.launched_update.store(true);
-		let likelihood = self.calculator.lock().likelihood(
-			&tree,
-			&self.transitions.lock(),
-			frequencies,
-		)?;
+		let likelihood = self
+			.calculator
+			.lock()
+			.likelihood(&tree, &self.transitions.lock())?;
 		self.last.store(likelihood);
 		Ok(likelihood)
 	}

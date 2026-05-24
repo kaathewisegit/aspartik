@@ -245,6 +245,17 @@ impl<'a, T> MatrixMut<'a, T> {
 		// SAFETY: unsafe function with invariants
 		unsafe { &mut *self.ptr.add(self.dim.offset(row, col)) }
 	}
+
+	pub fn copy_from(mut self, src: MatrixRef<'_, T>)
+	where
+		T: Copy,
+	{
+		for i in 0..self.num_rows() {
+			for j in 0..self.num_cols() {
+				self[(i, j)] = src[(i, j)];
+			}
+		}
+	}
 }
 
 impl<'a, T, const N: usize, const M: usize> From<&'a mut [[T; M]; N]>

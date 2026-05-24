@@ -2,7 +2,7 @@
 #![expect(clippy::too_many_arguments)]
 
 use anyhow::Result;
-use bytemuck::cast_slice;
+use bytemuck::{cast_slice, checked::cast_slice_mut};
 use fork_union::{SyncConstPtr, SyncMutPtr, ThreadPool, count_logical_cores};
 
 use crate::{Transitions, calculator::Calculator, parameters::Tree};
@@ -38,16 +38,22 @@ pub struct Cpu4Calculator {
 	pool: ThreadPool,
 }
 
-impl Calculator<4, f64> for Cpu4Calculator {
+impl Calculator<f64> for Cpu4Calculator {
 	fn likelihood(
 		&mut self,
 		tree: &Tree,
-		transitions: &Transitions<4, f64>,
-		frequencies: [f64; 4],
+		transitions: &Transitions,
 	) -> Result<f64> {
+		let frequencies =
+			*transitions.frequencies().as_array::<4>().unwrap();
+
 		let (internals, children) = tree.partials_lists();
-		let tms = transitions.matrices(cast_slice(&children));
-		let tms: Vec<[[f64; 5]; 4]> = tms
+		let mut matrices = vec![[[0.0; 4]; 4]; children.len() * 2];
+		transitions.write_matrices(
+			cast_slice(&children),
+			cast_slice_mut(&mut matrices),
+		);
+		let tms: Vec<[[f64; 5]; 4]> = matrices
 			.into_iter()
 			.map(|matrix| {
 				matrix.map(|row| {

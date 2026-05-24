@@ -1,4 +1,5 @@
 use anyhow::{Context, Result, anyhow, bail, ensure};
+use bytemuck::cast_slice;
 use cudarc::{
 	driver::{
 		CudaContext, CudaFunction, CudaSlice, CudaStream, LaunchConfig,
@@ -6,12 +7,12 @@ use cudarc::{
 	},
 	nvrtc::{CompileOptions, compile_ptx_with_opts},
 };
-use sk::EditBuf;
 
 use std::{env, sync::Arc};
 
 use super::Calculator;
 use crate::{Transitions, parameters::Tree};
+use sk::EditBuf;
 
 type Row = [f64; 4];
 type Transition = [f64; 16];
@@ -51,6 +52,7 @@ pub struct CudaCalculator {
 	/// Children of internal nodes updated in current proposal
 	children: CudaSlice<u32>,
 
+	transitions_host: Box<[f64]>,
 	/// Transitions for each edge from `edges`
 	///
 	/// The length is `num_updated_nodes`.
@@ -71,15 +73,20 @@ pub struct CudaCalculator {
 	num_patterns: u32,
 }
 
-impl Calculator<4, f64> for CudaCalculator {
+impl Calculator<f64> for CudaCalculator {
 	fn likelihood(
 		&mut self,
 		tree: &Tree,
-		transitions: &Transitions<4, f64>,
-		frequencies: [f64; 4],
+		transitions: &Transitions,
 	) -> Result<f64> {
+		let frequencies =
+			*transitions.frequencies().as_array::<4>().unwrap();
+
 		let (nodes, children, leaves_end) = tree.propagation_lists();
-		let tms = transitions.matrices(&nodes[..nodes.len() - 1]);
+		transitions.write_matrices(
+			&nodes[..nodes.len() - 1],
+			&mut self.transitions_host,
+		);
 
 		let root_children = children.last().unwrap();
 		let nodes: Vec<_> = nodes.iter().map(|&n| n as u32).collect();
@@ -98,7 +105,9 @@ impl Calculator<4, f64> for CudaCalculator {
 
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
 		self.stream.memcpy_htod(&children, &mut self.children)?;
-		let tms: &[Transition] = bytemuck::cast_slice(&tms);
+
+		let tms =
+			cast_slice(&self.transitions_host[..nodes.len() * 16]);
 		self.stream.memcpy_htod(tms, &mut self.transitions)?;
 
 		let mut leaves_end = leaves_end as u32;
@@ -383,6 +392,7 @@ impl CudaCalculator {
 			likelihoods,
 			likelihoods_host: vec![0.0; num_patterns].into(),
 			children,
+			transitions_host: vec![0.0; num_nodes * 16].into(),
 			transitions,
 			nodes,
 

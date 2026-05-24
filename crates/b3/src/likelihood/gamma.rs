@@ -10,8 +10,7 @@ use crate::{
 	calculator::{Calculator, CalculatorConfig},
 	clock::PyClock,
 	parameters::{Parameter, PyReal, PyTree, Real},
-	substitution::PySubstitution4,
-	substitution::SubstitutionModel,
+	substitution::Substitution,
 };
 use data::PyMsa;
 use sk::SkBuf;
@@ -20,12 +19,12 @@ use util::atomic::{MonotonicBool, MonotonicF64};
 
 #[pyclass(module = "aspartik.b3.likelihoods", frozen)]
 pub struct GammaLikelihood {
-	calculators: Mutex<Vec<Box<dyn Calculator<4, f64> + Send + Sync>>>,
+	calculators: Mutex<Vec<Box<dyn Calculator<f64> + Send + Sync>>>,
 
-	substitution: Mutex<Box<dyn SubstitutionModel<4, f64> + Send>>,
+	substitution: Mutex<Substitution>,
 	clock: Py<PyClock>,
 	alpha: Py<PyReal>,
-	transitions: Mutex<Vec<Transitions<4, f64>>>,
+	transitions: Mutex<Vec<Transitions>>,
 	tree: Py<PyTree>,
 
 	categories: Mutex<SkBuf<f64>>,
@@ -43,7 +42,7 @@ impl GammaLikelihood {
 	fn new(
 		msa: Py<PyMsa>,
 		tree: Py<PyTree>,
-		substitution: PySubstitution4,
+		substitution: Substitution,
 		num_categories: usize,
 		alpha: Py<PyReal>,
 		clock: Py<PyClock>,
@@ -60,7 +59,7 @@ impl GammaLikelihood {
 			calculators.push(calculator
 				.make4(samples.clone(), weights.clone())?);
 
-			let transition = Transitions::new(num_nodes);
+			let transition = Transitions::new(4, num_nodes);
 			transitions.push(transition);
 		}
 
@@ -73,7 +72,7 @@ impl GammaLikelihood {
 			calculators: Mutex::new(calculators),
 
 			clock,
-			substitution: Mutex::new(Box::new(substitution)),
+			substitution: Mutex::new(substitution),
 			alpha,
 			transitions: Mutex::new(transitions),
 			tree,
@@ -126,14 +125,12 @@ impl GammaLikelihood {
 		{
 			transition.update(
 				&mut tree,
-				&**substitution,
+				&mut **substitution,
 				|edge| clock.get_rate(edge) * category,
 			)?;
 		}
 
-		let frequencies = substitution.get_frequencies();
 		drop(clock);
-		drop(substitution);
 
 		self.launched_update.store(true);
 
@@ -151,7 +148,7 @@ impl GammaLikelihood {
 			let calculator = unsafe { &mut *calc_ptr.get(i) };
 
 			let out = calculator
-				.likelihood(&tree, transition, frequencies)
+				.likelihood(&tree, transition)
 				.unwrap();
 			*likelihood.lock() += out;
 		});

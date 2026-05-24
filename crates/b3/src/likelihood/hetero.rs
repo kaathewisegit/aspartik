@@ -9,19 +9,19 @@ use crate::{
 	calculator::{Calculator, CalculatorConfig},
 	clock::PyClock,
 	parameters::{Parameter, PyClassVector, PyTree},
-	substitution::{PySubstitution4, SubstitutionModel},
+	substitution::Substitution,
 };
 use data::PyMsa;
 use util::atomic::{MonotonicBool, MonotonicF64};
 
 #[pyclass(module = "aspartik.b3.likelihoods", frozen)]
 pub struct HeteroLikelihood {
-	calculators: Mutex<Vec<Box<dyn Calculator<4, f64> + Send + Sync>>>,
+	calculators: Mutex<Vec<Box<dyn Calculator<f64> + Send + Sync>>>,
 
 	classes: Py<PyClassVector>,
-	substitutions: Mutex<Vec<PySubstitution4>>,
+	substitutions: Mutex<Vec<Substitution>>,
 	clocks: Vec<Py<PyClock>>,
-	transitions: Mutex<Vec<Transitions<4, f64>>>,
+	transitions: Mutex<Vec<Transitions>>,
 	tree: Py<PyTree>,
 
 	weights: Vec<u32>,
@@ -41,7 +41,7 @@ impl HeteroLikelihood {
 		msa: Py<PyMsa>,
 		tree: Py<PyTree>,
 		classes: Py<PyClassVector>,
-		substitutions: Vec<PySubstitution4>,
+		substitutions: Vec<Substitution>,
 		clocks: Vec<Py<PyClock>>,
 		calculator: CalculatorConfig,
 	) -> Result<Self> {
@@ -60,7 +60,7 @@ impl HeteroLikelihood {
 			calculators.push(calculator
 				.make4(samples.clone(), weights.clone())?);
 
-			let transition = Transitions::new(num_nodes);
+			let transition = Transitions::new(4, num_nodes);
 			transitions.push(transition);
 		}
 
@@ -117,12 +117,14 @@ impl HeteroLikelihood {
 		for ((transition, clock), substitution) in transitions
 			.iter_mut()
 			.zip(&self.clocks)
-			.zip(substitutions.iter())
+			.zip(substitutions.iter_mut())
 		{
 			let clock = clock.get().inner();
-			transition.update(&mut tree, substitution, |edge| {
-				clock.get_rate(edge)
-			})?;
+			transition.update(
+				&mut tree,
+				&mut **substitution,
+				|edge| clock.get_rate(edge),
+			)?;
 		}
 
 		self.launched_update.store(true);
@@ -133,16 +135,12 @@ impl HeteroLikelihood {
 		self.pool.lock().for_n(self.clocks.len(), |prong| {
 			let i = prong.task_index;
 			let transition = &transitions[i];
-			let substitution = &substitutions[i];
-			let frequencies = substitution.get_frequencies();
 
 			// SAFETY: `i` is less thant `calculator.len()`, all
 			// accesses will be disjoint due to `for_n`.
 			let calculator = unsafe { &mut *calc_ptr.get(i) };
 
-			calculator
-				.likelihood(&tree, transition, frequencies)
-				.unwrap();
+			calculator.likelihood(&tree, transition).unwrap();
 			let mut likelihoods = self.likelihoods.lock();
 			likelihoods[i]
 				.copy_from_slice(calculator.likelihoods());

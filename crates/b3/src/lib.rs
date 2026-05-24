@@ -10,7 +10,7 @@ pub mod substitution;
 mod transitions;
 
 pub use callback::PyCallback;
-pub use transitions::{Transitions, TransitionsDyn};
+pub use transitions::Transitions;
 
 use pyo3::prelude::*;
 
@@ -39,7 +39,7 @@ pub mod pymodule {
 			BayesianSkyline, ConstantPopulation, ExponentialGrowth,
 			Monophyly, SymmetricDirichlet, Yule,
 		},
-		substitution::{PyGTR, PyHKY, PyJC, PyK80},
+		substitution::{GTR, HKY, JC, K80},
 	};
 
 	#[pymodule_init]
