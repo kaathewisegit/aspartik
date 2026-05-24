@@ -89,6 +89,10 @@ impl Calculator<4, f64> for Cpu4Calculator {
 		Ok(())
 	}
 
+	fn likelihoods(&self) -> &[f64] {
+		&self.likelihoods
+	}
+
 	fn num_patterns(&self) -> usize {
 		self.num_patterns
 	}

@@ -8,11 +8,13 @@ use data::{DnaNucleotide, Msa, seq::Character};
 mod compound;
 mod dna;
 mod gamma;
+mod hetero;
 mod state;
 
 pub use compound::CompoundLikelihood;
 pub use dna::DnaLikelihood;
 pub use gamma::GammaLikelihood;
+pub use hetero::HeteroLikelihood;
 pub use state::StateLikelihood;
 
 #[derive(FromPyObject, IntoPyObject)]
@@ -20,6 +22,7 @@ pub enum Likelihood {
 	Dna(Py<DnaLikelihood>),
 	Gamma(Py<GammaLikelihood>),
 	Compound(Py<CompoundLikelihood>),
+	Hetero(Py<HeteroLikelihood>),
 }
 
 impl Likelihood {
@@ -28,6 +31,7 @@ impl Likelihood {
 			Likelihood::Dna(l) => l.get().likelihood(),
 			Likelihood::Gamma(l) => l.get().likelihood(),
 			Likelihood::Compound(l) => l.get().likelihood(),
+			Likelihood::Hetero(l) => l.get().likelihood(),
 		}
 	}
 
@@ -36,6 +40,7 @@ impl Likelihood {
 			Likelihood::Dna(l) => l.get().accept(),
 			Likelihood::Gamma(l) => l.get().accept(),
 			Likelihood::Compound(l) => l.get().accept(),
+			Likelihood::Hetero(l) => l.get().accept(),
 		}
 	}
 
@@ -44,6 +49,7 @@ impl Likelihood {
 			Likelihood::Dna(l) => l.get().reject(),
 			Likelihood::Gamma(l) => l.get().reject(),
 			Likelihood::Compound(l) => l.get().reject(),
+			Likelihood::Hetero(l) => l.get().reject(),
 		}
 	}
 
@@ -52,6 +58,7 @@ impl Likelihood {
 			Self::Dna(l) => Self::Dna(l.clone_ref(py)),
 			Self::Gamma(l) => Self::Gamma(l.clone_ref(py)),
 			Self::Compound(l) => Self::Compound(l.clone_ref(py)),
+			Self::Hetero(l) => Self::Hetero(l.clone_ref(py)),
 		}
 	}
 }

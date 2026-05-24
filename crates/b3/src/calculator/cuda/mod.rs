@@ -163,6 +163,10 @@ impl Calculator<4, f64> for CudaCalculator {
 		Ok(())
 	}
 
+	fn likelihoods(&self) -> &[f64] {
+		&self.likelihoods_host
+	}
+
 	fn num_patterns(&self) -> usize {
 		self.num_patterns as usize
 	}

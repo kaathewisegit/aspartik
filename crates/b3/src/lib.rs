@@ -25,6 +25,7 @@ pub mod pymodule {
 		clock::PyClock,
 		likelihood::{
 			CompoundLikelihood, DnaLikelihood, GammaLikelihood,
+			HeteroLikelihood,
 		},
 		mcmc::Mcmc,
 		operators::{

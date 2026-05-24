@@ -52,6 +52,9 @@ pub trait Calculator<const N: usize, F> {
 	/// exactly what it was after the last call to `accept`.
 	fn reject(&mut self) -> Result<()>;
 
+	/// Pattern likelihoods calculated after the last update
+	fn likelihoods(&self) -> &[f64];
+
 	/// Number of patterns in the alignment
 	fn num_patterns(&self) -> usize;
 }
