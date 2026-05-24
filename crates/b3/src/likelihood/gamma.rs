@@ -134,7 +134,6 @@ impl GammaLikelihood {
 		let frequencies = substitution.get_frequencies();
 		drop(clock);
 		drop(substitution);
-		drop(tree);
 
 		self.launched_update.store(true);
 
@@ -146,7 +145,6 @@ impl GammaLikelihood {
 		self.pool.lock().for_n(categories.len(), |prong| {
 			let i = prong.task_index;
 			let transition = &transitions[i];
-			let tree = self.tree.get().inner();
 
 			// SAFETY: `i` is less thant `calculator.len()`, all
 			// accesses will be disjoint due to `for_n`.
