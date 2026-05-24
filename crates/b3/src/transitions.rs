@@ -25,12 +25,12 @@ where
 	pub fn update(
 		&mut self,
 		tree: &mut Tree,
-		clock_rate: f64,
 		substitution: &dyn SubstitutionModel<N, F>,
+		clock_rate: impl Fn(usize) -> f64,
 	) -> Result<()> {
 		for edge in tree.edges_to_update() {
 			let time_length = tree.edge_length(edge);
-			let length = time_length * clock_rate;
+			let length = time_length * clock_rate(edge);
 
 			let transition = substitution.get_transition(length);
 
@@ -80,14 +80,14 @@ impl TransitionsDyn {
 	pub fn update(
 		&mut self,
 		tree: &mut Tree,
-		clock_rate: f64,
 		substitution: &Substitution,
+		clock_rate: impl Fn(usize) -> f64,
 	) -> Result<()> {
 		let size = self.size;
 		let ms = size * size;
 		for edge in tree.edges_to_update() {
 			let time_length = tree.edge_length(edge);
-			let length = time_length * clock_rate;
+			let length = time_length * clock_rate(edge);
 
 			self.edits.set_edited(edge);
 			let bit = self.edits.offset(edge);

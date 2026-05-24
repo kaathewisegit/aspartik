@@ -114,7 +114,6 @@ impl GammaLikelihood {
 			return Ok(self.cache.load());
 		}
 
-		let clock_rate = clock.get_rate();
 		let mut categories = self.categories.lock();
 
 		// recalculate categories if alpha has changed
@@ -127,8 +126,8 @@ impl GammaLikelihood {
 		{
 			transition.update(
 				&mut tree,
-				clock_rate * category,
 				&**substitution,
+				|edge| clock.get_rate(edge) * category,
 			)?;
 		}
 
