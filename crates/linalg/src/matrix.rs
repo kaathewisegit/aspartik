@@ -10,14 +10,37 @@ use std::{
 use crate::Dim;
 
 #[repr(C)]
-#[derive(Clone, Copy)]
 pub struct MatrixRef<'a, T> {
 	ptr: *const T,
 	dim: Dim,
 	marker: PhantomData<&'a T>,
 }
 
-impl<'a, T: Copy> MatrixRef<'a, T> {
+impl<T> Clone for MatrixRef<'_, T> {
+	fn clone(&self) -> Self {
+		*self
+	}
+}
+
+impl<T> Copy for MatrixRef<'_, T> {}
+
+impl<'a, T> MatrixRef<'a, T> {
+	/// Create a new matrix reference from a pointer
+	///
+	/// # Safety
+	///
+	/// `ptr` must point to an allocation which lives for at least `'a`, has
+	/// no mutable references to it for the duration of the existence of a
+	/// `MatrixRef`, and has at least `dim.num_slots()` valid elements after
+	/// `ptr`.
+	pub unsafe fn from_raw_parts(ptr: *const T, dim: Dim) -> Self {
+		Self {
+			ptr,
+			dim,
+			marker: PhantomData,
+		}
+	}
+
 	pub fn from_array<const N: usize, const M: usize>(
 		arr: &'a [[T; M]; N],
 	) -> Self {
@@ -57,7 +80,10 @@ impl<'a, T: Copy> MatrixRef<'a, T> {
 		self.dim.is_square()
 	}
 
-	pub fn to_boxed_slice(self) -> Box<[T]> {
+	pub fn to_boxed_slice(self) -> Box<[T]>
+	where
+		T: Copy,
+	{
 		let mut out = Vec::with_capacity(self.num_elements());
 		for i in 0..self.num_rows() {
 			for j in 0..self.num_cols() {
@@ -84,7 +110,7 @@ impl<'a, T: Copy> MatrixRef<'a, T> {
 	}
 }
 
-impl<'a, T: Copy, const N: usize, const M: usize> From<&'a [[T; M]; N]>
+impl<'a, T, const N: usize, const M: usize> From<&'a [[T; M]; N]>
 	for MatrixRef<'a, T>
 {
 	fn from(arr: &'a [[T; M]; N]) -> Self {
@@ -92,7 +118,7 @@ impl<'a, T: Copy, const N: usize, const M: usize> From<&'a [[T; M]; N]>
 	}
 }
 
-impl<T: Copy> Index<(usize, usize)> for MatrixRef<'_, T> {
+impl<T> Index<(usize, usize)> for MatrixRef<'_, T> {
 	type Output = T;
 
 	fn index(&self, (row, col): (usize, usize)) -> &T {
@@ -109,7 +135,7 @@ pub struct MatrixMut<'a, T> {
 	marker: PhantomData<&'a mut T>,
 }
 
-impl<'a, T: Copy> MatrixMut<'a, T> {
+impl<'a, T> MatrixMut<'a, T> {
 	pub fn from_array<const N: usize, const M: usize>(
 		arr: &'a mut [[T; M]; N],
 	) -> Self {
@@ -208,7 +234,7 @@ impl<'a, T: Copy> MatrixMut<'a, T> {
 	}
 }
 
-impl<'a, T: Copy, const N: usize, const M: usize> From<&'a mut [[T; M]; N]>
+impl<'a, T, const N: usize, const M: usize> From<&'a mut [[T; M]; N]>
 	for MatrixMut<'a, T>
 {
 	fn from(arr: &'a mut [[T; M]; N]) -> Self {
@@ -228,7 +254,7 @@ impl<'a, T> Deref for MatrixMut<'a, T> {
 	}
 }
 
-impl<T: Copy> Index<(usize, usize)> for MatrixMut<'_, T> {
+impl<T> Index<(usize, usize)> for MatrixMut<'_, T> {
 	type Output = T;
 
 	fn index(&self, (row, col): (usize, usize)) -> &T {
@@ -238,7 +264,7 @@ impl<T: Copy> Index<(usize, usize)> for MatrixMut<'_, T> {
 	}
 }
 
-impl<T: Copy> IndexMut<(usize, usize)> for MatrixMut<'_, T> {
+impl<T> IndexMut<(usize, usize)> for MatrixMut<'_, T> {
 	fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
 		assert!(self.dim.is_index_valid(row, col));
 		// SAFETY: invariant checked above

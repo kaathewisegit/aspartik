@@ -1,6 +1,37 @@
+use std::marker::PhantomData;
+
 use num_traits::Num;
 
-use crate::vector::Vector;
+use crate::{Dim, MatrixRef, vector::Vector};
+
+#[derive(Clone, Copy)]
+pub struct ConstMatrixRef<'a, T, const N: usize, const M: usize> {
+	ptr: *const T,
+	marker: PhantomData<&'a T>,
+}
+
+impl<'a, T, const N: usize, const M: usize> ConstMatrixRef<'a, T, N, M> {
+	pub fn from_array(arr: &'a [[T; M]; N]) -> Self {
+		Self {
+			ptr: arr.as_ptr() as *const T,
+			marker: PhantomData,
+		}
+	}
+
+	pub const fn dim(self) -> Dim {
+		Dim {
+			rows: N as u32,
+			cols: M as u32,
+			row_stride: M as u32,
+		}
+	}
+
+	pub fn as_ref(self) -> MatrixRef<'a, T> {
+		// SAFETY: the data will live at least `'a` because of the
+		// `self` borrow, and the pointer is valid by construction.
+		unsafe { MatrixRef::from_raw_parts(self.ptr, self.dim()) }
+	}
+}
 
 pub trait ConstMatrix<T, const N: usize, const M: usize>:
 	Sized + Clone
