@@ -81,7 +81,7 @@ impl<T> SkBuf<T> {
 	/// `i` must be less than the length of `self`.
 	pub unsafe fn get_unchecked(&self, i: usize) -> &T {
 		// SAFETY: `i < self.len()` invariant
-		let idx = i * 2 + unsafe { self.edits.offset(i) };
+		let idx = i * 2 + unsafe { self.edits.offset_unchecked(i) };
 		// SAFETY: `i < self.len()`, so `i * 2 + 1` is less than
 		// `self.len() * 2`, the length of `inner`
 		unsafe { self.items.get_unchecked(idx) }
@@ -94,7 +94,7 @@ impl<T> SkBuf<T> {
 	/// `i` must be less than the length of `self`.
 	pub unsafe fn get_unchecked_mut(&mut self, i: usize) -> &mut T {
 		// SAFETY: `i < self.len()` invariant
-		let idx = i * 2 + unsafe { self.edits.offset(i) };
+		let idx = i * 2 + unsafe { self.edits.offset_unchecked(i) };
 		// SAFETY: see `active_inner`
 		unsafe { self.items.get_unchecked_mut(idx) }
 	}

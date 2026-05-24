@@ -473,7 +473,7 @@ create_pysubstitution!(
 	frequencies: Py<PyRealVector>, rates: Py<PyRealVector>
 );
 
-struct Substitution {
+pub struct Substitution {
 	frequencies: Py<PyRealVector>,
 	rates: Py<PyRealVector>,
 
@@ -569,7 +569,7 @@ impl Substitution {
 	}
 
 	// TODO: get rid of allocations
-	fn write_transition(&self, distance: f64, dst: MatrixMut<'_, f64>) {
+	pub fn write_transition(&self, distance: f64, dst: MatrixMut<'_, f64>) {
 		let n = self.eigenvalues.len();
 
 		let mut inter = vec![0.0; n * n];
@@ -589,11 +589,11 @@ impl Substitution {
 		mul(*inter_ref, inv_p_ref, dst);
 	}
 
-	fn accept(&mut self) {
+	pub fn accept(&mut self) {
 		self.has_changed = false;
 	}
 
-	fn reject(&mut self) {
+	pub fn reject(&mut self) {
 		if self.has_changed {
 			self.update_matrices();
 			self.has_changed = false;

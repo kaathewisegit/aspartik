@@ -10,7 +10,7 @@ pub mod substitution;
 mod transitions;
 
 pub use callback::PyCallback;
-pub use transitions::Transitions;
+pub use transitions::{Transitions, TransitionsDyn};
 
 use pyo3::prelude::*;
 

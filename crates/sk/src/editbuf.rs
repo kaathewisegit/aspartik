@@ -21,9 +21,9 @@ impl EditBuf {
 	///
 	/// # Safety
 	///
-	/// `i` must be less than the length of `self`.
-	pub unsafe fn offset(&self, index: usize) -> usize {
-		// SAFETY: `i < self.len()` invariant
+	/// `index` must be less than the length of `self`.
+	pub unsafe fn offset_unchecked(&self, index: usize) -> usize {
+		// SAFETY: `index < self.len()` invariant
 		let m = unsafe { self.0.get_unchecked(index) } & 0b1;
 		usize::from(m)
 	}
@@ -32,11 +32,17 @@ impl EditBuf {
 	///
 	/// # Safety
 	///
-	/// `i` must be less than the length of `self`.
-	pub unsafe fn offset_other(&self, index: usize) -> usize {
-		// SAFETY: `i < self.len()` invariant
-		let offset = unsafe { self.offset(index) };
+	/// `index` must be less than the length of `self`.
+	pub unsafe fn offset_other_unchecked(&self, index: usize) -> usize {
+		// SAFETY: `index < self.len()` invariant
+		let offset = unsafe { self.offset_unchecked(index) };
 		offset ^ 0b1
+	}
+
+	pub fn offset(&self, index: usize) -> usize {
+		assert!(index < self.len());
+		// SAFETY: invariant checked above
+		unsafe { self.offset_unchecked(index) }
 	}
 
 	pub fn accept(&mut self) {

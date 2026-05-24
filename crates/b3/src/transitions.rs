@@ -1,8 +1,12 @@
 use anyhow::Result;
+use linalg::MatrixMut;
 use num_traits::Zero;
 
-use crate::{parameters::Tree, substitution::SubstitutionModel};
-use sk::{SkBuf, skbuf};
+use crate::{
+	parameters::Tree,
+	substitution::{Substitution, SubstitutionModel},
+};
+use sk::{EditBuf, SkBuf, skbuf};
 
 pub struct Transitions<const N: usize, F> {
 	transitions: SkBuf<[[F; N]; N]>,
@@ -10,7 +14,7 @@ pub struct Transitions<const N: usize, F> {
 
 impl<const N: usize, F> Transitions<N, F>
 where
-	F: Default + Copy + Zero + Default,
+	F: Copy + Zero,
 {
 	pub fn new(length: usize) -> Self {
 		let transitions = skbuf![[[F::zero(); N]; N]; length];
@@ -18,7 +22,6 @@ where
 		Self { transitions }
 	}
 
-	/// Returns `true` if a full update is needed.
 	pub fn update(
 		&mut self,
 		tree: &mut Tree,
@@ -53,5 +56,57 @@ where
 		}
 
 		out
+	}
+}
+
+pub struct TransitionsDyn {
+	size: usize,
+	edits: EditBuf,
+	data: Box<[f64]>,
+}
+
+impl TransitionsDyn {
+	pub fn new(size: usize, len: usize) -> Self {
+		let values = vec![0.0; size * size * len].into_boxed_slice();
+		let edits = EditBuf::new(len);
+
+		Self {
+			size,
+			data: values,
+			edits,
+		}
+	}
+
+	pub fn update(
+		&mut self,
+		tree: &mut Tree,
+		clock_rate: f64,
+		substitution: &Substitution,
+	) -> Result<()> {
+		let size = self.size;
+		let ms = size * size;
+		for edge in tree.edges_to_update() {
+			let time_length = tree.edge_length(edge);
+			let length = time_length * clock_rate;
+
+			self.edits.set_edited(edge);
+			let bit = self.edits.offset(edge);
+
+			let offset = ms * (edge * 2 + bit);
+			let slice = &mut self.data[offset..offset + ms];
+			let m_ref = MatrixMut::from_slice(slice, size, size);
+
+			substitution.write_transition(length, m_ref);
+		}
+
+		Ok(())
+	}
+
+	pub fn accept(&mut self) {
+		self.edits.accept();
+	}
+
+	pub fn reject(&mut self) {
+		self.edits.reject();
 	}
 }

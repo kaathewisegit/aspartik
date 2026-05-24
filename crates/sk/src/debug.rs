@@ -25,7 +25,7 @@ where
 
 			let is_edited = self.is_changed_at(i);
 			// SAFETY: i < self.len()
-			let offset = unsafe { self.edits.offset(i) };
+			let offset = unsafe { self.edits.offset_unchecked(i) };
 
 			if is_edited && offset == 0 {
 				self.items[i * 2].fmt(f)?;

@@ -186,13 +186,13 @@ unsafe fn propose(
 
 	macro_rules! offset {
 		($index:expr) => {{
-			let ptr = selectors.offset($index);
+			let ptr = selectors.offset_unchecked($index);
 			($index * 2 + ptr) * num_patterns
 		}};
 	}
 	macro_rules! offset_old {
 		($index:expr) => {{
-			let ptr = selectors.offset_other($index);
+			let ptr = selectors.offset_other_unchecked($index);
 			($index * 2 + ptr) * num_patterns
 		}};
 	}
