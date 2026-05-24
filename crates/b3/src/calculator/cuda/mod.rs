@@ -6,7 +6,6 @@ use cudarc::{
 	},
 	nvrtc::{CompileOptions, compile_ptx_with_opts},
 };
-use parking_lot::MutexGuard;
 use sk::EditBuf;
 
 use std::{env, sync::Arc};
@@ -75,7 +74,7 @@ pub struct CudaCalculator {
 impl Calculator<4, f64> for CudaCalculator {
 	fn likelihood(
 		&mut self,
-		mut tree: MutexGuard<Tree>,
+		tree: &Tree,
 		transitions: &Transitions<4, f64>,
 		frequencies: [f64; 4],
 	) -> Result<f64> {
@@ -121,8 +120,6 @@ impl Calculator<4, f64> for CudaCalculator {
 			(root_children[0] as u32, root_children[1] as u32),
 			frequencies,
 		)?;
-
-		drop(tree);
 
 		// blocks on the running kernels
 		self.stream.memcpy_dtoh(

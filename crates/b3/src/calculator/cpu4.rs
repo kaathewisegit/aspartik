@@ -4,7 +4,6 @@
 use anyhow::Result;
 use bytemuck::cast_slice;
 use fork_union::{SyncConstPtr, SyncMutPtr, ThreadPool, count_logical_cores};
-use parking_lot::MutexGuard;
 
 use crate::{Transitions, calculator::Calculator, parameters::Tree};
 use buffer::Buffer;
@@ -42,7 +41,7 @@ pub struct Cpu4Calculator {
 impl Calculator<4, f64> for Cpu4Calculator {
 	fn likelihood(
 		&mut self,
-		mut tree: MutexGuard<Tree>,
+		tree: &Tree,
 		transitions: &Transitions<4, f64>,
 		frequencies: [f64; 4],
 	) -> Result<f64> {
@@ -57,8 +56,6 @@ impl Calculator<4, f64> for Cpu4Calculator {
 				})
 			})
 			.collect();
-
-		drop(tree);
 
 		self.set_selectors(&internals);
 

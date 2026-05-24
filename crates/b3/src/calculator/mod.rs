@@ -1,5 +1,4 @@
 use anyhow::Result;
-use parking_lot::MutexGuard;
 use pyo3::{prelude::*, types::PyType};
 
 use std::borrow::BorrowMut;
@@ -39,7 +38,7 @@ pub trait Calculator<const N: usize, F> {
 	/// Calculate tree likelihood
 	fn likelihood(
 		&mut self,
-		tree: MutexGuard<Tree>,
+		tree: &Tree,
 		transitions: &Transitions<N, F>,
 		frequencies: [F; N],
 	) -> Result<f64>;

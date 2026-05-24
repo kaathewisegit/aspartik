@@ -91,7 +91,7 @@ impl DnaLikelihood {
 
 		self.launched_update.store(true);
 		let likelihood = self.calculator.lock().likelihood(
-			tree,
+			&tree,
 			&self.transitions.lock(),
 			frequencies,
 		)?;

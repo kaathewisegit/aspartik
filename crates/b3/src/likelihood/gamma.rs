@@ -153,7 +153,7 @@ impl GammaLikelihood {
 			let calculator = unsafe { &mut *calc_ptr.get(i) };
 
 			let out = calculator
-				.likelihood(tree, transition, frequencies)
+				.likelihood(&tree, transition, frequencies)
 				.unwrap();
 			*likelihood.lock() += out;
 		});

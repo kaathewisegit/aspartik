@@ -28,10 +28,6 @@ pub struct PyPrior {
 }
 
 impl PyPrior {
-	pub fn id(&self) -> usize {
-		self.inner.as_ptr() as usize
-	}
-
 	pub fn clone_ref(&self, py: Python) -> Py<PyAny> {
 		self.inner.clone_ref(py)
 	}

@@ -43,9 +43,10 @@ pub struct Tree {
 	heights: SkBuf<f64>,
 
 	updated_edges: Bitmap,
-	/// An array of length num_nodes, where `true` means that the node has
-	/// been updated.
-	updated_nodes: Bitmap,
+	/// A bitmap of internal nodes whose child edges got updated
+	updated_partials: Bitmap,
+	/// A bitmap of all nodes whose parents were updated
+	updated_propagatons: Bitmap,
 }
 
 #[derive(
@@ -169,7 +170,8 @@ impl Tree {
 			heights: skbuf![0.0; num_nodes],
 
 			updated_edges: Bitmap::new(num_nodes),
-			updated_nodes: Bitmap::new(num_nodes),
+			updated_partials: Bitmap::new(num_nodes),
+			updated_propagatons: Bitmap::new(num_nodes),
 		};
 
 		out.set_random_edges(rng);
@@ -529,11 +531,28 @@ impl Tree {
 
 	fn clear_updated(&mut self) {
 		self.updated_edges.set_all_off();
-		self.updated_nodes.set_all_off();
+		self.updated_partials.set_all_off();
+		self.updated_propagatons.set_all_off();
 	}
 
-	pub fn mark_edge_updated(&mut self, edge: usize) {
+	/// Updated internal edge and node bookkeeping
+	fn mark_edge_updated(&mut self, edge: usize) {
 		self.updated_edges.set_on(edge);
+		let (child, _) = self.edge_nodes(edge);
+
+		self.updated_propagatons.set_on(child.0);
+
+		let mut curr = child;
+		while let Some(next) = self.parent_of(curr) {
+			curr = *next;
+
+			if self.updated_partials.at(curr.0) {
+				break;
+			}
+
+			self.updated_propagatons.set_on(curr.0);
+			self.updated_partials.set_on(curr.0);
+		}
 	}
 
 	/// Mark all edges as requiring updates
@@ -544,7 +563,8 @@ impl Tree {
 	/// nodes in the future, instead computing them from edges.
 	pub fn mark_all_edges_updated(&mut self) {
 		self.updated_edges.set_all_on();
-		self.updated_nodes.set_all_on();
+		self.updated_partials.set_all_on();
+		self.updated_propagatons.set_all_on();
 	}
 
 	pub fn edges_to_update(&self) -> Vec<usize> {
@@ -555,26 +575,6 @@ impl Tree {
 			}
 		}
 		out
-	}
-
-	/// For each updated node go upwards in the tree until root and
-	/// mark nodes as updated
-	fn mark_updated_parents(&mut self) {
-		for node in self.nodes() {
-			if self.is_node_updated(node) {
-				let mut curr = node;
-				while let Some(parent) = self.parent_of(curr) {
-					// return early when we find an already
-					// visited node to avoid wasting time
-					// on already checked paths
-					if self.is_node_updated(*parent) {
-						break;
-					}
-					self.mark_node_updated(*parent);
-					curr = *parent;
-				}
-			}
-		}
 	}
 
 	fn updated_internals(&self) -> Vec<Internal> {
@@ -616,17 +616,8 @@ impl Tree {
 	}
 
 	pub fn propagation_lists(
-		&mut self,
+		&self,
 	) -> (Vec<usize>, Vec<[usize; 2]>, usize) {
-		// mark updated nodes whose parent edge got updated
-		for edge in self.edges() {
-			if self.is_edge_updated(edge) {
-				let (child, _) = self.edge_nodes(edge);
-				self.mark_node_updated(child);
-			}
-		}
-		self.mark_updated_parents();
-
 		let mut nodes = Vec::<Node>::new();
 
 		// Updated leaves, in order
@@ -645,28 +636,15 @@ impl Tree {
 		(cast_vec(nodes), cast_vec(children), num_updated_leaves)
 	}
 
-	pub fn partials_lists(&mut self) -> (Vec<usize>, Vec<[usize; 2]>) {
-		// mark nodes whose child edges got updated
-		for edge in self.edges() {
-			if self.is_edge_updated(edge) {
-				let (_, parent) = self.edge_nodes(edge);
-				self.mark_node_updated(*parent);
-			}
-		}
-		self.mark_updated_parents();
-
+	pub fn partials_lists(&self) -> (Vec<usize>, Vec<[usize; 2]>) {
 		let internals = self.updated_internals();
 		let children = self.children_list(&internals);
 
 		(cast_vec(internals), cast_vec(children))
 	}
 
-	fn mark_node_updated(&mut self, node: Node) {
-		self.updated_nodes.set_on(node.0);
-	}
-
 	fn is_node_updated(&self, node: Node) -> bool {
-		self.updated_nodes.at(node.0)
+		self.updated_partials.at(node.0)
 	}
 
 	fn is_edge_updated(&self, edge: usize) -> bool {
