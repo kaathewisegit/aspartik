@@ -1,0 +1,78 @@
+#![allow(unused)]
+
+use anyhow::Result;
+use parking_lot::MutexGuard;
+
+use crate::{TransitionsDyn, parameters::Tree};
+use buffer::Buffer;
+use sk::EditBuf;
+
+pub struct StateCalculator {
+	num_leaves: usize,
+
+	edits: EditBuf,
+
+	values: Vec<u8>,
+	partials: Buffer<f64, 32>,
+
+	likelihood: f64,
+
+	scales: Vec<bool>,
+	scale_sum: u32,
+}
+
+impl StateCalculator {
+	pub fn likelihood(
+		&mut self,
+		mut tree: MutexGuard<Tree>,
+		transitions: &TransitionsDyn,
+	) -> Result<f64> {
+		let (internals, children) = tree.partials_lists();
+		drop(tree);
+
+		self.set_selectors(&internals);
+
+		todo!()
+	}
+
+	pub fn accept(&mut self) -> Result<()> {
+		self.edits.accept();
+
+		Ok(())
+	}
+
+	pub fn reject(&mut self) -> Result<()> {
+		self.edits.reject();
+		Ok(())
+	}
+
+	fn set_selectors(&mut self, nodes: &[usize]) {
+		for &node in nodes {
+			self.edits.set_edited(node - self.num_leaves);
+		}
+	}
+
+	pub fn new(size: usize, values: Vec<u8>) -> Self {
+		let num_leaves = values.len();
+		let num_internals = num_leaves - 1;
+
+		let partials =
+			Buffer::<_, 32>::new(size * size * num_internals * 2);
+		let scales = vec![false; num_internals * 2];
+
+		Self {
+			num_leaves,
+
+			edits: EditBuf::new(num_internals),
+
+			values,
+			partials,
+
+			scale_sum: 0,
+
+			likelihood: f64::NAN,
+
+			scales,
+		}
+	}
+}

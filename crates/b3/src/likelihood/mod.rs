@@ -8,10 +8,12 @@ use data::{DnaNucleotide, Msa, seq::Character};
 mod compound;
 mod dna;
 mod gamma;
+mod state;
 
 pub use compound::CompoundLikelihood;
 pub use dna::DnaLikelihood;
 pub use gamma::GammaLikelihood;
+pub use state::StateLikelihood;
 
 #[derive(FromPyObject, IntoPyObject)]
 pub enum Likelihood {

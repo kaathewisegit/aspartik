@@ -8,9 +8,11 @@ use crate::{Transitions, parameters::Tree};
 
 mod cpu4;
 mod cuda;
+mod state;
 
 pub use cpu4::Cpu4Calculator;
 pub use cuda::CudaCalculator;
+pub use state::StateCalculator;
 
 /// Felsenstein's pruning tree likelihood calculator
 ///

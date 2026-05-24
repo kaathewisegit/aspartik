@@ -556,7 +556,7 @@ impl Substitution {
 		inverse(p_ref, inv_p_ref);
 	}
 
-	fn update(&mut self) -> Result<bool> {
+	pub fn update(&mut self) -> Result<bool> {
 		if self.frequencies.get().inner().is_changed()
 			|| self.rates.get().inner().is_changed()
 		{
