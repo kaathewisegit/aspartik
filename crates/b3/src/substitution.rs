@@ -7,8 +7,8 @@ use std::ops::{Deref, DerefMut};
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
-	ConstMatrix, ConstSquareMatrix, MatrixMut, MatrixRef, eigen,
-	lu::inverse, mul,
+	ConstMatrix, MatrixMut, MatrixRef, eigen, from_diagonal, lu::inverse,
+	mul,
 };
 
 pub trait SubstitutionModel {
@@ -312,9 +312,8 @@ impl SubstitutionModel for HKY {
 	}
 
 	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
-		let diag: M4 = ConstSquareMatrix::from_diagonal(
-			self.diag.map(|v| (v * distance).exp()),
-		);
+		let diag: M4 =
+			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
 		let out: M4 = self.p.mul::<_, M4>(&diag).mul(&self.inv_p);
 		dst.copy_from(MatrixRef::from_array(&out));
@@ -447,9 +446,8 @@ impl SubstitutionModel for GTR {
 	}
 
 	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
-		let diag: M4 = ConstSquareMatrix::from_diagonal(
-			self.diag.map(|v| (v * distance).exp()),
-		);
+		let diag: M4 =
+			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
 		let out: M4 = self.p.mul::<_, M4>(&diag).mul(&self.inv_p);
 		dst.copy_from(MatrixRef::from_array(&out));

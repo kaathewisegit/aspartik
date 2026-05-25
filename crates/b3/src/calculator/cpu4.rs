@@ -7,7 +7,6 @@ use fork_union::{SyncConstPtr, SyncMutPtr, ThreadPool, count_logical_cores};
 
 use crate::{Transitions, calculator::Calculator, parameters::Tree};
 use buffer::Buffer;
-use linalg::Vector;
 use sk::EditBuf;
 
 pub struct Cpu4Calculator {
@@ -284,8 +283,8 @@ unsafe fn propose(
 
 	for i in 0..num_patterns {
 		let partial = partials_root.add(i).read();
-		let prod: [f64; 4] = partial.hadamard(frequencies);
-		state.likelihoods[i] = prod.sum().ln();
+		let prod: [f64; 4] = hadamard(&partial, &frequencies);
+		state.likelihoods[i] = sum(&prod).ln();
 	}
 }}
 
@@ -435,4 +434,12 @@ unsafe fn scale(
 			*scales.add(i) = false;
 		}
 	}
+}
+
+fn hadamard(a: &[f64; 4], b: &[f64; 4]) -> [f64; 4] {
+	[a[0] * b[0], a[1] * b[1], a[2] * b[2], a[3] * b[3]]
+}
+
+fn sum(v: &[f64; 4]) -> f64 {
+	v[0] + v[1] + v[2] + v[3]
 }

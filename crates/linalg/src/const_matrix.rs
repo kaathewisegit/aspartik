@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use num_traits::Num;
 
-use crate::{Dim, MatrixRef, vector::Vector};
+use crate::{Dim, MatrixRef};
 
 #[derive(Clone, Copy)]
 pub struct ConstMatrixRef<'a, T, const N: usize, const M: usize> {
@@ -158,18 +158,6 @@ pub trait ConstSquareMatrix<T, const N: usize>: ConstMatrix<T, N, N>
 where
 	T: Copy + Num,
 {
-	fn from_diagonal(diag: impl Vector<T, N>) -> Self {
-		let mut out = Self::zeros();
-		for i in 0..N {
-			*out.at_mut(i, i) = diag[i];
-		}
-		out
-	}
-
-	fn identity() -> Self {
-		Self::from_diagonal([T::one(); N])
-	}
-
 	fn trace(&self) -> T {
 		let mut out = *self.at(0, 0);
 		for i in 1..N {

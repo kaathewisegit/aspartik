@@ -3,7 +3,7 @@ use std::{
 	ptr::null_mut,
 };
 
-use crate::{ConstMatrix, Vector};
+use crate::ConstMatrix;
 
 pub fn eigen<const N: usize>(
 	m: &impl ConstMatrix<f64, N, N>,
@@ -11,7 +11,7 @@ pub fn eigen<const N: usize>(
 	let mut copy: [[f64; N]; N] = m.transpose();
 
 	let n_i32 = N as c_int;
-	let mut wr = <[f64; N]>::from_element(0.0);
+	let mut wr = [0.0; N];
 	let mut wi = [0.0; N];
 	let vl = null_mut::<f64>(); // not referenced
 	let mut vr: [[f64; N]; N] = ConstMatrix::zeros();
