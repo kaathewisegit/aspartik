@@ -7,7 +7,10 @@ use std::ops::{Deref, DerefMut};
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
-	ConstMatrix, MatrixMut, MatrixRef, eigen, from_diagonal, lu::inverse,
+	MatrixMut, MatrixRef,
+	const_matrix::{from_diagonal, mul as cmul},
+	eigen,
+	lu::inverse,
 	mul,
 };
 
@@ -238,8 +241,8 @@ impl HKY {
 			cached_kappa: f64::NAN,
 			cached_frequencies: [f64::NAN; 4],
 
-			p: M4::zeros(),
-			inv_p: M4::zeros(),
+			p: [[0.0; 4]; 4],
+			inv_p: [[0.0; 4]; 4],
 			diag: [0.0; 4],
 		};
 		out.update_matrices();
@@ -315,7 +318,7 @@ impl SubstitutionModel for HKY {
 		let diag: M4 =
 			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
-		let out: M4 = self.p.mul::<_, M4>(&diag).mul(&self.inv_p);
+		let out = cmul(&cmul(&self.p, &diag), &self.inv_p);
 		dst.copy_from(MatrixRef::from_array(&out));
 	}
 
@@ -356,8 +359,8 @@ impl GTR {
 			frequencies,
 			rates,
 
-			p: M4::zeros(),
-			inv_p: M4::zeros(),
+			p: [[0.0; 4]; 4],
+			inv_p: [[0.0; 4]; 4],
 			diag: [0.0; 4],
 
 			has_changed: false,
@@ -424,7 +427,11 @@ impl GTR {
 				+ b * p_a * p_g + c * p_a * p_t
 				+ d * p_c * p_g + e * p_c * p_t
 				+ f * p_g * p_t);
-		gtr.for_each(|e| *e /= div);
+		for row in &mut gtr {
+			for element in row {
+				*element /= div;
+			}
+		}
 
 		let mut imaginary = [0.0; 4];
 		eigen(&gtr, &mut self.diag, &mut imaginary, &mut self.p);
@@ -449,7 +456,7 @@ impl SubstitutionModel for GTR {
 		let diag: M4 =
 			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
-		let out: M4 = self.p.mul::<_, M4>(&diag).mul(&self.inv_p);
+		let out = cmul(&cmul(&self.p, &diag), &self.inv_p);
 		dst.copy_from(MatrixRef::from_array(&out));
 	}
 

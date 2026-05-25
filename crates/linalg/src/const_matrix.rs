@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use num_traits::Num;
+use num_traits::{Num, Zero};
 
 use crate::{Dim, MatrixRef};
 
@@ -33,171 +33,55 @@ impl<'a, T, const N: usize, const M: usize> ConstMatrixRef<'a, T, N, M> {
 	}
 }
 
-pub trait ConstMatrix<T, const N: usize, const M: usize>:
-	Sized + Clone
+pub fn from_diagonal<T, const N: usize>(diag: &[T; N]) -> [[T; N]; N]
 where
-	T: Copy + Num,
+	T: Zero + Copy,
 {
-	fn at(&self, row: usize, column: usize) -> &T;
+	let mut out = [[T::zero(); N]; N];
 
-	fn at_mut(&mut self, row: usize, column: usize) -> &mut T;
-
-	fn from_element(value: T) -> Self;
-
-	fn for_each<F>(&mut self, f: F)
-	where
-		F: FnMut(&mut T);
-
-	fn convert<O>(&self) -> O
-	where
-		O: ConstMatrix<T, N, M>,
-	{
-		let mut out = O::zeros();
-		for i in 0..N {
-			for j in 0..M {
-				*out.at_mut(i, j) = *self.at(i, j);
-			}
-		}
-		out
+	for i in 0..N {
+		out[i][i] = diag[i];
 	}
 
-	fn zeros() -> Self {
-		Self::from_element(T::zero())
-	}
-
-	fn transpose<O>(&self) -> O
-	where
-		O: ConstMatrix<T, M, N>,
-	{
-		let mut out = O::zeros();
-
-		for i in 0..N {
-			for j in 0..M {
-				*out.at_mut(j, i) = *self.at(i, j);
-			}
-		}
-
-		out
-	}
-
-	fn mul<const P: usize, O>(&self, rhs: &impl ConstMatrix<T, M, P>) -> O
-	where
-		O: ConstMatrix<T, N, P>,
-	{
-		let mut out = O::zeros();
-
-		for i in 0..N {
-			for j in 0..P {
-				for k in 0..M {
-					*out.at_mut(i, j) = *out.at(i, j)
-						+ *self.at(i, k)
-							* *rhs.at(k, j);
-				}
-			}
-		}
-
-		out
-	}
-
-	fn mul_scalar<O>(&self, rhs: T) -> O
-	where
-		O: ConstMatrix<T, N, M>,
-	{
-		let mut out = O::zeros();
-
-		for i in 0..N {
-			for j in 0..M {
-				*out.at_mut(i, j) = *self.at(i, j) * rhs;
-			}
-		}
-
-		out
-	}
-
-	fn add<O>(&self, rhs: &impl ConstMatrix<T, N, M>) -> O
-	where
-		O: ConstMatrix<T, N, M>,
-	{
-		let mut out = O::zeros();
-
-		for i in 0..N {
-			for j in 0..M {
-				*out.at_mut(i, j) =
-					*self.at(i, j) + *rhs.at(i, j);
-			}
-		}
-
-		out
-	}
-
-	fn sub<O>(&self, rhs: &impl ConstMatrix<T, N, M>) -> O
-	where
-		O: ConstMatrix<T, N, M>,
-	{
-		let mut out = O::zeros();
-
-		for i in 0..N {
-			for j in 0..M {
-				*out.at_mut(i, j) =
-					*self.at(i, j) - *rhs.at(i, j);
-			}
-		}
-
-		out
-	}
-
-	fn swap_rows(&mut self, a: usize, b: usize) {
-		for col in 0..M {
-			(*self.at_mut(a, col), *self.at_mut(b, col)) =
-				(*self.at(b, col), *self.at(a, col));
-		}
-	}
+	out
 }
 
-pub trait ConstSquareMatrix<T, const N: usize>: ConstMatrix<T, N, N>
+pub fn transpose<T, const N: usize, const M: usize>(
+	m: &[[T; M]; N],
+) -> [[T; N]; M]
 where
-	T: Copy + Num,
+	T: Zero + Copy,
 {
-	fn trace(&self) -> T {
-		let mut out = *self.at(0, 0);
-		for i in 1..N {
-			out = out + *self.at(i, i);
+	let mut trans = [[T::zero(); N]; M];
+
+	for i in 0..N {
+		for j in 0..M {
+			trans[j][i] = m[i][j];
 		}
-		out
 	}
+
+	trans
 }
 
-impl<T, const N: usize, M> ConstSquareMatrix<T, N> for M
+pub fn mul<T, const N: usize, const M: usize, const K: usize>(
+	a: &[[T; M]; N],
+	b: &[[T; K]; M],
+) -> [[T; K]; N]
 where
-	T: Copy + Num,
-	M: ConstMatrix<T, N, N>,
+	T: Num + Copy,
 {
-}
+	// Initialize the output matrix with T::zero()
+	let mut result = [[T::zero(); K]; N];
 
-impl<T, const N: usize, const M: usize> ConstMatrix<T, N, M> for [[T; M]; N]
-where
-	T: Copy + Num,
-{
-	fn at(&self, row: usize, column: usize) -> &T {
-		&self[row][column]
-	}
-
-	fn at_mut(&mut self, row: usize, column: usize) -> &mut T {
-		&mut self[row][column]
-	}
-
-	fn from_element(value: T) -> Self {
-		[[value; M]; N]
-	}
-
-	fn for_each<F>(&mut self, mut f: F)
-	where
-		F: FnMut(&mut T),
-	{
-		for i in 0..N {
-			for j in 0..M {
-				f(self.at_mut(i, j));
+	for i in 0..N {
+		for j in 0..K {
+			let mut sum = T::zero();
+			for k in 0..M {
+				sum = sum + a[i][k] * b[k][j];
 			}
+			result[i][j] = sum;
 		}
 	}
+
+	result
 }

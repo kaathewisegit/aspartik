@@ -1,7 +1,5 @@
 use arbitrary::{Result, Unstructured};
 
-use crate::ConstMatrix;
-
 // TODO: dynamic bounds
 fn small_float(u: &mut Unstructured) -> Result<f64> {
 	let integer: u64 = u.arbitrary()?;
@@ -12,7 +10,7 @@ fn small_float(u: &mut Unstructured) -> Result<f64> {
 pub fn matrix<const N: usize, const M: usize>(
 	u: &mut Unstructured,
 ) -> Result<[[f64; M]; N]> {
-	let mut out: [[f64; M]; N] = ConstMatrix::zeros();
+	let mut out: [[f64; M]; N] = [[0.0; M]; N];
 
 	for row in out.iter_mut() {
 		for element in row.iter_mut() {
@@ -31,7 +29,7 @@ pub fn matrix<const N: usize, const M: usize>(
 pub fn symmetric<const N: usize>(
 	u: &mut Unstructured,
 ) -> Result<[[f64; N]; N]> {
-	let mut out: [[f64; N]; N] = ConstMatrix::zeros();
+	let mut out: [[f64; N]; N] = [[0.0; N]; N];
 
 	#[expect(clippy::needless_range_loop)]
 	for i in 0..N {

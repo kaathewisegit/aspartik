@@ -3,18 +3,16 @@ use std::{
 	ptr::null_mut,
 };
 
-use crate::ConstMatrix;
+use crate::const_matrix::transpose;
 
-pub fn eigen<const N: usize>(
-	m: &impl ConstMatrix<f64, N, N>,
-) -> ([f64; N], [[f64; N]; N]) {
-	let mut copy: [[f64; N]; N] = m.transpose();
+pub fn eigen<const N: usize>(m: &[[f64; N]; N]) -> ([f64; N], [[f64; N]; N]) {
+	let mut copy: [[f64; N]; N] = transpose(m);
 
 	let n_i32 = N as c_int;
 	let mut wr = [0.0; N];
 	let mut wi = [0.0; N];
 	let vl = null_mut::<f64>(); // not referenced
-	let mut vr: [[f64; N]; N] = ConstMatrix::zeros();
+	let mut vr: [[f64; N]; N] = [[0.0; N]; N];
 	let mut info: c_int = 0;
 
 	let ljob = b'N' as c_char;
@@ -54,13 +52,11 @@ pub fn eigen<const N: usize>(
 		);
 	}
 
-	(wr, vr.transpose())
+	(wr, transpose(&vr))
 }
 
-pub fn inverse<const N: usize>(
-	m: &impl ConstMatrix<f64, N, N>,
-) -> [[f64; N]; N] {
-	let mut copy: [[f64; N]; N] = m.transpose();
+pub fn inverse<const N: usize>(m: &[[f64; N]; N]) -> [[f64; N]; N] {
+	let mut copy: [[f64; N]; N] = transpose(m);
 
 	let n_i32 = N as c_int;
 	let lda = n_i32;
@@ -107,5 +103,5 @@ pub fn inverse<const N: usize>(
 	}
 	assert_eq!(info, 0);
 
-	copy.transpose()
+	transpose(&copy)
 }

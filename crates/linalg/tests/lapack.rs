@@ -2,9 +2,9 @@ use arbitrary::{Result, Unstructured};
 use arbtest::arbtest;
 
 use linalg::{
-	ConstMatrix,
 	arbitrary::{normalized_array, symmetric},
-	eigen, from_diagonal,
+	const_matrix::{from_diagonal, mul},
+	eigen,
 	lu::inverse,
 };
 use math::assert_almost_eq;
@@ -22,14 +22,13 @@ fn reconstruct<const N: usize>(m: M<N>, relative: f64) {
 
 	let diag: M<N> = from_diagonal(&values);
 
-	let reconstructed: M<N> =
-		vectors.mul::<_, M<N>>(&diag).mul(&inv_vectors);
+	let reconstructed: M<N> = mul(&mul(&vectors, &diag), &inv_vectors);
 
 	for i in 0..N {
 		for j in 0..N {
 			assert_almost_eq!(
-				*reconstructed.at(i, j),
-				*m.at(i, j),
+				reconstructed[i][j],
+				m[i][j],
 				relative = relative,
 			);
 		}
@@ -81,7 +80,11 @@ fn gtr(u: &mut Unstructured) -> Result<M<4>> {
 			+ b * p_a * p_g + c * p_a * p_t
 			+ d * p_c * p_g + e * p_c * p_t
 			+ f * p_g * p_t);
-	gtr.for_each(|e| *e /= div);
+	for row in &mut gtr {
+		for element in row {
+			*element /= div;
+		}
+	}
 	Ok(gtr)
 }
 
