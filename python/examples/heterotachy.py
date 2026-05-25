@@ -1,4 +1,4 @@
-# WORKING IN PROGRESS
+# WORK IN PROGRESS
 
 from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.callbacks import PrintLogger, TraceWriter
@@ -16,12 +16,13 @@ from aspartik.b3.priors import (
     Bound,
     ConstantPopulation,
     Distribution,
+    SymmetricDirichlet,
 )
-from aspartik.b3.substitutions import HKY
+from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, LogNormal, Normal, Uniform
+from aspartik.stats.distributions import Gamma, Laplace, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 
@@ -30,18 +31,18 @@ tree = Tree(msa.sequence_names(), rng)
 
 N = 4
 
-kappas = [Real(2.0) for _ in range(N)]
-freqs = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
+rates = [RealVector.repeat(1, 6) for _ in range(N)]
+frequencies = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
 population_size = Real(1.0)
-clock_rates = [Real(0.001) for _ in range(N)]
+clock_rates = [Real(1) for _ in range(N)]
 classes = ClassVector(N, 845)
 
 priors = [
-    *(Bound(kappa) for kappa in kappas),
-    *(Bound(freq) for freq in freqs),
+    *(Bound(freqs) for freqs in frequencies),
+    *(Bound(rate) for rate in rates),
     Bound(population_size),
     *(Bound(clock_rate) for clock_rate in clock_rates),
-    *(Distribution(kappa, LogNormal(1.0, 1.25)) for kappa in kappas),
+    *(SymmetricDirichlet(rate, 6) for rate in rates),
     *(Distribution(clock_rate, Laplace(0, 0.5)) for clock_rate in clock_rates),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     ConstantPopulation(tree, population_size),
@@ -52,14 +53,14 @@ likelihood = HeteroLikelihood(
     msa=msa,
     tree=tree,
     classes=classes,
-    substitutions=[HKY(freq, kappa) for freq, kappa in zip(freqs, kappas)],
+    substitutions=[GTR(rate, freqs) for rate, freqs in zip(frequencies, rates)],
     clocks=[Clock.Strict(clock_rate) for clock_rate in clock_rates],
     calculator=Calculator.CPU(),
 )
 
 operators = [
-    *(ScaleReal(kappa, Uniform(0, 1), rng, weight=1) for kappa in kappas),
-    *(DeltaExchange(freq, rng, weight=3) for freq in freqs),
+    *(DeltaExchange(rate, rng, weight=1) for rate in rates),
+    *(DeltaExchange(freqs, rng, weight=3) for freqs in frequencies),
     *(
         ScaleReal(clock_rate, Uniform(0, 1), rng, weight=3)
         for clock_rate in clock_rates
@@ -75,7 +76,13 @@ loggers = [
     PrintLogger(every=10_000),
     TraceWriter(
         {
-            # TODO: lists
+            **{
+                f"clock_rate:{i}": clock_rate
+                for i, clock_rate in enumerate(clock_rates)
+            },
+            **{f"rates:{i}": rate for i, rate in enumerate(rates)},
+            **{f"frequencies:{i}": freqs for i, freqs in enumerate(frequencies)},
+            "classes": classes,
             "tree": tree,
         },
         path="target/heterotachy.trace",
