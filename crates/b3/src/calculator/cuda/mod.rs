@@ -106,8 +106,9 @@ impl Calculator<f64> for CudaCalculator {
 		self.stream.memcpy_htod(&nodes, &mut self.nodes)?;
 		self.stream.memcpy_htod(&children, &mut self.children)?;
 
-		let tms =
-			cast_slice(&self.transitions_host[..nodes.len() * 16]);
+		let tms = cast_slice(
+			&self.transitions_host[..(nodes.len() - 1) * 16],
+		);
 		self.stream.memcpy_htod(tms, &mut self.transitions)?;
 
 		let mut leaves_end = leaves_end as u32;
@@ -392,7 +393,7 @@ impl CudaCalculator {
 			likelihoods,
 			likelihoods_host: vec![0.0; num_patterns].into(),
 			children,
-			transitions_host: vec![0.0; num_nodes * 16].into(),
+			transitions_host: vec![0.0; num_edges * 16].into(),
 			transitions,
 			nodes,
 
