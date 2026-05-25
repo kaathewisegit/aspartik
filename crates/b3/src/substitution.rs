@@ -484,6 +484,8 @@ pub struct GenericSubstitution {
 	p: Vec<f64>,
 	inv_p: Vec<f64>,
 	eigenvalues: Vec<f64>,
+	diag: Vec<f64>,
+	scratch: Vec<f64>,
 	has_changed: bool,
 }
 
@@ -501,6 +503,8 @@ impl GenericSubstitution {
 			p: vec![0.0; n * n],
 			inv_p: vec![0.0; n * n],
 			eigenvalues: vec![0.0; n],
+			diag: vec![0.0; n * n],
+			scratch: vec![0.0; n * n],
 			has_changed: false,
 		};
 		out.update_matrices();
@@ -516,6 +520,8 @@ impl GenericSubstitution {
 			p: self.p.clone(),
 			inv_p: self.inv_p.clone(),
 			eigenvalues: self.eigenvalues.clone(),
+			diag: self.diag.clone(),
+			scratch: self.scratch.clone(),
 			has_changed: self.has_changed,
 		}
 	}
@@ -588,27 +594,24 @@ impl SubstitutionModel for GenericSubstitution {
 		}
 	}
 
-	// TODO: get rid of allocations
 	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
 		let n = self.eigenvalues.len();
 		assert!((*dst).is_square());
 		assert_eq!((*dst).num_cols(), n);
 
-		let mut inter = vec![0.0; n * n];
-		let mut inter_ref = inter.as_mat_mut(n, n);
+		let mut scratch_ref = self.scratch.as_mat_mut(n, n);
 
 		let p_ref = self.p.as_mat(n, n);
 		let inv_p_ref = self.inv_p.as_mat(n, n);
 
-		let mut diag = vec![0.0; n * n];
-		let mut diag_ref = diag.as_mat_mut(n, n);
+		let mut diag_ref = self.diag.as_mat_mut(n, n);
 		for i in 0..n {
 			diag_ref[(i, i)] =
 				(self.eigenvalues[i] * distance).exp();
 		}
 
-		mul(p_ref, *diag_ref, inter_ref.reborrow());
-		mul(*inter_ref, inv_p_ref, dst);
+		mul(p_ref, *diag_ref, scratch_ref.reborrow());
+		mul(*scratch_ref, inv_p_ref, dst);
 	}
 
 	fn write_frequencies(&self, dst: &mut [f64]) {
