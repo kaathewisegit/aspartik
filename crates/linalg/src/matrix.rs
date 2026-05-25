@@ -296,17 +296,7 @@ impl<T> IndexMut<(usize, usize)> for MatrixMut<'_, T> {
 	}
 }
 
-pub fn mul<'a, T, L, R, D>(lhs: L, rhs: R, dst: D)
-where
-	T: Copy + Num + Zeroable + 'a,
-	L: Into<MatrixRef<'a, T>>,
-	R: Into<MatrixRef<'a, T>>,
-	D: Into<MatrixMut<'a, T>>,
-{
-	mul_inner(lhs.into(), rhs.into(), dst.into())
-}
-
-pub fn mul_inner<T>(
+pub fn mul<T>(
 	lhs: MatrixRef<'_, T>,
 	rhs: MatrixRef<'_, T>,
 	mut dst: MatrixMut<'_, T>,

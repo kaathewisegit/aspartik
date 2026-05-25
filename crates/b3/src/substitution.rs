@@ -7,7 +7,7 @@ use std::ops::{Deref, DerefMut};
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
-	MatrixMut, MatrixRef,
+	MatrixArrayExt, MatrixMut, MatrixSliceExt,
 	const_matrix::{from_diagonal, mul as cmul},
 	eigen,
 	lu::inverse,
@@ -108,7 +108,7 @@ impl SubstitutionModel for JC {
 			[other, other, diagonal, other],
 			[other, other, other, diagonal],
 		];
-		dst.copy_from(MatrixRef::from_array(&out));
+		dst.copy_from(out.as_mat());
 	}
 
 	fn write_frequencies(&self, dst: &mut [f64]) {
@@ -188,7 +188,7 @@ impl SubstitutionModel for K80 {
 			[transition, transversion, diagonal, transversion],
 			[transversion, transition, transversion, diagonal],
 		];
-		dst.copy_from(MatrixRef::from_array(&out));
+		dst.copy_from(out.as_mat());
 	}
 
 	fn write_frequencies(&self, dst: &mut [f64]) {
@@ -319,7 +319,7 @@ impl SubstitutionModel for HKY {
 			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
 		let out = cmul(&cmul(&self.p, &diag), &self.inv_p);
-		dst.copy_from(MatrixRef::from_array(&out));
+		dst.copy_from(out.as_mat());
 	}
 
 	fn write_frequencies(&self, dst: &mut [f64]) {
@@ -457,7 +457,7 @@ impl SubstitutionModel for GTR {
 			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
 		let out = cmul(&cmul(&self.p, &diag), &self.inv_p);
-		dst.copy_from(MatrixRef::from_array(&out));
+		dst.copy_from(out.as_mat());
 	}
 
 	fn write_frequencies(&self, dst: &mut [f64]) {
@@ -526,7 +526,7 @@ impl GenericSubstitution {
 		let rates = self.rates.get().inner();
 
 		let mut q = vec![0.0; n * n];
-		let mut q_ref = MatrixMut::from_slice(&mut q, n, n);
+		let mut q_ref = q.as_mat_mut(n, n);
 
 		let mut rate_idx = 0;
 		// upper triangular
@@ -565,12 +565,12 @@ impl GenericSubstitution {
 		}
 
 		let mut imaginary = vec![0.0; n];
-		let q_ref = MatrixRef::from_slice(&q, n, n);
-		let p_ref = MatrixMut::from_slice(&mut self.p, n, n);
+		let q_ref = q.as_mat(n, n);
+		let p_ref = self.p.as_mat_mut(n, n);
 		eigen(q_ref, &mut self.eigenvalues, &mut imaginary, p_ref);
 
-		let p_ref = MatrixRef::from_slice(&self.p, n, n);
-		let inv_p_ref = MatrixMut::from_slice(&mut self.inv_p, n, n);
+		let p_ref = self.p.as_mat(n, n);
+		let inv_p_ref = self.inv_p.as_mat_mut(n, n);
 		inverse(p_ref, inv_p_ref);
 	}
 }
@@ -595,13 +595,13 @@ impl SubstitutionModel for GenericSubstitution {
 		assert_eq!((*dst).num_cols(), n);
 
 		let mut inter = vec![0.0; n * n];
-		let mut inter_ref = MatrixMut::from_slice(&mut inter, n, n);
+		let mut inter_ref = inter.as_mat_mut(n, n);
 
-		let p_ref = MatrixRef::from_slice(&self.p, n, n);
-		let inv_p_ref = MatrixRef::from_slice(&self.inv_p, n, n);
+		let p_ref = self.p.as_mat(n, n);
+		let inv_p_ref = self.inv_p.as_mat(n, n);
 
 		let mut diag = vec![0.0; n * n];
-		let mut diag_ref = MatrixMut::from_slice(&mut diag, n, n);
+		let mut diag_ref = diag.as_mat_mut(n, n);
 		for i in 0..n {
 			diag_ref[(i, i)] =
 				(self.eigenvalues[i] * distance).exp();
