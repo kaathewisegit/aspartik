@@ -2,7 +2,7 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{exceptions::PyIndexError, prelude::*, types::PyType};
 
-use std::{io::Write, ops::Index};
+use std::{fmt::Write as _, io::Write, ops::Index};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
@@ -121,5 +121,17 @@ impl_pyparameter_common!(PyRealVector, RealVector, {
 
 	fn __setitem__(&self, index: usize, value: f64) {
 		self.inner().set(index, value);
+	}
+
+	fn __repr__(&self) -> Result<String> {
+		let mut out = String::from("RealVector(");
+		let inner = self.inner();
+		for i in 0..inner.len() {
+			write!(out, "{}", inner[i])?;
+			if i != inner.len() - 1 {
+				write!(out, ", ")?;
+			}
+		}
+		Ok(out)
 	}
 });
