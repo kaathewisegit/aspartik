@@ -4,8 +4,7 @@ use arbtest::arbtest;
 use linalg::{
 	arbitrary::{normalized_array, symmetric},
 	const_matrix::{from_diagonal, mul},
-	eigen,
-	lu::inverse,
+	math::{eigen, inverse},
 };
 use math::assert_almost_eq;
 
@@ -30,6 +29,7 @@ fn reconstruct<const N: usize>(m: M<N>, relative: f64) {
 				reconstructed[i][j],
 				m[i][j],
 				relative = relative,
+				epsilon = 1e-14,
 			);
 		}
 	}
@@ -45,7 +45,7 @@ fn reconstruction_basic() {
 fn reconstruction_symmetric() {
 	arbtest(|u| {
 		let m = symmetric::<4>(u)?;
-		reconstruct(m, 1e-9);
+		reconstruct(m, 1e-11);
 		Ok(())
 	})
 	.size_min(128)

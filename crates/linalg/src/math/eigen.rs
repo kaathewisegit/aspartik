@@ -1,4 +1,5 @@
-use crate::{MatrixMut, MatrixRef, mul};
+use super::mul;
+use crate::{MatrixMut, MatrixRef};
 
 pub fn eigen<'a, I, V>(
 	matrix: I,

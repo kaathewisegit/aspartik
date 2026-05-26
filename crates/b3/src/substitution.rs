@@ -9,9 +9,7 @@ use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
 	MatrixArrayExt, MatrixMut, MatrixSliceExt,
 	const_matrix::{from_diagonal, mul as cmul},
-	eigen,
-	lu::inverse,
-	mul,
+	math::{eigen, inverse, mul},
 };
 
 pub trait SubstitutionModel {
