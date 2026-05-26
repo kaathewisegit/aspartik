@@ -1,26 +1,21 @@
 use anyhow::Result;
 use linalg::MatrixMut;
 
-use crate::{parameters::Tree, substitution::SubstitutionModel};
-use buffer::SliceBuffer;
-use sk::EditBuf;
+use crate::{SkSliceBuf, parameters::Tree, substitution::SubstitutionModel};
 
 pub struct Transitions {
 	size: usize,
-	edits: EditBuf,
-	data: SliceBuffer<f64>,
+	data: SkSliceBuf<f64>,
 	frequencies: Box<[f64]>,
 }
 
 impl Transitions {
 	pub fn new(size: usize, len: usize) -> Self {
-		let data = SliceBuffer::new(size * size, len * 2);
+		let data = SkSliceBuf::new(size * size, len);
 		let frequencies = vec![0.0; size].into_boxed_slice();
-		let edits = EditBuf::new(len);
 
 		Self {
 			size,
-			edits,
 			data,
 			frequencies,
 		}
@@ -37,11 +32,8 @@ impl Transitions {
 			let time_length = tree.edge_length(edge);
 			let length = time_length * clock_rate(edge);
 
-			self.edits.set_edited(edge);
-			let bit = self.edits.offset(edge);
-
 			let m_ref = MatrixMut::from_slice(
-				&mut self.data[edge * 2 + bit],
+				self.data.update(edge),
 				size,
 				size,
 			);
@@ -58,11 +50,11 @@ impl Transitions {
 	}
 
 	pub fn accept(&mut self) {
-		self.edits.accept();
+		self.data.accept();
 	}
 
 	pub fn reject(&mut self) {
-		self.edits.reject();
+		self.data.reject();
 	}
 
 	pub fn write_matrices(&self, edges: &[usize], dst: &mut [f64]) {
@@ -71,11 +63,8 @@ impl Transitions {
 
 		let mut offset = 0;
 		for &edge in edges {
-			let bit = self.edits.offset(edge);
-			let src_slice = &self.data[edge * 2 + bit];
-
 			let dst_slice = &mut dst[offset..offset + ms];
-			dst_slice.copy_from_slice(src_slice);
+			dst_slice.copy_from_slice(&self.data[edge]);
 			offset += ms;
 		}
 	}

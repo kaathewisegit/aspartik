@@ -6,10 +6,12 @@ pub mod mcmc;
 pub mod operators;
 pub mod parameters;
 pub mod priors;
+mod sk_slice_buf;
 pub mod substitution;
 mod transitions;
 
 pub use callback::PyCallback;
+pub use sk_slice_buf::SkSliceBuf;
 pub use transitions::Transitions;
 
 use pyo3::prelude::*;

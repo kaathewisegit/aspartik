@@ -5,13 +5,12 @@ use pyo3::prelude::*;
 
 use super::deduplicate;
 use crate::{
-	Transitions,
+	SkSliceBuf, Transitions,
 	calculator::{Calculator, CalculatorConfig},
 	clock::PyClock,
 	parameters::{Parameter, PyClassVector, PyTree},
 	substitution::Substitution,
 };
-use buffer::SliceBuffer;
 use data::PyMsa;
 use util::atomic::{MonotonicBool, MonotonicF64};
 
@@ -26,8 +25,7 @@ pub struct HeteroLikelihood {
 	tree: Py<PyTree>,
 
 	weights: Vec<u32>,
-	likelihoods: Mutex<SliceBuffer<f64>>,
-	selector: MonotonicBool,
+	likelihoods: Mutex<SkSliceBuf<f64>>,
 
 	pool: Mutex<ThreadPool>,
 
@@ -51,8 +49,7 @@ impl HeteroLikelihood {
 
 		let num_categories = clocks.len();
 		let num_patterns = weights.len();
-		let likelihoods =
-			SliceBuffer::new(num_patterns, num_categories * 2);
+		let likelihoods = SkSliceBuf::new(num_patterns, num_categories);
 
 		let mut calculators = Vec::new();
 		let mut transitions = Vec::new();
@@ -79,7 +76,6 @@ impl HeteroLikelihood {
 
 			weights,
 			likelihoods: Mutex::new(likelihoods),
-			selector: false.into(),
 			pool: Mutex::new(pool),
 
 			cache: f64::NAN.into(),
@@ -97,8 +93,6 @@ impl HeteroLikelihood {
 		let mut tree = self.tree.get().inner();
 		let mut transitions = self.transitions.lock();
 		let mut substitutions = self.substitutions.lock();
-
-		let num_categories = transitions.len();
 
 		let categories = self.categories.get().inner();
 
@@ -139,10 +133,6 @@ impl HeteroLikelihood {
 			let calc_ptr =
 				SyncMutPtr::new(calculators.as_mut_ptr());
 
-			let new_selector = !self.selector.load();
-			self.selector.store(new_selector);
-			let offset = num_categories * usize::from(new_selector);
-
 			self.pool.lock().for_n(self.clocks.len(), |prong| {
 				let i = prong.task_index;
 				let transition = &transitions[i];
@@ -156,19 +146,18 @@ impl HeteroLikelihood {
 					.likelihood(&tree, transition)
 					.unwrap();
 				let mut likelihoods = self.likelihoods.lock();
-				likelihoods[offset + i].copy_from_slice(
+				likelihoods.update(i).copy_from_slice(
 					calculator.likelihoods(),
 				);
 			});
 		}
 
 		let likelihoods = self.likelihoods.lock();
-		let offset = usize::from(self.selector.load()) * num_categories;
 		let num_patterns = likelihoods[0].len();
 		let mut out = 0.0;
 		for i in 0..num_patterns {
 			let category = usize::from(categories[i]);
-			let likelihood = likelihoods[offset + category][i];
+			let likelihood = likelihoods[category][i];
 			out += likelihood * f64::from(self.weights[i]);
 		}
 
@@ -178,6 +167,8 @@ impl HeteroLikelihood {
 
 	pub fn accept(&self) -> Result<()> {
 		self.cache.store(self.last.load());
+		self.likelihoods.lock().accept();
+
 		if self.launched_update.load() {
 			for calculator in self.calculators.lock().iter_mut() {
 				calculator.accept()?;
@@ -198,8 +189,7 @@ impl HeteroLikelihood {
 	}
 
 	pub fn reject(&self) -> Result<()> {
-		let old_selector = !self.selector.load();
-		self.selector.store(old_selector);
+		self.likelihoods.lock().reject();
 
 		if self.launched_update.load() {
 			for calculator in self.calculators.lock().iter_mut() {
