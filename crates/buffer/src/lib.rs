@@ -1,3 +1,7 @@
+mod slice_buf;
+
+pub use slice_buf::SliceBuffer;
+
 use bytemuck::Zeroable;
 
 use std::{
@@ -62,12 +66,12 @@ impl<T, const ALIGN: usize> Buffer<T, ALIGN> {
 	{
 		check_const!();
 
-		assert_ne!(len, 0, "Capacity must be bigger than 0");
+		assert_ne!(len, 0, "Length must be bigger than 0");
 		let layout = Layout::from_size_align(
 			len * size_of::<T>(),
 			Self::ALIGNMENT,
 		)
-		.expect("`capacity` too big");
+		.expect("`len` too big");
 
 		// SAFETY: we've checked above that capacity/size isn't 0 and
 		// there's a const assertion that size_of::<T> isn't 0.
