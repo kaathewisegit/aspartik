@@ -11,6 +11,7 @@ use crate::{
 	parameters::{Parameter, PyClassVector, PyTree},
 	substitution::Substitution,
 };
+use buffer::SliceBuffer;
 use data::PyMsa;
 use util::atomic::{MonotonicBool, MonotonicF64};
 
@@ -18,14 +19,15 @@ use util::atomic::{MonotonicBool, MonotonicF64};
 pub struct HeteroLikelihood {
 	calculators: Mutex<Vec<Box<dyn Calculator<f64> + Send + Sync>>>,
 
-	classes: Py<PyClassVector>,
+	categories: Py<PyClassVector>,
 	substitutions: Mutex<Vec<Substitution>>,
 	clocks: Vec<Py<PyClock>>,
 	transitions: Mutex<Vec<Transitions>>,
 	tree: Py<PyTree>,
 
 	weights: Vec<u32>,
-	likelihoods: Mutex<Vec<Vec<f64>>>,
+	likelihoods: Mutex<SliceBuffer<f64>>,
+	selector: MonotonicBool,
 
 	pool: Mutex<ThreadPool>,
 
@@ -40,7 +42,7 @@ impl HeteroLikelihood {
 	fn new(
 		msa: Py<PyMsa>,
 		tree: Py<PyTree>,
-		classes: Py<PyClassVector>,
+		categories: Py<PyClassVector>,
 		substitutions: Vec<Substitution>,
 		clocks: Vec<Py<PyClock>>,
 		calculator: CalculatorConfig,
@@ -50,7 +52,7 @@ impl HeteroLikelihood {
 		let num_categories = clocks.len();
 		let num_patterns = weights.len();
 		let likelihoods =
-			vec![vec![f64::NAN; num_patterns]; num_categories];
+			SliceBuffer::new(num_patterns, num_categories * 2);
 
 		let mut calculators = Vec::new();
 		let mut transitions = Vec::new();
@@ -69,7 +71,7 @@ impl HeteroLikelihood {
 		let out = Self {
 			calculators: Mutex::new(calculators),
 
-			classes,
+			categories,
 			clocks,
 			substitutions: Mutex::new(substitutions),
 			transitions: Mutex::new(transitions),
@@ -77,6 +79,7 @@ impl HeteroLikelihood {
 
 			weights,
 			likelihoods: Mutex::new(likelihoods),
+			selector: false.into(),
 			pool: Mutex::new(pool),
 
 			cache: f64::NAN.into(),
@@ -95,7 +98,9 @@ impl HeteroLikelihood {
 		let mut transitions = self.transitions.lock();
 		let mut substitutions = self.substitutions.lock();
 
-		let classes = self.classes.get().inner();
+		let num_categories = transitions.len();
+
+		let categories = self.categories.get().inner();
 
 		for clock in &self.clocks {
 			let mut clock = clock.get().inner();
@@ -109,49 +114,61 @@ impl HeteroLikelihood {
 			}
 		}
 
-		if !tree.is_changed() && !classes.is_changed() {
+		if !tree.is_changed() && !categories.is_changed() {
 			self.last.store(self.cache.load());
 			return Ok(self.cache.load());
 		}
 
-		for ((transition, clock), substitution) in transitions
-			.iter_mut()
-			.zip(&self.clocks)
-			.zip(substitutions.iter_mut())
-		{
-			let clock = clock.get().inner();
-			transition.update(
-				&mut tree,
-				&mut **substitution,
-				|edge| clock.get_rate(edge),
-			)?;
+		if tree.is_changed() {
+			for ((transition, clock), substitution) in transitions
+				.iter_mut()
+				.zip(&self.clocks)
+				.zip(substitutions.iter_mut())
+			{
+				let clock = clock.get().inner();
+				transition.update(
+					&mut tree,
+					&mut **substitution,
+					|edge| clock.get_rate(edge),
+				)?;
+			}
+
+			self.launched_update.store(true);
+
+			let calculators = &mut *self.calculators.lock();
+			let calc_ptr =
+				SyncMutPtr::new(calculators.as_mut_ptr());
+
+			let new_selector = !self.selector.load();
+			self.selector.store(new_selector);
+			let offset = num_categories * usize::from(new_selector);
+
+			self.pool.lock().for_n(self.clocks.len(), |prong| {
+				let i = prong.task_index;
+				let transition = &transitions[i];
+
+				// SAFETY: `i` is less thant `calculator.len()`,
+				// all accesses will be disjoint due to `for_n`.
+				let calculator =
+					unsafe { &mut *calc_ptr.get(i) };
+
+				calculator
+					.likelihood(&tree, transition)
+					.unwrap();
+				let mut likelihoods = self.likelihoods.lock();
+				likelihoods[offset + i].copy_from_slice(
+					calculator.likelihoods(),
+				);
+			});
 		}
 
-		self.launched_update.store(true);
-
-		let calculators = &mut *self.calculators.lock();
-		let calc_ptr = SyncMutPtr::new(calculators.as_mut_ptr());
-
-		self.pool.lock().for_n(self.clocks.len(), |prong| {
-			let i = prong.task_index;
-			let transition = &transitions[i];
-
-			// SAFETY: `i` is less thant `calculator.len()`, all
-			// accesses will be disjoint due to `for_n`.
-			let calculator = unsafe { &mut *calc_ptr.get(i) };
-
-			calculator.likelihood(&tree, transition).unwrap();
-			let mut likelihoods = self.likelihoods.lock();
-			likelihoods[i]
-				.copy_from_slice(calculator.likelihoods());
-		});
-
 		let likelihoods = self.likelihoods.lock();
+		let offset = usize::from(self.selector.load()) * num_categories;
 		let num_patterns = likelihoods[0].len();
 		let mut out = 0.0;
 		for i in 0..num_patterns {
-			let class = usize::from(classes[i]);
-			let likelihood = likelihoods[class][i];
+			let category = usize::from(categories[i]);
+			let likelihood = likelihoods[offset + category][i];
 			out += likelihood * f64::from(self.weights[i]);
 		}
 
@@ -181,6 +198,9 @@ impl HeteroLikelihood {
 	}
 
 	pub fn reject(&self) -> Result<()> {
+		let old_selector = !self.selector.load();
+		self.selector.store(old_selector);
+
 		if self.launched_update.load() {
 			for calculator in self.calculators.lock().iter_mut() {
 				calculator.reject()?;

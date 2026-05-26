@@ -129,7 +129,7 @@ class HeteroLikelihood:
         self,
         msa: MSA,
         tree: Tree,
-        classes: ClassVector,
+        categories: ClassVector,
         substitutions: list[Substitution4],
         clocks: list[Clock],
         calculator: Calculator,

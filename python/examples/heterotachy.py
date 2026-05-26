@@ -35,7 +35,7 @@ rates = [RealVector.repeat(1, 6) for _ in range(N)]
 frequencies = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
 population_size = Real(1.0)
 clock_rates = [Real(1) for _ in range(N)]
-classes = ClassVector(N, 845)
+categories = ClassVector(N, 845)
 
 priors = [
     *(Bound(freqs) for freqs in frequencies),
@@ -52,7 +52,7 @@ priors = [
 likelihood = HeteroLikelihood(
     msa=msa,
     tree=tree,
-    classes=classes,
+    categories=categories,
     substitutions=[GTR(rate, freqs) for rate, freqs in zip(frequencies, rates)],
     clocks=[Clock.Strict(clock_rate) for clock_rate in clock_rates],
     calculator=Calculator.CPU(),
@@ -69,7 +69,7 @@ operators = [
     SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
     FixedHeightSPR(tree, rng, weight=4 * N),
     ScaleReal(population_size, Uniform(0, 1), rng, weight=3 * N),
-    ClassvecFlip(classes, rng, weight=3),
+    ClassvecFlip(categories, rng, weight=100),
 ]
 
 loggers = [
@@ -82,7 +82,7 @@ loggers = [
             },
             **{f"rates:{i}": rate for i, rate in enumerate(rates)},
             **{f"frequencies:{i}": freqs for i, freqs in enumerate(frequencies)},
-            "classes": classes,
+            "categories": categories,
             "tree": tree,
         },
         path="target/heterotachy.trace",
