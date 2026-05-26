@@ -1,21 +1,20 @@
 use anyhow::Result;
 use linalg::MatrixMut;
 
-use std::ops::Range;
-
 use crate::{parameters::Tree, substitution::SubstitutionModel};
+use buffer::SliceBuffer;
 use sk::EditBuf;
 
 pub struct Transitions {
 	size: usize,
 	edits: EditBuf,
-	data: Box<[f64]>,
+	data: SliceBuffer<f64>,
 	frequencies: Box<[f64]>,
 }
 
 impl Transitions {
 	pub fn new(size: usize, len: usize) -> Self {
-		let data = vec![0.0; size * size * len * 2].into_boxed_slice();
+		let data = SliceBuffer::new(size * size, len * 2);
 		let frequencies = vec![0.0; size].into_boxed_slice();
 		let edits = EditBuf::new(len);
 
@@ -25,14 +24,6 @@ impl Transitions {
 			data,
 			frequencies,
 		}
-	}
-
-	fn get_range(&self, edge: usize) -> Range<usize> {
-		let ms = self.size * self.size;
-		let bit = self.edits.offset(edge);
-
-		let offset = ms * (edge * 2 + bit);
-		offset..offset + ms
 	}
 
 	pub fn update(
@@ -47,10 +38,10 @@ impl Transitions {
 			let length = time_length * clock_rate(edge);
 
 			self.edits.set_edited(edge);
+			let bit = self.edits.offset(edge);
 
-			let range = self.get_range(edge);
 			let m_ref = MatrixMut::from_slice(
-				&mut self.data[range],
+				&mut self.data[edge * 2 + bit],
 				size,
 				size,
 			);
@@ -79,9 +70,9 @@ impl Transitions {
 		let ms = size * size;
 
 		let mut offset = 0;
-		for edge in edges {
-			let range = self.get_range(*edge);
-			let src_slice = &self.data[range];
+		for &edge in edges {
+			let bit = self.edits.offset(edge);
+			let src_slice = &self.data[edge * 2 + bit];
 
 			let dst_slice = &mut dst[offset..offset + ms];
 			dst_slice.copy_from_slice(src_slice);
