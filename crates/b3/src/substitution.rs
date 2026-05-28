@@ -7,9 +7,9 @@ use std::ops::{Deref, DerefMut};
 
 use crate::parameters::{Parameter, PyReal, PyRealVector};
 use linalg::{
-	MatrixArrayExt, MatrixMut, MatrixSliceExt,
+	MatrixArrayExt, MatrixMut, MatrixSliceExt, beast_eigen,
 	const_matrix::{from_diagonal, mul as cmul},
-	math::{eigen, inverse, mul},
+	mul,
 };
 
 pub trait SubstitutionModel {
@@ -394,26 +394,26 @@ impl GTR {
 		let [p_a, p_c, p_g, p_t] = self.get_frequencies();
 		let [a, b, c, d, e, f] = self.get_rates();
 
-		let mut gtr = [
-			[
+		let mut gtr = vec![
+			vec![
 				-a * p_c - b * p_g - c * p_t,
 				a * p_c,
 				b * p_g,
 				c * p_t,
 			],
-			[
+			vec![
 				a * p_a,
 				-a * p_a - d * p_g - e * p_t,
 				d * p_g,
 				e * p_t,
 			],
-			[
+			vec![
 				b * p_a,
 				d * p_c,
 				-b * p_a - d * p_c - f * p_t,
 				f * p_t,
 			],
-			[
+			vec![
 				c * p_a,
 				e * p_c,
 				f * p_g,
@@ -431,9 +431,16 @@ impl GTR {
 			}
 		}
 
-		let mut imaginary = [0.0; 4];
-		eigen(&gtr, &mut self.diag, &mut imaginary, &mut self.p);
-		inverse(&self.p, &mut self.inv_p);
+		let mut eigen_sys = beast_eigen::DefaultEigenSystem::new(4);
+		let decomposition =
+			eigen_sys.decompose_matrix(&mut gtr).unwrap();
+
+		self.p.as_flattened_mut()
+			.copy_from_slice(decomposition.get_eigen_vectors());
+		self.inv_p.as_flattened_mut().copy_from_slice(
+			decomposition.get_inverse_eigen_vectors(),
+		);
+		self.diag.copy_from_slice(decomposition.get_eigen_values());
 	}
 }
 
@@ -524,19 +531,19 @@ impl GenericSubstitution {
 		}
 	}
 
+	#[allow(clippy::needless_range_loop)]
 	fn update_matrices(&mut self) {
 		let n = self.eigenvalues.len();
 		let freqs = self.frequencies.get().inner();
 		let rates = self.rates.get().inner();
 
-		let mut q = vec![0.0; n * n];
-		let mut q_ref = q.as_mat_mut(n, n);
+		let mut q = vec![vec![0.0; n]; n];
 
 		let mut rate_idx = 0;
 		// upper triangular
 		for i in 0..n {
 			for j in (i + 1)..n {
-				q_ref[(i, j)] = freqs[j] * rates[rate_idx];
+				q[i][j] = freqs[j] * rates[rate_idx];
 				rate_idx += 1;
 			}
 		}
@@ -545,7 +552,7 @@ impl GenericSubstitution {
 		// lower triangular
 		for i in 0..n {
 			for j in 0..i {
-				q_ref[(i, j)] = freqs[j] * rates[rate_idx];
+				q[i][j] = freqs[j] * rates[rate_idx];
 				rate_idx += 1;
 			}
 		}
@@ -558,24 +565,27 @@ impl GenericSubstitution {
 				if j == i {
 					continue;
 				}
-				sum += q_ref[(i, j)];
+				sum += q[i][j];
 			}
-			q_ref[(i, i)] = -sum;
+			q[i][i] = -sum;
 			scale += sum * freqs[i];
 		}
 
-		for val in q.iter_mut() {
-			*val /= scale;
+		for row in &mut q {
+			for el in row {
+				*el /= scale;
+			}
 		}
 
-		let mut imaginary = vec![0.0; n];
-		let q_ref = q.as_mat(n, n);
-		let p_ref = self.p.as_mat_mut(n, n);
-		eigen(q_ref, &mut self.eigenvalues, &mut imaginary, p_ref);
+		let mut eigen_sys =
+			beast_eigen::DefaultEigenSystem::new(self.diag.len());
+		let decomposition = eigen_sys.decompose_matrix(&mut q).unwrap();
 
-		let p_ref = self.p.as_mat(n, n);
-		let inv_p_ref = self.inv_p.as_mat_mut(n, n);
-		inverse(p_ref, inv_p_ref);
+		self.p.copy_from_slice(decomposition.get_eigen_vectors());
+		self.inv_p.copy_from_slice(
+			decomposition.get_inverse_eigen_vectors(),
+		);
+		self.diag.copy_from_slice(decomposition.get_eigen_values());
 	}
 }
 
