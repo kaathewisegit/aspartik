@@ -281,12 +281,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lapack-static"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7223eb77f8d191e0b139c02e940ecdce5e3081abd00d006adc0b132467308ffa"
-
-[[package]]
 name = "libc"
 version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -316,7 +310,6 @@ dependencies = [
  "arbtest",
  "bytemuck",
  "cudarc",
- "lapack-static",
  "math",
  "num-traits",
 ]

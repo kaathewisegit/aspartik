@@ -4,8 +4,6 @@ pub mod beast_eigen;
 pub mod const_matrix;
 mod dim;
 mod ext;
-#[cfg(feature = "lapack")]
-pub mod lapack;
 mod matrix;
 
 pub use const_matrix::ConstMatrixRef;

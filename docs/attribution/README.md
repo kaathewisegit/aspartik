@@ -15,13 +15,6 @@ Generic string similarity searches, whose code I copied and instantiated
 instead of reusing the generic functions from the library.
 
 
-### [`fast_linalg`](./fast_linalg-license)
-
-Linear algebra routines (LU and eigendecomposition) implemented by Anton
-Merenkov.  They are optimized for small matrices and power `b3` instead
-of LAPACK.
-
-
 ## Borrowing
 
 ### [BEAST X](./beast-license), [BEAST 2](./beast2-license)

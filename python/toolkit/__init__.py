@@ -11,7 +11,7 @@ from typing import Literal
 
 from . import doc
 
-FEATURES = f"--features arbitrary{',lapack' if sys.platform == 'linux' else ''}"
+FEATURES = "--features arbitrary"
 
 
 @contextmanager
