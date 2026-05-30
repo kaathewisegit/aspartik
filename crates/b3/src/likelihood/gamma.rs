@@ -48,7 +48,7 @@ impl GammaLikelihood {
 		clock: Py<PyClock>,
 		calculator: CalculatorConfig,
 	) -> Result<Self> {
-		let (samples, weights) = deduplicate(msa.get());
+		let (samples, weights, _) = deduplicate(msa.get());
 
 		let mut calculators = Vec::new();
 		let mut transitions = Vec::new();

@@ -25,6 +25,8 @@ pub struct HeteroLikelihood {
 	tree: Py<PyTree>,
 
 	weights: Vec<u32>,
+	#[pyo3(get)]
+	sites_to_patterns: Vec<usize>,
 	likelihoods: Mutex<SkSliceBuf<f64>>,
 
 	pool: Mutex<ThreadPool>,
@@ -45,7 +47,8 @@ impl HeteroLikelihood {
 		clocks: Vec<Py<PyClock>>,
 		calculator: CalculatorConfig,
 	) -> Result<Self> {
-		let (samples, weights) = deduplicate(msa.get());
+		let (samples, weights, sites_to_patterns) =
+			deduplicate(msa.get());
 
 		let num_categories = clocks.len();
 		let num_patterns = weights.len();
@@ -75,6 +78,7 @@ impl HeteroLikelihood {
 			tree,
 
 			weights,
+			sites_to_patterns,
 			likelihoods: Mutex::new(likelihoods),
 			pool: Mutex::new(pool),
 

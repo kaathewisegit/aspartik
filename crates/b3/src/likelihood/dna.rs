@@ -37,7 +37,7 @@ impl DnaLikelihood {
 		clock: Py<PyClock>,
 		calculator: CalculatorConfig,
 	) -> Result<Self> {
-		let (samples, weights) = deduplicate(msa.get());
+		let (samples, weights, _) = deduplicate(msa.get());
 		let calculator = calculator.make4(samples, weights)?;
 
 		let transitions = Transitions::new(4, tree.get().num_nodes());

@@ -63,7 +63,15 @@ impl Likelihood {
 	}
 }
 
-fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
+/// Deduplicates sites into unique patterns
+///
+/// Returns a tuple of
+///
+/// - A (num_sequences × num_patterns) byte vector, rows are patterns per
+///   sequence
+/// - Weights per pattern
+/// - A vector of pattern index corresponding to each site
+fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>, Vec<usize>) {
 	let mut hashes =
 		Vec::<(usize, blake3::Hash)>::with_capacity(msa.num_sites());
 
@@ -83,12 +91,17 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 	// hash -> (index, count)
 	let mut map = HashMap::<blake3::Hash, (usize, u32)>::new();
 
+	let mut num_patterns = 0;
+	let mut sites_to_patterns = Vec::with_capacity(msa.num_sites());
 	for (index, hash) in &hashes {
-		if let Some((_, count)) = map.get_mut(hash) {
+		if let Some((original, count)) = map.get_mut(hash) {
 			// there's an earlier site with the same contents
 			*count += 1;
+			sites_to_patterns.push(sites_to_patterns[*original]);
 		} else {
 			map.insert(*hash, (*index, 1));
+			sites_to_patterns.push(num_patterns);
+			num_patterns += 1;
 		}
 	}
 
@@ -115,5 +128,5 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>) {
 		}
 	}
 
-	(leaves, weights)
+	(leaves, weights, sites_to_patterns)
 }
