@@ -1,4 +1,4 @@
-from utils.compare import compare_b3
+from utils.replicate import replicate_b3
 
 from aspartik.b3 import Calculator, Clock
 from aspartik.b3.likelihoods import DNALikelihood, Likelihood
@@ -10,7 +10,7 @@ from aspartik.rng import RNG
 SCALES = [3, 30, 300]
 
 
-def test_compare_likelihood():
+def test_replicate_likelihood():
     rng = RNG(4)
 
     msa = read_msa_from_fasta("data/alignments/H1N1pdm_2009.fasta")
@@ -46,7 +46,7 @@ def test_compare_likelihood():
     if cuda_calculator:
         calculators.insert(0, cuda_calculator)
 
-    compare_b3(
+    replicate_b3(
         "data/runs/influenza/b3.trace",
         parameters={
             "tree": tree,

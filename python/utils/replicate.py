@@ -6,7 +6,7 @@ from aspartik.b3.parameters import Parameter, Real, RealVector, Tree
 from aspartik.data.newick import Tree as NewickTree
 
 
-def compare_b3(
+def replicate_b3(
     trace_path: str,
     parameters: dict[str, Parameter],
     priors: dict[str, Prior] = {},
@@ -22,13 +22,14 @@ def compare_b3(
                 case Real():
                     param.set(row[name])
                 case RealVector():
+                    print(row[name])
                     for i, value in enumerate(row[name]):
                         param[i] = value
 
         _check(row, priors, likelihoods)
 
 
-def compare_beast1(
+def replicate_beast1(
     log_path: str,
     trees_path: str,
     parameters: dict[str, Parameter],
@@ -46,8 +47,8 @@ def compare_beast1(
                 case Real():
                     param.set(float(row[name]))
                 case RealVector():
-                    for i, value in enumerate(row[name]):
-                        param[i] = float(value)
+                    for i in range(len(param)):
+                        param[i] = float(row[f"{name}{i}"])
 
         _check(row, priors, likelihoods)
 
@@ -60,8 +61,6 @@ def _check(row, priors: dict[str, Prior] = {}, likelihoods: list[Likelihood] = [
     for likelihood in likelihoods:
         expected = float(row["likelihood"])
         diff = abs(likelihood.likelihood() - expected)
-        # print("frequencies", row["frequencies"])
-        # print("rates", row["rates"])
         assert diff < 0.001 * abs(expected), (
             f"{likelihood.__class__.__name__}: {diff} ({diff / abs(expected):.2%})"
         )
