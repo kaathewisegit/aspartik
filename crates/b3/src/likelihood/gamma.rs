@@ -4,7 +4,7 @@ use math::Probability;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use super::deduplicate;
+use super::{deduplicate, log_sum_exp};
 use crate::{
 	Transitions,
 	calculator::{Calculator, CalculatorConfig},
@@ -20,6 +20,7 @@ use util::atomic::{MonotonicBool, MonotonicF64};
 #[pyclass(module = "aspartik.b3.likelihoods", frozen)]
 pub struct GammaLikelihood {
 	calculators: Mutex<Vec<Box<dyn Calculator<f64> + Send + Sync>>>,
+	weights: Vec<u32>,
 
 	substitution: Mutex<Substitution>,
 	clock: Py<PyClock>,
@@ -57,7 +58,7 @@ impl GammaLikelihood {
 
 		for _ in 0..num_categories {
 			calculators.push(calculator
-				.make4(samples.clone(), weights.clone())?);
+				.make4(samples.clone(), weights.len())?);
 
 			let transition = Transitions::new(4, num_nodes);
 			transitions.push(transition);
@@ -66,10 +67,11 @@ impl GammaLikelihood {
 		let mut categories = SkBuf::repeat(0.0, num_categories);
 		update_categories(&alpha.get().inner(), &mut categories);
 
-		let pool = ThreadPool::try_spawn(categories.len())?;
+		let pool = ThreadPool::try_spawn(1)?;
 
 		let out = Self {
 			calculators: Mutex::new(calculators),
+			weights,
 
 			clock,
 			substitution: Mutex::new(substitution),
@@ -114,9 +116,11 @@ impl GammaLikelihood {
 		}
 
 		let mut categories = self.categories.lock();
+		let num_categories = categories.len();
 
 		// recalculate categories if alpha has changed
 		if alpha.is_changed() {
+			tree.mark_all_edges_updated();
 			update_categories(&alpha, &mut categories);
 		}
 
@@ -134,12 +138,10 @@ impl GammaLikelihood {
 
 		self.launched_update.store(true);
 
-		let likelihood = Mutex::new(0.0);
-
 		let calculators = &mut *self.calculators.lock();
 		let calc_ptr = SyncMutPtr::new(calculators.as_mut_ptr());
 
-		self.pool.lock().for_n(categories.len(), |prong| {
+		self.pool.lock().for_n(num_categories, |prong| {
 			let i = prong.task_index;
 			let transition = &transitions[i];
 
@@ -147,13 +149,21 @@ impl GammaLikelihood {
 			// accesses will be disjoint due to `for_n`.
 			let calculator = unsafe { &mut *calc_ptr.get(i) };
 
-			let out = calculator
-				.likelihood(&tree, transition)
-				.unwrap();
-			*likelihood.lock() += out;
+			calculator.propose(&tree, transition).unwrap();
 		});
 
-		let likelihood = *likelihood.lock();
+		let num_patterns = calculators[0].num_patterns();
+
+		let mut likelihood = 0.0;
+		let div = (1.0 / (num_categories as f64)).ln();
+		let mut sums = vec![0.0; num_categories];
+		for i in 0..num_patterns {
+			for c in 0..num_categories {
+				sums[c] = calculators[c].likelihoods()[i];
+			}
+			let sum = log_sum_exp(&sums) + div;
+			likelihood += sum * f64::from(self.weights[i]);
+		}
 
 		self.last.store(likelihood);
 		Ok(likelihood)
@@ -162,6 +172,7 @@ impl GammaLikelihood {
 	pub fn accept(&self) -> Result<()> {
 		self.cache.store(self.last.load());
 		if self.launched_update.load() {
+			self.categories.lock().accept();
 			for calculator in self.calculators.lock().iter_mut() {
 				calculator.accept()?;
 			}
@@ -177,6 +188,7 @@ impl GammaLikelihood {
 
 	pub fn reject(&self) -> Result<()> {
 		if self.launched_update.load() {
+			self.categories.lock().reject();
 			for calculator in self.calculators.lock().iter_mut() {
 				calculator.reject()?;
 			}

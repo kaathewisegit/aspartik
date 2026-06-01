@@ -2,7 +2,7 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use super::deduplicate;
+use super::{deduplicate, weighted_sum};
 use crate::{
 	Transitions,
 	calculator::{Calculator, CalculatorConfig},
@@ -16,6 +16,7 @@ use util::atomic::{MonotonicBool, MonotonicF64};
 #[pyclass(name = "DNALikelihood", module = "aspartik.b3.likelihoods", frozen)]
 pub struct DnaLikelihood {
 	calculator: Mutex<Box<dyn Calculator<f64> + Send>>,
+	weights: Vec<u32>,
 
 	substitution: Mutex<Substitution>,
 	clock: Py<PyClock>,
@@ -38,12 +39,13 @@ impl DnaLikelihood {
 		calculator: CalculatorConfig,
 	) -> Result<Self> {
 		let (samples, weights, _) = deduplicate(msa.get());
-		let calculator = calculator.make4(samples, weights)?;
+		let calculator = calculator.make4(samples, weights.len())?;
 
 		let transitions = Transitions::new(4, tree.get().num_nodes());
 
 		let out = Self {
 			calculator: Mutex::new(calculator),
+			weights,
 
 			substitution: Mutex::new(substitution),
 			clock,
@@ -88,10 +90,10 @@ impl DnaLikelihood {
 		drop(clock);
 
 		self.launched_update.store(true);
-		let likelihood = self
-			.calculator
-			.lock()
-			.likelihood(&tree, &self.transitions.lock())?;
+		let mut calculator = self.calculator.lock();
+		calculator.propose(&tree, &self.transitions.lock())?;
+		let likelihood =
+			weighted_sum(calculator.likelihoods(), &self.weights);
 		self.last.store(likelihood);
 		Ok(likelihood)
 	}

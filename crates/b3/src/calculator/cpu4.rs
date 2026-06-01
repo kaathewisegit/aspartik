@@ -13,8 +13,6 @@ pub struct Cpu4Calculator {
 	num_leaves: usize,
 	num_patterns: usize,
 
-	pattern_weights: Vec<u32>,
-
 	selectors: EditBuf,
 
 	samples: Vec<u8>,
@@ -38,11 +36,11 @@ pub struct Cpu4Calculator {
 }
 
 impl Calculator<f64> for Cpu4Calculator {
-	fn likelihood(
+	fn propose(
 		&mut self,
 		tree: &Tree,
 		transitions: &Transitions,
-	) -> Result<f64> {
+	) -> Result<()> {
 		let frequencies =
 			*transitions.frequencies().as_array::<4>().unwrap();
 
@@ -68,17 +66,13 @@ impl Calculator<f64> for Cpu4Calculator {
 			propose(self, &internals, &children, &tms, frequencies)
 		}
 
-		for ((likelihood, scale), weight) in self
-			.likelihoods
-			.iter_mut()
-			.zip(&self.scale_sums)
-			.zip(&self.pattern_weights)
+		for (likelihood, scale) in
+			self.likelihoods.iter_mut().zip(&self.scale_sums)
 		{
 			*likelihood -= f64::from(*scale * self.scale_ln);
-			*likelihood *= f64::from(*weight);
 		}
 
-		Ok(self.likelihoods.iter().sum())
+		Ok(())
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -111,12 +105,11 @@ impl Cpu4Calculator {
 	}
 
 	pub fn new(
-		pattern_weights: Vec<u32>,
+		num_patterns: usize,
 		mut samples: Vec<u8>,
 		scale_ln: u32,
 		num_threads: usize,
 	) -> Self {
-		let num_patterns = pattern_weights.len();
 		let num_leaves = samples.len() / num_patterns;
 		let num_internals = num_leaves - 1;
 
@@ -149,7 +142,6 @@ impl Cpu4Calculator {
 		Self {
 			num_leaves,
 			num_patterns,
-			pattern_weights,
 
 			selectors: EditBuf::new(num_internals),
 

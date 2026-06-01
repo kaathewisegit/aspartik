@@ -60,7 +60,7 @@ impl HeteroLikelihood {
 		let num_nodes = tree.get().num_nodes();
 		for _ in 0..num_categories {
 			calculators.push(calculator
-				.make4(samples.clone(), weights.clone())?);
+				.make4(samples.clone(), num_patterns)?);
 
 			let transition = Transitions::new(4, num_nodes);
 			transitions.push(transition);
@@ -146,9 +146,7 @@ impl HeteroLikelihood {
 				let calculator =
 					unsafe { &mut *calc_ptr.get(i) };
 
-				calculator
-					.likelihood(&tree, transition)
-					.unwrap();
+				calculator.propose(&tree, transition).unwrap();
 				let mut likelihoods = self.likelihoods.lock();
 				likelihoods.update(i).copy_from_slice(
 					calculator.likelihoods(),

@@ -130,3 +130,22 @@ fn deduplicate(msa: &Msa<DnaNucleotide>) -> (Vec<u8>, Vec<u32>, Vec<usize>) {
 
 	(leaves, weights, sites_to_patterns)
 }
+
+fn weighted_sum(values: &[f64], weights: &[u32]) -> f64 {
+	values.iter()
+		.zip(weights)
+		.map(|(likelihood, weight)| likelihood * f64::from(*weight))
+		.sum()
+}
+
+fn log_sum_exp(values: &[f64]) -> f64 {
+	let max = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+
+	if max == f64::NEG_INFINITY {
+		return f64::NEG_INFINITY;
+	}
+
+	let sum_exp: f64 = values.iter().map(|&x| (x - max).exp()).sum();
+
+	max + sum_exp.ln()
+}

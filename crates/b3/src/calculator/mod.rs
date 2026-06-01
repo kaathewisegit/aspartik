@@ -36,11 +36,11 @@ pub use state::StateCalculator;
 /// calculator and then block on `likelihood` calls.
 pub trait Calculator<F> {
 	/// Calculate tree likelihood
-	fn likelihood(
+	fn propose(
 		&mut self,
 		tree: &Tree,
 		transitions: &Transitions,
-	) -> Result<f64>;
+	) -> Result<()>;
 
 	/// Accept the changes made in `likelihood`
 	fn accept(&mut self) -> Result<()>;
@@ -104,12 +104,12 @@ impl CalculatorConfig {
 	pub fn make4(
 		&self,
 		samples: Vec<u8>,
-		weights: Vec<u32>,
+		num_patterns: usize,
 	) -> Result<Box<dyn Calculator<f64> + Send + Sync>> {
 		match self.kind {
 			CalculatorKind::Cpu { num_threads } => {
 				let calc = Cpu4Calculator::new(
-					weights,
+					num_patterns,
 					samples,
 					self.scale_ln,
 					num_threads,
@@ -118,7 +118,7 @@ impl CalculatorConfig {
 			}
 			CalculatorKind::Cuda { device } => {
 				let calc = CudaCalculator::new(
-					weights,
+					num_patterns,
 					samples,
 					self.scale_ln,
 					device,

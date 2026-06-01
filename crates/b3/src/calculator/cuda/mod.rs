@@ -63,8 +63,6 @@ pub struct CudaCalculator {
 	/// The length is `num_updated_nodes`.
 	nodes: CudaSlice<u32>,
 
-	pattern_weights: Vec<u32>,
-
 	scales: CudaSlice<u8>,
 	scale_sums: CudaSlice<u32>,
 	scale_sums_backup: CudaSlice<u32>,
@@ -74,11 +72,11 @@ pub struct CudaCalculator {
 }
 
 impl Calculator<f64> for CudaCalculator {
-	fn likelihood(
+	fn propose(
 		&mut self,
 		tree: &Tree,
 		transitions: &Transitions,
-	) -> Result<f64> {
+	) -> Result<()> {
 		let frequencies =
 			*transitions.frequencies().as_array::<4>().unwrap();
 
@@ -138,17 +136,13 @@ impl Calculator<f64> for CudaCalculator {
 		)?;
 
 		let scale_sums = self.stream.clone_dtoh(&self.scale_sums)?;
-		for ((likelihood, scale), weight) in self
-			.likelihoods_host
-			.iter_mut()
-			.zip(scale_sums)
-			.zip(&self.pattern_weights)
+		for (likelihood, scale) in
+			self.likelihoods_host.iter_mut().zip(scale_sums)
 		{
 			*likelihood -= f64::from(scale);
-			*likelihood *= f64::from(*weight);
 		}
 
-		Ok(self.likelihoods_host.iter().sum())
+		Ok(())
 	}
 
 	fn accept(&mut self) -> Result<()> {
@@ -296,7 +290,7 @@ impl CudaCalculator {
 	}
 
 	pub fn new(
-		pattern_weights: Vec<u32>,
+		num_patterns: usize,
 		leaves: Vec<u8>,
 		scale_ln: u32,
 		cuda_device: usize,
@@ -314,7 +308,6 @@ impl CudaCalculator {
 		let scale_threshold = f64::from(-(scale_ln as i32)).exp();
 		let scale_mult = f64::from(scale_ln).exp();
 
-		let num_patterns = pattern_weights.len();
 		let num_leaves = leaves.len() / num_patterns;
 		let num_internals = num_leaves - 1;
 		let num_nodes = num_leaves + num_internals;
@@ -396,8 +389,6 @@ impl CudaCalculator {
 			transitions_host: vec![0.0; num_edges * 16].into(),
 			transitions,
 			nodes,
-
-			pattern_weights,
 
 			scales,
 			scale_sums,
