@@ -61,8 +61,7 @@ pub mod pymodule {
 	use distribution::{
 		Beta, BetaError, Exp, Gamma, GammaError, InverseGamma,
 		InverseGammaError, Laplace, LaplaceError, LogNormal,
-		LogNormalError, Normal, NormalError, Poisson, Uniform,
-		UniformError,
+		LogNormalError, Normal, NormalError, Uniform, UniformError,
 	};
 
 	#[pymodule_init]

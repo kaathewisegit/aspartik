@@ -3,8 +3,6 @@ from typing import Self
 from aspartik.stats.distributions import (
     Continuous,
     ContinuousCDF,
-    Discrete,
-    DiscreteCDF,
     Distribution,
     Sample,
 )
@@ -78,14 +76,6 @@ class Normal(ContinuousCDF, Continuous, Distribution, Sample[float]):
 class NormalError:
     MeanInvalid: Self
     StandardDeviationInvalid: Self
-
-class Poisson(DiscreteCDF, Discrete, Distribution, Sample[int]):
-    def __init__(self, lambda_: float): ...
-    @property
-    def lambda_(self) -> float: ...
-
-class PoissonError:
-    LambdaInvalid: Self
 
 class Uniform(ContinuousCDF, Continuous, Distribution, Sample[float]):
     def __init__(self, min: float, max: float): ...

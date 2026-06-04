@@ -14,7 +14,6 @@ from .._aspartik_rust_impl._stats_rust_impl import (
     LogNormalError as LogNormalError,
     Normal as Normal,
     NormalError as NormalError,
-    Poisson as Poisson,
     Uniform as Uniform,
     UniformError as UniformError,
 )

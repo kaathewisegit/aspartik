@@ -1,5 +1,3 @@
-#[cfg(feature = "python")]
-use pyo3::prelude::*;
 use rand::RngExt;
 
 use core::f64::consts;
@@ -9,8 +7,6 @@ use math::{
 	function::{factorial, gamma},
 };
 
-#[cfg(feature = "python")]
-use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::*,
@@ -31,34 +27,8 @@ use crate::{
 /// assert_almost_eq!(n.pmf(1), 0.367879441171442, epsilon = 1e-15);
 /// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
-#[cfg_attr(
-	feature = "python",
-	pyclass(
-		from_py_object,
-		module = "aspartik.stats.distributions",
-		frozen,
-		eq,
-		str
-	)
-)]
 pub struct Poisson {
 	lambda: Positive<f64>,
-}
-
-#[cfg(feature = "python")]
-impl_pymethods! {for Poisson;
-	new(lambda_: Positive<f64>) -> Poisson;
-	repr("Poisson({})", lambda);
-	Discrete true;
-	DiscreteCDF true;
-	Distribution true;
-
-	@
-
-	#[getter(lambda_)]
-	fn py_lambda(&self) -> f64 {
-		*self.lambda
-	}
 }
 
 impl Poisson {
