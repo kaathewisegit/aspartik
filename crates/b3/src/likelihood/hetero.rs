@@ -185,8 +185,8 @@ impl HeteroLikelihood {
 			for clock in &self.clocks {
 				clock.get().inner().accept();
 			}
+			self.launched_update.store(false);
 		}
-		self.launched_update.store(false);
 		Ok(())
 	}
 
@@ -207,8 +207,8 @@ impl HeteroLikelihood {
 			for clock in &self.clocks {
 				clock.get().inner().reject();
 			}
+			self.launched_update.store(false);
 		}
-		self.launched_update.store(false);
 		Ok(())
 	}
 }
