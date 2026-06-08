@@ -87,9 +87,9 @@ dependencies = [
 
 [[package]]
 name = "bitflags"
-version = "2.11.1"
+version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4512299f36f043ab09a583e57bceb5a5aab7a73db1805848e8fef3c9e8c78b3"
+checksum = "b4388bee8683e3d04af747c73422af53102d2bd24d9eadb6cbc100baef4b43f8"
 
 [[package]]
 name = "bitmap"
@@ -404,7 +404,7 @@ checksum = "7011d97b484a5ebdc4b1fdb3b12d5e4bbbea56e9d22b688f2e79e04b65a7d8a6"
 [[package]]
 name = "picoarrow"
 version = "0.1.0"
-source = "git+https://github.com/kaathewisegit/picoarrow#c6f06fe17a3c8961ec56f7ee936690029798931b"
+source = "git+https://github.com/kaathewisegit/picoarrow#241c7aa9cebbdd56806c046f9cb4837f4af922ef"
 dependencies = [
  "bytemuck",
  "flatbuffers",

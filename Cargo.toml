@@ -30,7 +30,7 @@ arbtest = "0.3.2"
 blake3 = "1.8"
 bytemuck = "1.25"
 bytes = "1.11"
-cudarc = { version = "0.19.4", default-features = false }
+cudarc = { version = "0.19.7", default-features = false }
 fork_union = "2.3"
 libc = "0.2.184"
 libm = "0.2.16"
