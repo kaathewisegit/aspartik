@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result, anyhow, bail};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 use pyo3::{
@@ -119,15 +119,26 @@ impl PyOperator {
 
 	pub fn propose(&self, py: Python) -> Result<Proposal> {
 		let proposal = py_call_method!(py, self.inner, "propose")?;
-		let proposal = proposal.extract::<Proposal>(py).expect("TODO");
+		let Ok(proposal) = proposal.extract::<Proposal>(py) else {
+			bail!(
+				"Expected operator {} to return `Propose` from the `propose` method, got {}",
+				self.inner,
+				proposal,
+			);
+		};
 
 		Ok(proposal)
 	}
 
 	pub fn parameters(&self, py: Python) -> Result<Vec<PyParameter>> {
 		let params = py_call_method!(py, self.inner, "parameters")?;
-		let params =
-			params.extract::<Vec<PyParameter>>(py).expect("TODO");
+		let Ok(params) = params.extract::<Vec<PyParameter>>(py) else {
+			bail!(
+				"Expected operator {} to return a list of parameters from the `parameters` method, got {}",
+				self.inner,
+				params,
+			);
+		};
 		Ok(params)
 	}
 
