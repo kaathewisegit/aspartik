@@ -17,7 +17,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0-alpha.13"
+version = "0.1.0-alpha.14"
 edition = "2024"
 license = "AGPL-3.0-only"
 authors = ["Andrej Kolčin <self@kaathewise.net>"]
@@ -32,7 +32,7 @@ bytemuck = "1.25"
 bytes = "1.11"
 cudarc = { version = "0.19.7", default-features = false }
 fork_union = "2.3"
-libc = "0.2.184"
+libc = "0.2.186"
 libm = "0.2.16"
 num-traits = "0.2.19"
 parking_lot = "0.12.5"
@@ -44,18 +44,18 @@ rand_pcg = "0.10.2"
 thiserror = "2.0"
 
 
-b3 = { version = "0.1.0-alpha.13", path = "crates/b3" }
-bitmap = { version = "0.1.0-alpha.13", path = "crates/bitmap" }
-buffer = { version = "0.1.0-alpha.13", path = "crates/buffer" }
-data = { version = "0.1.0-alpha.13", path = "crates/data" }
-io = { version = "0.1.0-alpha.13", path = "crates/io" }
-linalg = { version = "0.1.0-alpha.13", path = "crates/linalg" }
-math = { version = "0.1.0-alpha.13", path = "crates/math", default-features = false }
-rng = { version = "0.1.0-alpha.13", path = "crates/rng" }
-sk = { version = "0.1.0-alpha.13", path = "crates/sk" }
-stats = { version = "0.1.0-alpha.13", path = "crates/stats" }
-util = { version = "0.1.0-alpha.13", path = "crates/util" }
-verbatim = { version = "0.1.0-alpha.13", path = "crates/verbatim" }
+b3 = { version = "0.1.0-alpha.14", path = "crates/b3" }
+bitmap = { version = "0.1.0-alpha.14", path = "crates/bitmap" }
+buffer = { version = "0.1.0-alpha.14", path = "crates/buffer" }
+data = { version = "0.1.0-alpha.14", path = "crates/data" }
+io = { version = "0.1.0-alpha.14", path = "crates/io" }
+linalg = { version = "0.1.0-alpha.14", path = "crates/linalg" }
+math = { version = "0.1.0-alpha.14", path = "crates/math", default-features = false }
+rng = { version = "0.1.0-alpha.14", path = "crates/rng" }
+sk = { version = "0.1.0-alpha.14", path = "crates/sk" }
+stats = { version = "0.1.0-alpha.14", path = "crates/stats" }
+util = { version = "0.1.0-alpha.14", path = "crates/util" }
+verbatim = { version = "0.1.0-alpha.14", path = "crates/verbatim" }
 
 [workspace.lints.clippy]
 branches_sharing_code = "warn"
