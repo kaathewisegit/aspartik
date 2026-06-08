@@ -1,3 +1,11 @@
+from ._common import raise_import
+
+try:
+    import polars as pl
+except ImportError:
+    raise_import("polars")
+
+
 from pathlib import Path
 from typing import TextIO
 
@@ -12,8 +20,6 @@ def trees_to_newick(
     *,
     tree_key: str = "tree",
 ):
-    import polars as pl
-
     dest = _to_io(dest)
 
     tree = Tree(names, RNG(4))

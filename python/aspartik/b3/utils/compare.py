@@ -1,4 +1,9 @@
-import polars as pl
+from ._common import raise_import
+
+try:
+    import polars as pl
+except ImportError:
+    raise_import("polars")
 
 from typing import Literal
 
