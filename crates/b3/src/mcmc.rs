@@ -8,7 +8,7 @@ use std::{fs, io::Write, path::Path};
 use crate::{
 	PyCallback,
 	likelihood::Likelihood,
-	operators::{Proposal, PyOperator, WeightedScheduler},
+	operators::{Proposal, PyOperator, Scheduler},
 	parameters::PyParameter,
 	priors::PyPrior,
 };
@@ -24,7 +24,7 @@ pub struct Mcmc {
 	current_step: Mutex<usize>,
 
 	priors: Vec<PyPrior>,
-	scheduler: WeightedScheduler,
+	scheduler: Scheduler,
 	likelihood: Likelihood,
 	callbacks: Vec<PyCallback>,
 	#[pyo3(get)]
@@ -51,11 +51,8 @@ impl Mcmc {
 
 		optimization_cutoff: usize,
 	) -> Result<Mcmc> {
-		let scheduler = WeightedScheduler::new(
-			py,
-			operators,
-			optimization_cutoff,
-		)?;
+		let scheduler =
+			Scheduler::new(py, operators, optimization_cutoff)?;
 		let parameters = scheduler.parameters(py)?;
 
 		let out = Mcmc {
@@ -241,14 +238,10 @@ impl StepResult {
 	pub fn is_reject(&self) -> bool {
 		!self.is_accept()
 	}
-
-	pub fn index(&self) -> usize {
-		*self as usize
-	}
 }
 
 impl Mcmc {
-	pub fn scheduler(&self) -> &WeightedScheduler {
+	pub fn scheduler(&self) -> &Scheduler {
 		&self.scheduler
 	}
 

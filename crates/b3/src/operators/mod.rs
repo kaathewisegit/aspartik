@@ -7,7 +7,12 @@ use pyo3::{
 };
 use rand::distr::{Distribution, weighted::WeightedIndex};
 
-use std::{collections::HashSet, io::Write, time::Duration};
+use std::{
+	collections::HashSet,
+	io::Write,
+	ops::{Index, IndexMut},
+	time::Duration,
+};
 
 use crate::{mcmc::StepResult, parameters::PyParameter};
 use rng::Rng;
@@ -237,18 +242,50 @@ impl PyOperator {
 }
 
 #[derive(Debug)]
-pub struct WeightedScheduler {
+pub struct Scheduler {
 	operators: Vec<PyOperator>,
 	weights: Vec<f64>,
 	optimization_cutoff: usize,
 	statistics: Mutex<Statistics>,
 }
 
-type ResultStatistic = [usize; 4];
+pub type OperatorStatistics = ResultStatistics;
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ResultStatistics {
+	pub aborts: u64,
+	pub prior_rejects: u64,
+	pub accepts: u64,
+	pub rejects: u64,
+}
+
+impl Index<StepResult> for ResultStatistics {
+	type Output = u64;
+
+	fn index(&self, result: StepResult) -> &u64 {
+		match result {
+			StepResult::Abort => &self.aborts,
+			StepResult::PriorReject => &self.prior_rejects,
+			StepResult::Accept => &self.accepts,
+			StepResult::Reject => &self.rejects,
+		}
+	}
+}
+
+impl IndexMut<StepResult> for ResultStatistics {
+	fn index_mut(&mut self, result: StepResult) -> &mut u64 {
+		match result {
+			StepResult::Abort => &mut self.aborts,
+			StepResult::PriorReject => &mut self.prior_rejects,
+			StepResult::Accept => &mut self.accepts,
+			StepResult::Reject => &mut self.rejects,
+		}
+	}
+}
 
 #[derive(Debug)]
 struct Statistics {
-	results: Vec<ResultStatistic>,
+	results: Vec<OperatorStatistics>,
 	propose: Vec<Duration>,
 	likelihood: Vec<Duration>,
 }
@@ -256,14 +293,14 @@ struct Statistics {
 impl Statistics {
 	fn new(len: usize) -> Self {
 		Self {
-			results: vec![Default::default(); len],
+			results: vec![ResultStatistics::default(); len],
 			propose: vec![Duration::default(); len],
 			likelihood: vec![Duration::default(); len],
 		}
 	}
 }
 
-impl WeightedScheduler {
+impl Scheduler {
 	pub fn new(
 		py: Python,
 		operators: Vec<PyOperator>,
@@ -342,7 +379,7 @@ impl WeightedScheduler {
 		}
 
 		let mut statistics = self.statistics.lock();
-		statistics.results[index][result.index()] += 1;
+		statistics.results[index][result] += 1;
 
 		Ok(())
 	}
@@ -378,6 +415,10 @@ impl WeightedScheduler {
 		statistics.likelihood[index] += duration;
 	}
 
+	pub fn statistics(&self) -> Vec<OperatorStatistics> {
+		self.statistics.lock().results.clone()
+	}
+
 	pub fn py_statistics(&self, py: Python) -> Result<Py<PyList>> {
 		let statistics = self.statistics.lock();
 
@@ -385,11 +426,19 @@ impl WeightedScheduler {
 
 		for i in 0..self.operators.len() {
 			let copy = self.operators[i].inner.clone_ref(py);
-			let results = statistics.results[i];
+			let results = &statistics.results[i];
 			let propose = statistics.propose[i];
 			let likelihood = statistics.likelihood[i];
 
-			let tuple = (copy, results, propose, likelihood)
+			let tuple = (
+				copy,
+				results.aborts,
+				results.prior_rejects,
+				results.accepts,
+				results.rejects,
+				propose,
+				likelihood,
+			)
 				.into_pyobject(py)?;
 
 			out.append(tuple)?;
