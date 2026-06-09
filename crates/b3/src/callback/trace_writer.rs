@@ -4,7 +4,7 @@ use picoarrow::{
 	Field, Schema,
 	array::{
 		Array, ArrayBinary, ArrayF64, ArrayFixedSizeList, ArrayI64,
-		ArrayU8, ArrayU64, NonNullable,
+		ArrayU8, ArrayU64, NonNullable, Nullable,
 	},
 	ipc::{Compression, FileWriter},
 };
@@ -18,6 +18,7 @@ use std::{
 
 use crate::{
 	mcmc::Mcmc,
+	operators::PyOperator,
 	parameters::{
 		Parameter, PyClassVector, PyIntVector, PyReal, PyRealVector,
 		PyTree,
@@ -47,6 +48,10 @@ enum LoggedArray {
 		binary: ArrayBinary<NonNullable>,
 		length: ArrayF64<NonNullable>,
 		height: ArrayF64<NonNullable>,
+	},
+	Operator {
+		operator: PyOperator,
+		array: ArrayF64<Nullable>,
 	},
 	Prior {
 		prior: PyPrior,
@@ -89,6 +94,18 @@ impl Item {
 					}
 				})?;
 			}
+			LoggedArray::Operator { operator, array } => {
+				Python::attach(|py| -> Result<()> {
+					if let Some(tuning) =
+						operator.get_tuning(py)?
+					{
+						array.push(tuning);
+					} else {
+						array.push_null();
+					}
+					Ok(())
+				})?;
+			}
 			LoggedArray::Prior { prior, array } => {
 				let value = prior.probability(py)?;
 				array.push(value);
@@ -122,6 +139,9 @@ impl Item {
 				array.memory_size()
 			}
 			LoggedArray::ClassVector { array, .. } => {
+				array.memory_size()
+			}
+			LoggedArray::Operator { array, .. } => {
 				array.memory_size()
 			}
 			LoggedArray::Prior { array, .. } => array.memory_size(),
@@ -219,6 +239,12 @@ impl TraceWriter {
 					binary: ArrayBinary::new(),
 					length: ArrayF64::new(),
 					height: ArrayF64::new(),
+				}
+			} else if let Ok(operator) = val.extract::<PyOperator>()
+			{
+				LoggedArray::Operator {
+					operator,
+					array: ArrayF64::new(),
 				}
 			} else if let Ok(prior) = val.extract::<PyPrior>() {
 				LoggedArray::Prior {
@@ -346,6 +372,9 @@ impl TraceWriter {
 				LoggedArray::ClassVector { array, .. } => {
 					batch_arrays.push(array as &dyn Array)
 				}
+				LoggedArray::Operator { array, .. } => {
+					batch_arrays.push(array as &dyn Array)
+				}
 				LoggedArray::Prior { array, .. } => {
 					batch_arrays.push(array as &dyn Array)
 				}
@@ -384,6 +413,9 @@ impl TraceWriter {
 				LoggedArray::ClassVector { array, .. } => {
 					array.clear();
 				}
+				LoggedArray::Operator { array, .. } => {
+					array.clear();
+				}
 				LoggedArray::Prior { array, .. } => {
 					array.clear();
 				}
@@ -417,6 +449,9 @@ fn items_to_fields(items: &[Item], fields: &mut Vec<Field>) {
 				fields.push(array.make_field(&item.name))
 			}
 			LoggedArray::ClassVector { array, .. } => {
+				fields.push(array.make_field(&item.name))
+			}
+			LoggedArray::Operator { array, .. } => {
 				fields.push(array.make_field(&item.name))
 			}
 			LoggedArray::Prior { array, .. } => {

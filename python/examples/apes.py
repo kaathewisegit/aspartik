@@ -73,6 +73,7 @@ loggers = [
             "prior:kappa": priors[0],
             "prior:population_size": priors[1],
             "prior:coalescent": priors[2],
+            "operator:scale": operators[0],
         },
         "target/apes.trace",
         overwrite=True,

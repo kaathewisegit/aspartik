@@ -289,7 +289,7 @@ class Clock:
 class TraceWriter(Callback):
     def __init__(
         self,
-        items: dict[str, Parameter | Prior],
+        items: dict[str, Parameter | Prior | Operator],
         path: str,
         *,
         overwrite: bool = False,

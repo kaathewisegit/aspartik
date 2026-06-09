@@ -12,9 +12,8 @@ use std::{collections::HashSet, io::Write, time::Duration};
 use crate::{mcmc::StepResult, parameters::PyParameter};
 use rng::Rng;
 use util::{
-	atomic::{MonotonicF64, MonotonicU32},
-	py_bail, py_call_method, py_check_method, py_extract_attr,
-	py_has_method, time,
+	atomic::MonotonicU32, py_bail, py_call_method, py_check_method,
+	py_extract_attr, py_has_method, time,
 };
 use verbatim::{Deserialize, Serialize};
 
@@ -81,7 +80,6 @@ pub struct PyOperator {
 
 	has_accept_reject: bool,
 	has_tuning: bool,
-	tuning: MonotonicF64,
 	accepts: MonotonicU32,
 	rejects: MonotonicU32,
 }
@@ -103,11 +101,10 @@ impl<'py> FromPyObject<'_, 'py> for PyOperator {
 			inner: obj.to_owned().unbind(),
 			has_accept_reject,
 			has_tuning,
-			tuning: 0.75.into(),
 			accepts: 0.into(),
 			rejects: 0.into(),
 		};
-		out.set_tuning(obj.py())?;
+		out.set_tuning(obj.py(), 0.75)?;
 		Ok(out)
 	}
 }
@@ -142,23 +139,23 @@ impl PyOperator {
 		Ok(params)
 	}
 
-	pub fn set_tuning(&self, py: Python) -> Result<()> {
+	pub fn get_tuning(&self, py: Python) -> Result<Option<f64>> {
 		if self.has_tuning {
-			py_call_method!(
-				py,
-				self.inner,
-				"set_tuning",
-				self.tuning.load()
-			)?;
+			Ok(Some(py_call_method!(py, self.inner, "get_tuning")?
+				.extract::<f64>(py)?))
+		} else {
+			Ok(None)
+		}
+	}
+
+	pub fn set_tuning(&self, py: Python, value: f64) -> Result<()> {
+		if self.has_tuning {
+			py_call_method!(py, self.inner, "set_tuning", value)?;
 		}
 		Ok(())
 	}
 
 	pub fn tune(&self, py: Python) -> Result<()> {
-		if !self.has_tuning {
-			return Ok(());
-		}
-
 		let accepts = f64::from(self.accepts.load());
 		let rejects = f64::from(self.rejects.load());
 		let ratio = accepts / (accepts + rejects);
@@ -167,7 +164,9 @@ impl PyOperator {
 			return Ok(());
 		}
 
-		let old_tuning = self.tuning.load();
+		let Some(old_tuning) = self.get_tuning(py)? else {
+			return Ok(());
+		};
 
 		// This is a somewhat odd optimization routine because it
 		// doesn't decrease step size over time.  The idea is very
@@ -178,9 +177,8 @@ impl PyOperator {
 		// The rate of change (0.05) is tied to how often we tune.
 		let new_tuning =
 			(old_tuning - 0.05 * (ratio - 0.234)).clamp(0.01, 0.99);
-		self.tuning.store(new_tuning);
 
-		self.set_tuning(py)?;
+		self.set_tuning(py, new_tuning)?;
 
 		self.accepts.store(0);
 		self.rejects.store(0);
@@ -191,14 +189,24 @@ impl PyOperator {
 	pub fn load(&self, bytes: &mut &[u8]) -> Result<()> {
 		self.accepts.store(u32::deserialize(bytes)?);
 		self.rejects.store(u32::deserialize(bytes)?);
-		self.tuning.store(f64::deserialize(bytes)?);
+		Python::attach(|py| -> Result<()> {
+			if self.has_tuning {
+				self.set_tuning(py, f64::deserialize(bytes)?)?;
+			}
+			Ok(())
+		})?;
 		Ok(())
 	}
 
 	pub fn dump(&self, writer: &mut dyn Write) -> Result<()> {
 		self.accepts.load().serialize(writer)?;
 		self.rejects.load().serialize(writer)?;
-		self.tuning.load().serialize(writer)?;
+		Python::attach(|py| {
+			let Some(tuning) = self.get_tuning(py)? else {
+				return Ok(());
+			};
+			tuning.serialize(writer)
+		})?;
 		Ok(())
 	}
 
@@ -407,12 +415,7 @@ impl WeightedScheduler {
 		for operator in &self.operators {
 			operator.load(bytes)?;
 		}
-		Python::attach(|py| -> Result<()> {
-			for operator in &self.operators {
-				operator.set_tuning(py)?;
-			}
-			Ok(())
-		})
+		Ok(())
 	}
 
 	pub fn dump(&self, writer: &mut dyn Write) -> Result<()> {
