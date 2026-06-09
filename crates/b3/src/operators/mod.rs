@@ -186,27 +186,21 @@ impl PyOperator {
 		Ok(())
 	}
 
-	pub fn load(&self, bytes: &mut &[u8]) -> Result<()> {
+	pub fn load(&self, py: Python, bytes: &mut &[u8]) -> Result<()> {
 		self.accepts.store(u32::deserialize(bytes)?);
 		self.rejects.store(u32::deserialize(bytes)?);
-		Python::attach(|py| -> Result<()> {
-			if self.has_tuning {
-				self.set_tuning(py, f64::deserialize(bytes)?)?;
-			}
-			Ok(())
-		})?;
+		if self.has_tuning {
+			self.set_tuning(py, f64::deserialize(bytes)?)?;
+		}
 		Ok(())
 	}
 
-	pub fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+	pub fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
 		self.accepts.load().serialize(writer)?;
 		self.rejects.load().serialize(writer)?;
-		Python::attach(|py| {
-			let Some(tuning) = self.get_tuning(py)? else {
-				return Ok(());
-			};
-			tuning.serialize(writer)
-		})?;
+		if let Some(tuning) = self.get_tuning(py)? {
+			tuning.serialize(writer)?;
+		};
 		Ok(())
 	}
 
@@ -322,7 +316,11 @@ impl WeightedScheduler {
 		&self.operators[index]
 	}
 
-	pub fn operators(&self, py: Python) -> Vec<Py<PyAny>> {
+	pub fn operators(&self) -> &[PyOperator] {
+		&self.operators
+	}
+
+	pub fn py_operators(&self, py: Python) -> Vec<Py<PyAny>> {
 		self.operators.iter().map(|p| p.clone_inner(py)).collect()
 	}
 
@@ -380,7 +378,7 @@ impl WeightedScheduler {
 		statistics.likelihood[index] += duration;
 	}
 
-	pub fn statistics(&self, py: Python) -> Result<Py<PyList>> {
+	pub fn py_statistics(&self, py: Python) -> Result<Py<PyList>> {
 		let statistics = self.statistics.lock();
 
 		let out = PyList::empty(py);
@@ -411,16 +409,16 @@ impl WeightedScheduler {
 		Ok(())
 	}
 
-	pub fn load(&self, bytes: &mut &[u8]) -> Result<()> {
+	pub fn load(&self, py: Python, bytes: &mut &[u8]) -> Result<()> {
 		for operator in &self.operators {
-			operator.load(bytes)?;
+			operator.load(py, bytes)?;
 		}
 		Ok(())
 	}
 
-	pub fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+	pub fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
 		for operator in &self.operators {
-			operator.dump(writer)?;
+			operator.dump(py, writer)?;
 		}
 		Ok(())
 	}

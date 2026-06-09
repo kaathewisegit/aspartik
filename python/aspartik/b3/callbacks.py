@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from .._aspartik_rust_impl._b3_rust_impl import (
+    OperatorStats as OperatorStats,
     TraceWriter as TraceWriter,
 )
 from . import MCMC, Callback

@@ -3,7 +3,12 @@
 """
 
 from aspartik.b3 import MCMC, Calculator, Clock
-from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, TraceWriter
+from aspartik.b3.callbacks import (
+    OperatorStats,
+    PrintLogger,
+    StateCheckpoint,
+    TraceWriter,
+)
 from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import (
     BeastNarrowExchange,
@@ -62,7 +67,7 @@ likelihood = DNALikelihood(
     calculator=Calculator.CPU(),
 )
 
-loggers = [
+callbacks = [
     PrintLogger(every=10_000),
     TraceWriter(
         {
@@ -73,7 +78,6 @@ loggers = [
             "prior:kappa": priors[0],
             "prior:population_size": priors[1],
             "prior:coalescent": priors[2],
-            "operator:scale": operators[0],
         },
         "target/apes.trace",
         overwrite=True,
@@ -81,13 +85,14 @@ loggers = [
         every=1_000,
     ),
     StateCheckpoint("target/apes.state", every=10_000),
+    OperatorStats("target/apes.opstats", every=10_000),
 ]
 
 mcmc = MCMC(
     priors=priors,
     operators=operators,
     likelihood=likelihood,
-    callbacks=loggers,
+    callbacks=callbacks,
     rng=rng,
     optimization_cutoff=100_000,
 )

@@ -23,7 +23,7 @@ pub mod pymodule {
 	#[pymodule_export]
 	use crate::{
 		calculator::CalculatorConfig,
-		callback::TraceWriter,
+		callback::{OperatorStats, TraceWriter},
 		clock::PyClock,
 		likelihood::{
 			CompoundLikelihood, DnaLikelihood, GammaLikelihood,

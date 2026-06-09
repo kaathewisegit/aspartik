@@ -289,10 +289,13 @@ class Clock:
 class TraceWriter(Callback):
     def __init__(
         self,
-        items: dict[str, Parameter | Prior | Operator],
+        items: dict[str, Parameter | Prior],
         path: str,
         *,
         overwrite: bool = False,
         zstd: bool = False,
         every: int,
     ): ...
+
+class OperatorStats(Callback):
+    def __init__(self, path: str, *, every: int): ...

@@ -96,7 +96,7 @@ impl Mcmc {
 	/// A list of active operators
 	#[getter]
 	fn operators(&self, py: Python) -> Vec<Py<PyAny>> {
-		self.scheduler.operators(py)
+		self.scheduler.py_operators(py)
 	}
 
 	#[getter]
@@ -120,10 +120,13 @@ impl Mcmc {
 			Err(err) => {
 				let self_ = this.get();
 				self_.finish_run(py, this.clone_ref(py))?;
-				self_.dump_state_to_file(format!(
-					"b3-error-{}.state",
-					seconds_since_unix(),
-				))?;
+				self_.dump_state_to_file(
+					py,
+					format!(
+						"b3-error-{}.state",
+						seconds_since_unix(),
+					),
+				)?;
 				Err(err)
 			}
 		}
@@ -168,12 +171,12 @@ impl Mcmc {
 	/// original operator object.  And `results` is a list of step results.
 	#[getter]
 	fn operator_statistics(&self, py: Python) -> Result<Py<PyList>> {
-		self.scheduler.statistics(py)
+		self.scheduler.py_statistics(py)
 	}
 
-	fn dump_state(&self) -> Result<Vec<u8>> {
+	fn dump_state(&self, py: Python) -> Result<Vec<u8>> {
 		let mut out = Vec::new();
-		self.dump(&mut out)?;
+		self.dump(py, &mut out)?;
 		Ok(out)
 	}
 
@@ -191,7 +194,7 @@ impl Mcmc {
 			param.as_dyn().load(&mut bytes)?;
 		}
 
-		self.scheduler.load(&mut bytes)?;
+		self.scheduler.load(py, &mut bytes)?;
 
 		self.rng.get().load(&mut bytes)?;
 
@@ -245,7 +248,11 @@ impl StepResult {
 }
 
 impl Mcmc {
-	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+	pub fn scheduler(&self) -> &WeightedScheduler {
+		&self.scheduler
+	}
+
+	fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
 		VERSION.serialize(writer)?;
 		(*self.current_step.lock() as u64).serialize(writer)?;
 		self.posterior.load().serialize(writer)?;
@@ -254,7 +261,7 @@ impl Mcmc {
 			parameter.as_dyn().dump(writer)?;
 		}
 
-		self.scheduler.dump(writer)?;
+		self.scheduler.dump(py, writer)?;
 
 		self.rng.get().dump(writer)
 	}
@@ -295,8 +302,12 @@ impl Mcmc {
 		Ok(())
 	}
 
-	fn dump_state_to_file(&self, path: impl AsRef<Path>) -> Result<()> {
-		let state = self.dump_state()?;
+	fn dump_state_to_file(
+		&self,
+		py: Python,
+		path: impl AsRef<Path>,
+	) -> Result<()> {
+		let state = self.dump_state(py)?;
 		fs::write(path, state)?;
 		Ok(())
 	}
