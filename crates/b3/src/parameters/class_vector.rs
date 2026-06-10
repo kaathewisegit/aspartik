@@ -40,6 +40,10 @@ impl ClassVector {
 	pub fn iter(&self) -> Iter<'_, u32> {
 		self.classes.iter()
 	}
+
+	pub fn is_changed_at(&self, index: usize) -> bool {
+		self.classes.is_changed_at(index)
+	}
 }
 
 impl Parameter for ClassVector {

@@ -535,8 +535,8 @@ impl Tree {
 		self.updated_propagatons.set_all_off();
 	}
 
-	/// Updated internal edge and node bookkeeping
-	fn mark_edge_updated(&mut self, edge: usize) {
+	/// Update internal edge and node bookkeeping
+	pub fn mark_edge_updated(&mut self, edge: usize) {
 		self.updated_edges.set_on(edge);
 		let (child, _) = self.edge_nodes(edge);
 

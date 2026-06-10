@@ -56,6 +56,7 @@ impl DnaLikelihood {
 			last: f64::NAN.into(),
 			launched_update: false.into(),
 		};
+		out.tree.get().inner().mark_all_edges_updated();
 		out.likelihood()?;
 		// likelihood sets `last` and accept updates the cache, so
 		// neither cache nor last will be NaN.
@@ -68,8 +69,7 @@ impl DnaLikelihood {
 		let mut clock = self.clock.get().inner();
 		let mut substitution = self.substitution.lock();
 
-		clock.update()?;
-		clock.mark_tree(&mut tree);
+		clock.update(&mut tree)?;
 
 		if substitution.update()? {
 			tree.mark_all_edges_updated();

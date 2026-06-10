@@ -12,7 +12,7 @@ from ..b3.substitutions import Substitution4
 from ..data.msa import MSA
 from ..data.newick import Tree as NewickTree
 from ..rng import RNG
-from ..stats.distributions import Sample
+from ..stats.distributions import ContinuousCDF, Sample
 
 class Tree(Scalable):
     def __init__(self, names: list[str], rng: RNG): ...
@@ -285,6 +285,10 @@ class IntVector(Sized):
 class Clock:
     @classmethod
     def Strict(_cls, rate: Real) -> Clock: ...
+    @classmethod
+    def Relaxed(
+        _cls, rate_categories: ClassVector, distribution: ContinuousCDF
+    ) -> Clock: ...
 
 class TraceWriter(Callback):
     def __init__(

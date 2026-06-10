@@ -87,6 +87,7 @@ impl GammaLikelihood {
 			last: f64::NAN.into(),
 			launched_update: false.into(),
 		};
+		out.tree.get().inner().mark_all_edges_updated();
 		out.likelihood()?;
 		// likelihood sets `last` and accept updates the cache, so
 		// neither cache nor last will be NaN.
@@ -101,8 +102,7 @@ impl GammaLikelihood {
 		let mut substitution = self.substitution.lock();
 		let alpha = self.alpha.get().inner();
 
-		clock.update()?;
-		clock.mark_tree(&mut tree);
+		clock.update(&mut tree)?;
 
 		if substitution.update()? {
 			tree.mark_all_edges_updated();

@@ -86,6 +86,7 @@ impl HeteroLikelihood {
 			last: f64::NAN.into(),
 			launched_update: false.into(),
 		};
+		out.tree.get().inner().mark_all_edges_updated();
 		out.likelihood()?;
 		// likelihood sets `last` and accept updates the cache, so
 		// neither cache nor last will be NaN.
@@ -102,8 +103,7 @@ impl HeteroLikelihood {
 
 		for clock in &self.clocks {
 			let mut clock = clock.get().inner();
-			clock.update()?;
-			clock.mark_tree(&mut tree);
+			clock.update(&mut tree)?;
 		}
 
 		for substitution in substitutions.iter_mut() {

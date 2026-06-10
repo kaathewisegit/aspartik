@@ -432,10 +432,12 @@ impl Scheduler {
 
 			let tuple = (
 				copy,
-				results.aborts,
-				results.prior_rejects,
-				results.accepts,
-				results.rejects,
+				(
+					results.aborts,
+					results.prior_rejects,
+					results.accepts,
+					results.rejects,
+				),
 				propose,
 				likelihood,
 			)
