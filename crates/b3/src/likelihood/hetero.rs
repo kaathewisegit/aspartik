@@ -158,7 +158,7 @@ impl HeteroLikelihood {
 		let num_patterns = likelihoods[0].len();
 		let mut out = 0.0;
 		for i in 0..num_patterns {
-			let category = usize::from(categories[i]);
+			let category = categories[i] as usize;
 			let likelihood = likelihoods[category][i];
 			out += likelihood * f64::from(self.weights[i]);
 		}

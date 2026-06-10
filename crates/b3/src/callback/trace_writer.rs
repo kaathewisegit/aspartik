@@ -4,7 +4,7 @@ use picoarrow::{
 	Field, Schema,
 	array::{
 		Array, ArrayBinary, ArrayF64, ArrayFixedSizeList, ArrayI64,
-		ArrayU8, ArrayU64, NonNullable,
+		ArrayU32, ArrayU64, NonNullable,
 	},
 	ipc::{Compression, FileWriter},
 };
@@ -40,7 +40,7 @@ enum LoggedArray {
 	},
 	ClassVector {
 		classvec: Py<PyClassVector>,
-		array: ArrayFixedSizeList<ArrayU8<NonNullable>, NonNullable>,
+		array: ArrayFixedSizeList<ArrayU32<NonNullable>, NonNullable>,
 	},
 	Tree {
 		tree: Py<PyTree>,
@@ -209,7 +209,7 @@ impl TraceWriter {
 				LoggedArray::ClassVector {
 					classvec: class_vector.clone().unbind(),
 					array: ArrayFixedSizeList::new(
-						ArrayU8::new(),
+						ArrayU32::new(),
 						size,
 					),
 				}

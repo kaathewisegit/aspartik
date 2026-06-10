@@ -11,13 +11,13 @@ use verbatim::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct ClassVector {
-	num_classes: u8,
-	classes: SkBuf<u8>,
+	num_classes: u32,
+	classes: SkBuf<u32>,
 }
 
 #[expect(clippy::len_without_is_empty)]
 impl ClassVector {
-	pub fn new(num_classes: u8, len: usize) -> Self {
+	pub fn new(num_classes: u32, len: usize) -> Self {
 		Self {
 			num_classes,
 			classes: SkBuf::repeat(0, len),
@@ -28,16 +28,16 @@ impl ClassVector {
 		self.classes.len()
 	}
 
-	pub fn num_classes(&self) -> u8 {
+	pub fn num_classes(&self) -> u32 {
 		self.num_classes
 	}
 
-	pub fn set(&mut self, index: usize, class: u8) {
+	pub fn set(&mut self, index: usize, class: u32) {
 		assert!(class < self.num_classes);
 		self.classes.set(index, class);
 	}
 
-	pub fn iter(&self) -> Iter<'_, u8> {
+	pub fn iter(&self) -> Iter<'_, u32> {
 		self.classes.iter()
 	}
 }
@@ -62,7 +62,7 @@ impl Parameter for ClassVector {
 		self.accept();
 
 		for i in 0..self.len() {
-			let c = u8::deserialize(bytes)?;
+			let c = u32::deserialize(bytes)?;
 			self.set(i, c);
 		}
 		Ok(())
@@ -77,9 +77,9 @@ impl Parameter for ClassVector {
 }
 
 impl Index<usize> for ClassVector {
-	type Output = u8;
+	type Output = u32;
 
-	fn index(&self, index: usize) -> &u8 {
+	fn index(&self, index: usize) -> &u32 {
 		&self.classes[index]
 	}
 }
@@ -91,7 +91,7 @@ pub struct PyClassVector {
 
 impl_pyparameter_common!(PyClassVector, ClassVector, {
 	#[new]
-	pub fn new(num_classes: u8, len: usize) -> Self {
+	pub fn new(num_classes: u32, len: usize) -> Self {
 		Self {
 			inner: Mutex::new(ClassVector::new(num_classes, len)),
 		}
