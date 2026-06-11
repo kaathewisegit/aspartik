@@ -205,7 +205,7 @@ impl GammaLikelihood {
 
 fn update_categories(alpha: &Real, categories: &mut SkBuf<f64>) {
 	let alpha = alpha.value();
-	let dist = Gamma::new(alpha, 1.0 / alpha).unwrap();
+	let dist = Gamma::new(alpha, 1.0).unwrap();
 	let mut sum = 0.0;
 	let num_categories = categories.len();
 
