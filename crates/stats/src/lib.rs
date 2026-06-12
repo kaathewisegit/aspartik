@@ -6,7 +6,6 @@
 
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![allow(unused)]
 
 #[macro_use]
 pub mod distribution;

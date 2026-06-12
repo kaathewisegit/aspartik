@@ -310,20 +310,6 @@ fn ln_factorial(x: u64) -> f64 {
 		.map_or_else(|| ln_gamma(x as f64 + 1.0), |&fac| fac.ln())
 }
 
-/// Binomial coefficient
-///
-/// `n` choose `k` or `C(n, k)`.  Returns `0.0` if `k > n`.
-fn binomial(n: u64, k: u64) -> f64 {
-	if k > n {
-		0.0
-	} else {
-		(0.5 + (ln_factorial(n)
-			- ln_factorial(k) - ln_factorial(n - k))
-		.exp())
-		.floor()
-	}
-}
-
 /// Natural logarithm of the binomial coefficient
 ///
 /// Returns negative infinity if `k > n`.
