@@ -352,7 +352,8 @@ impl CudaCalculator {
 		let opts = CompileOptions {
 			include_paths: vec![
 				format!("{}/include", cuda_path()),
-				cccl_path(),
+				format!("{}/include/cccl", cuda_path()),
+				cccl_qual_path(),
 			],
 			options: vec![
 				format!("-DNUM_PATTERNS={num_patterns}"),
@@ -405,7 +406,7 @@ fn cuda_path() -> String {
 		.unwrap_or_else(|_| "/usr/local/cuda".to_string())
 }
 
-fn cccl_path() -> String {
+fn cccl_qual_path() -> String {
 	let arch = match env::consts::ARCH {
 		"x86_64" => "x86_64",
 		_ => unimplemented!(),
