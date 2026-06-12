@@ -11,10 +11,11 @@ keywords = ["probability", "statistics", "stats", "distribution", "math"]
 categories = ["science"]
 
 [dependencies]
-math = { workspace = true }
 rng = { workspace = true, optional = true }
 util = { workspace = true }
 
+computare-core = { workspace = true }
+computare-special = { workspace = true }
 num-traits = { workspace = true }
 pyo3 = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }

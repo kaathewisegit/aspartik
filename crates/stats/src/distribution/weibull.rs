@@ -1,28 +1,16 @@
 use rand::RngExt;
 use thiserror::Error;
 
-use std::f64::consts::LN_2;
+use computare_special::gamma::gamma;
+use std::f64::consts::{EULER_GAMMA, LN_2};
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::{Probability, consts::EULER_MASCHERONI, function::gamma, ulps_eq};
 
 /// Implements the [Weibull](https://en.wikipedia.org/wiki/Weibull_distribution)
 /// distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{Weibull, Continuous};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let n = Weibull::new(10.0, 1.0).unwrap();
-/// assert_almost_eq!(n.mean().unwrap(), 0.9513507698668732, epsilon = 1e-15);
-/// assert_eq!(n.pdf(1.0), 3.6787944117144233);
-/// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Weibull {
 	shape: f64,
@@ -161,8 +149,8 @@ impl ContinuousCDF for Weibull {
 
 	/// `λ (-ln(1 - x))^(1 / k)`, where `k` is the shape and `λ` is the
 	/// scale.
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		(-((-*p).ln_1p() / self.scale_pow_shape_inv))
+	fn inverse_cdf(&self, p: f64) -> f64 {
+		(-((-p).ln_1p() / self.scale_pow_shape_inv))
 			.powf(1.0 / self.shape)
 	}
 
@@ -187,7 +175,7 @@ impl Distribution for Weibull {
 	/// where `k` is the shape, `λ` is the scale, and `Γ` is
 	/// the gamma function
 	fn mean(&self) -> Option<f64> {
-		Some(self.scale * gamma::gamma(1.0 + 1.0 / self.shape))
+		Some(self.scale * gamma(1.0 + 1.0 / self.shape))
 	}
 
 	/// Returns the median of the weibull distribution
@@ -215,8 +203,7 @@ impl Distribution for Weibull {
 	/// the gamma function
 	fn variance(&self) -> Option<f64> {
 		let mean = self.mean()?;
-		Some(self.scale
-			* self.scale * gamma::gamma(1.0 + 2.0 / self.shape)
+		Some(self.scale * self.scale * gamma(1.0 + 2.0 / self.shape)
 			- mean * mean)
 	}
 
@@ -231,7 +218,7 @@ impl Distribution for Weibull {
 	/// where `k` is the shape, `λ` is the scale, and `γ` is
 	/// the Euler-Mascheroni constant
 	fn entropy(&self) -> Option<f64> {
-		let entr = EULER_MASCHERONI * (1.0 - 1.0 / self.shape)
+		let entr = EULER_GAMMA * (1.0 - 1.0 / self.shape)
 			+ (self.scale / self.shape).ln()
 			+ 1.0;
 		Some(entr)
@@ -255,7 +242,7 @@ impl Distribution for Weibull {
 		let sigma3 = sigma2 * sigma;
 		let skew = (self.scale
 			* self.scale * self.scale
-			* gamma::gamma(1.0 + 3.0 / self.shape)
+			* gamma(1.0 + 3.0 / self.shape)
 			- 3.0 * sigma2 * mu - (mu * mu * mu))
 			/ sigma3;
 		Some(skew)
@@ -277,7 +264,7 @@ impl Mode<Option<f64>> for Weibull {
 	///
 	/// where `k` is the shape and `λ` is the scale
 	fn mode(&self) -> Option<f64> {
-		let mode = if ulps_eq!(self.shape, 1.0) {
+		let mode = if self.shape == 1.0 {
 			0.0
 		} else {
 			self.scale
@@ -302,7 +289,7 @@ impl Continuous for Weibull {
 	fn pdf(&self, x: f64) -> f64 {
 		if x < 0.0 {
 			0.0
-		} else if x == 0.0 && ulps_eq!(self.shape, 1.0) {
+		} else if x == 0.0 && self.shape == 1.0 {
 			1.0 / self.scale
 		} else if x.is_infinite() {
 			0.0
@@ -328,7 +315,7 @@ impl Continuous for Weibull {
 	fn ln_pdf(&self, x: f64) -> f64 {
 		if x < 0.0 {
 			f64::NEG_INFINITY
-		} else if x == 0.0 && ulps_eq!(self.shape, 1.0) {
+		} else if x == 0.0 && self.shape == 1.0 {
 			0.0 - self.scale.ln()
 		} else if x.is_infinite() {
 			f64::NEG_INFINITY

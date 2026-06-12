@@ -1,9 +1,7 @@
-//! Defines common interfaces for interacting with statistical distributions
-//! and provides
-//! concrete implementations for a variety of distributions.
+//! Defines common interfaces for interacting with statistical distributions and
+//! provides concrete implementations for a variety of distributions.
+use computare_special::gamma::ln_gamma;
 use num_traits::{Num, NumAssignOps, One};
-
-use math::Probability;
 
 mod bernoulli;
 mod beta;
@@ -15,11 +13,9 @@ mod chi_squared;
 mod discrete_uniform;
 mod erlang;
 mod exponential;
-mod fisher_snedecor;
 mod gamma;
 mod geometric;
 mod gumbel;
-mod hypergeometric;
 #[macro_use]
 mod internal;
 mod inverse_gamma;
@@ -51,11 +47,9 @@ pub use chi_squared::ChiSquared;
 pub use discrete_uniform::{DiscreteUniform, DiscreteUniformError};
 pub use erlang::Erlang;
 pub use exponential::Exp;
-pub use fisher_snedecor::{FisherSnedecor, FisherSnedecorError};
 pub use gamma::{Gamma, GammaError};
 pub use geometric::{Geometric, GeometricError};
 pub use gumbel::{Gumbel, GumbelError};
-pub use hypergeometric::{Hypergeometric, HypergeometricError};
 pub use inverse_gamma::{InverseGamma, InverseGammaError};
 pub use laplace::{Laplace, LaplaceError};
 pub use levy::{Levy, LevyError};
@@ -149,9 +143,7 @@ pub trait ContinuousCDF: Continuous {
 	/// say, performance may may be lacking.
 	#[doc(alias = "quantile function")]
 	#[doc(alias = "quantile")]
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		let p = p.into_inner();
-
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		if p == 0.0 {
 			return self.lower();
 		};
@@ -205,32 +197,14 @@ pub trait Discrete {
 
 	/// Returns the probability mass function calculated at `x` for a given
 	/// distribution.
+	///
 	/// May panic depending on the implementor.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use math::{Probability, assert_almost_eq};
-	/// use stats::distribution::{Discrete, Binomial};
-	///
-	/// let n = Binomial::new(Probability::new(0.5), 10);
-	/// assert_almost_eq!(n.pmf(5), 0.24609375, epsilon = 1e-15);
-	/// ```
 	fn pmf(&self, x: Self::T) -> f64;
 
-	/// Returns the log of the probability mass function calculated at `x` for
-	/// a given distribution.
+	/// Returns the log of the probability mass function calculated at `x`
+	/// for a given distribution.
+	///
 	/// May panic depending on the implementor.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use math::{Probability, assert_almost_eq};
-	/// use stats::distribution::{Discrete, Binomial};
-	///
-	/// let n = Binomial::new(Probability::new(0.5), 10);
-	/// assert_almost_eq!(n.ln_pmf(5), (0.24609375f64).ln(), epsilon = 1e-15);
-	/// ```
 	fn ln_pmf(&self, x: Self::T) -> f64;
 }
 
@@ -272,9 +246,7 @@ where
 	/// Due to issues with rounding and floating-point accuracy the default
 	/// implementation may be ill-behaved Specialized inverse cdfs should be
 	/// used whenever possible.
-	fn inverse_cdf(&self, p: Probability<f64>) -> Self::T {
-		let p = p.into_inner();
-
+	fn inverse_cdf(&self, p: f64) -> Self::T {
 		if p <= self.cdf(self.lower()) {
 			return self.lower();
 		} else if p == 1.0 {
@@ -310,4 +282,55 @@ where
 	/// maximum value of the `T` type (infinity for floats and the maximum
 	/// possible value for integers).
 	fn upper(&self) -> Self::T;
+}
+
+/// `ln(x!)`
+///
+/// Returns `0.0` if `x <= 1`.
+fn ln_factorial(x: u64) -> f64 {
+	pub const MAX_FACTORIAL: usize = 170;
+	// Initialization for pre-computed cache of 171 factorial values
+	// 0!...170!
+	const FCACHE: [f64; MAX_FACTORIAL + 1] = {
+		let mut fcache = [1.0; MAX_FACTORIAL + 1];
+
+		// `const` only allow while loops (because `next` on `Iterator` isn't
+		// `const`)
+		let mut i = 1;
+		while i < MAX_FACTORIAL + 1 {
+			fcache[i] = fcache[i - 1] * i as f64;
+			i += 1;
+		}
+
+		fcache
+	};
+
+	let x = x as usize;
+	FCACHE.get(x)
+		.map_or_else(|| ln_gamma(x as f64 + 1.0), |&fac| fac.ln())
+}
+
+/// Binomial coefficient
+///
+/// `n` choose `k` or `C(n, k)`.  Returns `0.0` if `k > n`.
+fn binomial(n: u64, k: u64) -> f64 {
+	if k > n {
+		0.0
+	} else {
+		(0.5 + (ln_factorial(n)
+			- ln_factorial(k) - ln_factorial(n - k))
+		.exp())
+		.floor()
+	}
+}
+
+/// Natural logarithm of the binomial coefficient
+///
+/// Returns negative infinity if `k > n`.
+fn ln_binomial(n: u64, k: u64) -> f64 {
+	if k > n {
+		f64::NEG_INFINITY
+	} else {
+		ln_factorial(n) - ln_factorial(k) - ln_factorial(n - k)
+	}
 }

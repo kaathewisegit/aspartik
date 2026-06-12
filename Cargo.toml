@@ -8,7 +8,6 @@ members = [
 	"crates/data",
 	"crates/io",
 	"crates/linalg",
-	"crates/math",
 	"crates/rng",
 	"crates/sk",
 	"crates/stats",
@@ -30,6 +29,8 @@ arbtest = "0.3.2"
 blake3 = "1.8"
 bytemuck = "1.25"
 bytes = "1.11"
+computare-core = { git = "https://github.com/kaathewisegit/computare", version = "0.1.0-alpha.0" }
+computare-special = { git = "https://github.com/kaathewisegit/computare", version = "0.1.0-alpha.0" }
 cudarc = { version = "0.19.7", default-features = false }
 fork_union = "2.3"
 libc = "0.2.186"
@@ -50,7 +51,6 @@ buffer = { version = "0.1.0-alpha.14", path = "crates/buffer" }
 data = { version = "0.1.0-alpha.14", path = "crates/data" }
 io = { version = "0.1.0-alpha.14", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.14", path = "crates/linalg" }
-math = { version = "0.1.0-alpha.14", path = "crates/math", default-features = false }
 rng = { version = "0.1.0-alpha.14", path = "crates/rng" }
 sk = { version = "0.1.0-alpha.14", path = "crates/sk" }
 stats = { version = "0.1.0-alpha.14", path = "crates/stats" }

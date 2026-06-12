@@ -9,7 +9,6 @@ use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::Probability;
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 
@@ -180,9 +179,7 @@ impl ContinuousCDF for Uniform {
 		}
 	}
 
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		let p = *p;
-
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		if p == 0.0 {
 			self.min
 		} else if p == 1.0 {

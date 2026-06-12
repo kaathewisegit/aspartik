@@ -188,7 +188,6 @@ fn test_inverse_cdf() {
 		((f64::INFINITY, 1.0), 0.1, f64::INFINITY),
 	];
 	for (args, p, expected) in cases {
-		let p = Probability::new(p);
 		assert_close(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }
@@ -288,12 +287,11 @@ fn test_cdf_inverse_identity() {
 		// Test values within (0, 1) for cdf and inverse_cdf identity
 		let test_points = [0.1, 0.5, 0.9];
 		for p in test_points {
-			let p = Probability::new(p);
 			assert_close(
 				args,
 				p,
 				|d, p| d.cdf(d.inverse_cdf(p)),
-				*p,
+				p,
 			);
 		}
 	}

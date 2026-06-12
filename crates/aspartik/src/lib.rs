@@ -7,8 +7,7 @@ pub mod pymodule {
 	#[pymodule_export]
 	use {
 		b3::pymodule as b3, data::pymodule as data, io::pymodule as io,
-		math::pymodule as math, rng::pymodule as rng,
-		stats::pymodule as stats,
+		rng::pymodule as rng, stats::pymodule as stats,
 	};
 
 	#[pymodule_init]

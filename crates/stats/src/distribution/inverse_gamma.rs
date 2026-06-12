@@ -1,8 +1,11 @@
+use computare_special::gamma::{
+	digamma, gamma, ln_gamma, regularized_lower_gamma,
+	regularized_upper_gamma,
+};
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use thiserror::Error;
 
-use math::{Positive, function::gamma, ulps_eq};
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 
@@ -16,18 +19,6 @@ use crate::{
 /// Implements the [Inverse
 /// Gamma](https://en.wikipedia.org/wiki/Inverse-gamma_distribution)
 /// distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{InverseGamma, Continuous};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let n = InverseGamma::new(1.1, 0.1).unwrap();
-/// assert_almost_eq!(n.mean().unwrap(), 1.0, epsilon = 1e-14);
-/// assert_eq!(n.pdf(1.0), 0.07554920138253064);
-/// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
@@ -167,10 +158,7 @@ impl ContinuousCDF for InverseGamma {
 		} else if x.is_infinite() {
 			1.0
 		} else {
-			gamma::gamma_ur(
-				Positive::new(self.shape),
-				Positive::new(self.rate / x),
-			)
+			regularized_upper_gamma(self.shape, self.rate / x)
 		}
 	}
 
@@ -183,10 +171,7 @@ impl ContinuousCDF for InverseGamma {
 		} else if x.is_infinite() {
 			0.0
 		} else {
-			gamma::gamma_lr(
-				Positive::new(self.shape),
-				Positive::new(self.rate / x),
-			)
+			regularized_lower_gamma(self.shape, self.rate / x)
 		}
 	}
 
@@ -256,9 +241,8 @@ impl Distribution for InverseGamma {
 	/// where `α` is the shape, `β` is the rate, `Γ` is the gamma function,
 	/// and `ψ` is the digamma function
 	fn entropy(&self) -> Option<f64> {
-		let entr = self.shape
-			+ self.rate.ln() + gamma::ln_gamma(self.shape)
-			- (1.0 + self.shape) * gamma::digamma(self.shape);
+		let entr = self.shape + self.rate.ln() + ln_gamma(self.shape)
+			- (1.0 + self.shape) * digamma(self.shape);
 		Some(entr)
 	}
 
@@ -314,12 +298,12 @@ impl Continuous for InverseGamma {
 	fn pdf(&self, x: f64) -> f64 {
 		if x <= 0.0 || x.is_infinite() {
 			0.0
-		} else if ulps_eq!(self.shape, 1.0) {
+		} else if self.shape == 1.0 {
 			self.rate / (x * x) * (-self.rate / x).exp()
 		} else {
 			self.rate.powf(self.shape)
 				* x.powf(-self.shape - 1.0) * (-self.rate / x).exp()
-				/ gamma::gamma(self.shape)
+				/ gamma(self.shape)
 		}
 	}
 

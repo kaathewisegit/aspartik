@@ -1,7 +1,5 @@
 use stats::distribution::{LogNormal, LogNormalError};
 
-use math::assert_almost_eq;
-
 use crate::prelude::*;
 
 make_test_harness!(LogNormal(location: f64, scale: f64), LogNormalError);
@@ -110,7 +108,7 @@ fn test_variance() {
 	];
 	for (args, expected, epsilon) in abs_cases {
 		let variance = new_dist(args).variance().unwrap();
-		assert_almost_eq!(variance, expected, epsilon = epsilon);
+		assert_almost_eq!(variance, expected, absolute = epsilon);
 	}
 }
 
@@ -150,7 +148,7 @@ fn test_entropy() {
 	];
 	for (args, expected, epsilon) in abs_cases {
 		let entropy = new_dist(args).entropy().unwrap();
-		assert_almost_eq!(entropy, expected, epsilon = epsilon)
+		assert_almost_eq!(entropy, expected, absolute = epsilon)
 	}
 }
 
@@ -214,7 +212,7 @@ fn test_skewness() {
 	];
 	for (args, expected, epsilon) in abs_cases {
 		let skewness = new_dist(args).skewness().unwrap();
-		assert_almost_eq!(skewness, expected, epsilon = epsilon)
+		assert_almost_eq!(skewness, expected, absolute = epsilon)
 	}
 }
 
@@ -340,7 +338,7 @@ fn test_pdf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let pdf = new_dist(args).pdf(p);
-		assert_almost_eq!(pdf, expected, epsilon = epsilon)
+		assert_almost_eq!(pdf, expected, absolute = epsilon)
 	}
 }
 
@@ -384,7 +382,7 @@ fn test_ln_pdf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let ln_pdf = new_dist(args).ln_pdf(p);
-		assert_almost_eq!(ln_pdf, expected, epsilon = epsilon)
+		assert_almost_eq!(ln_pdf, expected, absolute = epsilon)
 	}
 }
 
@@ -426,7 +424,7 @@ fn test_cdf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let cdf = new_dist(args).cdf(p);
-		assert_almost_eq!(cdf, expected, epsilon = epsilon)
+		assert_almost_eq!(cdf, expected, absolute = epsilon)
 	}
 }
 
@@ -434,7 +432,6 @@ fn test_cdf() {
 fn test_inverse_cdf() {
 	let exact_cases = [((-0.1, 0.1), 0.0, 0.0)];
 	for (args, p, expected) in exact_cases {
-		let p = Probability::new(p);
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 
@@ -455,9 +452,8 @@ fn test_inverse_cdf() {
 		((2.5, 2.5), 0.1380201919245312, 0.8, 1e-11),
 	];
 	for (args, p, expected, epsilon) in abs_cases {
-		let p = Probability::new(p);
 		let inverse_cdf = new_dist(args).inverse_cdf(p);
-		assert_almost_eq!(inverse_cdf, expected, epsilon = epsilon)
+		assert_almost_eq!(inverse_cdf, expected, absolute = epsilon)
 	}
 }
 
@@ -478,7 +474,7 @@ fn test_sf() {
 	];
 	for (args, p, expected, epsilon) in abs_cases {
 		let sf = new_dist(args).sf(p);
-		assert_almost_eq!(sf, expected, epsilon = epsilon)
+		assert_almost_eq!(sf, expected, absolute = epsilon)
 	}
 }
 

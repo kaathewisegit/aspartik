@@ -1,7 +1,5 @@
 use stats::distribution::{NegativeBinomial, NegativeBinomialError};
 
-use math::assert_almost_eq;
-
 use crate::prelude::*;
 
 make_test_harness!(
@@ -42,7 +40,7 @@ fn test_mean() {
 		assert_almost_eq!(
 			dist.mean().unwrap(),
 			expected,
-			epsilon = 1e-15,
+			absolute = 1e-15,
 		);
 	}
 }
@@ -59,7 +57,7 @@ fn test_variance() {
 		assert_almost_eq!(
 			dist.variance().unwrap(),
 			expected,
-			epsilon = 1e-12,
+			absolute = 1e-12,
 		);
 	}
 }
@@ -76,7 +74,7 @@ fn test_skewness() {
 		assert_almost_eq!(
 			dist.skewness().unwrap(),
 			expected,
-			epsilon = 1e-9,
+			absolute = 1e-9,
 		);
 	}
 }
@@ -138,7 +136,7 @@ fn test_pmf() {
 	];
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.pmf(p), expected, epsilon = 1e-12);
+		assert_almost_eq!(dist.pmf(p), expected, absolute = 1e-12);
 	}
 }
 
@@ -176,7 +174,7 @@ fn test_ln_pmf() {
 	];
 	for (args, p, expected) in cases {
 		let dist = new_dist(args);
-		assert_almost_eq!(dist.ln_pmf(p), expected, epsilon = 1e-8);
+		assert_almost_eq!(dist.ln_pmf(p), expected, absolute = 1e-8);
 	}
 }
 
@@ -235,7 +233,6 @@ fn test_sf() {
 fn test_inverse_cdf() {
 	let cases = [((3.0, 0.5), 1.0, u64::MAX)];
 	for (args, p, expected) in cases {
-		let p = Probability::new(p);
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }
@@ -269,6 +266,10 @@ fn test_sample() {
 	let theoretical_mean = dist.mean().unwrap();
 	let theoretical_variance = dist.variance().unwrap();
 
-	assert_almost_eq!(sample_mean, theoretical_mean, epsilon = tol);
-	assert_almost_eq!(sample_variance, theoretical_variance, epsilon = tol);
+	assert_almost_eq!(sample_mean, theoretical_mean, absolute = tol);
+	assert_almost_eq!(
+		sample_variance,
+		theoretical_variance,
+		absolute = tol
+	);
 }

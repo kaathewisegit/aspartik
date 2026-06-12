@@ -226,15 +226,7 @@ fn test_inverse_cdf() {
 		// `(args, input_val, closure, expected)`.  Here, the
 		// `input_val` to `inverse_cdf` is `d.cdf(p)`, and the
 		// `expected` is `p`.
-		assert_exact(
-			args,
-			p,
-			|d, p| {
-				let prob = Probability::new(d.cdf(p));
-				d.inverse_cdf(prob)
-			},
-			expected,
-		);
+		assert_exact(args, p, |d, p| d.inverse_cdf(d.cdf(p)), expected);
 	}
 }
 

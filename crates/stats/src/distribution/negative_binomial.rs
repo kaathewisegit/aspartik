@@ -1,6 +1,5 @@
+use computare_special::{beta::regularized_incomplete_beta, gamma};
 use thiserror::Error;
-
-use math::function::{beta, gamma};
 
 use crate::distribution::{Discrete, DiscreteCDF};
 use crate::statistics::{Distribution, Mode};
@@ -15,19 +14,6 @@ use crate::statistics::{Distribution, Mode};
 ///
 /// `NegativeBinomial` accepts non-integer values for `r`.  This is a
 /// generalization of the more common case where `r` is an integer.
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{NegativeBinomial, Discrete};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let r = NegativeBinomial::new(4.0, 0.5).unwrap();
-/// assert_eq!(r.mean().unwrap(), 4.0);
-/// assert_almost_eq!(r.pmf(0), 0.0625, epsilon = 1e-8);
-/// assert_almost_eq!(r.pmf(3), 0.15625, epsilon = 1e-8);
-/// ```
 ///
 /// [wiki]: http://en.wikipedia.org/wiki/Negative_binomial_distribution
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -139,8 +125,7 @@ impl DiscreteCDF for NegativeBinomial {
 	///
 	/// where `I_(x)(a, b)` is the regularized incomplete beta function.
 	fn cdf(&self, x: u64) -> f64 {
-		// XXX: panics?
-		beta::beta_reg(self.r, x as f64 + 1.0, self.p).unwrap()
+		regularized_incomplete_beta(self.r, x as f64 + 1.0, self.p)
 	}
 
 	/// Calculates the survival function for the
@@ -160,8 +145,11 @@ impl DiscreteCDF for NegativeBinomial {
 	///
 	/// where `I_(x)(a, b)` is the regularized incomplete beta function
 	fn sf(&self, x: u64) -> f64 {
-		// XXX: panics?
-		beta::beta_reg(x as f64 + 1.0, self.r, 1.0 - self.p).unwrap()
+		regularized_incomplete_beta(
+			x as f64 + 1.0,
+			self.r,
+			1.0 - self.p,
+		)
 	}
 
 	fn lower(&self) -> u64 {

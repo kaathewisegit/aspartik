@@ -62,9 +62,7 @@ macro_rules! impl_pymethods {
 			}
 
 			#[pyo3(name = "inverse_cdf")]
-			fn py_inverse_cdf(
-				&self, p: math::Probability<f64>
-			) -> f64 {
+			fn py_inverse_cdf(&self, p: f64) -> f64 {
 				self.inverse_cdf(p)
 			}
 
@@ -109,9 +107,7 @@ macro_rules! impl_pymethods {
 			}
 
 			#[pyo3(name = "inverse_cdf")]
-			fn py_inverse_cdf(
-				&self, p: math::Probability<f64>,
-			) -> <Self as Discrete>::T {
+			fn py_inverse_cdf(&self, p: f64) -> <Self as Discrete>::T {
 				self.inverse_cdf(p)
 			}
 

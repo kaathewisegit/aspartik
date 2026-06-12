@@ -2,25 +2,10 @@ use crate::{
 	distribution::{Continuous, ContinuousCDF, Gamma, GammaError},
 	statistics::{Distribution, Mode},
 };
-use math::Probability;
 
 /// Implements the [Erlang](https://en.wikipedia.org/wiki/Erlang_distribution)
-/// distribution
-/// which is a special case of the
-/// [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
-/// distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{Erlang, Continuous};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let n = Erlang::new(3, 1.0).unwrap();
-/// assert_eq!(n.mean().unwrap(), 3.0);
-/// assert_almost_eq!(n.pdf(2.0), 0.2706705664732254, epsilon = 1e-15);
-/// ```
+/// distribution which is a special case of the
+/// [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) distribution
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Erlang {
 	g: Gamma,
@@ -137,7 +122,7 @@ impl ContinuousCDF for Erlang {
 	///
 	/// where `k` is the shape, `λ` is the rate, and `γ` is the upper
 	/// incomplete gamma function
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		self.g.inverse_cdf(p)
 	}
 

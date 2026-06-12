@@ -1,3 +1,4 @@
+use computare_special::{beta, gamma};
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use thiserror::Error;
@@ -8,27 +9,10 @@ use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::{
-	Probability,
-	function::{beta, gamma},
-	ulps_eq,
-};
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 
 /// [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution)
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{Beta, Continuous};
-/// use stats::statistics::*;
-/// use math::assert_almost_eq;
-///
-/// let n = Beta::new(2.0, 2.0).unwrap();
-/// assert_eq!(n.mean().unwrap(), 0.5);
-/// assert_almost_eq!(n.pdf(0.5), 1.5, epsilon = 1e-14);
-/// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
@@ -151,13 +135,14 @@ impl ContinuousCDF for Beta {
 			0.0
 		} else if x >= 1.0 {
 			1.0
-		} else if ulps_eq!(self.shape_a, 1.0)
-			&& ulps_eq!(self.shape_b, 1.0)
-		{
+		} else if self.shape_a == 1.0 && self.shape_b == 1.0 {
 			x
 		} else {
-			// XXX: panics?
-			beta::beta_reg(self.shape_a, self.shape_b, x).unwrap()
+			beta::regularized_incomplete_beta(
+				self.shape_a,
+				self.shape_b,
+				x,
+			)
 		}
 	}
 
@@ -168,21 +153,21 @@ impl ContinuousCDF for Beta {
 			1.0
 		} else if x >= 1.0 {
 			0.0
-		} else if ulps_eq!(self.shape_a, 1.0)
-			&& ulps_eq!(self.shape_b, 1.0)
-		{
+		} else if self.shape_a == 1.0 && self.shape_b == 1.0 {
 			1.0 - x
 		} else {
-			// XXX: panics?
-			beta::beta_reg(self.shape_b, self.shape_a, 1.0 - x)
-				.unwrap()
+			beta::regularized_incomplete_beta(
+				self.shape_b,
+				self.shape_a,
+				1.0 - x,
+			)
 		}
 	}
 
 	/// `I_x^{-1}(β, α)`, where `I_x` is the regularized lower incomplete
 	/// beta function.
-	fn inverse_cdf(&self, x: Probability<f64>) -> f64 {
-		beta::inv_beta_reg(self.shape_a, self.shape_b, *x)
+	fn inverse_cdf(&self, x: f64) -> f64 {
+		beta::inverse_regularized_beta(self.shape_a, self.shape_b, x)
 	}
 
 	fn lower(&self) -> f64 {
@@ -211,7 +196,7 @@ impl Distribution for Beta {
 	/// `ln(B(α, β)) - (α - 1) ψ(α) - (β - 1) ψ(β) + (α + β - 2) ψ(α +
 	/// β)`, where `ψ` is the digamma function.
 	fn entropy(&self) -> Option<f64> {
-		Some(beta::ln_beta(self.shape_a, self.shape_b).unwrap()
+		Some(beta::ln_beta(self.shape_a, self.shape_b)
 			- (self.shape_a - 1.0) * gamma::digamma(self.shape_a)
 			- (self.shape_b - 1.0) * gamma::digamma(self.shape_b)
 			+ (self.shape_a + self.shape_b - 2.0)
@@ -251,9 +236,7 @@ impl Continuous for Beta {
 	fn pdf(&self, x: f64) -> f64 {
 		if !(0.0..=1.0).contains(&x) {
 			0.0
-		} else if ulps_eq!(self.shape_a, 1.0)
-			&& ulps_eq!(self.shape_b, 1.0)
-		{
+		} else if self.shape_a == 1.0 && self.shape_b == 1.0 {
 			1.0
 		} else if self.shape_a > 80.0 || self.shape_b > 80.0 {
 			self.ln_pdf(x).exp()
@@ -269,26 +252,22 @@ impl Continuous for Beta {
 	fn ln_pdf(&self, x: f64) -> f64 {
 		if !(0.0..=1.0).contains(&x) {
 			f64::NEG_INFINITY
-		} else if ulps_eq!(self.shape_a, 1.0)
-			&& ulps_eq!(self.shape_b, 1.0)
-		{
+		} else if self.shape_a == 1.0 && self.shape_b == 1.0 {
 			0.0
 		} else {
 			let aa = gamma::ln_gamma(self.shape_a + self.shape_b)
 				- gamma::ln_gamma(self.shape_a)
 				- gamma::ln_gamma(self.shape_b);
-			let bb = if ulps_eq!(self.shape_a, 1.0) && x == 0.0 {
+			let bb = if self.shape_a == 1.0 && x == 0.0 {
 				0.0
 			} else if x == 0.0 {
 				f64::NEG_INFINITY
 			} else {
 				(self.shape_a - 1.0) * x.ln()
 			};
-			let cc = if ulps_eq!(self.shape_b, 1.0)
-				&& ulps_eq!(x, 1.0)
-			{
+			let cc = if self.shape_b == 1.0 && x == 1.0 {
 				0.0
-			} else if ulps_eq!(x, 1.0) {
+			} else if x == 1.0 {
 				f64::NEG_INFINITY
 			} else {
 				(self.shape_b - 1.0) * (1.0 - x).ln()

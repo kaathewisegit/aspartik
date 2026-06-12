@@ -7,22 +7,9 @@ use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::Probability;
 
 /// Implements the [Pareto](https://en.wikipedia.org/wiki/Pareto_distribution)
 /// distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{Pareto, Continuous};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let p = Pareto::new(1.0, 2.0).unwrap();
-/// assert_eq!(p.mean().unwrap(), 2.0);
-/// assert_almost_eq!(p.pdf(2.0), 0.25, epsilon = 1e-15);
-/// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Pareto {
 	scale: f64,
@@ -166,8 +153,8 @@ impl ContinuousCDF for Pareto {
 
 	/// `x_m / (1 - x)^(1 / α)`, where `x_m` is the scale and `α` is the
 	/// shape.
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		self.scale * (1.0 - *p).powf(-1.0 / self.shape)
+	fn inverse_cdf(&self, p: f64) -> f64 {
+		self.scale * (1.0 - p).powf(-1.0 / self.shape)
 	}
 
 	fn lower(&self) -> f64 {

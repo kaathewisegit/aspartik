@@ -45,7 +45,6 @@ dependencies = [
  "b3",
  "data",
  "io",
- "math",
  "pyo3",
  "rng",
  "stats",
@@ -66,12 +65,12 @@ dependencies = [
  "blake3",
  "buffer",
  "bytemuck",
+ "computare-special",
  "cudarc",
  "data",
  "fork_union",
  "io",
  "linalg",
- "math",
  "num-traits",
  "parking_lot",
  "picoarrow",
@@ -163,6 +162,20 @@ name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
+
+[[package]]
+name = "computare-core"
+version = "0.1.0-alpha.0"
+source = "git+https://github.com/kaathewisegit/computare#3b9ebe64c67f9acaec8c62885a6c9fff963c4661"
+
+[[package]]
+name = "computare-special"
+version = "0.1.0-alpha.0"
+source = "git+https://github.com/kaathewisegit/computare#3b9ebe64c67f9acaec8c62885a6c9fff963c4661"
+dependencies = [
+ "computare-core",
+ "libm",
+]
 
 [[package]]
 name = "constant_time_eq"
@@ -310,7 +323,6 @@ dependencies = [
  "arbtest",
  "bytemuck",
  "cudarc",
- "math",
  "num-traits",
 ]
 
@@ -321,19 +333,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965"
 dependencies = [
  "scopeguard",
-]
-
-[[package]]
-name = "math"
-version = "0.1.0-alpha.14"
-dependencies = [
- "arbitrary",
- "arbtest",
- "libm",
- "num-traits",
- "pyo3",
- "thiserror",
- "util",
 ]
 
 [[package]]
@@ -544,7 +543,6 @@ name = "rng"
 version = "0.1.0-alpha.14"
 dependencies = [
  "anyhow",
- "math",
  "parking_lot",
  "pyo3",
  "rand",
@@ -598,7 +596,8 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 name = "stats"
 version = "0.1.0-alpha.14"
 dependencies = [
- "math",
+ "computare-core",
+ "computare-special",
  "num-traits",
  "pyo3",
  "rand",

@@ -1,9 +1,8 @@
 use stats::distribution::Bernoulli;
 
 use crate::prelude::*;
-use math::Probability;
 
-make_test_harness!(Bernoulli(p: Probability<f64>));
+make_test_harness!(Bernoulli(p: f64));
 
 #[test]
 fn test_cdf() {
@@ -15,7 +14,6 @@ fn test_cdf() {
 		(0.7, 0, 0.3),
 	];
 	for (args, p, expected) in cases {
-		let args = Probability::new(args);
 		assert_close(args, p, |d, p| d.cdf(p), expected);
 	}
 }
@@ -30,7 +28,6 @@ fn test_sf() {
 		(0.7, 0, 0.7),
 	];
 	for (args, p, expected) in cases {
-		let args = Probability::new(args);
 		assert_close(args, p, |d, p| d.sf(p), expected);
 	}
 }
@@ -47,8 +44,6 @@ fn test_inverse_cdf() {
 		(0.5, 0.5, 0),
 	];
 	for (args, p, expected) in cases {
-		let args = Probability::new(args);
-		let p = Probability::new(p);
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }

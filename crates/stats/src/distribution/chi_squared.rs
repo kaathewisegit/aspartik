@@ -1,28 +1,13 @@
-use core::f64;
-
 use crate::{
 	distribution::{Continuous, ContinuousCDF, Gamma, GammaError},
 	statistics::{Distribution, Mode},
 };
-use math::Probability;
 
 /// Implements the
 /// [Chi-squared](https://en.wikipedia.org/wiki/Chi-squared_distribution)
 /// distribution which is a special case of the
 /// [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution) distribution
 /// (referenced [Here](./struct.Gamma.html))
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{ChiSquared, Continuous};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let n = ChiSquared::new(3.0).unwrap();
-/// assert_eq!(n.mean().unwrap(), 3.0);
-/// assert_almost_eq!(n.pdf(4.0), 0.1079819330263761, epsilon = 1e-15);
-/// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct ChiSquared {
 	freedom: f64,
@@ -155,7 +140,7 @@ impl ContinuousCDF for ChiSquared {
 	///
 	/// where `k` is the degrees of freedom, `Γ` is the gamma function,
 	/// and `γ` is the lower incomplete gamma function
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		self.g.inverse_cdf(p)
 	}
 

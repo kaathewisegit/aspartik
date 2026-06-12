@@ -1,7 +1,7 @@
+use computare_special::gamma::ln_gamma;
 use pyo3::prelude::*;
 
 use crate::parameters::PyRealVector;
-use math::function::gamma::ln_gamma;
 
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]

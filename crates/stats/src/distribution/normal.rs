@@ -1,19 +1,16 @@
+use computare_core::Float;
+use computare_special::erf::{erfc, inverse_erfc};
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use thiserror::Error;
 
-use core::f64::consts;
+use std::f64::consts::SQRT_2;
 
 #[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
-};
-use math::{
-	Probability,
-	consts::{LN_SQRT_2PI, LN_SQRT_2PIE, SQRT_2PI},
-	function::erf::{erfc, erfc_inv},
 };
 #[cfg(feature = "python")]
 use util::impl_pyerr;
@@ -156,9 +153,8 @@ impl ContinuousCDF for Normal {
 	}
 
 	/// `μ - sqrt(2) · σ · erfc_inv(2x)`
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		let p = *p;
-		self.mean - (self.std_dev * consts::SQRT_2 * erfc_inv(2.0 * p))
+	fn inverse_cdf(&self, p: f64) -> f64 {
+		self.mean - (self.std_dev * SQRT_2 * inverse_erfc(2.0 * p))
 	}
 
 	/// `-∞`
@@ -195,7 +191,7 @@ impl Distribution for Normal {
 
 	/// `(1 / 2) * ln(2σ^2 * π * e)`
 	fn entropy(&self) -> Option<f64> {
-		Some(self.std_dev.ln() + LN_SQRT_2PIE)
+		Some(self.std_dev.ln() + f64::LN_SQRT_2PI + 0.5)
 	}
 
 	/// Always zero
@@ -215,7 +211,7 @@ impl Continuous for Normal {
 	/// `(1 / sqrt(2σ^2 · π)) · e^(-(x - μ)^2 / 2σ^2)`
 	fn pdf(&self, x: f64) -> f64 {
 		let d = (x - self.mean) / self.std_dev;
-		(-0.5 * d * d).exp() / (SQRT_2PI * self.std_dev)
+		(-0.5 * d * d).exp() / (f64::SQRT_2PI * self.std_dev)
 	}
 
 	/// `ln((1 / sqrt(2σ^2 · π)) · e^(-(x - μ)^2 / 2σ^2))`
@@ -232,21 +228,21 @@ impl core::default::Default for Normal {
 }
 
 pub(crate) fn cdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
-	0.5 * erfc((mean - x) / (std_dev * consts::SQRT_2))
+	0.5 * erfc((mean - x) / (std_dev * SQRT_2))
 }
 
 pub(crate) fn sf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
-	0.5 * erfc((x - mean) / (std_dev * consts::SQRT_2))
+	0.5 * erfc((x - mean) / (std_dev * SQRT_2))
 }
 
 pub(crate) fn pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
 	let d = (x - mean) / std_dev;
-	(-0.5 * d * d).exp() / (SQRT_2PI * std_dev)
+	(-0.5 * d * d).exp() / (f64::SQRT_2PI * std_dev)
 }
 
 pub(crate) fn ln_pdf_unchecked(x: f64, mean: f64, std_dev: f64) -> f64 {
 	let d = (x - mean) / std_dev;
-	(-0.5 * d * d) - LN_SQRT_2PI - std_dev.ln()
+	(-0.5 * d * d) - f64::LN_SQRT_2PI - std_dev.ln()
 }
 
 #[cfg(feature = "rand")]

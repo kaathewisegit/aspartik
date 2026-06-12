@@ -1,11 +1,10 @@
 use rand::RngExt;
 use thiserror::Error;
 
-use core::f64::consts::PI;
+use core::f64::consts::{EULER_GAMMA, PI};
 
 use super::{Continuous, ContinuousCDF};
 use crate::statistics::{Distribution, Mode};
-use math::{Probability, consts::EULER_MASCHERONI};
 
 /// Implements the [Gumbel](https://en.wikipedia.org/wiki/Gumbel_distribution)
 /// distribution, also known as the type-I generalized extreme value distribution.
@@ -128,9 +127,7 @@ impl ContinuousCDF for Gumbel {
 
 	/// `μ - β ln(-ln(p))` for 0 < p < 1, where `μ` is the location and `β`
 	/// is the scale, and infinities at the ends.
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		let p = *p;
-
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		if p == 0.0 {
 			f64::NEG_INFINITY
 		} else if p == 1.0 {
@@ -175,7 +172,7 @@ impl Distribution for Gumbel {
 	/// where `μ` is the location, `β` is the scale
 	/// and `γ` is the Euler-Mascheroni constant (approx 0.57721)
 	fn mean(&self) -> Option<f64> {
-		Some(self.location + (EULER_MASCHERONI * self.scale))
+		Some(self.location + (EULER_GAMMA * self.scale))
 	}
 
 	/// Returns the median of the Gumbel distribution
@@ -228,7 +225,7 @@ impl Distribution for Gumbel {
 	/// where `β` is the scale
 	/// and `γ` is the Euler-Mascheroni constant (approx 0.57721)
 	fn entropy(&self) -> Option<f64> {
-		Some(1.0 + EULER_MASCHERONI + (self.scale).ln())
+		Some(1.0 + EULER_GAMMA + (self.scale).ln())
 	}
 
 	/// Returns the skewness of the Gumbel distribution

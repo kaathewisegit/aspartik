@@ -5,24 +5,9 @@ use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::Distribution,
 };
-use math::Probability;
 
-/// Implements the
-/// [Categorical](https://en.wikipedia.org/wiki/Categorical_distribution)
-/// distribution, also known as the generalized Bernoulli or discrete
-/// distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{Categorical, Discrete};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let n = Categorical::new(&[0.0, 1.0, 2.0]).unwrap();
-/// assert_almost_eq!(n.mean().unwrap(), 5.0 / 3.0, epsilon = 1e-15);
-/// assert_eq!(n.pmf(1), 1.0 / 3.0);
-/// ```
+/// Implements the Categorica distribution, also known as the generalized
+/// Bernoulli or discrete distribution
 #[derive(Clone, PartialEq, Debug)]
 pub struct Categorical {
 	norm_pmf: Vec<f64>,
@@ -175,8 +160,8 @@ impl DiscreteCDF for Categorical {
 	/// Returns `i` where `i` is the first index such that `x < f(i)` and
 	/// `f(x)` is defined as `p_x + f(x - 1)` and `f(0) = p_0` where `p_x`
 	/// is the `x`th probability mass
-	fn inverse_cdf(&self, x: Probability<f64>) -> u64 {
-		let denorm_prob = *x * self.cdf_max();
+	fn inverse_cdf(&self, x: f64) -> u64 {
+		let denorm_prob = x * self.cdf_max();
 		binary_index(&self.cdf, denorm_prob) as u64
 	}
 
@@ -217,9 +202,7 @@ impl Distribution for Categorical {
 	/// CDF^-1(0.5)
 	/// ```
 	fn median(&self) -> Option<f64> {
-		const HALF: Probability<f64> = Probability::new(0.5);
-
-		Some(self.inverse_cdf(HALF) as f64)
+		Some(self.inverse_cdf(0.5) as f64)
 	}
 
 	/// Returns the variance of the categorical distribution

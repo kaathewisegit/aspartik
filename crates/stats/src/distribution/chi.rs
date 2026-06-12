@@ -1,10 +1,11 @@
+use computare_special::gamma;
+
 use core::{f64::consts, num::NonZeroU64};
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::{Positive, function::gamma};
 
 /// [Chi distribution](https://en.wikipedia.org/wiki/Chi_distribution)
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -61,9 +62,9 @@ impl ContinuousCDF for Chi {
 		} else if x <= 0.0 {
 			0.0
 		} else {
-			gamma::gamma_lr(
-				Positive::new(self.freedom() as f64 / 2.0),
-				Positive::new(x * x / 2.0),
+			gamma::regularized_lower_gamma(
+				self.freedom() as f64 / 2.0,
+				x * x / 2.0,
 			)
 		}
 	}
@@ -77,9 +78,9 @@ impl ContinuousCDF for Chi {
 		} else if x <= 0.0 {
 			1.0
 		} else {
-			gamma::gamma_ur(
-				Positive::new(self.freedom() as f64 / 2.0),
-				Positive::new(x * x / 2.0),
+			gamma::regularized_upper_gamma(
+				self.freedom() as f64 / 2.0,
+				x * x / 2.0,
 			)
 		}
 	}

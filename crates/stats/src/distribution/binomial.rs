@@ -1,70 +1,32 @@
+use computare_special::beta::regularized_incomplete_beta;
 use rand::RngExt;
 
+use super::ln_binomial;
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::{Distribution, Mode},
 };
-use math::{
-	Probability,
-	function::{beta, factorial},
-	ulps_eq,
-};
 
 /// The [Binomial][w] distribution
-///
-/// # Examples
-///
-/// ```
-/// use math::Probability;
-/// use stats::distribution::{Binomial, Discrete};
-/// use stats::statistics::Distribution;
-///
-/// let n = Binomial::new(Probability::new(0.5), 5);
-/// assert_eq!(n.mean().unwrap(), 2.5);
-/// assert_eq!(n.pmf(0), 0.03125);
-/// assert_eq!(n.pmf(3), 0.3125);
-/// ```
 ///
 /// [w]: https://en.wikipedia.org/wiki/Binomial_distribution
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Binomial {
-	p: Probability<f64>,
+	p: f64,
 	n: u64,
 }
 
 impl Binomial {
 	/// A new binomial distribution with a given `p` probability of success
 	/// of `n` trials
-	pub fn new(p: Probability<f64>, n: u64) -> Binomial {
+	pub fn new(p: f64, n: u64) -> Binomial {
 		Binomial { p, n }
 	}
 
-	/// The probability of success `p` of this binomial distribution.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use math::Probability;
-	/// use stats::distribution::Binomial;
-	///
-	/// let n = Binomial::new(Probability::new(0.5), 5);
-	/// assert_eq!(*n.p(), 0.5);
-	/// ```
-	pub fn p(&self) -> Probability<f64> {
+	pub fn p(&self) -> f64 {
 		self.p
 	}
 
-	/// The number of trials `n` of this binomial distribution.
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use math::Probability;
-	/// use stats::distribution::Binomial;
-	///
-	/// let n = Binomial::new(Probability::new(0.5), 5);
-	/// assert_eq!(n.n(), 5);
-	/// ```
 	pub fn n(&self) -> u64 {
 		self.n
 	}
@@ -82,7 +44,7 @@ impl rand::distr::Distribution<u64> for Binomial {
 	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> u64 {
 		(0..self.n).fold(0, |acc, _| {
 			let n: f64 = rng.random();
-			if n < *self.p { acc + 1 } else { acc }
+			if n < self.p { acc + 1 } else { acc }
 		})
 	}
 }
@@ -104,13 +66,11 @@ impl DiscreteCDF for Binomial {
 			1.0
 		} else {
 			let k = x;
-			beta::beta_reg(
+			regularized_incomplete_beta(
 				(self.n - k) as f64,
 				k as f64 + 1.0,
-				1.0 - *self.p,
+				1.0 - self.p,
 			)
-			// XXX: panics?
-			.unwrap()
 		}
 	}
 
@@ -122,13 +82,11 @@ impl DiscreteCDF for Binomial {
 			0.0
 		} else {
 			let k = x;
-			beta::beta_reg(
+			regularized_incomplete_beta(
 				k as f64 + 1.0,
 				(self.n - k) as f64,
-				*self.p,
+				self.p,
 			)
-			// XXX: panics?
-			.unwrap()
 		}
 	}
 
@@ -146,22 +104,22 @@ impl DiscreteCDF for Binomial {
 impl Distribution for Binomial {
 	/// `p · n`
 	fn mean(&self) -> Option<f64> {
-		Some(*self.p * self.n as f64)
+		Some(self.p * self.n as f64)
 	}
 
 	/// Floor of `n · p`
 	fn median(&self) -> Option<f64> {
-		Some((*self.p * self.n as f64).floor())
+		Some((self.p * self.n as f64).floor())
 	}
 
 	/// `n · p · (1 - p)`
 	fn variance(&self) -> Option<f64> {
-		Some(*self.p * (1.0 - *self.p) * self.n as f64)
+		Some(self.p * (1.0 - self.p) * self.n as f64)
 	}
 
 	/// `(1 / 2) · ln (2 · π · e · n · p · (1 - p))`
 	fn entropy(&self) -> Option<f64> {
-		let entr = if *self.p == 0.0 || ulps_eq!(self.p, 1.0) {
+		let entr = if self.p == 0.0 || self.p == 1.0 {
 			0.0
 		} else {
 			(0..self.n + 1).fold(0.0, |acc, x| {
@@ -174,7 +132,7 @@ impl Distribution for Binomial {
 
 	/// `(1 - 2p) / sqrt(n · p · (1 - p)))`
 	fn skewness(&self) -> Option<f64> {
-		let p = *self.p;
+		let p = self.p;
 		Some((1.0 - 2.0 * p) / (self.n as f64 * p * (1.0 - p)).sqrt())
 	}
 }
@@ -182,12 +140,12 @@ impl Distribution for Binomial {
 impl Mode<Option<u64>> for Binomial {
 	/// Floor of `(n + 1) · p`
 	fn mode(&self) -> Option<u64> {
-		let mode = if *self.p == 0.0 {
+		let mode = if self.p == 0.0 {
 			0
-		} else if ulps_eq!(self.p, 1.0) {
+		} else if self.p == 1.0 {
 			self.n
 		} else {
-			((self.n as f64 + 1.0) * *self.p).floor() as u64
+			((self.n as f64 + 1.0) * self.p).floor() as u64
 		};
 		Some(mode)
 	}
@@ -200,14 +158,14 @@ impl Discrete for Binomial {
 	fn pmf(&self, x: u64) -> f64 {
 		if x > self.n {
 			0.0
-		} else if *self.p == 0.0 {
+		} else if self.p == 0.0 {
 			if x == 0 { 1.0 } else { 0.0 }
-		} else if ulps_eq!(self.p, 1.0) {
+		} else if self.p == 1.0 {
 			if x == self.n { 1.0 } else { 0.0 }
 		} else {
-			(factorial::ln_binomial(self.n, x)
+			(ln_binomial(self.n, x)
 				+ x as f64 * self.p.ln() + (self.n - x) as f64
-				* (1.0 - *self.p).ln())
+				* (1.0 - self.p).ln())
 			.exp()
 		}
 	}
@@ -216,14 +174,14 @@ impl Discrete for Binomial {
 	fn ln_pmf(&self, x: u64) -> f64 {
 		if x > self.n {
 			f64::NEG_INFINITY
-		} else if *self.p == 0.0 {
+		} else if self.p == 0.0 {
 			if x == 0 { 0.0 } else { f64::NEG_INFINITY }
-		} else if ulps_eq!(self.p, 1.0) {
+		} else if self.p == 1.0 {
 			if x == self.n { 0.0 } else { f64::NEG_INFINITY }
 		} else {
-			factorial::ln_binomial(self.n, x)
+			ln_binomial(self.n, x)
 				+ x as f64 * self.p.ln() + (self.n - x) as f64
-				* (1.0 - *self.p).ln()
+				* (1.0 - self.p).ln()
 		}
 	}
 }

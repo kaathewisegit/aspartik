@@ -6,25 +6,11 @@ use crate::{
 	distribution::{Binomial, Discrete, DiscreteCDF},
 	statistics::{Distribution, Mode},
 };
-use math::Probability;
 
 /// Implements the [Bernoulli]w[w] distribution
 ///
 /// Bernoulli distribution is a special case of the [Binomial][super::Binomial]
 /// distribution where `n` is 1.
-///
-/// # Examples
-///
-/// ```
-/// use math::Probability;
-/// use stats::distribution::{Bernoulli, Discrete};
-/// use stats::statistics::Distribution;
-///
-/// let n = Bernoulli::new(Probability::new(0.5));
-/// assert_eq!(n.mean().unwrap(), 0.5);
-/// assert_eq!(n.pmf(0), 0.5);
-/// assert_eq!(n.pmf(1), 0.5);
-/// ```
 ///
 /// [w]: https://en.wikipedia.org/wiki/Bernoulli_distribution
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -34,47 +20,17 @@ pub struct Bernoulli {
 
 impl Bernoulli {
 	/// A new bernoulli distribution with the given probability of success
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use math::Probability;
-	/// use stats::distribution::Bernoulli;
-	///
-	/// Bernoulli::new(Probability::new(0.5));
-	/// ```
-	pub fn new(p: Probability<f64>) -> Bernoulli {
+	pub fn new(p: f64) -> Bernoulli {
 		Bernoulli {
 			b: Binomial::new(p, 1),
 		}
 	}
 
-	/// The probability of success `p` of this bernoulli distribution
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use math::Probability;
-	/// use stats::distribution::Bernoulli;
-	///
-	/// let n = Bernoulli::new(Probability::new(0.5));
-	/// assert_eq!(n.p(), 0.5);
-	/// ```
 	pub fn p(&self) -> f64 {
-		*self.b.p()
+		self.b.p()
 	}
 
 	/// The number of trials `n` of the bernoulli distribution, always 1
-	///
-	/// # Examples
-	///
-	/// ```
-	/// use math::Probability;
-	/// use stats::distribution::Bernoulli;
-	///
-	/// let n = Bernoulli::new(Probability::new(0.5));
-	/// assert_eq!(n.n(), 1);
-	/// ```
 	pub fn n(&self) -> u64 {
 		1
 	}
@@ -106,7 +62,7 @@ impl rand::distr::Distribution<f64> for Bernoulli {
 impl DiscreteCDF for Bernoulli {
 	/// `1` if `x >= 1` else `1 - p`
 	fn cdf(&self, x: u64) -> f64 {
-		if x >= 1 { 1.0 } else { 1.0 - *self.b.p() }
+		if x >= 1 { 1.0 } else { 1.0 - self.b.p() }
 	}
 
 	/// `1` if `x < 0`, `p` if `x in [0, 1)`, `0` otherwise

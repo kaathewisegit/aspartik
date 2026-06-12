@@ -7,8 +7,6 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-math = { workspace = true }
-
 arbitrary = { workspace = true, optional = true }
 bytemuck = { workspace = true }
 cudarc = { workspace = true, optional = true }

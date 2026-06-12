@@ -1,13 +1,12 @@
 use rand::RngExt;
 use thiserror::Error;
 
-use core::f64;
+use std::f64::consts::LN_2;
 
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::{Distribution, Mode},
 };
-use math::{Probability, ulps_eq};
 
 /// Implements the
 /// [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)
@@ -90,7 +89,7 @@ impl core::fmt::Display for Geometric {
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 impl rand::distr::Distribution<u64> for Geometric {
 	fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> u64 {
-		if ulps_eq!(self.p, 1.0) {
+		if self.p == 1.0 {
 			1
 		} else {
 			let x: f64 = r.sample(rand::distr::OpenClosed01);
@@ -130,9 +129,7 @@ impl DiscreteCDF for Geometric {
 		}
 	}
 
-	fn inverse_cdf(&self, p: Probability<f64>) -> u64 {
-		let p = *p;
-
+	fn inverse_cdf(&self, p: f64) -> u64 {
 		if p == 1.0 || p == 0.0 {
 			return 1;
 		}
@@ -191,7 +188,7 @@ impl Distribution for Geometric {
 	/// ceil(-1 / log_2(1 - p))
 	/// ```
 	fn median(&self) -> Option<f64> {
-		Some((-f64::consts::LN_2 / (1.0 - self.p).ln()).ceil())
+		Some((-LN_2 / (1.0 - self.p).ln()).ceil())
 	}
 
 	/// Returns the standard deviation of the geometric distribution
@@ -225,7 +222,7 @@ impl Distribution for Geometric {
 	/// (2 - p) / sqrt(1 - p)
 	/// ```
 	fn skewness(&self) -> Option<f64> {
-		if ulps_eq!(self.p, 1.0) {
+		if self.p == 1.0 {
 			return Some(f64::INFINITY);
 		};
 		Some((2.0 - self.p) / (1.0 - self.p).sqrt())
@@ -275,9 +272,9 @@ impl Discrete for Geometric {
 	fn ln_pmf(&self, x: u64) -> f64 {
 		if x == 0 {
 			f64::NEG_INFINITY
-		} else if ulps_eq!(self.p, 1.0) && x == 1 {
+		} else if self.p == 1.0 && x == 1 {
 			0.0
-		} else if ulps_eq!(self.p, 1.0) {
+		} else if self.p == 1.0 {
 			f64::NEG_INFINITY
 		} else {
 			((x - 1) as f64 * (1.0 - self.p).ln()) + self.p.ln()

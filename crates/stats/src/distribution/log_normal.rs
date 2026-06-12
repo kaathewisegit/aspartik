@@ -1,8 +1,10 @@
+use computare_core::Float;
+use computare_special::erf::{erfc, inverse_erfc};
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use thiserror::Error;
 
-use core::f64;
+use std::f64::consts::SQRT_2;
 
 #[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
@@ -10,29 +12,12 @@ use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::{
-	Probability,
-	consts::{LN_SQRT_2PI, SQRT_2PI},
-	function::erf,
-};
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 
 /// Implements the
 /// [Log-normal](https://en.wikipedia.org/wiki/Log-normal_distribution)
 /// distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{LogNormal, Continuous};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let n = LogNormal::new(0.0, 1.0).unwrap();
-/// assert_eq!(n.mean().unwrap(), (0.5f64).exp());
-/// assert_almost_eq!(n.pdf(1.0), 0.3989422804014327, epsilon = 1e-16);
-/// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(
 	feature = "python",
@@ -182,10 +167,8 @@ impl ContinuousCDF for LogNormal {
 		} else if x.is_infinite() {
 			1.0
 		} else {
-			0.5 * erf::erfc(
-				(self.location - x.ln())
-					/ (self.scale * f64::consts::SQRT_2),
-			)
+			0.5 * erfc((self.location - x.ln())
+				/ (self.scale * SQRT_2))
 		}
 	}
 
@@ -215,30 +198,22 @@ impl ContinuousCDF for LogNormal {
 		} else if x.is_infinite() {
 			0.0
 		} else {
-			0.5 * erf::erfc(
-				(x.ln() - self.location)
-					/ (self.scale * f64::consts::SQRT_2),
-			)
+			0.5 * erfc((x.ln() - self.location)
+				/ (self.scale * SQRT_2))
 		}
 	}
 
 	/// `μ - σ * sqrt(2) * erfc_inv(2p)`, where `μ` is the location, `σ` is
 	/// the scale and `erfc_inv` is the inverse of the complementary error
 	/// function.
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		let p = *p;
-
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		if p == 0.0 {
 			0.0
 		} else if p == 1.0 {
 			f64::INFINITY
 		} else {
-			// XXX: breakup
 			(self.location
-				- (self.scale
-					* f64::consts::SQRT_2 * erf::erfc_inv(
-					2.0 * p,
-				)))
+				- (self.scale * SQRT_2 * inverse_erfc(2.0 * p)))
 			.exp()
 		}
 	}
@@ -304,7 +279,7 @@ impl Distribution for LogNormal {
 	///
 	/// where `μ` is the location and `σ` is the scale
 	fn entropy(&self) -> Option<f64> {
-		Some(0.5 + self.scale.ln() + self.location + LN_SQRT_2PI)
+		Some(0.5 + self.scale.ln() + self.location + f64::LN_SQRT_2PI)
 	}
 
 	/// Returns the skewness of the log-normal distribution
@@ -353,7 +328,7 @@ impl Continuous for LogNormal {
 			0.0
 		} else {
 			let d = (x.ln() - self.location) / self.scale;
-			(-0.5 * d * d).exp() / (x * SQRT_2PI * self.scale)
+			(-0.5 * d * d).exp() / (x * f64::SQRT_2PI * self.scale)
 		}
 	}
 
@@ -372,7 +347,8 @@ impl Continuous for LogNormal {
 			f64::NEG_INFINITY
 		} else {
 			let d = (x.ln() - self.location) / self.scale;
-			(-0.5 * d * d) - LN_SQRT_2PI - (x * self.scale).ln()
+			(-0.5 * d * d)
+				- f64::LN_SQRT_2PI - (x * self.scale).ln()
 		}
 	}
 }

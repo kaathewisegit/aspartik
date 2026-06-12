@@ -12,7 +12,6 @@ buffer = { workspace = true }
 data = { workspace = true }
 io = { workspace = true }
 linalg = { workspace = true }
-math = { workspace = true }
 rng = { workspace = true }
 sk = { workspace = true }
 stats = { workspace = true }
@@ -22,6 +21,7 @@ verbatim = { workspace = true }
 anyhow = { workspace = true }
 blake3 = { workspace = true }
 bytemuck = { workspace = true, features = ["derive", "extern_crate_alloc"] }
+computare-special = { workspace = true }
 cudarc = { workspace = true, features = ["driver", "nvrtc", "dynamic-loading", "cuda-13000", "std"] }
 fork_union = { workspace = true }
 num-traits = { workspace = true }

@@ -3,15 +3,12 @@ use pyo3::prelude::*;
 use rand::RngExt;
 use thiserror::Error;
 
-use core::f64;
-
 #[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::Probability;
 #[cfg(feature = "python")]
 use util::impl_pyerr;
 
@@ -188,9 +185,7 @@ impl ContinuousCDF for Laplace {
 
 	/// `μ + b * ln(2p)` if `p <= 1/2`, `μ - b * ln(2 - 2p)` otherwise,
 	/// where `μ` is the location, `b` is the scale.
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		let p = *p;
-
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		if p <= 0.5 {
 			self.location + self.scale * (2.0 * p).ln()
 		} else {

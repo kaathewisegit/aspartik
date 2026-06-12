@@ -1,19 +1,13 @@
 use stats::distribution::Binomial;
 
 use crate::prelude::*;
-use math::Probability;
 
-make_test_harness!(Binomial(p: Probability<f64>, n: u64));
-
-fn c(args: (f64, u64)) -> (Probability<f64>, u64) {
-	(Probability::new(args.0), args.1)
-}
+make_test_harness!(Binomial(p: f64, n: u64));
 
 #[test]
 fn test_mean() {
 	let cases = [((0.0, 4), 0.0), ((0.3, 3), 0.9), ((1.0, 2), 2.0)];
 	for (args, expected) in cases {
-		let args = c(args);
 		assert_close(args, (), |d, _| d.mean().unwrap(), expected);
 	}
 }
@@ -22,7 +16,6 @@ fn test_mean() {
 fn test_variance() {
 	let cases = [((0.0, 4), 0.0), ((0.3, 3), 0.63), ((1.0, 2), 0.0)];
 	for (args, expected) in cases {
-		let args = c(args);
 		assert_close(args, (), |d, _| d.variance().unwrap(), expected);
 	}
 }
@@ -35,7 +28,6 @@ fn test_entropy() {
 		((1.0, 2), 0.0),
 	];
 	for (args, expected) in cases {
-		let args = c(args);
 		assert_close(args, (), |d, _| d.entropy().unwrap(), expected);
 	}
 }
@@ -48,7 +40,6 @@ fn test_skewness() {
 		((1.0, 2), f64::NEG_INFINITY),
 	];
 	for (args, expected) in cases {
-		let args = c(args);
 		assert_close(args, (), |d, _| d.skewness().unwrap(), expected);
 	}
 }
@@ -57,7 +48,6 @@ fn test_skewness() {
 fn test_median() {
 	let cases = [((0.0, 4), 0.0), ((0.3, 3), 0.0), ((1.0, 2), 2.0)];
 	for (args, expected) in cases {
-		let args = c(args);
 		assert_exact(args, (), |d, _| d.median().unwrap(), expected);
 	}
 }
@@ -66,7 +56,6 @@ fn test_median() {
 fn test_mode() {
 	let cases = [((0.0, 4), 0), ((0.3, 3), 1), ((1.0, 2), 2)];
 	for (args, expected) in cases {
-		let args = c(args);
 		assert_exact(args, (), |d, _| d.mode().unwrap(), expected);
 	}
 }
@@ -75,7 +64,6 @@ fn test_mode() {
 fn test_lower() {
 	let cases = [((0.3, 10), 0)];
 	for (args, expected) in cases {
-		let args = c(args);
 		assert_exact(args, (), |d, _| d.lower(), expected);
 	}
 }
@@ -84,7 +72,6 @@ fn test_lower() {
 fn test_upper() {
 	let cases = [((0.3, 10), 10)];
 	for (args, expected) in cases {
-		let args = c(args);
 		assert_exact(args, (), |d, _| d.upper(), expected);
 	}
 }
@@ -118,7 +105,6 @@ fn test_pmf() {
 		((1.0, 10), 10, 1.0),
 	];
 	for (args, p, expected) in cases {
-		let args = c(args);
 		assert_close(args, p, |d, p_val| d.pmf(p_val), expected);
 	}
 }
@@ -152,7 +138,6 @@ fn test_ln_pmf() {
 		((1.0, 10), 10, 0.0),
 	];
 	for (args, p, expected) in cases {
-		let args = c(args);
 		assert_close(args, p, |d, p_val| d.ln_pmf(p_val), expected);
 	}
 }
@@ -188,7 +173,6 @@ fn test_cdf() {
 		((0.5, 3), 5, 1.0),
 	];
 	for (args, p, expected) in cases {
-		let args = c(args);
 		assert_close(args, p, |d, p_val| d.cdf(p_val), expected);
 	}
 }
@@ -224,7 +208,6 @@ fn test_sf() {
 		((0.5, 3), 5, 0.0),
 	];
 	for (args, p, expected) in cases {
-		let args = c(args);
 		assert_close(args, p, |d, p_val| d.sf(p_val), expected);
 	}
 }
@@ -239,8 +222,6 @@ fn test_inverse_cdf() {
 		((0.005, 10), 0.9, 0),       // issue #330
 	];
 	for (args, p, expected) in cases {
-		let p = Probability::new(p);
-		let args = c(args);
 		assert_exact(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }
@@ -249,18 +230,12 @@ fn test_inverse_cdf() {
 fn test_cdf_inverse_identity() {
 	let cases = [((0.3, 10), 3), ((0.3, 10), 4), ((0.5, 6), 4)];
 	for (args, p) in cases {
-		let args = c(args);
-		assert_exact(
-			args,
-			p,
-			|d, p| d.inverse_cdf(Probability::new(d.cdf(p))),
-			p,
-		);
+		assert_exact(args, p, |d, p| d.inverse_cdf(d.cdf(p)), p);
 	}
 }
 
 #[test]
 fn test_discrete() {
-	check_discrete_distribution(&new_dist((Probability::new(0.3), 5)), 5);
-	check_discrete_distribution(&new_dist((Probability::new(0.7), 10)), 10);
+	check_discrete_distribution(&new_dist((0.3, 5)), 5);
+	check_discrete_distribution(&new_dist((0.7, 10)), 10);
 }

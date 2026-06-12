@@ -1,6 +1,5 @@
 use anyhow::Result;
 use fork_union::{SyncMutPtr, ThreadPool};
-use math::Probability;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
@@ -211,7 +210,7 @@ fn update_categories(alpha: &Real, categories: &mut SkBuf<f64>) {
 
 	for i in 0..num_categories {
 		let p = (2.0 * i as f64 + 1.0) / (2.0 * num_categories as f64);
-		let modifier = dist.inverse_cdf(Probability::new(p));
+		let modifier = dist.inverse_cdf(p);
 		sum += modifier;
 
 		categories.set(i, modifier);

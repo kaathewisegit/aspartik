@@ -179,7 +179,6 @@ fn test_inverse_cdf() {
 		((1.5, 0.05), 0.01, 1.507535912465057),
 	];
 	for (args, p, expected) in cases {
-		let p = Probability::new(p);
 		assert_close(args, p, |d, p| d.inverse_cdf(p), expected);
 	}
 }

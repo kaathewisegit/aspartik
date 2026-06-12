@@ -1,4 +1,4 @@
-use math::assert_almost_eq;
+use computare_core::assert_almost_eq;
 
 use stats::distribution::{Continuous, ContinuousCDF, Discrete, DiscreteCDF};
 
@@ -214,7 +214,7 @@ where
 
 		let ln_density = dist.ln_pdf(x);
 
-		assert_almost_eq!(density.ln(), ln_density, epsilon = 1e-10);
+		assert_almost_eq!(density.ln(), ln_density, absolute = 1e-10);
 
 		// triangle rule
 		sum += (prev_density + density) * step / 2.0;
@@ -258,7 +258,7 @@ where
 			assert!(sum > 0.99);
 		}
 
-		assert_almost_eq!(sum, dist.cdf(i), epsilon = 1e-10);
+		assert_almost_eq!(sum, dist.cdf(i), absolute = 1e-10);
 		// assert_almost_eq!(sum, dist.cdf(i as f64), 1e-10);
 		// assert_almost_eq!(sum, dist.cdf(i as f64 + 0.1), 1e-10);
 		// assert_almost_eq!(sum, dist.cdf(i as f64 + 0.5), 1e-10);
@@ -290,7 +290,7 @@ fn check_derivative_of_cdf_is_pdf<D>(
 
 		let d_cdf = dist.cdf(x_ahead) - dist.cdf(x_behind);
 
-		assert_almost_eq!(d_cdf, DX * density, epsilon = 1e-11);
+		assert_almost_eq!(d_cdf, DX * density, absolute = 1e-11);
 
 		if x >= x_max {
 			break;
@@ -354,7 +354,7 @@ where
 }
 
 pub mod prelude {
-	pub use math::{Probability, almost_eq, assert_almost_eq};
+	pub use computare_core::{almost_eq, assert_almost_eq};
 	pub use num_traits::Float;
 	pub use stats::{
 		distribution::{

@@ -1,12 +1,11 @@
+use computare_special::gamma::{
+	regularized_lower_gamma, regularized_upper_gamma,
+};
 use rand::RngExt;
 
 use core::f64::consts;
 
-use math::{
-	Positive,
-	function::{factorial, gamma},
-};
-
+use super::ln_factorial;
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::*,
@@ -14,32 +13,20 @@ use crate::{
 
 /// Implements the [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
 /// distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{Poisson, Discrete};
-/// use stats::statistics::Distribution;
-/// use math::{assert_almost_eq, Positive};
-///
-/// let n = Poisson::new(Positive::new((1.0)));
-/// assert_eq!(n.mean().unwrap(), 1.0);
-/// assert_almost_eq!(n.pmf(1), 0.367879441171442, epsilon = 1e-15);
-/// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Poisson {
-	lambda: Positive<f64>,
+	lambda: f64,
 }
 
 impl Poisson {
 	/// Constructs a new poisson distribution with a rate (λ) of `lambda`
-	pub fn new(lambda: Positive<f64>) -> Poisson {
+	pub fn new(lambda: f64) -> Poisson {
 		Poisson { lambda }
 	}
 
 	/// Returns the rate (λ) of the poisson distribution
 	pub fn lambda(&self) -> f64 {
-		*self.lambda
+		self.lambda
 	}
 }
 
@@ -58,7 +45,7 @@ impl rand::distr::Distribution<u64> for Poisson {
 	/// Series C (Applied Statistics) Vol. 28 No. 1. (1979) pp. 29 - 35
 	/// otherwise
 	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> u64 {
-		sample_unchecked(rng, *self.lambda) as u64
+		sample_unchecked(rng, self.lambda) as u64
 	}
 }
 
@@ -71,7 +58,7 @@ impl rand::distr::Distribution<f64> for Poisson {
 	/// Series C (Applied Statistics) Vol. 28 No. 1. (1979) pp. 29 - 35
 	/// otherwise
 	fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-		sample_unchecked(rng, *self.lambda)
+		sample_unchecked(rng, self.lambda)
 	}
 }
 
@@ -83,14 +70,14 @@ impl DiscreteCDF for Poisson {
 	///
 	/// If `x <= 0`.
 	fn cdf(&self, x: u64) -> f64 {
-		gamma::gamma_ur(Positive::new(x as f64 + 1.0), self.lambda)
+		regularized_upper_gamma(x as f64 + 1.0, self.lambda)
 	}
 
 	/// `P(x + 1, λ)`, where `λ` is the rate and `P` is the lower
 	/// regularized gamma function
 	fn sf(&self, x: u64) -> f64 {
 		// PANIC: `x as f64` is positive, we add 1
-		gamma::gamma_lr(Positive::new(x as f64 + 1.0), self.lambda)
+		regularized_lower_gamma(x as f64 + 1.0, self.lambda)
 	}
 
 	fn lower(&self) -> u64 {
@@ -113,7 +100,7 @@ impl Distribution for Poisson {
 	///
 	/// where `λ` is the rate
 	fn mean(&self) -> Option<f64> {
-		Some(*self.lambda)
+		Some(self.lambda)
 	}
 
 	/// Returns the median of the poisson distribution
@@ -126,7 +113,7 @@ impl Distribution for Poisson {
 	///
 	/// where `λ` is the rate
 	fn median(&self) -> Option<f64> {
-		Some((*self.lambda + 1.0 / 3.0 - 0.02 / *self.lambda).floor())
+		Some((self.lambda + 1.0 / 3.0 - 0.02 / self.lambda).floor())
 	}
 
 	/// Returns the variance of the poisson distribution
@@ -139,7 +126,7 @@ impl Distribution for Poisson {
 	///
 	/// where `λ` is the rate
 	fn variance(&self) -> Option<f64> {
-		Some(*self.lambda)
+		Some(self.lambda)
 	}
 
 	/// Returns the entropy of the poisson distribution
@@ -152,12 +139,10 @@ impl Distribution for Poisson {
 	///
 	/// where `λ` is the rate
 	fn entropy(&self) -> Option<f64> {
-		Some(0.5 * (2.0 * consts::PI * consts::E * *self.lambda).ln()
-			- 1.0 / (12.0 * *self.lambda)
-			- 1.0 / (24.0 * *self.lambda * *self.lambda)
-			- 19.0 / (360.0
-				* *self.lambda * *self.lambda
-				* *self.lambda))
+		Some(0.5 * (2.0 * consts::PI * consts::E * self.lambda).ln()
+			- 1.0 / (12.0 * self.lambda)
+			- 1.0 / (24.0 * self.lambda.powi(2))
+			- 19.0 / (360.0 * self.lambda.powi(3)))
 	}
 
 	/// Returns the skewness of the poisson distribution
@@ -203,9 +188,8 @@ impl Discrete for Poisson {
 	///
 	/// where `λ` is the rate
 	fn pmf(&self, x: u64) -> f64 {
-		(-*self.lambda + x as f64 * self.lambda.ln()
-			- factorial::ln_factorial(x))
-		.exp()
+		(-self.lambda + x as f64 * self.lambda.ln() - ln_factorial(x))
+			.exp()
 	}
 
 	/// Calculates the log probability mass function for the poisson
@@ -220,8 +204,7 @@ impl Discrete for Poisson {
 	///
 	/// where `λ` is the rate
 	fn ln_pmf(&self, x: u64) -> f64 {
-		-*self.lambda + x as f64 * self.lambda.ln()
-			- factorial::ln_factorial(x)
+		-self.lambda + x as f64 * self.lambda.ln() - ln_factorial(x)
 	}
 }
 
@@ -263,8 +246,7 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 			let y = alpha - beta * x;
 			let temp = 1.0 + y.exp();
 			let lhs = y + (v / (temp * temp)).ln();
-			let rhs = k + n * lambda.ln()
-				- factorial::ln_factorial(n as u64);
+			let rhs = k + n * lambda.ln() - ln_factorial(n as u64);
 			if lhs <= rhs {
 				return n;
 			}

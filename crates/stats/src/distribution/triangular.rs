@@ -7,7 +7,6 @@ use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::Probability;
 
 /// Implements the
 /// [Triangular](https://en.wikipedia.org/wiki/Triangular_distribution)
@@ -230,11 +229,10 @@ impl ContinuousCDF for Triangular {
 	///     max - ((max - min) * (max - mode) * (1 - x))^(1 / 2)
 	/// }
 	/// ```
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		let min = self.min;
 		let max = self.max;
 		let mode = self.mode;
-		let p = *p;
 
 		if p < (mode - min) / (max - min) {
 			min + ((mode - min) * (max - min) * p).sqrt()

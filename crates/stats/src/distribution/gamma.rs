@@ -1,19 +1,13 @@
 use rand::RngExt;
 
-use core::f64;
-
+use computare_core::tolerance::{ToleranceConfig, is_close};
+use computare_special::gamma::{
+	digamma, gamma, ln_gamma, regularized_lower_gamma,
+	regularized_upper_gamma,
+};
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use thiserror::Error;
-
-use math::{
-	Positive, Probability,
-	function::gamma,
-	tolerance::{ACCURACY, Tolerance},
-	ulps_eq,
-};
-#[cfg(feature = "python")]
-use util::impl_pyerr;
 
 #[cfg(feature = "python")]
 use crate::python_macros::impl_pymethods;
@@ -21,21 +15,11 @@ use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
+#[cfg(feature = "python")]
+use util::impl_pyerr;
 
 /// Implements the [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
 /// distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{Gamma, Continuous};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let n = Gamma::new(3.0, 1.0).unwrap();
-/// assert_eq!(n.mean().unwrap(), 3.0);
-/// assert_almost_eq!(n.pdf(2.0), 0.2706705664732254, epsilon = 1e-15);
-/// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(
 	feature = "python",
@@ -172,17 +156,14 @@ impl ContinuousCDF for Gamma {
 	fn cdf(&self, x: f64) -> f64 {
 		if x <= 0.0 {
 			0.0
-		} else if ulps_eq!(x, self.shape) && self.rate.is_infinite() {
+		} else if x == self.shape && self.rate.is_infinite() {
 			1.0
 		} else if self.rate.is_infinite() {
 			0.0
 		} else if x.is_infinite() {
 			1.0
 		} else {
-			gamma::gamma_lr(
-				Positive::new(self.shape),
-				Positive::new(x * self.rate),
-			)
+			regularized_lower_gamma(self.shape, x * self.rate)
 		}
 	}
 
@@ -192,23 +173,18 @@ impl ContinuousCDF for Gamma {
 	fn sf(&self, x: f64) -> f64 {
 		if x <= 0.0 {
 			1.0
-		} else if ulps_eq!(x, self.shape) && self.rate.is_infinite() {
+		} else if x == self.shape && self.rate.is_infinite() {
 			0.0
 		} else if self.rate.is_infinite() {
 			1.0
 		} else if x.is_infinite() {
 			0.0
 		} else {
-			gamma::gamma_ur(
-				Positive::new(self.shape),
-				Positive::new(x * self.rate),
-			)
+			regularized_upper_gamma(self.shape, x * self.rate)
 		}
 	}
 
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		let p = *p;
-
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		if p == 0.0 {
 			return self.lower();
 		};
@@ -274,8 +250,8 @@ impl Distribution for Gamma {
 	/// function.
 	fn entropy(&self) -> Option<f64> {
 		let entr = self.shape - self.rate.ln()
-			+ gamma::ln_gamma(self.shape)
-			+ (1.0 - self.shape) * gamma::digamma(self.shape);
+			+ ln_gamma(self.shape)
+			+ (1.0 - self.shape) * digamma(self.shape);
 		Some(entr)
 	}
 
@@ -307,7 +283,7 @@ impl Continuous for Gamma {
 	fn pdf(&self, x: f64) -> f64 {
 		if x < 0.0 {
 			0.0
-		} else if ulps_eq!(self.shape, 1.0) {
+		} else if self.shape == 1.0 {
 			self.rate * (-self.rate * x).exp()
 		} else if self.shape > 160.0 {
 			self.ln_pdf(x).exp()
@@ -316,7 +292,7 @@ impl Continuous for Gamma {
 		} else {
 			self.rate.powf(self.shape)
 				* x.powf(self.shape - 1.0) * (-self.rate * x).exp()
-				/ gamma::gamma(self.shape)
+				/ gamma(self.shape)
 		}
 	}
 
@@ -324,14 +300,14 @@ impl Continuous for Gamma {
 	fn ln_pdf(&self, x: f64) -> f64 {
 		if x < 0.0 {
 			f64::NEG_INFINITY
-		} else if ulps_eq!(self.shape, 1.0) {
+		} else if self.shape == 1.0 {
 			self.rate.ln() - self.rate * x
 		} else if x.is_infinite() {
 			f64::NEG_INFINITY
 		} else {
 			self.shape * self.rate.ln()
 				+ (self.shape - 1.0) * x.ln()
-				- self.rate * x - gamma::ln_gamma(self.shape)
+				- self.rate * x - ln_gamma(self.shape)
 		}
 	}
 }
@@ -392,7 +368,16 @@ pub fn sample_unchecked<R: rand::Rng + ?Sized>(
 /// Compares two floats with `ACCURACY` relative precision.  Updates first
 /// argument to value of second argument
 pub fn convergence(x: &mut f64, x_new: f64) -> bool {
-	let res = x.is_close(&x_new, f64::EPSILON, ACCURACY, 0);
+	const ACCURACY: f64 = 1e-10;
+	let res = is_close(
+		x,
+		&x_new,
+		ToleranceConfig {
+			absolute: f64::EPSILON,
+			relative: ACCURACY,
+			ulps: 0,
+		},
+	);
 	*x = x_new;
 	res
 }

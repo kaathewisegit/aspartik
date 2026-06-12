@@ -1,16 +1,13 @@
+use computare_core::Float;
+use computare_special::erf::{erf, erfc, inverse_erfc};
 use rand::RngExt;
 use thiserror::Error;
 
-use core::f64::consts;
+use std::f64::consts::TAU;
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
-};
-use math::{
-	Probability,
-	consts::LN_SQRT_2PI,
-	function::erf::{erf, erfc, erfc_inv},
 };
 
 /// [Levy distribution](https://en.wikipedia.org/wiki/L%C3%A9vy_distribution)
@@ -74,7 +71,7 @@ impl rand::distr::Distribution<f64> for Levy {
 
 		// Inverse transform sampling
 		let u: f64 = rng.sample(OpenClosed01);
-		self.mu + (0.5 * self.c) / erfc_inv(u).powf(2.0)
+		self.mu + (0.5 * self.c) / inverse_erfc(u).powf(2.0)
 	}
 }
 
@@ -101,9 +98,9 @@ impl ContinuousCDF for Levy {
 		}
 	}
 
-	/// `μ + c ⋅ (erfc_inv(x)^2) / 2`
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		self.mu + 0.5 * self.c / (erfc_inv(*p).powi(2))
+	/// `μ + c ⋅ (inverse_erfc(x)^2) / 2`
+	fn inverse_cdf(&self, p: f64) -> f64 {
+		self.mu + 0.5 * self.c / (inverse_erfc(p).powi(2))
 	}
 
 	fn lower(&self) -> f64 {
@@ -121,9 +118,9 @@ impl Distribution for Levy {
 		Some(f64::INFINITY)
 	}
 
-	/// `μ + c / (2 * erfc_inv(0.5)^2)`
+	/// `μ + c / (2 * inverse_erfc(0.5)^2)`
 	fn median(&self) -> Option<f64> {
-		Some(self.mu + self.c / (2.0 * erfc_inv(0.5).powi(2)))
+		Some(self.mu + self.c / (2.0 * inverse_erfc(0.5).powi(2)))
 	}
 
 	/// The variance, always an infinity
@@ -158,8 +155,7 @@ impl Continuous for Levy {
 			0.0
 		} else {
 			let diff = x - self.mu;
-			(self.c / consts::TAU).sqrt()
-				* (-((0.5 * self.c) / diff)).exp()
+			(self.c / TAU).sqrt() * (-((0.5 * self.c) / diff)).exp()
 				/ diff.powf(1.5)
 		}
 	}
@@ -171,7 +167,7 @@ impl Continuous for Levy {
 		} else {
 			let diff = x - self.mu;
 			0.5 * (self.c.ln() - self.c / diff)
-				- (1.5 * diff.ln() + LN_SQRT_2PI)
+				- (1.5 * diff.ln() + f64::LN_SQRT_2PI)
 		}
 	}
 }

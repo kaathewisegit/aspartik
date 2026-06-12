@@ -1,30 +1,19 @@
 use thiserror::Error;
 
-use core::f64;
+use std::f64::consts::PI;
+
+use computare_special::{
+	beta::{beta, inverse_regularized_beta, regularized_incomplete_beta},
+	gamma::{digamma, ln_gamma},
+};
 
 use crate::{
 	distribution::{Continuous, ContinuousCDF},
 	statistics::{Distribution, Mode},
 };
-use math::{
-	Probability,
-	function::{beta, gamma},
-};
 
 /// Implements the [Student's
 /// T](https://en.wikipedia.org/wiki/Student%27s_t-distribution) distribution
-///
-/// # Examples
-///
-/// ```
-/// use stats::distribution::{StudentsT, Continuous};
-/// use stats::statistics::Distribution;
-/// use math::assert_almost_eq;
-///
-/// let n = StudentsT::new(0.0, 1.0, 2.0).unwrap();
-/// assert_eq!(n.mean().unwrap(), 0.0);
-/// assert_almost_eq!(n.pdf(0.0), 0.353553390593274, epsilon = 1e-15);
-/// ```
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct StudentsT {
 	location: f64,
@@ -190,13 +179,11 @@ impl ContinuousCDF for StudentsT {
 		} else {
 			let k = (x - self.location) / self.scale;
 			let h = self.freedom / (self.freedom + k * k);
-			let ib = 0.5 * beta::beta_reg(
+			let ib = 0.5 * regularized_incomplete_beta(
 				self.freedom / 2.0,
 				0.5,
 				h,
-			)
-			// panics?
-			.unwrap();
+			);
 			if x <= self.location { ib } else { 1.0 - ib }
 		}
 	}
@@ -227,25 +214,21 @@ impl ContinuousCDF for StudentsT {
 		} else {
 			let k = (x - self.location) / self.scale;
 			let h = self.freedom / (self.freedom + k * k);
-			let ib = 0.5 * beta::beta_reg(
+			let ib = 0.5 * regularized_incomplete_beta(
 				self.freedom / 2.0,
 				0.5,
 				h,
-			)
-			// XXX: panics?
-			.unwrap();
+			);
 			if x <= self.location { 1.0 - ib } else { ib }
 		}
 	}
 
-	fn inverse_cdf(&self, p: Probability<f64>) -> f64 {
-		let p = *p;
-
+	fn inverse_cdf(&self, p: f64) -> f64 {
 		// first calculate inverse_cdf for normal Student's T
 		let x1 = if p >= 0.5 { 1.0 - p } else { p };
 		let a = 0.5 * self.freedom;
 		let b = 0.5;
-		let mut y = beta::inv_beta_reg(a, b, 2.0 * x1);
+		let mut y = inverse_regularized_beta(a, b, 2.0 * x1);
 		y = (self.freedom * (1.0 - y) / y).sqrt();
 		y = if p >= 0.5 { y } else { -y };
 
@@ -351,13 +334,10 @@ impl Distribution for StudentsT {
 		// of entropy shows scaling affects the entropy by an additive constant `- ln σ`
 		let shift = -self.scale.ln();
 		let result = (self.freedom + 1.0) / 2.0
-			* (gamma::digamma((self.freedom + 1.0) / 2.0)
-				- gamma::digamma(self.freedom / 2.0))
-			+ (self.freedom.sqrt()
-				* beta::beta(self.freedom / 2.0, 0.5)
-					// XXX: panics?
-					.unwrap())
-			.ln();
+			* (digamma((self.freedom + 1.0) / 2.0)
+				- digamma(self.freedom / 2.0))
+			+ (self.freedom.sqrt() * beta(self.freedom / 2.0, 0.5))
+				.ln();
 		Some(result + shift)
 	}
 
@@ -418,12 +398,11 @@ impl Continuous for StudentsT {
 			)
 		} else {
 			let d = (x - self.location) / self.scale;
-			(gamma::ln_gamma((self.freedom + 1.0) / 2.0)
-				- gamma::ln_gamma(self.freedom / 2.0))
+			(ln_gamma((self.freedom + 1.0) / 2.0)
+				- ln_gamma(self.freedom / 2.0))
 			.exp() * (1.0 + d * d / self.freedom)
 				.powf(-0.5 * (self.freedom + 1.0))
-				/ (self.freedom * f64::consts::PI).sqrt()
-				/ self.scale
+				/ (self.freedom * PI).sqrt() / self.scale
 		}
 	}
 
@@ -452,11 +431,11 @@ impl Continuous for StudentsT {
 			)
 		} else {
 			let d = (x - self.location) / self.scale;
-			gamma::ln_gamma((self.freedom + 1.0) / 2.0)
+			ln_gamma((self.freedom + 1.0) / 2.0)
 				- 0.5 * ((self.freedom + 1.0)
 					* (1.0 + d * d / self.freedom).ln())
-				- gamma::ln_gamma(self.freedom / 2.0)
-				- 0.5 * (self.freedom * f64::consts::PI).ln()
+				- ln_gamma(self.freedom / 2.0)
+				- 0.5 * (self.freedom * PI).ln()
 				- self.scale.ln()
 		}
 	}
