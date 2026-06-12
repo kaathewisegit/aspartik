@@ -166,12 +166,12 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 [[package]]
 name = "computare-core"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/kaathewisegit/computare#3b9ebe64c67f9acaec8c62885a6c9fff963c4661"
+source = "git+https://github.com/kaathewisegit/computare#2515d19a77d6126a1340855f2a83b9e5d46ade82"
 
 [[package]]
 name = "computare-special"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/kaathewisegit/computare#3b9ebe64c67f9acaec8c62885a6c9fff963c4661"
+source = "git+https://github.com/kaathewisegit/computare#2515d19a77d6126a1340855f2a83b9e5d46ade82"
 dependencies = [
  "computare-core",
  "libm",

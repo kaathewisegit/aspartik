@@ -61,8 +61,7 @@ fn test_variance() {
 fn test_entropy() {
 	let cases = [
 		((9.0, 1.0), -1.3083356884473305),
-		// TODO: low precision (1e-13)
-		// ((5.0, 100.0), -2.520162318760274),
+		((5.0, 100.0), -2.520162318760274),
 		((1.0, 1.0), 0.0),
 	];
 	for (args, expected) in cases {
@@ -70,7 +69,7 @@ fn test_entropy() {
 			new_dist(args).entropy().unwrap(),
 			expected,
 			absolute = f64::EPSILON * 4.0,
-			relative = 1e-14,
+			relative = 1e-13,
 		);
 	}
 }
