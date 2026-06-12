@@ -66,7 +66,7 @@ impl GammaLikelihood {
 		let mut categories = SkBuf::repeat(0.0, num_categories);
 		update_categories(&alpha.get().inner(), &mut categories);
 
-		let pool = ThreadPool::try_spawn(1)?;
+		let pool = ThreadPool::try_spawn(num_categories)?;
 
 		let out = Self {
 			calculators: Mutex::new(calculators),
