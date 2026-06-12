@@ -5,7 +5,13 @@ from dataclasses import KW_ONLY, dataclass, field
 from typing import Literal, Optional
 
 from aspartik.b3 import MCMC, Calculator, Clock
-from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, Timer, TraceWriter
+from aspartik.b3.callbacks import (
+    OperatorStats,
+    PrintLogger,
+    StateCheckpoint,
+    Timer,
+    TraceWriter,
+)
 from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import (
     BeastNarrowExchange,
@@ -74,6 +80,9 @@ class MCMCConfig:
 
     state_path: Optional[str] = None
     state_every: int = 100_000
+
+    opstats_path: Optional[str] = None
+    opstats_every: int = 10_000
 
     length: Optional[int] = None
 
@@ -805,6 +814,8 @@ def _b3_config(c: MCMCConfig):
         )
     if c.state_path:
         callbacks.append(StateCheckpoint(c.state_path, every=c.state_every))
+    if c.opstats_path:
+        callbacks.append(OperatorStats(c.opstats_path, every=c.opstats_every))
     if c.timer:
         callbacks.append(Timer())
 

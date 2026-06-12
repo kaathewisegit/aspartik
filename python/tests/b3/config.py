@@ -13,6 +13,7 @@ APES_MSA = read_msa_from_fasta("data/alignments/apes.fasta")
 @pytest.mark.parametrize("tree_prior", ["yule", "constant", "exponential"])
 @pytest.mark.parametrize("print_every", [None, 100])
 @pytest.mark.parametrize("trace_path", [None, "target/test_config.trace"])
+@pytest.mark.parametrize("opstats_path", [None, "target/test_config.opstats"])
 @pytest.mark.parametrize("timer", [False, True])
 def test_config(
     calculator,
@@ -22,6 +23,7 @@ def test_config(
     tree_prior,
     print_every,
     trace_path,
+    opstats_path,
     timer,
 ):
     mcmc = MCMCConfig(
@@ -32,6 +34,7 @@ def test_config(
         tree_prior=tree_prior,
         print_every=print_every,
         trace_path=trace_path,
+        opstats_path=opstats_path,
         timer=timer,
     ).b3_mcmc()
 
