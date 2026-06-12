@@ -39,7 +39,7 @@ num-traits = "0.2.19"
 parking_lot = "0.12.5"
 peg = "0.8.6"
 picoarrow = { git = "https://github.com/kaathewisegit/picoarrow" }
-pyo3 = "0.28.3"
+pyo3 = "0.29.0"
 rand = { version = "0.10.1", default-features = false }
 rand_pcg = "0.10.2"
 thiserror = "2.0"
