@@ -132,6 +132,7 @@ impl_pyparameter_common!(PyRealVector, RealVector, {
 				write!(out, ", ")?;
 			}
 		}
+		out.push(')');
 		Ok(out)
 	}
 });
