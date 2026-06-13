@@ -45,7 +45,7 @@ pub struct Tree {
 	updated_edges: Bitmap,
 	/// A bitmap of internal nodes whose child edges got updated
 	updated_partials: Bitmap,
-	/// A bitmap of all nodes whose parents were updated
+	/// A bitmap of nodes whose parents were updated
 	updated_propagatons: Bitmap,
 }
 
@@ -577,20 +577,20 @@ impl Tree {
 		out
 	}
 
-	fn updated_internals(&self) -> Vec<Internal> {
+	fn updated_internals(&self, bitmap: &Bitmap) -> Vec<Internal> {
 		let mut internals = Vec::from([self.root()]);
 		let mut queue = VecDeque::from([self.root()]);
 
 		while let Some(node) = queue.pop_front() {
 			let (left, right) = self.children_of(node);
 
-			if self.is_node_updated(left)
+			if bitmap.at(left.0)
 				&& let Some(left) = self.as_internal(left)
 			{
 				internals.push(left);
 				queue.push_back(left);
 			}
-			if self.is_node_updated(right)
+			if bitmap.at(right.0)
 				&& let Some(right) = self.as_internal(right)
 			{
 				internals.push(right);
@@ -622,13 +622,14 @@ impl Tree {
 
 		// Updated leaves, in order
 		for leaf in self.leaves() {
-			if self.is_node_updated(*leaf) {
+			if self.updated_propagatons.at(leaf.0) {
 				nodes.push(*leaf);
 			}
 		}
 		let num_updated_leaves = nodes.len();
 
-		let internals = self.updated_internals();
+		let internals =
+			self.updated_internals(&self.updated_propagatons);
 		let children = self.children_list(&internals);
 
 		nodes.append(&mut cast_vec(internals));
@@ -637,14 +638,10 @@ impl Tree {
 	}
 
 	pub fn partials_lists(&self) -> (Vec<usize>, Vec<[usize; 2]>) {
-		let internals = self.updated_internals();
+		let internals = self.updated_internals(&self.updated_partials);
 		let children = self.children_list(&internals);
 
 		(cast_vec(internals), cast_vec(children))
-	}
-
-	fn is_node_updated(&self, node: Node) -> bool {
-		self.updated_partials.at(node.0)
 	}
 
 	fn is_edge_updated(&self, edge: usize) -> bool {
