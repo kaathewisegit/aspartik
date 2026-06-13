@@ -18,6 +18,7 @@ const RESULT_FIELDS: [&str; 4] =
 pub struct OperatorStats {
 	tunings: Mutex<Vec<ArrayF64<NonNullable>>>,
 	results: Mutex<Vec<[ArrayU64<NonNullable>; 4]>>,
+	step: Mutex<ArrayU64<NonNullable>>,
 
 	path: String,
 
@@ -32,12 +33,15 @@ impl OperatorStats {
 		Self {
 			tunings: Mutex::new(Vec::new()),
 			results: Mutex::new(Vec::new()),
+			step: Mutex::new(ArrayU64::new()),
 			path,
 			every,
 		}
 	}
 
 	fn call(&self, py: Python, mcmc: &Mcmc) -> Result<()> {
+		self.step.lock().push(mcmc.current_step() as u64);
+
 		let mut tunings = self.tunings.lock();
 		let mut results = self.results.lock();
 
@@ -76,6 +80,7 @@ impl OperatorStats {
 	fn finish(&self, _mcmc: Py<Mcmc>) -> Result<()> {
 		let tunings = self.tunings.lock();
 		let results = self.results.lock();
+		let step = self.step.lock();
 
 		let file = OpenOptions::new()
 			.write(true)
@@ -86,7 +91,9 @@ impl OperatorStats {
 		let writer = BufWriter::new(file);
 
 		let num_operators = tunings.len();
-		let mut fields = Vec::with_capacity(num_operators * 5);
+		let mut fields = Vec::with_capacity(num_operators * 5 + 1);
+
+		fields.push(step.make_field("step"));
 
 		for i in 0..num_operators {
 			for (j, name) in RESULT_FIELDS.iter().enumerate() {
@@ -103,7 +110,9 @@ impl OperatorStats {
 			FileWriter::new(writer, schema, Compression::None)?;
 
 		let mut batch_arrays: Vec<&dyn Array> =
-			Vec::with_capacity(num_operators * 5);
+			Vec::with_capacity(num_operators * 5 + 1);
+
+		batch_arrays.push(&*step as &dyn Array);
 
 		for i in 0..num_operators {
 			for j in 0..4 {
