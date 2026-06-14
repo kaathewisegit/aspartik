@@ -642,12 +642,12 @@ def _b3_config(c: MCMCConfig):
     parameters, operators, priors = [], [], []
     items = {}
 
-    heights = c.heights
-    if heights is None:
-        heights = [0.0] * c.msa.num_sequences
-    tree = Tree.simulate_coalescent(
-        c.msa.sequence_names(), heights, c.tree_sim_pop_size, rng
-    )
+    tree = Tree(c.msa.sequence_names(), rng)
+    if c.heights:
+        for leaf, height in zip(tree.leaves(), c.heights):
+            tree.set_height(leaf, height)
+        tree.set_random_heights(0.1, rng)
+        tree.accept()
     items["tree"] = tree
     parameters.append(tree)
 

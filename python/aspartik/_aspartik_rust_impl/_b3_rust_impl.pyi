@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Hashable, Iterator, Sequence
+from collections.abc import Hashable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Optional, Sized, SupportsFloat
@@ -20,14 +20,6 @@ class Tree(Scalable):
     def set_random_edges(self, rng: RNG): ...
     def set_random_heights(self, diff, rng: RNG): ...
     def load_newick(self, newick: NewickTree): ...
-    @classmethod
-    def simulate_coalescent(
-        cls,
-        names: Sequence[str],
-        heights: Sequence[float],
-        population_size: float,
-        rng: RNG,
-    ): ...
     @property
     def names(self) -> list[str]: ...
     def replace_child(
@@ -293,7 +285,7 @@ class Clock:
 class TraceWriter(Callback):
     def __init__(
         self,
-        items: dict[str, Parameter | Prior],
+        items: Mapping[str, Parameter | Prior],
         path: str,
         *,
         overwrite: bool = False,
