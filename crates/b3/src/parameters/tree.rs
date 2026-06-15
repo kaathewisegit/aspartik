@@ -17,8 +17,7 @@ use std::{
 	sync::atomic::{AtomicUsize, Ordering},
 };
 
-use super::Parameter;
-use crate::impl_pyparameter_common;
+use crate::{clock::PyClock, impl_pyparameter_common, parameters::Parameter};
 use bitmap::Bitmap;
 use data::newick::{
 	Edge as NewickEdge, Node as NewickNode, NodeIdx as NewickNodeIndex,
@@ -919,7 +918,11 @@ impl Tree {
 		(0..root).chain(root + 1..self.num_nodes())
 	}
 
-	pub fn to_newick(&self, internal_ids: bool) -> String {
+	pub fn to_newick(
+		&self,
+		internal_ids: bool,
+		clock_rate: &dyn Fn(usize) -> f64,
+	) -> String {
 		let mut tree = NewickTree::new();
 
 		let mut map = HashMap::<Node, NewickNodeIndex>::new();
@@ -945,7 +948,8 @@ impl Tree {
 				continue;
 			};
 
-			let edge_len = self.edge_length(node.0);
+			let edge_len =
+				self.edge_length(node.0) * clock_rate(node.0);
 			let edge =
 				NewickEdge::new(Some(edge_len), String::new());
 
@@ -1483,9 +1487,20 @@ impl_pyparameter_common!(PyTree, Tree, {
 	///
 	/// Leaf nodes will be labeled with the names passed to the constructor
 	/// while the internal nodes are unlabeled.
-	#[pyo3(signature = (internal_ids = false))]
-	fn to_newick(&self, internal_ids: bool) -> String {
-		self.inner().to_newick(internal_ids)
+	#[pyo3(signature = (internal_ids = false, clock = None))]
+	fn to_newick(
+		&self,
+		internal_ids: bool,
+		clock: Option<Py<PyClock>>,
+	) -> String {
+		if let Some(clock) = clock {
+			let clock = clock.get().inner();
+			self.inner().to_newick(internal_ids, &|edge| {
+				clock.get_rate(edge)
+			})
+		} else {
+			self.inner().to_newick(internal_ids, &|_| 1.0)
+		}
 	}
 
 	fn ola(&self) -> Vec<i32> {
