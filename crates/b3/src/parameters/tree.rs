@@ -14,7 +14,6 @@ use std::{
 	io::Write,
 	mem,
 	ops::Deref,
-	sync::atomic::{AtomicUsize, Ordering},
 };
 
 use crate::{clock::PyClock, impl_pyparameter_common, parameters::Parameter};
@@ -25,7 +24,7 @@ use data::newick::{
 };
 use rng::{PyRng, Rng};
 use sk::{SkBuf, skbuf};
-use util::py_bail;
+use util::{atomic::MonotonicUsize, py_bail};
 use verbatim::{Deserialize, Serialize};
 
 const ROOT: usize = 0x524f4f54;
@@ -113,12 +112,6 @@ pub struct Leaf(usize);
 
 macro_rules! nodes_2 {
 	($type:ty) => {
-		impl $type {
-			pub fn index(&self) -> usize {
-				self.0
-			}
-		}
-
 		#[pymethods]
 		impl $type {
 			fn __repr__(&self) -> String {
@@ -182,10 +175,11 @@ impl Tree {
 		let num_leaves = self.num_leaves();
 		let num_internals = self.num_internals();
 		let num_nodes = self.num_nodes();
-		// Here we create a Prüfer sequence, which encodes a binary tree
-		// with the root in the last node with the ID `2l - 2`.  To do
-		// that we create a sequence in which all internal nodes appear
-		// twice.  Except the last node, which only appears once.
+		// Here we create a Prüfer sequence, which encodes a binary
+		// tree with the root in the last node with the ID `2l - 2`.
+		// To do that we create a sequence in which all internal nodes
+		// appear twice.  Except the last node, which only appears
+		// once.
 		let internals = num_leaves..num_nodes;
 		let mut prüfer: Vec<usize> =
 			internals.clone().chain(internals).collect();
@@ -208,8 +202,8 @@ impl Tree {
 
 			// `children` update
 			let idx = (parent - num_leaves) * 2;
-			// first encountered child goes in the left slot, second
-			// one goes in the right
+			// first encountered child goes in the left slot,
+			// second one goes in the right
 			if children[idx] == ROOT {
 				children[idx] = child;
 			} else {
@@ -231,8 +225,8 @@ impl Tree {
 		self.root = (root, root);
 	}
 
-	// Sets the heights of internal nodes by walking upwards breadth-first
-	// starting with all of the leaves
+	/// Sets the heights of internal nodes by walking upwards breadth-first
+	/// starting with all of the leaves
 	pub fn set_random_heights(&mut self, diff: f64, rng: &mut Rng) {
 		let mut walk = VecDeque::new();
 		for leaf in self.leaves() {
@@ -1097,7 +1091,7 @@ macro_rules! make_iterator {
 	($name: ident, $t: tt) => {
 		#[pyclass(frozen, module = "aspartik.b3.tree")]
 		struct $name {
-			current: AtomicUsize,
+			current: MonotonicUsize,
 			end: usize,
 		}
 
@@ -1117,11 +1111,11 @@ macro_rules! make_iterator {
 			}
 
 			fn __next__(&self) -> Option<$t> {
-				let out = self.current.load(Ordering::Relaxed);
+				let out = self.current.load();
 				if out == self.end {
 					return None;
 				}
-				self.current.fetch_add(1, Ordering::Relaxed);
+				self.current.add(1);
 				Some($t(out))
 			}
 		}
@@ -1131,9 +1125,9 @@ macro_rules! make_iterator {
 make_iterator!(InternalsIter, Internal);
 make_iterator!(LeavesIter, Leaf);
 
-#[pyclass(module = "aspartik.b3.tree")]
+#[pyclass(frozen, module = "aspartik.b3.tree")]
 struct NodesIter {
-	current: usize,
+	current: MonotonicUsize,
 	end: usize,
 	num_leaves: usize,
 }
@@ -1145,18 +1139,18 @@ impl NodesIter {
 	}
 
 	fn __next__<'py>(
-		&mut self,
+		&self,
 		py: Python<'py>,
 	) -> Result<Option<Bound<'py, PyAny>>> {
-		if self.current == self.end {
+		let current = self.current.load();
+		if current == self.end {
 			return Ok(None);
 		}
+		let out = Node(current);
 
-		let out = Node(self.current);
+		self.current.add(1);
 
-		self.current += 1;
-
-		Ok(Some(out.into_pyobject(py, self.num_leaves)?))
+		out.into_pyobject(py, self.num_leaves).map(Some)
 	}
 }
 
@@ -1401,7 +1395,7 @@ impl_pyparameter_common!(PyTree, Tree, {
 	/// All of the `Leaf` nodes go before `Internal` ones.
 	fn nodes(&self) -> NodesIter {
 		NodesIter {
-			current: 0,
+			current: 0.into(),
 			end: self.num_nodes(),
 			num_leaves: self.num_leaves(),
 		}
