@@ -4,7 +4,9 @@
 //!
 //! [m]: https://llvm.org/docs/Atomics.html#monotonic
 
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::{
+	AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering,
+};
 
 /// An atomic `bool` on which all operations are relaxed
 #[derive(Debug, Default)]
@@ -78,5 +80,33 @@ impl MonotonicF64 {
 
 	pub fn store(&self, value: f64) {
 		self.0.store(value.to_bits(), Ordering::Relaxed);
+	}
+}
+
+/// An atomic `usize` on which all operations are relaxed
+#[derive(Debug, Default)]
+pub struct MonotonicUsize(AtomicUsize);
+
+impl From<usize> for MonotonicUsize {
+	fn from(value: usize) -> Self {
+		Self(value.into())
+	}
+}
+
+impl MonotonicUsize {
+	pub fn new(value: usize) -> Self {
+		value.into()
+	}
+
+	pub fn load(&self) -> usize {
+		self.0.load(Ordering::Relaxed)
+	}
+
+	pub fn store(&self, value: usize) {
+		self.0.store(value, Ordering::Relaxed)
+	}
+
+	pub fn add(&self, value: usize) {
+		self.0.fetch_add(value, Ordering::Relaxed);
 	}
 }
