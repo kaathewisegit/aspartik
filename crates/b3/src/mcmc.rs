@@ -277,9 +277,7 @@ impl Mcmc {
 
 			self_.finalize_step(py, operator_index, result)?;
 
-			if current_step.is_multiple_of(10_000) {
-				self_.scheduler.tune(py, current_step)?;
-			}
+			self_.scheduler.tune(py, current_step)?;
 
 			Self::call_callbacks(
 				this.clone_ref(py),

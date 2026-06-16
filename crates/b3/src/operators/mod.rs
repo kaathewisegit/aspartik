@@ -160,11 +160,16 @@ impl PyOperator {
 		Ok(())
 	}
 
-	pub fn tune(&self, py: Python) -> Result<()> {
+	/// Tune the operator
+	///
+	/// `r` is the tuning rate which deterimenes how fast tuning changes.
+	pub fn tune(&self, py: Python, r: f64) -> Result<()> {
+		const TARGET_ACCEPTANCE: f64 = 0.234;
+
 		let accepts = f64::from(self.accepts.load());
 		let rejects = f64::from(self.rejects.load());
-		let ratio = accepts / (accepts + rejects);
-		if ratio.is_nan() {
+		let acceptance = accepts / (accepts + rejects);
+		if acceptance.is_nan() {
 			// accepts + rejects = 0 on the firts call, bail
 			return Ok(());
 		}
@@ -173,15 +178,12 @@ impl PyOperator {
 			return Ok(());
 		};
 
-		// This is a somewhat odd optimization routine because it
-		// doesn't decrease step size over time.  The idea is very
-		// simple: if ratio > 0.234 we decrease the tuning parameter,
+		// If `acceptance > target` we decrease the tuning parameter,
 		// making the operator more bold, which should decrease
 		// acceptance.  And visa-versa.
-		//
-		// The rate of change (0.05) is tied to how often we tune.
-		let new_tuning =
-			(old_tuning - 0.05 * (ratio - 0.234)).clamp(0.01, 0.99);
+		let new_tuning = (old_tuning
+			+ r * (TARGET_ACCEPTANCE - acceptance))
+			.clamp(0.01, 0.99);
 
 		self.set_tuning(py, new_tuning)?;
 
@@ -450,12 +452,21 @@ impl Scheduler {
 	}
 
 	pub fn tune(&self, py: Python, step: usize) -> Result<()> {
-		if step > self.optimization_cutoff {
+		if !step.is_multiple_of(100_000)
+			|| step > self.optimization_cutoff
+		{
 			return Ok(());
 		}
 
+		let step_ratio = step as f64 / self.optimization_cutoff as f64;
+		let rate = if step_ratio < 0.9 {
+			0.5
+		} else {
+			5.0 * (1.0 - step_ratio)
+		};
+
 		for operator in &self.operators {
-			operator.tune(py)?;
+			operator.tune(py, rate)?;
 		}
 		Ok(())
 	}

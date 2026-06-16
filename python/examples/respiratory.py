@@ -8,7 +8,7 @@ tutorial:
 from datetime import datetime
 
 from aspartik.b3 import MCMC, Calculator, Clock
-from aspartik.b3.callbacks import PrintLogger, Timer, TraceWriter
+from aspartik.b3.callbacks import OperatorStats, PrintLogger, Timer, TraceWriter
 from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import (
     FixedHeightSPR,
@@ -115,10 +115,12 @@ loggers = [
         overwrite=True,
         zstd=True,
     ),
+    OperatorStats("target/respiratory.opstats", every=100_000),
     Timer(),
 ]
 
 mcmc = MCMC(
+    optimization_cutoff=10_000_000,
     priors=priors,
     operators=operators,
     likelihood=likelihood,
