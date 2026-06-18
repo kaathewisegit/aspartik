@@ -198,6 +198,10 @@ class SymmetricDirichlet(Prior):
     sum: float
 
 @dataclass
+class SymmetricMultinomial(Prior):
+    vec: ClassVector
+
+@dataclass
 class ConstantPopulation(Prior):
     tree: Tree
     population: Real

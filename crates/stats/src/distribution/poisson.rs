@@ -1,11 +1,11 @@
-use computare_special::gamma::{
-	regularized_lower_gamma, regularized_upper_gamma,
+use computare_special::{
+	factorial::ln_factorial,
+	gamma::{regularized_lower_gamma, regularized_upper_gamma},
 };
 use rand::RngExt;
 
 use core::f64::consts;
 
-use super::ln_factorial;
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::*,

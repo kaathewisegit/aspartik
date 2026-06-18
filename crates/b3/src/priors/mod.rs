@@ -9,12 +9,14 @@ use util::{
 mod coalescent;
 mod dirichlet;
 mod monophyly;
+mod multinomial;
 mod skyline;
 mod yule;
 
 pub use coalescent::{ConstantPopulation, ExponentialGrowth};
 pub use dirichlet::SymmetricDirichlet;
 pub use monophyly::Monophyly;
+pub use multinomial::SymmetricMultinomial;
 pub use skyline::BayesianSkyline;
 pub use yule::Yule;
 

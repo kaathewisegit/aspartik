@@ -1,7 +1,8 @@
-use computare_special::beta::regularized_incomplete_beta;
+use computare_special::{
+	beta::regularized_incomplete_beta, factorial::ln_binomial,
+};
 use rand::RngExt;
 
-use super::ln_binomial;
 use crate::{
 	distribution::{Discrete, DiscreteCDF},
 	statistics::{Distribution, Mode},
