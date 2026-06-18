@@ -1,21 +1,21 @@
 import type { PropsWithChildren } from "@kitajs/html"
+import { generateCss } from "../utils/css.ts"
 
-export default function (
-	props: PropsWithChildren<{ title?: string; class?: string }>,
+export function Headers(
+	props: PropsWithChildren<{
+		body: string
+		css?: string[]
+		title?: string
+	}>,
 ) {
-	const title = props.title ? `${props.title} | Aspartik` : "Aspartik"
+	const css = props.css ?? []
+	css.push("src/style.css")
 	return (
 		<>
-			{"<!DOCTYPE html>"}
-			<html lang="en">
-				<head>
-					<meta charset="UTF-8" />
-					<meta name="viewport" content="width=device-width" />
-					<link href="/style.css" rel="stylesheet" />
-					<title>{title}</title>
-				</head>
-				<body class={props.class}>{props.children}</body>
-			</html>
+			<meta charset="UTF-8" />
+			<meta name="viewport" content="width=device-width" />
+			<style>{generateCss(props.body, css)}</style>
+			<title>{props.title}</title>
 		</>
 	)
 }

@@ -1,11 +1,9 @@
-import Html from "../../components/html.tsx"
-
 const REDIRECT = `window.location.href = "/reference/aspartik"`
 
-export default function () {
-	return (
-		<Html title="Reference">
-			<script>{REDIRECT}</script>
-		</Html>
-	)
+export function Head() {
+	return <script>{REDIRECT}</script>
+}
+
+export function Body() {
+	return ""
 }

@@ -1,8 +1,12 @@
-import Html from "../components/html.tsx"
+import { Headers } from "../components/html.tsx"
 
-export default function () {
+export function Head(_: undefined, body: string) {
+	return <Headers body={body} title="Home" />
+}
+
+export function Body() {
 	return (
-		<Html title="Home">
+		<div>
 			<section class="flex min-h-screen min-w-screen flex-col items-center justify-center">
 				<h1 class="mx-auto max-w-fit font-medium text-5xl lg:text-9xl">
 					Aspartik b3
@@ -18,6 +22,6 @@ export default function () {
 					<a href="https://github.com/kaathewisegit/aspartik/">Source code</a>
 				</nav>
 			</section>
-		</Html>
+		</div>
 	)
 }

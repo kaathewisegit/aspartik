@@ -1,11 +1,12 @@
-import Html from "../components/html.tsx"
+import { Headers } from "../components/html.tsx"
 
-export default function () {
+export function Head(_: undefined, body: string) {
+	return <Headers body={body} title="Documentation" />
+}
+
+export function Body() {
 	return (
-		<Html
-			title="Documentation"
-			class="flex min-h-screen items-center justify-center"
-		>
+		<div class="flex min-h-screen items-center justify-center">
 			<div class="grid w-full max-w-5xl grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
 				<Container
 					title="Tutorials"
@@ -28,7 +29,7 @@ export default function () {
 					desc="Description of the Python API"
 				/>
 			</div>
-		</Html>
+		</div>
 	)
 }
 

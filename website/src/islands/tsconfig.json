@@ -13,7 +13,6 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 
-		"strict": true,
-		"types": ["vite/client"]
+		"strict": true
 	}
 }

@@ -1,12 +1,17 @@
 import { readFile } from "node:fs/promises"
-import tailwindcss from "@tailwindcss/postcss"
-import postcss from "postcss"
+import { Generator } from "@kaathewise/nuclearcss"
+import WIND4 from "@kaathewise/nuclearcss/wind4"
 
-const processor: postcss.Processor = postcss([tailwindcss()])
+export async function generateCss(
+	body: string,
+	cssPaths: string[],
+): Promise<string> {
+	const generator = Generator.from_options({ presets: [WIND4] })
+	generator.addContent(body)
+	for (const cssPath of cssPaths) {
+		const css = await readFile(cssPath, "utf8")
+		generator.addCSS(css)
+	}
 
-export async function convertCSS(path: string): Promise<string> {
-	const tailwindSrc = await readFile(path, "utf8")
-	const result = await processor.process(tailwindSrc, { from: path })
-
-	return result.css
+	return generator.generate()
 }

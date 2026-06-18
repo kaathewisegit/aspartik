@@ -23,5 +23,5 @@
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false
 	},
-	"exclude": ["islands/"]
+	"exclude": ["src/islands/"]
 }

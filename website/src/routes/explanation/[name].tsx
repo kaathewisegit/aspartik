@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises"
 
-import Html from "../../components/html.tsx"
+import { Headers } from "../../components/html.tsx"
 import Markdown from "../../components/markdown.tsx"
 
 export async function getStaticParams() {
@@ -15,15 +15,15 @@ export async function getStaticParams() {
 	return out
 }
 
-export default async function (props: { name: string }) {
+export function Head(_: undefined, body: string) {
+	return <Headers body={body} title="Explanation" />
+}
+
+export async function Body(props: { name: string }) {
 	const source = await fs.readFile(
 		`pages/explanation/${props.name}.dj`,
 		"utf-8",
 	)
 
-	return (
-		<Html title="Explanations">
-			<Markdown raw={source} class="prose mx-auto max-w-200" />
-		</Html>
-	)
+	return <Markdown raw={source} class="prose mx-auto max-w-200" />
 }

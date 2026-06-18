@@ -1,4 +1,4 @@
-import Html from "../../components/html.tsx"
+import { Headers } from "../../components/html.tsx"
 import Markdown from "../../components/markdown.tsx"
 import type {
 	ClassType,
@@ -8,8 +8,19 @@ import type {
 	VariableType,
 } from "../../content/reference.ts"
 import modules from "../../content/reference.ts"
-import { convertCSS } from "../../utils/css.ts"
 import highlight from "../../utils/highlight.ts"
+
+function getModule(slug: string[]) {
+	if (slug.at(-1) === "index") {
+		slug = slug.slice(0, -1)
+	}
+	const moduleName = slug.join(".")
+	const module = modules.find((mod) => mod.fullname === moduleName)
+	if (!module) {
+		throw new Error("No such module ")
+	}
+	return module
+}
 
 export async function getStaticParams() {
 	const out = []
@@ -23,28 +34,28 @@ export async function getStaticParams() {
 	return out
 }
 
-export default function (props: { slug: string[] }) {
-	let slug = props.slug
-	if (slug.at(-1) === "index") {
-		slug = slug.slice(0, -1)
-	}
-	const moduleName = slug.join(".")
-	const module = modules.find((mod) => mod.fullname === moduleName)
-	if (!module) {
-		throw new Error("No such module")
-	}
+export function Head(params: { slug: string[] }, body: string) {
+	const module = getModule(params.slug)
+	return (
+		<Headers
+			body={body}
+			css={["src/pdoc.css"]}
+			title={`${module.fullname} reference`}
+		/>
+	)
+}
 
-	const css = convertCSS("src/pdoc.css")
+export function Body(props: { slug: string[] }) {
+	const module = getModule(props.slug)
 
 	return (
-		<Html title={`${module.fullname} reference`}>
-			<style>{css}</style>
+		<div>
 			<Topbar />
 			<Sidebar {...module} />
-			<Body {...module} />
+			<Content {...module} />
 
 			<script type="module">{CHECKBOX_SCRIPT}</script>
-		</Html>
+		</div>
 	)
 }
 
@@ -147,7 +158,7 @@ export function RefList<T extends { name: string }>(props: {
 	)
 }
 
-export async function Body(props: ModuleType): Promise<string> {
+export async function Content(props: ModuleType): Promise<string> {
 	return (
 		<article id={props.name} class="mx-auto max-w-200 p-4">
 			<ModuleHeading {...props} />
