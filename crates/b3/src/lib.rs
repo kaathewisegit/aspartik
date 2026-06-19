@@ -39,8 +39,7 @@ pub mod pymodule {
 		},
 		priors::{
 			BayesianSkyline, ConstantPopulation, ExponentialGrowth,
-			Monophyly, SymmetricDirichlet, SymmetricMultinomial,
-			Yule,
+			Monophyly, SymmetricDirichlet, Yule,
 		},
 		substitution::{GTR, HKY, JC, K80},
 	};

@@ -17,7 +17,6 @@ from aspartik.b3.priors import (
     ConstantPopulation,
     Distribution,
     SymmetricDirichlet,
-    SymmetricMultinomial,
 )
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
@@ -47,7 +46,6 @@ priors = [
     *(Distribution(clock_rate, Laplace(0, 0.5)) for clock_rate in clock_rates),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     ConstantPopulation(tree, population_size),
-    SymmetricMultinomial(categories),
 ]
 
 
