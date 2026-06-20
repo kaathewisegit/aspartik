@@ -49,15 +49,18 @@ impl RelaxedClock {
 		let num_categories =
 			rate_categories.get().inner().num_classes() as usize;
 		let mut rates = vec![0.0; num_categories];
+		let step = 1.0 / (num_categories as f64);
+		let mut quantile = step / 2.0;
 		#[expect(clippy::needless_range_loop)]
 		for i in 0..num_categories {
 			let rate = py_call_method!(
 				py,
 				distribution,
 				"inverse_cdf",
-				(i + 1) as f64 / (num_categories + 1) as f64,
+				quantile,
 			)?;
 			rates[i] = rate.extract::<f64>(py)?;
+			quantile += step;
 		}
 		Ok(Self {
 			rates,
