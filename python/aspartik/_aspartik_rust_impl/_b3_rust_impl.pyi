@@ -281,6 +281,8 @@ class Clock:
     def Relaxed(
         _cls, rate_categories: ClassVector, distribution: ContinuousCDF
     ) -> Clock: ...
+    @property
+    def rates(self) -> list[float]: ...
 
 class TraceWriter(Callback):
     def __init__(

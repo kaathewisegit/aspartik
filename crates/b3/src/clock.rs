@@ -38,8 +38,6 @@ impl StrictClock {
 pub struct RelaxedClock {
 	rates: Vec<f64>,
 	rate_categories: Py<PyClassVector>,
-	#[expect(unused)]
-	distribution: Py<PyAny>,
 }
 
 impl RelaxedClock {
@@ -64,7 +62,6 @@ impl RelaxedClock {
 		Ok(Self {
 			rates,
 			rate_categories,
-			distribution,
 		})
 	}
 
@@ -157,6 +154,18 @@ impl PyClock {
 		Ok(Self {
 			inner: Mutex::new(clock),
 		})
+	}
+
+	/// All of the clock rates represented by this clock
+	///
+	/// This is a list for the relaxed clock and a unit list `[rate]` for a
+	/// strict clock.
+	#[getter]
+	fn rates(&self) -> Vec<f64> {
+		match &*self.inner() {
+			Clock::Strict(c) => vec![c.rate.get().inner().value()],
+			Clock::Relaxed(c) => c.rates.clone(),
+		}
 	}
 }
 
