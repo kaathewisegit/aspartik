@@ -147,9 +147,9 @@ checksum = "8ae3f5d315924270530207e2a68396c3cc547f6dca3fbdca317cfb1a51edb593"
 
 [[package]]
 name = "cc"
-version = "1.2.64"
+version = "1.2.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dad887fd958be91b5098c0248def011f4523ab786cd411be668777e55063501f"
+checksum = "e228eec9be7c17ccb640b59b36a5cd805ea2a564a4c5e162c2f659fea30d3b96"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -166,12 +166,12 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 [[package]]
 name = "computare-core"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/kaathewisegit/computare#ada24b9971b31d4f7be25b5246e0caa9a4158b29"
+source = "git+https://github.com/kaathewisegit/computare#2669aeab9c0b4f887a0de467bf524904265b7c22"
 
 [[package]]
 name = "computare-special"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/kaathewisegit/computare#ada24b9971b31d4f7be25b5246e0caa9a4158b29"
+source = "git+https://github.com/kaathewisegit/computare#2669aeab9c0b4f887a0de467bf524904265b7c22"
 dependencies = [
  "computare-core",
  "libm",
@@ -194,9 +194,9 @@ dependencies = [
 
 [[package]]
 name = "cudarc"
-version = "0.19.7"
+version = "0.19.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cea5f10a99e025c1b44ae2354c2d8326b25ddbd0baf76bde8e55cfd4018a2cc"
+checksum = "42310153e06cf4cd532901f7096beb27504d681736a29ee90728ae4e2d93b2a8"
 dependencies = [
  "libloading",
 ]
