@@ -20,12 +20,18 @@ jobs:
           - runner: ubuntu-22.04
             target: aarch64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+
       - uses: dtolnay/rust-toolchain@stable
-      - uses: astral-sh/setup-uv@v6
+
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: false
+
       - name: Pull dependencies
         run: |
           uv sync --no-install-project
@@ -48,12 +54,18 @@ jobs:
           - runner: windows-latest
             target: x64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+
       - uses: dtolnay/rust-toolchain@stable
-      - uses: astral-sh/setup-uv@v6
+
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: false
+
       - name: Pull dependencies
         run: |
           uv sync --no-install-project
@@ -76,12 +88,18 @@ jobs:
           - runner: macos-14
             target: aarch64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+
       - uses: dtolnay/rust-toolchain@stable
-      - uses: astral-sh/setup-uv@v6
+
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: false
+
       - name: Pull dependencies
         run: |
           uv sync --no-install-project
@@ -99,12 +117,18 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+
       - uses: dtolnay/rust-toolchain@stable
-      - uses: astral-sh/setup-uv@v6
+
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: false
+
       - name: Pull dependencies
         run: |
           uv sync --no-install-project
