@@ -38,7 +38,7 @@ libm = "0.2.16"
 num-traits = "0.2.19"
 parking_lot = "0.12.5"
 peg = "0.8.6"
-picoarrow = { git = "https://github.com/kaathewisegit/picoarrow" }
+picoarrow = "0.1.0"
 pyo3 = "0.29.0"
 rand = { version = "0.10.1", default-features = false }
 rand_pcg = "0.10.2"

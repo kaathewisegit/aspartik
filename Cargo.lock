@@ -34,9 +34,9 @@ checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
 
 [[package]]
 name = "arrayvec"
-version = "0.7.6"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
+checksum = "f02882884d3e1bc524fb12c79f107f6ad0e1cfd498c536ffb494301740995dfe"
 
 [[package]]
 name = "aspartik"
@@ -403,7 +403,8 @@ checksum = "7011d97b484a5ebdc4b1fdb3b12d5e4bbbea56e9d22b688f2e79e04b65a7d8a6"
 [[package]]
 name = "picoarrow"
 version = "0.1.0"
-source = "git+https://github.com/kaathewisegit/picoarrow#69636cb92d670a8e5855aa3f5dad901b1becb1d1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6c5f44faefba6063e9afabb774e10c8dc495000d95c290e4eb85e4a82bdb50c"
 dependencies = [
  "bytemuck",
  "flatbuffers",
