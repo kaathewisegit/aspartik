@@ -2,8 +2,8 @@ from ._common import raise_import
 
 try:
     import polars as pl
-except ImportError:
-    raise_import("polars")
+except ModuleNotFoundError as e:
+    raise_import(e)
 
 from typing import Literal
 

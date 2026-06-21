@@ -19,6 +19,7 @@ cli = ["cliclass~=0.1.0a1"]
 analysis = [
 	"polars~=1.41",
 	"matplotlib~=3.10",
+	"numpy~=2.4.6",
 ]
 
 [dependency-groups]

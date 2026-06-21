@@ -13,6 +13,7 @@ source = { editable = "." }
 [package.optional-dependencies]
 analysis = [
     { name = "matplotlib" },
+    { name = "numpy" },
     { name = "polars" },
 ]
 cli = [
@@ -37,6 +38,7 @@ dev = [
 requires-dist = [
     { name = "cliclass", marker = "extra == 'cli'", specifier = "~=0.1.0a1" },
     { name = "matplotlib", marker = "extra == 'analysis'", specifier = "~=3.10" },
+    { name = "numpy", marker = "extra == 'analysis'", specifier = "~=2.4.6" },
     { name = "polars", marker = "extra == 'analysis'", specifier = "~=1.41" },
 ]
 provides-extras = ["analysis", "cli"]

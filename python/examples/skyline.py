@@ -1,3 +1,9 @@
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import polars as pl
+
 from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.callbacks import PrintLogger, StateCheckpoint, TraceWriter
 from aspartik.b3.likelihoods import DNALikelihood
@@ -19,6 +25,7 @@ from aspartik.b3.priors import (
 )
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
+from aspartik.b3.utils.skyline import plot_skyline
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Normal, Uniform
@@ -62,7 +69,7 @@ operators = [
 likelihood = DNALikelihood(
     msa=msa,
     substitution=GTR(frequencies, rates),
-    clock=Clock.Strict(Real(1.0)),
+    clock=Clock.Strict(Real(7.9e-4)),
     tree=tree,
     calculator=Calculator.CPU(),
 )
@@ -96,4 +103,17 @@ mcmc = MCMC(
 
 
 if __name__ == "__main__":
-    run_from_cmdline(mcmc)
+    run_from_cmdline(mcmc, default_length=200_000)
+
+    offset = mcmc.current_step // (10_000 * 10)
+    sequence_names = msa.sequence_names()
+    df = pl.read_ipc("target/skyline.trace", memory_map=False).slice(offset)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_yscale("log")
+    ax.set_xlabel("Years ago")
+    ax.set_ylabel("Population size")
+    ax.invert_xaxis()
+    plot_skyline(fig, ax, df, "population_sizes", sequence_names, mode="hpd")
+    fig.tight_layout()
+    fig.savefig("target/skyline.png", dpi=300, bbox_inches="tight")
