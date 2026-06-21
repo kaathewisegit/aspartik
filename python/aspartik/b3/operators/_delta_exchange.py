@@ -67,7 +67,7 @@ class DeltaExchange(Operator, TunableOperator):
 
 
 @dataclass(slots=True)
-class DeltaExchangeInt(Operator, TunableOperator):
+class DeltaExchangeInt(Operator):
     """Scales a multidimensional integer parameter without changing its sum
 
     This operator is analogous to BEAST's `DeltaExchangeOperator` with
