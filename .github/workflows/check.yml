@@ -41,8 +41,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          uv sync
-          uv pip install gmpy2
+          uv sync --extra analysis
           uv run -m python.toolkit build
 
       - name: Setup website dependencies
