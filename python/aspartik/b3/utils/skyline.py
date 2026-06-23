@@ -55,7 +55,7 @@ def plot_skyline(
             ax.step(x, y, where="post", color="steelblue", alpha=0.1)
     else:
         max_height = heights.explode().max()
-        assert max_height is float
+        assert isinstance(max_height, float)
         grid = np.linspace(0.0, max_height, num_points)
 
         evals = np.array(
@@ -71,11 +71,12 @@ def plot_skyline(
         idx = np.argmin(sorted_evals[ci_range:] - sorted_evals[:-ci_range], axis=0)
         cols = np.arange(num_points)
 
+        ax.plot(grid, np.median(evals, axis=0), color="steelblue", label="median")
         ax.fill_between(
             grid,
             sorted_evals[idx, cols],
             sorted_evals[idx + ci_range, cols],
             color="steelblue",
             alpha=0.2,
+            label=f"{cred_mass:.0%} HPD",
         )
-        ax.plot(grid, np.median(evals, axis=0), color="steelblue")

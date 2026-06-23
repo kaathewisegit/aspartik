@@ -115,5 +115,6 @@ if __name__ == "__main__":
     ax.set_ylabel("Population size")
     ax.invert_xaxis()
     plot_skyline(fig, ax, df, "population_sizes", sequence_names, mode="hpd")
+    ax.legend()
     fig.tight_layout()
     fig.savefig("target/skyline.png", dpi=300, bbox_inches="tight")
