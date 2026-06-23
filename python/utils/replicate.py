@@ -2,7 +2,7 @@ import polars as pl
 
 from aspartik.b3 import Prior
 from aspartik.b3.likelihoods import Likelihood
-from aspartik.b3.parameters import Parameter, Real, RealVector, Tree
+from aspartik.b3.parameters import IntVector, Parameter, Real, RealVector, Tree
 from aspartik.data.newick import Tree as NewickTree
 
 
@@ -22,7 +22,6 @@ def replicate_b3(
                 case Real():
                     param.set(row[name])
                 case RealVector():
-                    print(row[name])
                     for i, value in enumerate(row[name]):
                         param[i] = value
 
@@ -49,14 +48,23 @@ def replicate_beast1(
                 case RealVector():
                     for i in range(len(param)):
                         param[i] = float(row[f"{name}{i}"])
+                case IntVector():
+                    for i in range(len(param)):
+                        param[i] = int(row[f"{name}{i}"])
+                case _:
+                    raise TypeError(
+                        f"Parameter {param.__class__.__name__} isn't supported"
+                    )
 
         _check(row, priors, likelihoods)
 
 
 def _check(row, priors: dict[str, Prior] = {}, likelihoods: list[Likelihood] = []):
     for name, prior in priors.items():
-        diff = abs(prior.probability() - float(row[name]))
-        assert diff < 1e-5
+        expected = float(row[name])
+        got = prior.probability()
+        diff = abs(expected - got)
+        assert diff < 1e-5, f"got {got}, expected {expected}, prior: {prior}"
 
     for likelihood in likelihoods:
         expected = float(row["likelihood"])

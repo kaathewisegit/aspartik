@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
@@ -63,7 +61,7 @@ impl BayesianSkyline {
 		let mut group_index = 0;
 		let mut sub_index = 0;
 
-		let mut pop_size = pop_sizes[0];
+		let mut pop_size;
 
 		let mut out = 0.0; // log-likelihood
 		let mut last_height = intervals.state()[0].1;
@@ -71,14 +69,15 @@ impl BayesianSkyline {
 
 		// duplicated from coalescent::calculate
 		for (node, height) in intervals.state().iter().skip(1) {
+			pop_size = pop_sizes[group_index];
 			if tree.is_internal(*node) {
 				sub_index += 1;
-				if sub_index > group_sizes[group_index] as usize
+				if sub_index
+					>= group_sizes[group_index] as usize
 				{
 					group_index += 1;
 					sub_index = 0;
 				}
-				pop_size = pop_sizes[group_index];
 			}
 
 			let binomial =

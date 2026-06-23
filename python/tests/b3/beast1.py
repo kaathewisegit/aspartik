@@ -5,8 +5,8 @@ from utils.replicate import replicate_beast1
 
 from aspartik.b3 import Calculator, Clock
 from aspartik.b3.likelihoods import DNALikelihood, GammaLikelihood
-from aspartik.b3.parameters import Real, RealVector, Tree
-from aspartik.b3.priors import ConstantPopulation, ExponentialGrowth
+from aspartik.b3.parameters import IntVector, Real, RealVector, Tree
+from aspartik.b3.priors import BayesianSkyline, ConstantPopulation, ExponentialGrowth
 from aspartik.b3.substitutions import GTR, HKY, JC
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
@@ -197,5 +197,38 @@ def test_gamma_high(rng):
             "constant.popSize": population_size,
         },
         priors={"coalescent": ConstantPopulation(tree, population_size)},
+        likelihoods=[likelihood],
+    )
+
+
+def test_skyline(rng):
+    clock_rate = Real(1.0)
+    rates = RealVector.repeat(0.25, 6)
+    frequencies = RealVector.repeat(0.25, 4)
+    population_sizes = RealVector.repeat(1.0, 4)
+    group_sizes = IntVector.repeat(0, 4)
+
+    msa = read_msa_from_fasta("data/alignments/hcv.fasta")
+    tree = Tree(msa.sequence_names(), rng)
+    likelihood = DNALikelihood(
+        msa=msa,
+        substitution=GTR(frequencies, rates),
+        clock=Clock.Strict(clock_rate),
+        tree=tree,
+        calculator=Calculator.CPU(),
+    )
+
+    replicate_beast1(
+        "data/runs/skyline-coalescent/beast1.trace",
+        "data/runs/skyline-coalescent/beast1.trees",
+        parameters={
+            "tree": tree,
+            "clock.rate": clock_rate,
+            "gtr.rates.": rates,
+            "frequencies": frequencies,
+            "skyline.popSize": population_sizes,
+            "skyline.groupSize": group_sizes,
+        },
+        priors={"skyline": BayesianSkyline(tree, population_sizes, group_sizes)},
         likelihoods=[likelihood],
     )
