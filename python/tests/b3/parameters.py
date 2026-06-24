@@ -1,6 +1,8 @@
+import pytest
+
 from math import inf
 
-from aspartik.b3.parameters import IntVector, Real, RealVector
+from aspartik.b3.parameters import ClassVector, IntVector, Real, RealVector
 
 
 def test_real_comparisons():
@@ -81,3 +83,14 @@ def test_int_vector_bound():
     assert not vec.is_bound(1, 3)
     assert not vec.is_bound(2, 4)
     assert not vec.is_bound(1, 2)
+
+
+def test_classvec_constraints():
+    with pytest.raises(match="at least 2 classes"):
+        ClassVector(0, 1)
+        ClassVector(1, 100)
+
+    with pytest.raises(match="non-empty"):
+        ClassVector(0, 0)
+        ClassVector(1, 0)
+        ClassVector(2, 0)

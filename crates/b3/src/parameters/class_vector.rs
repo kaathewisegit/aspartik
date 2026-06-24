@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, ensure};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
@@ -17,11 +17,16 @@ pub struct ClassVector {
 
 #[expect(clippy::len_without_is_empty)]
 impl ClassVector {
-	pub fn new(num_classes: u32, len: usize) -> Self {
-		Self {
+	pub fn new(num_classes: u32, len: usize) -> Result<Self> {
+		ensure!(len > 0, "`ClassVector` must be non-empty");
+		ensure!(
+			num_classes > 1,
+			"`ClassVector` must have at least 2 classes"
+		);
+		Ok(Self {
 			num_classes,
 			classes: SkBuf::repeat(0, len),
-		}
+		})
 	}
 
 	pub fn len(&self) -> usize {
@@ -95,10 +100,10 @@ pub struct PyClassVector {
 
 impl_pyparameter_common!(PyClassVector, ClassVector, {
 	#[new]
-	pub fn new(num_classes: u32, len: usize) -> Self {
-		Self {
-			inner: Mutex::new(ClassVector::new(num_classes, len)),
-		}
+	pub fn new(num_classes: u32, len: usize) -> Result<Self> {
+		Ok(Self {
+			inner: Mutex::new(ClassVector::new(num_classes, len)?),
+		})
 	}
 
 	pub fn into_list(&self) -> Vec<usize> {
