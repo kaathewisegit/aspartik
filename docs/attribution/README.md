@@ -180,12 +180,6 @@ Raw bindings to platform-specific C libraries.
 Used by `cudarc` to dynamically load CUDA libraries.
 
 
-### [`libm`](./libm-license)
-
-Floating point emulation library, used by `num-traits` for `no_std`
-targets.
-
-
 ### [`lock_api`](./parking_lot-license)
 
 A library for implementing Rust-style `Mutex` using `RawMutex` types.

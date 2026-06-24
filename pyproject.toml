@@ -17,21 +17,21 @@ keywords = ["bioinformatics"]
 [project.optional-dependencies]
 cli = ["cliclass~=0.1.0a1"]
 analysis = [
-	"polars~=1.41",
-	"matplotlib~=3.10",
-	"numpy~=2.4.6",
+	"polars~=1.42",
+	"matplotlib~=3.11",
+	"numpy~=2.5",
 ]
 
 [dependency-groups]
 dev = [
-	"maturin[patchelf]~=1.13 ; sys_platform == 'linux'",
-	"maturin~=1.13 ; sys_platform != 'linux'",
+	"maturin[patchelf]~=1.14 ; sys_platform == 'linux'",
+	"maturin~=1.14 ; sys_platform != 'linux'",
 	"mpmath~=1.4",
-	"gmpy2~=2.3.0",
-	"polars~=1.41",
+	"gmpy2~=2.3",
+	"polars~=1.42",
 	"pdoc~=16.0",
-	"ty~=0.0.44",
-	"pytest~=9.0",
+	"ty~=0.0.53",
+	"pytest~=9.1",
 	"ruff~=0.15",
 	"cliclass~=0.1.0a1", # duplicated from `cli`
 ]
