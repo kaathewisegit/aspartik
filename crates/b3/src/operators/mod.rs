@@ -453,7 +453,7 @@ impl Scheduler {
 
 	pub fn tune(&self, py: Python, step: usize) -> Result<()> {
 		if !step.is_multiple_of(100_000)
-			|| step > self.optimization_cutoff
+			|| step >= self.optimization_cutoff
 		{
 			return Ok(());
 		}
