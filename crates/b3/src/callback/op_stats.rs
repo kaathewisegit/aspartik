@@ -9,6 +9,7 @@ use pyo3::prelude::*;
 
 use std::{fs::OpenOptions, io::BufWriter};
 
+use super::trace_writer::metadata;
 use crate::mcmc::Mcmc;
 
 const RESULT_FIELDS: [&str; 4] =
@@ -105,7 +106,8 @@ impl OperatorStats {
 			);
 		}
 
-		let schema = Schema::from_fields(fields);
+		let mut schema = Schema::from_fields(fields);
+		schema.custom_metadata = metadata();
 		let mut writer =
 			FileWriter::new(writer, schema, Compression::None)?;
 

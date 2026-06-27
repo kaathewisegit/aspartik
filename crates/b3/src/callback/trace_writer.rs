@@ -11,6 +11,7 @@ use picoarrow::{
 use pyo3::{prelude::*, types::PyDict};
 
 use std::{
+	env::consts::{ARCH, OS},
 	fs::{File, OpenOptions},
 	io::BufWriter,
 	path::PathBuf,
@@ -24,6 +25,16 @@ use crate::{
 	},
 	priors::PyPrior,
 };
+use util::seconds_since_unix;
+
+pub fn metadata() -> Vec<(String, String)> {
+	vec![
+		("aspartik".to_owned(), env!("CARGO_PKG_VERSION").to_string()),
+		("os".to_owned(), OS.to_owned()),
+		("arch".to_owned(), ARCH.to_owned()),
+		("time".to_owned(), format!("{}", seconds_since_unix())),
+	]
+}
 
 enum LoggedArray {
 	Real {
@@ -274,7 +285,8 @@ impl TraceWriter {
 		];
 		items_to_fields(&items_v, &mut fields);
 
-		let schema = Schema::from_fields(fields);
+		let mut schema = Schema::from_fields(fields);
+		schema.custom_metadata = metadata();
 		let writer = FileWriter::new(writer, schema, compression)?;
 
 		Ok(Self {
