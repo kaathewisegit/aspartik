@@ -70,7 +70,7 @@ impl RelaxedClock {
 
 	fn update(&mut self, tree: &mut Tree) -> Result<()> {
 		let cats = self.rate_categories.get().inner();
-		for i in 0..tree.num_edges() {
+		for i in 0..tree.num_nodes() {
 			if cats.is_changed_at(i) {
 				tree.mark_edge_updated(i);
 			}
