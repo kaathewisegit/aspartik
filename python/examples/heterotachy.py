@@ -36,6 +36,7 @@ frequencies = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
 population_size = Real(1.0)
 clock_rates = [Real(1) for _ in range(N)]
 categories = ClassVector(N, 845)
+clock_categories = [ClassVector(10, tree.num_nodes) for _ in range(N)]
 
 priors = [
     *(Bound(freqs) for freqs in frequencies),
@@ -54,7 +55,10 @@ likelihood = HeteroLikelihood(
     tree=tree,
     categories=categories,
     substitutions=[GTR(rate, freqs) for rate, freqs in zip(frequencies, rates)],
-    clocks=[Clock.Strict(clock_rate) for clock_rate in clock_rates],
+    clocks=[
+        Clock.Relaxed(clock_cats, Gamma(1 / 3, 0.001))
+        for clock_cats in clock_categories
+    ],
     calculator=Calculator.CPU(),
 )
 
@@ -65,6 +69,7 @@ operators = [
         ScaleReal(clock_rate, Uniform(0, 1), rng, weight=3)
         for clock_rate in clock_rates
     ),
+    *(ClassvecFlip(clock_cats, rng, weight=50) for clock_cats in clock_categories),
     RootSlide(tree, Uniform(0, 1), rng, weight=3),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
     FixedHeightSPR(tree, rng, weight=4 * N),
@@ -77,8 +82,8 @@ loggers = [
     TraceWriter(
         {
             **{
-                f"clock_rate:{i}": clock_rate
-                for i, clock_rate in enumerate(clock_rates)
+                f"clock_categories:{i}": clock_cats
+                for i, clock_cats in enumerate(clock_categories)
             },
             **{f"rates:{i}": rate for i, rate in enumerate(rates)},
             **{f"frequencies:{i}": freqs for i, freqs in enumerate(frequencies)},
