@@ -1,4 +1,4 @@
-use bytemuck::Zeroable;
+use bytemuck::AnyBitPattern;
 
 use std::ops::Index;
 
@@ -13,7 +13,7 @@ pub struct SkSliceBuf<T> {
 impl<T> SkSliceBuf<T> {
 	pub fn new(size: usize, len: usize) -> Self
 	where
-		T: Zeroable,
+		T: AnyBitPattern,
 	{
 		Self {
 			edits: EditBuf::new(len),

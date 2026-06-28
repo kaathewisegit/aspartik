@@ -19,14 +19,6 @@ fn len_one() {
 }
 
 #[test]
-fn index_reads_zeroed() {
-	let buf: SliceBuffer<u32> = SliceBuffer::new(3, 4);
-	for i in 0..buf.len() {
-		assert!(buf[i].iter().all(|&v| v == 0));
-	}
-}
-
-#[test]
 fn index_mut_write_read() {
 	let mut buf: SliceBuffer<u8> = SliceBuffer::new(3, 4);
 	buf[0].copy_from_slice(&[1, 2, 3]);
@@ -38,16 +30,6 @@ fn index_mut_write_read() {
 	assert_eq!(buf[1], [4, 5, 6]);
 	assert_eq!(buf[2], [7, 8, 9]);
 	assert_eq!(buf[3], [10, 11, 12]);
-}
-
-#[test]
-fn get_unchecked_reads_zeroed() {
-	let buf: SliceBuffer<u64> = SliceBuffer::new(2, 5);
-	for i in 0..buf.len() {
-		// SAFETY: `i < buf.len()`
-		let slice = unsafe { buf.get_unchecked(i) };
-		assert!(slice.iter().all(|&v| v == 0));
-	}
 }
 
 #[test]

@@ -2,10 +2,10 @@ mod slice_buf;
 
 pub use slice_buf::SliceBuffer;
 
-use bytemuck::Zeroable;
+use bytemuck::AnyBitPattern;
 
 use std::{
-	alloc::{Layout, alloc_zeroed, dealloc, handle_alloc_error},
+	alloc::{Layout, alloc, dealloc, handle_alloc_error},
 	ops::{Deref, DerefMut},
 	ptr::{
 		NonNull, drop_in_place, slice_from_raw_parts,
@@ -62,7 +62,7 @@ impl<T, const ALIGN: usize> Buffer<T, ALIGN> {
 
 	pub fn new(len: usize) -> Self
 	where
-		T: Zeroable,
+		T: AnyBitPattern,
 	{
 		check_const!();
 
@@ -75,7 +75,7 @@ impl<T, const ALIGN: usize> Buffer<T, ALIGN> {
 
 		// SAFETY: we've checked above that capacity/size isn't 0 and
 		// there's a const assertion that size_of::<T> isn't 0.
-		let ptr = unsafe { alloc_zeroed(layout) as *mut T };
+		let ptr = unsafe { alloc(layout) as *mut T };
 		let Some(ptr) = NonNull::new(ptr) else {
 			handle_alloc_error(layout);
 		};
@@ -85,7 +85,7 @@ impl<T, const ALIGN: usize> Buffer<T, ALIGN> {
 
 	pub fn repeat(value: T, len: usize) -> Self
 	where
-		T: Copy + Zeroable,
+		T: Copy + AnyBitPattern,
 	{
 		let mut out = Self::new(len);
 		for element in &mut *out {
@@ -145,7 +145,7 @@ impl<T, const ALIGN: usize> DerefMut for Buffer<T, ALIGN> {
 
 impl<T, const ALIGN: usize> Clone for Buffer<T, ALIGN>
 where
-	T: Copy + Zeroable,
+	T: Copy + AnyBitPattern,
 {
 	fn clone(&self) -> Self {
 		let mut out = Self::new(self.len());
@@ -156,7 +156,7 @@ where
 
 impl<T, const ALIGN: usize> From<&[T]> for Buffer<T, ALIGN>
 where
-	T: Copy + Zeroable,
+	T: Copy + AnyBitPattern,
 {
 	fn from(value: &[T]) -> Self {
 		let mut out = Self::new(value.len());

@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut, Range};
 
-use bytemuck::Zeroable;
+use bytemuck::AnyBitPattern;
 
 use crate::Buffer;
 
@@ -13,7 +13,7 @@ impl<T, const ALIGN: usize> SliceBuffer<T, ALIGN> {
 	/// Creates a buffer capable of holding `len` slices of `size`
 	pub fn new(size: usize, len: usize) -> Self
 	where
-		T: Zeroable,
+		T: AnyBitPattern,
 	{
 		Self {
 			buffer: Buffer::new(size * len),
