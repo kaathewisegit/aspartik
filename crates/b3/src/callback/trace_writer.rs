@@ -25,7 +25,7 @@ use crate::{
 	},
 	priors::PyPrior,
 };
-use util::seconds_since_unix;
+use util::{py_call_method, seconds_since_unix};
 
 pub fn metadata() -> Vec<(String, String)> {
 	vec![
@@ -60,7 +60,7 @@ enum LoggedArray {
 		height: ArrayF64<NonNullable>,
 	},
 	Prior {
-		prior: PyPrior,
+		prior: Py<PyAny>,
 		array: ArrayF64<NonNullable>,
 	},
 }
@@ -101,7 +101,12 @@ impl Item {
 				})?;
 			}
 			LoggedArray::Prior { prior, array } => {
-				let value = prior.probability(py)?;
+				let value = py_call_method!(
+					py,
+					prior,
+					"probability"
+				)?
+				.extract::<f64>(py)?;
 				array.push(value);
 			}
 			LoggedArray::Tree {
@@ -233,7 +238,7 @@ impl TraceWriter {
 				}
 			} else if let Ok(prior) = val.extract::<PyPrior>() {
 				LoggedArray::Prior {
-					prior,
+					prior: prior.into_inner(),
 					array: ArrayF64::new(),
 				}
 			} else {

@@ -64,6 +64,10 @@ impl PyPrior {
 		}
 		Ok(())
 	}
+
+	pub fn into_inner(self) -> Py<PyAny> {
+		self.inner
+	}
 }
 
 impl<'py> FromPyObject<'_, 'py> for PyPrior {
