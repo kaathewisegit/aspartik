@@ -109,4 +109,8 @@ impl_pyparameter_common!(PyClassVector, ClassVector, {
 	pub fn into_list(&self) -> Vec<usize> {
 		self.inner().classes.iter().map(|&c| c as usize).collect()
 	}
+
+	pub fn set(&self, index: usize, category: u32) {
+		self.inner().set(index, category);
+	}
 });
