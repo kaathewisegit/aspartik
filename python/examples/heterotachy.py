@@ -36,7 +36,7 @@ frequencies = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
 population_size = Real(1.0)
 clock_rates = [Real(1) for _ in range(N)]
 categories = ClassVector(N, 845)
-clock_categories = [ClassVector(10, tree.num_nodes) for _ in range(N)]
+clock_categories = [ClassVector(30, tree.num_nodes) for _ in range(N)]
 
 priors = [
     *(Bound(freqs) for freqs in frequencies),
@@ -56,8 +56,7 @@ likelihood = HeteroLikelihood(
     categories=categories,
     substitutions=[GTR(rate, freqs) for rate, freqs in zip(frequencies, rates)],
     clocks=[
-        Clock.Relaxed(clock_cats, Gamma(1 / 3, 0.001))
-        for clock_cats in clock_categories
+        Clock.Relaxed(clock_cats, Gamma(1 / 4, 0.1)) for clock_cats in clock_categories
     ],
     calculator=Calculator.CPU(),
 )
@@ -77,7 +76,7 @@ operators = [
     ClassvecFlip(categories, rng, weight=100),
 ]
 
-loggers = [
+callbacks = [
     PrintLogger(every=10_000),
     TraceWriter(
         {
@@ -101,7 +100,7 @@ mcmc = MCMC(
     priors=priors,
     operators=operators,
     likelihood=likelihood,
-    callbacks=loggers,
+    callbacks=callbacks,
     rng=rng,
 )
 

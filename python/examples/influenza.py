@@ -89,7 +89,7 @@ likelihood = DNALikelihood(
     calculator=Calculator.CPU(),
 )
 
-loggers = [
+callbacks = [
     PrintLogger(every=10_000),
     TraceWriter(
         {
@@ -116,7 +116,7 @@ mcmc = MCMC(
     priors=priors,
     operators=operators,
     likelihood=likelihood,
-    callbacks=loggers,
+    callbacks=callbacks,
     rng=rng,
 )
 

@@ -85,7 +85,7 @@ callbacks = [
         every=1_000,
     ),
     StateCheckpoint("target/apes.state", every=10_000),
-    OperatorStats("target/apes.opstats", every=10_000),
+    OperatorStats("target/apes.opstats", every=100_000),
 ]
 
 mcmc = MCMC(
