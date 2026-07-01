@@ -11,10 +11,9 @@ from aspartik.b3.operators import (
     ScaleReal,
     SubtreeLeap,
 )
-from aspartik.b3.parameters import ClassVector, Real, RealVector, Tree
+from aspartik.b3.parameters import ClassVector, Real, RealVector, Root, Tree
 from aspartik.b3.priors import (
     Bound,
-    ConstantPopulation,
     Distribution,
     SymmetricDirichlet,
 )
@@ -28,17 +27,21 @@ msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
+tree.set_random_heights(10, rng)
 
 N = 4
 
 rates = [RealVector.repeat(1, 6) for _ in range(N)]
-frequencies = [RealVector(0.25, 0.25, 0.25, 0.25) for _ in range(N)]
+frequencies = [RealVector.repeat(0.25, 4) for _ in range(N)]
 population_size = Real(1.0)
 clock_rates = [Real(1) for _ in range(N)]
 categories = ClassVector(N, 845)
 clock_categories = [ClassVector(30, tree.num_nodes) for _ in range(N)]
+root = Root(tree)
+
 
 priors = [
+    Distribution(root, Laplace(140, 5)),
     *(Bound(freqs) for freqs in frequencies),
     *(Bound(rate) for rate in rates),
     Bound(population_size),
@@ -46,7 +49,6 @@ priors = [
     *(SymmetricDirichlet(rate, 6) for rate in rates),
     *(Distribution(clock_rate, Laplace(0, 0.5)) for clock_rate in clock_rates),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
-    ConstantPopulation(tree, population_size),
 ]
 
 
@@ -88,6 +90,7 @@ callbacks = [
             **{f"frequencies:{i}": freqs for i, freqs in enumerate(frequencies)},
             "categories": categories,
             "tree": tree,
+            "prior:root": priors[0],
         },
         path="target/heterotachy.trace",
         every=10_000,

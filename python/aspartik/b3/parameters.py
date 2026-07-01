@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from .._aspartik_rust_impl._b3_rust_impl import (
@@ -18,7 +19,7 @@ Used for type hints in places where there isn't a need to distinguish between
 internal and leaf nodes.
 """
 
-type Parameter = ClassVector | Real | RealVector | IntVector | Tree
+type Parameter = ClassVector | Real | RealVector | IntVector | Tree | Root
 
 
 @runtime_checkable
@@ -29,3 +30,14 @@ class Scalable(Protocol):
         """
 
         ...
+
+
+@dataclass
+class Root:
+    tree: Tree
+
+    def __float__(self):
+        return self.tree.height_of(self.tree.root)
+
+    def is_changed(self):
+        return self.tree.is_changed()
