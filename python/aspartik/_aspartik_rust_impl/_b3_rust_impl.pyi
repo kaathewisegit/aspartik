@@ -140,6 +140,8 @@ class CompoundLikelihood:
     def accept(self) -> None: ...
     def reject(self) -> None: ...
 
+STATE_PROTOCOL_VERSION: int
+
 class MCMC:
     def __init__(
         self,

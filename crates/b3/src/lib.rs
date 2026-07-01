@@ -16,9 +16,14 @@ pub use transitions::Transitions;
 
 use pyo3::prelude::*;
 
+pub use pymodule::STATE_PROTOCOL_VERSION;
+
 #[pymodule(name = "_b3_rust_impl")]
 pub mod pymodule {
 	use super::*;
+
+	#[pymodule_export]
+	pub const STATE_PROTOCOL_VERSION: u32 = 18;
 
 	#[pymodule_export]
 	use crate::{

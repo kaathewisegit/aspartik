@@ -6,7 +6,7 @@ use rand::RngExt;
 use std::{fs, io::Write, path::Path};
 
 use crate::{
-	PyCallback,
+	PyCallback, STATE_PROTOCOL_VERSION,
 	likelihood::Likelihood,
 	operators::{Proposal, PyOperator, Scheduler},
 	parameters::PyParameter,
@@ -178,10 +178,10 @@ impl Mcmc {
 	}
 
 	fn load_state(&self, py: Python, mut bytes: &[u8]) -> Result<()> {
-		let version = <&str>::deserialize(&mut bytes)?;
+		let version = <u32>::deserialize(&mut bytes)?;
 		ensure!(
-			version == VERSION,
-			"Tried to load state made by Aspartik version {version}, which is incompatible with {VERSION}"
+			version == STATE_PROTOCOL_VERSION,
+			"Cannot load state: protocol version v{version} is incompatible with the currently supported version v{STATE_PROTOCOL_VERSION}."
 		);
 		*self.current_step.lock() =
 			u64::deserialize(&mut bytes)? as usize;
@@ -216,8 +216,6 @@ impl Mcmc {
 	}
 }
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StepResult {
 	/// Operator returned `Proposal::Reject`
@@ -246,7 +244,7 @@ impl Mcmc {
 	}
 
 	fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
-		VERSION.serialize(writer)?;
+		STATE_PROTOCOL_VERSION.serialize(writer)?;
 		(*self.current_step.lock() as u64).serialize(writer)?;
 		self.posterior.load().serialize(writer)?;
 

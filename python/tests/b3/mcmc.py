@@ -1,6 +1,6 @@
 import pytest
 
-from aspartik.b3 import MCMC, Calculator, Clock
+from aspartik.b3 import MCMC, STATE_PROTOCOL_VERSION, Calculator, Clock
 from aspartik.b3.config import MCMCConfig
 from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.operators import ScaleReal, TreeScale
@@ -83,7 +83,9 @@ def test_version_assertion():
     mcmc.run(10_000)
     state = mcmc.dump_state()
 
-    state = state[:4] + b"9" + state[5:]
+    state = b"\x07" + state[1:]
 
-    with pytest.raises(match="Tried to load state made by Aspartik version 9"):
+    with pytest.raises(
+        match=f"Cannot load state: protocol version v7 is incompatible with the currently supported version v{STATE_PROTOCOL_VERSION}"
+    ):
         mcmc.load_state(state)
