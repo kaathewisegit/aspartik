@@ -8,10 +8,9 @@ from aspartik.b3.operators import (
     DeltaExchange,
     FixedHeightSPR,
     RootSlide,
-    ScaleReal,
     SubtreeLeap,
 )
-from aspartik.b3.parameters import ClassVector, Real, RealVector, Root, Tree
+from aspartik.b3.parameters import ClassVector, RealVector, Root, Tree
 from aspartik.b3.priors import (
     Bound,
     Distribution,
@@ -33,24 +32,16 @@ N = 4
 
 rates = [RealVector.repeat(1, 6) for _ in range(N)]
 frequencies = [RealVector.repeat(0.25, 4) for _ in range(N)]
-population_size = Real(1.0)
-clock_rates = [Real(1) for _ in range(N)]
 categories = ClassVector(N, 845)
 clock_categories = [ClassVector(30, tree.num_nodes) for _ in range(N)]
-root = Root(tree)
-
 
 priors = [
-    Distribution(root, Laplace(140, 5)),
+    Distribution(Root(tree), Laplace(284.1, 5)),
     *(Bound(freqs) for freqs in frequencies),
     *(Bound(rate) for rate in rates),
-    Bound(population_size),
-    *(Bound(clock_rate) for clock_rate in clock_rates),
     *(SymmetricDirichlet(rate, 6) for rate in rates),
-    *(Distribution(clock_rate, Laplace(0, 0.5)) for clock_rate in clock_rates),
-    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
+    *(SymmetricDirichlet(freqs, 1) for freqs in frequencies),
 ]
-
 
 likelihood = HeteroLikelihood(
     msa=msa,
@@ -66,15 +57,10 @@ likelihood = HeteroLikelihood(
 operators = [
     *(DeltaExchange(rate, rng, weight=1) for rate in rates),
     *(DeltaExchange(freqs, rng, weight=3) for freqs in frequencies),
-    *(
-        ScaleReal(clock_rate, Uniform(0, 1), rng, weight=3)
-        for clock_rate in clock_rates
-    ),
     *(ClassvecFlip(clock_cats, rng, weight=50) for clock_cats in clock_categories),
     RootSlide(tree, Uniform(0, 1), rng, weight=3),
     SubtreeLeap(tree, Normal(0, 1), rng, weight=12 * N),
     FixedHeightSPR(tree, rng, weight=4 * N),
-    ScaleReal(population_size, Uniform(0, 1), rng, weight=3 * N),
     ClassvecFlip(categories, rng, weight=100),
 ]
 
@@ -102,6 +88,7 @@ callbacks = [
 mcmc = MCMC(
     priors=priors,
     operators=operators,
+    optimization_cutoff=1_000_000,
     likelihood=likelihood,
     callbacks=callbacks,
     rng=rng,
