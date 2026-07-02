@@ -1,6 +1,8 @@
 import pytest
 from utils import random_msas, random_trees
 
+import itertools
+
 from aspartik.b3.config import MCMCConfig
 from aspartik.b3.parameters import Tree
 from aspartik.data.msa import MSA
@@ -121,3 +123,26 @@ def test_ola(rng: RNG):
     newick = NewickTree("((0:0,((1:0,3:0):0,4:0):0):0,2:0);")
     tree.load_newick(newick)
     assert tree.ola() == [0, -1, 1, -3]
+
+
+def test_mrca(rng: RNG):
+    tree = Tree([str(i) for i in range(4)], rng)
+    newick = NewickTree("((0:0,1:0):0,(2:0,3:0):0);")
+    tree.load_newick(newick)
+
+    leaf0, leaf1, leaf2, leaf3 = tree.leaves()
+
+    mrca_01 = tree.parent_of(leaf0)
+    assert mrca_01 is not None
+
+    mrca_23 = tree.parent_of(leaf2)
+    assert mrca_23 is not None
+
+    for a, b in itertools.permutations({leaf0, leaf1, mrca_01}, 2):
+        assert mrca_01 == tree.mrca(a, b)
+
+    for a, b in itertools.permutations({leaf2, leaf3, mrca_23}, 2):
+        assert mrca_23 == tree.mrca(a, b)
+
+    assert tree.mrca(leaf0, leaf2) == tree.root
+    assert tree.mrca(leaf1, leaf3) == tree.root

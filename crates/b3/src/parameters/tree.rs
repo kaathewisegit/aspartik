@@ -10,7 +10,7 @@ use rand::{RngExt, seq::SliceRandom};
 
 use std::{
 	cmp::{Reverse, max, min},
-	collections::{BinaryHeap, HashMap, VecDeque},
+	collections::{BinaryHeap, HashMap, HashSet, VecDeque},
 	io::Write,
 	mem,
 	ops::Deref,
@@ -729,7 +729,6 @@ impl Tree {
 		);
 		ensure!(roots[0] == self.root.0);
 
-		use std::collections::HashSet;
 		let mut children = HashSet::new();
 		for node in self.internals() {
 			let (left, right) = self.children_of(node);
@@ -839,6 +838,24 @@ impl Tree {
 		} else {
 			None
 		}
+	}
+
+	pub fn mrca(&self, a: Node, b: Node) -> Internal {
+		let mut ancestors = HashSet::new();
+		let mut curr = a;
+		ancestors.insert(curr);
+		while let Some(parent) = self.parent_of(curr) {
+			curr = *parent;
+			ancestors.insert(curr);
+		}
+
+		let mut curr = b;
+		while !ancestors.contains(&curr) {
+			curr = *self
+				.parent_of(curr)
+				.expect("unreachable: no common ancestor");
+		}
+		Internal(curr.0)
 	}
 
 	pub fn is_grandparent(&self, node: Internal) -> bool {
@@ -1378,6 +1395,11 @@ impl_pyparameter_common!(PyTree, Tree, {
 	/// Returns the parent of `node`, or `None` for the root node
 	fn parent_of(&self, node: Node) -> Result<Option<Internal>> {
 		Ok(self.inner().parent_of(node))
+	}
+
+	/// The most recent common ancestor of `a` and `b`
+	fn mrca(&self, a: Node, b: Node) -> Internal {
+		self.inner().mrca(a, b)
 	}
 
 	/// Returns `True` if both children of this node are also internal
