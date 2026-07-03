@@ -6,12 +6,14 @@ use util::{
 	atomic::MonotonicF64, py_call_method, py_check_method, py_has_method,
 };
 
+mod bdsky;
 mod coalescent;
 mod dirichlet;
 mod monophyly;
 mod skyline;
 mod yule;
 
+pub use bdsky::BirthDeathSkyline;
 pub use coalescent::{ConstantPopulation, ExponentialGrowth};
 pub use dirichlet::SymmetricDirichlet;
 pub use monophyly::Monophyly;

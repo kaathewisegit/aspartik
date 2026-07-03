@@ -59,6 +59,42 @@ def replicate_beast1(
         _check(row, priors, likelihoods)
 
 
+def replicate_beast2(
+    log_path: str,
+    parameters: dict[str, Parameter],
+    trees_path: str | None = None,
+    priors: dict[str, Prior] = {},
+    likelihoods: list[Likelihood] = [],
+):
+    log = pl.read_csv(log_path, separator="\t", comment_prefix="#")
+    trees = open(trees_path, "r") if trees_path is not None else None
+
+    try:
+        for row in log.iter_rows(named=True):
+            for name, param in parameters.items():
+                match param:
+                    case Tree():
+                        tree = next(trees) if trees is not None else row[name]
+                        param.load_newick(NewickTree(tree))
+                    case Real():
+                        param.set(float(row[name]))
+                    case RealVector():
+                        for i in range(len(param)):
+                            param[i] = float(row[f"{name}{i}"])
+                    case IntVector():
+                        for i in range(len(param)):
+                            param[i] = int(row[f"{name}{i}"])
+                    case _:
+                        raise TypeError(
+                            f"Parameter {param.__class__.__name__} isn't supported"
+                        )
+
+            _check(row, priors, likelihoods)
+    finally:
+        if trees is not None:
+            trees.close()
+
+
 def _check(row, priors: dict[str, Prior] = {}, likelihoods: list[Likelihood] = []):
     for name, prior in priors.items():
         expected = float(row[name])

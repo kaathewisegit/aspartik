@@ -220,6 +220,18 @@ class BayesianSkyline(Prior):
     group_sizes: IntVector
 
 @dataclass
+class BirthDeathSkyline(Prior):
+    tree: Tree
+    times: RealVector
+    birth_rates: RealVector
+    death_rates: RealVector
+    sampling_rates: RealVector
+    origin: Real
+    relative_death: bool = False
+    times_start_from_origin: bool = True
+    condition_on_survival: bool = True
+
+@dataclass
 class Monophyly(Prior):
     tree: Tree
     leaves: Sequence[Leaf]

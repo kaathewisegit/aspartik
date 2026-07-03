@@ -43,8 +43,8 @@ pub mod pymodule {
 			PyRealVector, PyTree,
 		},
 		priors::{
-			BayesianSkyline, ConstantPopulation, ExponentialGrowth,
-			Monophyly, SymmetricDirichlet, Yule,
+			BayesianSkyline, BirthDeathSkyline, ConstantPopulation,
+			ExponentialGrowth, Monophyly, SymmetricDirichlet, Yule,
 		},
 		substitution::{GTR, HKY, JC, K80},
 	};

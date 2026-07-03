@@ -1,12 +1,17 @@
 "BEAST X replication tests"
 
 import pytest
-from utils.replicate import replicate_beast1
+from utils.replicate import replicate_beast1, replicate_beast2
 
 from aspartik.b3 import Calculator, Clock
 from aspartik.b3.likelihoods import DNALikelihood, GammaLikelihood
 from aspartik.b3.parameters import IntVector, Real, RealVector, Tree
-from aspartik.b3.priors import BayesianSkyline, ConstantPopulation, ExponentialGrowth
+from aspartik.b3.priors import (
+    BayesianSkyline,
+    BirthDeathSkyline,
+    ConstantPopulation,
+    ExponentialGrowth,
+)
 from aspartik.b3.substitutions import GTR, HKY, JC
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
@@ -230,5 +235,49 @@ def test_skyline(rng):
             "skyline.groupSize": group_sizes,
         },
         priors={"skyline": BayesianSkyline(tree, population_sizes, group_sizes)},
+        likelihoods=[likelihood],
+    )
+
+
+def test_birthdeath_skyline(rng):
+    clock_rate = Real(1.0)
+    birth_rates = RealVector.repeat(1.0, 5)
+    death_rates = RealVector.repeat(0.5, 5)
+    sampling_rates = RealVector.repeat(0.25, 5)
+    times = RealVector(0.0, 0.01, 0.02, 0.03, 0.04)
+    origin = Real(0.5)
+
+    msa = read_msa_from_fasta("data/alignments/hcv.fasta")
+    tree = Tree(msa.sequence_names(), rng)
+    likelihood = DNALikelihood(
+        msa=msa,
+        substitution=JC(),
+        clock=Clock.Strict(clock_rate),
+        tree=tree,
+        calculator=Calculator.CPU(),
+    )
+
+    prior = BirthDeathSkyline(
+        tree,
+        times,
+        birth_rates,
+        death_rates,
+        sampling_rates,
+        origin,
+        relative_death=False,
+        times_start_from_origin=True,
+        condition_on_survival=True,
+    )
+
+    replicate_beast2(
+        "data/runs/skyline-birthdeath/beast2.log",
+        parameters={
+            "tree": tree,
+            "birthRate": birth_rates,
+            "deathRate": death_rates,
+            "origin": origin,
+        },
+        trees_path="data/runs/skyline-birthdeath/beast2.trees",
+        priors={"birthDeath": prior},
         likelihoods=[likelihood],
     )
