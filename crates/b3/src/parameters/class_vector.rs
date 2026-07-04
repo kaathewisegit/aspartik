@@ -15,7 +15,6 @@ pub struct ClassVector {
 	classes: SkBuf<u32>,
 }
 
-#[expect(clippy::len_without_is_empty)]
 impl ClassVector {
 	pub fn new(num_classes: u32, len: usize) -> Result<Self> {
 		ensure!(len > 0, "`ClassVector` must be non-empty");
@@ -29,6 +28,7 @@ impl ClassVector {
 		})
 	}
 
+	#[expect(clippy::len_without_is_empty)]
 	pub fn len(&self) -> usize {
 		self.classes.len()
 	}
@@ -112,5 +112,18 @@ impl_pyparameter_common!(PyClassVector, ClassVector, {
 
 	pub fn set(&self, index: usize, category: u32) {
 		self.inner().set(index, category);
+	}
+
+	#[getter]
+	pub fn num_classes(&self) -> u32 {
+		self.inner().num_classes()
+	}
+
+	pub fn __getitem__(&self, index: usize) -> u32 {
+		self.inner()[index]
+	}
+
+	pub fn __len__(&self) -> usize {
+		self.inner().len()
 	}
 });
