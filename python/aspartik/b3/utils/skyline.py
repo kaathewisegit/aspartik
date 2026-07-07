@@ -59,10 +59,14 @@ def plot_skyline_birthdeath(
     birth_rates: pl.Series | None = None,
     death_rates: pl.Series | None = None,
     values: pl.Series | None = None,
+    trees: pl.Series | None = None,
+    sequence_names: list[str] | None = None,
+    root_height: pl.Series | float | None = None,
     times_start_from_origin: bool = True,
     mode: Mode = "traces",
     num_points: int = 200,
     cred_mass: float = 0.95,
+    grid_end: float | None = None,
 ) -> None:
     if values is None:
         if birth_rates is None or death_rates is None:
@@ -71,16 +75,32 @@ def plot_skyline_birthdeath(
 
     _validate_num_samples(values)
 
+    if root_height is None:
+        if trees is not None:
+            if sequence_names is None:
+                raise ValueError("Expected sequence_names with trees")
+            root_height = _tree_root_heights(trees, sequence_names)
+        else:
+            root_height = 0.0
+
     boundaries = [
-        _birthdeath_boundaries(t, o, times_start_from_origin)
-        for t, o in zip(
+        _birthdeath_boundaries(t, o + h, times_start_from_origin)
+        for t, o, h in zip(
             _iter_series_or_value(times, len(values)),
             _iter_series_or_value(origin, len(values)),
+            _iter_series_or_value(root_height, len(values)),
         )
     ]
-    plot_values = [
-        list(reversed(row)) if times_start_from_origin else list(row) for row in values
-    ]
+    if times_start_from_origin:
+        plot_values = [list(reversed(row)) for row in values]
+    else:
+        plot_values = [list(row) for row in values]
+    plot_values = _trim_skyline_values(boundaries, plot_values)
+
+    if grid_end is None and mode == "hpd":
+        grid_end = float(
+            np.median(list(_iter_series_or_value(root_height, len(values))))
+        )
 
     _plot_skyline_values(
         ax,
@@ -89,12 +109,34 @@ def plot_skyline_birthdeath(
         mode,
         num_points,
         cred_mass,
+        grid_end,
     )
+
+
+def _tree_root_heights(trees: pl.Series, sequence_names: list[str]) -> pl.Series:
+    tree = Tree(sequence_names, RNG(4))
+    heights = []
+    for tree_state in trees:
+        tree.load(tree_state)
+        heights.append(tree.height_of(tree.root))
+    return pl.Series("root_height", heights)
 
 
 def _validate_num_samples(values: pl.Series) -> None:
     if len(values) <= 9:
         raise ValueError("The input trace must have at least 10 samples")
+
+
+def _trim_skyline_values(
+    boundaries: list[list[float]], values: Sequence[Sequence[float]]
+) -> list[list[float]]:
+    trimmed = []
+    for boundary, row in zip(boundaries, values):
+        size = len(boundary) - 1
+        if len(row) < size:
+            raise ValueError("Expected at least one skyline value per interval")
+        trimmed.append(list(row[:size]))
+    return trimmed
 
 
 def _series_ratio(numerator: pl.Series, denominator: pl.Series) -> pl.Series:
@@ -133,12 +175,17 @@ def _plot_skyline_values(
     mode: Mode,
     num_points: int,
     cred_mass: float,
+    grid_end: float | None = None,
 ) -> None:
     if mode == "traces":
         for x, y in zip(boundaries, values):
             ax.step(x, [*y, y[-1]], where="post", color="steelblue", alpha=0.1)
     else:
-        max_height = max(boundary[-1] for boundary in boundaries)
+        max_height = (
+            grid_end
+            if grid_end is not None
+            else max(boundary[-1] for boundary in boundaries)
+        )
         grid = np.linspace(0.0, max_height, num_points)
 
         evals = np.array(

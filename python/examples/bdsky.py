@@ -19,15 +19,16 @@ from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import (
     BirthDeathSkyline,
     Bound,
-    MarkovChainDistribution,
+    Distribution,
     SymmetricDirichlet,
+    VectorDistribution,
 )
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.b3.utils.skyline import plot_skyline_birthdeath
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Normal, Uniform
+from aspartik.stats.distributions import LogNormal, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/hcv.fasta")
 
@@ -36,12 +37,12 @@ tree = Tree(msa.sequence_names(), rng)
 tree.set_random_heights(0.1, rng)
 tree.accept()
 
-NUM_INTERVALS = 5
-times = RealVector(0.0, 0.01, 0.02, 0.03, 0.04)
+NUM_INTERVALS = 10
+times = RealVector(*[20.0 * i for i in range(NUM_INTERVALS)])
 birth_rates = RealVector.repeat(1.0, NUM_INTERVALS)
 death_rates = RealVector.repeat(0.5, NUM_INTERVALS)
-sampling_rates = RealVector.repeat(0.25, NUM_INTERVALS)  # TODO: vary?
-origin = Real(0.5)
+sampling_rates = RealVector.repeat(0.25, NUM_INTERVALS)
+origin = Real(150.0)
 
 frequencies = RealVector.repeat(0.25, 4)
 rates = RealVector.repeat(1, 6)
@@ -54,18 +55,19 @@ bdsky = BirthDeathSkyline(
     sampling_rates,
     origin,
     relative_death=False,
-    times_start_from_origin=True,
+    times_start_from_origin=False,
     condition_on_survival=True,
 )
 
 priors = [
-    Bound(birth_rates, 1e-3, 3.0),
-    Bound(death_rates, 0.25, 3.0),
-    Bound(origin, 0.05, 5.0),
+    Bound(birth_rates),
+    Bound(death_rates),
+    Bound(origin),
     Bound(frequencies),
     Bound(rates),
-    MarkovChainDistribution(birth_rates),
-    MarkovChainDistribution(death_rates),
+    VectorDistribution(birth_rates, LogNormal(0.0, 1.25)),
+    VectorDistribution(death_rates, LogNormal(0.0, 1.25)),
+    Distribution(origin, LogNormal(5.0, 0.5)),
     bdsky,
     SymmetricDirichlet(frequencies, 1),
     SymmetricDirichlet(rates, 6),
@@ -120,10 +122,11 @@ mcmc = MCMC(
 
 
 if __name__ == "__main__":
-    run_from_cmdline(mcmc, default_length=200_000)
+    run_from_cmdline(mcmc, default_length=1_000_000)
 
-    offset = mcmc.current_step // (10_000 * 10)
-    df = pl.read_ipc("target/bdsky.trace", memory_map=False).slice(offset)
+    df = pl.read_ipc("target/bdsky.trace", memory_map=False)
+    offset = int(len(df) * 0.1)
+    df = df.slice(offset)
 
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.set_xlabel("Years ago")
@@ -137,6 +140,9 @@ if __name__ == "__main__":
         df["origin"],
         birth_rates=df["birth_rates"],
         death_rates=df["death_rates"],
+        trees=df["tree"],
+        sequence_names=msa.sequence_names(),
+        times_start_from_origin=False,
         mode="hpd",
     )
     ax.legend()
