@@ -25,7 +25,7 @@ from aspartik.b3.priors import (
 )
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
-from aspartik.b3.utils.skyline import plot_skyline
+from aspartik.b3.utils.skyline import plot_skyline_coalescent
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Normal, Uniform
@@ -114,7 +114,15 @@ if __name__ == "__main__":
     ax.set_xlabel("Years ago")
     ax.set_ylabel("Population size")
     ax.invert_xaxis()
-    plot_skyline(fig, ax, df, "population_sizes", sequence_names, mode="hpd")
+    plot_skyline_coalescent(
+        fig,
+        ax,
+        df["tree"],
+        df["group_sizes"],
+        df["population_sizes"],
+        sequence_names,
+        mode="hpd",
+    )
     ax.legend()
     fig.tight_layout()
     fig.savefig("target/skyline.png", dpi=300, bbox_inches="tight")

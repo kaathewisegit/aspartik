@@ -1,3 +1,9 @@
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import polars as pl
+
 from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.callbacks import PrintLogger, TraceWriter
 from aspartik.b3.likelihoods import DNALikelihood
@@ -18,6 +24,7 @@ from aspartik.b3.priors import (
 )
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
+from aspartik.b3.utils.skyline import plot_skyline_birthdeath
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
 from aspartik.stats.distributions import Normal, Uniform
@@ -52,14 +59,14 @@ bdsky = BirthDeathSkyline(
 )
 
 priors = [
+    Bound(birth_rates, 1e-3, 3.0),
+    Bound(death_rates, 0.25, 3.0),
+    Bound(origin, 0.05, 5.0),
+    Bound(frequencies),
+    Bound(rates),
     MarkovChainDistribution(birth_rates),
     MarkovChainDistribution(death_rates),
     bdsky,
-    Bound(birth_rates),
-    Bound(death_rates),
-    Bound(origin),
-    Bound(frequencies),
-    Bound(rates),
     SymmetricDirichlet(frequencies, 1),
     SymmetricDirichlet(rates, 6),
 ]
@@ -114,3 +121,24 @@ mcmc = MCMC(
 
 if __name__ == "__main__":
     run_from_cmdline(mcmc, default_length=200_000)
+
+    offset = mcmc.current_step // (10_000 * 10)
+    df = pl.read_ipc("target/bdsky.trace", memory_map=False).slice(offset)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_xlabel("Years ago")
+    ax.set_ylabel("R_e")
+    ax.axhline(1.0, color="black", linestyle="--", linewidth=1, alpha=0.5)
+    ax.invert_xaxis()
+    plot_skyline_birthdeath(
+        fig,
+        ax,
+        [times[i] for i in range(len(times))],
+        df["origin"],
+        birth_rates=df["birth_rates"],
+        death_rates=df["death_rates"],
+        mode="hpd",
+    )
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig("target/bdsky.png", dpi=300, bbox_inches="tight")
