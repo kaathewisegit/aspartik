@@ -239,7 +239,26 @@ def test_skyline(rng):
     )
 
 
-def test_birthdeath_skyline(rng):
+@pytest.mark.parametrize(
+    ("fixture", "relative_death", "times_start_from_origin", "condition_on_survival"),
+    (
+        ("000", False, False, False),
+        ("001", False, False, True),
+        ("010", False, True, False),
+        ("011", False, True, True),
+        ("100", True, False, False),
+        ("101", True, False, True),
+        ("110", True, True, False),
+        ("111", True, True, True),
+    ),
+)
+def test_birthdeath_skyline(
+    rng,
+    fixture,
+    relative_death,
+    times_start_from_origin,
+    condition_on_survival,
+):
     clock_rate = Real(1.0)
     birth_rates = RealVector.repeat(1.0, 5)
     death_rates = RealVector.repeat(0.5, 5)
@@ -264,20 +283,21 @@ def test_birthdeath_skyline(rng):
         death_rates,
         sampling_rates,
         origin,
-        relative_death=False,
-        times_start_from_origin=True,
-        condition_on_survival=True,
+        relative_death=relative_death,
+        times_start_from_origin=times_start_from_origin,
+        condition_on_survival=condition_on_survival,
     )
 
+    path = f"data/runs/skyline-birthdeath/{fixture}"
     replicate_beast2(
-        "data/runs/skyline-birthdeath/beast2.log",
+        f"{path}/beast2.log",
         parameters={
             "tree": tree,
             "birthRate": birth_rates,
             "deathRate": death_rates,
             "origin": origin,
         },
-        trees_path="data/runs/skyline-birthdeath/beast2.trees",
+        trees_path=f"{path}/beast2.trees",
         priors={"birthDeath": prior},
         likelihoods=[likelihood],
     )
