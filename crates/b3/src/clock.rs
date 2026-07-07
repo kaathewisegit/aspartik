@@ -3,7 +3,10 @@ use parking_lot::{Mutex, MutexGuard};
 use pyo3::{prelude::*, types::PyType};
 
 use crate::parameters::{Parameter, PyClassVector, PyReal, Tree};
-use util::py_call_method;
+use util::{
+	atomic::{MonotonicBool, MonotonicF64},
+	py_call_method,
+};
 
 pub struct StrictClock {
 	rate: Py<PyReal>,
@@ -36,8 +39,10 @@ impl StrictClock {
 }
 
 pub struct RelaxedClock {
-	rates: Vec<f64>,
+	updated: MonotonicBool,
+	rates: Vec<MonotonicF64>,
 	rate_categories: Py<PyClassVector>,
+	distribution: Py<PyAny>,
 }
 
 impl RelaxedClock {
@@ -48,27 +53,58 @@ impl RelaxedClock {
 	) -> Result<Self> {
 		let num_categories =
 			rate_categories.get().inner().num_classes() as usize;
-		let mut rates = vec![0.0; num_categories];
+		let rates = vec![MonotonicF64::from(0.0); num_categories];
+		let out = Self {
+			updated: false.into(),
+			rates,
+			rate_categories,
+			distribution,
+		};
+		out.update_rates(py)?;
+		Ok(out)
+	}
+
+	fn update_rates(&self, py: Python) -> Result<()> {
+		let num_categories =
+			self.rate_categories.get().inner().num_classes()
+				as usize;
 		let step = 1.0 / (num_categories as f64);
 		let mut quantile = step / 2.0;
-		#[expect(clippy::needless_range_loop)]
 		for i in 0..num_categories {
 			let rate = py_call_method!(
 				py,
-				distribution,
+				self.distribution,
 				"inverse_cdf",
 				quantile,
 			)?;
-			rates[i] = rate.extract::<f64>(py)?;
+			self.rates[i].store(rate.extract::<f64>(py)?);
 			quantile += step;
 		}
-		Ok(Self {
-			rates,
-			rate_categories,
-		})
+		Ok(())
 	}
 
 	fn update(&mut self, tree: &mut Tree) -> Result<()> {
+		let updated = Python::attach(|py| -> Result<bool> {
+			let dist_upd = py_call_method!(
+				py,
+				self.distribution,
+				"is_changed"
+			)?;
+			let dist_upd: bool = dist_upd.extract(py)?;
+			if dist_upd {
+				self.update_rates(py)?;
+				return Ok(true);
+			}
+
+			Ok(false)
+		})?;
+
+		if updated {
+			self.updated.store(true);
+			tree.mark_all_edges_updated();
+			return Ok(());
+		}
+
 		let cats = self.rate_categories.get().inner();
 		for i in 0..tree.num_nodes() {
 			if cats.is_changed_at(i) {
@@ -82,12 +118,21 @@ impl RelaxedClock {
 	fn get_rate(&self, edge: usize) -> f64 {
 		let category =
 			self.rate_categories.get().inner()[edge] as usize;
-		self.rates[category]
+		self.rates[category].load()
 	}
 
-	fn accept(&mut self) {}
+	fn accept(&mut self) {
+		self.updated.store(false);
+	}
 
-	fn reject(&mut self) {}
+	fn reject(&mut self) {
+		if self.updated.load() {
+			Python::attach(|py| {
+				self.update_rates(py).unwrap();
+			});
+			self.updated.store(false);
+		}
+	}
 }
 
 pub enum Clock {
@@ -167,7 +212,9 @@ impl PyClock {
 	fn rates(&self) -> Vec<f64> {
 		match &*self.inner() {
 			Clock::Strict(c) => vec![c.rate.get().inner().value()],
-			Clock::Relaxed(c) => c.rates.clone(),
+			Clock::Relaxed(c) => {
+				c.rates.iter().map(|v| v.load()).collect()
+			}
 		}
 	}
 }

@@ -1,4 +1,5 @@
-from typing import Optional, Protocol, runtime_checkable
+from dataclasses import dataclass
+from typing import Optional, Protocol, SupportsFloat, runtime_checkable
 
 from .._aspartik_rust_impl._stats_rust_impl import (
     Beta as Beta,
@@ -17,6 +18,7 @@ from .._aspartik_rust_impl._stats_rust_impl import (
     Uniform as Uniform,
     UniformError as UniformError,
 )
+from ..b3.parameters import Real
 from ..rng import RNG
 
 
@@ -28,7 +30,7 @@ class Continuous(Protocol):
     In practice this defines the `pdf` and `ln_pdf` methods.
     """
 
-    def pdf(self, x: float) -> float:
+    def pdf(self, x: SupportsFloat) -> float:
         """
         Probability density function
 
@@ -36,7 +38,7 @@ class Continuous(Protocol):
         """
         ...
 
-    def ln_pdf(self, x: float) -> float:
+    def ln_pdf(self, x: SupportsFloat) -> float:
         """
         Logarithm of a probability density function
 
@@ -55,7 +57,7 @@ class ContinuousCDF(Continuous, Protocol):
     which the distribution is defined.
     """
 
-    def cdf(self, x: float) -> float:
+    def cdf(self, x: SupportsFloat) -> float:
         """
         Continuous distribution function
 
@@ -64,11 +66,11 @@ class ContinuousCDF(Continuous, Protocol):
         """
         ...
 
-    def sf(self, x: float) -> float:
+    def sf(self, x: SupportsFloat) -> float:
         """Survival function"""
         ...
 
-    def inverse_cdf(self, p: float) -> float:
+    def inverse_cdf(self, p: SupportsFloat) -> float:
         """
         Inverse continuous distribution function
 
@@ -106,7 +108,7 @@ class Discrete[T](Protocol):
 class DiscreteCDF[T](Discrete[T], Protocol):
     def cdf(self, x: T) -> float: ...
     def sf(self, x: T) -> float: ...
-    def inverse_cdf(self, p: float) -> T: ...
+    def inverse_cdf(self, p: SupportsFloat) -> T: ...
     @property
     def lower(self) -> T: ...
     @property
@@ -126,3 +128,19 @@ class Distribution(Protocol):
 @runtime_checkable
 class Sample[T](Protocol):
     def sample(self, rng: RNG) -> T: ...
+
+
+@dataclass(slots=True)
+class DynLogNormal:
+    location: float | Real
+    scale: float | Real
+
+    def is_changed(self):
+        if isinstance(self.location, Real) and self.location.is_changed():
+            return True
+        if isinstance(self.scale, Real) and self.scale.is_changed():
+            return True
+        return False
+
+    def inverse_cdf(self, p: float):
+        return LogNormal(self.location, self.scale).inverse_cdf(p)

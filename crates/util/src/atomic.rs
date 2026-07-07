@@ -18,6 +18,12 @@ impl From<bool> for MonotonicBool {
 	}
 }
 
+impl Clone for MonotonicBool {
+	fn clone(&self) -> Self {
+		self.load().into()
+	}
+}
+
 impl MonotonicBool {
 	pub fn new(value: bool) -> Self {
 		value.into()
@@ -39,6 +45,12 @@ pub struct MonotonicU32(AtomicU32);
 impl From<u32> for MonotonicU32 {
 	fn from(value: u32) -> Self {
 		Self(value.into())
+	}
+}
+
+impl Clone for MonotonicU32 {
+	fn clone(&self) -> Self {
+		self.load().into()
 	}
 }
 
@@ -66,6 +78,12 @@ pub struct MonotonicF64(AtomicU64);
 impl From<f64> for MonotonicF64 {
 	fn from(value: f64) -> Self {
 		Self(value.to_bits().into())
+	}
+}
+
+impl Clone for MonotonicF64 {
+	fn clone(&self) -> Self {
+		self.load().into()
 	}
 }
 

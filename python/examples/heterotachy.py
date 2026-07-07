@@ -10,7 +10,7 @@ from aspartik.b3.operators import (
     RootSlide,
     SubtreeLeap,
 )
-from aspartik.b3.parameters import ClassVector, RealVector, Root, Tree
+from aspartik.b3.parameters import ClassVector, Real, RealVector, Root, Tree
 from aspartik.b3.priors import (
     Bound,
     Distribution,
@@ -20,7 +20,7 @@ from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Gamma, Laplace, Normal, Uniform
+from aspartik.stats.distributions import DynLogNormal, Laplace, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 
@@ -49,7 +49,8 @@ likelihood = HeteroLikelihood(
     categories=categories,
     substitutions=[GTR(rate, freqs) for rate, freqs in zip(frequencies, rates)],
     clocks=[
-        Clock.Relaxed(clock_cats, Gamma(1 / 4, 0.1)) for clock_cats in clock_categories
+        Clock.Relaxed(clock_cats, DynLogNormal(Real(1), Real(1 / 3)))
+        for clock_cats in clock_categories
     ],
     calculator=Calculator.CPU(),
 )
