@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from ...stats.distributions import Continuous
 from .. import Prior
-from ..parameters import Real, Root
+from ..parameters import MRCA, Real, Root
 
 
 @dataclass(slots=True)
@@ -12,7 +12,7 @@ class Distribution(Prior):
     a distribution.
     """
 
-    param: Real | Root
+    param: Real | Root | MRCA
     distribution: Continuous
     """Distribution against which the parameter prior is calculated."""
 
