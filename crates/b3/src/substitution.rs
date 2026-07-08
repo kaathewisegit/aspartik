@@ -200,6 +200,14 @@ impl SubstitutionModel for K80 {
 	}
 }
 
+fn transition_freqs(freqs: &[f64; 4], mut dst: MatrixMut<'_, f64>) {
+	for i in 0..4 {
+		for j in 0..4 {
+			dst[(i, j)] = freqs[i];
+		}
+	}
+}
+
 /// Hasegawa et al. 1985
 ///
 /// A model which can be thought of as a combination of K80 and F81: both base
@@ -312,7 +320,17 @@ impl SubstitutionModel for HKY {
 		}
 	}
 
-	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
+	fn write_transition(
+		&mut self,
+		distance: f64,
+		mut dst: MatrixMut<'_, f64>,
+	) {
+		if distance > 50.0 {
+			transition_freqs(
+				&self.cached_frequencies,
+				dst.reborrow(),
+			);
+		}
 		let diag: M4 =
 			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
@@ -339,6 +357,8 @@ pub struct GTR {
 
 	rates: Py<PyRealVector>,
 
+	cached_frequencies: [f64; 4],
+
 	p: M4,
 	inv_p: M4,
 	diag: [f64; 4],
@@ -357,6 +377,8 @@ impl GTR {
 			frequencies,
 			rates,
 
+			cached_frequencies: [f64::NAN; 4],
+
 			p: [[0.0; 4]; 4],
 			inv_p: [[0.0; 4]; 4],
 			diag: [0.0; 4],
@@ -373,6 +395,7 @@ impl GTR {
 		Self {
 			frequencies: self.frequencies.clone_ref(py),
 			rates: self.rates.clone_ref(py),
+			cached_frequencies: self.cached_frequencies,
 			p: self.p,
 			inv_p: self.inv_p,
 			diag: self.diag,
@@ -391,7 +414,8 @@ impl GTR {
 	}
 
 	fn update_matrices(&mut self) {
-		let [p_a, p_c, p_g, p_t] = self.get_frequencies();
+		self.cached_frequencies = self.get_frequencies();
+		let [p_a, p_c, p_g, p_t] = self.cached_frequencies;
 		let [a, b, c, d, e, f] = self.get_rates();
 
 		let mut gtr = vec![
@@ -457,7 +481,17 @@ impl SubstitutionModel for GTR {
 		}
 	}
 
-	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
+	fn write_transition(
+		&mut self,
+		distance: f64,
+		mut dst: MatrixMut<'_, f64>,
+	) {
+		if distance > 50.0 {
+			transition_freqs(
+				&self.cached_frequencies,
+				dst.reborrow(),
+			);
+		}
 		let diag: M4 =
 			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
