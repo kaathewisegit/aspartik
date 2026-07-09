@@ -3,43 +3,43 @@ use std::collections::VecDeque;
 use anyhow::Result;
 use pyo3::prelude::*;
 
-use crate::parameters::{Internal, Leaf, PyTree, Tree};
+use crate::parameters::{Leaf, PyTree};
 
-/// Ensures that a group of leaves form a monophyly
-///
-/// Returns a static probability if the specified leaves are monophyletic or
-/// aborts the move otherwise.
 #[derive(Debug)]
 #[pyclass(module = "aspartik.b3.priors", frozen)]
 pub struct Monophyly {
 	#[pyo3(get)]
 	tree: Py<PyTree>,
 
-	/// The leaves which must be [monophyletic][w]
+	/// The leaves should must be [monophyletic][w]
 	///
 	/// [w]: https://en.wikipedia.org/wiki/Monophyly
 	#[pyo3(get)]
 	leaves: Vec<Leaf>,
+
+	/// Log-probability penalty to apply if the leaves aren't monophyletic
+	penalty: f64,
 }
 
 #[pymethods]
 impl Monophyly {
 	#[new]
-	fn new(tree: Py<PyTree>, leaves: Vec<Leaf>) -> Self {
-		Self { tree, leaves }
+	#[pyo3(signature = (tree, leaves, penalty = -1000.0))]
+	fn new(tree: Py<PyTree>, leaves: Vec<Leaf>, penalty: f64) -> Self {
+		Self {
+			tree,
+			leaves,
+			penalty,
+		}
 	}
 
 	fn probability(&self) -> Result<f64> {
 		let tree = &*self.tree.get().inner();
+		let num_leaves = self.leaves.len();
 
-		let mut mrca = tree
-			.parent_of(*self.leaves[0])
-			.expect("Leaves always have a parent");
-		for leaf in self.leaves.iter().skip(1).copied() {
-			let parent = tree
-				.parent_of(*leaf)
-				.expect("Leaves always have a parent");
-			mrca = common_ancestor(tree, mrca, parent)?;
+		let mut mrca = tree.mrca(*self.leaves[0], *self.leaves[1]);
+		for leaf in self.leaves.iter().skip(2).copied() {
+			mrca = tree.mrca(*mrca, *leaf);
 		}
 
 		let mut count: usize = 0;
@@ -53,13 +53,10 @@ impl Monophyly {
 			if let Some(right) = tree.as_internal(right) {
 				queue.push_back(right);
 			}
-		}
 
-		// the number of internals walked is higher than the number of a
-		// minimal tree, meaning there are more leaves interleaved
-		// between the passed ones
-		if count != self.leaves.len() - 1 {
-			return Ok(f64::NEG_INFINITY);
+			if count >= num_leaves {
+				return Ok(self.penalty);
+			}
 		}
 
 		Ok(0.0)
@@ -68,28 +65,4 @@ impl Monophyly {
 	fn is_changed(&self) -> bool {
 		self.tree.get().is_changed()
 	}
-}
-
-fn common_ancestor(
-	tree: &Tree,
-	mut a: Internal,
-	mut b: Internal,
-) -> Result<Internal> {
-	while a != b {
-		let height_a = tree.height_of(*a);
-		let height_b = tree.height_of(*b);
-
-		if height_a < height_b {
-			a = tree.parent_of(*a).unwrap_or(a);
-		} else if height_b < height_a {
-			b = tree.parent_of(*b).unwrap_or(b);
-		} else {
-			// since branch lengths mustn't be 0, if `height_a ==
-			// height_b`, neither of them is root.  This means we
-			// can pick whichever.
-			a = tree.parent_of(*a).unwrap_or(a);
-		}
-	}
-
-	Ok(a)
 }

@@ -235,6 +235,7 @@ class BirthDeathSkyline(Prior):
 class Monophyly(Prior):
     tree: Tree
     leaves: Sequence[Leaf]
+    penalty: float = -1000.0
 
 @dataclass
 class Yule(Prior):
