@@ -19,6 +19,7 @@ from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import (
     BirthDeathSkyline,
     Bound,
+    Distribution,
     SymmetricDirichlet,
 )
 from aspartik.b3.substitutions import GTR
@@ -26,7 +27,7 @@ from aspartik.b3.utils import run_from_cmdline
 from aspartik.b3.utils.skyline import plot_skyline_birthdeath
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Normal, Uniform
+from aspartik.stats.distributions import Beta, LogNormal, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/hcv.fasta")
 
@@ -51,6 +52,9 @@ priors = [
         reproductive_number,
         sampling_proportion,
     ),
+    Distribution(become_uninfectious_rate, LogNormal(0, 1)),
+    Distribution(reproductive_number, LogNormal(0, 1)),
+    Distribution(sampling_proportion, Beta(1, 1)),
     Bound(frequencies),
     Bound(rates),
     SymmetricDirichlet(frequencies, 1),
