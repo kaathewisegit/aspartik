@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from ...stats.distributions import Continuous
 from .. import Prior
-from ..parameters import MRCA, Real, Root
+from ..parameters import MRCA, Real, RealVector, Root
 
 
 @dataclass(slots=True)
@@ -12,12 +12,17 @@ class Distribution(Prior):
     a distribution.
     """
 
-    param: Real | Root | MRCA
+    param: Real | Root | MRCA | RealVector
     distribution: Continuous
     """Distribution against which the parameter prior is calculated."""
 
     def probability(self) -> float:
-        return self.distribution.ln_pdf(float(self.param))
+        distribution = self.distribution
+        param = self.param
+        if isinstance(param, RealVector):
+            return sum(distribution.ln_pdf(param[i]) for i in range(len(param)))
+        else:
+            return distribution.ln_pdf(float(param))
 
     def is_changed(self) -> bool:
         return self.param.is_changed()
