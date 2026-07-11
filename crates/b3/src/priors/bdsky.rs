@@ -12,6 +12,8 @@ struct Scratch {
 	ai: Vec<f64>,
 	bi: Vec<f64>,
 	p0_next: Vec<f64>,
+	lineage_heights: Vec<f64>,
+	lineage_counts: Vec<i64>,
 }
 
 impl Scratch {
@@ -23,6 +25,8 @@ impl Scratch {
 			ai: vec![0.0; n],
 			bi: vec![0.0; n],
 			p0_next: vec![0.0; n],
+			lineage_heights: vec![0.0; n],
+			lineage_counts: vec![0; n],
 		})
 	}
 }
@@ -60,26 +64,43 @@ fn p0(b: f64, g: f64, psi: f64, a: f64, c: f64, ti: f64, t: f64) -> f64 {
 	(b + g + psi - a * numer / denom) / (2.0 * b)
 }
 
-fn log_q(a: f64, c: f64, ti: f64, t: f64) -> f64 {
+fn q(a: f64, c: f64, ti: f64, t: f64) -> f64 {
 	let diff = t - ti;
 	let ex = (a * diff).exp();
 	let denom = ex * (1.0 - c) + (1.0 + c);
-	(4.0_f64).ln() + a * diff - 2.0 * denom.ln()
+	4.0 * ex / (denom * denom)
 }
 
-fn lineage_count_at_time(height: f64, tree: &Tree) -> i64 {
-	let mut count = 1;
+fn mul_scale(probability: &mut f64, scale: &mut f64, mul: f64) {
+	const THRESHOLD: f64 = 0.000000002061153622438558; // e^-20
+	const SCALE: f64 = 485165195.4097903; // e^20
+
+	*probability *= mul;
+
+	while *probability < THRESHOLD {
+		*probability *= SCALE;
+		*scale -= 20.0;
+	}
+	while *probability > 1.0 {
+		*probability *= THRESHOLD;
+		*scale += 20.0;
+	}
+}
+
+fn update_lineage_counts(heights: &[f64], tree: &Tree, counts: &mut [i64]) {
+	counts.fill(1);
 	for internal in tree.internals() {
-		if tree.height_of(*internal) > height {
-			count += 1;
+		let h = tree.height_of(*internal);
+		for (&height, count) in heights.iter().zip(counts.iter_mut()) {
+			*count += i64::from(h > height);
 		}
 	}
 	for leaf in tree.leaves() {
-		if tree.height_of(*leaf) >= height {
-			count -= 1;
+		let h = tree.height_of(*leaf);
+		for (&height, count) in heights.iter().zip(counts.iter_mut()) {
+			*count -= i64::from(h > height);
 		}
 	}
-	count
 }
 
 #[pymethods]
@@ -184,7 +205,8 @@ impl BirthDeathSkyline {
 			((x / iw).max(0.0) as usize).min(n - 1)
 		};
 
-		let mut log_p = 0.0;
+		let mut out = 1.0;
+		let mut scale = 0.0;
 
 		let p0_origin = p0(
 			s.birth[0], s.death[0], s.psi[0], s.ai[0], s.bi[0], iw,
@@ -193,15 +215,15 @@ impl BirthDeathSkyline {
 		if p0_origin == 1.0 {
 			return Ok(f64::NEG_INFINITY);
 		}
-		log_p += log_q(s.ai[0], s.bi[0], iw, 0.0)
-			- (1.0 - p0_origin).ln();
+		let q0 = q(s.ai[0], s.bi[0], iw, 0.0);
+		mul_scale(&mut out, &mut scale, q0 / (1.0 - p0_origin));
 
 		for internal in tree.internals() {
 			let x = origin - tree.height_of(*internal);
 			let idx = index_of(x);
 			let ti = (idx + 1) as f64 * iw;
-			log_p += s.birth[idx].ln()
-				+ log_q(s.ai[idx], s.bi[idx], ti, x);
+			let qi = q(s.ai[idx], s.bi[idx], ti, x);
+			mul_scale(&mut out, &mut scale, s.birth[idx] * qi);
 		}
 
 		for leaf in tree.leaves() {
@@ -211,23 +233,32 @@ impl BirthDeathSkyline {
 				return Ok(f64::NEG_INFINITY);
 			}
 			let ti = (idx + 1) as f64 * iw;
-			log_p += s.psi[idx].ln()
-				- log_q(s.ai[idx], s.bi[idx], ti, y);
+			let qi = q(s.ai[idx], s.bi[idx], ti, y);
+			mul_scale(&mut out, &mut scale, s.psi[idx] / qi);
 		}
 
 		for j in 1..n {
-			let time = j as f64 * iw; // times[j − 1]
-			let lineage_height = origin - time;
-			let n_lineages =
-				lineage_count_at_time(lineage_height, &tree);
+			s.lineage_heights[j] = origin - j as f64 * iw;
+		}
+		update_lineage_counts(
+			&s.lineage_heights[1..n],
+			&tree,
+			&mut s.lineage_counts[1..n],
+		);
+
+		for j in 1..n {
+			let n_lineages = s.lineage_counts[j];
 			if n_lineages > 0 {
+				let time = j as f64 * iw; // times[j − 1]
 				let ti = (j + 1) as f64 * iw; // times[j]
-				log_p += n_lineages as f64
-					* log_q(s.ai[j], s.bi[j], ti, time);
+				let qj = q(s.ai[j], s.bi[j], ti, time);
+				for _ in 0..n_lineages {
+					mul_scale(&mut out, &mut scale, qj);
+				}
 			}
 		}
 
-		Ok(log_p)
+		Ok(out.ln() + scale)
 	}
 
 	fn is_changed(&self) -> bool {
