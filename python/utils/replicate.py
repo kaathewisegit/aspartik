@@ -80,10 +80,10 @@ def replicate_beast2(
                         param.set(float(row[name]))
                     case RealVector():
                         for i in range(len(param)):
-                            param[i] = float(row[f"{name}{i}"])
+                            param[i] = float(row[f"{name}{i + 1}"])
                     case IntVector():
                         for i in range(len(param)):
-                            param[i] = int(row[f"{name}{i}"])
+                            param[i] = int(row[f"{name}{i + 1}"])
                     case _:
                         raise TypeError(
                             f"Parameter {param.__class__.__name__} isn't supported"
@@ -100,7 +100,8 @@ def _check(row, priors: dict[str, Prior] = {}, likelihoods: list[Likelihood] = [
         expected = float(row[name])
         got = prior.probability()
         diff = abs(expected - got)
-        assert diff < 1e-5, f"got {got}, expected {expected}, prior: {prior}"
+        rel = diff / abs(expected)
+        assert rel < 1e-12, f"got {got}, expected {expected}, prior: {prior}"
 
     for likelihood in likelihoods:
         expected = float(row["likelihood"])

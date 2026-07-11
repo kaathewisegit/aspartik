@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from typing import Literal
 
 from ._common import raise_import
@@ -24,10 +23,11 @@ def plot_skyline_coalescent(
     values: pl.Series,
     sequence_names: list[str],
     mode: Mode = "traces",
+    *,
     num_points: int = 200,
     cred_mass: float = 0.95,
 ) -> None:
-    _validate_num_samples(values)
+    _validate_num_samples(values, cred_mass)
 
     rng = RNG(4)
     tree = Tree(sequence_names, rng)
@@ -47,122 +47,125 @@ def plot_skyline_coalescent(
             group_times.append(internal_heights[min(n, num_heights - 1)])
         boundaries.append([0.0, *group_times])
 
-    _plot_skyline_values(ax, boundaries, values, mode, num_points, cred_mass)
+    if mode == "traces":
+        for x, y in zip(boundaries, values):
+            ax.step(x, [*y, y[-1]], where="post", color="steelblue", alpha=0.1)
+        return
+
+    max_height = max(boundary[-1] for boundary in boundaries)
+    grid = np.linspace(0.0, max_height, num_points)
+
+    evals = np.array(
+        [
+            np.asarray(y)[
+                np.searchsorted(x[1:], grid, side="right").clip(max=len(y) - 1)
+            ]
+            for x, y in zip(boundaries, values)
+        ]
+    )
+
+    low, high = _hpd_2d(evals, cred_mass)
+    ax.plot(grid, np.median(evals, axis=0), color="steelblue", label="median")
+    ax.fill_between(
+        grid, low, high, color="steelblue", alpha=0.2, label=f"{cred_mass:.0%} HPD"
+    )
 
 
 def plot_skyline_birthdeath(
     fig: plt.Figure,
     ax: plt.Axes,
-    times: pl.Series | Sequence[float],
-    origin: pl.Series | float,
+    origin: pl.Series,
+    reproductive_number: pl.Series,
+    become_uninfection_rate: pl.Series,
     *,
-    birth_rates: pl.Series | None = None,
-    death_rates: pl.Series | None = None,
-    values: pl.Series | None = None,
-    times_start_from_origin: bool = True,
-    mode: Mode = "traces",
     num_points: int = 200,
     cred_mass: float = 0.95,
 ) -> None:
-    if values is None:
-        if birth_rates is None or death_rates is None:
-            raise ValueError("Expected values or birth_rates and death_rates")
-        values = _series_ratio(birth_rates, death_rates)
+    _validate_num_samples(reproductive_number, cred_mass)
 
-    _validate_num_samples(values)
+    max_origin = origin.max()
+    assert isinstance(max_origin, float)
 
-    boundaries = [
-        _birthdeath_boundaries(t, o, times_start_from_origin)
-        for t, o in zip(
-            _iter_series_or_value(times, len(values)),
-            _iter_series_or_value(origin, len(values)),
-        )
-    ]
-    plot_values = [
-        list(reversed(row)) if times_start_from_origin else list(row) for row in values
-    ]
+    ax2 = ax.twinx()
 
-    _plot_skyline_values(
-        ax,
-        boundaries,
-        pl.Series("values", plot_values),
-        mode,
-        num_points,
-        cred_mass,
+    grid = np.linspace(0.0, max_origin, num_points)
+    evals = np.empty((len(reproductive_number), num_points))
+    for i, (row, o) in enumerate(zip(reproductive_number, origin)):
+        n = len(row)
+        iw = float(o) / n
+        vals = np.asarray(row, dtype=float)
+        idx = np.floor((float(o) - grid) / iw).astype(int).clip(0, n - 1)
+        evals[i] = vals[idx]
+
+    low, high = _hpd_2d(evals, cred_mass)
+    ax.plot(grid, np.median(evals, axis=0), color="darkorange", label=r"median $R_e$")
+    ax.fill_between(
+        grid,
+        low,
+        high,
+        color="darkorange",
+        alpha=0.2,
+        label=rf"$R_e$ {cred_mass:.0%} HPD",
     )
 
-
-def _validate_num_samples(values: pl.Series) -> None:
-    if len(values) <= 9:
-        raise ValueError("The input trace must have at least 10 samples")
-
-
-def _series_ratio(numerator: pl.Series, denominator: pl.Series) -> pl.Series:
-    return pl.Series(
-        "values",
-        [
-            [n / d for n, d in zip(numerator_row, denominator_row)]
-            for numerator_row, denominator_row in zip(numerator, denominator)
-        ],
+    delta = np.asarray(become_uninfection_rate, dtype=float)
+    _validate_num_samples(delta, cred_mass)
+    d_low, d_high = _hpd_1d(delta, cred_mass)
+    d_median = float(np.median(delta))
+    ax2.axhspan(
+        d_low,
+        d_high,
+        color="steelblue",
+        alpha=0.2,
+        label=rf"$\delta$ {cred_mass:.0%} HPD",
     )
+    ax2.axhline(d_median, color="steelblue", label=r"median $\delta$")
+
+    ax.set_ylabel(r"$R_e$", color="darkorange")
+    ax.tick_params(axis="y", colors="darkorange")
+    ax.spines["left"].set_color("darkorange")
+
+    ax2.set_ylabel(r"$\delta$", color="steelblue")
+    ax2.tick_params(axis="y", colors="steelblue")
+    ax2.spines["right"].set_color("steelblue")
+    ax2.set_ylim(0.0, 1.0)
+
+    ax.set_xlim(max_origin, 0.0)
+
+    handles, labels = [], []
+    for a in (ax, ax2):
+        h, ls = a.get_legend_handles_labels()
+        handles.extend(h)
+        labels.extend(ls)
+    ax.legend(handles, labels)
 
 
-def _iter_series_or_value(value: pl.Series | Sequence[float] | float, length: int):
-    if isinstance(value, pl.Series):
-        return value
-    return [value] * length
-
-
-def _birthdeath_boundaries(
-    times: Sequence[float], origin: float, times_start_from_origin: bool
-) -> list[float]:
-    if times_start_from_origin:
-        interval_ends = sorted(time for time in times if time > 0.0)
-        interval_ends = [time for time in interval_ends if time < origin]
-        interval_ends.append(origin)
-        return [0.0, *[origin - time for time in reversed(interval_ends[:-1])], origin]
-
-    interval_ends = sorted(time for time in times if 0.0 < time < origin)
-    return [0.0, *interval_ends, origin]
-
-
-def _plot_skyline_values(
-    ax: plt.Axes,
-    boundaries: list[list[float]],
-    values: pl.Series,
-    mode: Mode,
-    num_points: int,
-    cred_mass: float,
-) -> None:
-    if mode == "traces":
-        for x, y in zip(boundaries, values):
-            ax.step(x, [*y, y[-1]], where="post", color="steelblue", alpha=0.1)
-    else:
-        max_height = max(boundary[-1] for boundary in boundaries)
-        grid = np.linspace(0.0, max_height, num_points)
-
-        evals = np.array(
-            [
-                np.asarray(y)[
-                    np.searchsorted(x[1:], grid, side="right").clip(max=len(y) - 1)
-                ]
-                for x, y in zip(boundaries, values)
-            ]
+def _validate_num_samples(values: pl.Series | np.ndarray, cred_mass: float) -> None:
+    if not 0.0 < cred_mass < 1.0:
+        raise ValueError("cred_mass must be strictly between 0 and 1")
+    min_samples = int(np.ceil(1.0 / (1.0 - cred_mass)))
+    if len(values) < min_samples:
+        raise ValueError(
+            f"The input trace must have at least {min_samples} samples "
+            f"for a {cred_mass:.0%} credible interval"
         )
 
-        sorted_evals = np.sort(evals, axis=0)
-        ci_range = int(np.round(cred_mass * len(sorted_evals)))
-        ci_range = min(max(ci_range, 1), len(sorted_evals) - 1)
 
-        idx = np.argmin(sorted_evals[ci_range:] - sorted_evals[:-ci_range], axis=0)
-        cols = np.arange(num_points)
+def _hpd_1d(samples: np.ndarray, cred_mass: float) -> tuple[float, float]:
+    sorted_samples = np.sort(samples)
+    n = len(sorted_samples)
+    ci_range = int(np.round(cred_mass * n))
+    ci_range = min(max(ci_range, 1), n - 1)
+    widths = sorted_samples[ci_range:] - sorted_samples[:-ci_range]
+    idx = int(np.argmin(widths))
+    return float(sorted_samples[idx]), float(sorted_samples[idx + ci_range])
 
-        ax.plot(grid, np.median(evals, axis=0), color="steelblue", label="median")
-        ax.fill_between(
-            grid,
-            sorted_evals[idx, cols],
-            sorted_evals[idx + ci_range, cols],
-            color="steelblue",
-            alpha=0.2,
-            label=f"{cred_mass:.0%} HPD",
-        )
+
+def _hpd_2d(evals: np.ndarray, cred_mass: float) -> tuple[np.ndarray, np.ndarray]:
+    sorted_evals = np.sort(evals, axis=0)
+    n = len(sorted_evals)
+    ci_range = int(np.round(cred_mass * n))
+    ci_range = min(max(ci_range, 1), n - 1)
+    idx = np.argmin(sorted_evals[ci_range:] - sorted_evals[:-ci_range], axis=0)
+    cols = np.arange(evals.shape[1])
+    return sorted_evals[idx, cols], sorted_evals[idx + ci_range, cols]

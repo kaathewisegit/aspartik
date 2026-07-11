@@ -222,14 +222,10 @@ class BayesianSkyline(Prior):
 @dataclass
 class BirthDeathSkyline(Prior):
     tree: Tree
-    times: RealVector
-    birth_rates: RealVector
-    death_rates: RealVector
-    sampling_rates: RealVector
     origin: Real
-    relative_death: bool = False
-    times_start_from_origin: bool = True
-    condition_on_survival: bool = True
+    become_uninfection_rate: Real
+    reproductive_number: RealVector
+    sampling_proportion: Real
 
 @dataclass
 class Monophyly(Prior):

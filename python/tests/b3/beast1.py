@@ -239,32 +239,12 @@ def test_skyline(rng):
     )
 
 
-@pytest.mark.parametrize(
-    ("fixture", "relative_death", "times_start_from_origin", "condition_on_survival"),
-    (
-        ("000", False, False, False),
-        ("001", False, False, True),
-        ("010", False, True, False),
-        ("011", False, True, True),
-        ("100", True, False, False),
-        ("101", True, False, True),
-        ("110", True, True, False),
-        ("111", True, True, True),
-    ),
-)
-def test_birthdeath_skyline(
-    rng,
-    fixture,
-    relative_death,
-    times_start_from_origin,
-    condition_on_survival,
-):
-    clock_rate = Real(1.0)
-    birth_rates = RealVector.repeat(1.0, 5)
-    death_rates = RealVector.repeat(0.5, 5)
-    sampling_rates = RealVector.repeat(0.25, 5)
-    times = RealVector(0.0, 0.01, 0.02, 0.03, 0.04)
-    origin = Real(0.5)
+def test_birthdeath_skyline(rng):
+    clock_rate = Real(7.9e-4)
+    origin = Real(1000.0)
+    become_uninfection_rate = Real(1.0)
+    reproductive_number = RealVector.repeat(2.0, 10)
+    sampling_proportion = Real(0.01)
 
     msa = read_msa_from_fasta("data/alignments/hcv.fasta")
     tree = Tree(msa.sequence_names(), rng)
@@ -278,26 +258,22 @@ def test_birthdeath_skyline(
 
     prior = BirthDeathSkyline(
         tree,
-        times,
-        birth_rates,
-        death_rates,
-        sampling_rates,
         origin,
-        relative_death=relative_death,
-        times_start_from_origin=times_start_from_origin,
-        condition_on_survival=condition_on_survival,
+        become_uninfection_rate,
+        reproductive_number,
+        sampling_proportion,
     )
 
-    path = f"data/runs/skyline-birthdeath/{fixture}"
     replicate_beast2(
-        f"{path}/beast2.log",
+        "data/runs/skyline-birthdeath/beast2.trace",
         parameters={
             "tree": tree,
-            "birthRate": birth_rates,
-            "deathRate": death_rates,
-            "origin": origin,
+            "origin_BDSKY_Serial": origin,
+            "becomeUninfectiousRate_BDSKY_Serial": become_uninfection_rate,
+            "reproductiveNumber_BDSKY_Serial.": reproductive_number,
+            "samplingProportion_BDSKY_Serial": sampling_proportion,
         },
-        trees_path=f"{path}/beast2.trees",
-        priors={"birthDeath": prior},
+        trees_path="data/runs/skyline-birthdeath/beast2.trees",
+        priors={"BDSKY_Serial": prior},
         likelihoods=[likelihood],
     )

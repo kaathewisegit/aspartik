@@ -19,7 +19,6 @@ from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import (
     BirthDeathSkyline,
     Bound,
-    MarkovChainDistribution,
     SymmetricDirichlet,
 )
 from aspartik.b3.substitutions import GTR
@@ -33,48 +32,37 @@ msa = read_msa_from_fasta("data/alignments/hcv.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
-tree.set_random_heights(0.1, rng)
+tree.set_random_heights(10, rng)
 tree.accept()
 
-NUM_INTERVALS = 5
-times = RealVector(0.0, 0.01, 0.02, 0.03, 0.04)
-birth_rates = RealVector.repeat(1.0, NUM_INTERVALS)
-death_rates = RealVector.repeat(0.5, NUM_INTERVALS)
-sampling_rates = RealVector.repeat(0.25, NUM_INTERVALS)  # TODO: vary?
-origin = Real(0.5)
+become_uninfectious_rate = Real(1)
+reproductive_number = RealVector.repeat(2, 20)
+sampling_proportion = Real(1)
+origin = Real(1000)
 
 frequencies = RealVector.repeat(0.25, 4)
 rates = RealVector.repeat(1, 6)
 
-bdsky = BirthDeathSkyline(
-    tree,
-    times,
-    birth_rates,
-    death_rates,
-    sampling_rates,
-    origin,
-    relative_death=False,
-    times_start_from_origin=True,
-    condition_on_survival=True,
-)
-
 priors = [
-    Bound(birth_rates, 1e-3, 3.0),
-    Bound(death_rates, 0.25, 3.0),
-    Bound(origin, 0.05, 5.0),
+    BirthDeathSkyline(
+        tree,
+        origin,
+        become_uninfectious_rate,
+        reproductive_number,
+        sampling_proportion,
+    ),
     Bound(frequencies),
     Bound(rates),
-    MarkovChainDistribution(birth_rates),
-    MarkovChainDistribution(death_rates),
-    bdsky,
     SymmetricDirichlet(frequencies, 1),
     SymmetricDirichlet(rates, 6),
 ]
 
 operators = [
-    ScaleRealVector(birth_rates, Uniform(0, 1), rng, weight=15),
-    ScaleRealVector(death_rates, Uniform(0, 1), rng, weight=15),
     ScaleReal(origin, Uniform(0, 1), rng, weight=5),
+    ScaleReal(become_uninfectious_rate, Uniform(0, 1), rng, weight=2),
+    ScaleRealVector(reproductive_number, Uniform(0, 1), rng, weight=10),
+    ScaleReal(sampling_proportion, Uniform(0, 1), rng, weight=10),
+    #
     SubtreeLeap(tree, Normal(0, 1), rng, weight=50),
     FixedHeightSPR(tree, rng, weight=5),
     RootSlide(tree, Uniform(0, 1), rng, weight=5),
@@ -94,14 +82,14 @@ callbacks = [
     PrintLogger(every=10_000),
     TraceWriter(
         {
-            "birth_rates": birth_rates,
-            "death_rates": death_rates,
-            "sampling_rates": sampling_rates,
             "origin": origin,
+            "become_uninfectious_rate": become_uninfectious_rate,
+            "reproductive_number": reproductive_number,
+            "sampling_proportion": sampling_proportion,
             "frequencies": frequencies,
             "rates": rates,
             "tree": tree,
-            "prior:bdsky": bdsky,
+            "prior:bdsky": priors[0],
         },
         path="target/bdsky.trace",
         every=10_000,
@@ -122,23 +110,17 @@ mcmc = MCMC(
 if __name__ == "__main__":
     run_from_cmdline(mcmc, default_length=200_000)
 
-    offset = mcmc.current_step // (10_000 * 10)
-    df = pl.read_ipc("target/bdsky.trace", memory_map=False).slice(offset)
+    df = pl.read_ipc("target/bdsky.trace", memory_map=False)
+    df = df.slice(df.height // 2)
 
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.set_xlabel("Years ago")
-    ax.set_ylabel("R_e")
-    ax.axhline(1.0, color="black", linestyle="--", linewidth=1, alpha=0.5)
-    ax.invert_xaxis()
     plot_skyline_birthdeath(
         fig,
         ax,
-        [times[i] for i in range(len(times))],
         df["origin"],
-        birth_rates=df["birth_rates"],
-        death_rates=df["death_rates"],
-        mode="hpd",
+        df["reproductive_number"],
+        df["become_uninfectious_rate"],
     )
-    ax.legend()
     fig.tight_layout()
     fig.savefig("target/bdsky.png", dpi=300, bbox_inches="tight")
