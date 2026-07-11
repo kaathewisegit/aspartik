@@ -1,3 +1,4 @@
+import re
 import subprocess
 import tempfile
 from collections.abc import Sequence
@@ -22,6 +23,7 @@ from aspartik.b3.operators import (
     RandomWalk,
     RootSlide,
     ScaleReal,
+    ScaleRealVector,
     SubtreeLeap,
     SubtreeSlide,
     TreeScale,
@@ -29,6 +31,7 @@ from aspartik.b3.operators import (
 )
 from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import (
+    BirthDeathSkyline,
     Bound,
     ConstantPopulation,
     Distribution,
@@ -41,6 +44,7 @@ from aspartik.b3.utils import print_operator_stats, print_operator_timings
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 from aspartik.stats.distributions import (
+    Beta,
     Continuous,
     Gamma,
     Laplace,
@@ -59,7 +63,7 @@ class MCMCConfig:
     heights: Optional[Sequence[float]] = None
     tree_sim_pop_size: float = 100.0
 
-    tree_prior: Literal["yule", "constant", "exponential"]
+    tree_prior: str
     param_priors: dict[str, Continuous] = field(default_factory=dict)
     substitution_model: Literal["JC", "K80", "HKY", "GTR"]
     clock_rate: Optional[float] = None
@@ -553,6 +557,12 @@ def _beast1_config(c: MCMCConfig):
             <speciationLikelihood idref="prior:yule"/>
             """
 
+        case s if re.match(r"^bdsky(:\d+)?$", s):
+            raise NotImplementedError("bdsky tree prior is not implemented for BEAST1")
+
+        case _:
+            raise ValueError(f"unknown tree prior: {c.tree_prior!r}")
+
     assert tree_prior_s is not None
 
     file_log = (
@@ -725,6 +735,39 @@ def _b3_config(c: MCMCConfig):
             coalescent = ExponentialGrowth(tree, population_size, growth_rate)
             items["prior:coalescent"] = coalescent
             priors.extend([Bound(growth_rate), coalescent])
+
+        case s if re.match(r"^bdsky(:\d+)?$", s):
+            intervals = int(s.split(":")[1]) if ":" in s else 20
+
+            origin = create_real(1000.0, "origin", LogNormal(0, 1), weight=5)
+            become_uninfectious_rate = create_real(
+                1.0, "become_uninfectious_rate", LogNormal(0, 1), weight=2
+            )
+            sampling_proportion = create_real(
+                1.0, "sampling_proportion", Beta(1, 1), weight=10
+            )
+
+            reproductive_number = RealVector.repeat(2, intervals)
+            items["reproductive_number"] = reproductive_number
+            parameters.append(reproductive_number)
+            rn_dist = c.param_priors.get("reproductive_number", LogNormal(0, 1))
+            priors.append(Distribution(reproductive_number, rn_dist))
+            operators.append(
+                ScaleRealVector(reproductive_number, Uniform(0, 1), rng, weight=10)
+            )
+
+            bdsky = BirthDeathSkyline(
+                tree,
+                origin,
+                become_uninfectious_rate,
+                reproductive_number,
+                sampling_proportion,
+            )
+            items["prior:bdsky"] = bdsky
+            priors.append(bdsky)
+
+        case _:
+            raise ValueError(f"unknown tree prior: {c.tree_prior!r}")
 
     clock = None
     clock_rate_p = None
