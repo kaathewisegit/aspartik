@@ -18,6 +18,7 @@ from aspartik.b3.operators import (
     BeastNarrowExchange,
     BeastWideExchange,
     DeltaExchange,
+    DeltaExchangeInt,
     FixedHeightSPR,
     NodeSlide,
     RandomWalk,
@@ -29,13 +30,15 @@ from aspartik.b3.operators import (
     TreeScale,
     UpDown,
 )
-from aspartik.b3.parameters import Real, RealVector, Tree
+from aspartik.b3.parameters import IntVector, Real, RealVector, Tree
 from aspartik.b3.priors import (
+    BayesianSkyline,
     BirthDeathSkyline,
     Bound,
     ConstantPopulation,
     Distribution,
     ExponentialGrowth,
+    MarkovChainDistribution,
     SymmetricDirichlet,
     Yule,
 )
@@ -558,7 +561,14 @@ def _beast1_config(c: MCMCConfig):
             """
 
         case s if re.match(r"^bdsky(:\d+)?$", s):
-            raise NotImplementedError("bdsky tree prior is not implemented for BEAST1")
+            raise NotImplementedError(
+                "birth-death skyline tree prior is not implemented for BEAST1"
+            )
+
+        case s if re.match(r"^skyline(:\d+)?$", s):
+            raise NotImplementedError(
+                "coalescent skyline tree prior is not implemented for BEAST1"
+            )
 
         case _:
             raise ValueError(f"unknown tree prior: {c.tree_prior!r}")
@@ -737,7 +747,7 @@ def _b3_config(c: MCMCConfig):
             priors.extend([Bound(growth_rate), coalescent])
 
         case s if re.match(r"^bdsky(:\d+)?$", s):
-            intervals = int(s.split(":")[1]) if ":" in s else 20
+            intervals = int(s.split(":")[1]) if ":" in s else 10
 
             origin = create_real(1000.0, "origin", LogNormal(0, 1), weight=5)
             become_uninfectious_rate = create_real(
@@ -753,7 +763,9 @@ def _b3_config(c: MCMCConfig):
             rn_dist = c.param_priors.get("reproductive_number", LogNormal(0, 1))
             priors.append(Distribution(reproductive_number, rn_dist))
             operators.append(
-                ScaleRealVector(reproductive_number, Uniform(0, 1), rng, weight=10)
+                ScaleRealVector(
+                    reproductive_number, Uniform(0, 1), rng, weight=intervals
+                )
             )
 
             bdsky = BirthDeathSkyline(
@@ -763,8 +775,28 @@ def _b3_config(c: MCMCConfig):
                 reproductive_number,
                 sampling_proportion,
             )
-            items["prior:bdsky"] = bdsky
+            items["prior:coalescent"] = bdsky
             priors.append(bdsky)
+
+        case s if re.match(r"^skyline(:\d+)?$", s):
+            groups = int(s.split(":")[1]) if ":" in s else 10
+
+            population_sizes = RealVector.repeat(1.0, groups)
+            items["population_sizes"] = population_sizes
+            parameters.append(population_sizes)
+            priors.append(MarkovChainDistribution(population_sizes))
+            operators.append(
+                ScaleRealVector(population_sizes, Uniform(0, 1), rng, weight=15)
+            )
+
+            group_sizes = IntVector.repeat(0, groups)
+            items["group_sizes"] = group_sizes
+            parameters.append(group_sizes)
+            operators.append(DeltaExchangeInt(group_sizes, rng, weight=6))
+
+            coalescent = BayesianSkyline(tree, population_sizes, group_sizes)
+            items["prior:coalescent"] = coalescent
+            priors.append(coalescent)
 
         case _:
             raise ValueError(f"unknown tree prior: {c.tree_prior!r}")
