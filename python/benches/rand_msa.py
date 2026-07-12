@@ -12,6 +12,7 @@ def run_mcmc(
     num_sites: int,
     kind: Literal["cpu", "cuda"],
     length: int,
+    tree_prior: str = "constant",
     seed: int = 4,
 ) -> Optional[float]:
     rng = RNG(seed)
@@ -23,7 +24,7 @@ def run_mcmc(
         msa,
         calculator=kind,
         optimization_cutoff=1,
-        tree_prior="constant",
+        tree_prior=tree_prior,
         substitution_model="GTR",
         trace_path="target/rand_msa.trace",
         trees_path="target/rand_msa.trees",
@@ -47,6 +48,7 @@ def parse_cli_args():
     parser.add_argument("--num-sequences", type=int, required=True)
     parser.add_argument("--num-sites", type=int, required=True)
     parser.add_argument("--length", type=int, default=1_000_000)
+    parser.add_argument("--tree-prior", default="constant")
 
     return parser.parse_args()
 
@@ -60,6 +62,7 @@ def main():
         args.num_sites,
         args.kind,
         args.length,
+        args.tree_prior,
     )
 
 
