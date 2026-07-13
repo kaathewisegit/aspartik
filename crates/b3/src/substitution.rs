@@ -1,5 +1,3 @@
-#![allow(unused_variables)]
-
 use anyhow::Result;
 use pyo3::prelude::*;
 
@@ -203,7 +201,7 @@ impl SubstitutionModel for K80 {
 fn transition_freqs(freqs: &[f64; 4], mut dst: MatrixMut<'_, f64>) {
 	for i in 0..4 {
 		for j in 0..4 {
-			dst[(i, j)] = freqs[i];
+			dst[(i, j)] = freqs[j];
 		}
 	}
 }
@@ -325,12 +323,18 @@ impl SubstitutionModel for HKY {
 		distance: f64,
 		mut dst: MatrixMut<'_, f64>,
 	) {
-		if distance > 50.0 {
+		if distance > 20.0 {
 			transition_freqs(
 				&self.cached_frequencies,
 				dst.reborrow(),
 			);
+			return;
+		} else if distance < 1e-10 {
+			dst.reborrow().fill(1e-100);
+			dst.set_diagonal(&[1.0, 1.0, 1.0, 1.0]);
+			return;
 		}
+
 		let diag: M4 =
 			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
@@ -486,12 +490,18 @@ impl SubstitutionModel for GTR {
 		distance: f64,
 		mut dst: MatrixMut<'_, f64>,
 	) {
-		if distance > 50.0 {
+		if distance > 20.0 {
 			transition_freqs(
 				&self.cached_frequencies,
 				dst.reborrow(),
 			);
+			return;
+		} else if distance < 1e-10 {
+			dst.reborrow().fill(1e-100);
+			dst.set_diagonal(&[1.0, 1.0, 1.0, 1.0]);
+			return;
 		}
+
 		let diag: M4 =
 			from_diagonal(&self.diag.map(|v| (v * distance).exp()));
 
@@ -510,6 +520,7 @@ impl SubstitutionModel for GTR {
 	fn reject(&mut self) {
 		if self.has_changed {
 			self.update_matrices();
+			self.has_changed = false;
 		}
 	}
 }

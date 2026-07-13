@@ -175,6 +175,17 @@ impl<'a, T> MatrixMut<'a, T> {
 		}
 	}
 
+	pub fn fill(mut self, value: T)
+	where
+		T: Copy,
+	{
+		for i in 0..self.num_rows() {
+			for j in 0..self.num_cols() {
+				self[(i, j)] = value;
+			}
+		}
+	}
+
 	/// Zeroes out the matrix
 	pub fn zero(self)
 	where
