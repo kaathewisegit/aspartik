@@ -2,6 +2,7 @@ use computare_distributions::Continuous;
 use pyo3::prelude::*;
 
 use rng::PyRng;
+use util::{py_call_method, py_has_method};
 
 macro_rules! wrapper {
 	(
@@ -74,6 +75,17 @@ macro_rules! wrapper {
 
 				let x = self.make(py)?.sample(&mut rng.get().inner());
 				Ok(x)
+			}
+
+			fn is_changed(&self, py: Python) -> PyResult<bool> {
+				$(
+				let $field = self.$field.bind(py);
+				if py_has_method!($field, "is_changed") && py_call_method!($field, "is_changed")?.extract::<bool>()? {
+					return Ok(true);
+				}
+				)*
+
+				Ok(false)
 			}
 
 			$($($rest)*)?
