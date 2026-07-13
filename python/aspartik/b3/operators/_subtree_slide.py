@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from math import log
 
+from ...distributions import Sample
 from ...rng import RNG
-from ...stats.distributions import Sample
 from .. import Operator, Proposal
 from ..parameters import Internal, Node, Parameter, Tree
 from ._util import assert_two_internals, family

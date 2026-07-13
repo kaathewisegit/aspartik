@@ -2,8 +2,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Literal
 
+from ...distributions import Uniform
 from ...rng import RNG
-from ...stats.distributions import Uniform
 from .. import Operator, Proposal, TunableOperator
 from ..parameters import Parameter, Real
 

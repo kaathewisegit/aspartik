@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from math import log
 
+from ...distributions import Sample
 from ...rng import RNG
-from ...stats.distributions import Distribution
 from .. import Operator, Proposal, TunableOperator
 from ..parameters import Parameter, Tree
 from ._util import sample_range
@@ -20,7 +20,7 @@ class RootSlide(Operator, TunableOperator):
 
     tree: Tree
     """The tree to edit."""
-    distribution: Distribution
+    distribution: Sample[float]
     """The distribution to draw the height move distance from"""
     rng: RNG
     weight: float = 1

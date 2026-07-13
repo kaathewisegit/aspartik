@@ -8,7 +8,7 @@ from aspartik.b3.operators import (
     WideExchange,
     WilsonBalding,
 )
-from aspartik.stats.distributions import Uniform
+from aspartik.distributions import Uniform
 
 
 def test_narrow_exchange(rng):

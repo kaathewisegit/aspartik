@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ...stats.distributions import Continuous
+from ...distributions import Continuous
 from .. import Prior
 from ..parameters import MRCA, Real, RealVector, Root
 

@@ -21,8 +21,8 @@ pub type Rng = Pcg64;
 /// minor version of `b3` it will always output the same stream of values.
 ///
 /// It has a number of built-in methods, but it is primarily used by other
-/// Aspartik modules (for example `b3` and `stats.distributions`) as a
-/// randomness source.
+/// Aspartik modules (for example `b3` and `distributions`) as a randomness
+/// source.
 #[derive(Debug)]
 #[pyclass(name = "RNG", module = "aspartik.rng", frozen)]
 #[repr(transparent)]

@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from math import log
 
+from ...distributions import Sample
 from ...rng import RNG
-from ...stats.distributions import Distribution
 from .. import Operator, Proposal, TunableOperator
 from ..parameters import Parameter, Tree
 from ._util import sample_range
@@ -19,7 +19,7 @@ class TreeScale(Operator, TunableOperator):
 
     tree: Tree
     """The tree to scale."""
-    distribution: Distribution
+    distribution: Sample[float]
     """Distribution from which the scale is sampled."""
     rng: RNG
     weight: float = 1

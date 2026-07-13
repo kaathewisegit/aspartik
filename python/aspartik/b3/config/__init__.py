@@ -45,8 +45,7 @@ from aspartik.b3.priors import (
 from aspartik.b3.substitutions import GTR, HKY, JC, K80
 from aspartik.b3.utils import print_operator_stats, print_operator_timings
 from aspartik.data.msa import MSA
-from aspartik.rng import RNG
-from aspartik.stats.distributions import (
+from aspartik.distributions import (
     Beta,
     Continuous,
     Gamma,
@@ -55,6 +54,7 @@ from aspartik.stats.distributions import (
     Normal,
     Uniform,
 )
+from aspartik.rng import RNG
 
 
 @dataclass(slots=True)

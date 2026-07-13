@@ -1,4 +1,5 @@
 use anyhow::Result;
+use computare_distributions::{Continuous, Gamma};
 use fork_union::{SyncMutPtr, ThreadPool};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
@@ -13,7 +14,6 @@ use crate::{
 };
 use data::PyMsa;
 use sk::SkBuf;
-use stats::distribution::{ContinuousCDF, Gamma};
 use util::atomic::{MonotonicBool, MonotonicF64};
 
 #[pyclass(module = "aspartik.b3.likelihoods", frozen)]
@@ -204,7 +204,7 @@ impl GammaLikelihood {
 
 fn update_categories(alpha: &Real, categories: &mut SkBuf<f64>) {
 	let alpha = alpha.value();
-	let dist = Gamma::new(alpha, 1.0).unwrap();
+	let dist = Gamma::new(alpha, 1.0);
 	let mut sum = 0.0;
 	let num_categories = categories.len();
 

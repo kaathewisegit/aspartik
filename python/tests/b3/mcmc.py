@@ -7,9 +7,9 @@ from aspartik.b3.operators import ScaleReal, TreeScale
 from aspartik.b3.parameters import Real, Tree
 from aspartik.b3.priors import Bound
 from aspartik.b3.substitutions import K80
+from aspartik.distributions import Uniform
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Uniform
 
 
 def test_mcmc():

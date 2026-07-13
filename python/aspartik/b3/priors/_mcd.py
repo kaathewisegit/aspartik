@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from math import log
 
-from ...stats.distributions import Gamma
+from ...distributions import Gamma
 from .. import Prior
 from ..parameters import RealVector
 

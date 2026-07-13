@@ -1,15 +1,14 @@
 from typing import Self, SupportsFloat
 
-from aspartik.stats.distributions import (
+from aspartik.distributions import (
     Continuous,
-    ContinuousCDF,
-    Distribution,
     Sample,
+    Statistics,
 )
 
 # Concrete distributions
 
-class Beta(ContinuousCDF, Continuous, Distribution, Sample[float]):
+class Beta(Continuous, Statistics, Sample[float]):
     def __init__(self, shape_a: SupportsFloat, shape_b: SupportsFloat): ...
     @property
     def shape_a(self) -> float: ...
@@ -20,12 +19,12 @@ class BetaError:
     InvalidAlpha: Self
     InvalidBeta: Self
 
-class Exp(ContinuousCDF, Continuous, Distribution, Sample[float]):
+class Exponential(Continuous, Statistics, Sample[float]):
     def __init__(self, rate: SupportsFloat): ...
     @property
     def rate(self) -> float: ...
 
-class Gamma(ContinuousCDF, Continuous, Distribution, Sample[float]):
+class Gamma(Continuous, Statistics, Sample[float]):
     def __init__(self, shape: SupportsFloat, rate: SupportsFloat): ...
     @property
     def shape(self) -> float: ...
@@ -37,7 +36,7 @@ class GammaError:
     RateInvalid: Self
     ShapeAndRateInfinite: Self
 
-class InverseGamma(ContinuousCDF, Continuous, Distribution, Sample[float]):
+class InverseGamma(Continuous, Statistics, Sample[float]):
     def __init__(self, shape: SupportsFloat, rate: SupportsFloat): ...
     @property
     def shape(self) -> float: ...
@@ -48,7 +47,7 @@ class InverseGammaError:
     ShapeInvalid: Self
     RateInvalid: Self
 
-class Laplace(ContinuousCDF, Continuous, Distribution, Sample[float]):
+class Laplace(Continuous, Statistics, Sample[float]):
     def __init__(self, location: SupportsFloat, scale: SupportsFloat): ...
     @property
     def location(self) -> float: ...
@@ -59,7 +58,7 @@ class LaplaceError:
     LocationInvalid: Self
     ScaleInvalid: Self
 
-class LogNormal(ContinuousCDF, Continuous, Distribution, Sample[float]):
+class LogNormal(Continuous, Statistics, Sample[float]):
     def __init__(self, location: SupportsFloat, scale: SupportsFloat): ...
     @property
     def location(self) -> float: ...
@@ -70,14 +69,14 @@ class LogNormalError:
     LocationInvalid: Self
     ScaleInvalid: Self
 
-class Normal(ContinuousCDF, Continuous, Distribution, Sample[float]):
+class Normal(Continuous, Statistics, Sample[float]):
     def __init__(self, mean: SupportsFloat, std_dev: SupportsFloat): ...
 
 class NormalError:
     MeanInvalid: Self
     StandardDeviationInvalid: Self
 
-class Uniform(ContinuousCDF, Continuous, Distribution, Sample[float]):
+class Uniform(Continuous, Statistics, Sample[float]):
     def __init__(self, min: SupportsFloat, max: SupportsFloat): ...
     @property
     def min(self) -> float: ...

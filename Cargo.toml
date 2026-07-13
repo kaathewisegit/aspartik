@@ -6,11 +6,11 @@ members = [
 	"crates/bitmap",
 	"crates/buffer",
 	"crates/data",
+	"crates/distributions",
 	"crates/io",
 	"crates/linalg",
 	"crates/rng",
 	"crates/sk",
-	"crates/stats",
 	"crates/util",
 	"crates/verbatim",
 ]
@@ -30,6 +30,7 @@ blake3 = "1.8"
 bytemuck = "1.25"
 bytes = "1.12"
 computare-core = { git = "https://github.com/kaathewisegit/computare", version = "0.1.0-alpha.0" }
+computare-distributions = { git = "https://github.com/kaathewisegit/computare", version = "0.1.0-alpha.0" }
 computare-special = { git = "https://github.com/kaathewisegit/computare", version = "0.1.0-alpha.0" }
 cudarc = { version = "0.19.8", default-features = false }
 fork_union = "2.3"
@@ -48,11 +49,11 @@ b3 = { version = "0.1.0-alpha.18", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.18", path = "crates/bitmap" }
 buffer = { version = "0.1.0-alpha.18", path = "crates/buffer" }
 data = { version = "0.1.0-alpha.18", path = "crates/data" }
+distributions = { version = "0.1.0-alpha.18", path = "crates/distributions" }
 io = { version = "0.1.0-alpha.18", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.18", path = "crates/linalg" }
 rng = { version = "0.1.0-alpha.18", path = "crates/rng" }
 sk = { version = "0.1.0-alpha.18", path = "crates/sk" }
-stats = { version = "0.1.0-alpha.18", path = "crates/stats" }
 util = { version = "0.1.0-alpha.18", path = "crates/util" }
 verbatim = { version = "0.1.0-alpha.18", path = "crates/verbatim" }
 

@@ -1,0 +1,20 @@
+[package]
+name = "distributions"
+
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+rng = { workspace = true }
+util = { workspace = true }
+
+computare-distributions = { workspace = true, features = ["rand"] }
+pyo3 = { workspace = true }
+rand = { workspace = true }
+
+[features]
+
+[lints]
+workspace = true

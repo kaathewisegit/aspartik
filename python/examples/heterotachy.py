@@ -18,9 +18,9 @@ from aspartik.b3.priors import (
 )
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
+from aspartik.distributions import Laplace, LogNormal, Normal, Uniform
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import DynLogNormal, Laplace, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 
@@ -49,7 +49,7 @@ likelihood = HeteroLikelihood(
     categories=categories,
     substitutions=[GTR(rate, freqs) for rate, freqs in zip(frequencies, rates)],
     clocks=[
-        Clock.Relaxed(clock_cats, DynLogNormal(Real(1), Real(1 / 3)))
+        Clock.Relaxed(clock_cats, LogNormal(Real(1), Real(1 / 3)))
         for clock_cats in clock_categories
     ],
     calculator=Calculator.CPU(),

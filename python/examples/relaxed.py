@@ -20,9 +20,9 @@ from aspartik.b3.priors import (
 )
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
+from aspartik.distributions import Exponential, LogNormal, Normal, Uniform
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import DynLogNormal, Exp, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 
@@ -43,7 +43,7 @@ priors = [
     Bound(frequencies),
     Bound(rates),
     Distribution(clock_mean, Normal(0, 3)),
-    Distribution(clock_scale, Exp(3)),
+    Distribution(clock_scale, Exponential(3)),
     #
     Distribution(Root(tree), Normal(284.1, 0.5)),
 ]
@@ -59,7 +59,7 @@ operators = [
     ScaleReal(clock_scale, Uniform(0, 1), rng, weight=10),
 ]
 
-clock = Clock.Relaxed(clock_categories, DynLogNormal(clock_mean, clock_scale))
+clock = Clock.Relaxed(clock_categories, LogNormal(clock_mean, clock_scale))
 likelihood = DNALikelihood(
     msa=msa,
     substitution=GTR(frequencies, rates),

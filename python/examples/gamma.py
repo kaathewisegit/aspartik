@@ -18,9 +18,9 @@ from aspartik.b3.priors import (
 )
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
+from aspartik.distributions import Exponential, Gamma, Laplace, Normal, Uniform
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Exp, Gamma, Laplace, Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/H1N1pdm_2009.fasta")
 
@@ -52,7 +52,7 @@ frequencies = RealVector.repeat(0.25, 4)
 rates = RealVector.repeat(1, 6)
 
 priors = [
-    Distribution(alpha, Exp(0.5)),
+    Distribution(alpha, Exponential(0.5)),
     Distribution(clock_rate, Laplace(0, 0.5)),
     Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
     Distribution(growth_rate, Laplace(0, 100)),

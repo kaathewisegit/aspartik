@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from math import log
 
+from ...distributions import Sample
 from ...rng import RNG
-from ...stats.distributions import Distribution
 from .. import Operator, Proposal, TunableOperator
 from ..parameters import Parameter, Real, RealVector
 from ._util import sample_range
@@ -22,7 +22,7 @@ class ScaleReal(Operator, TunableOperator):
 
     param: Real
     """The parameter to scale."""
-    distribution: Distribution
+    distribution: Sample[float]
     """The distribution from which to sample the scaling factor."""
     rng: RNG
     weight: float = 1
@@ -54,7 +54,7 @@ class ScaleRealVector(Operator, TunableOperator):
 
     param: RealVector
     """The parameter to scale."""
-    distribution: Distribution
+    distribution: Sample[float]
     """The distribution from which to sample the scaling factor."""
     rng: RNG
     weight: float = 1

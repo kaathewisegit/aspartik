@@ -26,9 +26,9 @@ from aspartik.b3.priors import (
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.b3.utils.skyline import plot_skyline_coalescent
+from aspartik.distributions import Normal, Uniform
 from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
-from aspartik.stats.distributions import Normal, Uniform
 
 msa = read_msa_from_fasta("data/alignments/hcv.fasta")
 

@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from math import log
 
+from ...distributions import Sample
 from ...rng import RNG
-from ...stats.distributions import Distribution
 from .. import Operator, Proposal, TunableOperator
 from ..parameters import Parameter, Real, Tree
 from ._util import sample_range
@@ -26,7 +26,7 @@ class UpDown(Operator, TunableOperator):
     """The parameter to scale up."""
     down: Real | Tree
     """The parameter to scale down."""
-    distribution: Distribution
+    distribution: Sample[float]
     """The distribution from which to sample the scaling factor."""
     rng: RNG
     weight: float = 1

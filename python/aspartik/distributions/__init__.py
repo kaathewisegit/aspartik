@@ -1,24 +1,15 @@
-from dataclasses import dataclass
 from typing import Optional, Protocol, SupportsFloat, runtime_checkable
 
-from .._aspartik_rust_impl._stats_rust_impl import (
+from .._aspartik_rust_impl._distributions_rust_impl import (
     Beta as Beta,
-    BetaError as BetaError,
-    Exp as Exp,
+    Exponential as Exponential,
     Gamma as Gamma,
-    GammaError as GammaError,
     InverseGamma as InverseGamma,
-    InverseGammaError as InverseGammaError,
     Laplace as Laplace,
-    LaplaceError as LaplaceError,
     LogNormal as LogNormal,
-    LogNormalError as LogNormalError,
     Normal as Normal,
-    NormalError as NormalError,
     Uniform as Uniform,
-    UniformError as UniformError,
 )
-from ..b3.parameters import Real
 from ..rng import RNG
 
 
@@ -46,16 +37,6 @@ class Continuous(Protocol):
         on the result of the `pdf` method.
         """
         ...
-
-
-@runtime_checkable
-class ContinuousCDF(Continuous, Protocol):
-    """
-    Density-related continuous distribution methods
-
-    Also includes `lower` and `upper` properties, which define the interval on
-    which the distribution is defined.
-    """
 
     def cdf(self, x: SupportsFloat) -> float:
         """
@@ -102,10 +83,6 @@ class ContinuousCDF(Continuous, Protocol):
 class Discrete[T](Protocol):
     def pmf(self, x: T) -> float: ...
     def ln_pmf(self, x: T) -> float: ...
-
-
-@runtime_checkable
-class DiscreteCDF[T](Discrete[T], Protocol):
     def cdf(self, x: T) -> float: ...
     def sf(self, x: T) -> float: ...
     def inverse_cdf(self, p: SupportsFloat) -> T: ...
@@ -116,31 +93,14 @@ class DiscreteCDF[T](Discrete[T], Protocol):
 
 
 @runtime_checkable
-class Distribution(Protocol):
+class Statistics(Protocol):
     def mean(self) -> Optional[float]: ...
     def median(self) -> Optional[float]: ...
     def variance(self) -> Optional[float]: ...
     def std_dev(self) -> Optional[float]: ...
     def entropy(self) -> Optional[float]: ...
-    def skewness(self) -> Optional[float]: ...
 
 
 @runtime_checkable
 class Sample[T](Protocol):
     def sample(self, rng: RNG) -> T: ...
-
-
-@dataclass(slots=True)
-class DynLogNormal:
-    location: float | Real
-    scale: float | Real
-
-    def is_changed(self):
-        if isinstance(self.location, Real) and self.location.is_changed():
-            return True
-        if isinstance(self.scale, Real) and self.scale.is_changed():
-            return True
-        return False
-
-    def inverse_cdf(self, p: float):
-        return LogNormal(self.location, self.scale).inverse_cdf(p)

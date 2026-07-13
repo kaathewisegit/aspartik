@@ -2,13 +2,6 @@
 
 ## Vendoring
 
-### [`statrs`](./statrs-license)
-
-The `stats` submodule is a fork of the venerable `statrs` crate.  In
-fact, most the underlying algorithms are the same.  `stats` simply
-prunes most of the non-distribution functionality and adds a Python API.
-
-
 ### [`strsim`](./strsim-license)
 
 Generic string similarity searches, whose code I copied and instantiated
@@ -188,7 +181,7 @@ Used (and developed) by `parking_lot`
 
 ### [`num-traits`](./num-traits-license)
 
-Unified numerical interfaces.  Used in `linalg` and `stats`.
+Unified numerical interfaces.  Used in `linalg`.
 
 
 ### [`once_cell`](./once_cell-license)
@@ -243,8 +236,8 @@ See `proc-macro2`.
 
 ### [`rand`/`rand_pcg`][`rand`]
 
-Randomness crates used by both `b3` and `stats`.  The PCG generator
-powers the `rng` module because it's serializable.
+Randomness crates used by both `b3`.  The PCG generator powers the `rng`
+module because it's serializable.
 
 
 ### [`rustc_version`](./rustc_version-license)
@@ -281,7 +274,6 @@ Library for working with host triples, used by `pyo3-build-config`.
 ### [`thiserror`](./thiserror-license)
 
 `anyhow`'s sister project for deriving `Display` and `Error` on types.
-Currently only used in data because `stats` still supports `no_std`.
 
 
 ### [`thiserror-impl`](./thiserror-license)
