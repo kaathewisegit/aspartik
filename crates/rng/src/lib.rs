@@ -10,7 +10,6 @@ use rand_pcg::Pcg64;
 use std::io::Write;
 
 use util::seconds_since_unix;
-use verbatim::{Deserialize, Serialize};
 
 pub type Rng = Pcg64;
 
@@ -36,16 +35,17 @@ impl PyRng {
 	}
 
 	pub fn load(&self, bytes: &mut &[u8]) -> Result<()> {
-		let state = u128::deserialize(bytes)?;
-		let increment = u128::deserialize(bytes)?;
+		let state = verbatim::read_u128_le(bytes)?;
+		let increment = verbatim::read_u128_le(bytes)?;
 		*self.inner() = Pcg64::from_state(state, increment);
 		Ok(())
 	}
 
 	pub fn dump(&self, writer: &mut dyn Write) -> Result<()> {
 		let inner = self.inner();
-		inner.state().serialize(writer)?;
-		inner.stream().serialize(writer)
+		verbatim::write_u128_le(writer, inner.state())?;
+		verbatim::write_u128_le(writer, inner.stream())?;
+		Ok(())
 	}
 }
 

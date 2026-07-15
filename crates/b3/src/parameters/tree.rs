@@ -25,7 +25,6 @@ use data::newick::{
 use rng::{PyRng, Rng};
 use sk::{SkBuf, skbuf};
 use util::{atomic::MonotonicUsize, py_bail};
-use verbatim::{Deserialize, Serialize};
 
 const ROOT: usize = 0x524f4f54;
 
@@ -1066,7 +1065,7 @@ impl Parameter for Tree {
 
 	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
 		for i in 0..self.num_nodes() {
-			self.heights.set(i, f64::deserialize(bytes)?);
+			self.heights.set(i, verbatim::read_f64_le(bytes)?);
 		}
 
 		// overwrite all parents as one of them will be left as root
@@ -1076,7 +1075,7 @@ impl Parameter for Tree {
 
 		let num_leaves = self.num_leaves();
 		for i in 0..self.num_edges() {
-			let child = u32::deserialize(bytes)? as usize;
+			let child = verbatim::read_u32_le(bytes)? as usize;
 			self.children.set(i, child);
 			let parent = i / 2 + num_leaves;
 			self.parents.set(child, parent);
@@ -1094,10 +1093,10 @@ impl Parameter for Tree {
 
 	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
 		for &height in &self.heights {
-			height.serialize(writer)?;
+			verbatim::write_f64_le(writer, height)?;
 		}
 		for &child in &self.children {
-			(child as u32).serialize(writer)?;
+			verbatim::write_u32_le(writer, child as u32)?;
 		}
 
 		Ok(())

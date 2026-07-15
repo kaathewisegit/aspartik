@@ -7,7 +7,6 @@ use std::{io::Write, ops::Index};
 use super::Parameter;
 use crate::impl_pyparameter_common;
 use sk::{Iter, SkBuf};
-use verbatim::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct ClassVector {
@@ -71,7 +70,7 @@ impl Parameter for ClassVector {
 		self.accept();
 
 		for i in 0..self.len() {
-			let c = u32::deserialize(bytes)?;
+			let c = verbatim::read_u32_le(bytes)?;
 			self.set(i, c);
 		}
 		Ok(())
@@ -79,7 +78,7 @@ impl Parameter for ClassVector {
 
 	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
 		for i in 0..self.len() {
-			self[i].serialize(writer)?;
+			verbatim::write_u32_le(writer, self[i])?;
 		}
 		Ok(())
 	}

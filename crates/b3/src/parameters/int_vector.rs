@@ -8,7 +8,6 @@ use super::Parameter;
 use crate::impl_pyparameter_common;
 use sk::{Iter, SkBuf};
 use util::py_bail;
-use verbatim::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct IntVector {
@@ -64,7 +63,7 @@ impl Parameter for IntVector {
 		self.accept();
 
 		for i in 0..self.len() {
-			let value = i64::deserialize(bytes)?;
+			let value = verbatim::read_i64_le(bytes)?;
 			self.set(i, value);
 		}
 
@@ -73,7 +72,7 @@ impl Parameter for IntVector {
 
 	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
 		for i in 0..self.len() {
-			self[i].serialize(writer)?;
+			verbatim::write_i64_le(writer, self[i])?;
 		}
 		Ok(())
 	}

@@ -14,7 +14,6 @@ use crate::{
 };
 use rng::PyRng;
 use util::{atomic::MonotonicF64, seconds_since_unix, time};
-use verbatim::{Deserialize, Serialize};
 
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
@@ -178,14 +177,14 @@ impl Mcmc {
 	}
 
 	fn load_state(&self, py: Python, mut bytes: &[u8]) -> Result<()> {
-		let version = <u32>::deserialize(&mut bytes)?;
+		let version = verbatim::read_u32_le(&mut bytes)?;
 		ensure!(
 			version == STATE_PROTOCOL_VERSION,
 			"Cannot load state: protocol version v{version} is incompatible with the currently supported version v{STATE_PROTOCOL_VERSION}."
 		);
 		*self.current_step.lock() =
-			u64::deserialize(&mut bytes)? as usize;
-		self.posterior.store(f64::deserialize(&mut bytes)?);
+			verbatim::read_u64_le(&mut bytes)? as usize;
+		self.posterior.store(verbatim::read_f64_le(&mut bytes)?);
 
 		for param in &self.parameters {
 			param.as_dyn().load(&mut bytes)?;
@@ -244,9 +243,12 @@ impl Mcmc {
 	}
 
 	fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
-		STATE_PROTOCOL_VERSION.serialize(writer)?;
-		(*self.current_step.lock() as u64).serialize(writer)?;
-		self.posterior.load().serialize(writer)?;
+		verbatim::write_u32_le(writer, STATE_PROTOCOL_VERSION)?;
+		verbatim::write_u64_le(
+			writer,
+			*self.current_step.lock() as u64,
+		)?;
+		verbatim::write_f64_le(writer, self.posterior.load())?;
 
 		for parameter in &self.parameters {
 			parameter.as_dyn().dump(writer)?;

@@ -76,6 +76,7 @@ def test_dump_restore():
     assert isinstance(tree0, Tree)
     assert isinstance(tree1, Tree)
     assert tree0.to_newick() == tree1.to_newick()
+    assert mcmc0.prior == mcmc1.prior
 
 
 def test_version_assertion():

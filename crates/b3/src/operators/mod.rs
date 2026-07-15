@@ -20,7 +20,6 @@ use util::{
 	atomic::MonotonicU32, py_bail, py_call_method, py_check_method,
 	py_extract_attr, py_has_method, time,
 };
-use verbatim::{Deserialize, Serialize};
 
 mod classvec_flip;
 mod fhspr;
@@ -194,19 +193,19 @@ impl PyOperator {
 	}
 
 	pub fn load(&self, py: Python, bytes: &mut &[u8]) -> Result<()> {
-		self.accepts.store(u32::deserialize(bytes)?);
-		self.rejects.store(u32::deserialize(bytes)?);
+		self.accepts.store(verbatim::read_u32_le(bytes)?);
+		self.rejects.store(verbatim::read_u32_le(bytes)?);
 		if self.has_tuning {
-			self.set_tuning(py, f64::deserialize(bytes)?)?;
+			self.set_tuning(py, verbatim::read_f64_le(bytes)?)?;
 		}
 		Ok(())
 	}
 
 	pub fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
-		self.accepts.load().serialize(writer)?;
-		self.rejects.load().serialize(writer)?;
+		verbatim::write_u32_le(writer, self.accepts.load())?;
+		verbatim::write_u32_le(writer, self.rejects.load())?;
 		if let Some(tuning) = self.get_tuning(py)? {
-			tuning.serialize(writer)?;
+			verbatim::write_f64_le(writer, tuning)?;
 		};
 		Ok(())
 	}

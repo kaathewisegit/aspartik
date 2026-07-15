@@ -6,7 +6,6 @@ use std::io::Write;
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
-use verbatim::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Real {
@@ -50,13 +49,14 @@ impl Parameter for Real {
 	}
 
 	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
-		self.value = f64::deserialize(bytes)?;
+		self.value = verbatim::read_f64_le(bytes)?;
 		self.backup = f64::NAN; // so that is_changed is true
 		Ok(())
 	}
 
 	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
-		self.value.serialize(writer)
+		verbatim::write_f64_le(writer, self.value)?;
+		Ok(())
 	}
 }
 
