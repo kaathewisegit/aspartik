@@ -84,7 +84,8 @@ def test_version_assertion():
     mcmc.run(10_000)
     state = mcmc.dump_state()
 
-    state = b"\x07" + state[1:]
+    state = state[:4] + b"\x07" + state[4 + 1 :]
+    print(state[:8])
 
     with pytest.raises(
         match=f"Cannot load state: protocol version v7 is incompatible with the currently supported version v{STATE_PROTOCOL_VERSION}"

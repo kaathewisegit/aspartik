@@ -15,6 +15,8 @@ use crate::{
 use rng::PyRng;
 use util::{atomic::MonotonicF64, seconds_since_unix, time};
 
+const STATE_TAG: [u8; 4] = [0x62, 0x33, 0xb3, 0x44];
+
 /// The main object which runs the analysis
 #[pyclass(name = "MCMC", module = "aspartik.b3", frozen)]
 pub struct Mcmc {
@@ -177,6 +179,8 @@ impl Mcmc {
 	}
 
 	fn load_state(&self, py: Python, mut bytes: &[u8]) -> Result<()> {
+		verbatim::read_tag(&mut bytes, &STATE_TAG)
+			.with_context(|| anyhow!("Not a b3 state file"))?;
 		let version = verbatim::read_u32_le(&mut bytes)?;
 		ensure!(
 			version == STATE_PROTOCOL_VERSION,
@@ -243,6 +247,7 @@ impl Mcmc {
 	}
 
 	fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
+		verbatim::write_tag(writer, &STATE_TAG)?;
 		verbatim::write_u32_le(writer, STATE_PROTOCOL_VERSION)?;
 		verbatim::write_u64_le(
 			writer,

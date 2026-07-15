@@ -80,7 +80,15 @@ pub fn write_tag<W: Write + ?Sized>(
 pub fn read_tag<R: BufRead + ?Sized>(
 	reader: &mut R,
 	tag: &[u8],
-) -> IoResult<bool> {
+) -> IoResult<()> {
 	let bytes = reader.fill_buf()?;
-	Ok(bytes.starts_with(tag))
+	if bytes.starts_with(tag) {
+		reader.consume(tag.len());
+		Ok(())
+	} else {
+		Err(IoError::new(
+			ErrorKind::InvalidData,
+			format!("expected tag: {tag:?}"),
+		))
+	}
 }
