@@ -5,6 +5,30 @@ from typing import Optional
 
 from ..rng import RNG
 
+class AminoAcid:
+    Alanine: AminoAcid
+    Cysteine: AminoAcid
+    AsparticAcid: AminoAcid
+    GlutamicAcid: AminoAcid
+    Phenylalanine: AminoAcid
+    Glycine: AminoAcid
+    Histidine: AminoAcid
+    Isoleucine: AminoAcid
+    Lysine: AminoAcid
+    Leucine: AminoAcid
+    Methionine: AminoAcid
+    Asparagine: AminoAcid
+    Proline: AminoAcid
+    Glutamine: AminoAcid
+    Arginine: AminoAcid
+    Serine: AminoAcid
+    Threonine: AminoAcid
+    Valine: AminoAcid
+    Tryptophan: AminoAcid
+    Tyrosine: AminoAcid
+
+    def __init__(self, char: str): ...
+
 class DNANucleotide:
     Adenine: DNANucleotide
     Cytosine: DNANucleotide

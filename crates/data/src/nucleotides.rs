@@ -247,7 +247,6 @@ unsafe impl Character for DnaNucleotide {
 		}
 	}
 
-	#[inline(never)]
 	fn from_byte(b: u8) -> Option<Self> {
 		use DnaNucleotide::*;
 

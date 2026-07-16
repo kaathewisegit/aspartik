@@ -1,3 +1,4 @@
+mod aa;
 pub mod fasta;
 mod msa;
 pub mod newick;
@@ -6,6 +7,7 @@ mod parser;
 mod phred;
 pub mod seq;
 
+pub use aa::AminoAcid;
 pub use msa::Msa;
 #[cfg(feature = "python")]
 pub use msa::python::PyMsa;
@@ -23,9 +25,9 @@ pub mod pymodule {
 
 	#[pymodule_export]
 	use crate::{
-		DnaNucleotide, Phred, fasta::python::PyFastaDnaRecord,
-		msa::python::PyMsa, newick::python::PyTree,
-		seq::python::PyDnaSeq,
+		AminoAcid, DnaNucleotide, Phred,
+		fasta::python::PyFastaDnaRecord, msa::python::PyMsa,
+		newick::python::PyTree, seq::python::PyDnaSeq,
 	};
 
 	#[pymodule_init]
