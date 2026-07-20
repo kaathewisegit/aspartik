@@ -7,6 +7,7 @@ from aspartik.b3.operators import (
     ClassvecFlip,
     DeltaExchange,
     FixedHeightSPR,
+    RandomWalk,
     RootSlide,
     ScaleReal,
     SubtreeLeap,
@@ -24,7 +25,7 @@ msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
-tree.set_random_heights(10, rng)
+tree.set_random_heights(20, rng)
 tree.accept()
 leaves = list(tree.leaves())
 
@@ -33,8 +34,8 @@ N = 4
 rates = [RealVector.repeat(1, 6) for _ in range(N)]
 frequencies = [RealVector.repeat(0.25, 4) for _ in range(N)]
 categories = ClassVector(N, 845)
-clock_categories = [ClassVector(30, tree.num_nodes) for _ in range(N)]
-clock_means = [Real(1e-5) for _ in range(N)]
+clock_categories = [ClassVector(15, tree.num_nodes) for _ in range(N)]
+clock_locations = [Real(1e-5) for _ in range(N)]
 clock_scales = [Real(1 / 3) for _ in range(N)]
 
 priors = [
@@ -48,7 +49,10 @@ priors = [
     *(Bound(rate) for rate in rates),
     *(SymmetricDirichlet(rate, 6) for rate in rates),
     *(SymmetricDirichlet(freqs, 1) for freqs in frequencies),
-    *(Distribution(clock_mean, Normal(0, 3)) for clock_mean in clock_means),
+    *(
+        Distribution(clock_location, Normal(0, 10))
+        for clock_location in clock_locations
+    ),
     *(Distribution(clock_scale, Exponential(3)) for clock_scale in clock_scales),
 ]
 
@@ -58,9 +62,9 @@ likelihood = HeteroLikelihood(
     categories=categories,
     substitutions=[GTR(freqs, rate) for freqs, rate in zip(frequencies, rates)],
     clocks=[
-        Clock.Relaxed(clock_cats, LogNormal(clock_mean, clock_scale))
-        for clock_cats, clock_mean, clock_scale in zip(
-            clock_categories, clock_means, clock_scales
+        Clock.Relaxed(clock_cats, LogNormal(clock_location, clock_scale))
+        for clock_cats, clock_location, clock_scale in zip(
+            clock_categories, clock_locations, clock_scales
         )
     ],
     calculator=Calculator.CPU(),
@@ -75,8 +79,8 @@ operators = [
     FixedHeightSPR(tree, rng, weight=4 * N),
     ClassvecFlip(categories, rng, weight=100),
     *(
-        ScaleReal(clock_mean, Uniform(0, 1), rng, weight=10)
-        for clock_mean in clock_means
+        RandomWalk(clock_location, lower=-10, window=10, rng=rng, weight=10)
+        for clock_location in clock_locations
     ),
     *(
         ScaleReal(clock_scale, Uniform(0, 1), rng, weight=10)
@@ -93,8 +97,8 @@ callbacks = [
                 for i, clock_cats in enumerate(clock_categories)
             },
             **{
-                f"clock_mean:{i}": clock_mean
-                for i, clock_mean in enumerate(clock_means)
+                f"clock_location:{i}": clock_location
+                for i, clock_location in enumerate(clock_locations)
             },
             **{
                 f"clock_scale:{i}": clock_scale
