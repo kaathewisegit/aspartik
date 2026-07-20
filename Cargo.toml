@@ -40,7 +40,7 @@ parking_lot = "0.12.5"
 peg = "0.8.6"
 picoarrow = "0.1.0"
 pyo3 = "0.29.0"
-rand = { version = "0.10.1", default-features = false }
+rand = { version = "0.10.2", default-features = false }
 rand_pcg = "0.10.2"
 thiserror = "2.0"
 
