@@ -330,8 +330,9 @@ impl SubstitutionModel for HKY {
 			);
 			return;
 		} else if distance < 1e-10 {
-			dst.reborrow().fill(1e-100);
-			dst.set_diagonal(&[1.0, 1.0, 1.0, 1.0]);
+			dst.reborrow().fill(f64::EPSILON / 3.0);
+			const SUB_F64: f64 = 1.0 - f64::EPSILON;
+			dst.set_diagonal(&[SUB_F64; 4]);
 			return;
 		}
 
@@ -497,8 +498,9 @@ impl SubstitutionModel for GTR {
 			);
 			return;
 		} else if distance < 1e-10 {
-			dst.reborrow().fill(1e-100);
-			dst.set_diagonal(&[1.0, 1.0, 1.0, 1.0]);
+			dst.reborrow().fill(f64::EPSILON / 3.0);
+			const SUB_F64: f64 = 1.0 - f64::EPSILON;
+			dst.set_diagonal(&[SUB_F64; 4]);
 			return;
 		}
 
