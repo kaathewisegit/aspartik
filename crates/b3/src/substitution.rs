@@ -206,6 +206,21 @@ fn transition_freqs(freqs: &[f64; 4], mut dst: MatrixMut<'_, f64>) {
 	}
 }
 
+/// Transition matrix for small distances
+///
+/// `exp(X)` is defined as `∑1/n! Xⁿ`.  When `X = Q t`, where `t` is small, we
+/// can discard all items past `n = 1`.  Thus, `exp(Q t) ≈ I + Q t`.
+fn transition_q(q: &M4, distance: f64, mut dst: MatrixMut<'_, f64>) {
+	for i in 0..4 {
+		for j in 0..4 {
+			dst[(i, j)] = q[i][j] * distance;
+		}
+	}
+	for i in 0..4 {
+		dst[(i, i)] = 1.0;
+	}
+}
+
 /// Hasegawa et al. 1985
 ///
 /// A model which can be thought of as a combination of K80 and F81: both base
@@ -230,6 +245,8 @@ pub struct HKY {
 	p: M4,
 	inv_p: M4,
 	diag: [f64; 4],
+
+	q: M4,
 }
 
 #[pymethods]
@@ -248,6 +265,8 @@ impl HKY {
 			p: [[0.0; 4]; 4],
 			inv_p: [[0.0; 4]; 4],
 			diag: [0.0; 4],
+
+			q: Default::default(),
 		};
 		out.update_matrices();
 		out
@@ -264,6 +283,7 @@ impl HKY {
 			p: self.p,
 			inv_p: self.inv_p,
 			diag: self.diag,
+			q: self.q,
 		}
 	}
 
@@ -279,16 +299,30 @@ impl HKY {
 		let r = a + g;
 		let y = c + t;
 
+		self.q = [
+			[0.0, c, kappa * g, t],
+			[a, 0.0, g, kappa * t],
+			[kappa * a, c, 0.0, t],
+			[a, kappa * c, g, 0.0],
+		];
+
+		let div = 2.0
+			* (g * t + a * c
+				+ a * t + c * g + kappa * (a * g + c * t));
+
+		for i in 0..4 {
+			self.q[i][i] = -self.q[i].iter().sum::<f64>();
+			for j in 0..4 {
+				self.q[i][j] /= div;
+			}
+		}
+
 		self.p = [
 			[1.0, -y / r, -g / a, 0.0],
 			[1.0, 1.0, 0.0, -t / c],
 			[1.0, -y / r, 1.0, 0.0],
 			[1.0, 1.0, 0.0, 1.0],
 		];
-
-		let div = 2.0
-			* (g * t + a * c
-				+ a * t + c * g + kappa * (a * g + c * t));
 
 		self.diag = [
 			0.0,
@@ -318,21 +352,12 @@ impl SubstitutionModel for HKY {
 		}
 	}
 
-	fn write_transition(
-		&mut self,
-		distance: f64,
-		mut dst: MatrixMut<'_, f64>,
-	) {
+	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
 		if distance > 20.0 {
-			transition_freqs(
-				&self.cached_frequencies,
-				dst.reborrow(),
-			);
+			transition_freqs(&self.cached_frequencies, dst);
 			return;
 		} else if distance < 1e-10 {
-			dst.reborrow().fill(f64::EPSILON / 3.0);
-			const SUB_F64: f64 = 1.0 - f64::EPSILON;
-			dst.set_diagonal(&[SUB_F64; 4]);
+			transition_q(&self.q, distance, dst);
 			return;
 		}
 
@@ -368,6 +393,8 @@ pub struct GTR {
 	inv_p: M4,
 	diag: [f64; 4],
 
+	q: M4,
+
 	has_changed: bool,
 }
 
@@ -388,6 +415,8 @@ impl GTR {
 			inv_p: [[0.0; 4]; 4],
 			diag: [0.0; 4],
 
+			q: Default::default(),
+
 			has_changed: false,
 		};
 		out.update_matrices();
@@ -404,6 +433,7 @@ impl GTR {
 			p: self.p,
 			inv_p: self.inv_p,
 			diag: self.diag,
+			q: self.q,
 			has_changed: self.has_changed,
 		}
 	}
@@ -460,6 +490,13 @@ impl GTR {
 			}
 		}
 
+		#[expect(clippy::needless_range_loop)]
+		for i in 0..4 {
+			for j in 0..4 {
+				self.q[i][j] = gtr[i][j];
+			}
+		}
+
 		let mut eigen_sys = beast_eigen::DefaultEigenSystem::new(4);
 		let decomposition =
 			eigen_sys.decompose_matrix(&mut gtr).unwrap();
@@ -486,21 +523,12 @@ impl SubstitutionModel for GTR {
 		}
 	}
 
-	fn write_transition(
-		&mut self,
-		distance: f64,
-		mut dst: MatrixMut<'_, f64>,
-	) {
+	fn write_transition(&mut self, distance: f64, dst: MatrixMut<'_, f64>) {
 		if distance > 20.0 {
-			transition_freqs(
-				&self.cached_frequencies,
-				dst.reborrow(),
-			);
+			transition_freqs(&self.cached_frequencies, dst);
 			return;
 		} else if distance < 1e-10 {
-			dst.reborrow().fill(f64::EPSILON / 3.0);
-			const SUB_F64: f64 = 1.0 - f64::EPSILON;
-			dst.set_diagonal(&[SUB_F64; 4]);
+			transition_q(&self.q, distance, dst);
 			return;
 		}
 

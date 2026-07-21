@@ -1,5 +1,7 @@
 import polars as pl
 
+from math import inf
+
 from aspartik.b3 import MCMC, Calculator, Clock
 from aspartik.b3.callbacks import PrintLogger, TraceWriter
 from aspartik.b3.likelihoods import HeteroLikelihood
@@ -79,7 +81,7 @@ operators = [
     FixedHeightSPR(tree, rng, weight=4 * N),
     ClassvecFlip(categories, rng, weight=100),
     *(
-        RandomWalk(clock_location, lower=-10, window=10, rng=rng, weight=10)
+        RandomWalk(clock_location, lower=-inf, window=10, rng=rng, weight=10)
         for clock_location in clock_locations
     ),
     *(

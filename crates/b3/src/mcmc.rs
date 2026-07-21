@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow, bail, ensure};
+use anyhow::{Context, Result, anyhow, ensure};
 use parking_lot::Mutex;
 use pyo3::{IntoPyObjectExt, prelude::*, types::PyList};
 use rand::RngExt;
@@ -334,7 +334,7 @@ impl Mcmc {
 		let (likelihood, time) = time! {self.likelihood.likelihood()?};
 
 		if likelihood == f64::NEG_INFINITY {
-			bail!("Tree likelihood underflowed");
+			return Ok(Reject);
 		}
 
 		self.scheduler
