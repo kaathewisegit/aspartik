@@ -1616,6 +1616,10 @@ impl_pyparameter_common!(PyTree, Tree, {
 	}
 
 	fn robinson_foulds(&self, other: &PyTree) -> usize {
-		self.inner().robinson_foulds(&other.inner())
+		if std::ptr::eq(self, other) {
+			0
+		} else {
+			self.inner().robinson_foulds(&other.inner())
+		}
 	}
 });
