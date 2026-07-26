@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyTypeError, prelude::*};
 
 use std::ops::{Deref, DerefMut};
 
@@ -9,6 +9,7 @@ use linalg::{
 	const_matrix::{from_diagonal, mul as cmul},
 	mul,
 };
+use util::py_bail;
 
 pub trait SubstitutionModel {
 	fn update(&mut self) -> Result<bool>;
@@ -42,7 +43,11 @@ impl<'py> FromPyObject<'_, 'py> for Substitution {
 		{
 			Box::new(sub.get().clone_ref(py))
 		} else {
-			unimplemented!("error");
+			py_bail!(
+				PyTypeError,
+				"{} is not a Substitution",
+				obj.get_type().name()?
+			)
 		}))
 	}
 }
