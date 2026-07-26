@@ -77,7 +77,6 @@ def test_dump_load_mcmc(msa: MSA, rng: RNG):
     tree = mcmc.parameters[2]
     assert isinstance(tree, Tree)
     tree_state = tree.dump()
-    print(tree_state)
 
     deserialized_tree = Tree(msa.sequence_names(), rng)
     deserialized_tree.load(tree_state)

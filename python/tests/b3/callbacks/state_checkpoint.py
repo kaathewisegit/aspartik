@@ -18,6 +18,7 @@ def test_state_restore(msa: MSA, tmp_path):
             substitution_model="HKY",
             state_path=state_path,
             state_every=100,
+            print_every=None,
         ).b3_mcmc()
 
     mcmc = make_mcmc()
