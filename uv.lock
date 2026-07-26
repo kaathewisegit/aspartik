@@ -23,6 +23,7 @@ cli = [
 [package.dev-dependencies]
 dev = [
     { name = "cliclass" },
+    { name = "dendropy" },
     { name = "gmpy2" },
     { name = "maturin" },
     { name = "maturin", extra = ["patchelf"], marker = "sys_platform == 'linux'" },
@@ -46,6 +47,7 @@ provides-extras = ["analysis", "cli"]
 [package.metadata.requires-dev]
 dev = [
     { name = "cliclass", specifier = "~=0.1.0a1" },
+    { name = "dendropy", specifier = ">=5.0.10" },
     { name = "gmpy2", specifier = "~=2.3" },
     { name = "maturin", marker = "sys_platform != 'linux'", specifier = "~=1.14" },
     { name = "maturin", extras = ["patchelf"], marker = "sys_platform == 'linux'", specifier = "~=1.14" },
@@ -115,6 +117,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a9/95/a3dbbb5028f35eafb79008e7522a75244477d2838f38cbb722248dabc2a8/cycler-0.12.1.tar.gz", hash = "sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c", size = 7615, upload-time = "2023-10-07T05:32:18.335Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30", size = 8321, upload-time = "2023-10-07T05:32:16.783Z" },
+]
+
+[[package]]
+name = "dendropy"
+version = "5.0.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d4/53/88c39ee7789e56c16be7bf0a895317a6a84b05ff18b390aaad6b8381c4f3/dendropy-5.0.10.tar.gz", hash = "sha256:3d749f54fba88236f0cac5bd6247cd226e896d2a439032ec25055d6773f3b2bd", size = 398234, upload-time = "2026-07-12T15:32:33.62Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/81/1d/aa89b03a4b86538a47814c4c312770135c98fc6cbf52f5e1e4a360ff4cdb/dendropy-5.0.10-py3-none-any.whl", hash = "sha256:65fe155c3fc880311db5bdcbe6e48bf2a830275d3ee4839ccf8967c7f57e8cfc", size = 465111, upload-time = "2026-07-12T15:32:32.25Z" },
 ]
 
 [[package]]
@@ -572,6 +586,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b2/1d/1b2ef7bcde851c78d7f17f1cca13fd6dc695fc4b3d6197941e72cae5b132/ruff-0.16.0-py3-none-win32.whl", hash = "sha256:7fab76fa065c873f41ff744347c6e77bcc3dfec4bcc754dc26b63d23c0f7f5fb", size = 10785885, upload-time = "2026-07-23T19:11:23.947Z" },
     { url = "https://files.pythonhosted.org/packages/b2/a3/d5e4ef7a56be3f928ffb90b94c25ba7d3cb9c7fe0736aeaaedf361770712/ruff-0.16.0-py3-none-win_amd64.whl", hash = "sha256:429c117f022bf481fabd9d551e7a3952b24c65e6ef44337ea09d90bebef14472", size = 11923141, upload-time = "2026-07-23T19:11:26.409Z" },
     { url = "https://files.pythonhosted.org/packages/cb/9a/8415f2657cbe200f41a4531ccededf135505a92d4a012229121f885b26f9/ruff-0.16.0-py3-none-win_arm64.whl", hash = "sha256:14296fedcd2705c77ab8235439278bbb38f285cf7da5528b00b3e330c3d4872d", size = 11273407, upload-time = "2026-07-23T19:11:28.705Z" },
+]
+
+[[package]]
+name = "setuptools"
+version = "83.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/34/26/f5d29e25ffdb535afef2d35cdb55b325298f96debd670da4c325e08d70f4/setuptools-83.0.0.tar.gz", hash = "sha256:025bccbbf0fa05b6192bc64ae1e7b16e001fd6d6d4d5de03c97b1c1ade523bef", size = 1154254, upload-time = "2026-07-04T15:31:22.699Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5d/40/e1e72872c6354b306daef1703549e8e83b4d43cfea356311bf722a043752/setuptools-83.0.0-py3-none-any.whl", hash = "sha256:29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3", size = 1008090, upload-time = "2026-07-04T15:31:20.885Z" },
 ]
 
 [[package]]

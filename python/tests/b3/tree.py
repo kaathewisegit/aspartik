@@ -1,5 +1,7 @@
+import dendropy
 import pytest
-from utils import random_msas, random_trees
+from dendropy.calculate import treecompare
+from utils import random_integer, random_msas, random_trees
 
 import itertools
 
@@ -146,3 +148,88 @@ def test_mrca(rng: RNG):
 
     assert tree.mrca(leaf0, leaf2) == tree.root
     assert tree.mrca(leaf1, leaf3) == tree.root
+
+
+def test_robinson_foulds(rng: RNG):
+    # 4 taxa
+    tree = Tree([str(i) for i in range(4)], rng)
+    other = Tree([str(i) for i in range(4)], rng)
+
+    # identical -> 0
+    tree.load_newick(NewickTree("((0:0,1:0):0,(2:0,3:0):0);"))
+    other.load_newick(NewickTree("((0:0,1:0):0,(2:0,3:0):0);"))
+    assert tree.robinson_foulds(other) == 0
+
+    # shared clade {0,1}, differ on the other -> RF 2
+    other.load_newick(NewickTree("(((0:0,1:0):0,2:0):0,3:0);"))
+    assert tree.robinson_foulds(other) == 2
+
+    # no shared non-trivial clades -> RF 4 (maximum for 4 taxa)
+    other.load_newick(NewickTree("((0:0,2:0):0,(1:0,3:0):0);"))
+    assert tree.robinson_foulds(other) == 4
+
+    # 5 taxa
+    tree = Tree([str(i) for i in range(5)], rng)
+    other = Tree([str(i) for i in range(5)], rng)
+
+    # identical
+    tree.load_newick(NewickTree("((0:0,1:0):0,(2:0,(3:0,4:0):0):0);"))
+    other.load_newick(NewickTree("((0:0,1:0):0,(2:0,(3:0,4:0):0):0);"))
+    assert tree.robinson_foulds(other) == 0
+
+    # one NNI move: {0,1} and {3,4} shared -> RF 2
+    other.load_newick(NewickTree("((0:0,1:0):0,((2:0,3:0):0,4:0):0);"))
+    assert tree.robinson_foulds(other) == 2
+
+    # caterpillar: only {0,1} shared -> RF 4
+    other.load_newick(NewickTree("((((0:0,1:0):0,2:0):0,3:0):0,4:0);"))
+    assert tree.robinson_foulds(other) == 4
+
+    # maximally different (left comb vs right comb)
+    tree.load_newick(NewickTree("(0:0,(1:0,(2:0,(3:0,4:0):0):0):0);"))
+    other.load_newick(NewickTree("((((0:0,1:0):0,2:0):0,3:0):0,4:0);"))
+    assert tree.robinson_foulds(other) == 6
+
+    # 6 taxa
+    tree = Tree([str(i) for i in range(6)], rng)
+    other = Tree([str(i) for i in range(6)], rng)
+
+    tree.load_newick(NewickTree("(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);"))
+    other.load_newick(NewickTree("(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);"))
+    assert tree.robinson_foulds(other) == 0
+
+    # reroot: {0,1} and {2,3} shared, root clade differs
+    other.load_newick(NewickTree("((0:0,1:0):0,((2:0,3:0):0,(4:0,5:0):0):0);"))
+    assert tree.robinson_foulds(other) == 2
+
+    # symmetrical
+    assert tree.robinson_foulds(other) == other.robinson_foulds(tree)
+
+    # 8 taxa
+    tree = Tree([str(i) for i in range(8)], rng)
+    other = Tree([str(i) for i in range(8)], rng)
+
+    balanced = "((((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0):0,(6:0,7:0):0);"
+    tree.load_newick(NewickTree(balanced))
+    other.load_newick(NewickTree(balanced))
+    assert tree.robinson_foulds(other) == 0
+
+
+@pytest.mark.parametrize("size", random_integer(3, 1_000))
+def test_robinson_foulds_sim(size: int, rng: RNG):
+    a = Tree([str(i) for i in range(size)], rng)
+    b = Tree([str(i) for i in range(size)], rng)
+
+    def dendropy_distance(a, b):
+        tns = dendropy.TaxonNamespace()
+        a = dendropy.Tree.get(data=a, schema="newick", taxon_namespace=tns)
+        b = dendropy.Tree.get(data=b, schema="newick", taxon_namespace=tns)
+        a.is_rooted = True
+        b.is_rooted = True
+
+        a.encode_bipartitions()
+        b.encode_bipartitions()
+
+        return treecompare.symmetric_difference(a, b)
+
+    assert a.robinson_foulds(b) == dendropy_distance(a.to_newick(), b.to_newick())
