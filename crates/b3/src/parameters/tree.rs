@@ -227,25 +227,23 @@ impl Tree {
 	/// Sets the heights of internal nodes by walking upwards breadth-first
 	/// starting with all of the leaves
 	pub fn set_random_heights(&mut self, diff: f64, rng: &mut Rng) {
-		let mut walk = VecDeque::new();
+		let mut heights = vec![0.0; self.num_nodes()];
 		for leaf in self.leaves() {
-			// All leaves have a parent
-			let parent = self.parent_of(*leaf).unwrap();
-			walk.push_back(parent);
+			heights[leaf.0] = self.height_of(*leaf);
 		}
-		while let Some(internal) = walk.pop_front() {
+		for node in self.postorder() {
+			let Some(internal) = self.as_internal(node) else {
+				continue;
+			};
+
 			let (left, right) = self.children_of(internal);
-			let max = f64::max(
-				self.height_of(left),
-				self.height_of(right),
-			);
+			let max = f64::max(heights[left.0], heights[right.0]);
 
 			let node_diff = diff * (1.0 + rng.random::<f64>());
-			self.set_height(*internal, max + node_diff);
-
-			if let Some(parent) = self.parent_of(*internal) {
-				walk.push_front(parent);
-			}
+			heights[internal.0] = max + node_diff;
+		}
+		for node in self.nodes() {
+			self.set_height(node, heights[node.0]);
 		}
 
 		self.accept();
@@ -994,19 +992,19 @@ impl Tree {
 
 	fn robinson_foulds(&self, other: &Tree) -> usize {
 		let mut counter = 0;
-		let mut labels = HashMap::new();
+		let mut labels = vec![0; self.num_nodes()];
 		let mut clades = HashSet::new();
 
 		fn process(
 			node: Node,
 			tree: &Tree,
 			counter: &mut usize,
-			labels: &mut HashMap<usize, usize>,
+			labels: &mut [usize],
 			clades: &mut HashSet<(usize, usize)>,
 		) -> (usize, usize, usize) {
 			let Some(internal) = tree.as_internal(node) else {
 				let label = *counter;
-				labels.insert(node.0, label);
+				labels[node.0] = label;
 				*counter += 1;
 				return (label, label, 1);
 			};
@@ -1036,12 +1034,12 @@ impl Tree {
 		fn p_other(
 			node: Node,
 			tree: &Tree,
-			labels: &HashMap<usize, usize>,
+			labels: &[usize],
 			clades: &HashSet<(usize, usize)>,
 			num_shared: &mut usize,
 		) -> (usize, usize, usize) {
 			let Some(internal) = tree.as_internal(node) else {
-				let label = labels[&node.0];
+				let label = labels[node.0];
 				return (label, label, 1);
 			};
 
