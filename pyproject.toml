@@ -30,9 +30,9 @@ dev = [
 	"gmpy2~=2.3",
 	"polars~=1.42",
 	"pdoc~=16.0",
-	"ty~=0.0.61",
+	"ty~=0.0.63",
 	"pytest~=9.1",
-	"ruff~=0.15",
+	"ruff~=0.16",
 	"cliclass~=0.1.0a1", # duplicated from `cli`
 ]
 
