@@ -30,6 +30,7 @@ picoarrow = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"] }
 rand = { workspace = true, features = ["alloc"] }
 rand_pcg = { workspace = true }
+rustc-hash = { workspace = true }
 
 [lints]
 workspace = true

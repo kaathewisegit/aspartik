@@ -7,10 +7,11 @@ use pyo3::{
 	types::PyAny,
 };
 use rand::{RngExt, seq::SliceRandom};
+use rustc_hash::FxHashSet;
 
 use std::{
 	cmp::{Reverse, max, min},
-	collections::{BinaryHeap, HashMap, HashSet, VecDeque},
+	collections::{BinaryHeap, HashMap, VecDeque},
 	io::Write,
 	mem,
 	ops::Deref,
@@ -725,7 +726,7 @@ impl Tree {
 		);
 		ensure!(roots[0] == self.root.0);
 
-		let mut children = HashSet::new();
+		let mut children = FxHashSet::default();
 		for node in self.internals() {
 			let (left, right) = self.children_of(node);
 			children.insert(left);
@@ -837,7 +838,7 @@ impl Tree {
 	}
 
 	pub fn mrca(&self, a: Node, b: Node) -> Internal {
-		let mut ancestors = HashSet::new();
+		let mut ancestors = FxHashSet::default();
 		let mut curr = a;
 		ancestors.insert(curr);
 		while let Some(parent) = self.parent_of(curr) {
@@ -992,14 +993,14 @@ impl Tree {
 	fn robinson_foulds(&self, other: &Tree) -> usize {
 		let mut counter = 0;
 		let mut labels = vec![0; self.num_nodes()];
-		let mut clades = HashSet::new();
+		let mut clades = FxHashSet::default();
 
 		fn process(
 			node: Node,
 			tree: &Tree,
 			counter: &mut usize,
 			labels: &mut [usize],
-			clades: &mut HashSet<(usize, usize)>,
+			clades: &mut FxHashSet<(usize, usize)>,
 		) -> (usize, usize, usize) {
 			let Some(internal) = tree.as_internal(node) else {
 				let label = *counter;
@@ -1034,7 +1035,7 @@ impl Tree {
 			node: Node,
 			tree: &Tree,
 			labels: &[usize],
-			clades: &HashSet<(usize, usize)>,
+			clades: &FxHashSet<(usize, usize)>,
 			num_shared: &mut usize,
 		) -> (usize, usize, usize) {
 			let Some(internal) = tree.as_internal(node) else {
