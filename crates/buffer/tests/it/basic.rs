@@ -9,14 +9,14 @@ fn init_drop() {
 
 #[test]
 fn custom_alignment() {
-	let _ = black_box(Buffer::<u8, 2>::new(10));
-	let _ = black_box(Buffer::<u8, 4>::new(10));
-	let _ = black_box(Buffer::<u8, 8>::new(10));
-	let _ = black_box(Buffer::<u8, 16>::new(10));
-	let _ = black_box(Buffer::<u8, 32>::new(10));
-	let _ = black_box(Buffer::<u8, 64>::new(10));
-	let _ = black_box(Buffer::<u8, 128>::new(10));
-	let _ = black_box(Buffer::<u8, 256>::new(10));
-	let _ = black_box(Buffer::<u8, 512>::new(10));
-	let _ = black_box(Buffer::<u8, 1024>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 2>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 4>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 8>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 16>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 32>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 64>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 128>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 256>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 512>::new(10));
+	let _ = black_box(Buffer::<u8, usize, 1024>::new(10));
 }

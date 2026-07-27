@@ -48,7 +48,7 @@ fn get_mut_unchecked_write_read() {
 
 #[test]
 fn custom_alignment() {
-	let buf: SliceBuffer<u8, 64> = SliceBuffer::new(4, 8);
+	let buf: SliceBuffer<u8, u32, 64> = SliceBuffer::new(4, 8);
 	assert_eq!(buf.len(), 8);
 	let ptr = buf[0].as_ptr();
 	assert_eq!(ptr.align_offset(64), 0);

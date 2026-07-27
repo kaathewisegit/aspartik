@@ -17,7 +17,7 @@ pub struct Cpu4Calculator {
 
 	samples: Vec<u8>,
 	/// 32-bit alignment for aligned loads into YMM registers.
-	partials: Buffer<[f64; 4], 32>,
+	partials: Buffer<[f64; 4], usize, 32>,
 
 	likelihoods: Vec<f64>,
 
@@ -131,8 +131,9 @@ impl Cpu4Calculator {
 			num_threads
 		};
 
-		let partials =
-			Buffer::<_, 32>::new(num_internals * num_patterns * 2);
+		let partials = Buffer::<_, usize, 32>::new(
+			num_internals * num_patterns * 2,
+		);
 		let scales = vec![false; num_internals * num_patterns * 2];
 		let scale_sums = vec![0; num_patterns];
 

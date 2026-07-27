@@ -13,7 +13,7 @@ pub struct StateCalculator {
 	edits: EditBuf,
 
 	values: Vec<u8>,
-	partials: Buffer<f64, 32>,
+	partials: Buffer<f64, usize, 32>,
 
 	likelihood: f64,
 
@@ -57,8 +57,9 @@ impl StateCalculator {
 		let num_leaves = values.len();
 		let num_internals = num_leaves - 1;
 
-		let partials =
-			Buffer::<_, 32>::new(size * size * num_internals * 2);
+		let partials = Buffer::<_, usize, 32>::new(
+			size * size * num_internals * 2,
+		);
 		let scales = vec![false; num_internals * 2];
 
 		Self {
