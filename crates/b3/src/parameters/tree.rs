@@ -7,7 +7,7 @@ use pyo3::{
 	types::PyAny,
 };
 use rand::{RngExt, seq::SliceRandom};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use std::{
 	cmp::{Reverse, max, min},
@@ -993,15 +993,18 @@ impl Tree {
 	fn robinson_foulds(&self, other: &Tree) -> usize {
 		let mut counter = 0;
 		let mut labels = vec![0; self.num_nodes()];
-		let mut clades = FxHashSet::default();
+		let mut clades = FxHashSet::with_capacity_and_hasher(
+			self.num_nodes(),
+			FxBuildHasher,
+		);
 
 		fn process(
 			node: Node,
 			tree: &Tree,
-			counter: &mut usize,
-			labels: &mut [usize],
-			clades: &mut FxHashSet<(usize, usize)>,
-		) -> (usize, usize, usize) {
+			counter: &mut u32,
+			labels: &mut [u32],
+			clades: &mut FxHashSet<(u32, u32)>,
+		) -> (u32, u32, u32) {
 			let Some(internal) = tree.as_internal(node) else {
 				let label = *counter;
 				labels[node.0] = label;
@@ -1034,10 +1037,10 @@ impl Tree {
 		fn p_other(
 			node: Node,
 			tree: &Tree,
-			labels: &[usize],
-			clades: &FxHashSet<(usize, usize)>,
+			labels: &[u32],
+			clades: &FxHashSet<(u32, u32)>,
 			num_shared: &mut usize,
-		) -> (usize, usize, usize) {
+		) -> (u32, u32, u32) {
 			let Some(internal) = tree.as_internal(node) else {
 				let label = labels[node.0];
 				return (label, label, 1);
