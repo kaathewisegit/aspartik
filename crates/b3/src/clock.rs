@@ -107,15 +107,15 @@ impl RelaxedClock {
 
 		let cats = self.rate_categories.get().inner();
 		for &i in cats.changed_indices() {
-			tree.mark_edge_updated(i);
+			tree.mark_edge_updated(i as u32);
 		}
 
 		Ok(())
 	}
 
-	fn get_rate(&self, edge: usize) -> f64 {
-		let category =
-			self.rate_categories.get().inner()[edge] as usize;
+	fn get_rate(&self, edge: u32) -> f64 {
+		let category = self.rate_categories.get().inner()[edge as usize]
+			as usize;
 		self.rates[category].load()
 	}
 
@@ -146,7 +146,7 @@ impl Clock {
 		}
 	}
 
-	pub fn get_rate(&self, edge: usize) -> f64 {
+	pub fn get_rate(&self, edge: u32) -> f64 {
 		match self {
 			Self::Strict(clock) => clock.get_rate(),
 			Self::Relaxed(clock) => clock.get_rate(edge),

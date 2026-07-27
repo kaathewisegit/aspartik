@@ -25,7 +25,7 @@ impl Yule {
 		let rate = self.birth_rate.get().inner().value();
 		let root = tree.root();
 
-		let mut out = tree.num_internals() as f64 * rate.ln();
+		let mut out = f64::from(tree.num_internals()) * rate.ln();
 
 		for internal in tree.internals() {
 			let diff = -rate * tree.height_of(*internal);

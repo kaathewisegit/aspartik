@@ -13,7 +13,7 @@ pub struct Intervals {
 
 impl Intervals {
 	pub fn new(tree: &Tree) -> Mutex<Self> {
-		let num_nodes = tree.num_nodes();
+		let num_nodes = tree.num_nodes() as usize;
 		let state = Vec::<(Node, f64)>::with_capacity(num_nodes);
 		let mut out = Self {
 			state_backup: Vec::new(),
@@ -43,10 +43,11 @@ impl Intervals {
 			self.rebuild(tree);
 			return;
 		}
-		let mut changed = changed.to_owned();
+		let mut changed: Vec<_> =
+			changed.iter().map(|n| *n as u32).collect();
 		changed.sort_unstable();
 		changed.dedup();
-		let changed = cast_vec::<usize, Node>(changed);
+		let changed = cast_vec::<u32, Node>(changed);
 
 		for node in changed.iter().copied() {
 			let idx = self

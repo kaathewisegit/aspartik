@@ -50,7 +50,7 @@ pub struct CudaCalculator {
 	likelihoods_host: Box<[f64]>,
 
 	/// Children of internal nodes updated in current proposal
-	children: CudaSlice<u32>,
+	children: CudaSlice<[u32; 2]>,
 
 	transitions_host: Box<[f64]>,
 	/// Transitions for each edge from `edges`
@@ -87,11 +87,6 @@ impl Calculator<f64> for CudaCalculator {
 		);
 
 		let root_children = children.last().unwrap();
-		let nodes: Vec<_> = nodes.iter().map(|&n| n as u32).collect();
-		let children: Vec<_> = children
-			.iter()
-			.flat_map(|&[l, r]| [l as u32, r as u32])
-			.collect();
 
 		for &node in &nodes {
 			self.selectors.set_edited(node as usize);
@@ -123,11 +118,7 @@ impl Calculator<f64> for CudaCalculator {
 		)?;
 
 		let root = nodes.last().unwrap();
-		self.update_likelihoods(
-			*root,
-			(root_children[0] as u32, root_children[1] as u32),
-			frequencies,
-		)?;
+		self.update_likelihoods(*root, *root_children, frequencies)?;
 
 		// blocks on the running kernels
 		self.stream.memcpy_dtoh(
@@ -253,7 +244,7 @@ impl CudaCalculator {
 	fn update_likelihoods(
 		&self,
 		root: u32,
-		(left, right): (u32, u32),
+		[left, right]: [u32; 2],
 		frequencies: Row,
 	) -> Result<()> {
 		let mut builder =
@@ -336,7 +327,7 @@ impl CudaCalculator {
 
 		let likelihoods: CudaSlice<f64> =
 			stream.alloc_zeros(num_patterns)?;
-		let children = stream.alloc_zeros(num_internals * 2)?;
+		let children = stream.alloc_zeros(num_internals)?;
 		let transitions = stream.alloc_zeros(num_edges)?;
 		let nodes = stream.alloc_zeros(num_nodes)?;
 

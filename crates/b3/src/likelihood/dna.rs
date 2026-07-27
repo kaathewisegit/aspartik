@@ -41,7 +41,8 @@ impl DnaLikelihood {
 		let (samples, weights, _) = deduplicate(msa.get());
 		let calculator = calculator.make4(samples, weights.len())?;
 
-		let transitions = Transitions::new(4, tree.get().num_nodes());
+		let transitions =
+			Transitions::new(4, tree.get().num_nodes() as usize);
 
 		let out = Self {
 			calculator: Mutex::new(calculator),

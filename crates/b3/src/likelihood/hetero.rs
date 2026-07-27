@@ -57,7 +57,7 @@ impl HeteroLikelihood {
 		let mut calculators = Vec::new();
 		let mut transitions = Vec::new();
 
-		let num_nodes = tree.get().num_nodes();
+		let num_nodes = tree.get().num_nodes() as usize;
 		for _ in 0..num_categories {
 			calculators.push(calculator
 				.make4(samples.clone(), num_patterns)?);

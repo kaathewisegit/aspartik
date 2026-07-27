@@ -10,7 +10,7 @@ use buffer::Buffer;
 use sk::EditBuf;
 
 pub struct Cpu4Calculator {
-	num_leaves: usize,
+	num_leaves: u32,
 	num_patterns: usize,
 
 	selectors: EditBuf,
@@ -98,9 +98,10 @@ impl Calculator<f64> for Cpu4Calculator {
 }
 
 impl Cpu4Calculator {
-	fn set_selectors(&mut self, nodes: &[usize]) {
+	fn set_selectors(&mut self, nodes: &[u32]) {
 		for &node in nodes {
-			self.selectors.set_edited(node - self.num_leaves);
+			let idx = node - self.num_leaves;
+			self.selectors.set_edited(idx as usize);
 		}
 	}
 
@@ -140,7 +141,7 @@ impl Cpu4Calculator {
 		let scale_threshold = (-scale_ln_f64).exp();
 
 		Self {
-			num_leaves,
+			num_leaves: num_leaves as u32,
 			num_patterns,
 
 			selectors: EditBuf::new(num_internals),
@@ -167,8 +168,8 @@ impl Cpu4Calculator {
 #[rustfmt::skip]
 unsafe fn propose(
 	state: &mut Cpu4Calculator,
-	internals: &[usize],
-	children: &[[usize; 2]],
+	internals: &[u32],
+	children: &[[u32; 2]],
 	transitions: &[[[f64; 5]; 4]],
 	frequencies: [f64; 4],
 ) {unsafe {
@@ -184,14 +185,16 @@ unsafe fn propose(
 
 	macro_rules! offset {
 		($index:expr) => {{
-			let ptr = selectors.offset_unchecked($index);
-			($index * 2 + ptr) * num_patterns
+			let index = $index as usize;
+			let ptr = selectors.offset_unchecked(index);
+			(index * 2 + ptr) * num_patterns
 		}};
 	}
 	macro_rules! offset_old {
 		($index:expr) => {{
-			let ptr = selectors.offset_other_unchecked($index);
-			($index * 2 + ptr) * num_patterns
+			let index = $index as usize;
+			let ptr = selectors.offset_other_unchecked(index);
+			(index * 2 + ptr) * num_patterns
 		}};
 	}
 
@@ -214,8 +217,8 @@ unsafe fn propose(
 		let scales_old = scales.add(offset_old!(internal - state.num_leaves) + start);
 
 		if right < state.num_leaves { // both are children
-			let samples_left = samples.add(left * num_patterns + start);
-			let samples_right = samples.add(right * num_patterns + start);
+			let samples_left = samples.add(left as usize * num_patterns + start);
+			let samples_right = samples.add(right as usize * num_patterns + start);
 
 			calc_sample_sample(
 				count,
@@ -230,7 +233,7 @@ unsafe fn propose(
 				scale_sums.add(start),
 			);
 		} else if left < state.num_leaves && right >= state.num_leaves {
-			let samples_left = samples.add(left * num_patterns + start);
+			let samples_left = samples.add(left as usize * num_patterns + start);
 			let partials_right = partials.add(offset!(right - state.num_leaves) + start);
 
 			calc_sample_partial(

@@ -25,7 +25,7 @@ impl Transitions {
 		&mut self,
 		tree: &mut Tree,
 		substitution: &mut dyn SubstitutionModel,
-		clock_rate: impl Fn(usize) -> f64,
+		clock_rate: impl Fn(u32) -> f64,
 	) -> Result<()> {
 		let size = self.size;
 		for edge in tree.edges_to_update() {
@@ -33,7 +33,7 @@ impl Transitions {
 			let length = time_length * clock_rate(edge);
 
 			let m_ref = MatrixMut::from_slice(
-				self.data.update(edge),
+				self.data.update(edge as usize),
 				size,
 				size,
 			);
@@ -57,14 +57,14 @@ impl Transitions {
 		self.data.reject();
 	}
 
-	pub fn write_matrices(&self, edges: &[usize], dst: &mut [f64]) {
+	pub fn write_matrices(&self, edges: &[u32], dst: &mut [f64]) {
 		let size = self.size;
 		let ms = size * size;
 
 		let mut offset = 0;
 		for &edge in edges {
 			let dst_slice = &mut dst[offset..offset + ms];
-			dst_slice.copy_from_slice(&self.data[edge]);
+			dst_slice.copy_from_slice(&self.data[edge as usize]);
 			offset += ms;
 		}
 	}

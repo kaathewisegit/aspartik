@@ -41,7 +41,7 @@ impl StateLikelihood {
 		let calculator = StateCalculator::new(size, values);
 
 		let transitions =
-			Transitions::new(size, tree.get().num_nodes());
+			Transitions::new(size, tree.get().num_nodes() as usize);
 
 		let out = Self {
 			calculator: Mutex::new(calculator),

@@ -29,14 +29,14 @@ impl BayesianSkyline {
 
 		let num_events = tree.get().inner().num_internals();
 		let mut group_sizes_m = group_sizes.get().inner();
-		let num_groups = group_sizes_m.len();
+		let num_groups = group_sizes_m.len() as u32;
 
 		for i in 0..num_groups {
 			let mut size = num_events / num_groups;
 			if i == num_groups - 1 {
 				size += num_events % num_groups;
 			}
-			group_sizes_m.set(i, size as i64);
+			group_sizes_m.set(i as usize, size.into());
 		}
 		group_sizes_m.accept();
 

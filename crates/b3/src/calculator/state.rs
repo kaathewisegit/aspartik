@@ -8,7 +8,7 @@ use buffer::Buffer;
 use sk::EditBuf;
 
 pub struct StateCalculator {
-	num_leaves: usize,
+	num_leaves: u32,
 
 	edits: EditBuf,
 
@@ -46,9 +46,10 @@ impl StateCalculator {
 		Ok(())
 	}
 
-	fn set_selectors(&mut self, nodes: &[usize]) {
+	fn set_selectors(&mut self, nodes: &[u32]) {
 		for &node in nodes {
-			self.edits.set_edited(node - self.num_leaves);
+			let idx = node - self.num_leaves;
+			self.edits.set_edited(idx as usize);
 		}
 	}
 
@@ -61,7 +62,7 @@ impl StateCalculator {
 		let scales = vec![false; num_internals * 2];
 
 		Self {
-			num_leaves,
+			num_leaves: num_leaves as u32,
 
 			edits: EditBuf::new(num_internals),
 

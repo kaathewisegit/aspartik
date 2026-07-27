@@ -25,19 +25,23 @@ use data::newick::{
 };
 use rng::{PyRng, Rng};
 use sk::EpochBuf;
-use util::{atomic::MonotonicUsize, py_bail};
+use util::{atomic::MonotonicU32, py_bail};
 
-const ROOT: usize = 0x524f4f54;
+const ROOT: u32 = 0x524f4f54;
 
 #[derive(Debug, Clone)]
 pub struct Tree {
 	names: Vec<String>,
 
-	/// `(value, backup)`
-	root: (usize, usize),
+	num_nodes: u32,
+	num_leaves: u32,
+	num_internals: u32,
 
-	children: EpochBuf<usize>,
-	parents: EpochBuf<usize>,
+	/// `(value, backup)`
+	root: (u32, u32),
+
+	children: EpochBuf<u32>,
+	parents: EpochBuf<u32>,
 	heights: EpochBuf<f64>,
 
 	updated_edges: Bitmap,
@@ -51,13 +55,17 @@ pub struct Tree {
 	Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Zeroable, Pod,
 )]
 #[repr(transparent)]
-pub struct Node(usize);
+pub struct Node(u32);
 
 impl Node {
+	fn i(self) -> usize {
+		self.0 as usize
+	}
+
 	fn into_pyobject(
 		self,
 		py: Python,
-		num_leaves: usize,
+		num_leaves: u32,
 	) -> Result<Bound<PyAny>> {
 		let num_nodes = num_leaves * 2 - 1;
 		let any = if self.0 < num_leaves {
@@ -98,7 +106,7 @@ impl<'py> FromPyObject<'_, 'py> for Node {
 )]
 #[pyclass(from_py_object, module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
-pub struct Internal(usize);
+pub struct Internal(u32);
 
 /// Leaf node of the phylogenetic tree
 ///
@@ -108,7 +116,7 @@ pub struct Internal(usize);
 )]
 #[pyclass(from_py_object, module = "aspartik.b3.tree", frozen, eq, hash)]
 #[repr(transparent)]
-pub struct Leaf(usize);
+pub struct Leaf(u32);
 
 macro_rules! nodes_2 {
 	($type:ty) => {
@@ -155,6 +163,10 @@ impl Tree {
 		let mut out = Self {
 			names,
 
+			num_nodes: num_nodes as u32,
+			num_leaves: num_leaves as u32,
+			num_internals: num_internals as u32,
+
 			root: (0, 0),
 
 			children: EpochBuf::repeat(ROOT, num_internals * 2),
@@ -181,15 +193,15 @@ impl Tree {
 		// appear twice.  Except the last node, which only appears
 		// once.
 		let internals = num_leaves..num_nodes;
-		let mut prüfer: Vec<usize> =
+		let mut prüfer: Vec<u32> =
 			internals.clone().chain(internals).collect();
 		let root = prüfer.pop().unwrap(); // remove the last node
 		prüfer.shuffle(rng); // random shuffle
 
-		let mut parents = vec![ROOT; num_nodes];
-		let mut children = vec![ROOT; 2 * num_internals];
+		let mut parents = vec![ROOT; num_nodes as usize];
+		let mut children = vec![ROOT; (2 * num_internals) as usize];
 
-		let mut histogram = vec![2; num_internals];
+		let mut histogram = vec![2; num_internals as usize];
 		// the last node only appears once
 		*histogram.last_mut().unwrap() = 1;
 		let mut unused =
@@ -198,10 +210,10 @@ impl Tree {
 		for parent in prüfer {
 			let child = unused.pop().unwrap().0;
 
-			parents[child] = parent;
+			parents[child as usize] = parent;
 
 			// `children` update
-			let idx = (parent - num_leaves) * 2;
+			let idx = ((parent - num_leaves) * 2) as usize;
 			// first encountered child goes in the left slot,
 			// second one goes in the right
 			if children[idx] == ROOT {
@@ -210,15 +222,16 @@ impl Tree {
 				children[idx + 1] = child;
 			}
 
-			histogram[parent - num_leaves] -= 1;
-			if histogram[parent - num_leaves] == 0 {
+			let hist_idx = (parent - num_leaves) as usize;
+			histogram[hist_idx] -= 1;
+			if histogram[hist_idx] == 0 {
 				unused.push(Reverse(parent));
 			}
 		}
 		// last node, which should be connected to the root
 		let child = unused.pop().unwrap().0;
-		parents[child] = root;
-		children[(root - num_leaves) * 2 + 1] = child;
+		parents[child as usize] = root;
+		children[(root - num_leaves) as usize * 2 + 1] = child;
 
 		self.parents = parents.into();
 		self.children = children.into();
@@ -228,9 +241,9 @@ impl Tree {
 	/// Sets the heights of internal nodes by walking upwards breadth-first
 	/// starting with all of the leaves
 	pub fn set_random_heights(&mut self, diff: f64, rng: &mut Rng) {
-		let mut heights = vec![0.0; self.num_nodes()];
+		let mut heights = vec![0.0; self.num_nodes() as usize];
 		for leaf in self.leaves() {
-			heights[leaf.0] = self.height_of(*leaf);
+			heights[leaf.i()] = self.height_of(*leaf);
 		}
 		for node in self.postorder() {
 			let Some(internal) = self.as_internal(node) else {
@@ -238,23 +251,24 @@ impl Tree {
 			};
 
 			let (left, right) = self.children_of(internal);
-			let max = f64::max(heights[left.0], heights[right.0]);
+			let max =
+				f64::max(heights[left.i()], heights[right.i()]);
 
 			let node_diff = diff * (1.0 + rng.random::<f64>());
-			heights[internal.0] = max + node_diff;
+			heights[internal.i()] = max + node_diff;
 		}
 		for node in self.nodes() {
-			self.set_height(node, heights[node.0]);
+			self.set_height(node, heights[node.i()]);
 		}
 
 		self.accept();
 	}
 
 	pub fn load_newick(&mut self, newick: &NewickTree) -> Result<()> {
-		ensure!(newick.leaves().count() == self.num_leaves());
-		ensure!(newick.num_nodes() == self.num_nodes());
+		ensure!(newick.leaves().count() == self.num_leaves() as usize);
+		ensure!(newick.num_nodes() == self.num_nodes() as usize);
 
-		let mut mapping = HashMap::<NewickNodeIndex, usize>::new();
+		let mut mapping = HashMap::<NewickNodeIndex, u32>::new();
 		for n_leaf_idx in newick.leaves() {
 			let name = newick.get_node(n_leaf_idx).name();
 			let Some(s_idx) =
@@ -262,10 +276,10 @@ impl Tree {
 			else {
 				bail!("Node {name} not found in tree");
 			};
-			mapping.insert(n_leaf_idx, s_idx);
+			mapping.insert(n_leaf_idx, s_idx as u32);
 		}
 
-		for i in 0..self.num_edges() {
+		for i in 0..self.num_edges() as usize {
 			self.children[i] = ROOT;
 		}
 
@@ -286,8 +300,9 @@ impl Tree {
 				});
 
 			let current_idx = mapping[&n_idx];
-			self.parents[current_idx] = s_parent_idx;
-			let child_offset = (s_parent_idx - num_leaves) * 2;
+			self.parents[current_idx as usize] = s_parent_idx;
+			let child_offset =
+				(s_parent_idx - num_leaves) as usize * 2;
 			if self.children[child_offset] == ROOT {
 				self.children[child_offset] = current_idx;
 			} else {
@@ -334,7 +349,7 @@ impl Tree {
 
 		// set root
 		for internal in self.internals() {
-			if self.parents[internal.0] == ROOT {
+			if self.parents[internal.i()] == ROOT {
 				self.set_root(internal);
 			}
 		}
@@ -353,26 +368,26 @@ impl Tree {
 		let num_leaves = self.num_leaves(); // n in the paper
 
 		let mut labels = Vec::from_iter(0..num_leaves as i32);
-		labels.resize(num_nodes, 0);
+		labels.resize(num_nodes as usize, 0);
 
-		let mut clade_founder = vec![0; num_nodes];
+		let mut clade_founder = vec![0; num_nodes as usize];
 
 		for node in self.postorder() {
 			if let Some(leaf) = self.as_leaf(node) {
-				clade_founder[leaf.0] = leaf.0
+				clade_founder[leaf.i()] = leaf.0
 			} else if let Some(internal) = self.as_internal(node) {
 				let (left, right) = self.children_of(internal);
-				clade_founder[internal.0] = min(
-					clade_founder[left.0],
-					clade_founder[right.0],
+				clade_founder[internal.i()] = min(
+					clade_founder[left.i()],
+					clade_founder[right.i()],
 				);
 			} else {
 				unreachable!()
 			}
 		}
 
-		let mut clade_splitter = vec![0usize; num_nodes];
-		let mut splitter_to_node = vec![0; num_leaves];
+		let mut clade_splitter = vec![0; num_nodes as usize];
+		let mut splitter_to_node = vec![0; num_leaves as usize];
 		for node in self.preorder() {
 			let Some(internal) = self.as_internal(node) else {
 				continue;
@@ -381,34 +396,35 @@ impl Tree {
 			let (left, right) = self.children_of(internal);
 
 			let splitter = max(
-				clade_founder[left.0],
-				clade_founder[right.0],
+				clade_founder[left.i()],
+				clade_founder[right.i()],
 			);
-			clade_splitter[node.0] = splitter;
-			labels[node.0] = -(splitter as i32);
-			splitter_to_node[splitter] = node.0;
+			clade_splitter[node.i()] = splitter;
+			labels[node.i()] = -(splitter as i32);
+			splitter_to_node[splitter as usize] = node.0;
 		}
 
 		let mut ola = Vec::new();
 		let mut forward_to = Vec::from_iter(0..num_nodes);
 
 		for label in (1..num_leaves).rev() {
-			let splitter_node = Internal(splitter_to_node[label]);
+			let splitter_node =
+				Internal(splitter_to_node[label as usize]);
 			let (left, right) = self.children_of(splitter_node);
 
-			let sibling = if clade_founder[left.0] == label {
+			let sibling = if clade_founder[left.i()] == label {
 				right
 			} else {
 				left
 			};
 
 			let mut curr = sibling;
-			while forward_to[curr.0] != curr.0 {
-				curr = Node(forward_to[curr.0]);
+			while forward_to[curr.i()] != curr.0 {
+				curr = Node(forward_to[curr.i()]);
 			}
 
-			ola.push(labels[curr.0]);
-			forward_to[splitter_node.0] = curr.0;
+			ola.push(labels[curr.i()]);
+			forward_to[splitter_node.i()] = curr.0;
 		}
 		ola.reverse();
 
@@ -419,7 +435,7 @@ impl Tree {
 		&self.names
 	}
 
-	pub fn scale(&mut self, scale: f64) -> Result<usize> {
+	pub fn scale(&mut self, scale: f64) -> Result<u32> {
 		for node in self.internals() {
 			let new_height = self.height_of(*node) * scale;
 			self.set_height(*node, new_height);
@@ -441,22 +457,22 @@ impl Tree {
 	}
 
 	/// Update internal edge and node bookkeeping
-	pub fn mark_edge_updated(&mut self, edge: usize) {
-		self.updated_edges.set_on(edge);
+	pub fn mark_edge_updated(&mut self, edge: u32) {
+		self.updated_edges.set_on(edge as usize);
 		let (child, _) = self.edge_nodes(edge);
 
-		self.updated_propagatons.set_on(child.0);
+		self.updated_propagatons.set_on(child.i());
 
 		let mut curr = child;
 		while let Some(next) = self.parent_of(curr) {
 			curr = *next;
 
-			if self.updated_partials.at(curr.0) {
+			if self.updated_partials.at(curr.i()) {
 				break;
 			}
 
-			self.updated_propagatons.set_on(curr.0);
-			self.updated_partials.set_on(curr.0);
+			self.updated_propagatons.set_on(curr.i());
+			self.updated_partials.set_on(curr.i());
 		}
 	}
 
@@ -472,7 +488,7 @@ impl Tree {
 		self.updated_propagatons.set_all_on();
 	}
 
-	pub fn edges_to_update(&self) -> Vec<usize> {
+	pub fn edges_to_update(&self) -> Vec<u32> {
 		let mut out = Vec::new();
 		for edge in self.edges() {
 			if self.is_edge_updated(edge) {
@@ -489,13 +505,13 @@ impl Tree {
 		while let Some(node) = queue.pop_front() {
 			let (left, right) = self.children_of(node);
 
-			if bitmap.at(left.0)
+			if bitmap.at(left.i())
 				&& let Some(left) = self.as_internal(left)
 			{
 				internals.push(left);
 				queue.push_back(left);
 			}
-			if bitmap.at(right.0)
+			if bitmap.at(right.i())
 				&& let Some(right) = self.as_internal(right)
 			{
 				internals.push(right);
@@ -520,14 +536,12 @@ impl Tree {
 		children
 	}
 
-	pub fn propagation_lists(
-		&self,
-	) -> (Vec<usize>, Vec<[usize; 2]>, usize) {
+	pub fn propagation_lists(&self) -> (Vec<u32>, Vec<[u32; 2]>, usize) {
 		let mut nodes = Vec::<Node>::new();
 
 		// Updated leaves, in order
 		for leaf in self.leaves() {
-			if self.updated_propagatons.at(leaf.0) {
+			if self.updated_propagatons.at(leaf.i()) {
 				nodes.push(*leaf);
 			}
 		}
@@ -542,15 +556,15 @@ impl Tree {
 		(cast_vec(nodes), cast_vec(children), num_updated_leaves)
 	}
 
-	pub fn partials_lists(&self) -> (Vec<usize>, Vec<[usize; 2]>) {
+	pub fn partials_lists(&self) -> (Vec<u32>, Vec<[u32; 2]>) {
 		let internals = self.updated_internals(&self.updated_partials);
 		let children = self.children_list(&internals);
 
 		(cast_vec(internals), cast_vec(children))
 	}
 
-	fn is_edge_updated(&self, edge: usize) -> bool {
-		self.updated_edges.at(edge)
+	fn is_edge_updated(&self, edge: u32) -> bool {
+		self.updated_edges.at(edge as usize)
 	}
 
 	pub fn changed_height_nodes(&self) -> &[usize] {
@@ -563,10 +577,10 @@ impl Tree {
 		old_child: Node,
 		new_child: Node,
 	) -> Result<()> {
-		self.parents[new_child.0] = parent.0;
+		self.parents[new_child.i()] = parent.0;
 
 		let (left, right) = self.children_of(parent);
-		let idx = (parent.0 - self.num_leaves()) * 2;
+		let idx = (parent.0 - self.num_leaves()) as usize * 2;
 
 		if old_child == left {
 			self.children[idx] = new_child.0;
@@ -603,7 +617,7 @@ impl Tree {
 	/// Sets the height of `node`, recording it and it's parent and child
 	/// edges (if it has those).
 	pub fn set_height(&mut self, node: Node, height: f64) {
-		self.heights[node.0] = height;
+		self.heights[node.i()] = height;
 
 		if self.parent_of(node).is_some() {
 			self.mark_edge_updated(self.edge_index(node));
@@ -618,7 +632,7 @@ impl Tree {
 	/// Doesn't overwrite the old root.
 	pub fn set_root(&mut self, node: Internal) {
 		self.root.0 = node.0;
-		self.parents[node.0] = ROOT;
+		self.parents[node.i()] = ROOT;
 	}
 
 	pub fn swap_parents(&mut self, a: Node, b: Node) -> Result<()> {
@@ -712,12 +726,12 @@ impl Tree {
 			);
 		}
 
-		let roots: Vec<usize> = self
+		let roots: Vec<u32> = self
 			.parents
 			.iter()
 			.enumerate()
 			.filter(|&(_, &parent)| parent == ROOT)
-			.map(|(idx, _)| idx)
+			.map(|(idx, _)| idx as u32)
 			.collect();
 		ensure!(
 			roots.len() == 1,
@@ -732,24 +746,24 @@ impl Tree {
 			children.insert(left);
 			children.insert(right);
 		}
-		ensure!(children.len() == self.num_nodes() - 1);
+		ensure!(children.len() == self.num_nodes() as usize - 1);
 
 		Ok(())
 	}
 
-	pub fn num_nodes(&self) -> usize {
-		self.heights.len()
+	pub fn num_nodes(&self) -> u32 {
+		self.num_nodes
 	}
 
-	pub fn num_internals(&self) -> usize {
-		(self.num_nodes() - 1) / 2
+	pub fn num_internals(&self) -> u32 {
+		self.num_internals
 	}
 
-	pub fn num_leaves(&self) -> usize {
-		self.num_internals() + 1
+	pub fn num_leaves(&self) -> u32 {
+		self.num_leaves
 	}
 
-	pub fn num_edges(&self) -> usize {
+	pub fn num_edges(&self) -> u32 {
 		self.num_internals() * 2
 	}
 
@@ -782,13 +796,13 @@ impl Tree {
 	}
 
 	pub fn height_of(&self, node: Node) -> f64 {
-		self.heights[node.0]
+		self.heights[node.i()]
 	}
 
 	pub fn children_of(&self, node: Internal) -> (Node, Node) {
-		let index = node.0 - self.num_leaves();
-		let left = self.children[index * 2];
-		let right = self.children[index * 2 + 1];
+		let offset = (node.0 - self.num_leaves()) as usize * 2;
+		let left = self.children[offset];
+		let right = self.children[offset + 1];
 
 		(Node(left), Node(right))
 	}
@@ -812,26 +826,26 @@ impl Tree {
 	}
 
 	/// Index of the edge between `child` and its parent.
-	pub fn edge_index(&self, child: Node) -> usize {
+	pub fn edge_index(&self, child: Node) -> u32 {
 		child.0
 	}
 
-	pub fn edge_length(&self, edge: usize) -> f64 {
+	pub fn edge_length(&self, edge: u32) -> f64 {
 		let (child, parent) = self.edge_nodes(edge);
 
 		self.height_of(*parent) - self.height_of(child)
 	}
 
-	pub fn edge_nodes(&self, edge: usize) -> (Node, Internal) {
+	pub fn edge_nodes(&self, edge: u32) -> (Node, Internal) {
 		let child = edge;
-		let parent = self.parents[child];
+		let parent = self.parents[child as usize];
 
 		(Node(child), Internal(parent))
 	}
 
 	pub fn parent_of(&self, node: Node) -> Option<Internal> {
-		if self.parents[node.0] != ROOT {
-			Some(Internal(self.parents[node.0]))
+		if self.parents[node.i()] != ROOT {
+			Some(Internal(self.parents[node.i()]))
 		} else {
 			None
 		}
@@ -902,7 +916,7 @@ impl Tree {
 	pub fn leaf_by_name(&self, name: &str) -> Option<Leaf> {
 		for (i, leaf_name) in self.names.iter().enumerate() {
 			if name == leaf_name {
-				return Some(Leaf(i));
+				return Some(Leaf(i as u32));
 			}
 		}
 
@@ -921,7 +935,7 @@ impl Tree {
 		(0..self.num_leaves()).map(Leaf)
 	}
 
-	pub fn edges(&self) -> impl Iterator<Item = usize> + use<> {
+	pub fn edges(&self) -> impl Iterator<Item = u32> + use<> {
 		let root = self.root().0;
 		(0..root).chain(root + 1..self.num_nodes())
 	}
@@ -929,7 +943,7 @@ impl Tree {
 	pub fn to_newick(
 		&self,
 		internal_ids: bool,
-		clock_rate: &dyn Fn(usize) -> f64,
+		clock_rate: &dyn Fn(u32) -> f64,
 	) -> String {
 		let mut tree = NewickTree::new();
 
@@ -937,7 +951,7 @@ impl Tree {
 
 		for node in self.nodes() {
 			let name = if self.is_leaf(node) {
-				self.names[node.0].clone()
+				self.names[node.i()].clone()
 			} else if internal_ids {
 				node.0.to_string()
 			} else {
@@ -990,11 +1004,11 @@ impl Tree {
 		out
 	}
 
-	fn robinson_foulds(&self, other: &Tree) -> usize {
+	fn robinson_foulds(&self, other: &Tree) -> u32 {
 		let mut counter = 0;
-		let mut labels = vec![0; self.num_nodes()];
+		let mut labels = vec![0; self.num_nodes() as usize];
 		let mut clades = FxHashSet::with_capacity_and_hasher(
-			self.num_nodes(),
+			self.num_nodes() as usize,
 			FxBuildHasher,
 		);
 
@@ -1007,7 +1021,7 @@ impl Tree {
 		) -> (u32, u32, u32) {
 			let Some(internal) = tree.as_internal(node) else {
 				let label = *counter;
-				labels[node.0] = label;
+				labels[node.i()] = label;
 				*counter += 1;
 				return (label, label, 1);
 			};
@@ -1039,10 +1053,10 @@ impl Tree {
 			tree: &Tree,
 			labels: &[u32],
 			clades: &FxHashSet<(u32, u32)>,
-			num_shared: &mut usize,
+			num_shared: &mut u32,
 		) -> (u32, u32, u32) {
 			let Some(internal) = tree.as_internal(node) else {
-				let label = labels[node.0];
+				let label = labels[node.i()];
 				return (label, label, 1);
 			};
 
@@ -1151,24 +1165,25 @@ impl Parameter for Tree {
 
 	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
 		for i in 0..self.num_nodes() {
-			self.heights[i] = verbatim::read_f64_le(bytes)?;
+			self.heights[i as usize] =
+				verbatim::read_f64_le(bytes)?;
 		}
 
 		// overwrite all parents as one of them will be left as root
 		for internal in self.internals() {
-			self.parents[internal.0] = ROOT;
+			self.parents[internal.i()] = ROOT;
 		}
 
 		let num_leaves = self.num_leaves();
 		for i in 0..self.num_edges() {
-			let child = verbatim::read_u32_le(bytes)? as usize;
-			self.children[i] = child;
+			let child = verbatim::read_u32_le(bytes)?;
+			self.children[i as usize] = child;
 			let parent = i / 2 + num_leaves;
-			self.parents[child] = parent;
+			self.parents[child as usize] = parent;
 		}
 
 		for internal in self.internals() {
-			if self.parents[internal.0] == ROOT {
+			if self.parents[internal.i()] == ROOT {
 				self.set_root(internal);
 			}
 		}
@@ -1182,7 +1197,7 @@ impl Parameter for Tree {
 			verbatim::write_f64_le(writer, height)?;
 		}
 		for child in self.children.iter().copied() {
-			verbatim::write_u32_le(writer, child as u32)?;
+			verbatim::write_u32_le(writer, child)?;
 		}
 
 		Ok(())
@@ -1193,12 +1208,12 @@ macro_rules! make_iterator {
 	($name: ident, $t: tt) => {
 		#[pyclass(frozen, module = "aspartik.b3.tree")]
 		struct $name {
-			current: MonotonicUsize,
-			end: usize,
+			current: MonotonicU32,
+			end: u32,
 		}
 
 		impl $name {
-			fn new(start: usize, end: usize) -> Self {
+			fn new(start: u32, end: u32) -> Self {
 				Self {
 					current: start.into(),
 					end,
@@ -1229,9 +1244,9 @@ make_iterator!(LeavesIter, Leaf);
 
 #[pyclass(frozen, module = "aspartik.b3.tree")]
 struct NodesIter {
-	current: MonotonicUsize,
-	end: usize,
-	num_leaves: usize,
+	current: MonotonicU32,
+	end: u32,
+	num_leaves: u32,
 }
 
 #[pymethods]
@@ -1322,7 +1337,7 @@ impl_pyparameter_common!(PyTree, Tree, {
 	///
 	/// Throws a `RuntimeError` if any of the internal nodes would be moved
 	/// below either of its children.
-	fn scale(&self, scale: f64) -> Result<usize> {
+	fn scale(&self, scale: f64) -> Result<u32> {
 		self.inner().scale(scale)
 	}
 
@@ -1368,25 +1383,25 @@ impl_pyparameter_common!(PyTree, Tree, {
 
 	/// Total number of nodes in the tree
 	#[getter]
-	pub fn num_nodes(&self) -> usize {
+	pub fn num_nodes(&self) -> u32 {
 		self.inner().num_nodes()
 	}
 
 	/// Number of internal nodes (those with children)
 	#[getter]
-	pub fn num_internals(&self) -> usize {
+	pub fn num_internals(&self) -> u32 {
 		self.inner().num_internals()
 	}
 
 	/// Number of leaf nodes
 	#[getter]
-	fn num_leaves(&self) -> usize {
+	fn num_leaves(&self) -> u32 {
 		self.inner().num_leaves()
 	}
 
 	/// Total number of edges
 	#[getter]
-	pub fn num_edges(&self) -> usize {
+	pub fn num_edges(&self) -> u32 {
 		self.inner().num_edges()
 	}
 
@@ -1452,7 +1467,7 @@ impl_pyparameter_common!(PyTree, Tree, {
 	}
 
 	/// Returns the index of an edge from `child` to its parent
-	fn edge_index(&self, child: Node) -> usize {
+	fn edge_index(&self, child: Node) -> u32 {
 		self.inner().edge_index(child)
 	}
 
@@ -1460,7 +1475,7 @@ impl_pyparameter_common!(PyTree, Tree, {
 	///
 	/// The length is the distance between the parent and the child nodes
 	/// of that edge
-	fn edge_length(&self, edge: usize) -> f64 {
+	fn edge_length(&self, edge: u32) -> f64 {
 		self.inner().edge_length(edge)
 	}
 
@@ -1468,7 +1483,7 @@ impl_pyparameter_common!(PyTree, Tree, {
 	fn edge_nodes<'py>(
 		&self,
 		py: Python<'py>,
-		edge: usize,
+		edge: u32,
 	) -> Result<(Bound<'py, PyAny>, Internal)> {
 		let inner = self.inner();
 		let (node, internal) = inner.edge_nodes(edge);
@@ -1616,7 +1631,7 @@ impl_pyparameter_common!(PyTree, Tree, {
 		self.inner().internal_heights()
 	}
 
-	fn robinson_foulds(&self, other: &PyTree) -> usize {
+	fn robinson_foulds(&self, other: &PyTree) -> u32 {
 		if std::ptr::eq(self, other) {
 			0
 		} else {
