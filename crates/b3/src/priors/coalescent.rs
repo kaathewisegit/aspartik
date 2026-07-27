@@ -1,4 +1,5 @@
 use anyhow::Result;
+use bytemuck::cast_vec;
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
@@ -37,22 +38,21 @@ impl Intervals {
 	}
 
 	pub fn update(&mut self, tree: &Tree) {
-		let mut changed = Vec::new();
-		for node in tree.internals() {
-			if tree.is_node_height_updated(*node) {
-				changed.push(node);
-			}
-			if changed.len() > 5 {
-				self.rebuild(tree);
-				return;
-			}
+		let changed = tree.changed_height_nodes();
+		if changed.len() > 5 {
+			self.rebuild(tree);
+			return;
 		}
+		let mut changed = changed.to_owned();
+		changed.sort_unstable();
+		changed.dedup();
+		let changed = cast_vec::<usize, Node>(changed);
 
 		for node in changed.iter().copied() {
 			let idx = self
 				.state
 				.iter()
-				.position(|(n, _)| *n == *node)
+				.position(|(n, _)| *n == node)
 				// node must always be present in `nodes`
 				.unwrap();
 
@@ -60,7 +60,7 @@ impl Intervals {
 		}
 
 		for node in changed {
-			let height = tree.height_of(*node);
+			let height = tree.height_of(node);
 
 			let idx = self
 				.state
@@ -70,7 +70,7 @@ impl Intervals {
 				// both Ok and Err give us a valid insertion
 				// point
 				.unwrap_or_else(|e| e);
-			self.state.insert(idx, (*node, height));
+			self.state.insert(idx, (node, height));
 		}
 	}
 

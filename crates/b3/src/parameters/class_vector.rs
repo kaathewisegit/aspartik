@@ -2,16 +2,16 @@ use anyhow::{Result, ensure};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
 
-use std::{io::Write, ops::Index};
+use std::{io::Write, ops::Index, slice::Iter};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
-use sk::{Iter, SkBuf};
+use sk::EpochBuf;
 
 #[derive(Debug, Clone)]
 pub struct ClassVector {
 	num_classes: u32,
-	classes: SkBuf<u32>,
+	classes: EpochBuf<u32>,
 }
 
 impl ClassVector {
@@ -23,7 +23,7 @@ impl ClassVector {
 		);
 		Ok(Self {
 			num_classes,
-			classes: SkBuf::repeat(0, len),
+			classes: EpochBuf::repeat(0, len),
 		})
 	}
 
@@ -38,15 +38,15 @@ impl ClassVector {
 
 	pub fn set(&mut self, index: usize, class: u32) {
 		assert!(class < self.num_classes);
-		self.classes.set(index, class);
+		self.classes[index] = class;
 	}
 
 	pub fn iter(&self) -> Iter<'_, u32> {
 		self.classes.iter()
 	}
 
-	pub fn is_changed_at(&self, index: usize) -> bool {
-		self.classes.is_changed_at(index)
+	pub fn changed_indices(&self) -> &[usize] {
+		self.classes.changed_indices()
 	}
 }
 

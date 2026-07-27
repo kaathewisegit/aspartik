@@ -106,10 +106,8 @@ impl RelaxedClock {
 		}
 
 		let cats = self.rate_categories.get().inner();
-		for i in 0..tree.num_nodes() {
-			if cats.is_changed_at(i) {
-				tree.mark_edge_updated(i);
-			}
+		for &i in cats.changed_indices() {
+			tree.mark_edge_updated(i);
 		}
 
 		Ok(())

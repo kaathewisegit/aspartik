@@ -2,16 +2,16 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{exceptions::PyIndexError, prelude::*, types::PyType};
 
-use std::{fmt::Write as _, io::Write, ops::Index};
+use std::{fmt::Write as _, io::Write, ops::Index, slice::Iter};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
-use sk::{Iter, SkBuf};
+use sk::EpochBuf;
 use util::py_bail;
 
 #[derive(Debug, Clone)]
 pub struct RealVector {
-	values: SkBuf<f64>,
+	values: EpochBuf<f64>,
 }
 
 #[allow(clippy::len_without_is_empty)]
@@ -27,7 +27,7 @@ impl RealVector {
 	}
 
 	pub fn set(&mut self, index: usize, value: f64) {
-		self.values.set(index, value)
+		self.values[index] = value;
 	}
 
 	pub fn iter(&self) -> Iter<'_, f64> {
@@ -133,5 +133,18 @@ impl_pyparameter_common!(PyRealVector, RealVector, {
 		}
 		out.push(')');
 		Ok(out)
+	}
+
+	fn __eq__(&self, other: Vec<f64>) -> bool {
+		let inner = self.inner();
+		if inner.len() != other.len() {
+			return false;
+		}
+		for i in 0..inner.len() {
+			if inner[i] != other[i] {
+				return false;
+			}
+		}
+		true
 	}
 });

@@ -50,6 +50,23 @@ def test_real_vector_bound():
     assert not vec.is_bound(0.1, 0.2)
 
 
+def test_real_vector_epoch():
+    vec = RealVector(1, 2, 3)
+    assert vec == RealVector(1, 2, 3)
+    vec[0] = 10
+    assert vec == RealVector(10, 2, 3)
+    vec.reject()
+    assert vec == RealVector(1, 2, 3)
+    vec[1] = 20
+    assert vec == RealVector(1, 20, 3)
+    vec.accept()
+    assert vec == RealVector(1, 20, 3)
+    vec[2] = 30
+    assert vec == RealVector(1, 20, 30)
+    vec.accept()
+    assert vec == RealVector(1, 20, 30)
+
+
 def test_int_vector_repeat():
     for length in range(100):
         vec = IntVector.repeat(10, length)

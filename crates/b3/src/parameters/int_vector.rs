@@ -2,16 +2,16 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{exceptions::PyIndexError, prelude::*, types::PyType};
 
-use std::{fmt::Write as _, io::Write, ops::Index};
+use std::{fmt::Write as _, io::Write, ops::Index, slice::Iter};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
-use sk::{Iter, SkBuf};
+use sk::EpochBuf;
 use util::py_bail;
 
 #[derive(Debug, Clone)]
 pub struct IntVector {
-	values: SkBuf<i64>,
+	values: EpochBuf<i64>,
 }
 
 #[allow(clippy::len_without_is_empty)]
@@ -27,7 +27,7 @@ impl IntVector {
 	}
 
 	pub fn set(&mut self, index: usize, value: i64) {
-		self.values.set(index, value)
+		self.values[index] = value;
 	}
 
 	pub fn iter(&self) -> Iter<'_, i64> {

@@ -13,7 +13,7 @@ use crate::{
 	substitution::Substitution,
 };
 use data::PyMsa;
-use sk::SkBuf;
+use sk::EpochBuf;
 use util::atomic::{MonotonicBool, MonotonicF64};
 
 #[pyclass(module = "aspartik.b3.likelihoods", frozen)]
@@ -27,7 +27,7 @@ pub struct GammaLikelihood {
 	transitions: Mutex<Vec<Transitions>>,
 	tree: Py<PyTree>,
 
-	categories: Mutex<SkBuf<f64>>,
+	categories: Mutex<EpochBuf<f64>>,
 
 	pool: Mutex<ThreadPool>,
 
@@ -63,7 +63,7 @@ impl GammaLikelihood {
 			transitions.push(transition);
 		}
 
-		let mut categories = SkBuf::repeat(0.0, num_categories);
+		let mut categories = EpochBuf::repeat(0.0, num_categories);
 		update_categories(&alpha.get().inner(), &mut categories);
 
 		let pool = ThreadPool::try_spawn(num_categories)?;
@@ -202,7 +202,7 @@ impl GammaLikelihood {
 	}
 }
 
-fn update_categories(alpha: &Real, categories: &mut SkBuf<f64>) {
+fn update_categories(alpha: &Real, categories: &mut EpochBuf<f64>) {
 	let alpha = alpha.value();
 	let dist = Gamma::new(alpha, 1.0);
 	let mut sum = 0.0;
@@ -213,13 +213,13 @@ fn update_categories(alpha: &Real, categories: &mut SkBuf<f64>) {
 		let modifier = dist.inverse_cdf(p);
 		sum += modifier;
 
-		categories.set(i, modifier);
+		categories[i] = modifier;
 	}
 
 	let mean = sum / num_categories as f64;
 
 	for i in 0..num_categories {
 		let modifier = categories[i];
-		categories.set(i, modifier / mean);
+		categories[i] = modifier / mean;
 	}
 }

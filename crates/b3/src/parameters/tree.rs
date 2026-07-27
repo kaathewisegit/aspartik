@@ -23,7 +23,7 @@ use data::newick::{
 	Tree as NewickTree, python::PyTree as PyNewickTree,
 };
 use rng::{PyRng, Rng};
-use sk::{SkBuf, skbuf};
+use sk::EpochBuf;
 use util::{atomic::MonotonicUsize, py_bail};
 
 const ROOT: usize = 0x524f4f54;
@@ -35,9 +35,9 @@ pub struct Tree {
 	/// `(value, backup)`
 	root: (usize, usize),
 
-	children: SkBuf<usize>,
-	parents: SkBuf<usize>,
-	heights: SkBuf<f64>,
+	children: EpochBuf<usize>,
+	parents: EpochBuf<usize>,
+	heights: EpochBuf<f64>,
 
 	updated_edges: Bitmap,
 	/// A bitmap of internal nodes whose child edges got updated
@@ -156,9 +156,9 @@ impl Tree {
 
 			root: (0, 0),
 
-			children: skbuf![ROOT; num_internals * 2],
-			parents: skbuf![ROOT; num_nodes],
-			heights: skbuf![0.0; num_nodes],
+			children: EpochBuf::repeat(ROOT, num_internals * 2),
+			parents: EpochBuf::repeat(ROOT, num_nodes),
+			heights: EpochBuf::repeat(0.0, num_nodes),
 
 			updated_edges: Bitmap::new(num_nodes),
 			updated_partials: Bitmap::new(num_nodes),
@@ -265,7 +265,7 @@ impl Tree {
 		}
 
 		for i in 0..self.num_edges() {
-			self.children.set(i, ROOT);
+			self.children[i] = ROOT;
 		}
 
 		let mut queue = VecDeque::from_iter(newick.leaves());
@@ -285,13 +285,12 @@ impl Tree {
 				});
 
 			let current_idx = mapping[&n_idx];
-			self.parents.set(current_idx, s_parent_idx);
+			self.parents[current_idx] = s_parent_idx;
 			let child_offset = (s_parent_idx - num_leaves) * 2;
 			if self.children[child_offset] == ROOT {
-				self.children.set(child_offset, current_idx);
+				self.children[child_offset] = current_idx;
 			} else {
-				self.children
-					.set(child_offset + 1, current_idx);
+				self.children[child_offset + 1] = current_idx;
 			}
 		}
 
@@ -553,8 +552,8 @@ impl Tree {
 		self.updated_edges.at(edge)
 	}
 
-	pub fn is_node_height_updated(&self, node: Node) -> bool {
-		self.heights.is_changed_at(node.0)
+	pub fn changed_height_nodes(&self) -> &[usize] {
+		self.heights.changed_indices()
 	}
 
 	pub fn replace_child(
@@ -563,15 +562,15 @@ impl Tree {
 		old_child: Node,
 		new_child: Node,
 	) -> Result<()> {
-		self.parents.set(new_child.0, parent.0);
+		self.parents[new_child.0] = parent.0;
 
 		let (left, right) = self.children_of(parent);
 		let idx = (parent.0 - self.num_leaves()) * 2;
 
 		if old_child == left {
-			self.children.set(idx, new_child.0);
+			self.children[idx] = new_child.0;
 		} else if old_child == right {
-			self.children.set(idx + 1, new_child.0);
+			self.children[idx + 1] = new_child.0;
 		} else {
 			bail!(
 				"replace_child: {old_child:?} is not a child of {parent:?}"
@@ -603,7 +602,7 @@ impl Tree {
 	/// Sets the height of `node`, recording it and it's parent and child
 	/// edges (if it has those).
 	pub fn set_height(&mut self, node: Node, height: f64) {
-		self.heights.set(node.0, height);
+		self.heights[node.0] = height;
 
 		if self.parent_of(node).is_some() {
 			self.mark_edge_updated(self.edge_index(node));
@@ -618,7 +617,7 @@ impl Tree {
 	/// Doesn't overwrite the old root.
 	pub fn set_root(&mut self, node: Internal) {
 		self.root.0 = node.0;
-		self.parents.set(node.0, ROOT);
+		self.parents[node.0] = ROOT;
 	}
 
 	pub fn swap_parents(&mut self, a: Node, b: Node) -> Result<()> {
@@ -1148,20 +1147,20 @@ impl Parameter for Tree {
 
 	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
 		for i in 0..self.num_nodes() {
-			self.heights.set(i, verbatim::read_f64_le(bytes)?);
+			self.heights[i] = verbatim::read_f64_le(bytes)?;
 		}
 
 		// overwrite all parents as one of them will be left as root
 		for internal in self.internals() {
-			self.parents.set(internal.0, ROOT);
+			self.parents[internal.0] = ROOT;
 		}
 
 		let num_leaves = self.num_leaves();
 		for i in 0..self.num_edges() {
 			let child = verbatim::read_u32_le(bytes)? as usize;
-			self.children.set(i, child);
+			self.children[i] = child;
 			let parent = i / 2 + num_leaves;
-			self.parents.set(child, parent);
+			self.parents[child] = parent;
 		}
 
 		for internal in self.internals() {
@@ -1175,10 +1174,10 @@ impl Parameter for Tree {
 	}
 
 	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
-		for &height in &self.heights {
+		for height in self.heights.iter().copied() {
 			verbatim::write_f64_le(writer, height)?;
 		}
-		for &child in &self.children {
+		for child in self.children.iter().copied() {
 			verbatim::write_u32_le(writer, child as u32)?;
 		}
 
