@@ -16,10 +16,7 @@ impl<T: Copy> EpochBuf<T> {
 		}
 	}
 
-	pub fn accept(&mut self)
-	where
-		T: std::fmt::Debug,
-	{
+	pub fn accept(&mut self) {
 		let len = self.len;
 		for index in self.indices.iter().copied() {
 			self.values[index + len] = self.values[index];

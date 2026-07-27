@@ -10,8 +10,8 @@ authors.workspace = true
 [dependencies]
 
 [dev-dependencies]
-rand = { workspace = true }
-rand_pcg = { workspace = true }
+arbitrary = { workspace = true }
+arbtest = { workspace = true }
 
 [lints]
 workspace = true
