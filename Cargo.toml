@@ -38,7 +38,7 @@ libc = "0.2.186"
 num-traits = "0.2.19"
 parking_lot = "0.12.5"
 peg = "0.8.6"
-picoarrow = "0.1.0"
+picoarrow = "0.2.2"
 pyo3 = "0.29.0"
 rand = { version = "0.10.2", default-features = false }
 rand_pcg = "0.10.2"

@@ -78,7 +78,7 @@ impl OperatorStats {
 		Ok(())
 	}
 
-	fn finish(&self, _mcmc: Py<Mcmc>) -> Result<()> {
+	fn finish(&self, py: Python, mcmc: &Mcmc) -> Result<()> {
 		let tunings = self.tunings.lock();
 		let results = self.results.lock();
 		let step = self.step.lock();
@@ -93,13 +93,20 @@ impl OperatorStats {
 
 		let num_operators = tunings.len();
 		let mut fields = Vec::with_capacity(num_operators * 5 + 1);
+		let operators = mcmc.scheduler().operators();
 
 		fields.push(step.make_field("step"));
 
 		for i in 0..num_operators {
+			let op_name = operators[i].type_name(py)?;
 			for (j, name) in RESULT_FIELDS.iter().enumerate() {
-				fields.push(results[i][j]
-					.make_field(&format!("{i}:{name}")));
+				let mut field = results[i][j]
+					.make_field(&format!("{i}:{name}"));
+				field.custom_metadata.push((
+					"name".to_owned(),
+					op_name.clone(),
+				));
+				fields.push(field);
 			}
 			fields.push(
 				tunings[i].make_field(&format!("{i}:tuning"))
