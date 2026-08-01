@@ -39,7 +39,7 @@ pub struct BirthDeathSkyline {
 	#[pyo3(get)]
 	origin: Py<PyReal>,
 	#[pyo3(get)]
-	become_uninfection_rate: Py<PyReal>,
+	become_uninfectious_rate: Py<PyReal>,
 	#[pyo3(get)]
 	reproductive_number: Py<PyRealVector>,
 	#[pyo3(get)]
@@ -109,14 +109,14 @@ impl BirthDeathSkyline {
 	#[pyo3(signature = (
 		tree,
 		origin,
-		become_uninfection_rate,
+		become_uninfectious_rate,
 		reproductive_number,
 		sampling_proportion,
 	))]
 	fn new(
 		tree: Py<PyTree>,
 		origin: Py<PyReal>,
-		become_uninfection_rate: Py<PyReal>,
+		become_uninfectious_rate: Py<PyReal>,
 		reproductive_number: Py<PyRealVector>,
 		sampling_proportion: Py<PyReal>,
 	) -> Result<Self> {
@@ -126,7 +126,7 @@ impl BirthDeathSkyline {
 		Ok(Self {
 			tree,
 			origin,
-			become_uninfection_rate,
+			become_uninfectious_rate,
 			reproductive_number,
 			sampling_proportion,
 			scratch: Scratch::new(size),
@@ -137,8 +137,8 @@ impl BirthDeathSkyline {
 		let s = &mut *self.scratch.lock();
 		let tree = self.tree.get().inner();
 		let origin = self.origin.get().inner().value();
-		let become_uninfection_rate =
-			self.become_uninfection_rate.get().inner().value();
+		let become_uninfectious_rate =
+			self.become_uninfectious_rate.get().inner().value();
 		let reproductive_number =
 			self.reproductive_number.get().inner();
 		let sampling_proportion =
@@ -155,14 +155,14 @@ impl BirthDeathSkyline {
 
 		for i in 0..n {
 			s.birth[i] = reproductive_number[i]
-				* become_uninfection_rate;
+				* become_uninfectious_rate;
 		}
 		for i in 0..n {
 			s.psi[i] =
-				sampling_proportion * become_uninfection_rate;
+				sampling_proportion * become_uninfectious_rate;
 		}
 		for i in 0..n {
-			s.death[i] = become_uninfection_rate - s.psi[i];
+			s.death[i] = become_uninfectious_rate - s.psi[i];
 		}
 
 		for i in 0..n {
@@ -264,7 +264,7 @@ impl BirthDeathSkyline {
 	fn is_changed(&self) -> bool {
 		self.tree.get().is_changed()
 			|| self.origin.get().is_changed()
-			|| self.become_uninfection_rate.get().is_changed()
+			|| self.become_uninfectious_rate.get().is_changed()
 			|| self.reproductive_number.get().is_changed()
 			|| self.sampling_proportion.get().is_changed()
 	}

@@ -224,7 +224,7 @@ class BayesianSkyline(Prior):
 class BirthDeathSkyline(Prior):
     tree: Tree
     origin: Real
-    become_uninfection_rate: Real
+    become_uninfectious_rate: Real
     reproductive_number: RealVector
     sampling_proportion: Real
 
