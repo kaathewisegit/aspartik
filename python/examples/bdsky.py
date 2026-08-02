@@ -39,7 +39,7 @@ tree.accept()
 become_uninfectious_rate = Real(1)
 reproductive_number = RealVector.repeat(2, 20)
 sampling_proportion = Real(1)
-origin = Real(1000)
+origin = Real(tree.height_of(tree.root) * 2)
 
 frequencies = RealVector.repeat(0.25, 4)
 rates = RealVector.repeat(1, 6)
@@ -124,7 +124,6 @@ if __name__ == "__main__":
         ax,
         df["origin"],
         df["reproductive_number"],
-        df["become_uninfectious_rate"],
     )
     fig.tight_layout()
     fig.savefig("target/bdsky.png", dpi=300, bbox_inches="tight")

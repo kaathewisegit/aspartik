@@ -76,7 +76,6 @@ def plot_skyline_birthdeath(
     ax: plt.Axes,
     origin: pl.Series,
     reproductive_number: pl.Series,
-    become_uninfection_rate: pl.Series,
     *,
     num_points: int = 200,
     cred_mass: float = 0.95,
@@ -85,8 +84,6 @@ def plot_skyline_birthdeath(
 
     max_origin = origin.max()
     assert isinstance(max_origin, float)
-
-    ax2 = ax.twinx()
 
     grid = np.linspace(0.0, max_origin, num_points)
     evals = np.empty((len(reproductive_number), num_points))
@@ -108,36 +105,13 @@ def plot_skyline_birthdeath(
         label=rf"$R_e$ {cred_mass:.0%} HPD",
     )
 
-    delta = np.asarray(become_uninfection_rate, dtype=float)
-    _validate_num_samples(delta, cred_mass)
-    d_low, d_high = _hpd_1d(delta, cred_mass)
-    d_median = float(np.median(delta))
-    ax2.axhspan(
-        d_low,
-        d_high,
-        color="steelblue",
-        alpha=0.2,
-        label=rf"$\delta$ {cred_mass:.0%} HPD",
-    )
-    ax2.axhline(d_median, color="steelblue", label=r"median $\delta$")
-
-    ax.set_ylabel(r"$R_e$", color="darkorange")
-    ax.tick_params(axis="y", colors="darkorange")
-    ax.spines["left"].set_color("darkorange")
-
-    ax2.set_ylabel(r"$\delta$", color="steelblue")
-    ax2.tick_params(axis="y", colors="steelblue")
-    ax2.spines["right"].set_color("steelblue")
-    ax2.set_ylim(0.0, 1.0)
+    ax.set_ylabel(r"$R_e$")
+    ax.tick_params(axis="y")
+    ax.spines["left"]
 
     ax.set_xlim(max_origin, 0.0)
 
-    handles, labels = [], []
-    for a in (ax, ax2):
-        h, ls = a.get_legend_handles_labels()
-        handles.extend(h)
-        labels.extend(ls)
-    ax.legend(handles, labels)
+    ax.legend()
 
 
 def _validate_num_samples(values: pl.Series | np.ndarray, cred_mass: float) -> None:
