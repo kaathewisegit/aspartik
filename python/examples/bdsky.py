@@ -121,8 +121,8 @@ if __name__ == "__main__":
     plot_skyline_birthdeath(
         fig,
         ax,
-        df["origin"],
         df["reproductive_number"],
+        origin=df["origin"],
     )
     fig.tight_layout()
     fig.savefig("target/bdsky.png", dpi=300, bbox_inches="tight")

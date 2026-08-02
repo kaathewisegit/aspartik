@@ -74,24 +74,50 @@ def plot_skyline_coalescent(
 def plot_skyline_birthdeath(
     fig: plt.Figure,
     ax: plt.Axes,
-    origin: pl.Series,
     reproductive_number: pl.Series,
     *,
+    origin: pl.Series | None = None,
+    interval_times: pl.Series | None = None,
     num_points: int = 200,
     cred_mass: float = 0.95,
 ) -> None:
     _validate_num_samples(reproductive_number, cred_mass)
 
-    max_origin = origin.max()
-    assert isinstance(max_origin, float)
+    if origin is None and interval_times is None:
+        raise ValueError(
+            "at least one of `origin` or `interval_times` must be provided"
+        )
 
-    grid = np.linspace(0.0, max_origin, num_points)
+    if origin is not None:
+        max_time = origin.cast(pl.Float64).max()
+    elif interval_times is not None:
+        n = len(reproductive_number[0])
+        max_time = (interval_times.cast(pl.Float64) * n).max()
+    assert isinstance(max_time, float)
+
+    grid = np.linspace(0.0, max_time, num_points)
     evals = np.empty((len(reproductive_number), num_points))
-    for i, (row, o) in enumerate(zip(reproductive_number, origin)):
+
+    for i, row in enumerate(reproductive_number):
         n = len(row)
-        iw = float(o) / n
+        if origin is not None:
+            mt = float(origin[i])
+        elif interval_times is not None:
+            mt = float(interval_times[i]) * n
+        else:
+            raise AssertionError
+        if interval_times is not None:
+            width = float(interval_times[i])
+        else:
+            width = mt / n
         vals = np.asarray(row, dtype=float)
-        idx = np.floor((float(o) - grid) / iw).astype(int).clip(0, n - 1)
+
+        boundaries = np.empty(n + 1)
+        boundaries[:n] = width * np.arange(n)
+        boundaries[n] = mt
+
+        idx = np.searchsorted(boundaries, mt - grid, side="right") - 1
+        np.clip(idx, 0, n - 1, out=idx)
         evals[i] = vals[idx]
 
     low, high = _hpd_2d(evals, cred_mass)
@@ -109,7 +135,7 @@ def plot_skyline_birthdeath(
     ax.tick_params(axis="y")
     ax.spines["left"]
 
-    ax.set_xlim(max_origin, 0.0)
+    ax.set_xlim(max_time, 0.0)
 
     ax.legend()
 
