@@ -240,14 +240,16 @@ def test_skyline(rng):
 
 
 def test_birthdeath_skyline(rng):
-    clock_rate = Real(7.9e-4)
-    origin = Real(1000.0)
-    become_uninfection_rate = Real(1.0)
-    reproductive_number = RealVector.repeat(2.0, 10)
-    sampling_proportion = Real(0.01)
 
     msa = read_msa_from_fasta("data/alignments/hcv.fasta")
     tree = Tree(msa.sequence_names(), rng)
+
+    clock_rate = Real(7.9e-4)
+    origin = Real(1000)
+    become_uninfectious_rate = Real(1e-3)
+    reproductive_number = RealVector.repeat(2.0, 10)
+    sampling_proportion = Real(1)
+
     likelihood = DNALikelihood(
         msa=msa,
         substitution=JC(),
@@ -258,10 +260,10 @@ def test_birthdeath_skyline(rng):
 
     prior = BirthDeathSkyline(
         tree,
-        origin,
-        become_uninfection_rate,
+        become_uninfectious_rate,
         reproductive_number,
         sampling_proportion,
+        origin=origin,
     )
 
     replicate_beast2(
@@ -269,7 +271,7 @@ def test_birthdeath_skyline(rng):
         parameters={
             "tree": tree,
             "origin_BDSKY_Serial": origin,
-            "becomeUninfectiousRate_BDSKY_Serial": become_uninfection_rate,
+            "becomeUninfectiousRate_BDSKY_Serial": become_uninfectious_rate,
             "reproductiveNumber_BDSKY_Serial.": reproductive_number,
             "samplingProportion_BDSKY_Serial": sampling_proportion,
         },

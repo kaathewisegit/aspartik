@@ -749,12 +749,14 @@ def _b3_config(c: MCMCConfig):
         case s if re.match(r"^bdsky(:\d+)?$", s):
             intervals = int(s.split(":")[1]) if ":" in s else 10
 
-            origin = create_real(1000.0, "origin", LogNormal(0, 1), weight=5)
+            origin = create_real(
+                tree.height_of(tree.root), "origin", LogNormal(0, 1), weight=5
+            )
             become_uninfectious_rate = create_real(
                 1.0, "become_uninfectious_rate", LogNormal(0, 1), weight=2
             )
             sampling_proportion = create_real(
-                1.0, "sampling_proportion", Beta(1, 1), weight=10
+                1e-3, "sampling_proportion", Beta(1, 1), weight=10
             )
 
             reproductive_number = RealVector.repeat(2, intervals)
@@ -770,10 +772,10 @@ def _b3_config(c: MCMCConfig):
 
             bdsky = BirthDeathSkyline(
                 tree,
-                origin,
                 become_uninfectious_rate,
                 reproductive_number,
                 sampling_proportion,
+                origin=origin,
             )
             items["prior:coalescent"] = bdsky
             priors.append(bdsky)

@@ -223,10 +223,11 @@ class BayesianSkyline(Prior):
 @dataclass
 class BirthDeathSkyline(Prior):
     tree: Tree
-    origin: Real
     become_uninfectious_rate: Real
     reproductive_number: RealVector
     sampling_proportion: Real
+    origin: Real | None = None
+    interval_times: Real | None = None
 
 @dataclass
 class Monophyly(Prior):

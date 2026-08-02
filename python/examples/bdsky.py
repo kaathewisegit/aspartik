@@ -34,7 +34,6 @@ msa = read_msa_from_fasta("data/alignments/hcv.fasta")
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
 tree.set_random_heights(10, rng)
-tree.accept()
 
 become_uninfectious_rate = Real(1)
 reproductive_number = RealVector.repeat(2, 20)
@@ -47,10 +46,10 @@ rates = RealVector.repeat(1, 6)
 priors = [
     BirthDeathSkyline(
         tree,
-        origin,
         become_uninfectious_rate,
         reproductive_number,
         sampling_proportion,
+        origin=origin,
     ),
     Distribution(become_uninfectious_rate, LogNormal(0, 1)),
     Distribution(reproductive_number, LogNormal(0, 1)),

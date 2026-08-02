@@ -12,6 +12,7 @@ struct Scratch {
 	ai: Vec<f64>,
 	bi: Vec<f64>,
 	p0_next: Vec<f64>,
+	times: Vec<f64>,
 	lineage_heights: Vec<f64>,
 	lineage_counts: Vec<i64>,
 }
@@ -25,6 +26,7 @@ impl Scratch {
 			ai: vec![0.0; n],
 			bi: vec![0.0; n],
 			p0_next: vec![0.0; n],
+			times: vec![0.0; n + 1],
 			lineage_heights: vec![0.0; n],
 			lineage_counts: vec![0; n],
 		})
@@ -37,7 +39,9 @@ pub struct BirthDeathSkyline {
 	#[pyo3(get)]
 	tree: Py<PyTree>,
 	#[pyo3(get)]
-	origin: Py<PyReal>,
+	origin: Option<Py<PyReal>>,
+	#[pyo3(get)]
+	interval_times: Option<Py<PyReal>>,
 	#[pyo3(get)]
 	become_uninfectious_rate: Py<PyReal>,
 	#[pyo3(get)]
@@ -76,6 +80,7 @@ fn mul_scale(probability: &mut f64, scale: &mut f64, mul: f64) {
 	const SCALE: f64 = 485165195.4097903; // e^20
 
 	*probability *= mul;
+	assert_ne!(*probability, 0.0);
 
 	while *probability < THRESHOLD {
 		*probability *= SCALE;
@@ -103,22 +108,49 @@ fn update_lineage_counts(heights: &[f64], tree: &Tree, counts: &mut [i64]) {
 	}
 }
 
+fn index_of(times: &[f64], x: f64, n: usize) -> usize {
+	times.partition_point(|&t| t <= x)
+		.saturating_sub(1)
+		.min(n - 1)
+}
+
+fn update_change_times(
+	times: &mut [f64],
+	origin: Option<f64>,
+	interval: Option<f64>,
+	root_height: f64,
+) {
+	let n = times.len() - 1;
+	let max_time = origin.unwrap_or(root_height);
+	let interval_width = interval.unwrap_or(max_time / n as f64);
+
+	times[0] = 0.0;
+	#[expect(clippy::needless_range_loop)]
+	for i in 1..n {
+		times[i] = interval_width * i as f64;
+	}
+	times[n] = max_time;
+}
+
 #[pymethods]
 impl BirthDeathSkyline {
 	#[new]
 	#[pyo3(signature = (
 		tree,
-		origin,
 		become_uninfectious_rate,
 		reproductive_number,
 		sampling_proportion,
+		*,
+		origin=None,
+		interval_times=None,
 	))]
 	fn new(
 		tree: Py<PyTree>,
-		origin: Py<PyReal>,
 		become_uninfectious_rate: Py<PyReal>,
 		reproductive_number: Py<PyRealVector>,
 		sampling_proportion: Py<PyReal>,
+		origin: Option<Py<PyReal>>,
+		interval_times: Option<Py<PyReal>>,
 	) -> Result<Self> {
 		let size = reproductive_number.get().inner().len();
 		ensure!(size >= 2, "Expected at least two skyline intervals");
@@ -126,6 +158,7 @@ impl BirthDeathSkyline {
 		Ok(Self {
 			tree,
 			origin,
+			interval_times,
 			become_uninfectious_rate,
 			reproductive_number,
 			sampling_proportion,
@@ -136,22 +169,37 @@ impl BirthDeathSkyline {
 	fn probability(&self) -> Result<f64> {
 		let s = &mut *self.scratch.lock();
 		let tree = self.tree.get().inner();
-		let origin = self.origin.get().inner().value();
 		let become_uninfectious_rate =
 			self.become_uninfectious_rate.get().inner().value();
 		let reproductive_number =
 			self.reproductive_number.get().inner();
 		let sampling_proportion =
 			self.sampling_proportion.get().inner().value();
+		let origin =
+			self.origin.as_ref().map(|o| o.get().inner().value());
+		let interval_times = self
+			.interval_times
+			.as_ref()
+			.map(|it| it.get().inner().value());
 
-		let n = reproductive_number.len();
 		let root_height = tree.height_of(*tree.root());
 
-		if root_height >= origin {
+		if origin.is_some_and(|o| o < root_height) {
 			return Ok(f64::NEG_INFINITY);
 		}
 
-		let iw = origin / n as f64; // equidistant interval width
+		let n = reproductive_number.len();
+
+		update_change_times(
+			&mut s.times,
+			origin,
+			interval_times,
+			root_height,
+		);
+
+		if s.times[n] < s.times[n - 1] {
+			return Ok(f64::NEG_INFINITY);
+		}
 
 		for i in 0..n {
 			s.birth[i] = reproductive_number[i]
@@ -178,16 +226,14 @@ impl BirthDeathSkyline {
 		);
 
 		for i in (0..n - 1).rev() {
-			let ti = (i + 2) as f64 * iw; // times[i + 1]
-			let t = (i + 1) as f64 * iw; // times[i]
 			s.p0_next[i + 1] = p0(
 				s.birth[i + 1],
 				s.death[i + 1],
 				s.psi[i + 1],
 				s.ai[i + 1],
 				s.bi[i + 1],
-				ti,
-				t,
+				s.times[i + 2],
+				s.times[i + 1],
 			);
 			if (s.p0_next[i + 1] - 1.0).abs() < 1e-10 {
 				return Ok(f64::NEG_INFINITY);
@@ -201,44 +247,40 @@ impl BirthDeathSkyline {
 			);
 		}
 
-		let index_of = |x: f64| -> usize {
-			((x / iw).max(0.0) as usize).min(n - 1)
-		};
-
 		let mut out = 1.0;
 		let mut scale = 0.0;
 
 		let p0_origin = p0(
-			s.birth[0], s.death[0], s.psi[0], s.ai[0], s.bi[0], iw,
-			0.0,
+			s.birth[0], s.death[0], s.psi[0], s.ai[0], s.bi[0],
+			s.times[1], s.times[0],
 		);
 		if p0_origin == 1.0 {
 			return Ok(f64::NEG_INFINITY);
 		}
-		let q0 = q(s.ai[0], s.bi[0], iw, 0.0);
+		let q0 = q(s.ai[0], s.bi[0], s.times[1], s.times[0]);
 		mul_scale(&mut out, &mut scale, q0 / (1.0 - p0_origin));
 
+		let last = s.times.last().unwrap();
+
 		for internal in tree.internals() {
-			let x = origin - tree.height_of(*internal);
-			let idx = index_of(x);
-			let ti = (idx + 1) as f64 * iw;
-			let qi = q(s.ai[idx], s.bi[idx], ti, x);
+			let x = last - tree.height_of(*internal);
+			let idx = index_of(&s.times, x, n);
+			let qi = q(s.ai[idx], s.bi[idx], s.times[idx + 1], x);
 			mul_scale(&mut out, &mut scale, s.birth[idx] * qi);
 		}
 
 		for leaf in tree.leaves() {
-			let y = origin - tree.height_of(*leaf);
-			let idx = index_of(y);
+			let y = last - tree.height_of(*leaf);
+			let idx = index_of(&s.times, y, n);
 			if s.psi[idx] == 0.0 {
 				return Ok(f64::NEG_INFINITY);
 			}
-			let ti = (idx + 1) as f64 * iw;
-			let qi = q(s.ai[idx], s.bi[idx], ti, y);
+			let qi = q(s.ai[idx], s.bi[idx], s.times[idx + 1], y);
 			mul_scale(&mut out, &mut scale, s.psi[idx] / qi);
 		}
 
 		for j in 1..n {
-			s.lineage_heights[j] = origin - j as f64 * iw;
+			s.lineage_heights[j] = last - s.times[j];
 		}
 		update_lineage_counts(
 			&s.lineage_heights[1..n],
@@ -249,9 +291,12 @@ impl BirthDeathSkyline {
 		for j in 1..n {
 			let n_lineages = s.lineage_counts[j];
 			if n_lineages > 0 {
-				let time = j as f64 * iw; // times[j − 1]
-				let ti = (j + 1) as f64 * iw; // times[j]
-				let qj = q(s.ai[j], s.bi[j], ti, time);
+				let qj = q(
+					s.ai[j],
+					s.bi[j],
+					s.times[j + 1],
+					s.times[j],
+				);
 				for _ in 0..n_lineages {
 					mul_scale(&mut out, &mut scale, qj);
 				}
@@ -263,9 +308,14 @@ impl BirthDeathSkyline {
 
 	fn is_changed(&self) -> bool {
 		self.tree.get().is_changed()
-			|| self.origin.get().is_changed()
 			|| self.become_uninfectious_rate.get().is_changed()
 			|| self.reproductive_number.get().is_changed()
 			|| self.sampling_proportion.get().is_changed()
+			|| self.origin
+				.as_ref()
+				.is_some_and(|it| it.get().is_changed())
+			|| self.interval_times
+				.as_ref()
+				.is_some_and(|it| it.get().is_changed())
 	}
 }
