@@ -75,7 +75,7 @@ fn q(a: f64, c: f64, ti: f64, t: f64) -> f64 {
 	4.0 * ex / (denom * denom)
 }
 
-fn mul_scale(probability: &mut f64, scale: &mut f64, mul: f64) {
+fn mul_scale(probability: &mut f64, scale: &mut i32, mul: f64) {
 	const THRESHOLD: f64 = 0.000000002061153622438558; // e^-20
 	const SCALE: f64 = 485165195.4097903; // e^20
 
@@ -84,11 +84,11 @@ fn mul_scale(probability: &mut f64, scale: &mut f64, mul: f64) {
 
 	while *probability < THRESHOLD {
 		*probability *= SCALE;
-		*scale -= 20.0;
+		*scale -= 20;
 	}
 	while *probability > 1.0 {
 		*probability *= THRESHOLD;
-		*scale += 20.0;
+		*scale += 20;
 	}
 }
 
@@ -109,9 +109,7 @@ fn update_lineage_counts(heights: &[f64], tree: &Tree, counts: &mut [i64]) {
 }
 
 fn index_of(times: &[f64], x: f64, n: usize) -> usize {
-	times.partition_point(|&t| t <= x)
-		.saturating_sub(1)
-		.min(n - 1)
+	times.iter().rposition(|&t| t <= x).unwrap_or(0).min(n - 1)
 }
 
 fn update_change_times(
@@ -248,7 +246,7 @@ impl BirthDeathSkyline {
 		}
 
 		let mut out = 1.0;
-		let mut scale = 0.0;
+		let mut scale = 0;
 
 		let p0_origin = p0(
 			s.birth[0], s.death[0], s.psi[0], s.ai[0], s.bi[0],
@@ -303,7 +301,7 @@ impl BirthDeathSkyline {
 			}
 		}
 
-		Ok(out.ln() + scale)
+		Ok(out.ln() + f64::from(scale))
 	}
 
 	fn is_changed(&self) -> bool {
