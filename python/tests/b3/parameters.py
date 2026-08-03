@@ -24,6 +24,10 @@ def test_real_comparisons():
     assert not val >= 0.3
 
 
+def test_real_repr():
+    assert repr(Real(1.5)) == "Real(1.5)"
+
+
 def test_real_vector_repeat():
     for length in range(100):
         vec = RealVector.repeat(0.5, length)

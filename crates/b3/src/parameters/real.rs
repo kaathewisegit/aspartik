@@ -108,4 +108,8 @@ impl_pyparameter_common!(PyReal, Real, {
 	fn __float__(&self) -> f64 {
 		self.inner().value()
 	}
+
+	fn __repr__(&self) -> String {
+		format!("Real({})", self.inner().value())
+	}
 });
