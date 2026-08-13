@@ -131,6 +131,7 @@ def plot_skyline_birthdeath(
         label=rf"$R_e$ {cred_mass:.0%} HPD",
     )
 
+    ax.axhline(y=1, linewidth=1, linestyle="--")
     ax.set_ylabel(r"$R_e$")
     ax.tick_params(axis="y")
     ax.spines["left"]
