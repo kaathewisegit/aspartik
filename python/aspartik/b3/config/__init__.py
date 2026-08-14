@@ -729,14 +729,14 @@ def _b3_config(c: MCMCConfig):
             priors.append(yule)
         case "constant":
             population_size = create_real(
-                1.0, "population_size", Gamma(0.001, 1 / 1000.0), weight=3
+                1.0, "population_size", Gamma(0.001, 1000.0), weight=3
             )
             coalescent = ConstantPopulation(tree, population_size)
             items["prior:coalescent"] = coalescent
             priors.append(coalescent)
         case "exponential":
             population_size = create_real(
-                1.0, "population_size", Gamma(0.001, 1 / 1000.0), weight=3
+                1.0, "population_size", Gamma(0.001, 1000.0), weight=3
             )
             growth_rate = create_real(
                 1.0, "growth_rate", Laplace(0, 100), weight=3, positive=False

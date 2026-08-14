@@ -54,7 +54,7 @@ rates = RealVector.repeat(1, 6)
 priors = [
     Distribution(alpha, Exponential(0.5)),
     Distribution(clock_rate, Laplace(0, 0.5)),
-    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
+    Distribution(population_size, Gamma(0.001, 1000.0)),
     Distribution(growth_rate, Laplace(0, 100)),
     ExponentialGrowth(tree, population_size, growth_rate),
     Bound(alpha, lower=0.1, upper=100),

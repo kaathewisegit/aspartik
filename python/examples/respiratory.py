@@ -61,7 +61,7 @@ priors = [
     Bound(frequencies),
     Distribution(kappa, LogNormal(1.0, 1.25)),
     Distribution(clock_rate, Laplace(0, 0.5)),
-    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
+    Distribution(population_size, Gamma(0.001, 1000.0)),
     Distribution(growth_rate, Laplace(0.0, 100.0)),
     ExponentialGrowth(tree, population_size, growth_rate),
 ]

@@ -39,7 +39,7 @@ frequencies = RealVector.repeat(0.25, 4)
 
 priors = [
     Distribution(kappa, LogNormal(1.0, 1.25)),
-    Distribution(population_size, Gamma(0.001, 1 / 1000.0)),
+    Distribution(population_size, Gamma(0.001, 1000.0)),
     ConstantPopulation(tree, population_size),
 ]
 
