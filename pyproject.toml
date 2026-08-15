@@ -17,7 +17,7 @@ keywords = ["bioinformatics"]
 [project.optional-dependencies]
 cli = ["cliclass~=0.1.0a1"]
 analysis = [
-	"polars~=1.42",
+	"polars~=1.43",
 	"matplotlib~=3.11",
 	"numpy~=2.5",
 ]
@@ -28,9 +28,9 @@ dev = [
 	"maturin~=1.14 ; sys_platform != 'linux'",
 	"mpmath~=1.4",
 	"gmpy2~=2.3",
-	"polars~=1.42",
+	"polars~=1.43",
 	"pdoc~=16.0",
-	"ty~=0.0.63",
+	"ty~=0.0.72",
 	"pytest~=9.1",
 	"ruff~=0.16",
 	"cliclass~=0.1.0a1", # duplicated from `cli`
