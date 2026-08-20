@@ -1,4 +1,5 @@
-use computare_distributions::Continuous;
+use anyhow::Result;
+use computare_distributions::{Continuous, Statistics};
 use pyo3::{exceptions::PyTypeError, prelude::*};
 
 use rng::PyRng;
@@ -12,6 +13,7 @@ macro_rules! wrapper {
 		repr($repr_fmt:literal, $($repr_args:tt),* $(,)?);
 		$(Continuous $continuous:literal;)?
 		$(Discrete $discrete:literal;)?
+		$(Statistics $statistics:literal;)?
 
 		$(@ $($rest:tt)*)?
 	) => {
@@ -75,6 +77,34 @@ macro_rules! wrapper {
 			}
 			)?
 
+			$(
+			fn mean(&self, py: Python) -> Result<f64> {
+				#[expect(clippy::no_effect)]
+				$statistics;
+				Ok(self.make(py)?.mean()?)
+			}
+
+			fn median(&self, py: Python) -> Result<f64> {
+				Ok(self.make(py)?.median()?)
+			}
+
+			fn mode(&self, py: Python) -> Result<f64> {
+				Ok(self.make(py)?.mode()?)
+			}
+
+			fn variance(&self, py: Python) -> Result<f64> {
+				Ok(self.make(py)?.variance()?)
+			}
+
+			fn std(&self, py: Python) -> Result<f64> {
+				Ok(self.make(py)?.std()?)
+			}
+
+			fn entropy(&self, py: Python) -> Result<f64> {
+				Ok(self.make(py)?.entropy()?)
+			}
+			)?
+
 			fn sample(&self, py: Python, rng: Py<PyRng>) -> PyResult<f64> {
 				use rand::distr::Distribution;
 
@@ -98,6 +128,8 @@ macro_rules! wrapper {
 	};
 }
 
+// TODO: Beta, Gamma, InverseGamma, Normal, and Uniform have `&str` error types, which can't be
+// wrapped by anyhow
 wrapper! {
 	Beta { shape_a, shape_b };
 	repr("Beta(shape_a={}, shape_b={})", shape_a, shape_b);
@@ -108,6 +140,7 @@ wrapper! {
 	Exponential { rate };
 	repr("Exponential(rate={})", rate);
 	Continuous true;
+	Statistics true;
 }
 
 wrapper! {
@@ -126,12 +159,14 @@ wrapper! {
 	Laplace { location, scale };
 	repr("Laplace(location={}, scale={})", location, scale);
 	Continuous true;
+	Statistics true;
 }
 
 wrapper! {
 	LogNormal { location, scale };
 	repr("LogNormal(location={}, scale={})", location, scale);
 	Continuous true;
+	Statistics true;
 }
 
 wrapper! {

@@ -244,6 +244,7 @@ dependencies = [
 name = "distributions"
 version = "0.1.0-alpha.20"
 dependencies = [
+ "anyhow",
  "computare-distributions",
  "pyo3",
  "rand",

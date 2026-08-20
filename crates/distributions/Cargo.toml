@@ -10,6 +10,7 @@ authors.workspace = true
 rng = { workspace = true }
 util = { workspace = true }
 
+anyhow = { workspace = true }
 computare-distributions = { workspace = true, features = ["rand"] }
 pyo3 = { workspace = true }
 rand = { workspace = true }
