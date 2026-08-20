@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use num_traits::{Num, Zero};
+use computare_core::{Num, Zero};
 
 use crate::{Dim, MatrixRef};
 
@@ -77,7 +77,7 @@ where
 		for j in 0..K {
 			let mut sum = T::zero();
 			for k in 0..M {
-				sum = sum + a[i][k] * b[k][j];
+				sum += a[i][k] * b[k][j];
 			}
 			result[i][j] = sum;
 		}

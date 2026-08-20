@@ -163,11 +163,6 @@ Case conversion library used by `pyo3` during build time for case
 conversion attributes on pyclasses.
 
 
-### [`libc`](./libc-license)
-
-Raw bindings to platform-specific C libraries.
-
-
 ### [`libloading`](./libloading-license)
 
 Used by `cudarc` to dynamically load CUDA libraries.
@@ -269,14 +264,6 @@ See `proc-macro2`.
 ### [`target-lexicon`](./target-lexicon-license)
 
 Library for working with host triples, used by `pyo3-build-config`.
-
-
-### [`thiserror`](./thiserror-license)
-
-`anyhow`'s sister project for deriving `Display` and `Error` on types.
-
-
-### [`thiserror-impl`](./thiserror-license)
 
 
 ### [`unicode-indent`](./unicode-ident-license)

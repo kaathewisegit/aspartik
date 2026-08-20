@@ -11,13 +11,11 @@ pub use dim::Dim;
 pub use ext::{MatrixArrayExt, MatrixSliceExt};
 pub use matrix::{MatrixMut, MatrixRef};
 
-pub fn mul<T>(
-	lhs: MatrixRef<'_, T>,
-	rhs: MatrixRef<'_, T>,
-	mut dst: MatrixMut<'_, T>,
-) where
-	T: Copy + num_traits::Num,
-{
+pub fn mul(
+	lhs: MatrixRef<'_, f64>,
+	rhs: MatrixRef<'_, f64>,
+	mut dst: MatrixMut<'_, f64>,
+) {
 	assert_eq!(lhs.num_cols(), rhs.num_rows());
 	assert_eq!(dst.num_rows(), lhs.num_rows());
 	assert_eq!(dst.num_cols(), rhs.num_cols());
@@ -28,9 +26,9 @@ pub fn mul<T>(
 
 	for i in 0..rows {
 		for j in 0..cols {
-			let mut sum = T::zero();
+			let mut sum = 0.0;
 			for k in 0..inner {
-				sum = sum + lhs[(i, k)] * rhs[(k, j)];
+				sum += lhs[(i, k)] * rhs[(k, j)];
 			}
 			dst[(i, j)] = sum;
 		}

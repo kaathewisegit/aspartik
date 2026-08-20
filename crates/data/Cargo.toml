@@ -18,7 +18,6 @@ parking_lot = { workspace = true, optional = true }
 peg = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
 rand = { workspace = true }
-thiserror = { workspace = true }
 
 [dev-dependencies]
 arbitrary = { workspace = true }

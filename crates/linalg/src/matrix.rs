@@ -1,5 +1,5 @@
 use bytemuck::Zeroable;
-use num_traits::One;
+use computare_core::One;
 
 use std::{
 	marker::PhantomData,
