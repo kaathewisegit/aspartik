@@ -1,8 +1,8 @@
 use computare_distributions::Continuous;
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyTypeError, prelude::*};
 
 use rng::PyRng;
-use util::{py_call_method, py_has_method};
+use util::{py_bail, py_call_method, py_has_method};
 
 macro_rules! wrapper {
 	(
@@ -30,9 +30,14 @@ macro_rules! wrapper {
 		#[pymethods]
 		impl $class {
 			#[new]
-			fn new($($field: Py<PyAny>),*) -> Self {
-				// TODO: check SupportsFloat
-				Self { $($field),* }
+			fn new(py: Python, $($field: Py<PyAny>),*) -> PyResult<Self> {
+				$({
+				let $field = $field.bind(py);
+				if !py_has_method!($field, "__float__") {
+					py_bail!(PyTypeError, "{} must implement the `SupportsFloat` protocol", $field);
+				}
+				})*
+				Ok(Self { $($field),* })
 			}
 
 			fn __repr__(&self) -> String {
