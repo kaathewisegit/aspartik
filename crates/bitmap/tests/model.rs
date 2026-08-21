@@ -31,15 +31,11 @@ impl Model {
 	}
 
 	pub fn set_all_off(&mut self) {
-		for value in &mut self.0 {
-			*value = false;
-		}
+		self.0.fill(false);
 	}
 
 	pub fn set_all_on(&mut self) {
-		for value in &mut self.0 {
-			*value = true;
-		}
+		self.0.fill(true);
 	}
 
 	fn len(&self) -> usize {
