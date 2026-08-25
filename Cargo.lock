@@ -405,9 +405,9 @@ checksum = "7011d97b484a5ebdc4b1fdb3b12d5e4bbbea56e9d22b688f2e79e04b65a7d8a6"
 
 [[package]]
 name = "picoarrow"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "490dd23199b31a96055c5e5445eac5e81ca1499c674f94313d4f759f72cfce07"
+checksum = "0dbb703df56590cff243ecc23387dca87c12713a8471c7895a1f7e07b9528553"
 dependencies = [
  "bytemuck",
  "flatbuffers",
