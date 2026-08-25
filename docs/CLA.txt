@@ -1,0 +1,13 @@
+Contributor License Agreement
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole by me and I have the right
+    to submit it under the open source licenses AGPL-3.0, GPL-3.0,
+    LGPL-3.0, EUPL-1.2, or MPL-2.0.
+
+(b) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) listed above.
