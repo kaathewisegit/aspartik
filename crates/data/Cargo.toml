@@ -16,6 +16,7 @@ arbitrary = { workspace = true, optional = true, features = ["derive"] }
 bytes = { workspace = true }
 parking_lot = { workspace = true, optional = true }
 peg = { workspace = true }
+picoarrow = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
 rand = { workspace = true }
 

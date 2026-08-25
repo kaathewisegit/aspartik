@@ -214,6 +214,7 @@ dependencies = [
  "bytes",
  "parking_lot",
  "peg",
+ "picoarrow",
  "pyo3",
  "rand",
  "rng",
