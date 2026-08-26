@@ -6,6 +6,7 @@ mod nucleotides;
 mod parser;
 mod phred;
 pub mod seq;
+pub mod tree;
 
 pub use aa::AminoAcid;
 pub use msa::Msa;

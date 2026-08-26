@@ -144,4 +144,12 @@ impl Tree {
 	pub fn edge(&self, parent: NodeIdx, child: NodeIdx) -> &Edge {
 		self.edges.get(&(parent, child)).unwrap()
 	}
+
+	pub(crate) fn edge_entries(
+		&self,
+	) -> impl Iterator<Item = (NodeIdx, NodeIdx, &Edge)> {
+		self.edges
+			.iter()
+			.map(|(&(parent, child), edge)| (parent, child, edge))
+	}
 }
