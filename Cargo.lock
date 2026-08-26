@@ -218,6 +218,7 @@ dependencies = [
  "pyo3",
  "rand",
  "rng",
+ "rustc-hash",
  "util",
 ]
 

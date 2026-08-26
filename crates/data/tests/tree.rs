@@ -1,7 +1,9 @@
-use anyhow::Result;
+use anyhow::{Result, ensure};
 use arbitrary::Unstructured;
 use arbtest::arbtest;
 use picoarrow::array::{ArrayUtf8, Nullable};
+
+use std::collections::BTreeSet;
 
 use data::{
 	newick::{Edge, Node as NewickNode, Tree as NewickTree},
@@ -64,6 +66,112 @@ fn internal(tree: &BinaryRootedTree, index: u32) -> Internal {
 
 fn indices(nodes: impl Iterator<Item = Node>) -> Vec<u32> {
 	nodes.map(Node::index).collect()
+}
+
+fn indexed_tree(source: &str) -> Result<BinaryRootedTree> {
+	let source = BinaryRootedTree::try_from(&NewickTree::parse(source)?)?;
+	let num_leaves = source.num_leaves();
+	let num_nodes = source.num_nodes();
+	let mut mapping = vec![0; num_nodes as usize];
+	let mut seen = vec![false; num_leaves as usize];
+	let mut node_names = vec![String::new(); num_nodes as usize];
+
+	for leaf in source.leaves() {
+		let old_node = Node::from(leaf);
+		let name = source.name(old_node).unwrap();
+		let index = name.parse::<u32>()?;
+		ensure!(index < num_leaves);
+		ensure!(!seen[index as usize]);
+		mapping[old_node.index() as usize] = index;
+		seen[index as usize] = true;
+		node_names[index as usize] = name.to_owned();
+	}
+	ensure!(seen.into_iter().all(|value| value));
+
+	for internal in source.internals() {
+		mapping[internal.index() as usize] = internal.index();
+		if let Some(name) = source.name(internal.into()) {
+			node_names[internal.index() as usize] = name.to_owned();
+		}
+	}
+
+	let children = source
+		.internals()
+		.flat_map(|internal| {
+			let (left, right) = source.children_of(internal);
+			[
+				mapping[left.index() as usize],
+				mapping[right.index() as usize],
+			]
+		})
+		.collect::<Vec<_>>();
+	let mut edge_lengths = vec![0.0; source.num_edges() as usize];
+	for child in source.edges() {
+		edge_lengths[mapping[child.index() as usize] as usize] =
+			source.edge_length(child).unwrap();
+	}
+
+	tree(num_leaves, children, edge_lengths, names(&node_names))
+}
+
+fn clades(tree: &BinaryRootedTree) -> BTreeSet<Vec<u32>> {
+	let mut descendants = vec![Vec::new(); tree.num_nodes() as usize];
+	let mut clades = BTreeSet::new();
+
+	for node in tree.postorder() {
+		if let Some(leaf) = tree.as_leaf(node) {
+			descendants[node.index() as usize] = vec![leaf.index()];
+			continue;
+		}
+
+		let internal = tree.as_internal(node).unwrap();
+		let (left, right) = tree.children_of(internal);
+		let mut leaves = descendants[left.index() as usize].clone();
+		leaves.extend_from_slice(&descendants[right.index() as usize]);
+		leaves.sort_unstable();
+		if internal != tree.root() {
+			clades.insert(leaves.clone());
+		}
+		descendants[node.index() as usize] = leaves;
+	}
+
+	clades
+}
+
+fn arbitrary_tree(
+	u: &mut Unstructured<'_>,
+	num_leaves: u32,
+) -> arbitrary::Result<BinaryRootedTree> {
+	let num_nodes = num_leaves * 2 - 1;
+	let mut available = (0..num_leaves).collect::<Vec<_>>();
+	let mut children = Vec::with_capacity((num_nodes - 1) as usize);
+
+	for parent in num_leaves..num_nodes {
+		let left_index = u.int_in_range(0..=available.len() - 1)?;
+		let left = available.swap_remove(left_index);
+		let right_index = u.int_in_range(0..=available.len() - 1)?;
+		let right = available.swap_remove(right_index);
+		children.extend([left, right]);
+		available.push(parent);
+	}
+
+	let node_names = (0..num_nodes)
+		.map(|node| {
+			if node < num_leaves {
+				format!("leaf_{node}")
+			} else {
+				String::new()
+			}
+		})
+		.collect::<Vec<_>>();
+
+	Ok(tree(
+		num_leaves,
+		children,
+		vec![0.0; (num_nodes - 1) as usize],
+		names(&node_names),
+	)
+	.unwrap())
 }
 
 #[test]
@@ -474,6 +582,116 @@ fn random_binary_trees_roundtrip() {
 			first_newick.into_string(),
 			second_newick.into_string()
 		);
+
+		Ok(())
+	});
+}
+
+#[test]
+fn ordered_leaf_attachment() -> Result<()> {
+	for (source, expected) in [
+		("(((0:0,1:0):0,3:0):0,2:0);", vec![0, -1, -1]),
+		("(((0:0,2:0):0,3:0):0,1:0);", vec![0, 0, -2]),
+		("(((1:0,2:0):0,3:0):0,0:0);", vec![0, 1, -2]),
+		(
+			"(((0:0,(1:0,5:0):0):0,(3:0,4:0):0):0,2:0);",
+			vec![0, -1, -1, 3, 1],
+		),
+		(
+			"((0:0,1:0):0,(((5:0,3:0):0,4:0):0,2:0):0);",
+			vec![0, -1, 2, 3, 3],
+		),
+		("((0:0,(2:0,3:0):0):0,(1:0,4:0):0);", vec![0, 0, 2, 1]),
+		("((0:0,((1:0,3:0):0,4:0):0):0,2:0);", vec![0, -1, 1, -3]),
+	] {
+		assert_eq!(indexed_tree(source)?.ola(), expected);
+	}
+
+	Ok(())
+}
+
+#[test]
+fn robinson_foulds() -> Result<()> {
+	for (first, second, expected) in [
+		(
+			"((0:0,1:0):0,(2:0,3:0):0);",
+			"((0:0,1:0):0,(2:0,3:0):0);",
+			0,
+		),
+		(
+			"((0:0,1:0):0,(2:0,3:0):0);",
+			"(((0:0,1:0):0,2:0):0,3:0);",
+			2,
+		),
+		(
+			"((0:0,1:0):0,(2:0,3:0):0);",
+			"((0:0,2:0):0,(1:0,3:0):0);",
+			4,
+		),
+		(
+			"((0:0,1:0):0,(2:0,3:0):0);",
+			"((1:0,0:0):0,(3:0,2:0):0);",
+			0,
+		),
+		(
+			"((0:0,1:0):0,(2:0,(3:0,4:0):0):0);",
+			"((0:0,1:0):0,(2:0,(3:0,4:0):0):0);",
+			0,
+		),
+		(
+			"((0:0,1:0):0,(2:0,(3:0,4:0):0):0);",
+			"((0:0,1:0):0,((2:0,3:0):0,4:0):0);",
+			2,
+		),
+		(
+			"((0:0,1:0):0,(2:0,(3:0,4:0):0):0);",
+			"((((0:0,1:0):0,2:0):0,3:0):0,4:0);",
+			4,
+		),
+		(
+			"(0:0,(1:0,(2:0,(3:0,4:0):0):0):0);",
+			"((((0:0,1:0):0,2:0):0,3:0):0,4:0);",
+			6,
+		),
+		(
+			"(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);",
+			"(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);",
+			0,
+		),
+		(
+			"(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);",
+			"((0:0,1:0):0,((2:0,3:0):0,(4:0,5:0):0):0);",
+			2,
+		),
+		(
+			"((((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0):0,(6:0,7:0):0);",
+			"((((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0):0,(6:0,7:0):0);",
+			0,
+		),
+	] {
+		let first = indexed_tree(first)?;
+		let second = indexed_tree(second)?;
+		assert_eq!(first.robinson_foulds(&second), expected);
+		assert_eq!(second.robinson_foulds(&first), expected);
+	}
+
+	Ok(())
+}
+
+#[test]
+fn random_robinson_foulds() {
+	arbtest(|u: &mut Unstructured<'_>| {
+		let num_leaves = u.int_in_range(2_u32..=1_000)?;
+		let first = arbitrary_tree(u, num_leaves)?;
+		let second = arbitrary_tree(u, num_leaves)?;
+		let first_clades = clades(&first);
+		let second_clades = clades(&second);
+		let expected = first_clades
+			.symmetric_difference(&second_clades)
+			.count() as u32;
+
+		assert_eq!(first.robinson_foulds(&second), expected);
+		assert_eq!(second.robinson_foulds(&first), expected);
 
 		Ok(())
 	});
