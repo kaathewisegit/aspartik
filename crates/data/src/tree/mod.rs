@@ -1,4 +1,5 @@
 mod binary;
+pub mod builder;
 mod newick;
 
 pub use binary::BinaryRootedTree;
