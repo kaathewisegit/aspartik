@@ -84,4 +84,18 @@ impl TreeBuilder {
 
 		self.parents[node.i()] = new_parent;
 	}
+
+	pub fn add_node(
+		&mut self,
+		parent: Node,
+		data: NodeData,
+		edge: EdgeData,
+	) -> Node {
+		let new_node = Node(self.nodes.len() as u32);
+		self.nodes.push(data);
+		self.edges.push(edge);
+		self.parents.push(parent);
+		self.children[parent.i()].push(new_node);
+		new_node
+	}
 }
