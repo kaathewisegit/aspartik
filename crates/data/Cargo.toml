@@ -19,6 +19,7 @@ peg = { workspace = true }
 picoarrow = { workspace = true }
 pyo3 = { workspace = true, features = ["anyhow"], optional = true }
 rand = { workspace = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
 arbitrary = { workspace = true }

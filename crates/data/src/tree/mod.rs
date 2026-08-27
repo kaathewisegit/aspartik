@@ -1,7 +1,11 @@
 use anyhow::{Result, anyhow, ensure};
 use picoarrow::array::{Array, ArrayUtf8, Nullable};
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use std::fmt;
+use std::{
+	cmp::{max, min},
+	fmt,
+};
 
 mod newick;
 
@@ -33,11 +37,19 @@ impl Leaf {
 	pub fn index(self) -> u32 {
 		self.0
 	}
+
+	fn i(self) -> usize {
+		self.0 as usize
+	}
 }
 
 impl Internal {
 	pub fn index(self) -> u32 {
 		self.0
+	}
+
+	fn i(self) -> usize {
+		self.0 as usize
 	}
 }
 
@@ -279,6 +291,163 @@ impl BinaryRootedTree {
 		self.leaves().find(|leaf| {
 			self.node_names.get(leaf.0 as usize) == Some(name)
 		})
+	}
+
+	pub fn ola(&self) -> Vec<i32> {
+		let num_nodes = self.num_nodes();
+		let num_leaves = self.num_leaves();
+
+		let mut labels = Vec::from_iter(0..num_leaves as i32);
+		labels.resize(num_nodes as usize, 0);
+
+		let mut clade_founder = vec![0; num_nodes as usize];
+
+		for node in self.postorder() {
+			if let Some(leaf) = self.as_leaf(node) {
+				clade_founder[leaf.i()] = leaf.0
+			} else if let Some(internal) = self.as_internal(node) {
+				let (left, right) = self.children_of(internal);
+				clade_founder[internal.i()] = min(
+					clade_founder[left.i()],
+					clade_founder[right.i()],
+				);
+			} else {
+				unreachable!()
+			}
+		}
+
+		let mut clade_splitter = vec![0; num_nodes as usize];
+		let mut splitter_to_node = vec![0; num_leaves as usize];
+		for node in self.preorder() {
+			let Some(internal) = self.as_internal(node) else {
+				continue;
+			};
+
+			let (left, right) = self.children_of(internal);
+
+			let splitter = max(
+				clade_founder[left.i()],
+				clade_founder[right.i()],
+			);
+			clade_splitter[node.i()] = splitter;
+			labels[node.i()] = -(splitter as i32);
+			splitter_to_node[splitter as usize] = node.0;
+		}
+
+		let mut ola = Vec::new();
+		let mut forward_to = Vec::from_iter(0..num_nodes);
+
+		for label in (1..num_leaves).rev() {
+			let splitter_node =
+				Internal(splitter_to_node[label as usize]);
+			let (left, right) = self.children_of(splitter_node);
+
+			let sibling = if clade_founder[left.i()] == label {
+				right
+			} else {
+				left
+			};
+
+			let mut curr = sibling;
+			while forward_to[curr.i()] != curr.0 {
+				curr = Node(forward_to[curr.i()]);
+			}
+
+			ola.push(labels[curr.i()]);
+			forward_to[splitter_node.i()] = curr.0;
+		}
+		ola.reverse();
+
+		ola
+	}
+
+	pub fn robinson_foulds(&self, other: &Self) -> u32 {
+		let mut counter = 0;
+		let mut labels = vec![0; self.num_nodes() as usize];
+		let mut clades = FxHashSet::with_capacity_and_hasher(
+			self.num_nodes() as usize,
+			FxBuildHasher,
+		);
+
+		fn process(
+			node: Node,
+			tree: &BinaryRootedTree,
+			counter: &mut u32,
+			labels: &mut [u32],
+			clades: &mut FxHashSet<(u32, u32)>,
+		) -> (u32, u32, u32) {
+			let Some(internal) = tree.as_internal(node) else {
+				let label = *counter;
+				labels[node.i()] = label;
+				*counter += 1;
+				return (label, label, 1);
+			};
+
+			let (left, right) = tree.children_of(internal);
+			let (left_min, _left_max, left_size) =
+				process(left, tree, counter, labels, clades);
+			let (_right_min, right_max, right_size) =
+				process(right, tree, counter, labels, clades);
+			let size = left_size + right_size;
+
+			if node != tree.root().into() {
+				clades.insert((left_min, right_max));
+			}
+
+			(left_min, right_max, size)
+		}
+		process(
+			self.root().into(),
+			self,
+			&mut counter,
+			&mut labels,
+			&mut clades,
+		);
+
+		let mut num_shared_clades = 0;
+		fn process_other(
+			node: Node,
+			tree: &BinaryRootedTree,
+			labels: &[u32],
+			clades: &FxHashSet<(u32, u32)>,
+			num_shared: &mut u32,
+		) -> (u32, u32, u32) {
+			let Some(internal) = tree.as_internal(node) else {
+				let label = labels[node.i()];
+				return (label, label, 1);
+			};
+
+			let (left, right) = tree.children_of(internal);
+			let (left_min, left_max, left_size) = process_other(
+				left, tree, labels, clades, num_shared,
+			);
+			let (right_min, right_max, right_size) = process_other(
+				right, tree, labels, clades, num_shared,
+			);
+			let size = left_size + right_size;
+
+			let min_val = left_min.min(right_min);
+			let max_val = left_max.max(right_max);
+
+			if node != tree.root().into()
+				&& max_val - min_val + 1 == size
+				&& clades.contains(&(min_val, max_val))
+			{
+				*num_shared += 1;
+			}
+
+			(min_val, max_val, size)
+		}
+		process_other(
+			other.root().into(),
+			other,
+			&labels,
+			&clades,
+			&mut num_shared_clades,
+		);
+
+		let num_nontrivial = self.num_leaves() - 2;
+		2 * (num_nontrivial - num_shared_clades)
 	}
 
 	pub fn preorder(&self) -> impl Iterator<Item = Node> + '_ {
