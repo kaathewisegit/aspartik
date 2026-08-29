@@ -138,6 +138,93 @@ fn clades(tree: &BinaryRootedTree) -> BTreeSet<Vec<u32>> {
 	clades
 }
 
+fn lca_depths(tree: &BinaryRootedTree) -> Vec<u32> {
+	let num_leaves = tree.num_leaves() as usize;
+	let mut depths = vec![0; tree.num_nodes() as usize];
+	for node in tree.preorder() {
+		if let Some(internal) = tree.as_internal(node) {
+			let (left, right) = tree.children_of(internal);
+			depths[left.index() as usize] =
+				depths[node.index() as usize] + 1;
+			depths[right.index() as usize] =
+				depths[node.index() as usize] + 1;
+		}
+	}
+
+	let mut lca_depths = vec![0; num_leaves * num_leaves];
+	for first in 0..num_leaves {
+		for second in first + 1..num_leaves {
+			let mut left = node(tree, first as u32);
+			let mut right = node(tree, second as u32);
+			while depths[left.index() as usize]
+				> depths[right.index() as usize]
+			{
+				left = tree.parent_of(left).unwrap().into();
+			}
+			while depths[right.index() as usize]
+				> depths[left.index() as usize]
+			{
+				right = tree.parent_of(right).unwrap().into();
+			}
+			while left != right {
+				left = tree.parent_of(left).unwrap().into();
+				right = tree.parent_of(right).unwrap().into();
+			}
+			let depth = depths[left.index() as usize];
+			lca_depths[first * num_leaves + second] = depth;
+			lca_depths[second * num_leaves + first] = depth;
+		}
+	}
+	lca_depths
+}
+
+fn triplet_topology(
+	lca_depths: &[u32],
+	num_leaves: usize,
+	triplet: [usize; 3],
+) -> usize {
+	let depth = |left: usize, right: usize| {
+		lca_depths[left * num_leaves + right]
+	};
+	let [a, b, c] = triplet;
+	let depths = [depth(a, b), depth(a, c), depth(b, c)];
+	depths.iter()
+		.position(|&value| value == *depths.iter().max().unwrap())
+		.unwrap()
+}
+
+fn triplet_distance_slow(
+	first: &BinaryRootedTree,
+	second: &BinaryRootedTree,
+) -> u128 {
+	assert_eq!(first.num_leaves(), second.num_leaves());
+	let num_leaves = first.num_leaves() as usize;
+	let first_depths = lca_depths(first);
+	let second_depths = lca_depths(second);
+	let mut distance = 0;
+
+	for a in 0..num_leaves {
+		for b in a + 1..num_leaves {
+			for c in b + 1..num_leaves {
+				let triplet = [a, b, c];
+				distance += u128::from(
+					triplet_topology(
+						&first_depths,
+						num_leaves,
+						triplet,
+					) != triplet_topology(
+						&second_depths,
+						num_leaves,
+						triplet,
+					),
+				);
+			}
+		}
+	}
+
+	distance
+}
+
 fn arbitrary_tree(
 	u: &mut Unstructured<'_>,
 	num_leaves: u32,
@@ -525,6 +612,7 @@ fn deep_ladder_uses_iterative_traversal() -> Result<()> {
 	assert_eq!(tree.preorder().count(), tree.num_nodes() as usize);
 	assert_eq!(tree.postorder().count(), tree.num_nodes() as usize);
 	assert_eq!(roundtrip.num_nodes(), tree.num_nodes());
+	assert_eq!(tree.triplet_distance(&tree), 0);
 
 	Ok(())
 }
@@ -695,4 +783,73 @@ fn random_robinson_foulds() {
 
 		Ok(())
 	});
+}
+
+#[test]
+fn triplet_distance() -> Result<()> {
+	let trees = [
+		indexed_tree("((0:0,1:0):0,2:0);")?,
+		indexed_tree("((0:0,2:0):0,1:0);")?,
+		indexed_tree("((1:0,2:0):0,0:0);")?,
+	];
+
+	for (index, first) in trees.iter().enumerate() {
+		assert_eq!(first.triplet_distance(first), 0);
+		for second in &trees[index + 1..] {
+			assert_eq!(first.triplet_distance(second), 1);
+			assert_eq!(second.triplet_distance(first), 1);
+		}
+	}
+
+	let first = indexed_tree("((0:0,(1:0,2:0):0):0,(3:0,4:0):0);")?;
+	let second = indexed_tree("((1:0,(0:0,2:0):0):0,(3:0,4:0):0);")?;
+	assert_eq!(first.triplet_distance(&second), 1);
+	assert_eq!(second.triplet_distance(&first), 1);
+	assert_eq!(triplet_distance_slow(&first, &second), 1);
+
+	let first = indexed_tree("((0:0,1:0):0,(2:0,3:0):0);")?;
+	let second = indexed_tree("(0:0,(1:0,(2:0,3:0):0):0);")?;
+	assert_eq!(
+		first.triplet_distance(&second),
+		triplet_distance_slow(&first, &second)
+	);
+	assert_ne!(first.triplet_distance(&second), 0);
+
+	Ok(())
+}
+
+#[test]
+fn random_triplet_distance() {
+	arbtest(|u: &mut Unstructured<'_>| {
+		let num_leaves = u.int_in_range(2_u32..=24)?;
+		let first = arbitrary_tree(u, num_leaves)?;
+		let second = arbitrary_tree(u, num_leaves)?;
+		let expected = triplet_distance_slow(&first, &second);
+
+		assert_eq!(first.triplet_distance(&second), expected);
+		assert_eq!(second.triplet_distance(&first), expected);
+
+		Ok(())
+	});
+}
+
+#[test]
+fn random_large_triplet_distance_properties() {
+	arbtest(|u: &mut Unstructured<'_>| {
+		let num_leaves = u.int_in_range(2_u32..=1_000)?;
+		let first = arbitrary_tree(u, num_leaves)?;
+		let second = arbitrary_tree(u, num_leaves)?;
+		let distance = first.triplet_distance(&second);
+
+		assert_eq!(first.triplet_distance(&first), 0);
+		assert_eq!(second.triplet_distance(&first), distance);
+		assert!(distance <= choose3_for_test(num_leaves));
+
+		Ok(())
+	});
+}
+
+fn choose3_for_test(value: u32) -> u128 {
+	let value = u128::from(value);
+	value * value.saturating_sub(1) * value.saturating_sub(2) / 6
 }
