@@ -2,13 +2,11 @@ use anyhow::{Result, anyhow, ensure};
 use picoarrow::array::{Array, ArrayUtf8, Nullable};
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use std::{
-	cmp::{max, min},
-	fmt,
-};
+use std::cmp::{max, min};
 
 use super::{Internal, Leaf, Node, ROOT_PARENT};
 
+#[derive(Debug)]
 pub struct BinaryRootedTree {
 	num_leaves: u32,
 	children: Box<[u32]>,
@@ -17,33 +15,6 @@ pub struct BinaryRootedTree {
 	node_names: ArrayUtf8<Nullable>,
 	node_metadata: ArrayUtf8<Nullable>,
 	edge_metadata: ArrayUtf8<Nullable>,
-}
-
-impl fmt::Debug for BinaryRootedTree {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		let names: Vec<_> = self
-			.nodes()
-			.map(|node| self.node_names.get(node.i()))
-			.collect();
-		let node_metadata: Vec<_> = self
-			.nodes()
-			.map(|node| self.node_metadata.get(node.i()))
-			.collect();
-		let edge_metadata: Vec<_> = self
-			.edges()
-			.map(|child| self.edge_metadata.get(child.i()))
-			.collect();
-
-		f.debug_struct("BinaryRootedTree")
-			.field("num_leaves", &self.num_leaves)
-			.field("children", &self.children)
-			.field("parents", &self.parents)
-			.field("edge_lengths", &self.edge_lengths)
-			.field("node_names", &names)
-			.field("node_metadata", &node_metadata)
-			.field("edge_metadata", &edge_metadata)
-			.finish()
-	}
 }
 
 impl BinaryRootedTree {
@@ -520,6 +491,11 @@ impl BinaryRootedTree {
 			tree: self,
 			stack: vec![(self.root().into(), false)],
 		}
+	}
+
+	/// Returns `true` if the children have the same names and ids
+	pub fn identical_children(&self, other: &BinaryRootedTree) -> bool {
+		self.node_names == other.node_names
 	}
 }
 
