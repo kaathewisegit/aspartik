@@ -138,6 +138,23 @@ fn clades(tree: &BinaryRootedTree) -> BTreeSet<Vec<u32>> {
 	clades
 }
 
+fn mrca_slow(tree: &BinaryRootedTree, first: Node, second: Node) -> Node {
+	let mut ancestors = BTreeSet::new();
+	let mut current = Some(first);
+	while let Some(node) = current {
+		ancestors.insert(node);
+		current = tree.parent_of(node).map(Node::from);
+	}
+
+	let mut current = second;
+	loop {
+		if ancestors.contains(&current) {
+			return current;
+		}
+		current = tree.parent_of(current).unwrap().into();
+	}
+}
+
 fn lca_depths(tree: &BinaryRootedTree) -> Vec<u32> {
 	let num_leaves = tree.num_leaves() as usize;
 	let mut depths = vec![0; tree.num_nodes() as usize];
@@ -613,6 +630,14 @@ fn deep_ladder_uses_iterative_traversal() -> Result<()> {
 	assert_eq!(tree.postorder().count(), tree.num_nodes() as usize);
 	assert_eq!(roundtrip.num_nodes(), tree.num_nodes());
 	assert_eq!(tree.triplet_distance(&tree), 0);
+	assert_eq!(
+		tree.mrca(node(&tree, 0), node(&tree, NUM_LEAVES - 1)),
+		tree.root().into()
+	);
+	assert_eq!(
+		tree.mrca(node(&tree, 0), node(&tree, 1)),
+		node(&tree, NUM_LEAVES)
+	);
 
 	Ok(())
 }
@@ -780,6 +805,61 @@ fn random_robinson_foulds() {
 
 		assert_eq!(first.robinson_foulds(&second), expected);
 		assert_eq!(second.robinson_foulds(&first), expected);
+
+		Ok(())
+	});
+}
+
+#[test]
+fn mrca() -> Result<()> {
+	let balanced = indexed_tree("((0:0,1:0):0,(2:0,3:0):0);")?;
+	let zero = node(&balanced, 0);
+	let one = node(&balanced, 1);
+	let two = node(&balanced, 2);
+	let left = node(&balanced, 4);
+	let right = node(&balanced, 5);
+	let root = Node::from(balanced.root());
+
+	for (first, second, expected) in [
+		(zero, zero, zero),
+		(left, left, left),
+		(zero, one, left),
+		(one, zero, left),
+		(zero, left, left),
+		(left, zero, left),
+		(two, right, right),
+		(zero, two, root),
+		(root, zero, root),
+	] {
+		assert_eq!(balanced.mrca(first, second), expected);
+	}
+
+	let ladder = indexed_tree("(0:0,(1:0,(2:0,(3:0,4:0):0):0):0);")?;
+	for first in ladder.nodes() {
+		for second in ladder.nodes() {
+			assert_eq!(
+				ladder.mrca(first, second),
+				mrca_slow(&ladder, first, second)
+			);
+		}
+	}
+
+	Ok(())
+}
+
+#[test]
+fn random_mrca() {
+	arbtest(|u: &mut Unstructured<'_>| {
+		let num_leaves = u.int_in_range(2_u32..=1_000)?;
+		let tree = arbitrary_tree(u, num_leaves)?;
+		let first =
+			node(&tree, u.int_in_range(0..=tree.num_nodes() - 1)?);
+		let second =
+			node(&tree, u.int_in_range(0..=tree.num_nodes() - 1)?);
+		let expected = mrca_slow(&tree, first, second);
+
+		assert_eq!(tree.mrca(first, second), expected);
+		assert_eq!(tree.mrca(second, first), expected);
 
 		Ok(())
 	});
