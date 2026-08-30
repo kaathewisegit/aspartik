@@ -69,6 +69,16 @@ impl<T, Idx: Size, const ALIGN: usize> Buffer<T, Idx, ALIGN> {
 		Self { raw, len }
 	}
 
+	pub fn reallocate(&mut self, new_len: Idx)
+	where
+		T: AnyBitPattern,
+	{
+		assert_ne!(new_len, Idx::ZERO);
+		// SAFETY: `new_len` is not zero, `self.len` is the old capacity
+		unsafe { self.raw.reallocate(self.len, new_len) };
+		self.len = new_len;
+	}
+
 	pub fn len(&self) -> Idx {
 		self.len
 	}

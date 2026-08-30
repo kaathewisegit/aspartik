@@ -30,3 +30,25 @@ fn zeroed() {
 	assert_eq!(&Buffer::<f32>::zeroed(10)[..], &[0.0; 10]);
 	assert_eq!(&Buffer::<f64>::zeroed(10)[..], &[0.0; 10]);
 }
+
+#[test]
+fn reallocate() {
+	let mut buf = Buffer::<u8>::zeroed(4);
+	for i in 0..4 {
+		buf[i] = i as u8;
+	}
+	assert_eq!(&buf[..], &[0, 1, 2, 3]);
+
+	buf.reallocate(6);
+	for i in 4..6 {
+		buf[i] = (i * 10) as u8;
+	}
+	assert_eq!(&buf[..], &[0, 1, 2, 3, 40, 50]);
+	for i in 0..6 {
+		buf[i] = (i * 10) as u8;
+	}
+	assert_eq!(&buf[..], &[0, 10, 20, 30, 40, 50]);
+
+	buf.reallocate(2);
+	assert_eq!(&buf[..], &[0, 10]);
+}
