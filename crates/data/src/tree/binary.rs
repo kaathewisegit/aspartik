@@ -237,6 +237,26 @@ impl BinaryRootedTree {
 		})
 	}
 
+	pub fn mrca(&self, first: Node, second: Node) -> Node {
+		let mut left = first.0;
+		let mut right = second.0;
+
+		while left != right {
+			left = if left == ROOT_PARENT {
+				second.0
+			} else {
+				self.parents[left as usize]
+			};
+			right = if right == ROOT_PARENT {
+				first.0
+			} else {
+				self.parents[right as usize]
+			};
+		}
+
+		Node(left)
+	}
+
 	pub fn ola(&self) -> Vec<i32> {
 		let num_nodes = self.num_nodes();
 		let num_leaves = self.num_leaves();
