@@ -57,7 +57,7 @@ impl StateCalculator {
 		let num_leaves = values.len();
 		let num_internals = num_leaves - 1;
 
-		let partials = Buffer::<_, usize, 32>::new(
+		let partials = Buffer::<_, usize, 32>::uninit(
 			size * size * num_internals * 2,
 		);
 		let scales = vec![false; num_internals * 2];

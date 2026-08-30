@@ -16,7 +16,7 @@ impl<T, Idx: Size, const ALIGN: usize> SliceBuffer<T, Idx, ALIGN> {
 		T: AnyBitPattern,
 	{
 		Self {
-			buffer: Buffer::new(size * len),
+			buffer: Buffer::uninit(size * len),
 			size,
 		}
 	}

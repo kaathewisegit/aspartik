@@ -131,7 +131,7 @@ impl Cpu4Calculator {
 			num_threads
 		};
 
-		let partials = Buffer::<_, usize, 32>::new(
+		let partials = Buffer::<_, usize, 32>::uninit(
 			num_internals * num_patterns * 2,
 		);
 		let scales = vec![false; num_internals * num_patterns * 2];
