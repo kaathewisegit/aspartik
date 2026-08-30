@@ -5,6 +5,10 @@ use std::{
 
 use super::Size;
 
+/// A contiguous array allocation for `T`
+///
+/// `RawBuffer` doesn't contain its own capacity, so it should be tracked by
+/// its upstream user.
 pub struct RawBuffer<T, const ALIGN: usize = 0> {
 	ptr: NonNull<T>,
 }
@@ -40,12 +44,20 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 	const _NON_ZST: () =
 		assert!(size_of::<T>() != 0, "T must not be a ZST");
 
-	/// Allocate a new uninitialized slice of size `len`.
+	fn layout<Idx: Size>(capacity: Idx) -> Layout {
+		Layout::from_size_align(
+			capacity.usize() * size_of::<T>(),
+			Self::ALIGNMENT,
+		)
+		.expect("`capacity` too big")
+	}
+
+	/// Allocate a new uninitialized slice of size `capacity`.
 	///
 	/// # Safety
 	///
-	/// - `len` must not be zero
-	pub unsafe fn uninit<Idx: Size>(len: Idx) -> Self {
+	/// - `capacity` must not be zero
+	pub unsafe fn uninit<Idx: Size>(capacity: Idx) -> Self {
 		#[expect(unused)]
 		{
 			Self::_CHECK_ALIGN_POW2;
@@ -53,12 +65,8 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 			Self::_NON_ZST;
 		}
 
-		debug_assert_ne!(len, Idx::ZERO);
-		let layout = Layout::from_size_align(
-			len.usize() * size_of::<T>(),
-			Self::ALIGNMENT,
-		)
-		.expect("`len` too big");
+		debug_assert_ne!(capacity, Idx::ZERO);
+		let layout = Self::layout(capacity);
 
 		// SAFETY: we've checked above that capacity/size isn't 0 and
 		// there's a const assertion that size_of::<T> isn't 0.
@@ -72,18 +80,25 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 
 	/// # Safety
 	///
-	/// `len * size_of::<T>()` must not overflow `isize`.
-	pub unsafe fn get<Idx: Size>(&self, len: Idx) -> *const T {
+	/// `idx * size_of::<T>()` must not overflow `isize`.
+	///
+	/// Additionally, the resulting pointer is only valid if `idx` is
+	/// within the buffer's capacity.
+	pub unsafe fn get<Idx: Size>(&self, idx: Idx) -> *const T {
 		// SAFETY: function's unsafe invariant
-		unsafe { self.ptr.add(len.usize()) }.as_ptr()
+		unsafe { self.ptr.add(idx.usize()) }.as_ptr()
 	}
 
 	/// # Safety
 	///
-	/// `len * size_of::<T>()` must not overflow `isize`.
-	pub unsafe fn get_mut<Idx: Size>(&self, len: Idx) -> *mut T {
+	/// `idx * size_of::<T>()` must not overflow `isize`.
+	pub unsafe fn get_mut<Idx: Size>(&self, idx: Idx) -> *mut T {
 		// SAFETY: same as `get`
-		(unsafe { self.get(len) }) as *mut T
+		(unsafe { self.get(idx) }) as *mut T
+	}
+
+	pub fn ptr(&self) -> NonNull<T> {
+		self.ptr
 	}
 
 	pub fn as_raw_slice_mut<Idx: Size>(&mut self, len: Idx) -> *mut [T] {
@@ -117,11 +132,13 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 		unsafe { dealloc(self.ptr.as_ptr() as *mut u8, layout) }
 	}
 
-	/// Prefix-slice
+	/// Get a prefix slice of length `len` pointing into the buffer
 	///
 	/// # Safety
 	///
-	/// `len` must be less or equal to one passed in `uninit`.
+	/// `len` must be less than or equal to the buffer capacity.
+	/// Violating this triggers undefined behavior even if the elements
+	/// past the end of the buffer are never accessed.
 	pub unsafe fn as_slice<Idx: Size>(&mut self, len: Idx) -> &[T] {
 		// SAFETY: invariant
 		unsafe { &*self.as_raw_slice(len) }
@@ -131,9 +148,24 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 	///
 	/// # Safety
 	///
-	/// `len` must be less or equal to one passed in `uninit`.
-	pub unsafe fn as_slice_mut<Idx: Size>(&mut self, len: Idx) -> &[T] {
+	/// `len` must be less than or equal to the buffer capacity.
+	pub unsafe fn as_slice_mut<Idx: Size>(&mut self, len: Idx) -> &mut [T] {
 		// SAFETY: invariant
-		unsafe { &*self.as_raw_slice_mut(len) }
+		unsafe { &mut *self.as_raw_slice_mut(len) }
+	}
+
+	/// Deallocate the buffer
+	///
+	/// # Safety
+	///
+	/// The `capacity` must be correct.
+	///
+	/// Additionally, while Rust allows leaking all types, not dropping the
+	/// contents of the buffer might lead to correctness issues.
+	pub unsafe fn deallocate<Idx: Size>(&mut self, capacity: Idx) {
+		let layout = Self::layout(capacity);
+		// SAFETY: capacity (and thus layout) should be valid by the
+		// function invariant.
+		unsafe { dealloc(self.ptr.as_ptr() as *mut u8, layout) };
 	}
 }
