@@ -71,7 +71,7 @@ impl<T, Idx: Size, const ALIGN: usize> Drop for Buffer<T, Idx, ALIGN> {
 		unsafe { drop_in_place(self.raw.as_raw_slice_mut(self.len)) }
 
 		// SAFETY: `raw` has a length of `len`
-		unsafe { self.raw.drop(self.len) };
+		unsafe { self.raw.deallocate(self.len) };
 	}
 }
 

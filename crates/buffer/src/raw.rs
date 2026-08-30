@@ -1,6 +1,10 @@
 use std::{
-	alloc::{Layout, alloc, dealloc, handle_alloc_error},
-	ptr::{NonNull, slice_from_raw_parts, slice_from_raw_parts_mut},
+	alloc::{Layout, alloc, alloc_zeroed, dealloc, handle_alloc_error},
+	cmp,
+	ptr::{
+		NonNull, copy_nonoverlapping, slice_from_raw_parts,
+		slice_from_raw_parts_mut,
+	},
 };
 
 use super::Size;
@@ -52,11 +56,11 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 		.expect("`capacity` too big")
 	}
 
-	/// Allocate a new uninitialized slice of size `capacity`.
+	/// Allocate a new uninitialized buffer of size `capacity`.
 	///
 	/// # Safety
 	///
-	/// - `capacity` must not be zero
+	/// - `capacity` must not be zero.
 	pub unsafe fn uninit<Idx: Size>(capacity: Idx) -> Self {
 		#[expect(unused)]
 		{
@@ -76,6 +80,58 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 		};
 
 		Self { ptr }
+	}
+
+	/// Allocates a new buffer of size `capacity` with all bits set to 0
+	///
+	///
+	/// # Safety
+	///
+	/// - `capacity` must not be zero.
+	pub unsafe fn zeroed<Idx: Size>(capacity: Idx) -> Self {
+		#[expect(unused)]
+		{
+			Self::_CHECK_ALIGN_POW2;
+			Self::_CHECK_ALIGN_SIZE;
+			Self::_NON_ZST;
+		}
+
+		debug_assert_ne!(capacity, Idx::ZERO);
+		let layout = Self::layout(capacity);
+
+		// SAFETY: we've checked above that capacity/size isn't 0 and
+		// there's a const assertion that size_of::<T> isn't 0.
+		let ptr = unsafe { alloc_zeroed(layout) as *mut T };
+		let Some(ptr) = NonNull::new(ptr) else {
+			handle_alloc_error(layout);
+		};
+
+		Self { ptr }
+	}
+
+	/// # Safety
+	///
+	/// - `old_capacity` must be the current capacity of the buffer.
+	/// - `new_capacity` must not be zero.
+	pub unsafe fn reallocate<Idx: Size>(
+		&mut self,
+		old_capacity: Idx,
+		new_capacity: Idx,
+	) {
+		// SAFETY: `new_capacity` is not zero per the function invariant
+		let new_buf = unsafe { Self::uninit(new_capacity) };
+		let count = cmp::min(old_capacity, new_capacity).usize();
+		// SAFETY: `count` fits inside both buffers, the old buffer is
+		// discarded right after.
+		unsafe {
+			copy_nonoverlapping::<T>(
+				self.ptr.as_ptr(),
+				new_buf.ptr.as_ptr(),
+				count,
+			);
+			self.deallocate(old_capacity);
+		}
+		*self = new_buf;
 	}
 
 	/// # Safety
@@ -116,22 +172,6 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 		slice_from_raw_parts(self.ptr.as_ptr(), len.usize())
 	}
 
-	/// Deallocate the slice
-	///
-	/// # Safety
-	///
-	/// `len` must have the same value as one passed to `uninit`.
-	pub unsafe fn drop<Idx: Size>(&mut self, len: Idx) {
-		let layout = Layout::from_size_align(
-			len.usize() * size_of::<T>(),
-			Self::ALIGNMENT,
-		)
-		.unwrap();
-
-		// SAFETY: the layout is the same
-		unsafe { dealloc(self.ptr.as_ptr() as *mut u8, layout) }
-	}
-
 	/// Get a prefix slice of length `len` pointing into the buffer
 	///
 	/// # Safety
@@ -139,7 +179,7 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 	/// `len` must be less than or equal to the buffer capacity.
 	/// Violating this triggers undefined behavior even if the elements
 	/// past the end of the buffer are never accessed.
-	pub unsafe fn as_slice<Idx: Size>(&mut self, len: Idx) -> &[T] {
+	pub unsafe fn as_slice<Idx: Size>(&self, len: Idx) -> &[T] {
 		// SAFETY: invariant
 		unsafe { &*self.as_raw_slice(len) }
 	}
@@ -158,7 +198,8 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 	///
 	/// # Safety
 	///
-	/// The `capacity` must be correct.
+	/// The `capacity` must be correct.  The slice **must not be used**
+	/// after this method is called.
 	///
 	/// Additionally, while Rust allows leaking all types, not dropping the
 	/// contents of the buffer might lead to correctness issues.
