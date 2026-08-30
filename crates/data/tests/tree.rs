@@ -45,9 +45,26 @@ fn tree(
 	edge_lengths: Vec<f64>,
 	node_names: ArrayUtf8<Nullable>,
 ) -> Result<BinaryRootedTree> {
+	tree_with_root(
+		num_leaves,
+		num_leaves * 2 - 2,
+		children,
+		edge_lengths,
+		node_names,
+	)
+}
+
+fn tree_with_root(
+	num_leaves: u32,
+	root: u32,
+	children: Vec<u32>,
+	edge_lengths: Vec<f64>,
+	node_names: ArrayUtf8<Nullable>,
+) -> Result<BinaryRootedTree> {
 	let num_nodes = num_leaves as usize * 2 - 1;
 	BinaryRootedTree::new(
 		num_leaves,
+		root,
 		children.into_boxed_slice(),
 		edge_lengths.into_boxed_slice(),
 		node_names,
@@ -259,6 +276,27 @@ fn arbitrary_tree(
 		available.push(parent);
 	}
 
+	let mut internal_ids = (num_leaves..num_nodes).collect::<Vec<_>>();
+	for last in (1..internal_ids.len()).rev() {
+		let index = u.int_in_range(0..=last)?;
+		internal_ids.swap(last, index);
+	}
+	let mut mapping = (0..num_nodes).collect::<Vec<_>>();
+	for (offset, id) in internal_ids.into_iter().enumerate() {
+		mapping[num_leaves as usize + offset] = id;
+	}
+	let mut remapped_children = vec![0; children.len()];
+	for old_parent in num_leaves..num_nodes {
+		let old_offset = (old_parent - num_leaves) as usize * 2;
+		let new_parent = mapping[old_parent as usize];
+		let new_offset = (new_parent - num_leaves) as usize * 2;
+		remapped_children[new_offset] =
+			mapping[children[old_offset] as usize];
+		remapped_children[new_offset + 1] =
+			mapping[children[old_offset + 1] as usize];
+	}
+	let root = mapping[(num_nodes - 1) as usize];
+
 	let node_names = (0..num_nodes)
 		.map(|node| {
 			if node < num_leaves {
@@ -269,9 +307,10 @@ fn arbitrary_tree(
 		})
 		.collect::<Vec<_>>();
 
-	Ok(tree(
+	Ok(tree_with_root(
 		num_leaves,
-		children,
+		root,
+		remapped_children,
 		vec![0.0; (num_nodes - 1) as usize],
 		names(&node_names),
 	)
@@ -363,6 +402,41 @@ fn balanced_and_ladder_traversals() -> Result<()> {
 	assert_eq!(
 		ladder.parent_of(node(&ladder, 4)),
 		Some(internal(&ladder, 5))
+	);
+
+	Ok(())
+}
+
+#[test]
+fn explicit_nonterminal_root() -> Result<()> {
+	let tree = BinaryRootedTree::new(
+		4,
+		4,
+		vec![5, 6, 0, 1, 2, 3].into_boxed_slice(),
+		vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6].into_boxed_slice(),
+		str_names(&["A", "B", "C", "D", "ROOT", "AB", "CD"]),
+		nulls(7),
+		nulls(6),
+	)?;
+
+	assert_eq!(tree.root().index(), 4);
+	assert_eq!(
+		tree.children_of(tree.root()),
+		(node(&tree, 5), node(&tree, 6))
+	);
+	assert_eq!(tree.parent_of(node(&tree, 5)), Some(tree.root()));
+	assert_eq!(indices(tree.edges()), vec![0, 1, 2, 3, 5, 6]);
+	assert_eq!(tree.edge_length(node(&tree, 4)), None);
+	assert_eq!(tree.edge_length(node(&tree, 5)), Some(0.5));
+	assert_eq!(tree.edge_length(node(&tree, 6)), Some(0.6));
+	assert_eq!(indices(tree.preorder()), vec![4, 5, 0, 1, 6, 2, 3]);
+	assert_eq!(indices(tree.postorder()), vec![0, 1, 5, 2, 3, 6, 4]);
+	assert_eq!(tree.mrca(node(&tree, 0), node(&tree, 3)), node(&tree, 4));
+
+	let newick = NewickTree::from(&tree);
+	assert_eq!(
+		newick.into_string(),
+		"((A:0.1,B:0.2)AB:0.5,(C:0.3,D:0.4)CD:0.6)ROOT;"
 	);
 
 	Ok(())
@@ -485,6 +559,7 @@ fn metadata_roundtrip() -> Result<()> {
 fn constructor_rejects_invalid_layouts() {
 	assert!(BinaryRootedTree::new(
 		1,
+		0,
 		Box::new([]),
 		Box::new([]),
 		str_names(&["A"]),
@@ -500,6 +575,7 @@ fn constructor_rejects_invalid_layouts() {
 	] {
 		assert!(BinaryRootedTree::new(
 			2,
+			2,
 			children.into_boxed_slice(),
 			lengths.into_boxed_slice(),
 			str_names(&labels),
@@ -511,6 +587,27 @@ fn constructor_rejects_invalid_layouts() {
 
 	assert!(BinaryRootedTree::new(
 		2,
+		0,
+		vec![0, 1].into_boxed_slice(),
+		vec![1.0, 1.0].into_boxed_slice(),
+		str_names(&["A", "B", ""]),
+		nulls(3),
+		nulls(2),
+	)
+	.is_err());
+	assert!(BinaryRootedTree::new(
+		2,
+		3,
+		vec![0, 1].into_boxed_slice(),
+		vec![1.0, 1.0].into_boxed_slice(),
+		str_names(&["A", "B", ""]),
+		nulls(3),
+		nulls(2),
+	)
+	.is_err());
+	assert!(BinaryRootedTree::new(
+		2,
+		2,
 		vec![0, 1].into_boxed_slice(),
 		vec![1.0, 1.0].into_boxed_slice(),
 		str_names(&["A", "B", ""]),
@@ -519,6 +616,7 @@ fn constructor_rejects_invalid_layouts() {
 	)
 	.is_err());
 	assert!(BinaryRootedTree::new(
+		2,
 		2,
 		vec![0, 1].into_boxed_slice(),
 		vec![1.0, 1.0].into_boxed_slice(),
@@ -533,6 +631,7 @@ fn constructor_rejects_invalid_layouts() {
 		let num_nodes = num_leaves * 2 - 1;
 		assert!(BinaryRootedTree::new(
 			num_leaves,
+			num_nodes - 1,
 			children.into_boxed_slice(),
 			vec![1.0; num_nodes as usize - 1].into_boxed_slice(),
 			str_names(&vec![""; num_nodes as usize]),
