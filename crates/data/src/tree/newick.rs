@@ -123,6 +123,7 @@ impl TryFrom<&Tree> for BinaryRootedTree {
 			mapping[node as usize] =
 				num_leaves + u32::try_from(index)?;
 		}
+		let binary_root = mapping[root as usize];
 
 		let mut binary_children = Vec::with_capacity(num_nodes - 1);
 		for &node in &internals {
@@ -141,11 +142,15 @@ impl TryFrom<&Tree> for BinaryRootedTree {
 			names[new_node] = nonempty(node.name());
 			node_metadata[new_node] = nonempty(node.attributes());
 			if old_node != root as usize {
-				binary_lengths[new_node] = lengths[old_node]
+				let edge_index = new_node
+					- usize::from(
+						new_node > binary_root as usize,
+					);
+				binary_lengths[edge_index] = lengths[old_node]
 					.context(
 						"A non-root node has no edge length",
 					)?;
-				edge_metadata[new_node] =
+				edge_metadata[edge_index] =
 					old_edge_metadata[old_node];
 			}
 		}
@@ -165,6 +170,7 @@ impl TryFrom<&Tree> for BinaryRootedTree {
 
 		Self::new(
 			num_leaves,
+			binary_root,
 			binary_children.into_boxed_slice(),
 			binary_lengths.into_boxed_slice(),
 			node_names,

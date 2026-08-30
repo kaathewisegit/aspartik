@@ -9,6 +9,7 @@ use super::{Internal, Leaf, Node, ROOT_PARENT};
 #[derive(Debug)]
 pub struct BinaryRootedTree {
 	num_leaves: u32,
+	root: u32,
 	children: Box<[u32]>,
 	parents: Box<[u32]>,
 	edge_lengths: Box<[f64]>,
@@ -20,6 +21,7 @@ pub struct BinaryRootedTree {
 impl BinaryRootedTree {
 	pub fn new(
 		num_leaves: u32,
+		root: u32,
 		children: Box<[u32]>,
 		edge_lengths: Box<[f64]>,
 		mut node_names: ArrayUtf8<Nullable>,
@@ -42,6 +44,10 @@ impl BinaryRootedTree {
 		let num_edges = num_nodes - 1;
 		let num_nodes_usize = usize::try_from(num_nodes)?;
 		let num_edges_usize = usize::try_from(num_edges)?;
+		ensure!(
+			(num_leaves..num_nodes).contains(&root),
+			"Root node {root} is not an internal node"
+		);
 
 		ensure!(
 			children.len() == num_edges_usize,
@@ -69,7 +75,6 @@ impl BinaryRootedTree {
 			edge_metadata.len()
 		);
 
-		let root = num_nodes - 1;
 		let mut parents = vec![ROOT_PARENT; num_nodes_usize];
 		let mut seen = vec![false; num_nodes_usize];
 
@@ -83,10 +88,6 @@ impl BinaryRootedTree {
 					"Child {child} of node {parent} is out of range"
 				);
 				ensure!(
-					child < parent,
-					"Child {child} must have a lower index than parent {parent}"
-				);
-				ensure!(
 					!seen[child as usize],
 					"Node {child} appears as a child more than once"
 				);
@@ -96,13 +97,35 @@ impl BinaryRootedTree {
 			}
 		}
 
-		for node in 0..root {
-			ensure!(
-				seen[node as usize],
-				"Node {node} is not connected to a parent"
-			);
+		for node in 0..num_nodes {
+			if node == root {
+				ensure!(
+					!seen[node as usize],
+					"The root appears as a child"
+				);
+			} else {
+				ensure!(
+					seen[node as usize],
+					"Node {node} is not connected to a parent"
+				);
+			}
 		}
-		ensure!(!seen[root as usize], "The root appears as a child");
+
+		seen.fill(false);
+		let mut stack = vec![root];
+		while let Some(node) = stack.pop() {
+			seen[node as usize] = true;
+			if node >= num_leaves {
+				let offset = (node - num_leaves) as usize * 2;
+				stack.extend_from_slice(
+					&children[offset..offset + 2],
+				);
+			}
+		}
+		ensure!(
+			seen.iter().all(|value| *value),
+			"Not all nodes are reachable from the root"
+		);
 
 		node_names.shrink_to_fit();
 		node_metadata.shrink_to_fit();
@@ -110,6 +133,7 @@ impl BinaryRootedTree {
 
 		Ok(Self {
 			num_leaves,
+			root,
 			children,
 			parents: parents.into_boxed_slice(),
 			edge_lengths,
@@ -136,7 +160,7 @@ impl BinaryRootedTree {
 	}
 
 	pub fn root(&self) -> Internal {
-		Internal(self.num_nodes() - 1)
+		Internal(self.root)
 	}
 
 	pub fn nodes(&self) -> impl DoubleEndedIterator<Item = Node> + use<> {
@@ -154,7 +178,8 @@ impl BinaryRootedTree {
 	}
 
 	pub fn edges(&self) -> impl DoubleEndedIterator<Item = Node> + use<> {
-		(0..self.num_edges()).map(Node)
+		let root = self.root;
+		(0..root).chain(root + 1..self.num_nodes()).map(Node)
 	}
 
 	pub fn is_leaf(&self, node: Node) -> bool {
@@ -184,8 +209,7 @@ impl BinaryRootedTree {
 	}
 
 	pub fn edge_length(&self, child: Node) -> Option<f64> {
-		(child.0 < self.num_edges())
-			.then(|| self.edge_lengths[child.i()])
+		self.edge_index(child).map(|index| self.edge_lengths[index])
 	}
 
 	pub fn name(&self, node: Node) -> Option<&str> {
@@ -197,9 +221,14 @@ impl BinaryRootedTree {
 	}
 
 	pub fn edge_metadata(&self, child: Node) -> Option<&str> {
-		(child.0 < self.num_edges())
-			.then(|| self.edge_metadata.get(child.i()))
-			.flatten()
+		self.edge_index(child)
+			.and_then(|index| self.edge_metadata.get(index))
+	}
+
+	fn edge_index(&self, child: Node) -> Option<usize> {
+		(child.0 < self.num_nodes() && child.0 != self.root).then(
+			|| (child.0 - u32::from(child.0 > self.root)) as usize,
+		)
 	}
 
 	pub fn leaf_by_name(&self, name: &str) -> Option<Leaf> {
