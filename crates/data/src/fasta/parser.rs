@@ -25,7 +25,7 @@ pub struct FastaParser<C: Character> {
 }
 
 impl<C: Character> FastaParser<C> {
-	#[allow(clippy::new_without_default)]
+	#[expect(clippy::new_without_default)]
 	pub fn new() -> Self {
 		Self {
 			state: State::Blank,

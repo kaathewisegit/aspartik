@@ -14,7 +14,7 @@ pub struct IntVector {
 	values: EpochBuf<i64>,
 }
 
-#[allow(clippy::len_without_is_empty)]
+#[expect(clippy::len_without_is_empty)]
 impl IntVector {
 	pub fn new(values: Vec<i64>) -> Self {
 		Self {

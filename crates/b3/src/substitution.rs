@@ -611,7 +611,7 @@ impl GenericSubstitution {
 		}
 	}
 
-	#[allow(clippy::needless_range_loop)]
+	#[expect(clippy::needless_range_loop)]
 	fn update_matrices(&mut self) {
 		let n = self.eigenvalues.len();
 		let freqs = self.frequencies.get().inner();

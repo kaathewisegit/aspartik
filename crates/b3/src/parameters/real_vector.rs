@@ -14,7 +14,7 @@ pub struct RealVector {
 	values: EpochBuf<f64>,
 }
 
-#[allow(clippy::len_without_is_empty)]
+#[expect(clippy::len_without_is_empty)]
 impl RealVector {
 	pub fn new(values: Vec<f64>) -> Self {
 		Self {
