@@ -1,3 +1,5 @@
+use arbtest::arbtest;
+
 use std::{hint::black_box, mem::drop};
 
 use buffer::Buffer;
@@ -51,4 +53,29 @@ fn reallocate() {
 
 	buf.reallocate(2);
 	assert_eq!(&buf[..], &[0, 10]);
+}
+
+fn from_slice<const A: usize>() {
+	arbtest(|u| {
+		let vec = u.arbitrary::<Vec<i32>>()?;
+		if vec.is_empty() {
+			return Ok(());
+		}
+		let buf = Buffer::<i32, u32, A>::from_slice(&vec);
+		assert_eq!(&*buf, &vec);
+		Ok(())
+	});
+}
+
+#[test]
+fn test_from_slice_0() {
+	from_slice::<0>();
+}
+#[test]
+fn test_from_slice_8() {
+	from_slice::<8>();
+}
+#[test]
+fn test_from_slice_16() {
+	from_slice::<16>();
 }

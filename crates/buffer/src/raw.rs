@@ -134,6 +134,23 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 		*self = new_buf;
 	}
 
+	pub fn from_slice(slice: &[T]) -> Self {
+		let len = slice.len();
+		assert_ne!(len, 0);
+		// SAFETY: we'll overwrite them
+		let out = unsafe { Self::uninit(len) };
+		// SAFETY: both `slice` and `out` have the length of `len`,
+		// `out` is writeable
+		unsafe {
+			copy_nonoverlapping::<T>(
+				slice.as_ptr(),
+				out.ptr().as_ptr(),
+				len,
+			)
+		}
+		out
+	}
+
 	/// # Safety
 	///
 	/// `idx * size_of::<T>()` must not overflow `isize`.

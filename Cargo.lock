@@ -107,6 +107,7 @@ dependencies = [
 name = "buffer"
 version = "0.1.0-alpha.20"
 dependencies = [
+ "arbtest",
  "bytemuck",
 ]
 

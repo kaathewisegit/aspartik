@@ -24,6 +24,8 @@ pub trait Size:
 	const EIGHT: Self;
 
 	fn usize(self) -> usize;
+
+	fn from_usize(idx: usize) -> Option<Self>;
 }
 
 #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
@@ -35,6 +37,10 @@ impl Size for u32 {
 
 	fn usize(self) -> usize {
 		self as usize
+	}
+
+	fn from_usize(idx: usize) -> Option<Self> {
+		u32::try_from(idx).ok()
 	}
 }
 
@@ -48,6 +54,10 @@ impl Size for u64 {
 	fn usize(self) -> usize {
 		self as usize
 	}
+
+	fn from_usize(idx: usize) -> Option<Self> {
+		u64::try_from(idx).ok()
+	}
 }
 
 impl Size for usize {
@@ -58,5 +68,9 @@ impl Size for usize {
 
 	fn usize(self) -> usize {
 		self
+	}
+
+	fn from_usize(idx: usize) -> Option<Self> {
+		Some(idx)
 	}
 }

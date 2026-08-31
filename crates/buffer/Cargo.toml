@@ -10,6 +10,7 @@ authors.workspace = true
 bytemuck = { workspace = true }
 
 [dev-dependencies]
+arbtest = { workspace = true }
 
 [lints]
 workspace = true

@@ -1,6 +1,7 @@
 use bytemuck::{AnyBitPattern, Zeroable};
 
 use std::{
+	fmt::{self, Debug},
 	ops::{Deref, DerefMut},
 	ptr::drop_in_place,
 };
@@ -79,6 +80,13 @@ impl<T, Idx: Size, const ALIGN: usize> Buffer<T, Idx, ALIGN> {
 		self.len = new_len;
 	}
 
+	pub fn from_slice(slice: &[T]) -> Self {
+		let len =
+			Idx::from_usize(slice.len()).expect("Length overflow");
+		let raw = RawBuffer::<T, ALIGN>::from_slice(slice);
+		Self { len, raw }
+	}
+
 	pub fn len(&self) -> Idx {
 		self.len
 	}
@@ -107,5 +115,11 @@ impl<T, Idx: Size, const ALIGN: usize> DerefMut for Buffer<T, Idx, ALIGN> {
 	fn deref_mut(&mut self) -> &mut [T] {
 		// SAFETY: `raw` has a length of `len`
 		unsafe { &mut *self.raw.as_raw_slice_mut(self.len) }
+	}
+}
+
+impl<T: Debug, Idx: Size, const ALIGN: usize> Debug for Buffer<T, Idx, ALIGN> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		f.debug_list().entries(&**self).finish()
 	}
 }
