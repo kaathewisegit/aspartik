@@ -1,6 +1,6 @@
 use std::fmt::{self};
 
-use crate::seq::{Character, Sequence, write_str};
+use crate::seq::{Character, write_str};
 
 mod parser;
 
@@ -13,11 +13,11 @@ pub struct Record<C: Character> {
 	/// The sequence description.  Must start with a '>' character and have
 	/// an ID follow right after without a space.
 	raw_description: String,
-	seq: Sequence<C>,
+	seq: Vec<C>,
 }
 
 impl<C: Character> Record<C> {
-	pub fn new(raw_description: String, seq: Sequence<C>) -> Self {
+	pub fn new(raw_description: String, seq: Vec<C>) -> Self {
 		Self {
 			raw_description,
 			seq,
@@ -49,11 +49,11 @@ impl<C: Character> Record<C> {
 		&self.raw_description[1..end]
 	}
 
-	pub fn sequence(&self) -> &Sequence<C> {
+	pub fn sequence(&self) -> &[C] {
 		&self.seq
 	}
 
-	pub fn into_sequence(self) -> Sequence<C> {
+	pub fn into_sequence(self) -> Vec<C> {
 		self.seq
 	}
 
@@ -88,7 +88,7 @@ impl<C: Character> fmt::Debug for Record<C> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("Record")
 			.field("description", &self.description())
-			.field("sequence", &self.sequence().to_string())
+			.field("sequence", &self.sequence())
 			.finish()
 	}
 }

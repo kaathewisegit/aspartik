@@ -6,7 +6,7 @@ use std::{cmp::Ordering, ops::Range};
 use crate::{
 	DnaNucleotide,
 	fasta::Record,
-	seq::{Character, Sequence, SequenceMut, SequenceRef},
+	seq::{Character, random_dna},
 };
 
 #[cfg(feature = "python")]
@@ -17,7 +17,7 @@ pub struct Msa<C: Character> {
 	num_sequences: usize,
 	num_sites: usize,
 	names: Box<[String]>,
-	data: Sequence<C>,
+	data: Vec<C>,
 }
 
 impl<C: Character> Msa<C> {
@@ -25,7 +25,7 @@ impl<C: Character> Msa<C> {
 		num_sequences: usize,
 		num_sites: usize,
 		names: Box<[String]>,
-		data: Sequence<C>,
+		data: Vec<C>,
 	) -> Result<Self> {
 		ensure!(num_sequences * num_sites == data.len());
 		ensure!(names.len() == num_sequences);
@@ -45,7 +45,7 @@ impl<C: Character> Msa<C> {
 		let mut num_sites = 0;
 		let mut num_sequences = 0;
 
-		let mut data = SequenceMut::new();
+		let mut data = Vec::new();
 		let mut names = Vec::new();
 
 		for record in records.into_iter() {
@@ -66,7 +66,7 @@ impl<C: Character> Msa<C> {
 			num_sequences,
 			num_sites,
 			names: names.into(),
-			data: data.into(),
+			data,
 		})
 	}
 
@@ -90,19 +90,19 @@ impl<C: Character> Msa<C> {
 		&self.names
 	}
 
-	pub fn sequence(&self, index: usize) -> SequenceRef<'_, C> {
+	pub fn sequence(&self, index: usize) -> &[C] {
 		let start = index * self.num_sites;
 		let end = start + self.num_sites;
-		self.data.slice(start..end)
+		&self.data[start..end]
 	}
 
-	pub fn sequence_owned(&self, index: usize) -> Sequence<C> {
+	pub fn sequence_owned(&self, index: usize) -> Vec<C> {
 		let start = index * self.num_sites;
 		let end = start + self.num_sites;
-		self.data.slice_owned(start..end)
+		self.data[start..end].to_vec()
 	}
 
-	pub fn sequences(&self) -> impl Iterator<Item = SequenceRef<'_, C>> {
+	pub fn sequences(&self) -> impl Iterator<Item = &[C]> {
 		(0..self.num_sequences()).map(|i| self.sequence(i))
 	}
 
@@ -138,7 +138,7 @@ impl Msa<DnaNucleotide> {
 		names: Box<[String]>,
 		rng: &mut R,
 	) -> Result<Self> {
-		let seq = Sequence::random(num_sequences * num_sites, rng);
+		let seq = random_dna(num_sequences * num_sites, rng);
 		Self::new(num_sequences, num_sites, names, seq)
 	}
 

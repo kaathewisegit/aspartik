@@ -7,22 +7,23 @@ fn parse_err() {
 }
 
 #[test]
-fn count() {
+fn test_count() {
 	let s = dna![
 		"AGCTTTTCATTCTGACTGCAACGGGCAATATGTCTCTGTGTGGATTAAAAAAAGAGTGTCTGATAGCAGC"
 	];
 
-	assert_eq!(s.count(Adenine), 20);
-	assert_eq!(s.count(Cytosine), 12);
-	assert_eq!(s.count(Guanine), 17);
-	assert_eq!(s.count(Thymine), 21);
+	assert_eq!(count(&s, Adenine), 20);
+	assert_eq!(count(&s, Cytosine), 12);
+	assert_eq!(count(&s, Guanine), 17);
+	assert_eq!(count(&s, Thymine), 21);
 }
 
 #[test]
 fn dna_complement() {
-	let s = dna!["AAAACCCGGT"];
+	let mut s = dna!["AAAACCCGGT"];
+	reverse_complement(&mut s);
 
-	assert_eq!(s.reverse_complement().to_string(), "ACCGGGTTTT");
+	assert_eq!(s, dna!["ACCGGGTTTT"]);
 }
 
 #[test]

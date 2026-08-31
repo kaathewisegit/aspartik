@@ -1,11 +1,9 @@
-use anyhow::{Error, Result, anyhow, bail};
+use anyhow::{Result, anyhow, bail};
 
-use std::str::FromStr;
-
-use super::{Character, Sequence, SequenceMut};
+use super::Character;
 
 pub fn parse_append_str<C: Character>(
-	seq: &mut SequenceMut<C>,
+	seq: &mut Vec<C>,
 	string: &str,
 ) -> Result<()> {
 	for (i, byte) in string.bytes().enumerate() {
@@ -23,7 +21,7 @@ pub fn parse_append_str<C: Character>(
 }
 
 pub fn parse_append_bytes<C: Character>(
-	seq: &mut SequenceMut<C>,
+	seq: &mut Vec<C>,
 	bytes: &[u8],
 ) -> Result<()> {
 	for b in bytes.iter().copied() {
@@ -35,19 +33,15 @@ pub fn parse_append_bytes<C: Character>(
 	Ok(())
 }
 
-pub fn parse_str<C: Character>(string: &str) -> Result<SequenceMut<C>> {
-	let mut seq = SequenceMut::with_capacity(string.len());
-
+pub fn parse_str<C: Character>(string: &str) -> Result<Vec<C>> {
+	let mut seq = Vec::with_capacity(string.len());
 	parse_append_str(&mut seq, string)?;
-
 	Ok(seq)
 }
 
-pub fn parse_bytes<C: Character>(bytes: &[u8]) -> Result<SequenceMut<C>> {
-	let mut seq = SequenceMut::with_capacity(bytes.len());
-
+pub fn parse_bytes<C: Character>(bytes: &[u8]) -> Result<Vec<C>> {
+	let mut seq = Vec::with_capacity(bytes.len());
 	parse_append_bytes(&mut seq, bytes)?;
-
 	Ok(seq)
 }
 
@@ -84,13 +78,5 @@ fn highlight_error(src: &str, index: usize) -> String {
 			"Illegal character encountered in the sequence:\n> {}\n  {:index$}^",
 			src, "",
 		)
-	}
-}
-
-impl<C: Character> FromStr for Sequence<C> {
-	type Err = Error;
-
-	fn from_str(s: &str) -> Result<Self> {
-		Ok(parse_str(s)?.into())
 	}
 }

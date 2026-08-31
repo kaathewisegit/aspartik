@@ -5,7 +5,6 @@ use arbtest::arbtest;
 use data::{
 	DnaNucleotide, Parser,
 	fasta::{FastaParser, Record},
-	seq::Sequence,
 };
 
 fn arb_record(u: &mut Unstructured) -> ArbResult<Record<DnaNucleotide>> {
@@ -14,7 +13,7 @@ fn arb_record(u: &mut Unstructured) -> ArbResult<Record<DnaNucleotide>> {
 		description.truncate(index);
 	}
 
-	let seq = u.arbitrary::<Sequence<DnaNucleotide>>()?;
+	let seq = u.arbitrary::<Vec<DnaNucleotide>>()?;
 
 	Ok(Record::new(format!(">{description}"), seq))
 }

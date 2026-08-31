@@ -1,7 +1,10 @@
 use pyo3::prelude::*;
 
 use super::Record;
-use crate::{DnaNucleotide, seq::python::PyDnaSeq};
+use crate::{
+	DnaNucleotide,
+	seq::{DisplaySequence, python::PyDnaSeq},
+};
 
 /// A FASTA record with a DNA sequence
 ///
@@ -73,7 +76,7 @@ impl PyFastaDnaRecord {
 		format!(
 			r#"DNARecord({:?}, DNASeq("{}"))"#,
 			self.0.raw_description(),
-			self.0.sequence(),
+			DisplaySequence(self.0.sequence()),
 		)
 	}
 }

@@ -1,15 +1,6 @@
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Result as ArbResult, Unstructured};
-use bytes::{BufMut, Bytes, BytesMut};
 use rand::{Rng, RngExt};
 
-use std::{
-	fmt::{self, Write as _},
-	marker::PhantomData,
-	mem,
-	ops::{Deref, DerefMut, RangeBounds},
-	slice,
-};
+use std::fmt::{self, Debug, Write as _};
 
 use crate::nucleotides::DnaNucleotide;
 
@@ -30,7 +21,7 @@ pub use write::{write_fmt, write_str};
 /// casted to `[u8]`.  In practice this means that the size of the type must be
 /// one byte and there are no alignment requirements (all types are 1-byte
 /// aligned).
-pub unsafe trait Character: Copy + Eq {
+pub unsafe trait Character: Copy + Eq + Debug {
 	fn from_ascii(char: u8) -> Option<Self>;
 
 	fn to_ascii(&self) -> u8;
@@ -40,318 +31,45 @@ pub unsafe trait Character: Copy + Eq {
 	fn into_byte(self) -> u8;
 }
 
-fn c2b<C: Character>(characters: &[C]) -> &[u8] {
-	let ptr = characters.as_ptr() as *const u8;
-	// SAFETY: characters must be equal in layout to `u8` bytes
-	unsafe { slice::from_raw_parts(ptr, characters.len()) }
-}
+#[derive(Debug, Clone, Copy)]
+pub struct DisplaySequence<'a, C>(pub &'a [C]);
 
-/// Cast a slice of bytes to a slice of characters
-///
-/// # Safety
-///
-/// All bytes in `bytes` must be valid characters.
-unsafe fn b2c<C: Character>(bytes: &[u8]) -> &[C] {
-	let ptr = bytes.as_ptr() as *const C;
-	// SAFETY: characters must be equal in layout to `u8` bytes
-	unsafe { slice::from_raw_parts(ptr, bytes.len()) }
-}
-
-/// Cast a mutable slice of bytes to a slice of characters
-///
-/// # Safety
-///
-/// All bytes in `bytes` must be valid characters.
-unsafe fn b2c_mut<C: Character>(bytes: &mut [u8]) -> &mut [C] {
-	let ptr = bytes.as_ptr() as *mut C;
-	// SAFETY: characters must be equal in layout to `u8` bytes
-	unsafe { slice::from_raw_parts_mut(ptr, bytes.len()) }
-}
-
-fn verify_bytes<C: Character>(bytes: &[u8]) -> bool {
-	for byte in bytes.iter().copied() {
-		if C::from_byte(byte).is_none() {
-			return false;
-		}
-	}
-	true
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct Sequence<C: Character> {
-	/// SAFETY: `bytes` must always hold valid `C` characters
-	bytes: Bytes,
-	marker: PhantomData<C>,
-}
-
-impl<C: Character> Deref for Sequence<C> {
-	type Target = [C];
-
-	fn deref(&self) -> &[C] {
-		let bytes = self.bytes.as_ref();
-		// SAFETY: `self.bytes` must always hold valid characters.
-		unsafe { b2c(bytes) }
-	}
-}
-
-impl<C: Character> AsRef<[C]> for Sequence<C> {
-	fn as_ref(&self) -> &[C] {
-		self
-	}
-}
-
-impl<C: Character> fmt::Display for Sequence<C> {
+impl<'a, C: Character> fmt::Display for DisplaySequence<'a, C> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		for character in self.as_ref() {
+		for character in self.0 {
 			f.write_char(character.to_ascii() as char)?;
 		}
 		Ok(())
 	}
 }
 
-impl<C: Character> Sequence<C> {
-	pub fn copy_from_slice(data: &[C]) -> Self {
-		let bytes = Bytes::copy_from_slice(c2b(data));
-
-		Self {
-			bytes,
-			marker: PhantomData,
-		}
+pub fn random_dna<R: Rng>(len: usize, rng: &mut R) -> Vec<DnaNucleotide> {
+	let mut seq = Vec::with_capacity(len);
+	for __ in 0..len {
+		seq.push(match rng.random_range(0..4) {
+			0 => DnaNucleotide::Adenine,
+			1 => DnaNucleotide::Cytosine,
+			2 => DnaNucleotide::Guanine,
+			3 => DnaNucleotide::Thymine,
+			_ => unreachable!(),
+		})
 	}
+	seq
+}
 
-	pub fn from_vec(mut data: Vec<C>) -> Self {
-		let ptr = data.as_mut_ptr() as *mut u8;
-		let length = data.len();
-		let capacity = data.capacity();
-		mem::forget(data);
+pub fn count<C: Character>(seq: &[C], c: C) -> usize {
+	seq.iter().filter(|sc| **sc == c).count()
+}
 
-		// SAFETY: characters have the same layout as u8 bytes and the
-		// old vector has been forgotten without being dropped.
-		let bytes =
-			unsafe { Vec::from_raw_parts(ptr, length, capacity) };
-
-		Self {
-			bytes: Bytes::from_owner(bytes),
-			marker: PhantomData,
-		}
-	}
-
-	pub fn copy_from_byte_slice(bytes: &[u8]) -> Option<Self> {
-		if verify_bytes::<C>(bytes) {
-			// SAFETY: We have checked that every byte is valid
-			let data = unsafe { b2c(bytes) };
-			Some(Self::copy_from_slice(data))
-		} else {
-			None
-		}
-	}
-
-	pub fn as_bytes(&self) -> &[u8] {
-		&self.bytes
-	}
-
-	pub fn len(&self) -> usize {
-		self.bytes.len()
-	}
-
-	pub fn is_empty(&self) -> bool {
-		self.bytes.is_empty()
-	}
-
-	pub fn slice(
-		&self,
-		range: impl std::slice::SliceIndex<[u8], Output = [u8]>,
-	) -> SequenceRef<'_, C> {
-		let bytes = &self.bytes.as_ref()[range];
-		// SAFETY: `Sequence`'s bytes are all valid characters
-		let seq = unsafe { b2c(bytes) };
-		SequenceRef(seq)
-	}
-
-	pub fn slice_owned(&self, range: impl RangeBounds<usize>) -> Self {
-		Self {
-			bytes: self.bytes.slice(range),
-			marker: PhantomData,
-		}
-	}
-
-	/// Counts how many times the character `c` occurs in the sequence.
-	pub fn count(&self, c: C) -> usize {
-		let mut out = 0;
-
-		for current in self.as_ref() {
-			if *current == c {
-				out += 1
-			}
-		}
-
-		out
+pub fn complement(bases: &mut [DnaNucleotide]) {
+	for base in bases {
+		*base = base.complement();
 	}
 }
 
-impl Sequence<DnaNucleotide> {
-	pub fn random<R: Rng>(len: usize, rng: &mut R) -> Self {
-		let mut seq = SequenceMut::with_capacity(len);
-		for __ in 0..len {
-			seq.push(match rng.random_range(0..4) {
-				0 => DnaNucleotide::Adenine,
-				1 => DnaNucleotide::Cytosine,
-				2 => DnaNucleotide::Guanine,
-				3 => DnaNucleotide::Thymine,
-				_ => unreachable!(),
-			})
-		}
-		seq.into()
-	}
-
-	pub fn complement(&self) -> Self {
-		let mut seq = SequenceMut::from_characters(self);
-		seq.complement();
-		seq.into()
-	}
-
-	pub fn reverse_complement(&self) -> Self {
-		let mut seq = SequenceMut::from_characters(self);
-		seq.reverse_complement();
-		seq.into()
-	}
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct SequenceRef<'a, C: Character>(&'a [C]);
-
-impl<'a, C: Character> Deref for SequenceRef<'a, C> {
-	type Target = [C];
-
-	fn deref(&self) -> &'a [C] {
-		self.0
-	}
-}
-
-impl<'a, C: Character> AsRef<[C]> for SequenceRef<'a, C> {
-	fn as_ref(&self) -> &'a [C] {
-		self.0
-	}
-}
-
-impl<C: Character> fmt::Display for SequenceRef<'_, C> {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		for character in self.as_ref() {
-			f.write_char(character.to_ascii() as char)?;
-		}
-		Ok(())
-	}
-}
-
-#[derive(Debug)]
-pub struct SequenceMut<C: Character> {
-	bytes: BytesMut,
-	marker: PhantomData<C>,
-}
-
-impl<C: Character> Deref for SequenceMut<C> {
-	type Target = [C];
-
-	fn deref(&self) -> &[C] {
-		// SAFETY: `self.bytes` must be valid characters
-		unsafe { b2c(self.bytes.as_ref()) }
-	}
-}
-
-impl<C: Character> DerefMut for SequenceMut<C> {
-	fn deref_mut(&mut self) -> &mut [C] {
-		// SAFETY: `self.bytes` must be valid characters
-		unsafe { b2c_mut(self.bytes.as_mut()) }
-	}
-}
-
-impl<C: Character> AsRef<[C]> for SequenceMut<C> {
-	fn as_ref(&self) -> &[C] {
-		self
-	}
-}
-
-impl<C: Character> AsMut<[C]> for SequenceMut<C> {
-	fn as_mut(&mut self) -> &mut [C] {
-		// SAFETY: `self.bytes` must be valid characters
-		unsafe { b2c_mut(self.bytes.as_mut()) }
-	}
-}
-
-impl<C: Character> From<SequenceMut<C>> for Sequence<C> {
-	fn from(value: SequenceMut<C>) -> Self {
-		value.into_sequence()
-	}
-}
-
-impl<C: Character> SequenceMut<C> {
-	pub fn new() -> Self {
-		Self {
-			bytes: BytesMut::new(),
-			marker: PhantomData,
-		}
-	}
-
-	pub fn with_capacity(capacity: usize) -> Self {
-		Self {
-			bytes: BytesMut::with_capacity(capacity),
-			marker: PhantomData,
-		}
-	}
-
-	pub fn from_characters(characters: &[C]) -> Self {
-		Self {
-			bytes: BytesMut::from(c2b(characters)),
-			marker: PhantomData,
-		}
-	}
-
-	pub fn into_sequence(self) -> Sequence<C> {
-		Sequence {
-			bytes: self.bytes.freeze(),
-			marker: PhantomData,
-		}
-	}
-
-	pub fn reserve(&mut self, additional: usize) {
-		self.bytes.reserve(additional)
-	}
-
-	pub fn push(&mut self, character: C) {
-		self.bytes.put_u8(character.into_byte());
-	}
-
-	pub fn extend(&mut self, characters: &[C]) {
-		self.bytes.extend_from_slice(c2b(characters));
-	}
-
-	pub fn reverse(&mut self) {
-		self.bytes.reverse()
-	}
-}
-
-impl SequenceMut<DnaNucleotide> {
-	pub fn complement(&mut self) {
-		for base in self.as_mut() {
-			*base = base.complement();
-		}
-	}
-
-	pub fn reverse_complement(&mut self) {
-		self.complement();
-		self.reverse();
-	}
-}
-
-impl<C: Character> Default for SequenceMut<C> {
-	fn default() -> Self {
-		Self {
-			bytes: BytesMut::default(),
-			marker: PhantomData,
-		}
-	}
+pub fn reverse_complement(bases: &mut [DnaNucleotide]) {
+	complement(bases);
+	bases.reverse();
 }
 
 #[macro_export]
@@ -360,27 +78,9 @@ macro_rules! dna {
 	($seq:literal) => {
 		parse_str::<$crate::DnaNucleotide>($seq)
 			.expect("Invalid DNA sequence literal")
-			.into_sequence()
 	};
 }
 
 /// Create a new DNA sequence from a string literal
 #[doc(inline)]
 pub use crate::dna;
-
-#[cfg(feature = "arbitrary")]
-impl<'a, C> Arbitrary<'a> for Sequence<C>
-where
-	C: Character + Arbitrary<'a>,
-{
-	fn arbitrary(u: &mut Unstructured<'a>) -> ArbResult<Self> {
-		let character_iter = u.arbitrary_iter::<C>()?;
-
-		let mut seq_mut = SequenceMut::new();
-		for character in character_iter {
-			seq_mut.push(character?);
-		}
-
-		Ok(seq_mut.into())
-	}
-}

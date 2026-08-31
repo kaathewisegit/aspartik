@@ -5,7 +5,7 @@ use std::mem;
 use super::Record;
 use crate::{
 	Parser,
-	seq::{Character, SequenceMut, parse_append_str},
+	seq::{Character, parse_append_str},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -21,7 +21,7 @@ pub struct FastaParser<C: Character> {
 	state: State,
 
 	description: String,
-	seq: SequenceMut<C>,
+	seq: Vec<C>,
 }
 
 impl<C: Character> FastaParser<C> {
@@ -31,7 +31,7 @@ impl<C: Character> FastaParser<C> {
 			state: State::Blank,
 
 			description: String::new(),
-			seq: SequenceMut::new(),
+			seq: Vec::new(),
 		}
 	}
 
@@ -62,7 +62,7 @@ impl<C: Character> FastaParser<C> {
 	fn make_record(&mut self) -> Record<C> {
 		let raw_description = mem::take(&mut self.description);
 
-		let seq = mem::take(&mut self.seq).into_sequence();
+		let seq = mem::take(&mut self.seq);
 
 		Record {
 			raw_description,
