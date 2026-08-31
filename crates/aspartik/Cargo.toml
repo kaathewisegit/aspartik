@@ -12,7 +12,6 @@ repository.workspace = true
 b3 = { workspace = true }
 data = { workspace = true }
 distributions = { workspace = true }
-io = { workspace = true }
 rng = { workspace = true }
 
 pyo3 = { workspace = true, features = ["anyhow"] }

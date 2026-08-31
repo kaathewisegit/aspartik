@@ -10,7 +10,6 @@ authors.workspace = true
 bitmap = { workspace = true }
 buffer = { workspace = true }
 data = { workspace = true }
-io = { workspace = true }
 linalg = { workspace = true }
 rng = { workspace = true }
 sk = { workspace = true }

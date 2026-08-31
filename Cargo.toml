@@ -7,7 +7,6 @@ members = [
 	"crates/buffer",
 	"crates/data",
 	"crates/distributions",
-	"crates/io",
 	"crates/linalg",
 	"crates/rng",
 	"crates/sk",
@@ -47,7 +46,6 @@ bitmap = { version = "0.1.0-alpha.20", path = "crates/bitmap" }
 buffer = { version = "0.1.0-alpha.20", path = "crates/buffer" }
 data = { version = "0.1.0-alpha.20", path = "crates/data" }
 distributions = { version = "0.1.0-alpha.20", path = "crates/distributions" }
-io = { version = "0.1.0-alpha.20", path = "crates/io" }
 linalg = { version = "0.1.0-alpha.20", path = "crates/linalg" }
 rng = { version = "0.1.0-alpha.20", path = "crates/rng" }
 sk = { version = "0.1.0-alpha.20", path = "crates/sk" }
