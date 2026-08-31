@@ -2,18 +2,25 @@
 
 ## `b3`
 
-- [x] Deterministic tests with approximate tree comparisons
-
-- [ ] More birth-death models
-
 
 ## `data`
 
 - [ ] FASTQ
 
-- [/] A general tree type for use with Newick (extended Newick?)
+- [ ] Tree builder
 
-- [ ] New Newick parser (Sans IO, non-recursive)
+  - [ ] Rerooting
+  - [ ] Conversion from Newick
+  - [ ] Inline vectors
+  - [ ] `is_binary` method
+  - [ ] Conversion to the binary tree
+
+- [ ] Binary tree
+
+  - [ ] SVG rendering
+  - [ ] Smaller buffers
+
+- [ ] New non-recursive Newick parser
 
 - [ ] Variant call format
 
@@ -37,19 +44,6 @@
   - [ ] Parser
 
 
-## `io`
-
-- [ ] FASTA to MSA parsing without intermediary allocations
-
-
 ## `linalg`
 
-- [ ] Heap-allocated vectors and matrices (storage types?)
-
-- [ ] Standalone eigenvalue algorithms
-
-
-## `math`
-
-
-## `skvec`
+Remove when `computare` can replace it.
