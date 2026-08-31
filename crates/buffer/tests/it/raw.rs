@@ -67,12 +67,11 @@ fn reallocate_larger() {
 fn from_slice<const A: usize>() {
 	arbtest(|u| unsafe {
 		let vec = u.arbitrary::<Vec<i32>>()?;
-		if vec.is_empty() {
-			return Ok(());
-		}
 		let mut raw = RawBuffer::<i32, A>::from_slice(&vec);
 		assert_eq!(raw.as_slice(vec.len()), &vec);
-		raw.deallocate(vec.len());
+		if !vec.is_empty() {
+			raw.deallocate(vec.len());
+		}
 		Ok(())
 	});
 }

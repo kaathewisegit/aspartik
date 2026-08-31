@@ -58,9 +58,6 @@ fn reallocate() {
 fn from_slice<const A: usize>() {
 	arbtest(|u| {
 		let vec = u.arbitrary::<Vec<i32>>()?;
-		if vec.is_empty() {
-			return Ok(());
-		}
 		let buf = Buffer::<i32, u32, A>::from_slice(&vec);
 		assert_eq!(&*buf, &vec);
 		Ok(())

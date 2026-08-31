@@ -94,6 +94,10 @@ impl<T, Idx: Size, const ALIGN: usize> Buffer<T, Idx, ALIGN> {
 
 impl<T, Idx: Size, const ALIGN: usize> Drop for Buffer<T, Idx, ALIGN> {
 	fn drop(&mut self) {
+		if self.len == Idx::ZERO {
+			return;
+		}
+
 		// SAFETY: `raw` has a length of `len`
 		unsafe { drop_in_place(self.raw.as_raw_slice_mut(self.len)) }
 

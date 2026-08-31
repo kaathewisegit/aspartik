@@ -56,6 +56,18 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 		.expect("`capacity` too big")
 	}
 
+	pub fn dangling() -> Self {
+		#[expect(unused)]
+		{
+			Self::_CHECK_ALIGN_POW2;
+			Self::_CHECK_ALIGN_SIZE;
+			Self::_NON_ZST;
+		}
+		Self {
+			ptr: NonNull::dangling(),
+		}
+	}
+
 	/// Allocate a new uninitialized buffer of size `capacity`.
 	///
 	/// # Safety
@@ -136,7 +148,9 @@ impl<T, const ALIGN: usize> RawBuffer<T, ALIGN> {
 
 	pub fn from_slice(slice: &[T]) -> Self {
 		let len = slice.len();
-		assert_ne!(len, 0);
+		if len == 0 {
+			return Self::dangling();
+		}
 		// SAFETY: we'll overwrite them
 		let out = unsafe { Self::uninit(len) };
 		// SAFETY: both `slice` and `out` have the length of `len`,
