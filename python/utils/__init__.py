@@ -1,9 +1,7 @@
-import random
 from collections.abc import Callable
 
 from aspartik.b3 import Operator, Proposal
 from aspartik.b3.parameters import Tree
-from aspartik.data import DNASeq
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 
@@ -47,14 +45,10 @@ def random_trees(lower: int, upper: int, num: int = 1000):
 
 def random_msa(rng: RNG, lower: int, upper: int):
     num_sites = rng.random_int(lower, upper)
-
-    def random_seq():
-        return DNASeq("".join(random.choices("ACGT", k=num_sites)))
-
     num_sequences = rng.random_int(lower, upper)
-    return MSA(
-        [str(i) for i in range(num_sequences)],
-        [random_seq() for _ in range(num_sequences)],
+
+    return MSA.random(
+        num_sequences, num_sites, [str(i) for i in range(num_sequences)], rng
     )
 
 

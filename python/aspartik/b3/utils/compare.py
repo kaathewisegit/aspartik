@@ -7,7 +7,7 @@ except ModuleNotFoundError as e:
 
 from typing import Literal
 
-from ...io import read_msa_from_fasta
+from ...data.msa import MSA
 from ..config import MCMCConfig
 
 
@@ -34,7 +34,7 @@ def compare_beast1(
     beast1_path = f"target/{name}.beast1.log"
 
     b3_c = MCMCConfig(
-        msa=read_msa_from_fasta(fasta_path),
+        msa=MSA.from_fasta_file(fasta_path),
         substitution_model="HKY",
         tree_prior=tree_prior,
         length=length,
@@ -44,7 +44,7 @@ def compare_beast1(
     b3_c.b3_make_and_run()
 
     beast1_c = MCMCConfig(
-        msa=read_msa_from_fasta(fasta_path),
+        msa=MSA.from_fasta_file(fasta_path),
         substitution_model="HKY",
         tree_prior=tree_prior,
         length=length,

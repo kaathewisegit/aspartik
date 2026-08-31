@@ -41,7 +41,7 @@ impl PyFastaDnaRecord {
 	/// Full description, including the starting `>` character
 	#[getter]
 	fn raw_description(&self) -> String {
-		self.0.raw_description().to_owned()
+		self.0.description().to_owned()
 	}
 
 	/// Description of the record
@@ -75,7 +75,7 @@ impl PyFastaDnaRecord {
 	fn __repr__(&self) -> String {
 		format!(
 			r#"DNARecord({:?}, DNASeq("{}"))"#,
-			self.0.raw_description(),
+			self.0.description(),
 			DisplaySequence(self.0.sequence()),
 		)
 	}

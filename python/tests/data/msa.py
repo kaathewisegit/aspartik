@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from aspartik.data.msa import MSA
-from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
 
 
@@ -10,17 +9,22 @@ def test_pathlike():
         def __fspath__(self):
             return "data/alignments/apes.fasta"
 
-    read_msa_from_fasta(Pathlike())
+    MSA.from_fasta_file(Pathlike())
 
 
 def test_eq():
     alignments = Path("data/alignments/")
 
     for fasta_file in alignments.glob("*.fasta"):
-        a = read_msa_from_fasta(fasta_file)
-        b = read_msa_from_fasta(fasta_file)
+        a = MSA.from_fasta_file(fasta_file)
+        b = MSA.from_fasta_file(fasta_file)
 
         assert a == b
+
+        s = open(fasta_file, "r").read()
+        num_records = sum(1 for line in s.splitlines() if line.startswith(">"))
+
+        assert a.num_sequences == num_records
 
 
 def test_random(rng: RNG):

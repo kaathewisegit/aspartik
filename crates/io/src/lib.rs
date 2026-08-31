@@ -1,12 +1,8 @@
-#[cfg(feature = "python")]
-mod fasta;
-mod format_readers;
 pub mod reader;
 pub mod rw;
 pub mod sam;
 mod str_buf;
 
-pub use format_readers::read_msa_from_fasta;
 pub use str_buf::StrBufReader;
 
 #[cfg(feature = "python")]
@@ -16,11 +12,6 @@ use pyo3::prelude::*;
 #[pymodule(name = "_io_rust_impl")]
 pub mod pymodule {
 	use super::*;
-
-	#[pymodule_export]
-	use crate::{
-		fasta::PyFastaDnaReader, format_readers::py_read_msa_from_fasta,
-	};
 
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {

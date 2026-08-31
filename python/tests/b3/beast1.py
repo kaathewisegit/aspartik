@@ -13,12 +13,12 @@ from aspartik.b3.priors import (
     ExponentialGrowth,
 )
 from aspartik.b3.substitutions import GTR, HKY, JC
-from aspartik.io import read_msa_from_fasta
+from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 
 
 def test_constant_population(rng: RNG):
-    msa = read_msa_from_fasta("data/runs/test-constant/alignment.fasta")
+    msa = MSA.from_fasta_file("data/runs/test-constant/alignment.fasta")
 
     tree = Tree(msa.sequence_names(), rng)
     population_size = Real(1.0)
@@ -44,7 +44,7 @@ def test_constant_population(rng: RNG):
 
 
 def test_exponential_growth(rng: RNG):
-    msa = read_msa_from_fasta("data/runs/test-exponential/alignment.fasta")
+    msa = MSA.from_fasta_file("data/runs/test-exponential/alignment.fasta")
 
     tree = Tree(msa.sequence_names(), rng)
     population_size = Real(1.0)
@@ -79,7 +79,7 @@ def test_hky_small(rng):
     frequencies = RealVector.repeat(0.25, 4)
     population_size = Real(1.0)
 
-    msa = read_msa_from_fasta("data/alignments/apes.fasta")
+    msa = MSA.from_fasta_file("data/alignments/apes.fasta")
     tree = Tree(msa.sequence_names(), rng)
     likelihood = DNALikelihood(
         msa=msa,
@@ -110,7 +110,7 @@ def test_gtr_small(rng):
     frequencies = RealVector.repeat(0.25, 4)
     population_size = Real(1.0)
 
-    msa = read_msa_from_fasta("data/alignments/apes.fasta")
+    msa = MSA.from_fasta_file("data/alignments/apes.fasta")
     tree = Tree(msa.sequence_names(), rng)
     likelihood = DNALikelihood(
         msa=msa,
@@ -143,7 +143,7 @@ def test_gamma_low(rng):
     frequencies = RealVector.repeat(0.25, 4)
     population_size = Real(1.0)
 
-    msa = read_msa_from_fasta("data/alignments/apes.fasta")
+    msa = MSA.from_fasta_file("data/alignments/apes.fasta")
     tree = Tree(msa.sequence_names(), rng)
     likelihood = GammaLikelihood(
         msa=msa,
@@ -178,7 +178,7 @@ def test_gamma_high(rng):
     frequencies = RealVector.repeat(0.25, 4)
     population_size = Real(1.0)
 
-    msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
+    msa = MSA.from_fasta_file("data/alignments/electricFish.fasta")
     tree = Tree(msa.sequence_names(), rng)
     likelihood = GammaLikelihood(
         msa=msa,
@@ -213,7 +213,7 @@ def test_skyline(rng):
     population_sizes = RealVector.repeat(1.0, 4)
     group_sizes = IntVector.repeat(0, 4)
 
-    msa = read_msa_from_fasta("data/alignments/hcv.fasta")
+    msa = MSA.from_fasta_file("data/alignments/hcv.fasta")
     tree = Tree(msa.sequence_names(), rng)
     likelihood = DNALikelihood(
         msa=msa,
@@ -241,7 +241,7 @@ def test_skyline(rng):
 
 def test_birthdeath_skyline(rng):
 
-    msa = read_msa_from_fasta("data/alignments/hcv.fasta")
+    msa = MSA.from_fasta_file("data/alignments/hcv.fasta")
     tree = Tree(msa.sequence_names(), rng)
 
     clock_rate = Real(7.9e-4)

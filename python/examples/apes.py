@@ -24,11 +24,11 @@ from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.priors import ConstantPopulation, Distribution
 from aspartik.b3.substitutions import HKY
 from aspartik.b3.utils import run_from_cmdline
+from aspartik.data.msa import MSA
 from aspartik.distributions import Gamma, LogNormal, Uniform
-from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
 
-msa = read_msa_from_fasta("data/alignments/apes.fasta")
+msa = MSA.from_fasta_file("data/alignments/apes.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)

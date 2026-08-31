@@ -19,11 +19,11 @@ from aspartik.b3.priors import Bound, Distribution, Monophyly, SymmetricDirichle
 from aspartik.b3.substitutions import GTR
 from aspartik.b3.utils import run_from_cmdline
 from aspartik.b3.utils.heterotachy import pattern_probabilities, site_probabilities
+from aspartik.data.msa import MSA
 from aspartik.distributions import Exponential, Laplace, LogNormal, Normal, Uniform
-from aspartik.io import read_msa_from_fasta
 from aspartik.rng import RNG
 
-msa = read_msa_from_fasta("data/alignments/electricFish.fasta")
+msa = MSA.from_fasta_file("data/alignments/electricFish.fasta")
 
 rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)

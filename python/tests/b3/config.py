@@ -1,9 +1,9 @@
 import pytest
 
 from aspartik.b3.config import MCMCConfig
-from aspartik.io import read_msa_from_fasta
+from aspartik.data.msa import MSA
 
-APES_MSA = read_msa_from_fasta("data/alignments/apes.fasta")
+APES_MSA = MSA.from_fasta_file("data/alignments/apes.fasta")
 
 
 @pytest.mark.parametrize("calculator", ["cpu"])

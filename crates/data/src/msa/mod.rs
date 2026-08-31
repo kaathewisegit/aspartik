@@ -1,11 +1,11 @@
 use anyhow::{Result, ensure};
 use rand::Rng;
 
-use std::{cmp::Ordering, ops::Range};
+use std::{cmp::Ordering, io::BufRead, mem, ops::Range};
 
 use crate::{
 	DnaNucleotide,
-	fasta::Record,
+	fasta::FastaParser,
 	seq::{Character, random_dna},
 };
 
@@ -38,9 +38,9 @@ impl<C: Character> Msa<C> {
 		})
 	}
 
-	pub fn from_fasta<I>(records: I) -> Result<Self>
+	pub fn from_fasta_reader<R>(reader: R) -> Result<Self>
 	where
-		I: IntoIterator<Item = Result<Record<C>>>,
+		R: BufRead,
 	{
 		let mut num_sites = 0;
 		let mut num_sequences = 0;
@@ -48,19 +48,26 @@ impl<C: Character> Msa<C> {
 		let mut data = Vec::new();
 		let mut names = Vec::new();
 
-		for record in records.into_iter() {
-			let record = record?;
-
+		let mut add_record = |parser: &mut FastaParser<C>| {
 			if num_sites == 0 {
-				num_sites = record.sequence().len();
+				num_sites = parser.seq.len();
 			}
+			ensure!(num_sites == parser.seq.len());
 
-			ensure!(num_sites == record.sequence().len());
-
-			data.extend(record.sequence());
-			names.push(record.id().to_owned());
+			data.append(&mut parser.seq);
+			names.push(mem::take(&mut parser.description));
 			num_sequences += 1;
+			Ok(())
+		};
+
+		let mut parser = FastaParser::new();
+
+		// TODO: use read_string to avoid allocating strings
+		for line in reader.lines() {
+			parser.parse_line(&mut add_record, &line?)?;
 		}
+
+		add_record(&mut parser)?;
 
 		Ok(Self {
 			num_sequences,

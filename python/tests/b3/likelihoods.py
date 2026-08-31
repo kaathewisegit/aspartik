@@ -2,12 +2,12 @@ from aspartik.b3 import Calculator, Clock
 from aspartik.b3.likelihoods import DNALikelihood
 from aspartik.b3.parameters import Real, RealVector, Tree
 from aspartik.b3.substitutions import HKY
-from aspartik.io import read_msa_from_fasta
+from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 
 
 def test_cpu(rng: RNG):
-    msa = read_msa_from_fasta("data/alignments/apes.fasta")
+    msa = MSA.from_fasta_file("data/alignments/apes.fasta")
 
     tree = Tree(msa.sequence_names(), rng)
 

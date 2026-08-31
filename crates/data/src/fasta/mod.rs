@@ -1,39 +1,28 @@
+use anyhow::{Context, Result, anyhow, bail};
+
 use std::fmt::{self};
 
-use crate::seq::{Character, write_str};
-
-mod parser;
+use crate::seq::{Character, parse_append_str, write_str};
 
 #[cfg(feature = "python")]
 pub mod python;
-pub use parser::FastaParser;
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Record<C: Character> {
-	/// The sequence description.  Must start with a '>' character and have
-	/// an ID follow right after without a space.
-	raw_description: String,
+	description: String,
 	seq: Vec<C>,
 }
 
 impl<C: Character> Record<C> {
-	pub fn new(raw_description: String, seq: Vec<C>) -> Self {
-		Self {
-			raw_description,
-			seq,
-		}
-	}
-
-	/// The sequence header line, exactly as it appeared in the source.
-	pub fn raw_description(&self) -> &str {
-		&self.raw_description
+	pub fn new(description: String, seq: Vec<C>) -> Self {
+		Self { description, seq }
 	}
 
 	/// Description, excludes the starting '>'.
 	pub fn description(&self) -> &str {
 		// SAFETY: this won't panic because `description` must start
 		// with an ASCII character '>'.
-		&self.raw_description[1..]
+		&self.description
 	}
 
 	pub fn id(&self) -> &str {
@@ -42,11 +31,11 @@ impl<C: Character> Record<C> {
 		// returns the description whole if there isn't a post-space
 		// comment
 		let end = self
-			.raw_description
+			.description
 			.find(' ')
-			.unwrap_or(self.raw_description.len());
+			.unwrap_or(self.description.len());
 
-		&self.raw_description[1..end]
+		&self.description[1..end]
 	}
 
 	pub fn sequence(&self) -> &[C] {
@@ -70,13 +59,14 @@ impl<C: Character> ToString for Record<C> {
 	fn to_string(&self) -> String {
 		// newline after description + one newline per 80 seq characters
 		// + final newline
-		let capacity = self.raw_description.len()
+		let capacity = self.description.len()
 			+ 1 + self.sequence().len()
 			+ self.sequence().len() / 80
 			+ 1;
 		let mut out = String::with_capacity(capacity);
 
-		out.push_str(self.raw_description());
+		out.push('>');
+		out.push_str(self.description());
 		out.push('\n');
 		write_str(self.sequence(), &mut out);
 
@@ -90,5 +80,64 @@ impl<C: Character> fmt::Debug for Record<C> {
 			.field("description", &self.description())
 			.field("sequence", &self.sequence())
 			.finish()
+	}
+}
+
+#[derive(Debug)]
+pub struct FastaParser<C: Character> {
+	in_sequence: bool,
+	pub description: String,
+	pub seq: Vec<C>,
+}
+
+impl<C: Character> FastaParser<C> {
+	pub fn new() -> Self {
+		Self {
+			in_sequence: false,
+			description: String::new(),
+			seq: Vec::new(),
+		}
+	}
+
+	pub fn parse_line<F>(&mut self, callback: F, line: &str) -> Result<()>
+	where
+		F: FnOnce(&mut FastaParser<C>) -> Result<()>,
+	{
+		// comments
+		if line.trim_start().starts_with(';') {
+			Ok(())
+		} else if let Some(line) = line.strip_prefix('>') {
+			// there was a last record before this one
+			if self.in_sequence {
+				self.in_sequence = false;
+				callback(self)?;
+			}
+			// TODO: clear sequence
+			self.description.clear();
+			self.description.push_str(line);
+			self.in_sequence = true;
+			Ok(())
+		} else {
+			if !self.in_sequence {
+				bail!(
+					"Encountered sequence data before any record"
+				);
+			}
+
+			parse_append_str(&mut self.seq, line).with_context(
+				|| {
+					anyhow!(
+						"Failed to parse sequence {}",
+						&self.description[1..],
+					)
+				},
+			)
+		}
+	}
+}
+
+impl<C: Character> Default for FastaParser<C> {
+	fn default() -> Self {
+		Self::new()
 	}
 }

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from os import PathLike
 from typing import Optional
 
 from ..rng import RNG
@@ -79,7 +79,7 @@ class Phred:
 class MSA:
     def __init__(self, names: list[str], sequences: list[DNASeq]): ...
     @classmethod
-    def from_fasta(cls, fasta: Sequence[DNARecord]) -> MSA:
+    def from_fasta_file(cls, path: PathLike | str) -> MSA:
         """
         Create an alignment from FASTA records
 
