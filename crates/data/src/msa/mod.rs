@@ -38,7 +38,7 @@ impl<C: Character> Msa<C> {
 		})
 	}
 
-	pub fn from_fasta_reader<R>(reader: R) -> Result<Self>
+	pub fn from_fasta_reader<R>(mut reader: R) -> Result<Self>
 	where
 		R: BufRead,
 	{
@@ -62,9 +62,12 @@ impl<C: Character> Msa<C> {
 
 		let mut parser = FastaParser::new();
 
-		// TODO: use read_string to avoid allocating strings
-		for line in reader.lines() {
-			parser.parse_line(&mut add_record, &line?)?;
+		// XXX: this still does triple copies:
+		// reader -> BufReader -> buffer -> record -> MSA
+		let mut buffer = String::new();
+		while reader.read_line(&mut buffer)? != 0 {
+			parser.parse_line(&mut add_record, &buffer)?;
+			buffer.clear();
 		}
 
 		add_record(&mut parser)?;
