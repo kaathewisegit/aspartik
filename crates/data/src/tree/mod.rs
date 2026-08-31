@@ -2,7 +2,7 @@ mod binary;
 pub mod builder;
 mod newick;
 
-pub use binary::BinaryRootedTree;
+pub use binary::BinaryTree;
 
 const ROOT_PARENT: u32 = u32::MAX;
 

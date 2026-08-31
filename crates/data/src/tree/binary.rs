@@ -5,25 +5,26 @@ use rustc_hash::{FxBuildHasher, FxHashSet};
 use std::cmp::{max, min};
 
 use super::{Internal, Leaf, Node, ROOT_PARENT};
+use buffer::Buffer;
 
 #[derive(Debug)]
-pub struct BinaryRootedTree {
+pub struct BinaryTree {
 	num_leaves: u32,
 	root: u32,
-	children: Box<[u32]>,
-	parents: Box<[u32]>,
-	edge_lengths: Box<[f64]>,
+	children: Buffer<u32>,
+	parents: Buffer<u32>,
+	edge_lengths: Buffer<f64>,
 	node_names: ArrayUtf8<Nullable>,
 	node_metadata: ArrayUtf8<Nullable>,
 	edge_metadata: ArrayUtf8<Nullable>,
 }
 
-impl BinaryRootedTree {
+impl BinaryTree {
 	pub fn new(
 		num_leaves: u32,
 		root: u32,
-		children: Box<[u32]>,
-		edge_lengths: Box<[f64]>,
+		children: &[u32],
+		edge_lengths: &[f64],
 		mut node_names: ArrayUtf8<Nullable>,
 		mut node_metadata: ArrayUtf8<Nullable>,
 		mut edge_metadata: ArrayUtf8<Nullable>,
@@ -134,9 +135,9 @@ impl BinaryRootedTree {
 		Ok(Self {
 			num_leaves,
 			root,
-			children,
-			parents: parents.into_boxed_slice(),
-			edge_lengths,
+			children: Buffer::from_slice(children),
+			parents: Buffer::from_slice(&parents),
+			edge_lengths: Buffer::from_slice(edge_lengths),
 			node_names,
 			node_metadata,
 			edge_metadata,
@@ -335,7 +336,7 @@ impl BinaryRootedTree {
 
 		fn process(
 			node: Node,
-			tree: &BinaryRootedTree,
+			tree: &BinaryTree,
 			counter: &mut u32,
 			labels: &mut [u32],
 			clades: &mut FxHashSet<(u32, u32)>,
@@ -371,7 +372,7 @@ impl BinaryRootedTree {
 		let mut num_shared_clades = 0;
 		fn process_other(
 			node: Node,
-			tree: &BinaryRootedTree,
+			tree: &BinaryTree,
 			labels: &[u32],
 			clades: &FxHashSet<(u32, u32)>,
 			num_shared: &mut u32,
@@ -523,7 +524,7 @@ impl BinaryRootedTree {
 	}
 
 	/// Returns `true` if the children have the same names and ids
-	pub fn identical_children(&self, other: &BinaryRootedTree) -> bool {
+	pub fn identical_children(&self, other: &BinaryTree) -> bool {
 		self.node_names == other.node_names
 	}
 }
@@ -665,7 +666,7 @@ struct TripletHdt {
 }
 
 impl TripletHdt {
-	fn new(tree: &BinaryRootedTree) -> Self {
+	fn new(tree: &BinaryTree) -> Self {
 		let mut components =
 			Vec::with_capacity(tree.num_nodes() as usize * 2 - 1);
 		for node in tree.nodes() {
@@ -802,7 +803,7 @@ fn choose3(value: u32) -> u128 {
 }
 
 struct Preorder<'a> {
-	tree: &'a BinaryRootedTree,
+	tree: &'a BinaryTree,
 	stack: Vec<Node>,
 }
 
@@ -823,7 +824,7 @@ impl Iterator for Preorder<'_> {
 }
 
 struct Postorder<'a> {
-	tree: &'a BinaryRootedTree,
+	tree: &'a BinaryTree,
 	stack: Vec<(Node, bool)>,
 }
 

@@ -7,7 +7,7 @@ use std::collections::BTreeSet;
 
 use data::{
 	newick::{Edge, Node as NewickNode, Tree as NewickTree},
-	tree::{BinaryRootedTree, Internal, Node},
+	tree::{BinaryTree, Internal, Node},
 };
 
 fn nullable_values<'a>(
@@ -44,7 +44,7 @@ fn tree(
 	children: Vec<u32>,
 	edge_lengths: Vec<f64>,
 	node_names: ArrayUtf8<Nullable>,
-) -> Result<BinaryRootedTree> {
+) -> Result<BinaryTree> {
 	tree_with_root(
 		num_leaves,
 		num_leaves * 2 - 2,
@@ -60,24 +60,24 @@ fn tree_with_root(
 	children: Vec<u32>,
 	edge_lengths: Vec<f64>,
 	node_names: ArrayUtf8<Nullable>,
-) -> Result<BinaryRootedTree> {
+) -> Result<BinaryTree> {
 	let num_nodes = num_leaves as usize * 2 - 1;
-	BinaryRootedTree::new(
+	BinaryTree::new(
 		num_leaves,
 		root,
-		children.into_boxed_slice(),
-		edge_lengths.into_boxed_slice(),
+		&children,
+		&edge_lengths,
 		node_names,
 		nulls(num_nodes),
 		nulls(num_nodes - 1),
 	)
 }
 
-fn node(tree: &BinaryRootedTree, index: u32) -> Node {
+fn node(tree: &BinaryTree, index: u32) -> Node {
 	tree.nodes().nth(index as usize).unwrap()
 }
 
-fn internal(tree: &BinaryRootedTree, index: u32) -> Internal {
+fn internal(tree: &BinaryTree, index: u32) -> Internal {
 	tree.as_internal(node(tree, index)).unwrap()
 }
 
@@ -85,8 +85,8 @@ fn indices(nodes: impl Iterator<Item = Node>) -> Vec<u32> {
 	nodes.map(Node::index).collect()
 }
 
-fn indexed_tree(source: &str) -> Result<BinaryRootedTree> {
-	let source = BinaryRootedTree::try_from(&NewickTree::parse(source)?)?;
+fn indexed_tree(source: &str) -> Result<BinaryTree> {
+	let source = BinaryTree::try_from(&NewickTree::parse(source)?)?;
 	let num_leaves = source.num_leaves();
 	let num_nodes = source.num_nodes();
 	let mut mapping = vec![0; num_nodes as usize];
@@ -131,7 +131,7 @@ fn indexed_tree(source: &str) -> Result<BinaryRootedTree> {
 	tree(num_leaves, children, edge_lengths, names(&node_names))
 }
 
-fn clades(tree: &BinaryRootedTree) -> BTreeSet<Vec<u32>> {
+fn clades(tree: &BinaryTree) -> BTreeSet<Vec<u32>> {
 	let mut descendants = vec![Vec::new(); tree.num_nodes() as usize];
 	let mut clades = BTreeSet::new();
 
@@ -155,7 +155,7 @@ fn clades(tree: &BinaryRootedTree) -> BTreeSet<Vec<u32>> {
 	clades
 }
 
-fn mrca_slow(tree: &BinaryRootedTree, first: Node, second: Node) -> Node {
+fn mrca_slow(tree: &BinaryTree, first: Node, second: Node) -> Node {
 	let mut ancestors = BTreeSet::new();
 	let mut current = Some(first);
 	while let Some(node) = current {
@@ -172,7 +172,7 @@ fn mrca_slow(tree: &BinaryRootedTree, first: Node, second: Node) -> Node {
 	}
 }
 
-fn lca_depths(tree: &BinaryRootedTree) -> Vec<u32> {
+fn lca_depths(tree: &BinaryTree) -> Vec<u32> {
 	let num_leaves = tree.num_leaves() as usize;
 	let mut depths = vec![0; tree.num_nodes() as usize];
 	for node in tree.preorder() {
@@ -227,10 +227,7 @@ fn triplet_topology(
 		.unwrap()
 }
 
-fn triplet_distance_slow(
-	first: &BinaryRootedTree,
-	second: &BinaryRootedTree,
-) -> u128 {
+fn triplet_distance_slow(first: &BinaryTree, second: &BinaryTree) -> u128 {
 	assert_eq!(first.num_leaves(), second.num_leaves());
 	let num_leaves = first.num_leaves() as usize;
 	let first_depths = lca_depths(first);
@@ -262,7 +259,7 @@ fn triplet_distance_slow(
 fn arbitrary_tree(
 	u: &mut Unstructured<'_>,
 	num_leaves: u32,
-) -> arbitrary::Result<BinaryRootedTree> {
+) -> arbitrary::Result<BinaryTree> {
 	let num_nodes = num_leaves * 2 - 1;
 	let mut available = (0..num_leaves).collect::<Vec<_>>();
 	let mut children = Vec::with_capacity((num_nodes - 1) as usize);
@@ -409,11 +406,11 @@ fn balanced_and_ladder_traversals() -> Result<()> {
 
 #[test]
 fn explicit_nonterminal_root() -> Result<()> {
-	let tree = BinaryRootedTree::new(
+	let tree = BinaryTree::new(
 		4,
 		4,
-		vec![5, 6, 0, 1, 2, 3].into_boxed_slice(),
-		vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6].into_boxed_slice(),
+		&[5, 6, 0, 1, 2, 3],
+		&[0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
 		str_names(&["A", "B", "C", "D", "ROOT", "AB", "CD"]),
 		nulls(7),
 		nulls(6),
@@ -451,7 +448,7 @@ fn preserves_child_order_and_edge_values() -> Result<()> {
 		str_names(&["A", "B", "C", "AB", "root"]),
 	)?;
 	let newick = NewickTree::from(&tree);
-	let roundtrip = BinaryRootedTree::try_from(&newick)?;
+	let roundtrip = BinaryTree::try_from(&newick)?;
 
 	let preorder_names = roundtrip
 		.preorder()
@@ -473,7 +470,7 @@ fn preserves_child_order_and_edge_values() -> Result<()> {
 fn newick_roundtrip() -> Result<()> {
 	let source = "((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6);";
 	let newick = NewickTree::parse(source)?;
-	let tree = BinaryRootedTree::try_from(&newick)?;
+	let tree = BinaryTree::try_from(&newick)?;
 	assert_eq!(NewickTree::from(&tree).into_string(), source);
 
 	let mut named = NewickTree::new();
@@ -495,7 +492,7 @@ fn newick_roundtrip() -> Result<()> {
 		named.add_edge(parent, child, Edge::from_distance(length));
 	}
 	named.set_root(root);
-	let named_tree = BinaryRootedTree::try_from(&named)?;
+	let named_tree = BinaryTree::try_from(&named)?;
 	assert_eq!(named_tree.name(node(&named_tree, 4)), Some("AB"));
 	assert_eq!(named_tree.name(node(&named_tree, 5)), Some("CD"));
 	assert_eq!(named_tree.name(node(&named_tree, 6)), Some("ROOT"));
@@ -527,7 +524,7 @@ fn metadata_roundtrip() -> Result<()> {
 	newick.add_edge(root, b, Edge::from_distance(0.2));
 	newick.set_root(root);
 
-	let tree = BinaryRootedTree::try_from(&newick)?;
+	let tree = BinaryTree::try_from(&newick)?;
 	let a = Node::from(tree.leaf_by_name("A").unwrap());
 	assert_eq!(tree.node_metadata(a), Some("[&country=SE]"));
 	assert_eq!(tree.edge_metadata(a), Some("[&rate=fast]"));
@@ -557,11 +554,11 @@ fn metadata_roundtrip() -> Result<()> {
 
 #[test]
 fn constructor_rejects_invalid_layouts() {
-	assert!(BinaryRootedTree::new(
+	assert!(BinaryTree::new(
 		1,
 		0,
-		Box::new([]),
-		Box::new([]),
+		&[],
+		&[],
 		str_names(&["A"]),
 		nulls(1),
 		nulls(0),
@@ -573,11 +570,11 @@ fn constructor_rejects_invalid_layouts() {
 		(vec![0, 1], vec![1.0], vec!["A", "B", ""]),
 		(vec![0, 1], vec![1.0, 1.0], vec!["A", "B"]),
 	] {
-		assert!(BinaryRootedTree::new(
+		assert!(BinaryTree::new(
 			2,
 			2,
-			children.into_boxed_slice(),
-			lengths.into_boxed_slice(),
+			&children,
+			&lengths,
 			str_names(&labels),
 			nulls(3),
 			nulls(2),
@@ -585,41 +582,41 @@ fn constructor_rejects_invalid_layouts() {
 		.is_err());
 	}
 
-	assert!(BinaryRootedTree::new(
+	assert!(BinaryTree::new(
 		2,
 		0,
-		vec![0, 1].into_boxed_slice(),
-		vec![1.0, 1.0].into_boxed_slice(),
+		&[0, 1],
+		&[1.0, 1.0],
 		str_names(&["A", "B", ""]),
 		nulls(3),
 		nulls(2),
 	)
 	.is_err());
-	assert!(BinaryRootedTree::new(
+	assert!(BinaryTree::new(
 		2,
 		3,
-		vec![0, 1].into_boxed_slice(),
-		vec![1.0, 1.0].into_boxed_slice(),
+		&[0, 1],
+		&[1.0, 1.0],
 		str_names(&["A", "B", ""]),
 		nulls(3),
 		nulls(2),
 	)
 	.is_err());
-	assert!(BinaryRootedTree::new(
+	assert!(BinaryTree::new(
 		2,
 		2,
-		vec![0, 1].into_boxed_slice(),
-		vec![1.0, 1.0].into_boxed_slice(),
+		&[0, 1],
+		&[1.0, 1.0],
 		str_names(&["A", "B", ""]),
 		nulls(2),
 		nulls(2),
 	)
 	.is_err());
-	assert!(BinaryRootedTree::new(
+	assert!(BinaryTree::new(
 		2,
 		2,
-		vec![0, 1].into_boxed_slice(),
-		vec![1.0, 1.0].into_boxed_slice(),
+		&[0, 1],
+		&[1.0, 1.0],
 		str_names(&["A", "B", ""]),
 		nulls(3),
 		nulls(1),
@@ -629,11 +626,11 @@ fn constructor_rejects_invalid_layouts() {
 	for children in [vec![0, 3], vec![0, 2], vec![0, 0], vec![0, 3, 1, 2]] {
 		let num_leaves = if children.len() == 2 { 2 } else { 3 };
 		let num_nodes = num_leaves * 2 - 1;
-		assert!(BinaryRootedTree::new(
+		assert!(BinaryTree::new(
 			num_leaves,
 			num_nodes - 1,
-			children.into_boxed_slice(),
-			vec![1.0; num_nodes as usize - 1].into_boxed_slice(),
+			&children,
+			&vec![1.0; num_nodes as usize - 1],
 			str_names(&vec![""; num_nodes as usize]),
 			nulls(num_nodes as usize),
 			nulls(num_nodes as usize - 1),
@@ -646,18 +643,18 @@ fn constructor_rejects_invalid_layouts() {
 fn newick_rejects_unsupported_structures() -> Result<()> {
 	let mut rootless = NewickTree::new();
 	rootless.add_node(NewickNode::named("A"));
-	assert!(BinaryRootedTree::try_from(&rootless).is_err());
+	assert!(BinaryTree::try_from(&rootless).is_err());
 	rootless.set_root(10);
-	assert!(BinaryRootedTree::try_from(&rootless).is_err());
+	assert!(BinaryTree::try_from(&rootless).is_err());
 
 	let mut single = NewickTree::new();
 	let root = single.add_node(NewickNode::named("A"));
 	single.set_root(root);
-	assert!(BinaryRootedTree::try_from(&single).is_err());
+	assert!(BinaryTree::try_from(&single).is_err());
 
 	for source in ["(A:1,B:1,C:1);", "(A:1,B:);"] {
 		let newick = NewickTree::parse(source)?;
-		assert!(BinaryRootedTree::try_from(&newick).is_err());
+		assert!(BinaryTree::try_from(&newick).is_err());
 	}
 
 	let mut unary = NewickTree::new();
@@ -665,17 +662,17 @@ fn newick_rejects_unsupported_structures() -> Result<()> {
 	let root = unary.add_node(NewickNode::unnamed());
 	unary.add_edge(root, child, Edge::from_distance(1.0));
 	unary.set_root(root);
-	assert!(BinaryRootedTree::try_from(&unary).is_err());
+	assert!(BinaryTree::try_from(&unary).is_err());
 
 	let mut disconnected = NewickTree::parse("(A:1,B:1);")?;
 	disconnected.add_node(NewickNode::named("C"));
-	assert!(BinaryRootedTree::try_from(&disconnected).is_err());
+	assert!(BinaryTree::try_from(&disconnected).is_err());
 
 	let mut invalid_edge = NewickTree::new();
 	let root = invalid_edge.add_node(NewickNode::unnamed());
 	invalid_edge.add_edge(root, 10, Edge::from_distance(1.0));
 	invalid_edge.set_root(root);
-	assert!(BinaryRootedTree::try_from(&invalid_edge).is_err());
+	assert!(BinaryTree::try_from(&invalid_edge).is_err());
 
 	Ok(())
 }
@@ -691,7 +688,7 @@ fn newick_rejects_multiple_parents_and_cycles() -> Result<()> {
 	multiple_parents.add_edge(root, child, Edge::from_distance(1.0));
 	multiple_parents.add_edge(root, other, Edge::from_distance(1.0));
 	multiple_parents.set_root(root);
-	assert!(BinaryRootedTree::try_from(&multiple_parents).is_err());
+	assert!(BinaryTree::try_from(&multiple_parents).is_err());
 
 	let mut cycle = NewickTree::parse("(A:1,B:1);")?;
 	let leaf_c = cycle.add_node(NewickNode::named("C"));
@@ -702,7 +699,7 @@ fn newick_rejects_multiple_parents_and_cycles() -> Result<()> {
 	cycle.add_edge(internal_c, leaf_c, Edge::from_distance(1.0));
 	cycle.add_edge(internal_d, internal_c, Edge::from_distance(1.0));
 	cycle.add_edge(internal_d, leaf_d, Edge::from_distance(1.0));
-	assert!(BinaryRootedTree::try_from(&cycle).is_err());
+	assert!(BinaryTree::try_from(&cycle).is_err());
 
 	Ok(())
 }
@@ -723,7 +720,7 @@ fn deep_ladder_uses_iterative_traversal() -> Result<()> {
 		names(&vec![String::new(); NUM_LEAVES as usize * 2 - 1]),
 	)?;
 	let newick = NewickTree::from(&tree);
-	let roundtrip = BinaryRootedTree::try_from(&newick)?;
+	let roundtrip = BinaryTree::try_from(&newick)?;
 
 	assert_eq!(tree.preorder().count(), tree.num_nodes() as usize);
 	assert_eq!(tree.postorder().count(), tree.num_nodes() as usize);
@@ -787,8 +784,7 @@ fn random_binary_trees_roundtrip() {
 		assert_eq!(tree.postorder().count(), num_nodes as usize);
 
 		let first_newick = NewickTree::from(&tree);
-		let roundtrip =
-			BinaryRootedTree::try_from(&first_newick).unwrap();
+		let roundtrip = BinaryTree::try_from(&first_newick).unwrap();
 		let second_newick = NewickTree::from(&roundtrip);
 		assert_eq!(
 			first_newick.into_string(),

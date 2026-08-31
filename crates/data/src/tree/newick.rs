@@ -1,14 +1,14 @@
 use anyhow::{Context, Result, ensure};
 use picoarrow::array::{ArrayUtf8, Nullable};
 
-use super::{BinaryRootedTree, Node};
+use super::{BinaryTree, Node};
 use crate::newick::{Edge, Node as NewickNode, NodeIdx, Tree};
 
 fn nonempty(value: &str) -> Option<&str> {
 	(!value.is_empty()).then_some(value)
 }
 
-impl TryFrom<&Tree> for BinaryRootedTree {
+impl TryFrom<&Tree> for BinaryTree {
 	type Error = anyhow::Error;
 
 	fn try_from(tree: &Tree) -> Result<Self> {
@@ -171,8 +171,8 @@ impl TryFrom<&Tree> for BinaryRootedTree {
 		Self::new(
 			num_leaves,
 			binary_root,
-			binary_children.into_boxed_slice(),
-			binary_lengths.into_boxed_slice(),
+			&binary_children,
+			&binary_lengths,
 			node_names,
 			node_metadata_array,
 			edge_metadata_array,
@@ -180,8 +180,8 @@ impl TryFrom<&Tree> for BinaryRootedTree {
 	}
 }
 
-impl From<&BinaryRootedTree> for Tree {
-	fn from(tree: &BinaryRootedTree) -> Self {
+impl From<&BinaryTree> for Tree {
+	fn from(tree: &BinaryTree) -> Self {
 		let mut out = Self::new();
 		let mut mapping = vec![u32::MAX; tree.num_nodes() as usize];
 

@@ -8,6 +8,7 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
+buffer = { workspace = true }
 rng = { workspace = true, optional = true }
 util = { workspace = true }
 
