@@ -66,6 +66,13 @@ impl<C: Character> Msa<C> {
 		// reader -> BufReader -> buffer -> record -> MSA
 		let mut buffer = String::new();
 		while reader.read_line(&mut buffer)? != 0 {
+			if buffer.ends_with('\n') {
+				buffer.pop();
+				if buffer.ends_with('\r') {
+					buffer.pop();
+				}
+			}
+
 			parser.parse_line(&mut add_record, &buffer)?;
 			buffer.clear();
 		}
