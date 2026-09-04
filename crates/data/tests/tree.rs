@@ -7,7 +7,7 @@ use std::collections::BTreeSet;
 
 use data::{
 	newick::{Edge, Node as NewickNode, Tree as NewickTree},
-	tree::{BinaryTree, Internal, Node},
+	tree::{BinaryTree, Internal, Node, robinson_foulds_matrix},
 };
 
 fn nullable_values<'a>(
@@ -903,6 +903,83 @@ fn random_robinson_foulds() {
 
 		Ok(())
 	});
+}
+
+#[test]
+fn multi_tree_robinson_foulds() -> Result<()> {
+	assert!(robinson_foulds_matrix(&[])?.is_empty());
+
+	let trees = [
+		indexed_tree("((0:0,1:0):0,(2:0,3:0):0);")?,
+		indexed_tree("(((0:0,1:0):0,2:0):0,3:0);")?,
+		indexed_tree("((0:0,2:0):0,(1:0,3:0):0);")?,
+		indexed_tree("((1:0,0:0):0,(3:0,2:0):0);")?,
+	];
+	let distances = robinson_foulds_matrix(&trees)?;
+	assert_eq!(
+		distances,
+		[[0, 2, 4, 0], [2, 0, 4, 2], [4, 4, 0, 4], [0, 2, 4, 0],]
+	);
+
+	let single = [indexed_tree("(0:0,1:0);")?];
+	assert_eq!(robinson_foulds_matrix(&single)?, [[0]]);
+
+	let mismatched = [
+		indexed_tree("(0:0,1:0);")?,
+		indexed_tree("((0:0,1:0):0,2:0);")?,
+	];
+	assert!(robinson_foulds_matrix(&mismatched).is_err());
+
+	Ok(())
+}
+
+#[test]
+fn random_multi_tree_robinson_foulds() {
+	arbtest(|u: &mut Unstructured<'_>| {
+		let num_leaves = u.int_in_range(2_u32..=100)?;
+		let num_trees = u.int_in_range(0_usize..=12)?;
+		let trees = (0..num_trees)
+			.map(|_| arbitrary_tree(u, num_leaves))
+			.collect::<arbitrary::Result<Vec<_>>>()?;
+		let distances = robinson_foulds_matrix(&trees).unwrap();
+
+		assert_eq!(distances.len(), num_trees);
+		for (first_index, first) in trees.iter().enumerate() {
+			assert_eq!(distances[first_index].len(), num_trees);
+			for (second_index, second) in trees.iter().enumerate() {
+				assert_eq!(
+					distances[first_index][second_index],
+					first.robinson_foulds(second)
+				);
+			}
+		}
+
+		Ok(())
+	});
+}
+
+#[test]
+fn many_tree_robinson_foulds() -> Result<()> {
+	let sources = [
+		"((0:0,1:0):0,(2:0,3:0):0);",
+		"(((0:0,1:0):0,2:0):0,3:0);",
+		"((0:0,2:0):0,(1:0,3:0):0);",
+	];
+	let trees = (0..256)
+		.map(|index| indexed_tree(sources[index % sources.len()]))
+		.collect::<Result<Vec<_>>>()?;
+	let distances = robinson_foulds_matrix(&trees)?;
+
+	for (first_index, first) in trees.iter().enumerate() {
+		for (second_index, second) in trees.iter().enumerate() {
+			assert_eq!(
+				distances[first_index][second_index],
+				first.robinson_foulds(second)
+			);
+		}
+	}
+
+	Ok(())
 }
 
 #[test]
