@@ -1,8 +1,10 @@
 mod binary;
 pub mod builder;
+mod distance;
 mod newick;
 
 pub use binary::BinaryTree;
+pub use distance::robinson_foulds_matrix;
 
 const ROOT_PARENT: u32 = u32::MAX;
 
