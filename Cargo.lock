@@ -219,6 +219,7 @@ dependencies = [
  "rand",
  "rng",
  "rustc-hash",
+ "smallvec",
  "util",
 ]
 

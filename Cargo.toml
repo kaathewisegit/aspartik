@@ -40,6 +40,7 @@ pyo3 = "0.29.2"
 rand = { version = "0.10.2", default-features = false }
 rand_pcg = "0.10.2"
 rustc-hash = "2.1"
+smallvec = "1.15"
 
 b3 = { version = "0.1.0-alpha.20", path = "crates/b3" }
 bitmap = { version = "0.1.0-alpha.20", path = "crates/bitmap" }
