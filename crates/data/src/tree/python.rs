@@ -520,6 +520,17 @@ impl PyBinaryTree {
 	fn branch_score(&self, other: &PyBinaryTree) -> Result<f64> {
 		branch_score(&self.inner, &other.inner)
 	}
+
+	fn triplet_distance(&self, other: &PyBinaryTree) -> Result<u128> {
+		ensure!(
+			self.inner.num_leaves() == other.inner.num_leaves(),
+			"Expected both trees to have {} leaves, got {}",
+			self.inner.num_leaves(),
+			other.inner.num_leaves()
+		);
+		Ok(self.inner.triplet_distance(&other.inner))
+	}
+
 	fn __len__(&self) -> usize {
 		self.num_nodes() as usize
 	}

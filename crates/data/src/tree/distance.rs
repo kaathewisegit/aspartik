@@ -1,6 +1,8 @@
 use anyhow::{Result, ensure};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
+use std::borrow::Borrow;
+
 use super::BinaryTree;
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Hash)]
@@ -78,7 +80,7 @@ pub fn robinson_foulds_matrix(trees: &[&BinaryTree]) -> Result<Vec<Vec<u32>>> {
 			FxBuildHasher,
 		);
 
-	for (tree_index, tree) in trees.iter().enumerate() {
+	for (tree_index, tree) in trees.iter().map(Borrow::borrow).enumerate() {
 		let hashes = clade_hashes(tree);
 		for node in tree.postorder() {
 			if node != tree.root().into() && tree.is_internal(node)

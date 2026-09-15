@@ -68,6 +68,23 @@ def test_branch_score():
     assert second.branch_score(first) == pytest.approx(5.0**0.5)
 
 
+def test_triplet_distance():
+    first = indexed_tree(((0, 1), (2, 3)))
+    second = indexed_tree(((0, 2), (1, 3)))
+
+    assert first.triplet_distance(first) == 0
+    assert first.triplet_distance(second) == 4
+    assert first.triplet_distance(second) == second.triplet_distance(first)
+
+
+def test_triplet_distance_rejects_leaf_count_mismatch():
+    first = BinaryTree.random(10, RNG(4))
+    second = BinaryTree.random(11, RNG(5))
+
+    with pytest.raises(RuntimeError, match="Expected both trees"):
+        first.triplet_distance(second)
+
+
 def test_robinson_foulds_matrix():
     trees = [
         indexed_tree(((0, 1), (2, 3))),
