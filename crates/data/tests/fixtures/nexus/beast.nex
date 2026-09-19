@@ -1,0 +1,14 @@
+#NEXUS
+BEGIN TAXA;
+    DIMENSIONS NTAX=3;
+    TAXLABELS A B 'C C';
+END;
+
+BEGIN TREES;
+    TRANSLATE
+        1 A,
+        2 B,
+        3 'C C';
+    TREE STATE_0 = [&R] ((1[&date=2020]:0.1[&rate=0.5],2:0.2)[&posterior=0.9]:0.3,3:0.4);
+    TREE STATE_10000 = [&R] (1:0.2,(2:0.3,3:0.4):0.5);
+END;
