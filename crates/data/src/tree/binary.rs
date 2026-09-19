@@ -40,6 +40,7 @@ impl BinaryTree {
 			})?;
 		let num_internals = num_leaves - 1;
 		let num_nodes_usize = usize::try_from(num_nodes)?;
+		let num_edges = num_nodes - 1;
 		let num_edges_usize = num_nodes_usize - 1;
 
 		let internals = num_leaves..num_nodes;
@@ -48,7 +49,7 @@ impl BinaryTree {
 		let root = prufer.pop().unwrap();
 		prufer.shuffle(rng);
 
-		let mut children = vec![ROOT_PARENT; num_edges_usize];
+		let mut children = Buffer::repeat(ROOT_PARENT, num_edges);
 		let mut remaining = vec![2; num_internals as usize];
 		*remaining.last_mut().unwrap() = 1;
 		let mut unused =
@@ -83,13 +84,13 @@ impl BinaryTree {
 		for _ in 0..num_edges_usize {
 			edge_metadata.push(None)?;
 		}
-		let edge_lengths = vec![0.0; num_edges_usize];
+		let edge_lengths = Buffer::repeat(0.0, num_edges);
 
 		Self::new(
 			num_leaves,
 			root,
-			&children,
-			&edge_lengths,
+			children,
+			edge_lengths,
 			node_names,
 			node_metadata,
 			edge_metadata,
@@ -99,8 +100,8 @@ impl BinaryTree {
 	pub fn new(
 		num_leaves: u32,
 		root: u32,
-		children: &[u32],
-		edge_lengths: &[f64],
+		children: Buffer<u32>,
+		edge_lengths: Buffer<f64>,
 		mut node_names: ArrayUtf8<Nullable>,
 		mut node_metadata: ArrayUtf8<Nullable>,
 		mut edge_metadata: ArrayUtf8<Nullable>,
@@ -127,12 +128,12 @@ impl BinaryTree {
 		);
 
 		ensure!(
-			children.len() == num_edges_usize,
+			children.len() == num_edges,
 			"Expected {num_edges} child entries, got {}",
 			children.len()
 		);
 		ensure!(
-			edge_lengths.len() == num_edges_usize,
+			edge_lengths.len() == num_edges,
 			"Expected {num_edges} edge lengths, got {}",
 			edge_lengths.len()
 		);
@@ -152,7 +153,7 @@ impl BinaryTree {
 			edge_metadata.len()
 		);
 
-		let mut parents = vec![ROOT_PARENT; num_nodes_usize];
+		let mut parents = Buffer::repeat(ROOT_PARENT, num_nodes);
 		let mut seen = vec![false; num_nodes_usize];
 
 		for (offset, pair) in
@@ -211,9 +212,9 @@ impl BinaryTree {
 		Ok(Self {
 			num_leaves,
 			root,
-			children: Buffer::from_slice(children),
-			parents: Buffer::from_slice(&parents),
-			edge_lengths: Buffer::from_slice(edge_lengths),
+			children,
+			parents,
+			edge_lengths,
 			node_names,
 			node_metadata,
 			edge_metadata,

@@ -1,4 +1,5 @@
 use anyhow::{Result, anyhow, bail, ensure};
+use buffer::Buffer;
 use picoarrow::array::{ArrayUtf8, Nullable};
 use smallvec::SmallVec;
 
@@ -559,8 +560,8 @@ impl TryFrom<TreeBuilder> for BinaryTree {
 		Self::new(
 			num_leaves,
 			root,
-			&children,
-			&edge_lengths,
+			Buffer::from_slice(&children),
+			Buffer::from_slice(&edge_lengths),
 			names,
 			node_attributes,
 			edge_metadata,
