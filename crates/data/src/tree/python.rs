@@ -4,7 +4,7 @@ use pyo3::{basic::CompareOp, prelude::*, types::PyType};
 
 use crate::tree::{
 	BinaryTree, Internal, Leaf, Node, SvgOptions as TreeSvgOptions,
-	TreeLayout, branch_score,
+	TreeLayout, branch_score, branch_score_matrix,
 	builder::{EdgeData, NodeData, TreeBuilder},
 	robinson_foulds_matrix, triplet_distance_matrix,
 };
@@ -626,6 +626,26 @@ impl PyBinaryTree {
 	fn __str__(&self) -> Result<String> {
 		self.to_newick()
 	}
+}
+
+#[pyfunction(name = "branch_score_matrix")]
+pub fn py_branch_score_matrix(
+	py: Python<'_>,
+	trees: Vec<Py<PyBinaryTree>>,
+) -> Result<Py<PyAny>> {
+	let distances = py.detach(move || {
+		let trees = trees
+			.iter()
+			.map(|tree| &tree.get().inner)
+			.collect::<Vec<_>>();
+		branch_score_matrix(&trees)
+	})?;
+	let flat: Vec<f64> = distances.into_iter().flatten().collect();
+	let flat_bytes: &[u8] = bytemuck::cast_slice(&flat);
+	let array_module = py.import("array")?;
+	let py_array = array_module.call_method1("array", ("d",))?;
+	py_array.call_method1("frombytes", (flat_bytes,))?;
+	Ok(py_array.unbind())
 }
 
 impl PyBinaryTree {

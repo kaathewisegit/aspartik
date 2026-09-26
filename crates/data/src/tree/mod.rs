@@ -10,7 +10,8 @@ mod serialize_newick;
 
 pub use binary::BinaryTree;
 pub use distances::{
-	branch_score, robinson_foulds_matrix, triplet_distance_matrix,
+	branch_score, branch_score_matrix, robinson_foulds_matrix,
+	triplet_distance_matrix,
 };
 pub use parse_newick::parse as parse_newick;
 pub use render::{LayoutKind, Point, SvgOptions, TreeLayout};

@@ -4,6 +4,7 @@ from typing import Literal, get_args
 
 from aspartik.data.tree import (
     BinaryTree,
+    branch_score_matrix,
     robinson_foulds_matrix,
     triplet_distance_matrix,
 )
@@ -26,22 +27,12 @@ def num_leaves(value):
     return value
 
 
-def pairwise_matrix(trees, distance):
-    matrix = [[0 for _ in trees] for _ in trees]
-    for first in range(len(trees)):
-        for second in range(first):
-            value = distance(trees[first], trees[second])
-            matrix[first][second] = value
-            matrix[second][first] = value
-    return matrix
-
-
 def distance_matrix(metric, trees):
     match metric:
         case "robinson-foulds":
             return robinson_foulds_matrix(trees)
         case "branch-score":
-            return pairwise_matrix(trees, BinaryTree.branch_score)
+            return branch_score_matrix(trees)
         case "triplet":
             return triplet_distance_matrix(trees)
         case _:

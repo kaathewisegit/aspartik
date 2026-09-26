@@ -32,7 +32,10 @@ pub mod pymodule {
 		AminoAcid, DnaNucleotide, Phred, PyMsa, PyTaxonSet,
 		fasta::python::PyFastaDnaRecord,
 		seq::python::PyDnaSeq,
-		tree::python::{PyBinaryTree, PySvgOptions, PyTreeBuilder},
+		tree::python::{
+			PyBinaryTree, PySvgOptions, PyTreeBuilder,
+			py_branch_score_matrix,
+		},
 		tree::{Internal, Leaf, Node},
 	};
 

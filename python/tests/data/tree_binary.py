@@ -8,6 +8,7 @@ from array import array
 from aspartik.data.tree import (
     BinaryTree,
     TreeBuilder,
+    branch_score_matrix,
     robinson_foulds_matrix,
     triplet_distance_matrix,
 )
@@ -76,6 +77,32 @@ def test_branch_score():
     assert first.branch_score(first) == 0.0
     assert first.branch_score(second) == pytest.approx(5.0**0.5)
     assert second.branch_score(first) == pytest.approx(5.0**0.5)
+
+
+def test_branch_score_matrix():
+    trees = [
+        BinaryTree.from_newick("(A:1,B:2);"),
+        BinaryTree.from_newick("(A:2,B:4);"),
+        BinaryTree.from_newick("(A:0,B:0);"),
+    ]
+    matrix = branch_score_matrix(trees)
+    assert isinstance(matrix, array)
+    assert matrix.typecode == "d"
+    assert list(matrix) == pytest.approx(
+        [first.branch_score(second) for first in trees for second in trees]
+    )
+    assert branch_score_matrix([]) == array("d", [])
+    assert branch_score_matrix(trees[:1]) == array("d", [0.0])
+
+
+def test_branch_score_matrix_rejects_leaf_mismatch():
+    first = BinaryTree.from_newick("(A:1,B:2);")
+    different_count = BinaryTree.from_newick("((A:1,B:2):1,C:3);")
+    different_name = BinaryTree.from_newick("(A:1,C:2);")
+    with pytest.raises(RuntimeError, match="Expected every tree to have 2 leaves"):
+        branch_score_matrix([first, different_count])
+    with pytest.raises(RuntimeError, match="same leaf IDs"):
+        branch_score_matrix([first, different_name])
 
 
 def test_triplet_distance():

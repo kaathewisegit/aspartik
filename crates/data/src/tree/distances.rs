@@ -3,6 +3,8 @@ use hashbrown::HashTable;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
 
+use std::ptr;
+
 use super::{BinaryTree, Node};
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -204,6 +206,94 @@ pub fn branch_score(first: &BinaryTree, second: &BinaryTree) -> Result<f64> {
 	}
 	squared += lengths.values().map(|length| length.powi(2)).sum::<f64>();
 	Ok(squared.sqrt())
+}
+
+pub fn branch_score_matrix(trees: &[&BinaryTree]) -> Result<Vec<Vec<f64>>> {
+	let Some(first_tree) = trees.first() else {
+		return Ok(Vec::new());
+	};
+
+	let num_leaves = first_tree.num_leaves();
+	for tree in &trees[1..] {
+		ensure!(
+			tree.num_leaves() == num_leaves,
+			"Expected every tree to have {num_leaves} leaves, got {}",
+			tree.num_leaves()
+		);
+		ensure!(
+			first_tree.identical_children(tree),
+			"Expected every tree to use the same leaf IDs"
+		);
+	}
+
+	let capacity = trees.len() * first_tree.num_edges() as usize;
+	let mut clades = Vec::with_capacity(capacity);
+	let mut hashes =
+		vec![CladeHash::default(); first_tree.num_nodes() as usize];
+
+	for (tree_index, tree) in trees.iter().enumerate() {
+		for node in tree.postorder() {
+			let hash = clade_hash(tree, &hashes, node);
+			hashes[node.usize()] = hash;
+			if node != tree.root().into() {
+				clades.push((hash, tree_index, node));
+			}
+		}
+	}
+
+	clades.sort_unstable();
+
+	let mut norms = vec![0.0; trees.len()];
+	let mut distances = vec![vec![0.0; trees.len()]; trees.len()];
+	let mut start = 0;
+	while start < clades.len() {
+		let hash = clades[start].0;
+		let mut end = start + 1;
+		while end < clades.len() && clades[end].0 == hash {
+			end += 1;
+		}
+
+		let group = &clades[start..end];
+		for (offset, &(_, first, node)) in group.iter().enumerate() {
+			let length = trees[first].edge_length(node).unwrap();
+			norms[first] += length * length;
+			for &(_, second, other_node) in &group[offset + 1..] {
+				let other_length = trees[second]
+					.edge_length(other_node)
+					.unwrap();
+				distances[first][second] +=
+					length * other_length;
+			}
+		}
+		start = end;
+	}
+
+	for first in 0..trees.len() {
+		for second in first + 1..trees.len() {
+			let squared = norms[first] + norms[second]
+				- 2.0 * distances[first][second];
+			let distance = if squared
+				<= 8.0 * f64::EPSILON
+					* (norms[first] + norms[second])
+				|| !squared.is_finite()
+			{
+				if ptr::eq(trees[first], trees[second]) {
+					0.0
+				} else {
+					branch_score(
+						trees[first],
+						trees[second],
+					)?
+				}
+			} else {
+				squared.sqrt()
+			};
+			distances[first][second] = distance;
+			distances[second][first] = distance;
+		}
+	}
+
+	Ok(distances)
 }
 
 impl BinaryTree {

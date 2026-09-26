@@ -10,8 +10,9 @@ use rand_pcg::Pcg64;
 use std::collections::{BTreeMap, BTreeSet};
 
 use data::tree::{
-	BinaryTree, Internal, Node, SvgOptions, branch_score, parse_newick,
-	robinson_foulds_matrix, triplet_distance_matrix,
+	BinaryTree, Internal, Node, SvgOptions, branch_score,
+	branch_score_matrix, parse_newick, robinson_foulds_matrix,
+	triplet_distance_matrix,
 };
 
 fn nullable_values<'a>(
@@ -1319,6 +1320,115 @@ fn branch_score_reference_distances() -> Result<()> {
 	}
 
 	Ok(())
+}
+
+#[test]
+fn multi_tree_branch_score() -> Result<()> {
+	assert!(branch_score_matrix(&[])?.is_empty());
+
+	let trees = [
+		indexed_tree("((0:1,1:2):3,(2:4,3:5):6);")?,
+		indexed_tree("((0:2,1:4):6,(2:8,3:10):12);")?,
+		indexed_tree("((0:1,2:4):3,(1:2,3:5):6);")?,
+		indexed_tree("((0:0,1:0):0,(2:0,3:0):0);")?,
+	];
+	let references = trees.iter().collect::<Vec<_>>();
+	let distances = branch_score_matrix(&references)?;
+	for (first_index, first) in trees.iter().enumerate() {
+		assert_eq!(distances[first_index][first_index], 0.0);
+		for (second_index, second) in trees.iter().enumerate() {
+			assert_almost_eq!(
+				distances[first_index][second_index],
+				branch_score_slow(first, second)
+			);
+			assert_eq!(
+				distances[first_index][second_index],
+				distances[second_index][first_index]
+			);
+		}
+	}
+
+	assert_eq!(branch_score_matrix(&references[..1])?, [[0.0]]);
+	let repeated = [references[0], references[0]];
+	assert_eq!(branch_score_matrix(&repeated)?, [[0.0, 0.0], [0.0, 0.0]]);
+
+	let close = indexed_tree("(0:1.000000001,1:1);")?;
+	let base = indexed_tree("(0:1,1:1);")?;
+	let close_distance = branch_score_matrix(&[&base, &close])?[0][1];
+	let expected = branch_score(&base, &close)?;
+	assert_almost_eq!(close_distance, expected, absolute = 1e-15);
+	assert!(close_distance > 0.0);
+
+	let mismatched_count = [
+		&indexed_tree("(0:1,1:1);")?,
+		&indexed_tree("((0:1,1:1):1,2:1);")?,
+	];
+	assert!(branch_score_matrix(&mismatched_count).is_err());
+
+	let mismatched_names = [
+		&parse_newick("(A:1,B:1);")?.into_binary()?,
+		&parse_newick("(A:1,C:1);")?.into_binary()?,
+	];
+	assert!(branch_score_matrix(&mismatched_names).is_err());
+	Ok(())
+}
+
+#[test]
+fn random_multi_tree_branch_score() {
+	arbtest(|u: &mut Unstructured<'_>| {
+		let num_leaves = u.int_in_range(2_u32..=30)?;
+		let num_trees = u.int_in_range(0_usize..=8)?;
+		let num_nodes = num_leaves * 2 - 1;
+		let mut node_names = vec![String::new(); num_nodes as usize];
+		for leaf in 0..num_leaves {
+			node_names[leaf as usize] = format!("leaf_{leaf}");
+		}
+		let trees = (0..num_trees)
+			.map(|_| {
+				let source = arbitrary_tree(u, num_leaves)?;
+				let lengths = (0..source.num_edges())
+					.map(|_| {
+						u.int_in_range(0_u32..=100).map(
+							|value| {
+								f64::from(value)
+									/ 10.0
+							},
+						)
+					})
+					.collect::<arbitrary::Result<Vec<_>>>(
+					)?;
+				Ok(tree_with_root(
+					num_leaves,
+					source.root().u32(),
+					topology(&source)
+						.into_iter()
+						.flatten()
+						.collect(),
+					lengths,
+					names(&node_names),
+				)
+				.unwrap())
+			})
+			.collect::<arbitrary::Result<Vec<_>>>()?;
+		let references = trees.iter().collect::<Vec<_>>();
+		let distances = branch_score_matrix(&references).unwrap();
+		assert_eq!(distances.len(), num_trees);
+		for (first_index, first) in trees.iter().enumerate() {
+			assert_eq!(distances[first_index].len(), num_trees);
+			for (second_index, second) in trees.iter().enumerate() {
+				let expected =
+					branch_score(first, second).unwrap();
+				let actual =
+					distances[first_index][second_index];
+				assert_almost_eq!(
+					actual,
+					expected,
+					relative = 1e-9
+				);
+			}
+		}
+		Ok(())
+	});
 }
 
 #[test]
