@@ -31,7 +31,7 @@ rng = RNG(4)
 tree = Tree(msa.sequence_names(), rng)
 
 times = []
-for name in msa.sequence_names().to_list():
+for name in msa.sequence_names():
     node = tree.leaf_by_name(name)
     assert node is not None
 

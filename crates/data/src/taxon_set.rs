@@ -1,6 +1,8 @@
 use picoarrow::array::{Array, ArrayUtf8, NonNullable};
 #[cfg(feature = "python")]
 use pyo3::{prelude::*, types::PyType};
+#[cfg(feature = "python")]
+use util::atomic::MonotonicUsize;
 
 use std::{iter::FromIterator, ops::Deref, sync::Arc};
 
@@ -18,13 +20,6 @@ impl TaxonSet {
 
 	pub fn ranged_ints(len: usize) -> Self {
 		Self::from_iter((0..len).map(|i| i.to_string()))
-	}
-
-	pub fn iter(&self) -> TaxonSetIter<'_> {
-		TaxonSetIter {
-			taxon_set: self,
-			index: 0,
-		}
 	}
 }
 
@@ -60,45 +55,6 @@ impl Deref for TaxonSet {
 	}
 }
 
-// TODO: replace with upstream `picoarrow` iterator
-pub struct TaxonSetIter<'a> {
-	taxon_set: &'a TaxonSet,
-	index: usize,
-}
-
-impl<'a> Iterator for TaxonSetIter<'a> {
-	type Item = &'a str;
-
-	fn next(&mut self) -> Option<Self::Item> {
-		if self.index < self.taxon_set.len() {
-			let item = self.taxon_set.get(self.index);
-			self.index += 1;
-			Some(item)
-		} else {
-			None
-		}
-	}
-
-	fn size_hint(&self) -> (usize, Option<usize>) {
-		let remaining = self.taxon_set.len() - self.index;
-		(remaining, Some(remaining))
-	}
-}
-
-impl ExactSizeIterator for TaxonSetIter<'_> {}
-
-impl<'a> IntoIterator for &'a TaxonSet {
-	type Item = &'a str;
-	type IntoIter = TaxonSetIter<'a>;
-
-	fn into_iter(self) -> Self::IntoIter {
-		TaxonSetIter {
-			taxon_set: self,
-			index: 0,
-		}
-	}
-}
-
 #[cfg(feature = "python")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[pyclass(
@@ -124,8 +80,36 @@ impl PyTaxonSet {
 		PyTaxonSet(TaxonSet::ranged_ints(len))
 	}
 
-	// TODO: replace with a Python-native iterator
-	fn to_list(&self) -> Vec<String> {
-		self.0.iter().map(|s| s.to_owned()).collect()
+	fn __iter__(&self) -> PyTaxonSetIter {
+		PyTaxonSetIter {
+			taxon_set: self.0.clone(),
+			index: 0.into(),
+		}
+	}
+}
+
+#[cfg(feature = "python")]
+#[derive(Debug)]
+#[pyclass(name = "TaxonSetIter", frozen)]
+struct PyTaxonSetIter {
+	taxon_set: TaxonSet,
+	index: MonotonicUsize,
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl PyTaxonSetIter {
+	fn __iter__(this: PyRef<Self>) -> PyRef<Self> {
+		this
+	}
+
+	fn __next__(&self) -> Option<String> {
+		let index = self.index.load();
+		if index == self.taxon_set.len() {
+			return None;
+		}
+		let out = self.taxon_set.get(index);
+		self.index.add(1);
+		Some(out.to_owned())
 	}
 }

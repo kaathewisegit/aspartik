@@ -35,7 +35,7 @@ cudarc = { version = "0.19.10", default-features = false }
 fork_union = "2.3"
 hashbrown = { version = "0.17", default-features = false }
 parking_lot = "0.12.5"
-picoarrow = "0.3.3"
+picoarrow = "0.3.4"
 pyo3 = "0.29.2"
 rand = { version = "0.10.3", default-features = false }
 rand_pcg = "0.10.2"

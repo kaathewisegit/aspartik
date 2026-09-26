@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from array import array
+from collections.abc import Iterator
 from os import PathLike
 
 from ..rng import RNG
@@ -277,4 +278,4 @@ class TaxonSet:
     def __init__(self, names: list[str]): ...
     @classmethod
     def ranged_ints(_cls, len: int) -> TaxonSet: ...
-    def to_list(self) -> list[str]: ...
+    def __iter__(self) -> Iterator[str]: ...

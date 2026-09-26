@@ -231,10 +231,10 @@ def _beast1_config(c: MCMCConfig):
     if c.heights:
         taxa = [
             f'<taxon id="{name}">\n\t\t<date value="{height}" direction="backwards" units="years"/>\n\t</taxon>'
-            for name, height in zip(c.msa.sequence_names().to_list(), c.heights)
+            for name, height in zip(c.msa.sequence_names(), c.heights)
         ]
     else:
-        taxa = [f'<taxon id="{name}"/>' for name in c.msa.sequence_names().to_list()]
+        taxa = [f'<taxon id="{name}"/>' for name in c.msa.sequence_names()]
     taxa = "\n\t\t".join(taxa)
 
     sequences = []
