@@ -3,6 +3,8 @@ use hashbrown::HashTable;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
 
+use std::ptr;
+
 use super::{BinaryTree, Node};
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -234,16 +236,12 @@ pub fn branch_score_matrix(trees: &[&BinaryTree]) -> Result<Vec<Vec<f64>>> {
 			let hash = clade_hash(tree, &hashes, node);
 			hashes[node.usize()] = hash;
 			if node != tree.root().into() {
-				clades.push((
-					hash,
-					tree_index,
-					tree.edge_length(node).unwrap(),
-				));
+				clades.push((hash, tree_index, node));
 			}
 		}
 	}
 
-	clades.sort_unstable_by_key(|entry| (entry.0, entry.1));
+	clades.sort_unstable();
 
 	let mut norms = vec![0.0; trees.len()];
 	let mut distances = vec![vec![0.0; trees.len()]; trees.len()];
@@ -256,9 +254,13 @@ pub fn branch_score_matrix(trees: &[&BinaryTree]) -> Result<Vec<Vec<f64>>> {
 		}
 
 		let group = &clades[start..end];
-		for (offset, &(_, first, length)) in group.iter().enumerate() {
+		for (offset, &(_, first, node)) in group.iter().enumerate() {
+			let length = trees[first].edge_length(node).unwrap();
 			norms[first] += length * length;
-			for &(_, second, other_length) in &group[offset + 1..] {
+			for &(_, second, other_node) in &group[offset + 1..] {
+				let other_length = trees[second]
+					.edge_length(other_node)
+					.unwrap();
 				distances[first][second] +=
 					length * other_length;
 			}
@@ -275,7 +277,7 @@ pub fn branch_score_matrix(trees: &[&BinaryTree]) -> Result<Vec<Vec<f64>>> {
 					* (norms[first] + norms[second])
 				|| !squared.is_finite()
 			{
-				if std::ptr::eq(trees[first], trees[second]) {
+				if ptr::eq(trees[first], trees[second]) {
 					0.0
 				} else {
 					branch_score(

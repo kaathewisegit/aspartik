@@ -1356,7 +1356,7 @@ fn multi_tree_branch_score() -> Result<()> {
 	let base = indexed_tree("(0:1,1:1);")?;
 	let close_distance = branch_score_matrix(&[&base, &close])?[0][1];
 	let expected = branch_score(&base, &close)?;
-	assert!((close_distance - expected).abs() < 1e-15);
+	assert_almost_eq!(close_distance, expected, absolute = 1e-15);
 	assert!(close_distance > 0.0);
 
 	let mismatched_count = [
@@ -1420,8 +1420,11 @@ fn random_multi_tree_branch_score() {
 					branch_score(first, second).unwrap();
 				let actual =
 					distances[first_index][second_index];
-				assert!((actual - expected).abs()
-					<= 1e-9 * (1.0 + expected));
+				assert_almost_eq!(
+					actual,
+					expected,
+					relative = 1e-9
+				);
 			}
 		}
 		Ok(())
