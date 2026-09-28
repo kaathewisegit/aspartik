@@ -1,6 +1,7 @@
 mod aa;
 pub mod fasta;
 mod msa;
+pub mod nexus;
 mod nucleotides;
 mod parser;
 mod phred;
