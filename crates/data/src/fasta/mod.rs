@@ -112,9 +112,9 @@ impl<C: Character> FastaParser<C> {
 				self.in_sequence = false;
 				callback(self)?;
 			}
-			// TODO: clear sequence
 			self.description.clear();
 			self.description.push_str(line);
+			self.seq.clear();
 			self.in_sequence = true;
 			Ok(())
 		} else {
