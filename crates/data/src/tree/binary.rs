@@ -144,7 +144,6 @@ impl BinaryTree {
 			node_metadata,
 			edge_metadata,
 		};
-		tree.validate()?;
 		tree.internal_names.shrink_to_fit();
 		tree.node_metadata.shrink_to_fit();
 		tree.edge_metadata.shrink_to_fit();

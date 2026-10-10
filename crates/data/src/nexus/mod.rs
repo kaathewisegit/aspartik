@@ -54,7 +54,7 @@ pub(crate) fn parse_token<'a>(line: &mut &'a str) -> Result<&'a str> {
 		Ok(&body[..end])
 	} else {
 		let end = line
-			.find(|c: char| !c.is_ascii_alphanumeric())
+			.find(|c: char| c.is_ascii_whitespace() || c == ',')
 			.unwrap_or(line.len());
 		let name = &line[..end];
 		*line = &line[end..];

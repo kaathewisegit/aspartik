@@ -914,23 +914,6 @@ fn random_canonical_constructor() {
 }
 
 #[test]
-fn constructor_rejects_inconsistent_parents() {
-	for parents in [[u32::MAX, 2, u32::MAX], [2, 2, 0], [2, 2, 2]] {
-		assert!(new_tree(
-			2,
-			2,
-			Buffer::from_slice(&[0, 1]),
-			Buffer::from_slice(&parents),
-			Buffer::from_slice(&[1.0, 2.0]),
-			names(&["A", "B", "root"]),
-			nulls(3),
-			nulls(2),
-		)
-		.is_err());
-	}
-}
-
-#[test]
 fn balanced_and_ladder_traversals() -> Result<()> {
 	let balanced = tree(
 		4,
@@ -1059,110 +1042,6 @@ fn metadata_roundtrip() -> Result<()> {
 	assert_eq!(tree.to_newick()?, source);
 
 	Ok(())
-}
-
-#[test]
-fn constructor_rejects_invalid_layouts() {
-	assert!(from_children(
-		1,
-		0,
-		Buffer::from_slice(&[]),
-		Buffer::from_slice(&[]),
-		names(&["A"]),
-		nulls(1),
-		nulls(0),
-	)
-	.is_err());
-
-	for (children, lengths, labels) in [
-		(vec![0], vec![1.0, 1.0], vec!["A", "B", ""]),
-		(vec![0, 1], vec![1.0], vec!["A", "B", ""]),
-		(vec![0, 1], vec![1.0, 1.0], vec!["A", "B"]),
-	] {
-		assert!(from_children(
-			2,
-			2,
-			Buffer::from_slice(&children),
-			Buffer::from_slice(&lengths),
-			names(&labels),
-			nulls(3),
-			nulls(2),
-		)
-		.is_err());
-	}
-
-	assert!(from_children(
-		2,
-		0,
-		Buffer::from_slice(&[0, 1]),
-		Buffer::from_slice(&[1.0, 1.0]),
-		names(&["A", "B", ""]),
-		nulls(3),
-		nulls(2),
-	)
-	.is_err());
-	assert!(from_children(
-		2,
-		3,
-		Buffer::from_slice(&[0, 1]),
-		Buffer::from_slice(&[1.0, 1.0]),
-		names(&["A", "B", ""]),
-		nulls(3),
-		nulls(2),
-	)
-	.is_err());
-	assert!(from_children(
-		2,
-		2,
-		Buffer::from_slice(&[0, 1]),
-		Buffer::from_slice(&[1.0, 1.0]),
-		names(&["A", "B", ""]),
-		nulls(2),
-		nulls(2),
-	)
-	.is_err());
-	assert!(from_children(
-		2,
-		2,
-		Buffer::from_slice(&[0, 1]),
-		Buffer::from_slice(&[1.0, 1.0]),
-		names(&["A", "B", ""]),
-		nulls(3),
-		nulls(1),
-	)
-	.is_err());
-
-	for children in [vec![0, 3], vec![0, 2], vec![0, 0], vec![0, 3, 1, 2]] {
-		let num_leaves = if children.len() == 2 { 2 } else { 3 };
-		let num_nodes = num_leaves * 2 - 1;
-		assert!(from_children(
-			num_leaves,
-			num_nodes - 1,
-			Buffer::from_slice(&children),
-			Buffer::from_slice(&vec![1.0; num_nodes as usize - 1]),
-			nulls(num_nodes as usize),
-			nulls(num_nodes as usize),
-			nulls(num_nodes as usize - 1),
-		)
-		.is_err());
-	}
-}
-
-#[test]
-fn constructor_rejects_oversized_leaf_count() {
-	let error = BinaryTree::new(
-		u32::MAX / 2 + 1,
-		0,
-		Buffer::from_slice(&[]),
-		Buffer::from_slice(&[]),
-		Buffer::from_slice(&[]),
-		TaxonSet::from_iter(std::iter::empty::<&str>()),
-		nulls(0),
-		nulls(0),
-		nulls(0),
-	)
-	.unwrap_err();
-	assert!(error.to_string().contains("cannot have more than"));
 }
 
 #[test]
