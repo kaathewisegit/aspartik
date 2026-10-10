@@ -1,209 +1,191 @@
 use anyhow::{Result, bail, ensure};
 
-use std::io::BufRead;
+mod trees;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Block {
-	Outside,
-	Trees,
-	Other,
+pub use trees::read_binary_trees;
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+enum Status {
+	#[default]
+	BeforeStart,
+	OutsideBlock,
+	InBlock,
+	InCommand,
 }
 
-#[derive(Default)]
-struct Scanner {
-	quote: Option<u8>,
+#[derive(Debug, Clone, Default)]
+pub struct NexusParser {
+	status: Status,
+	/// Block name, always in uppercase
+	block: String,
+	command: String,
 	comment_depth: usize,
+	// XXX: line tracking
 }
 
-fn update_comment_depth(depth: &mut usize, byte: u8) {
-	match byte {
-		b'[' => *depth += 1,
-		b']' => *depth -= 1,
-		_ => {}
-	}
-}
-
-impl Scanner {
-	fn find(&mut self, input: &str, target: u8) -> Option<usize> {
-		let bytes = input.as_bytes();
-		let mut index = 0;
-		while index < bytes.len() {
-			let current = bytes[index];
-			if self.comment_depth != 0 {
-				update_comment_depth(
-					&mut self.comment_depth,
-					current,
-				);
-			} else if let Some(quote) = self.quote {
-				if current == quote {
-					if bytes.get(index + 1) == Some(&quote)
-					{
-						index += 1;
-					} else {
-						self.quote = None;
-					}
-				}
-			} else {
-				match current {
-					b'[' => update_comment_depth(
-						&mut self.comment_depth,
-						current,
-					),
-					b'\'' | b'"' => {
-						self.quote = Some(current)
-					}
-					_ if current == target => {
-						return Some(index);
-					}
-					_ => {}
-				}
-			}
-			index += 1;
-		}
-		None
-	}
-}
-
-fn skip_trivia<'a>(mut input: &'a str, comment_depth: &mut usize) -> &'a str {
-	loop {
-		if *comment_depth == 0 {
-			input = input.trim_start();
-		}
-		if *comment_depth == 0 && !input.starts_with('[') {
-			return input;
-		}
-		let mut end = 0;
-		for (index, byte) in input.bytes().enumerate() {
-			update_comment_depth(comment_depth, byte);
-			end = index + 1;
-			if *comment_depth == 0 {
-				break;
-			}
-		}
-		input = &input[end..];
-		if *comment_depth != 0 {
-			return input;
-		}
-	}
-}
-
-fn after_keyword<'a>(input: &'a str, keyword: &str) -> Option<&'a str> {
-	let input = skip_trivia(input, &mut 0);
-	let word = input.get(..keyword.len())?;
-	if !word.eq_ignore_ascii_case(keyword) {
-		return None;
-	}
-	let rest = &input[keyword.len()..];
-	if rest.chars().next().is_some_and(|character| {
-		!character.is_whitespace()
-			&& !matches!(character, ';' | '[' | '*')
-	}) {
-		return None;
-	}
-	Some(rest)
-}
-
-fn process<F>(
-	statement: &str,
-	block: &mut Block,
-	callback: &mut F,
-) -> Result<()>
-where
-	F: FnMut(&str) -> Result<()>,
-{
-	let mut comment_depth = 0;
-	let mut statement = skip_trivia(statement, &mut comment_depth);
-	if let Some(rest) = after_keyword(statement, "#NEXUS") {
-		statement = skip_trivia(rest, &mut comment_depth);
-	}
-	if statement.is_empty() {
-		return Ok(());
-	}
-	if *block == Block::Outside {
-		if let Some(rest) = after_keyword(statement, "BEGIN") {
-			*block = if after_keyword(rest, "TREES").is_some() {
-				Block::Trees
-			} else {
-				Block::Other
-			};
-		}
-		return Ok(());
-	}
-	if after_keyword(statement, "END").is_some()
-		|| after_keyword(statement, "ENDBLOCK").is_some()
-	{
-		*block = Block::Outside;
-		return Ok(());
-	}
-	if *block == Block::Other {
-		return Ok(());
-	}
-	let Some(rest) = after_keyword(statement, "TREE")
-		.or_else(|| after_keyword(statement, "UTREE"))
-	else {
-		return Ok(());
-	};
-	let rest = skip_trivia(rest, &mut comment_depth);
-	let rest = skip_trivia(
-		rest.strip_prefix('*').unwrap_or(rest),
-		&mut comment_depth,
-	);
-	let equal = Scanner::default().find(rest, b'=').ok_or_else(|| {
-		anyhow::anyhow!("Expected '=' in TREE command")
-	})?;
-	ensure!(!rest[..equal].trim().is_empty(), "Expected a tree name");
-	let newick = rest[equal + 1..].trim();
-	callback(newick)
-}
-
-pub fn for_each_tree<R, F>(mut reader: R, mut callback: F) -> Result<()>
-where
-	R: BufRead,
-	F: FnMut(&str) -> Result<()>,
-{
-	let mut block = Block::Outside;
-	let mut line = String::new();
-	let mut pending = String::new();
-	let mut scanner = Scanner::default();
-	while reader.read_line(&mut line)? != 0 {
-		let mut rest = line.as_str();
-		while !rest.is_empty() {
-			if let Some(end) = scanner.find(rest, b';') {
-				let (part, tail) = rest.split_at(end + 1);
-				if pending.is_empty() {
-					process(
-						part,
-						&mut block,
-						&mut callback,
-					)?;
-				} else {
-					pending.push_str(part);
-					process(
-						&pending,
-						&mut block,
-						&mut callback,
-					)?;
-					pending.clear();
-				}
-				rest = tail;
-			} else {
-				pending.push_str(rest);
-				break;
-			}
-		}
-		line.clear();
-	}
-	if scanner.quote.is_some() {
-		bail!("Unterminated quote in NEXUS input");
-	}
-	if scanner.comment_depth != 0 {
-		bail!("Unterminated comment in NEXUS input");
-	}
+fn read_command<'a>(line: &mut &'a str) -> Result<&'a str> {
+	let end = line
+		.find(|c: char| !c.is_ascii_alphanumeric())
+		.unwrap_or(line.len());
+	let cmd = &line[..end];
+	*line = &line[end..];
 	ensure!(
-		pending.trim().is_empty()
-			|| pending.trim().eq_ignore_ascii_case("#NEXUS"),
-		"Unterminated NEXUS command"
+		end > 0,
+		"Expected a command token, got trailing characters {line:?}"
 	);
-	ensure!(block == Block::Outside, "Unterminated NEXUS block");
-	Ok(())
+	Ok(cmd)
+}
+
+impl NexusParser {
+	fn skip_comment(&mut self, line: &mut &str) {
+		if self.comment_depth == 0 && !line.starts_with('[') {
+			return;
+		}
+		for (i, c) in line.char_indices() {
+			match c {
+				'[' => self.comment_depth += 1,
+				']' => self.comment_depth -= 1,
+				_ => {}
+			}
+			if self.comment_depth == 0 {
+				*line = &line[i + c.len_utf8()..];
+				return;
+			}
+		}
+
+		*line = "";
+	}
+
+	fn skip_trivia(&mut self, line: &mut &str) {
+		loop {
+			let prev = *line;
+			*line = line.trim_ascii_start();
+			self.skip_comment(line);
+
+			if *line == prev {
+				break;
+			}
+		}
+	}
+
+	fn expect_semi(&mut self, line: &mut &str) -> Result<()> {
+		self.skip_trivia(line);
+		ensure!(
+			line.starts_with(";"),
+			"Expected a semicolon, got {line:?}"
+		);
+		*line = &line[1..];
+		self.skip_trivia(line);
+		ensure!(
+			line.is_empty(),
+			"Unexpected trailing characters after semicolon: {line:?}"
+		);
+		Ok(())
+	}
+
+	fn parse_command<F>(&mut self, line: &mut &str, f: F) -> Result<()>
+	where
+		F: FnOnce(&str, &str) -> Result<()>,
+	{
+		let bytes = line.as_bytes();
+		let mut idx = 0;
+
+		while idx < bytes.len() {
+			match bytes[idx] {
+				b'[' => self.comment_depth += 1,
+				b']' => {
+					ensure!(
+						self.comment_depth > 0,
+						"Unxepected `]` outside of a comment"
+					);
+					self.comment_depth -= 1;
+				}
+				b';' if self.comment_depth == 0 => {
+					self.command.push_str(&line[..=idx]);
+					*line = &line[idx..];
+					self.status = Status::InBlock;
+					self.expect_semi(line)?;
+					f(&self.block, &self.command)?;
+					self.command.clear();
+					return Ok(());
+				}
+				_ => {}
+			}
+			idx += 1;
+		}
+
+		// No terminating semicolon found, consume the whole line
+		self.command.push_str(line);
+		*line = "";
+		Ok(())
+	}
+
+	pub fn parse_line<F>(
+		&mut self,
+		mut line: &str,
+		callback: F,
+	) -> Result<()>
+	where
+		F: FnOnce(&str, &str) -> Result<()>,
+	{
+		match self.status {
+			Status::BeforeStart => {
+				ensure!(
+					line == "#NEXUS",
+					"NEXUS file must start with the `#NEXUS` magic value"
+				);
+				self.status = Status::OutsideBlock;
+			}
+			Status::OutsideBlock => {
+				self.skip_trivia(&mut line);
+				if line.is_empty() {
+					return Ok(());
+				}
+				let cmd = read_command(&mut line)?;
+				if !cmd.eq_ignore_ascii_case("BEGIN") {
+					bail!(
+						"Top-level commands must start with BEGIN, got `{cmd}`"
+					);
+				}
+				self.skip_trivia(&mut line);
+				let block = read_command(&mut line)?;
+				self.block = block.to_uppercase();
+				self.status = Status::InBlock;
+				self.expect_semi(&mut line)?;
+			}
+			Status::InBlock => {
+				self.skip_trivia(&mut line);
+				if line.is_empty() {
+					return Ok(());
+				}
+				let cmd = read_command(&mut line)?;
+				if cmd.eq_ignore_ascii_case("END") {
+					self.status = Status::OutsideBlock;
+					self.expect_semi(&mut line)?;
+					return Ok(());
+				}
+				self.command.push_str(cmd);
+				self.status = Status::InCommand;
+				self.parse_command(&mut line, callback)?;
+			}
+			Status::InCommand => {
+				self.parse_command(&mut line, callback)?;
+			}
+		}
+
+		Ok(())
+	}
+
+	pub fn finish(&self) -> Result<()> {
+		match self.status {
+			Status::BeforeStart => bail!("Empty file"),
+			Status::InCommand => {
+				bail!("Command {:?} not finished", self.command)
+			}
+			Status::InBlock => {
+				bail!("Block {} not finished", self.block)
+			}
+			Status::OutsideBlock => Ok(()),
+		}
+	}
 }
