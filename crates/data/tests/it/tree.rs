@@ -26,19 +26,10 @@ fn nullable_values<'a>(
 	out
 }
 
-fn names(values: &[String]) -> ArrayUtf8<Nullable> {
-	nullable_values(
-		values.iter().map(|value| {
-			(!value.is_empty()).then_some(value.as_str())
-		}),
-	)
-}
-
-fn str_names(values: &[&str]) -> ArrayUtf8<Nullable> {
-	nullable_values(
-		values.iter()
-			.map(|value| (!value.is_empty()).then_some(*value)),
-	)
+fn names<S: AsRef<str>>(values: &[S]) -> ArrayUtf8<Nullable> {
+	nullable_values(values.iter().map(|value| {
+		(!value.as_ref().is_empty()).then_some(value.as_ref())
+	}))
 }
 
 fn nulls(len: usize) -> ArrayUtf8<Nullable> {
@@ -209,6 +200,10 @@ fn indices(nodes: impl Iterator<Item = Node>) -> Vec<u32> {
 	nodes.map(Node::u32).collect()
 }
 
+fn internal_indices(tree: &BinaryTree) -> Vec<u32> {
+	tree.internals().map(Internal::u32).collect()
+}
+
 fn indexed_tree(source: &str) -> Result<BinaryTree> {
 	let source = parse_newick(source)?.into_binary()?;
 	let num_leaves = source.num_leaves();
@@ -267,33 +262,8 @@ fn indexed_tree(source: &str) -> Result<BinaryTree> {
 	)
 }
 
-fn clades(tree: &BinaryTree) -> BTreeSet<Vec<u32>> {
+fn descendant_leaves(tree: &BinaryTree) -> Vec<Vec<u32>> {
 	let mut descendants = vec![Vec::new(); tree.num_nodes() as usize];
-	let mut clades = BTreeSet::new();
-
-	for node in tree.postorder() {
-		if let Some(leaf) = tree.as_leaf(node) {
-			descendants[node.usize()] = vec![leaf.u32()];
-			continue;
-		}
-
-		let internal = tree.as_internal(node).unwrap();
-		let [left, right] = tree.children_of(internal);
-		let mut leaves = descendants[left.usize()].clone();
-		leaves.extend_from_slice(&descendants[right.usize()]);
-		leaves.sort_unstable();
-		if internal != tree.root() {
-			clades.insert(leaves.clone());
-		}
-		descendants[node.usize()] = leaves;
-	}
-
-	clades
-}
-
-fn branch_clades(tree: &BinaryTree) -> BTreeMap<Vec<u32>, f64> {
-	let mut descendants = vec![Vec::new(); tree.num_nodes() as usize];
-	let mut clades = BTreeMap::new();
 	for node in tree.postorder() {
 		let leaves = if let Some(leaf) = tree.as_leaf(node) {
 			vec![leaf.u32()]
@@ -305,15 +275,32 @@ fn branch_clades(tree: &BinaryTree) -> BTreeMap<Vec<u32>, f64> {
 			leaves.sort_unstable();
 			leaves
 		};
-		if node != tree.root().into() {
-			clades.insert(
-				leaves.clone(),
-				tree.edge_length(node).unwrap(),
-			);
-		}
 		descendants[node.usize()] = leaves;
 	}
-	clades
+	descendants
+}
+
+fn clades(tree: &BinaryTree) -> BTreeSet<Vec<u32>> {
+	let descendants = descendant_leaves(tree);
+	let root = tree.root().usize();
+	tree.internals()
+		.filter(|internal| internal.usize() != root)
+		.map(|internal| descendants[internal.usize()].clone())
+		.collect()
+}
+
+fn branch_clades(tree: &BinaryTree) -> BTreeMap<Vec<u32>, f64> {
+	let descendants = descendant_leaves(tree);
+	let root = tree.root().into();
+	tree.nodes()
+		.filter(|node| *node != root)
+		.map(|node| {
+			(
+				descendants[node.usize()].clone(),
+				tree.edge_length(node).unwrap(),
+			)
+		})
+		.collect()
 }
 
 fn branch_score_slow(first: &BinaryTree, second: &BinaryTree) -> f64 {
@@ -423,10 +410,22 @@ fn triplet_distance_slow(first: &BinaryTree, second: &BinaryTree) -> u128 {
 	distance
 }
 
-fn arbitrary_tree(
+fn leaf_labels(num_leaves: u32, num_nodes: u32) -> Vec<String> {
+	(0..num_nodes)
+		.map(|node| {
+			if node < num_leaves {
+				format!("leaf_{node}")
+			} else {
+				String::new()
+			}
+		})
+		.collect()
+}
+
+fn arbitrary_tree_parts(
 	u: &mut Unstructured<'_>,
 	num_leaves: u32,
-) -> arbitrary::Result<BinaryTree> {
+) -> arbitrary::Result<(u32, Vec<u32>)> {
 	let num_nodes = num_leaves * 2 - 1;
 	let mut available = (0..num_leaves).collect::<Vec<_>>();
 	let mut children = Vec::with_capacity((num_nodes - 1) as usize);
@@ -459,26 +458,34 @@ fn arbitrary_tree(
 		remapped_children[new_offset + 1] =
 			mapping[children[old_offset + 1] as usize];
 	}
-	let root = mapping[(num_nodes - 1) as usize];
+	Ok((mapping[(num_nodes - 1) as usize], remapped_children))
+}
 
-	let node_names = (0..num_nodes)
-		.map(|node| {
-			if node < num_leaves {
-				format!("leaf_{node}")
-			} else {
-				String::new()
-			}
-		})
-		.collect::<Vec<_>>();
-
-	Ok(tree_with_root(
-		num_leaves,
-		root,
-		remapped_children,
-		vec![0.0; (num_nodes - 1) as usize],
-		names(&node_names),
+fn arbitrary_tree_with_lengths(
+	u: &mut Unstructured<'_>,
+	num_leaves: u32,
+	lengths: Vec<f64>,
+) -> arbitrary::Result<BinaryTree> {
+	let (root, children) = arbitrary_tree_parts(u, num_leaves)?;
+	let labels = leaf_labels(num_leaves, num_leaves * 2 - 1);
+	Ok(
+		tree_with_root(
+			num_leaves,
+			root,
+			children,
+			lengths,
+			names(&labels),
+		)
+		.unwrap(),
 	)
-	.unwrap())
+}
+
+fn arbitrary_tree(
+	u: &mut Unstructured<'_>,
+	num_leaves: u32,
+) -> arbitrary::Result<BinaryTree> {
+	let lengths = vec![0.0; (num_leaves * 2 - 2) as usize];
+	arbitrary_tree_with_lengths(u, num_leaves, lengths)
 }
 
 #[test]
@@ -487,7 +494,7 @@ fn two_leaf_tree() -> Result<()> {
 		2,
 		vec![0, 1],
 		vec![0.1, 0.2],
-		str_names(&["A", "B", "root"]),
+		names(&["A", "B", "root"]),
 	)?;
 
 	assert_eq!(tree.num_nodes(), 3);
@@ -550,7 +557,7 @@ fn constructor_accepts_owned_buffers() -> Result<()> {
 		children,
 		Buffer::from_slice(&[2, 2, u32::MAX]),
 		edge_lengths,
-		str_names(&["A", "B", "root"]),
+		names(&["A", "B", "root"]),
 		nulls(3),
 		nulls(2),
 	)?;
@@ -569,7 +576,7 @@ fn canonical_constructor_relabels_internals() -> Result<()> {
 		4,
 		Buffer::from_slice(&[5, 6, 0, 1, 2, 3]),
 		Buffer::from_slice(&[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]),
-		str_names(&["A", "B", "C", "D", "ROOT", "AB", "CD"]),
+		names(&["A", "B", "C", "D", "ROOT", "AB", "CD"]),
 		nullable_values([
 			None,
 			None,
@@ -591,13 +598,7 @@ fn canonical_constructor_relabels_internals() -> Result<()> {
 
 	tree.validate()?;
 	assert_eq!(tree.root().u32(), 6);
-	assert_eq!(
-		tree.postorder()
-			.filter(|&node| tree.is_internal(node))
-			.map(Node::u32)
-			.collect::<Vec<_>>(),
-		vec![4, 5, 6]
-	);
+	assert_eq!(internal_indices(&tree), vec![4, 5, 6]);
 	assert_eq!(tree.name(node(&tree, 4)), Some("AB"));
 	assert_eq!(tree.name(node(&tree, 5)), Some("CD"));
 	assert_eq!(tree.name(node(&tree, 6)), Some("ROOT"));
@@ -648,13 +649,7 @@ fn canonical_names_and_topology() -> Result<()> {
 		first.node_metadata(first.leaf_by_name("A").unwrap().into()),
 		Some("[&node=A]")
 	);
-	assert_eq!(
-		first.postorder()
-			.filter(|&node| first.is_internal(node))
-			.map(Node::u32)
-			.collect::<Vec<_>>(),
-		vec![4, 5, 6]
-	);
+	assert_eq!(internal_indices(&first), vec![4, 5, 6]);
 	Ok(())
 }
 
@@ -776,12 +771,7 @@ fn canonical_rejects_missing_and_duplicate_names() -> Result<()> {
 	)?;
 	assert!(unnamed.canonical().is_err());
 	for labels in [["A", "", "root"], ["A", "A", "root"]] {
-		let tree = tree(
-			2,
-			vec![0, 1],
-			vec![1.0, 2.0],
-			str_names(&labels),
-		)?;
+		let tree = tree(2, vec![0, 1], vec![1.0, 2.0], names(&labels))?;
 		assert!(tree.canonical().is_err());
 	}
 	Ok(())
@@ -915,11 +905,7 @@ fn random_canonical_constructor() {
 			original.to_newick().unwrap()
 		);
 		assert_eq!(
-			canonical
-				.postorder()
-				.filter(|&node| canonical.is_internal(node))
-				.map(Node::u32)
-				.collect::<Vec<_>>(),
+			internal_indices(&canonical),
 			(num_leaves..canonical.num_nodes()).collect::<Vec<_>>()
 		);
 		canonical.validate().unwrap();
@@ -936,7 +922,7 @@ fn constructor_rejects_inconsistent_parents() {
 			Buffer::from_slice(&[0, 1]),
 			Buffer::from_slice(&parents),
 			Buffer::from_slice(&[1.0, 2.0]),
-			str_names(&["A", "B", "root"]),
+			names(&["A", "B", "root"]),
 			nulls(3),
 			nulls(2),
 		)
@@ -950,7 +936,7 @@ fn balanced_and_ladder_traversals() -> Result<()> {
 		4,
 		vec![0, 1, 2, 3, 4, 5],
 		vec![1.0; 6],
-		str_names(&["A", "B", "C", "D", "", "", ""]),
+		names(&["A", "B", "C", "D", "", "", ""]),
 	)?;
 	assert_eq!(indices(balanced.preorder()), vec![6, 4, 0, 1, 5, 2, 3]);
 	assert_eq!(indices(balanced.postorder()), vec![0, 1, 4, 2, 3, 5, 6]);
@@ -960,7 +946,7 @@ fn balanced_and_ladder_traversals() -> Result<()> {
 		4,
 		vec![0, 1, 2, 4, 3, 5],
 		vec![1.0; 6],
-		str_names(&["A", "B", "C", "D", "", "", ""]),
+		names(&["A", "B", "C", "D", "", "", ""]),
 	)?;
 	assert_eq!(indices(ladder.preorder()), vec![6, 3, 5, 2, 4, 0, 1]);
 	assert_eq!(indices(ladder.postorder()), vec![3, 2, 0, 1, 4, 5, 6]);
@@ -980,7 +966,7 @@ fn explicit_nonterminal_root() -> Result<()> {
 		Buffer::from_slice(&[5, 6, 0, 1, 2, 3]),
 		Buffer::from_slice(&[5, 5, 6, 6, u32::MAX, 4, 4]),
 		Buffer::from_slice(&[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]),
-		str_names(&["A", "B", "C", "D", "ROOT", "AB", "CD"]),
+		names(&["A", "B", "C", "D", "ROOT", "AB", "CD"]),
 		nulls(7),
 		nulls(6),
 	)?;
@@ -1013,7 +999,7 @@ fn preserves_child_order_and_edge_values() -> Result<()> {
 		3,
 		vec![1, 0, 2, 3],
 		vec![f64::NAN, f64::INFINITY, -1.5, 0.0],
-		str_names(&["A", "B", "C", "AB", "root"]),
+		names(&["A", "B", "C", "AB", "root"]),
 	)?;
 	let roundtrip = parse_newick(&tree.to_newick()?)?.into_binary()?;
 
@@ -1082,7 +1068,7 @@ fn constructor_rejects_invalid_layouts() {
 		0,
 		Buffer::from_slice(&[]),
 		Buffer::from_slice(&[]),
-		str_names(&["A"]),
+		names(&["A"]),
 		nulls(1),
 		nulls(0),
 	)
@@ -1098,7 +1084,7 @@ fn constructor_rejects_invalid_layouts() {
 			2,
 			Buffer::from_slice(&children),
 			Buffer::from_slice(&lengths),
-			str_names(&labels),
+			names(&labels),
 			nulls(3),
 			nulls(2),
 		)
@@ -1110,7 +1096,7 @@ fn constructor_rejects_invalid_layouts() {
 		0,
 		Buffer::from_slice(&[0, 1]),
 		Buffer::from_slice(&[1.0, 1.0]),
-		str_names(&["A", "B", ""]),
+		names(&["A", "B", ""]),
 		nulls(3),
 		nulls(2),
 	)
@@ -1120,7 +1106,7 @@ fn constructor_rejects_invalid_layouts() {
 		3,
 		Buffer::from_slice(&[0, 1]),
 		Buffer::from_slice(&[1.0, 1.0]),
-		str_names(&["A", "B", ""]),
+		names(&["A", "B", ""]),
 		nulls(3),
 		nulls(2),
 	)
@@ -1130,7 +1116,7 @@ fn constructor_rejects_invalid_layouts() {
 		2,
 		Buffer::from_slice(&[0, 1]),
 		Buffer::from_slice(&[1.0, 1.0]),
-		str_names(&["A", "B", ""]),
+		names(&["A", "B", ""]),
 		nulls(2),
 		nulls(2),
 	)
@@ -1140,7 +1126,7 @@ fn constructor_rejects_invalid_layouts() {
 		2,
 		Buffer::from_slice(&[0, 1]),
 		Buffer::from_slice(&[1.0, 1.0]),
-		str_names(&["A", "B", ""]),
+		names(&["A", "B", ""]),
 		nulls(3),
 		nulls(1),
 	)
@@ -1154,7 +1140,7 @@ fn constructor_rejects_invalid_layouts() {
 			num_nodes - 1,
 			Buffer::from_slice(&children),
 			Buffer::from_slice(&vec![1.0; num_nodes as usize - 1]),
-			str_names(&vec![""; num_nodes as usize]),
+			nulls(num_nodes as usize),
 			nulls(num_nodes as usize),
 			nulls(num_nodes as usize - 1),
 		)
@@ -1212,7 +1198,7 @@ fn deep_ladder_uses_iterative_traversal() -> Result<()> {
 		NUM_LEAVES,
 		children,
 		vec![1.0; (NUM_LEAVES as usize - 1) * 2],
-		names(&vec![String::new(); NUM_LEAVES as usize * 2 - 1]),
+		nulls(NUM_LEAVES as usize * 2 - 1),
 	)?;
 	let roundtrip = parse_newick(&tree.to_newick()?)?.into_binary()?;
 
@@ -1296,36 +1282,13 @@ fn random_binary_trees_roundtrip() {
 	arbtest(|u: &mut Unstructured<'_>| {
 		let num_leaves = u.int_in_range(2_u32..=40)?;
 		let num_nodes = num_leaves * 2 - 1;
-		let mut available: Vec<u32> = (0..num_leaves).collect();
-		let mut children = Vec::with_capacity((num_nodes - 1) as usize);
-
-		for parent in num_leaves..num_nodes {
-			let left_index =
-				u.int_in_range(0..=available.len() - 1)?;
-			let left = available.swap_remove(left_index);
-			let right_index =
-				u.int_in_range(0..=available.len() - 1)?;
-			let right = available.swap_remove(right_index);
-			children.extend([left, right]);
-			available.push(parent);
-		}
-
 		let lengths = (0..num_nodes - 1)
 			.map(|_| {
 				u.arbitrary::<u16>()
 					.map(|value| f64::from(value) / 100.0)
 			})
 			.collect::<arbitrary::Result<Vec<_>>>()?;
-		let labels = (0..num_nodes)
-			.map(|node| {
-				if node < num_leaves {
-					format!("leaf_{node}")
-				} else {
-					String::new()
-				}
-			})
-			.collect::<Vec<_>>();
-		let tree = tree(num_leaves, children, lengths, names(&labels))
+		let tree = arbitrary_tree_with_lengths(u, num_leaves, lengths)
 			.unwrap();
 
 		for internal in tree.internals() {
@@ -1568,15 +1531,9 @@ fn random_multi_tree_branch_score() {
 	arbtest(|u: &mut Unstructured<'_>| {
 		let num_leaves = u.int_in_range(2_u32..=30)?;
 		let num_trees = u.int_in_range(0_usize..=8)?;
-		let num_nodes = num_leaves * 2 - 1;
-		let mut node_names = vec![String::new(); num_nodes as usize];
-		for leaf in 0..num_leaves {
-			node_names[leaf as usize] = format!("leaf_{leaf}");
-		}
 		let trees = (0..num_trees)
 			.map(|_| {
-				let source = arbitrary_tree(u, num_leaves)?;
-				let lengths = (0..source.num_edges())
+				let lengths = (0..num_leaves * 2 - 2)
 					.map(|_| {
 						u.int_in_range(0_u32..=100).map(
 							|value| {
@@ -1587,17 +1544,9 @@ fn random_multi_tree_branch_score() {
 					})
 					.collect::<arbitrary::Result<Vec<_>>>(
 					)?;
-				Ok(tree_with_root(
-					num_leaves,
-					source.root().u32(),
-					topology(&source)
-						.into_iter()
-						.flatten()
-						.collect(),
-					lengths,
-					names(&node_names),
+				arbitrary_tree_with_lengths(
+					u, num_leaves, lengths,
 				)
-				.unwrap())
 			})
 			.collect::<arbitrary::Result<Vec<_>>>()?;
 		let references = trees.iter().collect::<Vec<_>>();
@@ -1950,7 +1899,7 @@ fn layout_rejects_invalid_values() -> Result<()> {
 			2,
 			vec![0, 1],
 			vec![length, 1.0],
-			str_names(&["0", "1", ""]),
+			names(&["0", "1", ""]),
 		)?;
 		assert!(invalid.rectangular_layout(1.0).is_err());
 		assert!(invalid.slanted_layout(1.0).is_err());
@@ -1968,7 +1917,7 @@ fn svg_rendering() -> Result<()> {
 		Buffer::from_slice(&[0, 1]),
 		Buffer::from_slice(&[2, 2, u32::MAX]),
 		Buffer::from_slice(&[1.0, 2.0]),
-		str_names(&["A<&\"'", "B", "root"]),
+		names(&["A<&\"'", "B", "root"]),
 		nullable_values([Some("node<&\"'"), None, Some("root data")]),
 		nullable_values([Some("edge<&\"'"), None]),
 	)?;
