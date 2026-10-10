@@ -28,10 +28,9 @@ fn parse_translate(command: &str) -> Result<(TaxonSet, TaxonSet)> {
 
 		from.push(first)?;
 		to.push(second)?;
-		println!("{first:?}/{second:?}");
 	}
 
-	Ok((to.into(), from.into()))
+	Ok((from.into(), to.into()))
 }
 
 pub fn read_binary_trees<R>(mut reader: R) -> Result<Vec<BinaryTree>>

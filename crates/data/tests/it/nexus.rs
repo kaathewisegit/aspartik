@@ -78,10 +78,10 @@ END;
 
 BEGIN TREES;
 	TRANSLATE
-		Taxon1 1,
-		Taxon2 2,
-		Taxon3 3,
-		Taxon4 4;
+		1 Taxon1,
+		2 Taxon2,
+		3 Taxon3,
+		4 Taxon4;
 	TREE tree1 = [&R] (((1:0.1, 2:0.2):0.3, 3:0.4):0.5, 4:0.6);
 	TREE tree2 = [&R] ((1:0.2, (2:0.1, 3:0.3):0.2):0.4, 4:0.5);
 END;
