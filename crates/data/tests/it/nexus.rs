@@ -98,3 +98,34 @@ END;
 		assert_eq!(tree.to_newick().unwrap(), expected);
 	}
 }
+
+#[test]
+fn trees_quoted_translation_names() {
+	let s = r#"#NEXUS
+
+BEGIN TAXA;
+	DIMENSIONS ntax=3;
+	TAXLABELS "Taxon one" 'Taxon [two]' Taxon3;
+END;
+
+BEGIN TREES;
+	TRANSLATE
+		1 "Taxon one",
+		2 'Taxon [two]',
+		3 Taxon3;
+	TREE tree1 = [&R] ((1:0.1, 2:0.2):0.3, 3:0.4);
+	TREE tree2 = [&R] (1:0.2, (2:0.1, 3:0.3):0.2);
+END;
+	"#;
+
+	let expected_trees = [
+		"(('Taxon one':0.1,'Taxon [two]':0.2):0.3,Taxon3:0.4);",
+		"('Taxon one':0.2,('Taxon [two]':0.1,Taxon3:0.3):0.2);",
+	];
+
+	let trees = read_binary_trees(Cursor::new(s)).unwrap();
+
+	for (tree, expected) in trees.iter().zip(expected_trees) {
+		assert_eq!(tree.to_newick().unwrap(), expected);
+	}
+}

@@ -1,4 +1,4 @@
-use anyhow::{Result, bail, ensure};
+use anyhow::{Result, anyhow, bail, ensure};
 
 mod trees;
 
@@ -34,6 +34,30 @@ fn read_command<'a>(line: &mut &'a str) -> Result<&'a str> {
 		"Expected a command token, got trailing characters {line:?}"
 	);
 	Ok(cmd)
+}
+
+pub(crate) fn parse_token<'a>(line: &mut &'a str) -> Result<&'a str> {
+	*line = line.trim_ascii_start();
+
+	let first = line.chars().next().ok_or_else(|| {
+		anyhow!("Expected a name, reached end of input")
+	})?;
+
+	if first == '"' || first == '\'' {
+		let body = &line[1..];
+		let end = body.find(first).ok_or_else(|| {
+			anyhow!("Unterminated quoted name: {line:?}")
+		})?;
+		*line = &body[end + 1..];
+		Ok(&body[..end])
+	} else {
+		let end = line
+			.find(|c: char| !c.is_ascii_alphanumeric())
+			.unwrap_or(line.len());
+		let name = &line[..end];
+		*line = &line[end..];
+		Ok(name)
+	}
 }
 
 impl NexusParser {

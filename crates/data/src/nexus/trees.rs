@@ -1,33 +1,41 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Result, bail};
 
 use picoarrow::array::{ArrayUtf8, NonNullable};
 use std::io::BufRead;
 
-use super::NexusParser;
+use super::{NexusParser, parse_token};
 use crate::{TaxonSet, tree::BinaryTree};
 
 fn parse_translate(command: &str) -> Result<(TaxonSet, TaxonSet)> {
 	let mut from = ArrayUtf8::<NonNullable>::new();
 	let mut to = ArrayUtf8::<NonNullable>::new();
 
+	// cuts "translate" and ";"
 	let body = &command[9..command.len() - 1];
 
-	for entry in body.split(',') {
-		let entry = entry.trim();
-		if entry.is_empty() {
-			continue;
+	let mut rest = body;
+	loop {
+		rest = rest.trim_ascii();
+		if rest.is_empty() {
+			break;
 		}
 
-		let mut tokens = entry.split_whitespace();
-		let first = tokens
-			.next()
-			.ok_or_else(|| anyhow!("Missing first identifier"))?;
-		let second = tokens
-			.next()
-			.ok_or_else(|| anyhow!("Missing second identifier"))?;
+		let first = parse_token(&mut rest)?;
+		let second = parse_token(&mut rest)?;
 
 		from.push(first)?;
 		to.push(second)?;
+
+		rest = rest.trim_ascii_start();
+		if rest.is_empty() {
+			break;
+		}
+		if !rest.starts_with(',') {
+			bail!(
+				"Expected `,` between translation entries, got {rest:?}"
+			);
+		}
+		rest = &rest[1..];
 	}
 
 	Ok((from.into(), to.into()))
