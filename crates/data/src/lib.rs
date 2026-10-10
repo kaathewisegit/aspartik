@@ -38,7 +38,8 @@ pub mod pymodule {
 		seq::python::PyDnaSeq,
 		tree::python::{
 			PyBinaryTree, PySvgOptions, PyTreeBuilder,
-			py_branch_score_matrix,
+			py_branch_score_matrix, py_robinson_foulds_matrix,
+			py_triplet_distance_matrix,
 		},
 		tree::{Internal, Leaf, Node},
 	};
@@ -46,14 +47,6 @@ pub mod pymodule {
 	#[pymodule_init]
 	fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
 		::util::py_patch_module!(m);
-		m.add_function(wrap_pyfunction!(
-			crate::tree::python::py_robinson_foulds_matrix,
-			m
-		)?)?;
-		m.add_function(wrap_pyfunction!(
-			crate::tree::python::py_triplet_distance_matrix,
-			m
-		)?)?;
 
 		Ok(())
 	}
