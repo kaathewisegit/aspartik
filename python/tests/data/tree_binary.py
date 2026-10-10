@@ -226,50 +226,52 @@ def test_robinson_foulds_matrix_rejects_leaf_id_mismatch():
         robinson_foulds_matrix(trees)
 
 
-@pytest.mark.skip("Needs canonical forms")
 def test_robinson_foulds(rng: RNG):
     # 4 taxa
+    taxa = TaxonSet.ranged_ints(4)
 
     # identical -> 0
-    tree = BinaryTree.from_newick("((0:0,1:0):0,(2:0,3:0):0);")
-    other = BinaryTree.from_newick("((0:0,1:0):0,(2:0,3:0):0);")
+    tree = BinaryTree.from_newick("((0:0,1:0):0,(2:0,3:0):0);", taxa)
+    other = BinaryTree.from_newick("((0:0,1:0):0,(2:0,3:0):0);", taxa)
     assert tree.robinson_foulds(other) == 0
 
     # shared clade {0,1}, differ on the other -> RF 2
-    other = BinaryTree.from_newick("(((0:0,1:0):0,2:0):0,3:0);")
+    other = BinaryTree.from_newick("(((0:0,1:0):0,2:0):0,3:0);", taxa)
     assert tree.robinson_foulds(other) == 2
 
     # no shared non-trivial clades -> RF 4 (maximum for 4 taxa)
-    other = BinaryTree.from_newick("((0:0,2:0):0,(1:0,3:0):0);")
+    other = BinaryTree.from_newick("((0:0,2:0):0,(1:0,3:0):0);", taxa)
     assert tree.robinson_foulds(other) == 4
 
     # 5 taxa
+    taxa = TaxonSet.ranged_ints(5)
 
     # identical
-    tree = BinaryTree.from_newick("((0:0,1:0):0,(2:0,(3:0,4:0):0):0);")
-    other = BinaryTree.from_newick("((0:0,1:0):0,(2:0,(3:0,4:0):0):0);")
+    tree = BinaryTree.from_newick("((0:0,1:0):0,(2:0,(3:0,4:0):0):0);", taxa)
+    other = BinaryTree.from_newick("((0:0,1:0):0,(2:0,(3:0,4:0):0):0);", taxa)
     assert tree.robinson_foulds(other) == 0
 
     # one NNI move: {0,1} and {3,4} shared -> RF 2
-    other = BinaryTree.from_newick("((0:0,1:0):0,((2:0,3:0):0,4:0):0);")
+    other = BinaryTree.from_newick("((0:0,1:0):0,((2:0,3:0):0,4:0):0);", taxa)
     assert tree.robinson_foulds(other) == 2
 
     # caterpillar: only {0,1} shared -> RF 4
-    other = BinaryTree.from_newick("((((0:0,1:0):0,2:0):0,3:0):0,4:0);")
+    other = BinaryTree.from_newick("((((0:0,1:0):0,2:0):0,3:0):0,4:0);", taxa)
     assert tree.robinson_foulds(other) == 4
 
     # maximally different (left comb vs right comb)
-    tree = BinaryTree.from_newick("(0:0,(1:0,(2:0,(3:0,4:0):0):0):0);")
-    other = BinaryTree.from_newick("((((0:0,1:0):0,2:0):0,3:0):0,4:0);")
+    tree = BinaryTree.from_newick("(0:0,(1:0,(2:0,(3:0,4:0):0):0):0);", taxa)
+    other = BinaryTree.from_newick("((((0:0,1:0):0,2:0):0,3:0):0,4:0);", taxa)
     assert tree.robinson_foulds(other) == 6
 
     # 6 taxa
-    tree = BinaryTree.from_newick("(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);")
-    other = BinaryTree.from_newick("(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);")
+    taxa = TaxonSet.ranged_ints(6)
+    tree = BinaryTree.from_newick("(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);", taxa)
+    other = BinaryTree.from_newick("(((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0);", taxa)
     assert tree.robinson_foulds(other) == 0
 
     # reroot: {0,1} and {2,3} shared, root clade differs
-    other = BinaryTree.from_newick("((0:0,1:0):0,((2:0,3:0):0,(4:0,5:0):0):0);")
+    other = BinaryTree.from_newick("((0:0,1:0):0,((2:0,3:0):0,(4:0,5:0):0):0);", taxa)
     assert tree.robinson_foulds(other) == 2
 
     # symmetrical
@@ -277,12 +279,12 @@ def test_robinson_foulds(rng: RNG):
 
     # 8 taxa
     balanced = "((((0:0,1:0):0,(2:0,3:0):0):0,(4:0,5:0):0):0,(6:0,7:0):0);"
-    tree = BinaryTree.from_newick(balanced)
-    other = BinaryTree.from_newick(balanced)
+    taxa = TaxonSet.ranged_ints(8)
+    tree = BinaryTree.from_newick(balanced, taxa)
+    other = BinaryTree.from_newick(balanced, taxa)
     assert tree.robinson_foulds(other) == 0
 
 
-@pytest.mark.skip("Needs leaf labels")
 @pytest.mark.parametrize("size", random_integer(3, 1_000))
 def test_robinson_foulds_sim(size: int, rng: RNG):
     taxa = TaxonSet.ranged_ints(size)
