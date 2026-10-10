@@ -168,7 +168,6 @@ impl PyTreeBuilder {
 
 	fn preorder(&self) -> Result<Vec<Node>> {
 		let tree = self.inner();
-		tree.validate()?;
 		let mut output = Vec::with_capacity(tree.num_nodes() as usize);
 		let mut stack = vec![tree.root()];
 		while let Some(node) = stack.pop() {
@@ -186,7 +185,6 @@ impl PyTreeBuilder {
 
 	fn postorder(&self) -> Result<Vec<Node>> {
 		let tree = self.inner();
-		tree.validate()?;
 		let mut output = Vec::with_capacity(tree.num_nodes() as usize);
 		let mut stack = vec![(tree.root(), false)];
 		while let Some((node, visited)) = stack.pop() {

@@ -180,7 +180,6 @@ pub fn parse(input: &str) -> Result<TreeBuilder> {
 			tokenizer.next()?.is_none(),
 			"Unexpected input after ';'"
 		);
-		tree.validate()?;
 		return Ok(tree);
 	}
 
@@ -239,7 +238,6 @@ pub fn parse(input: &str) -> Result<TreeBuilder> {
 						tokenizer.next()?.is_none(),
 						"Unexpected input after ';'"
 					);
-					tree.validate()?;
 					return Ok(tree);
 				}
 			}
