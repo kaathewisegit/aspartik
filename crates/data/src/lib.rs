@@ -32,6 +32,9 @@ pub mod pymodule {
 	use crate::{
 		AminoAcid, DnaNucleotide, Phred, PyMsa, PyTaxonSet,
 		fasta::python::PyFastaDnaRecord,
+		nexus::python::{
+			py_read_binary_tree_str, py_read_binary_trees_path,
+		},
 		seq::python::PyDnaSeq,
 		tree::python::{
 			PyBinaryTree, PySvgOptions, PyTreeBuilder,

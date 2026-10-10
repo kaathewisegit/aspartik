@@ -1,5 +1,7 @@
 use anyhow::{Result, anyhow, bail, ensure};
 
+#[cfg(feature = "python")]
+pub mod python;
 mod trees;
 
 pub use trees::read_binary_trees;

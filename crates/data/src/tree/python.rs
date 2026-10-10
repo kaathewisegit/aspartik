@@ -663,6 +663,12 @@ pub fn py_branch_score_matrix(
 	Ok(py_array.unbind())
 }
 
+impl From<BinaryTree> for PyBinaryTree {
+	fn from(tree: BinaryTree) -> Self {
+		Self { inner: tree }
+	}
+}
+
 impl PyBinaryTree {
 	fn node(&self, node: &Bound<'_, PyAny>) -> Result<Node> {
 		checked_node(node, self.inner.num_nodes())

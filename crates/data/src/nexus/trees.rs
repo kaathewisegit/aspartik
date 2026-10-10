@@ -60,7 +60,6 @@ where
 			translation = Some(parse_translate(command)?);
 		}
 
-		println!("command {command:?}");
 		if command.get(..4).is_some_and(|prefix| {
 			prefix.eq_ignore_ascii_case("tree")
 		}) {
