@@ -1,6 +1,6 @@
 use anyhow::{Context, Result, bail, ensure};
-use buffer::Buffer;
 use bytemuck::allocation::cast_vec;
+use computare_buffer::Buffer;
 use parking_lot::Mutex;
 use picoarrow::array::{Array, ArrayUtf8, Nullable};
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyAny};

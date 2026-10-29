@@ -10,7 +10,7 @@ use std::{
 
 use super::{Internal, Leaf, Node, TOMBSTONE, Tree};
 use crate::TaxonSet;
-use buffer::Buffer;
+use computare_buffer::Buffer;
 
 #[derive(Debug)]
 pub struct BinaryTree {
@@ -43,11 +43,10 @@ impl BinaryTree {
 		let num_nodes = num_leaves * 2 - 1;
 		let num_internals = num_leaves - 1;
 		let num_nodes_usize = usize::try_from(num_nodes)?;
-		let num_edges = num_nodes - 1;
 		let num_edges_usize = num_nodes_usize - 1;
 
 		let internals = num_leaves..num_nodes;
-		let mut parents = Buffer::repeat(TOMBSTONE, num_nodes);
+		let mut parents = Buffer::repeat(TOMBSTONE, num_nodes_usize);
 		for (slot, parent) in parents[..num_edges_usize]
 			.iter_mut()
 			.zip(internals.clone().chain(internals))
@@ -57,7 +56,7 @@ impl BinaryTree {
 		let root = parents[num_edges_usize - 1];
 		parents[..num_edges_usize - 1].shuffle(rng);
 
-		let mut children = Buffer::repeat(TOMBSTONE, num_edges);
+		let mut children = Buffer::repeat(TOMBSTONE, num_edges_usize);
 		let mut remaining = vec![2; num_internals as usize];
 		*remaining.last_mut().unwrap() = 1;
 		let mut unused =
@@ -95,7 +94,7 @@ impl BinaryTree {
 
 		let mut internal_names = ArrayUtf8::<Nullable>::new();
 		internal_names.push_nulls(num_internals as usize);
-		let edge_lengths = Buffer::repeat(1.0, num_nodes);
+		let edge_lengths = Buffer::repeat(1.0, num_nodes_usize);
 
 		Ok(Self {
 			num_leaves,
@@ -138,22 +137,23 @@ impl BinaryTree {
 		let num_nodes = num_leaves * 2 - 1;
 		let num_edges = num_nodes - 1;
 		let num_nodes_usize = num_nodes as usize;
+		let num_edges_usize = num_edges as usize;
 		ensure!(
 			(num_leaves..num_nodes).contains(&root),
 			"Root node {root} is not an internal node"
 		);
 		ensure!(
-			self.children.len() == num_edges,
+			self.children.len() == num_edges_usize,
 			"Expected {num_edges} child entries, got {}",
 			self.children.len()
 		);
 		ensure!(
-			self.parents.len() == num_nodes,
+			self.parents.len() == num_nodes_usize,
 			"Expected {num_nodes} parent entries, got {}",
 			self.parents.len()
 		);
 		ensure!(
-			self.edge_lengths.len() == num_nodes,
+			self.edge_lengths.len() == num_nodes_usize,
 			"Expected {num_nodes} edge lengths, got {}",
 			self.edge_lengths.len()
 		);

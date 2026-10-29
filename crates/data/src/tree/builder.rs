@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use super::{BinaryTree, Node, Tree, newick::parse_newick};
 use crate::{TaxonMap, TaxonSet};
-use buffer::Buffer;
+use computare_buffer::Buffer;
 
 #[derive(Debug, Clone, Default)]
 pub struct TreeBuilder {
@@ -226,10 +226,10 @@ pub fn builder_to_binary(
 		"The tree contains unreachable nodes"
 	);
 
-	let mut children = Buffer::<u32, u32, 0>::repeat(0_u32, num_nodes - 1);
-	let mut parents = Buffer::<u32, u32, 0>::repeat(unmapped, num_nodes);
-	let mut edge_lengths =
-		Buffer::<f64, u32, 0>::repeat(f64::NAN, num_nodes);
+	let num_nodes_usize = num_nodes as usize;
+	let mut children = Buffer::<u32>::zeroed(num_nodes_usize - 1);
+	let mut parents = Buffer::<u32>::repeat(unmapped, num_nodes_usize);
+	let mut edge_lengths = Buffer::<f64>::repeat(f64::NAN, num_nodes_usize);
 
 	for node in builder.nodes() {
 		let mapped = mapping[node.usize()];

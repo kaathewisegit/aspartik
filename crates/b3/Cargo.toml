@@ -8,7 +8,6 @@ authors.workspace = true
 
 [dependencies]
 bitmap = { workspace = true }
-buffer = { workspace = true }
 data = { workspace = true }
 rng = { workspace = true }
 sk = { workspace = true }

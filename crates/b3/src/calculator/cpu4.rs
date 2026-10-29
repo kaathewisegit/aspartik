@@ -6,7 +6,7 @@ use bytemuck::{cast_slice, checked::cast_slice_mut};
 use fork_union::{SyncConstPtr, SyncMutPtr, ThreadPool, count_logical_cores};
 
 use crate::{Transitions, calculator::Calculator, parameters::DatedTree};
-use buffer::Buffer;
+use computare_buffer::Buffer;
 use sk::EditBuf;
 
 pub struct Cpu4Calculator {
@@ -17,7 +17,7 @@ pub struct Cpu4Calculator {
 
 	samples: Vec<u8>,
 	/// 32-bit alignment for aligned loads into YMM registers.
-	partials: Buffer<[f64; 4], usize, 32>,
+	partials: Buffer<[f64; 4], 32>,
 
 	likelihoods: Vec<f64>,
 
@@ -131,7 +131,7 @@ impl Cpu4Calculator {
 			num_threads
 		};
 
-		let partials = Buffer::<_, usize, 32>::uninit(
+		let partials = Buffer::<_, 32>::zeroed(
 			num_internals * num_patterns * 2,
 		);
 		let scales = vec![false; num_internals * num_patterns * 2];

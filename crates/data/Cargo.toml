@@ -8,13 +8,13 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-buffer = { workspace = true }
 rng = { workspace = true, optional = true }
 util = { workspace = true }
 
 anyhow = { workspace = true }
 arbitrary = { workspace = true, optional = true, features = ["derive"] }
 bytemuck = { workspace = true, features = ["derive"] }
+computare-buffer = { workspace = true }
 computare-linalg = { workspace = true }
 fork_union = { workspace = true }
 hashbrown = { workspace = true }
