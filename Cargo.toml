@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 edition = "2024"
 license = "AGPL-3.0-only"
 authors = ["Andrej Kolčin <self@kaathewise.net>"]
@@ -42,14 +42,14 @@ rand_pcg = "0.10.2"
 rustc-hash = "2.1"
 smallvec = "1.16"
 
-b3 = { version = "0.1.0-alpha.22", path = "crates/b3" }
-bitmap = { version = "0.1.0-alpha.22", path = "crates/bitmap" }
-data = { version = "0.1.0-alpha.22", path = "crates/data" }
-distributions = { version = "0.1.0-alpha.22", path = "crates/distributions" }
-rng = { version = "0.1.0-alpha.22", path = "crates/rng" }
-sk = { version = "0.1.0-alpha.22", path = "crates/sk" }
-util = { version = "0.1.0-alpha.22", path = "crates/util" }
-verbatim = { version = "0.1.0-alpha.22", path = "crates/verbatim" }
+b3 = { version = "0.1.0-alpha.23", path = "crates/b3" }
+bitmap = { version = "0.1.0-alpha.23", path = "crates/bitmap" }
+data = { version = "0.1.0-alpha.23", path = "crates/data" }
+distributions = { version = "0.1.0-alpha.23", path = "crates/distributions" }
+rng = { version = "0.1.0-alpha.23", path = "crates/rng" }
+sk = { version = "0.1.0-alpha.23", path = "crates/sk" }
+util = { version = "0.1.0-alpha.23", path = "crates/util" }
+verbatim = { version = "0.1.0-alpha.23", path = "crates/verbatim" }
 
 [workspace.lints.clippy]
 branches_sharing_code = "warn"

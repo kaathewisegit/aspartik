@@ -43,7 +43,7 @@ checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 
 [[package]]
 name = "aspartik"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 dependencies = [
  "b3",
  "data",
@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "b3"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 dependencies = [
  "anyhow",
  "bitmap",
@@ -85,7 +85,7 @@ checksum = "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
 
 [[package]]
 name = "bitmap"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 dependencies = [
  "rand",
  "rand_pcg",
@@ -210,7 +210,7 @@ dependencies = [
 
 [[package]]
 name = "data"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 dependencies = [
  "anyhow",
  "arbitrary",
@@ -246,7 +246,7 @@ dependencies = [
 
 [[package]]
 name = "distributions"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 dependencies = [
  "anyhow",
  "computare-distributions",
@@ -574,7 +574,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rng"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 dependencies = [
  "anyhow",
  "parking_lot",
@@ -620,7 +620,7 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "sk"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 dependencies = [
  "arbitrary",
  "arbtest",
@@ -668,11 +668,11 @@ checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
 
 [[package]]
 name = "util"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 
 [[package]]
 name = "verbatim"
-version = "0.1.0-alpha.22"
+version = "0.1.0-alpha.23"
 dependencies = [
  "bytemuck",
 ]
