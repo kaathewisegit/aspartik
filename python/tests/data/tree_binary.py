@@ -141,6 +141,7 @@ def test_triplet_distance_matrix():
         [first.triplet_distance(second) for first in trees for second in trees],
     )
     assert triplet_distance_matrix(trees) == expected
+    assert triplet_distance_matrix(trees, 1) == expected
     assert triplet_distance_matrix([]) == array("Q", [])
     assert triplet_distance_matrix(trees[:1]) == array("Q", [0])
 

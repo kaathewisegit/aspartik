@@ -228,6 +228,7 @@ dependencies = [
  "bytemuck",
  "computare-core",
  "computare-linalg",
+ "fork_union",
  "hashbrown",
  "logos",
  "parking_lot",

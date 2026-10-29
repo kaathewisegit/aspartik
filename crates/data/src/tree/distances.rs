@@ -1,5 +1,9 @@
 use anyhow::{Result, ensure};
 use computare_linalg::{Matrix, RowMatrix};
+use fork_union::{
+	DynamicScheduler, IntoParallelIterator, ParallelIteratorExt,
+	SyncMutPtr, count_logical_cores, spawn,
+};
 use hashbrown::HashTable;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
@@ -329,6 +333,7 @@ impl BinaryTree {
 /// <https://doi.org/10.4230/LIPIcs.ESA.2017.21>.
 pub fn triplet_distance_matrix(
 	trees: &[&BinaryTree],
+	num_threads: Option<usize>,
 ) -> Result<RowMatrix<u128>> {
 	let Some(first_tree) = trees.first() else {
 		return Ok(RowMatrix::empty());
@@ -347,15 +352,30 @@ pub fn triplet_distance_matrix(
 		);
 	}
 
-	let mut distances = RowMatrix::zeroed(trees.len(), trees.len());
-	for first in 0..trees.len() {
-		for second in 0..first {
-			let distance =
-				trees[first].triplet_distance(trees[second]);
-			*distances.at_mut(first, second) = distance;
-			*distances.at_mut(second, first) = distance;
-		}
-	}
+	let num_trees = trees.len();
+	let num_threads = num_threads.unwrap_or_else(count_logical_cores);
+	ensure!(num_threads > 0, "Expected at least one thread");
+	let mut pool = spawn(num_threads);
+	let distances = RowMatrix::zeroed(num_trees, num_trees);
+	let output = SyncMutPtr::new(distances.as_ptr());
+	(0..num_trees)
+		.into_par_iter()
+		.with_schedule(&mut pool, DynamicScheduler)
+		.for_each(|first| {
+			for second in 0..first {
+				let distance = trees[first]
+					.triplet_distance(trees[second]);
+				// SAFETY: Each tree pair maps to two unique matrix cells.
+				unsafe {
+					*output.get(
+						first * num_trees + second
+					) = distance;
+					*output.get(
+						second * num_trees + first
+					) = distance;
+				}
+			}
+		});
 	Ok(distances)
 }
 

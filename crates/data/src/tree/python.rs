@@ -553,16 +553,18 @@ pub fn py_robinson_foulds_matrix(
 }
 
 #[pyfunction(name = "triplet_distance_matrix")]
+#[pyo3(signature = (trees, num_threads = None))]
 pub fn py_triplet_distance_matrix(
 	py: Python<'_>,
 	trees: Vec<Py<PyBinaryTree>>,
+	num_threads: Option<usize>,
 ) -> Result<Py<PyAny>> {
 	let distances = py.detach(move || {
 		let trees = trees
 			.iter()
 			.map(|tree| &tree.get().inner)
 			.collect::<Vec<_>>();
-		triplet_distance_matrix(&trees)
+		triplet_distance_matrix(&trees, num_threads)
 	})?;
 	let mut flat = Vec::<u64>::with_capacity(distances.num_elements());
 	for &distance in distances.as_slice() {
