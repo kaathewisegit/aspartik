@@ -33,15 +33,18 @@ fn labels_lengths_and_empty_fields() {
 
 #[test]
 fn quoted_labels() -> Result<()> {
-	// TODO: quote '' escaping
+	let escaped = TreeBuilder::from_newick("('Prince''s':0.1,'');")?;
+	assert_eq!(escaped.to_newick(), "('Prince''s':0.1,);");
+	assert_eq!(escaped.name_of(escaped.root().unwrap()), "",);
+	let children = escaped.children_of(escaped.root().unwrap());
+	assert_eq!(children.len(), 2);
+	assert_eq!(escaped.name_of(children[0]), "Prince's");
+	assert_eq!(escaped.name_of(children[1]), "");
 
-	let double_quoted = TreeBuilder::from_newick(
-		"(\"with quotes!\":0.1,\"another one\":0.2);",
-	)?;
-	assert_eq!(
-		double_quoted.to_newick(),
-		"('with quotes!':0.1,'another one':0.2);"
-	);
+	let doubled = TreeBuilder::from_newick("('a''''b':0.1);")?;
+	let node = doubled.children_of(doubled.root().unwrap())[0];
+	assert_eq!(doubled.name_of(node), "a''b");
+	assert_eq!(doubled.to_newick(), "('a''''b':0.1);");
 
 	Ok(())
 }

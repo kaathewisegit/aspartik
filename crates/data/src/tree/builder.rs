@@ -120,6 +120,10 @@ impl TreeBuilder {
 		&self.node_names[node.usize()]
 	}
 
+	pub fn name_mut(&mut self, node: Node) -> &mut String {
+		&mut self.node_names[node.usize()]
+	}
+
 	pub fn node_attribute(&self, node: Node) -> &str {
 		&self.node_attributes[node.usize()]
 	}
