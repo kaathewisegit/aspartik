@@ -38,3 +38,16 @@ fn parse_record() {
 		Ok(())
 	});
 }
+
+#[test]
+fn into_parts() {
+	let record = Record::new(
+		">a".to_owned(),
+		vec![DnaNucleotide::Adenine, DnaNucleotide::Cytosine],
+	);
+
+	let (description, seq) = record.into_parts();
+
+	assert_eq!(description, "a");
+	assert_eq!(seq, &[DnaNucleotide::Adenine, DnaNucleotide::Cytosine]);
+}

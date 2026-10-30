@@ -6,7 +6,7 @@ use std::{cmp::Ordering, io::BufRead, ops::Range};
 
 use crate::{
 	DnaNucleotide, TaxonSet,
-	fasta::FastaParser,
+	fasta::{FastaParser, Record},
 	seq::{Character, random_dna},
 };
 
@@ -35,6 +35,36 @@ impl<C: Character> Msa<C> {
 			num_sequences,
 			num_sites,
 			names,
+			data,
+		})
+	}
+
+	pub fn from_records<I>(records: I) -> Result<Self>
+	where
+		I: IntoIterator<Item = Record<C>>,
+	{
+		let mut num_sites = 0;
+		let mut num_sequences = 0;
+
+		let mut data = Vec::new();
+		let mut names = ArrayUtf8::<NonNullable>::new();
+
+		for record in records {
+			if num_sites == 0 {
+				num_sites = record.len();
+			}
+			ensure!(num_sites == record.len());
+
+			let (description, seq) = record.into_parts();
+			data.extend(seq);
+			names.push(&description)?;
+			num_sequences += 1;
+		}
+
+		Ok(Self {
+			num_sequences,
+			num_sites,
+			names: names.into(),
 			data,
 		})
 	}

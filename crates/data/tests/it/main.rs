@@ -1,4 +1,5 @@
 mod fasta;
+mod msa;
 mod newick;
 mod nexus;
 mod phred;

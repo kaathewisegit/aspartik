@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from aspartik.data import TaxonSet
+from aspartik.data import DNASeq, TaxonSet
+from aspartik.data.fasta import DNARecord
 from aspartik.data.msa import MSA
 from aspartik.rng import RNG
 
@@ -26,6 +27,21 @@ def test_eq():
         num_records = sum(1 for line in s.splitlines() if line.startswith(">"))
 
         assert a.num_sequences == num_records
+
+
+def test_from_records():
+    records = [
+        DNARecord(">a", DNASeq("AC")),
+        DNARecord(">b", DNASeq("GT")),
+    ]
+
+    msa = MSA.from_records(records)
+
+    assert msa.num_sequences == 2
+    assert msa.num_sites == 2
+    assert msa.sequence_names() == TaxonSet(["a", "b"])
+    assert str(msa.sequence(0)) == "AC"
+    assert str(msa.sequence(1)) == "GT"
 
 
 def test_random(rng: RNG):
