@@ -41,7 +41,6 @@ fn probability_incorrect() {
 	let mut last = f64::INFINITY;
 	for ch in b'!'..=b'I' {
 		let phred = Phred::from_ascii(ch).unwrap();
-		println!("{last} < {}", phred.probability_incorrect());
 		assert!(last > phred.probability_incorrect());
 		last = phred.probability_incorrect();
 	}
