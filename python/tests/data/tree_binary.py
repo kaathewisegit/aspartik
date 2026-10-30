@@ -276,7 +276,7 @@ def test_robinson_foulds_sim(size: int, rng: RNG):
         tns = dendropy.TaxonNamespace()
         a = dendropy.Tree.get(data=a, schema="newick", taxon_namespace=tns)
         b = dendropy.Tree.get(data=b, schema="newick", taxon_namespace=tns)
-        # TODO: leaf labels
+
         a.is_rooted = True
         b.is_rooted = True
 
