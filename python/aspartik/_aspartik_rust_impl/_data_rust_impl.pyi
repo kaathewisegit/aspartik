@@ -82,7 +82,15 @@ class MSA:
     @classmethod
     def from_fasta_file(cls, path: PathLike | str) -> MSA:
         """
-        Create an alignment from FASTA records
+        Read an alignment from a FASTA file
+
+        All records must have the same length.
+        """
+
+    @classmethod
+    def from_records(cls, records: list[DNARecord]) -> MSA:
+        """
+        Create an alignment from a list of FASTA records
 
         All records must have the same length.
         """

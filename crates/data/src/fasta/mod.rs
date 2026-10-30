@@ -46,6 +46,12 @@ impl<C: Character> Record<C> {
 		self.seq
 	}
 
+	/// Consumes the record into the name (without '>') and the sequence
+	pub fn into_parts(mut self) -> (String, Vec<C>) {
+		self.description.remove(0);
+		(self.description, self.seq)
+	}
+
 	pub fn len(&self) -> usize {
 		self.seq.len()
 	}

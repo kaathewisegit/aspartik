@@ -3,7 +3,10 @@ use pyo3::{prelude::*, types::PyType};
 
 use std::{fs::File, io::BufReader, ops::Deref, path::PathBuf};
 
-use crate::{DnaNucleotide, Msa, seq::python::PyDnaSeq, taxon_set::PyTaxonSet};
+use crate::{
+	DnaNucleotide, Msa, fasta::python::PyFastaDnaRecord,
+	seq::python::PyDnaSeq, taxon_set::PyTaxonSet,
+};
 use rng::PyRng;
 
 /// DNA multiple sequence alignment
@@ -30,13 +33,22 @@ impl Deref for PyMsa {
 
 #[pymethods]
 impl PyMsa {
-	// TODO: constructor from two lists: sequences and names
-
 	/// Constructs an MSA from a list of FASTA records
 	#[classmethod]
 	fn from_fasta_file(_cls: Py<PyType>, path: PathBuf) -> Result<Self> {
 		let reader = BufReader::new(File::open(path)?);
 		Ok(Self(Msa::from_fasta_reader(reader)?))
+	}
+
+	/// Constructs an MSA from FASTA records
+	#[classmethod]
+	fn from_records(
+		_cls: Py<PyType>,
+		records: Vec<PyRef<PyFastaDnaRecord>>,
+	) -> Result<Self> {
+		let records =
+			records.into_iter().map(|record| record.0.clone());
+		Ok(Self(Msa::from_records(records)?))
 	}
 
 	#[classmethod]
