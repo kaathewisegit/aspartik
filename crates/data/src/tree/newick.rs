@@ -9,6 +9,20 @@ fn unquote(s: &str) -> &str {
 	&s[1..s.len() - 1]
 }
 
+fn write_unescaped(dest: &mut String, raw: &str) {
+	dest.clear();
+
+	let inner = &raw[1..raw.len() - 1];
+	let prev = raw.chars().next().unwrap();
+	let mut chars = inner.chars().peekable();
+	while let Some(curr) = chars.next() {
+		if curr == prev && chars.peek() == Some(&prev) {
+			chars.next();
+		}
+		dest.push(curr);
+	}
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Logos)]
 #[logos(skip(r"[ \t\r\n]+"))]
 enum Token<'a> {
@@ -24,8 +38,7 @@ enum Token<'a> {
 	Semicolon,
 	#[regex(r#"[^ '\"\[\t\r\n():,;]+"#, |lex| lex.slice())]
 	Ident(&'a str),
-	#[regex(r#""[^"]*""#, |lex| unquote(lex.slice()))]
-	#[regex(r"'[^']*'", |lex| unquote(lex.slice()))]
+	#[regex(r#"'([^']|'')*'"#, |lex| lex.slice())]
 	Quoted(&'a str),
 	#[regex(r"\[[^\]]*\]", |lex| unquote(lex.slice()))]
 	Attribute(&'a str),
@@ -57,10 +70,17 @@ pub fn parse_newick<'a>(tree: &mut TreeBuilder, newick: &'a str) -> Result<()> {
 	let mut node = tree.add_dummy_node();
 
 	loop {
-		if let Token::Ident(name) | Token::Quoted(name) = token {
-			tree.set_node_name(node, name);
-			token = next(&mut lexer)?;
-		};
+		match token {
+			Token::Ident(name) => {
+				tree.set_node_name(node, name);
+				token = next(&mut lexer)?;
+			}
+			Token::Quoted(name) => {
+				write_unescaped(tree.name_mut(node), name);
+				token = next(&mut lexer)?;
+			}
+			_ => {}
+		}
 
 		if let Token::Attribute(attr) = token {
 			tree.set_node_attribute(node, attr);
