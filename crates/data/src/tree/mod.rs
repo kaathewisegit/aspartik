@@ -101,14 +101,10 @@ macro_rules! nodes_2 {
 nodes_2!(Leaf);
 nodes_2!(Internal);
 
-pub trait Tree {
+pub trait RootedTree {
 	fn num_nodes(&self) -> u32;
 
-	fn root(&self) -> Option<Node>;
-
-	fn has_root(&self) -> bool {
-		self.root().is_some()
-	}
+	fn root(&self) -> Node;
 
 	fn parent_of(&self, node: Node) -> Option<Node>;
 
@@ -129,7 +125,7 @@ pub trait Tree {
 
 	fn to_newick(&self) -> String {
 		struct AsDisplay<'a, T: ?Sized>(&'a T);
-		impl<T: Tree + ?Sized> fmt::Display for AsDisplay<'_, T> {
+		impl<T: RootedTree + ?Sized> fmt::Display for AsDisplay<'_, T> {
 			fn fmt(
 				&self,
 				f: &mut fmt::Formatter<'_>,
@@ -141,33 +137,25 @@ pub trait Tree {
 	}
 
 	/// Iterator which walks the tree post-order
-	///
-	/// If the tree has no root, the iterator will be empty.
 	fn postorder(&self) -> Postorder<'_, Self>
 	where
 		Self: Sized,
 	{
-		let mut stack = Vec::new();
-		if let Some(root) = self.root() {
-			stack.push(root);
-		}
 		Postorder {
 			tree: self,
-			stack,
+			stack: vec![self.root()],
 			prev: None,
 		}
 	}
 
-	/// If the tree has no root, the iterator will be empty.
 	fn preorder(&self) -> Preorder<'_, Self>
 	where
 		Self: Sized,
 	{
-		let mut stack = Vec::new();
-		if let Some(root) = self.root() {
-			stack.push(root);
+		Preorder {
+			tree: self,
+			stack: vec![self.root()],
 		}
-		Preorder { tree: self, stack }
 	}
 }
 
@@ -177,7 +165,7 @@ pub struct Postorder<'a, T> {
 	prev: Option<Node>,
 }
 
-impl<T: Tree> Iterator for Postorder<'_, T> {
+impl<T: RootedTree> Iterator for Postorder<'_, T> {
 	type Item = Node;
 
 	fn next(&mut self) -> Option<Node> {
@@ -207,7 +195,7 @@ pub struct Preorder<'a, T> {
 	stack: Vec<Node>,
 }
 
-impl<T: Tree> Iterator for Preorder<'_, T> {
+impl<T: RootedTree> Iterator for Preorder<'_, T> {
 	type Item = Node;
 
 	fn next(&mut self) -> Option<Node> {

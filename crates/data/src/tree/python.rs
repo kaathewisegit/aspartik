@@ -4,9 +4,9 @@ use pyo3::{exceptions::PyTypeError, prelude::*, types::PyType};
 
 use crate::PyTaxonSet;
 use crate::tree::{
-	BinaryTree, Internal, Leaf, Node, SvgOptions as TreeSvgOptions, Tree,
-	TreeBuilder, TreeLayout, branch_score, branch_score_matrix,
-	robinson_foulds_matrix, triplet_distance_matrix,
+	BinaryTree, Internal, Leaf, Node, RootedTree,
+	SvgOptions as TreeSvgOptions, TreeBuilder, TreeLayout, branch_score,
+	branch_score_matrix, robinson_foulds_matrix, triplet_distance_matrix,
 };
 use rng::PyRng;
 use util::py_bail;
@@ -145,7 +145,7 @@ impl PyTreeBuilder {
 	}
 
 	#[getter]
-	fn root(&self) -> Option<Node> {
+	fn root(&self) -> Node {
 		self.inner().root()
 	}
 

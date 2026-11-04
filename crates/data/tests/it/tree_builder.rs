@@ -3,14 +3,13 @@ use arbtest::arbtest;
 
 use std::collections::HashSet;
 
-use data::tree::{Node, TreeBuilder};
+use data::tree::{Node, TOMBSTONE, TreeBuilder};
 
 #[test]
 fn build_basic() {
 	let mut builder = TreeBuilder::new();
 
-	let root = builder.add_dummy_node();
-	builder.set_root(root);
+	let root = builder.root();
 
 	let left = builder.add_node("left", 1.0, root);
 	let right = builder.add_node("right", 2.5, root);
@@ -18,7 +17,7 @@ fn build_basic() {
 	let left_right = builder.add_node("b", 1.5, left);
 
 	assert_eq!(builder.num_nodes(), 5);
-	assert_eq!(builder.root(), Some(root));
+	assert_eq!(builder.root(), root);
 
 	assert_eq!(builder.parent_of(root), None);
 	assert_eq!(builder.parent_of(left), Some(root));
@@ -47,7 +46,7 @@ fn build_basic() {
 
 	builder.clear();
 	assert_eq!(builder.num_nodes(), 0);
-	assert_eq!(builder.root(), None);
+	assert_eq!(builder.root(), Node(TOMBSTONE));
 }
 
 #[test]
@@ -55,8 +54,7 @@ fn build_arbitrary() {
 	arbtest(|u: &mut Unstructured<'_>| {
 		let mut builder = TreeBuilder::new();
 
-		let root = builder.add_dummy_node();
-		builder.set_root(root);
+		let root = builder.root();
 
 		let num_steps = u.int_in_range(0..=1_000u32)?;
 		for _ in 0..num_steps {
@@ -78,7 +76,7 @@ fn build_arbitrary() {
 			assert!(builder.children_of(parent).contains(&child));
 		}
 
-		assert_eq!(builder.root(), Some(root));
+		assert_eq!(builder.root(), root);
 		assert_eq!(builder.num_nodes(), num_steps + 1);
 		assert_eq!(
 			builder.nodes().count(),

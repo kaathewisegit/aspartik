@@ -2,11 +2,11 @@ use anyhow::{Context, Result, anyhow, ensure};
 use picoarrow::array::{Array, ArrayUtf8, NonNullable, Nullable};
 use smallvec::SmallVec;
 
-use super::{BinaryTree, Node, Tree, newick::parse_newick};
+use super::{BinaryTree, Node, RootedTree, newick::parse_newick};
 use crate::{TaxonMap, TaxonSet};
 use computare_buffer::Buffer;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct TreeBuilder {
 	parents: Vec<Node>,
 	children: Vec<SmallVec<[Node; 2]>>,
@@ -14,12 +14,21 @@ pub struct TreeBuilder {
 	node_attributes: Vec<String>,
 	edge_lengths: Vec<f64>,
 	edge_attributes: Vec<String>,
-	root: Option<Node>,
+	root: Node,
 }
 
 impl TreeBuilder {
+	/// A new tree with a single root node
 	pub fn new() -> Self {
-		Self::default()
+		TreeBuilder {
+			parents: vec![Node::TOMBSTONE],
+			children: vec![SmallVec::new()],
+			node_names: vec![String::new()],
+			node_attributes: vec![String::new()],
+			edge_lengths: vec![f64::NAN],
+			edge_attributes: vec![String::new()],
+			root: Node(0),
+		}
 	}
 
 	pub fn add_dummy_node(&mut self) -> Node {
@@ -63,11 +72,11 @@ impl TreeBuilder {
 		self.node_attributes.clear();
 		self.edge_lengths.clear();
 		self.edge_attributes.clear();
-		self.root = None;
+		self.root = Node::TOMBSTONE;
 	}
 
 	pub fn set_root(&mut self, node: Node) {
-		self.root = Some(node);
+		self.root = node;
 	}
 
 	pub fn num_nodes(&self) -> u32 {
@@ -105,7 +114,7 @@ impl TreeBuilder {
 
 	// Node getters
 	pub fn parent_of(&self, node: Node) -> Option<Node> {
-		if self.root.is_some_and(|root| root == node) {
+		if self.root == node {
 			None
 		} else {
 			Some(self.parents[node.usize()])
@@ -137,7 +146,7 @@ impl TreeBuilder {
 		&self.edge_attributes[node.usize()]
 	}
 
-	pub fn root(&self) -> Option<Node> {
+	pub fn root(&self) -> Node {
 		self.root
 	}
 
@@ -188,11 +197,17 @@ impl TreeBuilder {
 	}
 }
 
+impl Default for TreeBuilder {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 pub fn builder_to_binary(
 	builder: &TreeBuilder,
 	taxon_map: TaxonMap,
 ) -> Result<BinaryTree> {
-	let root = builder.root().ok_or_else(|| anyhow!("tree has no root"))?;
+	let root = builder.root();
 	let num_nodes = builder.num_nodes();
 	let num_leaves = taxon_map.taxon_set().len() as u32;
 	ensure!(
@@ -261,12 +276,12 @@ pub fn builder_to_binary(
 	Ok(binary)
 }
 
-impl Tree for TreeBuilder {
+impl RootedTree for TreeBuilder {
 	fn num_nodes(&self) -> u32 {
 		self.num_nodes()
 	}
 
-	fn root(&self) -> Option<Node> {
+	fn root(&self) -> Node {
 		self.root
 	}
 

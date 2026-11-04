@@ -48,13 +48,8 @@ def test_from_newick_rejects_invalid():
 
 def test_add_node_and_dummy():
     tree = TreeBuilder()
-    assert tree.num_nodes == 0
-    assert tree.root is None
-
-    root = tree.add_dummy_node()
-    tree.set_root(root)
-    assert tree.root == root
-    assert tree.name(root) is None
+    assert tree.num_nodes == 1
+    root = tree.root
 
     child = tree.add_node(root, "A", 1.0)
     assert tree.parent_of(child) == root
@@ -77,7 +72,7 @@ def test_root():
 
 def test_setters():
     tree = TreeBuilder()
-    root = tree.add_dummy_node()
+    root = tree.root
     child = tree.add_node(root, "A", 1.0)
 
     tree.set_name(child, "B")
@@ -93,7 +88,7 @@ def test_setters():
 
 def test_set_node_children():
     tree = TreeBuilder()
-    root = tree.add_dummy_node()
+    root = tree.root
     left = tree.add_node(root, "A", 1.0)
     right = tree.add_node(root, "B", 2.0)
     tree.set_root(root)

@@ -8,7 +8,7 @@ use std::{
 	slice,
 };
 
-use super::{Internal, Leaf, Node, TOMBSTONE, Tree};
+use super::{Internal, Leaf, Node, RootedTree, TOMBSTONE};
 use crate::TaxonSet;
 use computare_buffer::Buffer;
 
@@ -410,13 +410,13 @@ impl BinaryTree {
 	}
 }
 
-impl Tree for BinaryTree {
+impl RootedTree for BinaryTree {
 	fn num_nodes(&self) -> u32 {
 		self.num_nodes()
 	}
 
-	fn root(&self) -> Option<Node> {
-		Some(Self::root(self).into())
+	fn root(&self) -> Node {
+		self.root().into()
 	}
 
 	fn parent_of(&self, node: Node) -> Option<Node> {

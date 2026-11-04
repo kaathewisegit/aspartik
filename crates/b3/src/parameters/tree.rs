@@ -18,8 +18,8 @@ use bitmap::Bitmap;
 use data::{
 	PyTaxonSet, TaxonSet,
 	tree::{
-		BinaryTree, Internal, Leaf, Node, TOMBSTONE, Tree, TreeBuilder,
-		python::PyBinaryTree, python::PyTreeBuilder,
+		BinaryTree, Internal, Leaf, Node, RootedTree, TOMBSTONE,
+		TreeBuilder, python::PyBinaryTree, python::PyTreeBuilder,
 	},
 };
 use rng::{PyRng, Rng};
@@ -758,7 +758,7 @@ impl DatedTree {
 	}
 
 	pub fn mrca(&self, a: Node, b: Node) -> Internal {
-		let out = Tree::mrca(self, a, b);
+		let out = RootedTree::mrca(self, a, b);
 		self.as_internal(out).expect("unreachable")
 	}
 
@@ -884,13 +884,13 @@ impl DatedTree {
 	}
 }
 
-impl Tree for DatedTree {
+impl RootedTree for DatedTree {
 	fn num_nodes(&self) -> u32 {
 		self.num_nodes()
 	}
 
-	fn root(&self) -> Option<Node> {
-		Some(*self.root())
+	fn root(&self) -> Node {
+		*self.root()
 	}
 
 	fn parent_of(&self, node: Node) -> Option<Node> {

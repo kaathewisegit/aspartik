@@ -4,7 +4,7 @@ use std::io::Cursor;
 
 use data::{
 	nexus::{NexusParser, read_binary_trees},
-	tree::Tree,
+	tree::RootedTree,
 };
 
 fn parse(source: &str) -> Result<()> {

@@ -23,8 +23,7 @@ def topology(tree):
 
 def indexed_tree(topology):
     tree = TreeBuilder()
-    root = tree.add_dummy_node()
-    tree.set_root(root)
+    root = tree.root
     leaves = [tree.add_node(root, str(index), 0.0) for index in range(4)]
     tree.set_node_children(root, [])
 

@@ -8,7 +8,7 @@ use std::{
 	path::PathBuf,
 };
 
-use data::tree::{BinaryTree, Tree, TreeBuilder};
+use data::tree::{BinaryTree, RootedTree, TreeBuilder};
 
 #[test]
 fn roundtrip_basic() {
@@ -35,14 +35,14 @@ fn labels_lengths_and_empty_fields() {
 fn quoted_labels() -> Result<()> {
 	let escaped = TreeBuilder::from_newick("('Prince''s':0.1,'');")?;
 	assert_eq!(escaped.to_newick(), "('Prince''s':0.1,);");
-	assert_eq!(escaped.name_of(escaped.root().unwrap()), "",);
-	let children = escaped.children_of(escaped.root().unwrap());
+	assert_eq!(escaped.name_of(escaped.root()), "",);
+	let children = escaped.children_of(escaped.root());
 	assert_eq!(children.len(), 2);
 	assert_eq!(escaped.name_of(children[0]), "Prince's");
 	assert_eq!(escaped.name_of(children[1]), "");
 
 	let doubled = TreeBuilder::from_newick("('a''''b':0.1);")?;
-	let node = doubled.children_of(doubled.root().unwrap())[0];
+	let node = doubled.children_of(doubled.root())[0];
 	assert_eq!(doubled.name_of(node), "a''b");
 	assert_eq!(doubled.to_newick(), "('a''''b':0.1);");
 
@@ -55,7 +55,7 @@ fn multifurcating_roundtrip() -> Result<()> {
 	let builder = TreeBuilder::from_newick(source)?;
 	assert!(!builder.is_binary());
 	assert!(builder.to_binary().is_err());
-	assert_eq!(builder.children_of(builder.root().unwrap()).len(), 4);
+	assert_eq!(builder.children_of(builder.root()).len(), 4);
 	assert_eq!(builder.to_newick(), source);
 
 	Ok(())
@@ -132,8 +132,7 @@ fn arbitrary_builder(
 	num_leaves: u32,
 ) -> arbitrary::Result<TreeBuilder> {
 	let mut tree = TreeBuilder::new();
-	let root = tree.add_dummy_node();
-	tree.set_root(root);
+	let root = tree.root();
 	tree.set_node_name(root, "root");
 	tree.set_node_attribute(root, "&id=0");
 	let mut leaves = vec![root];

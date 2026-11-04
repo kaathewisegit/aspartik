@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use std::ptr;
 
-use super::{BinaryTree, Node, Tree};
+use super::{BinaryTree, Node, RootedTree};
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct CladeHash {

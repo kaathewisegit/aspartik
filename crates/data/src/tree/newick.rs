@@ -3,7 +3,7 @@ use logos::{Lexer, Logos};
 
 use std::fmt::{self, Formatter, Write};
 
-use super::{Node, Tree, TreeBuilder};
+use super::{Node, RootedTree, TreeBuilder};
 
 fn unquote(s: &str) -> &str {
 	&s[1..s.len() - 1]
@@ -146,13 +146,11 @@ pub fn parse_newick<'a>(tree: &mut TreeBuilder, newick: &'a str) -> Result<()> {
 	Ok(())
 }
 
-pub fn serialize_newick<T: Tree + ?Sized>(
+pub fn serialize_newick<T: RootedTree + ?Sized>(
 	tree: &T,
 	f: &mut Formatter<'_>,
 ) -> fmt::Result {
-	let Some(root) = tree.root() else {
-		return Err(fmt::Error);
-	};
+	let root = tree.root();
 
 	let mut parents = vec![root];
 	let mut children = vec![tree.children_of(root)];
@@ -195,7 +193,7 @@ pub fn serialize_newick<T: Tree + ?Sized>(
 	Ok(())
 }
 
-fn write_node<T: Tree + ?Sized>(
+fn write_node<T: RootedTree + ?Sized>(
 	tree: &T,
 	node: Node,
 	f: &mut Formatter<'_>,
