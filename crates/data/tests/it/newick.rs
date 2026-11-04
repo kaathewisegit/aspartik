@@ -81,8 +81,8 @@ fn malformed_and_truncated_input() {
 	}
 }
 
-fn nested_tree(depth: usize) -> String {
-	let mut source = String::with_capacity(depth * 2 + 2);
+fn nested_tree(depth: u32) -> String {
+	let mut source = String::with_capacity(depth as usize * 2 + 2);
 	for _ in 0..depth {
 		source.push('(');
 	}
@@ -96,17 +96,17 @@ fn nested_tree(depth: usize) -> String {
 
 #[test]
 fn eight_million_nested_tree_does_not_exhaust_the_stack() -> Result<()> {
-	const DEPTH: usize = 200;
+	const DEPTH: u32 = 200;
 	let tree = TreeBuilder::from_newick(&nested_tree(DEPTH))?;
-	assert_eq!(tree.num_nodes(), (DEPTH + 1));
+	assert_eq!(tree.num_nodes(), DEPTH + 1);
 
 	Ok(())
 }
 
 #[test]
 fn deep_ladder_parse_and_write() -> Result<()> {
-	const NUM_LEAVES: usize = 5_000;
-	let mut source = String::with_capacity(NUM_LEAVES * 16);
+	const NUM_LEAVES: u32 = 5_000;
+	let mut source = String::with_capacity(NUM_LEAVES as usize * 16);
 	for leaf in 0..NUM_LEAVES - 1 {
 		source.push('(');
 		source.push_str(&format!("L{leaf}:1,"));
@@ -141,7 +141,7 @@ fn arbitrary_builder(
 		let index = u.int_in_range(0..=leaves.len() - 1)?;
 		let parent = leaves.swap_remove(index);
 		for _ in 0..2 {
-			let id = tree.num_nodes() as u32;
+			let id = tree.num_nodes();
 			let child = tree.add_node(
 				&format!("node {id}"),
 				f64::from(id) / 10.0,

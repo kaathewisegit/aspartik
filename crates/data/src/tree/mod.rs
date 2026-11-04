@@ -102,6 +102,8 @@ nodes_2!(Leaf);
 nodes_2!(Internal);
 
 pub trait Tree {
+	fn num_nodes(&self) -> u32;
+
 	fn root(&self) -> Option<Node>;
 
 	fn has_root(&self) -> bool {

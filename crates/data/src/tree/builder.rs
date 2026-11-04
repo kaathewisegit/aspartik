@@ -70,12 +70,12 @@ impl TreeBuilder {
 		self.root = Some(node);
 	}
 
-	pub fn num_nodes(&self) -> usize {
-		self.parents.len()
+	pub fn num_nodes(&self) -> u32 {
+		self.parents.len() as u32
 	}
 
 	pub fn nodes(&self) -> impl DoubleEndedIterator<Item = Node> + use<> {
-		(0..self.num_nodes() as u32).map(Node)
+		(0..self.num_nodes()).map(Node)
 	}
 
 	// Node setters
@@ -193,7 +193,7 @@ pub fn builder_to_binary(
 	taxon_map: TaxonMap,
 ) -> Result<BinaryTree> {
 	let root = builder.root().ok_or_else(|| anyhow!("tree has no root"))?;
-	let num_nodes = builder.num_nodes() as u32;
+	let num_nodes = builder.num_nodes();
 	let num_leaves = taxon_map.taxon_set().len() as u32;
 	ensure!(
 		num_leaves >= 2,
@@ -262,6 +262,10 @@ pub fn builder_to_binary(
 }
 
 impl Tree for TreeBuilder {
+	fn num_nodes(&self) -> u32 {
+		self.num_nodes()
+	}
+
 	fn root(&self) -> Option<Node> {
 		self.root
 	}

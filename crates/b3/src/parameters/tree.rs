@@ -885,6 +885,10 @@ impl DatedTree {
 }
 
 impl Tree for DatedTree {
+	fn num_nodes(&self) -> u32 {
+		self.num_nodes()
+	}
+
 	fn root(&self) -> Option<Node> {
 		Some(*self.root())
 	}

@@ -141,7 +141,7 @@ impl PyTreeBuilder {
 
 	#[getter]
 	fn num_nodes(&self) -> u32 {
-		self.inner().num_nodes() as u32
+		self.inner().num_nodes()
 	}
 
 	#[getter]
@@ -150,8 +150,7 @@ impl PyTreeBuilder {
 	}
 
 	fn nodes(&self) -> Vec<Node> {
-		let num_nodes = self.inner().num_nodes() as u32;
-		(0..num_nodes).map(Node).collect()
+		self.inner().nodes().collect()
 	}
 
 	fn is_binary(&self) -> bool {
@@ -255,7 +254,7 @@ impl PyTreeBuilder {
 	}
 
 	fn __len__(&self) -> usize {
-		self.inner().num_nodes()
+		self.inner().num_nodes() as usize
 	}
 }
 

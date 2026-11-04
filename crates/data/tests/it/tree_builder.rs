@@ -58,9 +58,9 @@ fn build_arbitrary() {
 		let root = builder.add_dummy_node();
 		builder.set_root(root);
 
-		let num_steps = u.int_in_range(0..=1_000)?;
+		let num_steps = u.int_in_range(0..=1_000u32)?;
 		for _ in 0..num_steps {
-			let num_nodes = builder.num_nodes() as u32;
+			let num_nodes = builder.num_nodes();
 			let parent = Node(u.int_in_range(0..=(num_nodes - 1))?);
 
 			let name = u64::arbitrary(u)?.to_string();
@@ -79,11 +79,11 @@ fn build_arbitrary() {
 		}
 
 		assert_eq!(builder.root(), Some(root));
+		assert_eq!(builder.num_nodes(), num_steps + 1);
 		assert_eq!(
-			builder.num_nodes(),
-			usize::try_from(num_steps).unwrap() + 1
+			builder.nodes().count(),
+			builder.num_nodes() as usize,
 		);
-		assert_eq!(builder.nodes().count(), builder.num_nodes());
 		assert_eq!(builder.parent_of(root), None);
 
 		let mut traversed = HashSet::new();

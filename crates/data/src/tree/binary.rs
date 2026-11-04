@@ -411,6 +411,10 @@ impl BinaryTree {
 }
 
 impl Tree for BinaryTree {
+	fn num_nodes(&self) -> u32 {
+		self.num_nodes()
+	}
+
 	fn root(&self) -> Option<Node> {
 		Some(Self::root(self).into())
 	}
