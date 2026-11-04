@@ -1,9 +1,11 @@
 use anyhow::{Context, Result, bail, ensure};
-use bytemuck::allocation::cast_vec;
+use bytemuck::{allocation::cast_vec, cast_slice, cast_slice_mut};
 use computare_buffer::Buffer;
 use parking_lot::Mutex;
 use picoarrow::array::{Array, ArrayUtf8, Nullable};
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyAny};
+use pyo3::{
+	buffer::PyBuffer, exceptions::PyValueError, prelude::*, types::PyAny,
+};
 use rand::{RngExt, seq::SliceRandom};
 
 use std::{
@@ -863,10 +865,16 @@ impl DatedTree {
 			internal_names.push_nulls(num_internals as usize);
 		}
 
+		let mut children = Buffer::from_slice(&self.children);
+		let (pairs, _) = children.as_chunks_mut::<2>();
+		for pair in pairs {
+			*pair = [min(pair[0], pair[1]), max(pair[0], pair[1])];
+		}
+
 		BinaryTree::new(
 			num_leaves,
 			self.root().0,
-			Buffer::from_slice(&self.children),
+			children,
 			Buffer::from_slice(&self.parents),
 			Buffer::from_slice(&edge_lengths),
 			self.names.clone(),
@@ -881,6 +889,45 @@ impl DatedTree {
 		}
 		out.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
 		out
+	}
+
+	pub fn parents_slice(&self) -> &[u32] {
+		&self.parents
+	}
+
+	pub fn heights_slice(&self) -> &[f64] {
+		&self.heights
+	}
+
+	fn load_heights(&mut self, bytes: &[u8]) {
+		let heights = self.heights.slice_mut();
+		cast_slice_mut(heights).copy_from_slice(bytes);
+	}
+
+	fn load_parents(&mut self, bytes: &[u8]) -> Result<()> {
+		let num_leaves = self.num_leaves();
+		let num_nodes = self.num_nodes();
+
+		let parents = self.parents.slice_mut();
+		cast_slice_mut(parents).copy_from_slice(bytes);
+
+		let children = self.children.slice_mut();
+		children.fill(TOMBSTONE);
+		for node in 0..num_nodes {
+			let parent = parents[node as usize];
+			if parent == TOMBSTONE {
+				self.root = (node, node);
+				continue;
+			}
+			let offset = (parent - num_leaves) as usize;
+			if children[offset * 2] == TOMBSTONE {
+				children[offset * 2] = node;
+			} else {
+				children[offset * 2 + 1] = node;
+			}
+		}
+
+		Ok(())
 	}
 }
 
@@ -947,42 +994,31 @@ impl Parameter for DatedTree {
 		self.root.0 = self.root.1;
 	}
 
+	#[cfg(target_endian = "little")]
 	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
-		for i in 0..self.num_nodes() {
-			self.heights[i as usize] =
-				verbatim::read_f64_le(bytes)?;
-		}
+		let num_nodes = self.num_nodes();
+		let num_nodes_usize = num_nodes as usize;
+		ensure!(bytes.len() >= num_nodes_usize * (8 + 4));
 
-		// overwrite all parents as one of them will be left as root
-		for internal in self.internals() {
-			self.parents[internal.usize()] = TOMBSTONE;
-		}
+		let (parent_bytes, rest) = bytes.split_at(num_nodes_usize * 4);
+		self.load_parents(parent_bytes)?;
+		*bytes = rest;
 
-		let num_leaves = self.num_leaves();
-		for i in 0..self.num_edges() {
-			let child = verbatim::read_u32_le(bytes)?;
-			self.children[i as usize] = child;
-			let parent = i / 2 + num_leaves;
-			self.parents[child as usize] = parent;
-		}
-
-		for internal in self.internals() {
-			if self.parents[internal.usize()] == TOMBSTONE {
-				self.set_root(internal);
-			}
-		}
+		let (height_bytes, rest) = bytes.split_at(num_nodes_usize * 8);
+		self.load_heights(height_bytes);
+		*bytes = rest;
 
 		self.mark_all_edges_updated();
 		Ok(())
 	}
 
+	#[cfg(target_endian = "little")]
 	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
-		for height in self.heights.iter().copied() {
-			verbatim::write_f64_le(writer, height)?;
-		}
-		for child in self.children.iter().copied() {
-			verbatim::write_u32_le(writer, child)?;
-		}
+		let parents: &[u8] = cast_slice(&self.parents);
+		writer.write_all(parents)?;
+
+		let heights: &[u8] = cast_slice(&self.heights);
+		writer.write_all(heights)?;
 
 		Ok(())
 	}
@@ -1102,6 +1138,24 @@ impl_pyparameter_common!(PyDatedTree, DatedTree, {
 
 	fn load_newick(&self, newick: &PyTreeBuilder) -> Result<()> {
 		self.inner().load_newick(&newick.inner())
+	}
+
+	/// TODO: proper alignment in storage so that `load_parents*` functions
+	/// can take typed slices.
+	fn load_parts(
+		&self,
+		py: Python,
+		parents: PyBuffer<u32>,
+		heights: PyBuffer<f64>,
+	) -> Result<()> {
+		let parents = parents.to_vec(py)?;
+		let heights = heights.to_vec(py)?;
+
+		let mut inner = self.inner();
+		inner.load_parents(cast_slice(&parents))?;
+		inner.load_heights(cast_slice(&heights));
+
+		Ok(())
 	}
 
 	/// A list of all leaf names.

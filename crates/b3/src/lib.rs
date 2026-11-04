@@ -24,7 +24,7 @@ pub mod pymodule {
 	use super::*;
 
 	#[pymodule_export]
-	pub const STATE_PROTOCOL_VERSION: u32 = 18;
+	pub const STATE_PROTOCOL_VERSION: u32 = 19;
 
 	#[pymodule_export]
 	use crate::{

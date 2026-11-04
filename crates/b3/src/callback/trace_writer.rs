@@ -3,8 +3,8 @@ use parking_lot::Mutex;
 use picoarrow::{
 	Field, Schema,
 	array::{
-		Array, ArrayBinary, ArrayF64, ArrayFixedSizeList, ArrayI64,
-		ArrayU32, ArrayU64, NonNullable,
+		Array, ArrayF64, ArrayFixedSizeList, ArrayI64, ArrayU32,
+		ArrayU64, NonNullable,
 	},
 	ipc::{Compression, FileWriter},
 };
@@ -20,8 +20,7 @@ use std::{
 use crate::{
 	mcmc::Mcmc,
 	parameters::{
-		Parameter, PyClassVector, PyDatedTree, PyIntVector, PyReal,
-		PyRealVector,
+		PyClassVector, PyDatedTree, PyIntVector, PyReal, PyRealVector,
 	},
 	priors::PyPrior,
 };
@@ -55,7 +54,8 @@ enum LoggedArray {
 	},
 	Tree {
 		tree: Py<PyDatedTree>,
-		binary: ArrayBinary<NonNullable>,
+		parents: ArrayFixedSizeList<ArrayU32<NonNullable>, NonNullable>,
+		heights: ArrayFixedSizeList<ArrayF64<NonNullable>, NonNullable>,
 		length: ArrayF64<NonNullable>,
 		height: ArrayF64<NonNullable>,
 	},
@@ -111,17 +111,24 @@ impl Item {
 			}
 			LoggedArray::Tree {
 				tree,
-				binary,
+				parents,
+				heights,
 				length,
 				height,
 			} => {
 				let tree = &*tree.get().inner();
 				length.push(tree.total_length());
 				height.push(tree.height_of(*tree.root()));
-
-				let mut out = Vec::new();
-				tree.dump(&mut out)?;
-				binary.push(&out)?;
+				parents.push(|n| {
+					n.extend_from_slice(
+						tree.parents_slice(),
+					)
+				})?;
+				heights.push(|n| {
+					n.extend_from_slice(
+						tree.heights_slice(),
+					)
+				})?;
 			}
 		}
 
@@ -142,13 +149,15 @@ impl Item {
 			}
 			LoggedArray::Prior { array, .. } => array.memory_size(),
 			LoggedArray::Tree {
-				binary,
+				parents,
+				heights,
 				length,
 				height,
 				..
 			} => {
-				length.memory_size()
-					+ height.memory_size() + binary.memory_size()
+				parents.memory_size()
+					+ heights.memory_size() + length.memory_size()
+					+ height.memory_size()
 			}
 		}
 	}
@@ -230,9 +239,17 @@ impl TraceWriter {
 					),
 				}
 			} else if let Ok(tree) = val.cast::<PyDatedTree>() {
+				let num_nodes = tree.get().num_nodes();
 				LoggedArray::Tree {
 					tree: tree.clone().unbind(),
-					binary: ArrayBinary::new(),
+					parents: ArrayFixedSizeList::new(
+						ArrayU32::new(),
+						num_nodes as i32,
+					),
+					heights: ArrayFixedSizeList::new(
+						ArrayF64::new(),
+						num_nodes as i32,
+					),
 					length: ArrayF64::new(),
 					height: ArrayF64::new(),
 				}
@@ -367,12 +384,16 @@ impl TraceWriter {
 					batch_arrays.push(array as &dyn Array)
 				}
 				LoggedArray::Tree {
-					binary,
+					parents,
+					heights,
 					length,
 					height,
 					..
 				} => {
-					batch_arrays.push(binary as &dyn Array);
+					batch_arrays
+						.push(parents as &dyn Array);
+					batch_arrays
+						.push(heights as &dyn Array);
 					batch_arrays.push(length as &dyn Array);
 					batch_arrays.push(height as &dyn Array);
 				}
@@ -405,12 +426,14 @@ impl TraceWriter {
 					array.clear();
 				}
 				LoggedArray::Tree {
-					binary,
+					parents,
+					heights,
 					length,
 					height,
 					..
 				} => {
-					binary.clear();
+					parents.clear();
+					heights.clear();
 					length.clear();
 					height.clear();
 				}
@@ -440,12 +463,20 @@ fn items_to_fields(items: &[Item], fields: &mut Vec<Field>) {
 				fields.push(array.make_field(&item.name))
 			}
 			LoggedArray::Tree {
-				binary,
+				parents,
+				heights,
 				length,
 				height,
 				..
 			} => {
-				fields.push(binary.make_field(&item.name));
+				fields.push(parents.make_field(&format!(
+					"{}:parents",
+					item.name
+				)));
+				fields.push(heights.make_field(&format!(
+					"{}:heights",
+					item.name
+				)));
 				fields.push(length.make_field(&format!(
 					"{}:length",
 					item.name

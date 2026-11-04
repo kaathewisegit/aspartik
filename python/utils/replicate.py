@@ -14,18 +14,23 @@ def replicate_b3(
 ):
     trace = pl.read_ipc(trace_path)
 
-    for row in trace.iter_rows(named=True):
-        for name, param in parameters.items():
-            match param:
-                case DatedTree():
-                    param.load(row[name])
-                case Real():
-                    param.set(row[name])
-                case RealVector():
-                    for i, value in enumerate(row[name]):
-                        param[i] = value
+    for batch in trace.iter_slices(n_rows=100):
+        for i in range(len(batch)):
+            for name, param in parameters.items():
+                match param:
+                    case DatedTree():
+                        parents = batch[f"{name}:parents"][i].to_numpy()
+                        heights = batch[f"{name}:heights"][i].to_numpy()
+                        param.load_parts(parents, heights)
+                    case Real():
+                        param.set(batch[name][i])
+                    case RealVector():
+                        for j, value in enumerate(batch[name][i]):
+                            param[j] = value
 
-        _check(row, priors, likelihoods)
+            expected = {prior: batch[prior][i] for prior in priors}
+            expected["likelihood"] = batch["likelihood"][i]
+            _check(expected, priors, likelihoods)
 
 
 def replicate_beast1(

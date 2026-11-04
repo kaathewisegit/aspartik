@@ -44,6 +44,11 @@ impl<T: Copy> EpochBuf<T> {
 	pub fn changed_indices(&self) -> &[usize] {
 		&self.indices
 	}
+
+	pub fn slice_mut(&mut self) -> &mut [T] {
+		self.indices.extend(0..self.len);
+		&mut self.values[..self.len]
+	}
 }
 
 impl<T> Deref for EpochBuf<T> {
