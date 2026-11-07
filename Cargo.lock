@@ -674,6 +674,8 @@ version = "0.1.0-alpha.23"
 name = "verbatim"
 version = "0.1.0-alpha.23"
 dependencies = [
+ "arbitrary",
+ "arbtest",
  "bytemuck",
 ]
 
