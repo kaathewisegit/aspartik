@@ -192,7 +192,11 @@ fn read(value: &Value, reader: &mut VerbatimReader<&[u8]>) -> Value {
 #[test]
 fn roundtrip() {
 	arbtest(|u: &mut Unstructured<'_>| {
-		let values = Vec::<Value>::arbitrary(u)?;
+		let len = u.int_in_range(0..=2048)?;
+		let mut values = Vec::with_capacity(len);
+		for _ in 0..len {
+			values.push(Value::arbitrary(u)?);
+		}
 
 		let mut writer = VerbatimWriter::new(Vec::new());
 		for value in &values {
@@ -213,5 +217,6 @@ fn roundtrip() {
 			"roundtrip mismatch:\nwritten: {values:?}\nread:    {read_values:?}",
 		);
 		Ok(())
-	});
+	})
+	.size_min(2u32.pow(20));
 }
