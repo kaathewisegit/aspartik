@@ -1000,10 +1000,10 @@ impl Parameter for DatedTree {
 		reader: &mut VerbatimReader<&mut &[u8]>,
 	) -> Result<()> {
 		let parents = reader.read_slice::<u32>()?;
-		self.load_parents(cast_slice(&parents))?;
+		self.load_parents(cast_slice(parents))?;
 
 		let heights = reader.read_slice::<f64>()?;
-		self.load_heights(cast_slice(&heights));
+		self.load_heights(cast_slice(heights));
 
 		self.mark_all_edges_updated();
 		Ok(())

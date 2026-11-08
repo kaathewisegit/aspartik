@@ -180,12 +180,12 @@ fn read(value: &Value, reader: &mut VerbatimReader<&[u8]>) -> Value {
 		Value::I128(_) => Value::I128(reader.read_i128().unwrap()),
 		Value::F32(_) => Value::F32(reader.read_f32().unwrap()),
 		Value::F64(_) => Value::F64(reader.read_f64().unwrap()),
-		Value::F32Slice(_) => {
-			Value::F32Slice(reader.read_slice::<f32>().unwrap())
-		}
-		Value::F64Slice(_) => {
-			Value::F64Slice(reader.read_slice::<f64>().unwrap())
-		}
+		Value::F32Slice(_) => Value::F32Slice(
+			reader.read_slice::<f32>().unwrap().to_vec(),
+		),
+		Value::F64Slice(_) => Value::F64Slice(
+			reader.read_slice::<f64>().unwrap().to_vec(),
+		),
 	}
 }
 

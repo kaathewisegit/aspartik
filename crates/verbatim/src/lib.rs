@@ -1,10 +1,8 @@
-use bytemuck::{AnyBitPattern, NoUninit, cast_slice, cast_slice_mut};
+use bytemuck::{AnyBitPattern, NoUninit, cast_slice};
 
 use std::{
-	io::{
-		BufRead, Error as IoError, ErrorKind, Read, Result as IoResult,
-		Write,
-	},
+	cmp,
+	io::{Error as IoError, ErrorKind, Read, Result as IoResult, Write},
 	mem,
 };
 
@@ -95,8 +93,10 @@ impl<W: Write> VerbatimWriter<W> {
 	}
 }
 
-pub struct VerbatimReader<R> {
+pub struct VerbatimReader<R, const BUFFER_SIZE: usize = 8192> {
 	reader: R,
+	buffer: Vec<u8>,
+	start: usize,
 	read: usize,
 }
 
@@ -105,40 +105,83 @@ macro_rules! reader_primitive_le {
 		pub fn $read(&mut self) -> IoResult<$type> {
 			let r = self.read % $size;
 			if r != 0 {
-				let mut pad = [0u8; $size];
-				let skipped = self
-					.reader
-					.read(&mut pad[..$size - r])?;
-				if skipped != $size - r {
-					return Err(IoError::new(
-						ErrorKind::UnexpectedEof,
-						"unexpected end while reading padding",
-					));
-				}
+				let pad = $size - r;
+				self.demand(pad)?;
+				self.start += pad;
 				self.read += $size - r;
 			}
-			let mut buf = [0u8; $size];
-			self.reader.read_exact(&mut buf)?;
+			self.demand($size)?;
+			let buf: [u8; $size] =
+				self.peek($size).try_into().unwrap();
+			self.start += $size;
 			self.read += $size;
 			Ok(<$type>::from_le_bytes(buf))
 		}
 	};
 }
 
-impl<R: Read + BufRead> VerbatimReader<R> {
+impl<R: Read> VerbatimReader<R, 8192> {
 	pub fn new(reader: R) -> Self {
-		Self { reader, read: 0 }
+		Self {
+			reader,
+			buffer: Vec::with_capacity(8192),
+			start: 0,
+			read: 0,
+		}
+	}
+}
+
+impl<R: Read, const BUFFER_SIZE: usize> VerbatimReader<R, BUFFER_SIZE> {
+	pub fn with_capacity(reader: R) -> Self {
+		Self {
+			reader,
+			buffer: Vec::with_capacity(BUFFER_SIZE),
+			start: 0,
+			read: 0,
+		}
 	}
 
 	pub fn into_inner(self) -> R {
 		self.reader
 	}
 
+	/// Extend the buffer, relocating active bytes it to the start
+	fn fill(&mut self, required: usize) -> IoResult<usize> {
+		let active = self.buffer.len() - self.start;
+		self.buffer.copy_within(self.start.., 0);
+		self.start = 0;
+		let target = cmp::max(required, BUFFER_SIZE);
+		if self.buffer.len() < target {
+			self.buffer.resize(target, 0);
+		}
+		let read = self.reader.read(&mut self.buffer[active..])?;
+		self.buffer.truncate(active + read);
+		Ok(read)
+	}
+
+	/// Read at least `required` bytes into the buffer
+	fn demand(&mut self, required: usize) -> IoResult<()> {
+		while self.buffer.len() - self.start < required {
+			if self.fill(required)? == 0 {
+				return Err(IoError::new(
+					ErrorKind::UnexpectedEof,
+					"unexpected end while filling the buffer",
+				));
+			}
+		}
+		Ok(())
+	}
+
+	fn peek(&self, len: usize) -> &[u8] {
+		&self.buffer[self.start..self.start + len]
+	}
+
 	pub fn read_u8(&mut self) -> IoResult<u8> {
-		let mut buf = [0u8; 1];
-		self.reader.read_exact(&mut buf)?;
+		self.demand(1)?;
+		let value = self.buffer[self.start];
 		self.read += 1;
-		Ok(buf[0])
+		self.start += 1;
+		Ok(value)
 	}
 
 	pub fn read_i8(&mut self) -> IoResult<i8> {
@@ -171,9 +214,9 @@ impl<R: Read + BufRead> VerbatimReader<R> {
 		&mut self,
 		tag: [u8; N],
 	) -> IoResult<()> {
-		let bytes = self.reader.fill_buf()?;
-		if bytes.starts_with(&tag) {
-			self.reader.consume(N);
+		self.demand(N)?;
+		if self.peek(N) == tag {
+			self.start += N;
 			self.read += N;
 			Ok(())
 		} else {
@@ -184,7 +227,7 @@ impl<R: Read + BufRead> VerbatimReader<R> {
 		}
 	}
 
-	pub fn read_slice<T>(&mut self) -> IoResult<Vec<T>>
+	pub fn read_slice<T>(&mut self) -> IoResult<&[T]>
 	where
 		T: NoUninit + AnyBitPattern,
 	{
@@ -193,21 +236,25 @@ impl<R: Read + BufRead> VerbatimReader<R> {
 		let align = mem::align_of::<T>();
 		let r = self.read % align;
 		if r != 0 && len != 0 {
-			let mut pad = [0u8; 32];
-			let skipped = self.reader.read(&mut pad[..align - r])?;
-			if skipped != align - r {
-				return Err(IoError::new(
-					ErrorKind::UnexpectedEof,
-					"unexpected end while reading padding",
-				));
-			}
+			let pad = align - r;
+			self.demand(pad)?;
+			self.start += pad;
 			self.read += align - r;
 		}
 
-		let mut values = vec![T::zeroed(); len];
-		let bytes: &mut [u8] = cast_slice_mut(&mut values);
-		self.reader.read_exact(bytes)?;
-		self.read += bytes.len();
-		Ok(values)
+		let byte_len = len * mem::size_of::<T>();
+		self.demand(byte_len)?;
+
+		if self.start > 0 {
+			let old_len = self.buffer.len();
+			self.buffer.copy_within(self.start.., 0);
+			self.buffer.resize(old_len - self.start, 0);
+			self.start = 0;
+		}
+
+		self.start += byte_len;
+		self.read += byte_len;
+		let bytes = &self.buffer[0..byte_len];
+		Ok(cast_slice(bytes))
 	}
 }
