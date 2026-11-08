@@ -2,12 +2,13 @@ use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{exceptions::PyIndexError, prelude::*, types::PyType};
 
-use std::{fmt::Write as _, io::Write, ops::Index, slice::Iter};
+use std::{fmt::Write as _, ops::Index, slice::Iter};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
 use sk::EpochBuf;
 use util::py_bail;
+use verbatim::{DynVerbatimWriter, VerbatimReader};
 
 #[derive(Debug, Clone)]
 pub struct RealVector {
@@ -56,23 +57,26 @@ impl Parameter for RealVector {
 		self.values.reject()
 	}
 
-	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
+	fn load(
+		&mut self,
+		reader: &mut VerbatimReader<&mut &[u8]>,
+	) -> Result<()> {
 		for i in 0..self.len() {
 			self.set(i, f64::NAN);
 		}
 		self.accept();
 
 		for i in 0..self.len() {
-			let value = verbatim::read_f64_le(bytes)?;
+			let value = reader.read_f64()?;
 			self.set(i, value);
 		}
 
 		Ok(())
 	}
 
-	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+	fn dump(&self, writer: &mut DynVerbatimWriter<'_>) -> Result<()> {
 		for i in 0..self.len() {
-			verbatim::write_f64_le(writer, self[i])?;
+			writer.write_f64(self[i])?;
 		}
 		Ok(())
 	}

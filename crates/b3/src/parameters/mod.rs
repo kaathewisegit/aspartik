@@ -1,8 +1,7 @@
 use anyhow::Result;
 use parking_lot::{MappedMutexGuard, MutexGuard};
 use pyo3::{ffi::PyObject, prelude::*};
-
-use std::io::Write;
+use verbatim::{DynVerbatimWriter, VerbatimReader};
 
 mod class_vector;
 mod int_vector;
@@ -24,9 +23,12 @@ pub trait Parameter {
 
 	fn reject(&mut self);
 
-	fn load(&mut self, bytes: &mut &[u8]) -> Result<()>;
+	fn load(
+		&mut self,
+		reader: &mut VerbatimReader<&mut &[u8]>,
+	) -> Result<()>;
 
-	fn dump(&self, writer: &mut dyn Write) -> Result<()>;
+	fn dump(&self, writer: &mut DynVerbatimWriter<'_>) -> Result<()>;
 }
 
 #[macro_export]
@@ -47,12 +49,16 @@ macro_rules! impl_pyparameter_common {
 			}
 
 			pub fn load(&self, mut bytes: &[u8]) -> Result<()> {
-				self.inner().load(&mut bytes)
+				let mut reader = VerbatimReader::new(&mut bytes);
+				self.inner().load(&mut reader)
 			}
 
 			pub fn dump(&self) -> Result<Vec<u8>> {
+				use std::io::Write;
+
 				let mut out = Vec::new();
-				self.inner().dump(&mut out)?;
+				let mut writer = verbatim::VerbatimWriter::<&mut dyn Write>::new(&mut out);
+				self.inner().dump(&mut writer)?;
 				Ok(out)
 			}
 

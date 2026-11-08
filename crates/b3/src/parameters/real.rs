@@ -1,8 +1,7 @@
 use anyhow::Result;
 use parking_lot::Mutex;
 use pyo3::{basic::CompareOp, prelude::*};
-
-use std::io::Write;
+use verbatim::{DynVerbatimWriter, VerbatimReader};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
@@ -48,14 +47,17 @@ impl Parameter for Real {
 		self.value = self.backup;
 	}
 
-	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
-		self.value = verbatim::read_f64_le(bytes)?;
+	fn load(
+		&mut self,
+		reader: &mut VerbatimReader<&mut &[u8]>,
+	) -> Result<()> {
+		self.value = reader.read_f64()?;
 		self.backup = f64::NAN; // so that is_changed is true
 		Ok(())
 	}
 
-	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
-		verbatim::write_f64_le(writer, self.value)?;
+	fn dump(&self, writer: &mut DynVerbatimWriter<'_>) -> Result<()> {
+		writer.write_f64(self.value)?;
 		Ok(())
 	}
 }

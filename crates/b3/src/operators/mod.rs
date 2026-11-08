@@ -9,7 +9,6 @@ use rand::distr::{Distribution, weighted::WeightedIndex};
 
 use std::{
 	collections::HashSet,
-	io::Write,
 	ops::{Index, IndexMut},
 	time::Duration,
 };
@@ -20,6 +19,7 @@ use util::{
 	atomic::MonotonicU32, py_bail, py_call_method, py_check_method,
 	py_extract_attr, py_has_method, time,
 };
+use verbatim::{DynVerbatimWriter, VerbatimReader};
 
 mod classvec_flip;
 mod fhspr;
@@ -192,20 +192,28 @@ impl PyOperator {
 		Ok(())
 	}
 
-	pub fn load(&self, py: Python, bytes: &mut &[u8]) -> Result<()> {
-		self.accepts.store(verbatim::read_u32_le(bytes)?);
-		self.rejects.store(verbatim::read_u32_le(bytes)?);
+	pub fn load(
+		&self,
+		py: Python,
+		reader: &mut VerbatimReader<&mut &[u8]>,
+	) -> Result<()> {
+		self.accepts.store(reader.read_u32()?);
+		self.rejects.store(reader.read_u32()?);
 		if self.has_tuning {
-			self.set_tuning(py, verbatim::read_f64_le(bytes)?)?;
+			self.set_tuning(py, reader.read_f64()?)?;
 		}
 		Ok(())
 	}
 
-	pub fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
-		verbatim::write_u32_le(writer, self.accepts.load())?;
-		verbatim::write_u32_le(writer, self.rejects.load())?;
+	pub fn dump(
+		&self,
+		py: Python,
+		writer: &mut DynVerbatimWriter<'_>,
+	) -> Result<()> {
+		writer.write_u32(self.accepts.load())?;
+		writer.write_u32(self.rejects.load())?;
 		if let Some(tuning) = self.get_tuning(py)? {
-			verbatim::write_f64_le(writer, tuning)?;
+			writer.write_f64(tuning)?;
 		};
 		Ok(())
 	}
@@ -477,14 +485,22 @@ impl Scheduler {
 		Ok(())
 	}
 
-	pub fn load(&self, py: Python, bytes: &mut &[u8]) -> Result<()> {
+	pub fn load(
+		&self,
+		py: Python,
+		reader: &mut VerbatimReader<&mut &[u8]>,
+	) -> Result<()> {
 		for operator in &self.operators {
-			operator.load(py, bytes)?;
+			operator.load(py, reader)?;
 		}
 		Ok(())
 	}
 
-	pub fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
+	pub fn dump(
+		&self,
+		py: Python,
+		writer: &mut DynVerbatimWriter<'_>,
+	) -> Result<()> {
 		for operator in &self.operators {
 			operator.dump(py, writer)?;
 		}

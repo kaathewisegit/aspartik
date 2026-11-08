@@ -11,7 +11,6 @@ use rand::{RngExt, seq::SliceRandom};
 use std::{
 	cmp::{max, min},
 	collections::VecDeque,
-	io::Write,
 	slice,
 };
 
@@ -27,6 +26,7 @@ use data::{
 use rng::{PyRng, Rng};
 use sk::EpochBuf;
 use util::{atomic::MonotonicU32, py_bail};
+use verbatim::{DynVerbatimWriter, VerbatimReader};
 
 #[derive(Debug, Clone)]
 pub struct DatedTree {
@@ -995,31 +995,24 @@ impl Parameter for DatedTree {
 	}
 
 	#[cfg(target_endian = "little")]
-	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
-		let num_nodes = self.num_nodes();
-		let num_nodes_usize = num_nodes as usize;
-		ensure!(bytes.len() >= num_nodes_usize * (8 + 4));
+	fn load(
+		&mut self,
+		reader: &mut VerbatimReader<&mut &[u8]>,
+	) -> Result<()> {
+		let parents = reader.read_slice::<u32>()?;
+		self.load_parents(cast_slice(&parents))?;
 
-		let (parent_bytes, rest) = bytes.split_at(num_nodes_usize * 4);
-		self.load_parents(parent_bytes)?;
-		*bytes = rest;
-
-		let (height_bytes, rest) = bytes.split_at(num_nodes_usize * 8);
-		self.load_heights(height_bytes);
-		*bytes = rest;
+		let heights = reader.read_slice::<f64>()?;
+		self.load_heights(cast_slice(&heights));
 
 		self.mark_all_edges_updated();
 		Ok(())
 	}
 
 	#[cfg(target_endian = "little")]
-	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
-		let parents: &[u8] = cast_slice(&self.parents);
-		writer.write_all(parents)?;
-
-		let heights: &[u8] = cast_slice(&self.heights);
-		writer.write_all(heights)?;
-
+	fn dump(&self, writer: &mut DynVerbatimWriter<'_>) -> Result<()> {
+		writer.write_slice(&self.parents)?;
+		writer.write_slice(&self.heights)?;
 		Ok(())
 	}
 }

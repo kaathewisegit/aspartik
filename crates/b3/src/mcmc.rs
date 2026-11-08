@@ -14,6 +14,7 @@ use crate::{
 };
 use rng::PyRng;
 use util::{atomic::MonotonicF64, seconds_since_unix, time};
+use verbatim::{DynVerbatimWriter, VerbatimReader, VerbatimWriter};
 
 const STATE_TAG: [u8; 4] = [0x62, 0x33, 0xb3, 0x44];
 
@@ -173,29 +174,31 @@ impl Mcmc {
 
 	fn dump_state(&self, py: Python) -> Result<Vec<u8>> {
 		let mut out = Vec::new();
-		self.dump(py, &mut out)?;
+		let mut writer =
+			VerbatimWriter::<&mut dyn Write>::new(&mut out);
+		self.dump(py, &mut writer)?;
 		Ok(out)
 	}
 
 	fn load_state(&self, py: Python, mut bytes: &[u8]) -> Result<()> {
-		verbatim::read_tag(&mut bytes, &STATE_TAG)
+		let mut reader = VerbatimReader::new(&mut bytes);
+		reader.read_tag(STATE_TAG)
 			.with_context(|| anyhow!("Not a b3 state file"))?;
-		let version = verbatim::read_u32_le(&mut bytes)?;
+		let version = reader.read_u32()?;
 		ensure!(
 			version == STATE_PROTOCOL_VERSION,
 			"Cannot load state: protocol version v{version} is incompatible with the currently supported version v{STATE_PROTOCOL_VERSION}."
 		);
-		*self.current_step.lock() =
-			verbatim::read_u64_le(&mut bytes)? as usize;
-		self.posterior.store(verbatim::read_f64_le(&mut bytes)?);
+		*self.current_step.lock() = reader.read_u64()? as usize;
+		self.posterior.store(reader.read_f64()?);
 
 		for param in &self.parameters {
-			param.as_dyn().load(&mut bytes)?;
+			param.as_dyn().load(&mut reader)?;
 		}
 
-		self.scheduler.load(py, &mut bytes)?;
+		self.scheduler.load(py, &mut reader)?;
 
-		self.rng.get().load(&mut bytes)?;
+		self.rng.get().load(&mut reader)?;
 
 		// update calculators
 		self.likelihood.likelihood()?;
@@ -245,14 +248,15 @@ impl Mcmc {
 		&self.scheduler
 	}
 
-	fn dump(&self, py: Python, writer: &mut dyn Write) -> Result<()> {
-		verbatim::write_tag(writer, &STATE_TAG)?;
-		verbatim::write_u32_le(writer, STATE_PROTOCOL_VERSION)?;
-		verbatim::write_u64_le(
-			writer,
-			*self.current_step.lock() as u64,
-		)?;
-		verbatim::write_f64_le(writer, self.posterior.load())?;
+	fn dump(
+		&self,
+		py: Python,
+		writer: &mut DynVerbatimWriter<'_>,
+	) -> Result<()> {
+		writer.write_tag(STATE_TAG)?;
+		writer.write_u32(STATE_PROTOCOL_VERSION)?;
+		writer.write_u64(*self.current_step.lock() as u64)?;
+		writer.write_f64(self.posterior.load())?;
 
 		for parameter in &self.parameters {
 			parameter.as_dyn().dump(writer)?;

@@ -1,8 +1,8 @@
 use anyhow::{Result, ensure};
 use parking_lot::Mutex;
 use pyo3::prelude::*;
-
-use std::{io::Write, ops::Index, slice::Iter};
+use std::{ops::Index, slice::Iter};
+use verbatim::{DynVerbatimWriter, VerbatimReader};
 
 use super::Parameter;
 use crate::impl_pyparameter_common;
@@ -63,22 +63,25 @@ impl Parameter for ClassVector {
 		self.classes.reject()
 	}
 
-	fn load(&mut self, bytes: &mut &[u8]) -> Result<()> {
+	fn load(
+		&mut self,
+		reader: &mut VerbatimReader<&mut &[u8]>,
+	) -> Result<()> {
 		for i in 0..self.len() {
 			self.set(i, 0);
 		}
 		self.accept();
 
 		for i in 0..self.len() {
-			let c = verbatim::read_u32_le(bytes)?;
+			let c = reader.read_u32()?;
 			self.set(i, c);
 		}
 		Ok(())
 	}
 
-	fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+	fn dump(&self, writer: &mut DynVerbatimWriter<'_>) -> Result<()> {
 		for i in 0..self.len() {
-			verbatim::write_u32_le(writer, self[i])?;
+			writer.write_u32(self[i])?;
 		}
 		Ok(())
 	}

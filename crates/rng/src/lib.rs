@@ -6,8 +6,7 @@ use rand::{
 	distr::uniform::{UniformFloat, UniformSampler},
 };
 use rand_pcg::Pcg64;
-
-use std::io::Write;
+use verbatim::{DynVerbatimWriter, VerbatimReader};
 
 use util::seconds_since_unix;
 
@@ -34,17 +33,20 @@ impl PyRng {
 		self.inner.lock()
 	}
 
-	pub fn load(&self, bytes: &mut &[u8]) -> Result<()> {
-		let state = verbatim::read_u128_le(bytes)?;
-		let increment = verbatim::read_u128_le(bytes)?;
+	pub fn load(
+		&self,
+		reader: &mut VerbatimReader<&mut &[u8]>,
+	) -> Result<()> {
+		let state = reader.read_u128()?;
+		let increment = reader.read_u128()?;
 		*self.inner() = Pcg64::from_state(state, increment);
 		Ok(())
 	}
 
-	pub fn dump(&self, writer: &mut dyn Write) -> Result<()> {
+	pub fn dump(&self, writer: &mut DynVerbatimWriter<'_>) -> Result<()> {
 		let inner = self.inner();
-		verbatim::write_u128_le(writer, inner.state())?;
-		verbatim::write_u128_le(writer, inner.stream())?;
+		writer.write_u128(inner.state())?;
+		writer.write_u128(inner.stream())?;
 		Ok(())
 	}
 }

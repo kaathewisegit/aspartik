@@ -123,6 +123,9 @@ macro_rules! writer_primitive_le {
 	};
 }
 
+/// [`VerbatimWriter`] backed by a borrowed [`Write`] trait object
+pub type DynVerbatimWriter<'a> = VerbatimWriter<&'a mut (dyn Write + 'a)>;
+
 impl<W: Write> VerbatimWriter<W> {
 	pub fn new(writer: W) -> Self {
 		Self { writer, written: 0 }
