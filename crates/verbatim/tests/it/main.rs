@@ -39,6 +39,22 @@ padding_test!(f32_padding, write_f32, 4, f32);
 padding_test!(f64_padding, write_f64, 8, f64);
 
 #[test]
+fn tag() {
+	const TAG: [u8; 4] = *b"TAG!";
+
+	let mut writer = VerbatimWriter::new(Vec::new());
+	writer.write_tag(TAG).unwrap();
+	assert_eq!(writer.into_inner(), TAG);
+
+	let mut reader = VerbatimReader::new(TAG.as_slice());
+	reader.read_tag(TAG).unwrap();
+	assert!(reader.into_inner().is_empty());
+
+	let mut reader = VerbatimReader::new(b"nope".as_slice());
+	assert!(reader.read_tag(TAG).is_err());
+}
+
+#[test]
 fn slice() {
 	arbtest(|u: &mut Unstructured<'_>| {
 		let slice = Vec::<u16>::arbitrary(u)?;

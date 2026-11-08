@@ -157,6 +157,15 @@ impl<W: Write> VerbatimWriter<W> {
 		self.write_u8(u8::from(value))
 	}
 
+	pub fn write_tag<const N: usize>(
+		&mut self,
+		tag: [u8; N],
+	) -> IoResult<()> {
+		self.writer.write_all(&tag)?;
+		self.written += N;
+		Ok(())
+	}
+
 	pub fn write_slice<T>(&mut self, slice: &[T]) -> IoResult<()>
 	where
 		T: NoUninit,
@@ -241,6 +250,23 @@ impl<R: Read + BufRead> VerbatimReader<R> {
 				ErrorKind::InvalidData,
 				format!("invalid boolean value: {value:x}"),
 			)),
+		}
+	}
+
+	pub fn read_tag<const N: usize>(
+		&mut self,
+		tag: [u8; N],
+	) -> IoResult<()> {
+		let bytes = self.reader.fill_buf()?;
+		if bytes.starts_with(&tag) {
+			self.reader.consume(N);
+			self.read += N;
+			Ok(())
+		} else {
+			Err(IoError::new(
+				ErrorKind::InvalidData,
+				format!("expected tag: {tag:?}"),
+			))
 		}
 	}
 
