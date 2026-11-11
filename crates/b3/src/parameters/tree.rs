@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail, ensure};
-use bytemuck::{allocation::cast_vec, cast_slice, cast_slice_mut};
+use bytemuck::allocation::cast_vec;
 use computare_buffer::Buffer;
 use parking_lot::Mutex;
 use picoarrow::array::{Array, ArrayUtf8, Nullable};
@@ -899,17 +899,16 @@ impl DatedTree {
 		&self.heights
 	}
 
-	fn load_heights(&mut self, bytes: &[u8]) {
-		let heights = self.heights.slice_mut();
-		cast_slice_mut(heights).copy_from_slice(bytes);
+	fn load_heights(&mut self, heights: &[f64]) {
+		self.heights.slice_mut().copy_from_slice(heights);
 	}
 
-	fn load_parents(&mut self, bytes: &[u8]) -> Result<()> {
+	fn load_parents(&mut self, loaded_parents: &[u32]) -> Result<()> {
 		let num_leaves = self.num_leaves();
 		let num_nodes = self.num_nodes();
 
 		let parents = self.parents.slice_mut();
-		cast_slice_mut(parents).copy_from_slice(bytes);
+		parents.copy_from_slice(loaded_parents);
 
 		let children = self.children.slice_mut();
 		children.fill(TOMBSTONE);
@@ -1000,10 +999,10 @@ impl Parameter for DatedTree {
 		reader: &mut VerbatimReader<&mut &[u8]>,
 	) -> Result<()> {
 		let parents = reader.read_slice::<u32>()?;
-		self.load_parents(cast_slice(parents))?;
+		self.load_parents(parents)?;
 
 		let heights = reader.read_slice::<f64>()?;
-		self.load_heights(cast_slice(heights));
+		self.load_heights(heights);
 
 		self.mark_all_edges_updated();
 		Ok(())
@@ -1133,8 +1132,6 @@ impl_pyparameter_common!(PyDatedTree, DatedTree, {
 		self.inner().load_newick(&newick.inner())
 	}
 
-	/// TODO: proper alignment in storage so that `load_parents*` functions
-	/// can take typed slices.
 	fn load_parts(
 		&self,
 		py: Python,
@@ -1145,8 +1142,8 @@ impl_pyparameter_common!(PyDatedTree, DatedTree, {
 		let heights = heights.to_vec(py)?;
 
 		let mut inner = self.inner();
-		inner.load_parents(cast_slice(&parents))?;
-		inner.load_heights(cast_slice(&heights));
+		inner.load_parents(&parents)?;
+		inner.load_heights(&heights);
 
 		Ok(())
 	}
