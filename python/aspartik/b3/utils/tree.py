@@ -26,8 +26,8 @@ def trees_to_newick(
     tree = DatedTree(names, RNG(4))
     df = pl.read_ipc(trace_path)
 
-    for bytes in df["tree"]:
-        tree.load(bytes)
+    for parents, heights in zip(df[f"{tree_key}:parents"], df[f"{tree_key}:heights"]):
+        tree.load_parts(parents.to_numpy(), heights.to_numpy())
         dest.write(tree.to_binary().to_newick())
         dest.write("\n")
 

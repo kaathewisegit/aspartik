@@ -117,11 +117,13 @@ if __name__ == "__main__":
     plot_skyline_coalescent(
         fig,
         ax,
-        df["tree"],
+        df["tree:parents"],
+        df["tree:heights"],
         df["group_sizes"],
         df["population_sizes"],
         sequence_names,
         mode="hpd",
+        cred_mass=0.8,
     )
     ax.legend()
     fig.tight_layout()

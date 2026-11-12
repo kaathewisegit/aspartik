@@ -36,7 +36,7 @@ tree = DatedTree(msa.sequence_names(), rng)
 tree.set_random_heights(10, rng)
 
 become_uninfectious_rate = Real(1)
-reproductive_number = RealVector.repeat(2, 20)
+reproductive_number = RealVector.repeat(2, 10)
 sampling_proportion = Real(1)
 origin = Real(tree.height_of(tree.root) * 2)
 
@@ -123,6 +123,7 @@ if __name__ == "__main__":
         ax,
         df["reproductive_number"],
         origin=df["origin"],
+        cred_mass=0.8,
     )
     fig.tight_layout()
     fig.savefig("target/bdsky.png", dpi=300, bbox_inches="tight")

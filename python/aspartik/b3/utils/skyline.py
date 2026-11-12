@@ -19,7 +19,8 @@ Mode = Literal["traces", "hpd"]
 def plot_skyline_coalescent(
     fig: plt.Figure,
     ax: plt.Axes,
-    trees: pl.Series,
+    tree_parents: pl.Series,
+    tree_heights: pl.Series,
     group_sizes: pl.Series,
     values: pl.Series,
     sequence_names: TaxonSet,
@@ -37,8 +38,8 @@ def plot_skyline_coalescent(
     num_heights = len(tree.internal_heights())
 
     boundaries = []
-    for tree_state, group_size in zip(trees, group_sizes):
-        tree.load(tree_state)
+    for parents, heights, group_size in zip(tree_parents, tree_heights, group_sizes):
+        tree.load_parts(parents.to_numpy(), heights.to_numpy())
         internal_heights = tree.internal_heights()
 
         n = 0
