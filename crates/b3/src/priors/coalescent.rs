@@ -219,7 +219,8 @@ impl ExponentialGrowth {
 					(end - start) / pop
 				} else {
 					((end * gr).exp() - (start * gr).exp())
-						/ pop / gr
+						/ pop
+						/ gr
 				}
 			},
 		))

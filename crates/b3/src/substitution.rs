@@ -354,7 +354,9 @@ impl HKY {
 
 		let div = 2.0
 			* (g * t + a * c
-				+ a * t + c * g + kappa * (a * g + c * t));
+				+ a * t
+				+ c * g
+				+ kappa * (a * g + c * t));
 
 		for i in 0..4 {
 			self.q[i][i] = -self.q[i].iter().sum::<f64>();
@@ -526,8 +528,10 @@ impl GTR {
 		let mut gtr = RowMatrix::from_slice(&gtr, 4, 4);
 		let div = 2.0
 			* (a * p_a * p_c
-				+ b * p_a * p_g + c * p_a * p_t
-				+ d * p_c * p_g + e * p_c * p_t
+				+ b * p_a * p_g
+				+ c * p_a * p_t
+				+ d * p_c * p_g
+				+ e * p_c * p_t
 				+ f * p_g * p_t);
 		gtr.for_each_mut(|element| *element /= div);
 

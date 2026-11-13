@@ -156,7 +156,8 @@ impl Item {
 				..
 			} => {
 				parents.memory_size()
-					+ heights.memory_size() + length.memory_size()
+					+ heights.memory_size()
+					+ length.memory_size()
 					+ height.memory_size()
 			}
 		}

@@ -713,12 +713,11 @@ impl TripletCounter {
 			let left = self.counting.pop().unwrap();
 			let blue = left.blue + right.blue;
 			shared += u128::from(choose2_u64(left.red))
-				* u128::from(right.blue) + u128::from(
-				choose2_u64(left.blue),
-			) * u128::from(
-				right.red,
-			) + u128::from(left.red)
-				* u128::from(choose2_u64(right.blue))
+				* u128::from(right.blue)
+				+ u128::from(choose2_u64(left.blue))
+					* u128::from(right.red)
+				+ u128::from(left.red)
+					* u128::from(choose2_u64(right.blue))
 				+ u128::from(left.blue)
 					* u128::from(choose2_u64(right.red))
 				+ u128::from(node.same_red) * u128::from(blue)
@@ -839,10 +838,10 @@ impl TripletCounter {
 						+ self.prune_states[right].red
 						+ node.red;
 					let same_red = self.prune_states[left]
-						.same_red + self
-						.prune_states[right]
-						.same_red + node
-						.same_red;
+						.same_red
+						+ self.prune_states[right]
+							.same_red
+						+ node.same_red;
 					let contract_index = new_start
 						+ self.prune_states[kept]
 							.position();

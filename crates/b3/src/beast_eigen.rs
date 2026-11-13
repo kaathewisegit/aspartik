@@ -313,9 +313,8 @@ impl DefaultEigenSystem {
 					}
 					tst1 = p.abs()
 						* (h.at(m - 2, m - 2).abs()
-							+ z.abs() + h
-							.at(m, m)
-							.abs());
+							+ z.abs()
+							+ h.at(m, m).abs());
 					tst2 = tst1 + h.at(m - 1, m - 2).abs()
 						* (q.abs() + r.abs());
 					if tst2 == tst1 {
@@ -352,11 +351,13 @@ impl DefaultEigenSystem {
 					if x != 0.0 {
 						if p < 0.0 {
 							s = -(p * p
-								+ q * q + r * r)
+								+ q * q
+								+ r * r)
 								.sqrt();
 						} else {
 							s = (p * p
-								+ q * q + r * r)
+								+ q * q
+								+ r * r)
 								.sqrt();
 						}
 						if k != m {
@@ -368,7 +369,10 @@ impl DefaultEigenSystem {
 							*h.at_mut(
 								k - 1,
 								k - 2,
-							) = -*h.at(k - 1, k - 2);
+							) = -*h.at(
+								k - 1,
+								k - 2,
+							);
 						}
 						p += s;
 						x = p / s;

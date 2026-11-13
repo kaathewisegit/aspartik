@@ -1,3 +1,5 @@
+#![allow(clippy::needless_range_loop)]
+
 pub mod beast_eigen;
 pub mod calculator;
 pub mod callback;

@@ -66,7 +66,8 @@ impl<C: Character> ToString for Record<C> {
 		// newline after description + one newline per 80 seq characters
 		// + final newline
 		let capacity = self.description.len()
-			+ 1 + self.sequence().len()
+			+ 1
+			+ self.sequence().len()
 			+ self.sequence().len() / 80
 			+ 1;
 		let mut out = String::with_capacity(capacity);

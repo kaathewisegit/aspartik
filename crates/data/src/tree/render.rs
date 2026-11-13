@@ -120,7 +120,8 @@ impl BinaryTree {
 			let [left, right] = self.children_of(internal);
 			coordinates[node.usize()].y =
 				(coordinates[left.usize()].y
-					+ coordinates[right.usize()].y) / 2.0;
+					+ coordinates[right.usize()].y)
+					/ 2.0;
 		}
 		Ok(TreeLayout {
 			width: distances.into_iter().fold(0.0, f64::max),
@@ -241,7 +242,8 @@ impl BinaryTree {
 				content_width = content_width.max(x
 					+ label_gap
 					+ options.font_size
-						* 0.6 * name.chars().count() as f64);
+						* 0.6
+						* name.chars().count() as f64);
 			}
 		}
 		let width = content_width + options.margin * 2.0;
@@ -413,7 +415,8 @@ fn separate_subtrees(
 	while let (Some(upper_node), Some(lower_node)) = (upper, lower) {
 		let distance = upper_modifiers
 			+ state[upper_node.usize()].preliminary
-			+ separation - lower_modifiers
+			+ separation
+			- lower_modifiers
 			- state[lower_node.usize()].preliminary;
 		if (first && distance < 0.0) || distance > 0.0 {
 			lower_modifiers += distance;
