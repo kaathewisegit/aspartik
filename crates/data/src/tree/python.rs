@@ -11,6 +11,8 @@ use crate::tree::{
 use rng::PyRng;
 use util::py_bail;
 
+use super::distances::validate_triplet_num_leaves;
+
 impl<'py> FromPyObject<'_, 'py> for Node {
 	type Error = PyErr;
 
@@ -473,13 +475,14 @@ impl PyBinaryTree {
 		branch_score(&self.inner, &other.inner)
 	}
 
-	fn triplet_distance(&self, other: &PyBinaryTree) -> Result<u128> {
+	fn triplet_distance(&self, other: &PyBinaryTree) -> Result<u64> {
 		ensure!(
 			self.inner.num_leaves() == other.inner.num_leaves(),
 			"Expected both trees to have {} leaves, got {}",
 			self.inner.num_leaves(),
 			other.inner.num_leaves()
 		);
+		validate_triplet_num_leaves(self.inner.num_leaves())?;
 		Ok(self.inner.triplet_distance(&other.inner))
 	}
 
@@ -565,11 +568,7 @@ pub fn py_triplet_distance_matrix(
 			.collect::<Vec<_>>();
 		triplet_distance_matrix(&trees, num_threads)
 	})?;
-	let mut flat = Vec::<u64>::with_capacity(distances.num_elements());
-	for &distance in distances.as_slice() {
-		flat.push(u64::try_from(distance)?);
-	}
-	let flat_bytes: &[u8] = bytemuck::cast_slice(&flat);
+	let flat_bytes: &[u8] = bytemuck::cast_slice(distances.as_slice());
 	let array_module = py.import("array")?;
 	let py_array = array_module.call_method1("array", ("Q",))?;
 	py_array.call_method1("frombytes", (flat_bytes,))?;

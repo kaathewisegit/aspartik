@@ -121,6 +121,30 @@ def test_triplet_distance():
     assert first.triplet_distance(second) == second.triplet_distance(first)
 
 
+@pytest.mark.parametrize("num_leaves", [2, 3, 4, 100, 5_000])
+def test_triplet_reversed_ladders(num_leaves):
+    taxa = TaxonSet.ranged_ints(num_leaves)
+
+    def ladder(labels):
+        return (
+            "(" * (num_leaves - 1)
+            + f"{labels[0]},{labels[1]})"
+            + "".join(f",{label})" for label in labels[2:])
+            + ";"
+        )
+
+    labels = list(taxa)
+    first = BinaryTree.from_newick(ladder(labels), taxa)
+    second = BinaryTree.from_newick(ladder(labels[::-1]), taxa)
+    expected = num_leaves * (num_leaves - 1) * (num_leaves - 2) // 6
+    assert first.triplet_distance(second) == expected
+    assert second.triplet_distance(first) == expected
+    assert first.triplet_distance(first) == 0
+    assert triplet_distance_matrix([first, second], 2) == array(
+        "Q", [0, expected, expected, 0]
+    )
+
+
 def test_triplet_distance_rejects_leaf_count_mismatch():
     first = BinaryTree.random(TaxonSet.ranged_ints(10), RNG(4))
     second = BinaryTree.random(TaxonSet.ranged_ints(11), RNG(5))
@@ -139,8 +163,11 @@ def test_triplet_distance_matrix():
         "Q",
         [first.triplet_distance(second) for first in trees for second in trees],
     )
-    assert triplet_distance_matrix(trees) == expected
-    assert triplet_distance_matrix(trees, 1) == expected
+    for threads in (None, 1, 2, 4):
+        result = triplet_distance_matrix(trees, threads)
+        assert result == expected
+        assert result.typecode == "Q"
+        assert result.itemsize == 8
     assert triplet_distance_matrix([]) == array("Q", [])
     assert triplet_distance_matrix(trees[:1]) == array("Q", [0])
 

@@ -316,8 +316,9 @@ impl BinaryTree {
 	///
 	/// Time is O(n log n) for trees with n leaves. See
 	/// <https://doi.org/10.4230/LIPIcs.ESA.2017.21>.
-	pub fn triplet_distance(&self, other: &Self) -> u128 {
+	pub fn triplet_distance(&self, other: &Self) -> u64 {
 		assert_eq!(self.num_leaves(), other.num_leaves());
+		validate_triplet_num_leaves(self.num_leaves()).unwrap();
 
 		if self.num_leaves() < 3 {
 			return 0;
@@ -334,12 +335,13 @@ impl BinaryTree {
 pub fn triplet_distance_matrix(
 	trees: &[&BinaryTree],
 	num_threads: Option<usize>,
-) -> Result<RowMatrix<u128>> {
+) -> Result<RowMatrix<u64>> {
 	let Some(first_tree) = trees.first() else {
 		return Ok(RowMatrix::empty());
 	};
 
 	let num_leaves = first_tree.num_leaves();
+	validate_triplet_num_leaves(num_leaves)?;
 	for tree in &trees[1..] {
 		ensure!(
 			tree.num_leaves() == num_leaves,
@@ -598,7 +600,7 @@ impl TripletCounter {
 		(centroids, leaf_order)
 	}
 
-	fn distance(mut self) -> u128 {
+	fn distance(mut self) -> u64 {
 		let shared = self.count_component(0, 0);
 		choose3(self.num_leaves) - shared
 	}
@@ -620,7 +622,7 @@ impl TripletCounter {
 		}
 	}
 
-	fn count_component(&mut self, root: u32, excluded_size: u32) -> u128 {
+	fn count_component(&mut self, root: u32, excluded_size: u32) -> u64 {
 		let centroid = self.find_centroid(root, excluded_size);
 		let node = self.centroids[centroid as usize];
 		self.centroids[centroid as usize].alive = false;
@@ -688,7 +690,7 @@ impl TripletCounter {
 		self.colors = colors;
 	}
 
-	fn count_shared(&mut self) -> u128 {
+	fn count_shared(&mut self) -> u64 {
 		self.counting.clear();
 		let mut shared = 0;
 		for index in self.current_start..self.current_end {
@@ -698,7 +700,7 @@ impl TripletCounter {
 					self.colors.is_blue(node.leaf),
 				);
 				if blue == 1 {
-					shared += u128::from(node.same_red);
+					shared += node.same_red;
 				}
 				self.counting.push(TripletLeafCounts {
 					red: u64::from(
@@ -712,17 +714,12 @@ impl TripletCounter {
 			let right = self.counting.pop().unwrap();
 			let left = self.counting.pop().unwrap();
 			let blue = left.blue + right.blue;
-			shared += u128::from(choose2_u64(left.red))
-				* u128::from(right.blue)
-				+ u128::from(choose2_u64(left.blue))
-					* u128::from(right.red)
-				+ u128::from(left.red)
-					* u128::from(choose2_u64(right.blue))
-				+ u128::from(left.blue)
-					* u128::from(choose2_u64(right.red))
-				+ u128::from(node.same_red) * u128::from(blue)
-				+ u128::from(node.red)
-					* u128::from(choose2_u64(blue));
+			shared += choose2_u64(left.red) * right.blue
+				+ choose2_u64(left.blue) * right.red
+				+ left.red * choose2_u64(right.blue)
+				+ left.blue * choose2_u64(right.red)
+				+ node.same_red * blue
+				+ node.red * choose2_u64(blue);
 			self.counting.push(TripletLeafCounts {
 				red: left.red + right.red + node.red,
 				blue,
@@ -887,7 +884,107 @@ fn choose2_u64(value: u64) -> u64 {
 	value * value.saturating_sub(1) / 2
 }
 
-fn choose3(value: u32) -> u128 {
-	let value = u128::from(value);
-	value * value.saturating_sub(1) * value.saturating_sub(2) / 6
+pub(super) fn validate_triplet_num_leaves(num_leaves: u32) -> Result<()> {
+	ensure!(
+		num_leaves <= 4_801_280,
+		"Triplet distance supports at most 4801280 leaves, got {num_leaves}"
+	);
+	Ok(())
+}
+
+fn choose3(value: u32) -> u64 {
+	let mut factors = [
+		u64::from(value),
+		u64::from(value.saturating_sub(1)),
+		u64::from(value.saturating_sub(2)),
+	];
+	for divisor in [2, 3] {
+		let factor = factors
+			.iter_mut()
+			.find(|n| **n % divisor == 0)
+			.unwrap();
+		*factor /= divisor;
+	}
+	factors.into_iter().product()
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn wide_choose3(value: u32) -> u128 {
+		let value = u128::from(value);
+		value * value.saturating_sub(1) * value.saturating_sub(2) / 6
+	}
+
+	#[test]
+	fn triplet_limit() {
+		assert!(validate_triplet_num_leaves(4_801_280).is_ok());
+		assert!(validate_triplet_num_leaves(4_801_281).is_err());
+		assert!(validate_triplet_num_leaves(u32::MAX).is_err());
+		assert!(wide_choose3(4_801_280) <= u128::from(u64::MAX));
+		assert!(wide_choose3(4_801_281) > u128::from(u64::MAX));
+		assert_eq!(choose3(4_801_280), 18_446_738_006_366_306_560);
+	}
+
+	#[test]
+	fn triplet_combinations() {
+		for value in (0..=10_000).chain(4_791_280..=4_801_280) {
+			assert_eq!(
+				u128::from(choose3(value)),
+				wide_choose3(value)
+			);
+			let pairs = u128::from(value)
+				* u128::from(value.saturating_sub(1))
+				/ 2;
+			assert_eq!(
+				u128::from(choose2_u64(u64::from(value))),
+				pairs
+			);
+		}
+	}
+
+	#[test]
+	fn weighted_triplet_counts_at_limit() {
+		for blue in [2, 3, 10, 100, 1_000] {
+			let red = 4_801_280 - blue;
+			let contracts =
+				(0..blue)
+					.flat_map(|leaf| {
+						let mut nodes = vec![TripletContractNode::leaf(leaf)];
+						if leaf > 0 {
+							nodes.push(TripletContractNode::internal());
+						}
+						nodes
+					})
+					.collect::<Vec<_>>();
+			let mut counter = TripletCounter {
+				centroids: Vec::new(),
+				current_start: 0,
+				current_end: contracts.len(),
+				contracts,
+				colors: TripletColors {
+					red_min: u32::MAX,
+					red_max: u32::MAX,
+					blue_min: 0,
+					blue_max: blue - 1,
+				},
+				counting: Vec::new(),
+				keep_states: Vec::new(),
+				prune_states: Vec::new(),
+				num_leaves: 4_801_280,
+			};
+			let root = counter.contracts.last_mut().unwrap();
+			root.red = red.into();
+			root.same_red = choose2_u64(red.into());
+			let red = u128::from(red);
+			let blue = u128::from(blue);
+			let expected = red * red.saturating_sub(1) / 2 * blue
+				+ red * blue * (blue - 1) / 2;
+			assert_eq!(
+				u128::from(counter.count_shared()),
+				expected
+			);
+		}
+	}
 }
