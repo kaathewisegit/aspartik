@@ -1,5 +1,7 @@
 use arbitrary::{Arbitrary, Unstructured};
 use arbtest::arbtest;
+use computare_buffer::Buffer;
+use picoarrow::array::{ArrayUtf8, Nullable};
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
@@ -70,20 +72,32 @@ fn reference_triplet(first: &BinaryTree, second: &BinaryTree) -> u64 {
 }
 
 #[test]
-fn triplet_matches_enumeration() {
+fn triplet_arbitrary() {
 	arbtest(|u: &mut Unstructured<'_>| {
-		let num_leaves = u.int_in_range(2..=25)?;
+		let num_leaves = u.int_in_range(2..=100)?;
 		let mut rng = Pcg64::seed_from_u64(u64::arbitrary(u)?);
 		let taxa = TaxonSet::ranged_ints(num_leaves);
 		let first = BinaryTree::random(taxa.clone(), &mut rng).unwrap();
 		let second = BinaryTree::random(taxa, &mut rng).unwrap();
 		let expected = reference_triplet(&first, &second);
-		let actual: u64 = first.triplet_distance(&second);
+		let actual: u64 = first.triplet_distance(&second).unwrap();
 		assert_eq!(actual, expected);
-		assert_eq!(second.triplet_distance(&first), expected);
-		assert_eq!(first.triplet_distance(&first), 0);
+		assert_eq!(second.triplet_distance(&first).unwrap(), expected);
+		assert_eq!(first.triplet_distance(&first).unwrap(), 0);
 		Ok(())
 	});
+}
+
+#[test]
+fn triplet_hundred_leaves() {
+	let mut rng = Pcg64::seed_from_u64(4);
+	let taxa = TaxonSet::ranged_ints(100);
+	let first = BinaryTree::random(taxa.clone(), &mut rng).unwrap();
+	let second = BinaryTree::random(taxa, &mut rng).unwrap();
+	assert_eq!(
+		first.triplet_distance(&second).unwrap(),
+		reference_triplet(&first, &second)
+	);
 }
 
 #[test]
@@ -118,5 +132,44 @@ fn triplet_matrix_thread_counts() {
 			.unwrap()
 			.as_slice(),
 		[0]
+	);
+}
+
+#[test]
+fn triplet_limit() {
+	let choose3 = |n: u128| n * (n - 1) * (n - 2) / 6;
+	assert_eq!(choose3(4_801_280), 18_446_738_006_366_306_560);
+	assert!(choose3(4_801_280) <= u128::from(u64::MAX));
+	assert!(choose3(4_801_281) > u128::from(u64::MAX));
+	for num_leaves in [0, 1, 4_801_281, u32::MAX] {
+		let tree = BinaryTree::new(
+			num_leaves,
+			0,
+			Buffer::empty(),
+			Buffer::empty(),
+			Buffer::empty(),
+			TaxonSet::ranged_ints(0),
+			ArrayUtf8::<Nullable>::new(),
+		);
+		assert!(tree.triplet_distance(&tree).is_err());
+		assert!(triplet_distance_matrix(&[&tree], Some(1)).is_err());
+	}
+}
+
+#[test]
+fn triplet_leaf_counts() {
+	let mut rng = Pcg64::seed_from_u64(4);
+	let first =
+		BinaryTree::random(TaxonSet::ranged_ints(2), &mut rng).unwrap();
+	let second =
+		BinaryTree::random(TaxonSet::ranged_ints(3), &mut rng).unwrap();
+	assert_eq!(first.triplet_distance(&first).unwrap(), 0);
+	assert!(first.triplet_distance(&second).is_err());
+	assert!(second.triplet_distance(&first).is_err());
+	assert_eq!(
+		triplet_distance_matrix(&[&first, &first], Some(2))
+			.unwrap()
+			.as_slice(),
+		[0; 4]
 	);
 }

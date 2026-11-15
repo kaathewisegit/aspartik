@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow, ensure};
+use anyhow::{Result, anyhow};
 use parking_lot::{Mutex, MutexGuard};
 use pyo3::{exceptions::PyTypeError, prelude::*, types::PyType};
 
@@ -10,8 +10,6 @@ use crate::tree::{
 };
 use rng::PyRng;
 use util::py_bail;
-
-use super::distances::validate_triplet_num_leaves;
 
 impl<'py> FromPyObject<'_, 'py> for Node {
 	type Error = PyErr;
@@ -476,14 +474,7 @@ impl PyBinaryTree {
 	}
 
 	fn triplet_distance(&self, other: &PyBinaryTree) -> Result<u64> {
-		ensure!(
-			self.inner.num_leaves() == other.inner.num_leaves(),
-			"Expected both trees to have {} leaves, got {}",
-			self.inner.num_leaves(),
-			other.inner.num_leaves()
-		);
-		validate_triplet_num_leaves(self.inner.num_leaves())?;
-		Ok(self.inner.triplet_distance(&other.inner))
+		self.inner.triplet_distance(&other.inner)
 	}
 
 	fn __len__(&self) -> usize {

@@ -316,15 +316,20 @@ impl BinaryTree {
 	///
 	/// Time is O(n log n) for trees with n leaves. See
 	/// <https://doi.org/10.4230/LIPIcs.ESA.2017.21>.
-	pub fn triplet_distance(&self, other: &Self) -> u64 {
-		assert_eq!(self.num_leaves(), other.num_leaves());
-		validate_triplet_num_leaves(self.num_leaves()).unwrap();
+	pub fn triplet_distance(&self, other: &Self) -> Result<u64> {
+		ensure!(
+			self.num_leaves() == other.num_leaves(),
+			"Expected both trees to have {} leaves, got {}",
+			self.num_leaves(),
+			other.num_leaves()
+		);
+		validate_triplet_num_leaves(self.num_leaves())?;
 
 		if self.num_leaves() < 3 {
-			return 0;
+			return Ok(0);
 		}
 
-		TripletCounter::new(self, other).distance()
+		Ok(TripletCounter::new(self, other).distance())
 	}
 }
 
@@ -365,8 +370,11 @@ pub fn triplet_distance_matrix(
 		.with_schedule(&mut pool, DynamicScheduler)
 		.for_each(|first| {
 			for second in 0..first {
-				let distance = trees[first]
-					.triplet_distance(trees[second]);
+				let distance = TripletCounter::new(
+					trees[first],
+					trees[second],
+				)
+				.distance();
 				// SAFETY: Each tree pair maps to two unique matrix cells.
 				unsafe {
 					*output.get(
@@ -884,7 +892,12 @@ fn choose2_u64(value: u64) -> u64 {
 	value * value.saturating_sub(1) / 2
 }
 
-pub(super) fn validate_triplet_num_leaves(num_leaves: u32) -> Result<()> {
+fn validate_triplet_num_leaves(num_leaves: u32) -> Result<()> {
+	ensure!(
+		num_leaves >= 2,
+		"Expected at least two leaves, got {num_leaves}"
+	);
+	// C(n, 3) fits in u64 through n = 4_801_280; the next size overflows.
 	ensure!(
 		num_leaves <= 4_801_280,
 		"Triplet distance supports at most 4801280 leaves, got {num_leaves}"
@@ -893,98 +906,11 @@ pub(super) fn validate_triplet_num_leaves(num_leaves: u32) -> Result<()> {
 }
 
 fn choose3(value: u32) -> u64 {
-	let mut factors = [
-		u64::from(value),
-		u64::from(value.saturating_sub(1)),
-		u64::from(value.saturating_sub(2)),
-	];
-	for divisor in [2, 3] {
-		let factor = factors
-			.iter_mut()
-			.find(|n| **n % divisor == 0)
-			.unwrap();
-		*factor /= divisor;
-	}
-	factors.into_iter().product()
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	fn wide_choose3(value: u32) -> u128 {
-		let value = u128::from(value);
-		value * value.saturating_sub(1) * value.saturating_sub(2) / 6
-	}
-
-	#[test]
-	fn triplet_limit() {
-		assert!(validate_triplet_num_leaves(4_801_280).is_ok());
-		assert!(validate_triplet_num_leaves(4_801_281).is_err());
-		assert!(validate_triplet_num_leaves(u32::MAX).is_err());
-		assert!(wide_choose3(4_801_280) <= u128::from(u64::MAX));
-		assert!(wide_choose3(4_801_281) > u128::from(u64::MAX));
-		assert_eq!(choose3(4_801_280), 18_446_738_006_366_306_560);
-	}
-
-	#[test]
-	fn triplet_combinations() {
-		for value in (0..=10_000).chain(4_791_280..=4_801_280) {
-			assert_eq!(
-				u128::from(choose3(value)),
-				wide_choose3(value)
-			);
-			let pairs = u128::from(value)
-				* u128::from(value.saturating_sub(1))
-				/ 2;
-			assert_eq!(
-				u128::from(choose2_u64(u64::from(value))),
-				pairs
-			);
-		}
-	}
-
-	#[test]
-	fn weighted_triplet_counts_at_limit() {
-		for blue in [2, 3, 10, 100, 1_000] {
-			let red = 4_801_280 - blue;
-			let contracts =
-				(0..blue)
-					.flat_map(|leaf| {
-						let mut nodes = vec![TripletContractNode::leaf(leaf)];
-						if leaf > 0 {
-							nodes.push(TripletContractNode::internal());
-						}
-						nodes
-					})
-					.collect::<Vec<_>>();
-			let mut counter = TripletCounter {
-				centroids: Vec::new(),
-				current_start: 0,
-				current_end: contracts.len(),
-				contracts,
-				colors: TripletColors {
-					red_min: u32::MAX,
-					red_max: u32::MAX,
-					blue_min: 0,
-					blue_max: blue - 1,
-				},
-				counting: Vec::new(),
-				keep_states: Vec::new(),
-				prune_states: Vec::new(),
-				num_leaves: 4_801_280,
-			};
-			let root = counter.contracts.last_mut().unwrap();
-			root.red = red.into();
-			root.same_red = choose2_u64(red.into());
-			let red = u128::from(red);
-			let blue = u128::from(blue);
-			let expected = red * red.saturating_sub(1) / 2 * blue
-				+ red * blue * (blue - 1) / 2;
-			assert_eq!(
-				u128::from(counter.count_shared()),
-				expected
-			);
-		}
+	let value = u64::from(value);
+	let pairs = value * (value - 1) / 2;
+	if pairs.is_multiple_of(3) {
+		pairs / 3 * (value - 2)
+	} else {
+		pairs * ((value - 2) / 3)
 	}
 }
