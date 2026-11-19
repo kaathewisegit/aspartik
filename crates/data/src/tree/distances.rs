@@ -316,14 +316,20 @@ impl BinaryTree {
 	///
 	/// Time is O(n log n) for trees with n leaves. See
 	/// <https://doi.org/10.4230/LIPIcs.ESA.2017.21>.
-	pub fn triplet_distance(&self, other: &Self) -> u128 {
-		assert_eq!(self.num_leaves(), other.num_leaves());
+	pub fn triplet_distance(&self, other: &Self) -> Result<u64> {
+		ensure!(
+			self.num_leaves() == other.num_leaves(),
+			"Expected both trees to have {} leaves, got {}",
+			self.num_leaves(),
+			other.num_leaves()
+		);
+		validate_triplet_num_leaves(self.num_leaves())?;
 
 		if self.num_leaves() < 3 {
-			return 0;
+			return Ok(0);
 		}
 
-		TripletCounter::new(self, other).distance()
+		Ok(TripletCounter::new(self, other).distance())
 	}
 }
 
@@ -334,12 +340,13 @@ impl BinaryTree {
 pub fn triplet_distance_matrix(
 	trees: &[&BinaryTree],
 	num_threads: Option<usize>,
-) -> Result<RowMatrix<u128>> {
+) -> Result<RowMatrix<u64>> {
 	let Some(first_tree) = trees.first() else {
 		return Ok(RowMatrix::empty());
 	};
 
 	let num_leaves = first_tree.num_leaves();
+	validate_triplet_num_leaves(num_leaves)?;
 	for tree in &trees[1..] {
 		ensure!(
 			tree.num_leaves() == num_leaves,
@@ -363,8 +370,11 @@ pub fn triplet_distance_matrix(
 		.with_schedule(&mut pool, DynamicScheduler)
 		.for_each(|first| {
 			for second in 0..first {
-				let distance = trees[first]
-					.triplet_distance(trees[second]);
+				let distance = TripletCounter::new(
+					trees[first],
+					trees[second],
+				)
+				.distance();
 				// SAFETY: Each tree pair maps to two unique matrix cells.
 				unsafe {
 					*output.get(
@@ -598,7 +608,7 @@ impl TripletCounter {
 		(centroids, leaf_order)
 	}
 
-	fn distance(mut self) -> u128 {
+	fn distance(mut self) -> u64 {
 		let shared = self.count_component(0, 0);
 		choose3(self.num_leaves) - shared
 	}
@@ -620,7 +630,7 @@ impl TripletCounter {
 		}
 	}
 
-	fn count_component(&mut self, root: u32, excluded_size: u32) -> u128 {
+	fn count_component(&mut self, root: u32, excluded_size: u32) -> u64 {
 		let centroid = self.find_centroid(root, excluded_size);
 		let node = self.centroids[centroid as usize];
 		self.centroids[centroid as usize].alive = false;
@@ -688,7 +698,7 @@ impl TripletCounter {
 		self.colors = colors;
 	}
 
-	fn count_shared(&mut self) -> u128 {
+	fn count_shared(&mut self) -> u64 {
 		self.counting.clear();
 		let mut shared = 0;
 		for index in self.current_start..self.current_end {
@@ -698,7 +708,7 @@ impl TripletCounter {
 					self.colors.is_blue(node.leaf),
 				);
 				if blue == 1 {
-					shared += u128::from(node.same_red);
+					shared += node.same_red;
 				}
 				self.counting.push(TripletLeafCounts {
 					red: u64::from(
@@ -712,17 +722,12 @@ impl TripletCounter {
 			let right = self.counting.pop().unwrap();
 			let left = self.counting.pop().unwrap();
 			let blue = left.blue + right.blue;
-			shared += u128::from(choose2_u64(left.red))
-				* u128::from(right.blue)
-				+ u128::from(choose2_u64(left.blue))
-					* u128::from(right.red)
-				+ u128::from(left.red)
-					* u128::from(choose2_u64(right.blue))
-				+ u128::from(left.blue)
-					* u128::from(choose2_u64(right.red))
-				+ u128::from(node.same_red) * u128::from(blue)
-				+ u128::from(node.red)
-					* u128::from(choose2_u64(blue));
+			shared += choose2_u64(left.red) * right.blue
+				+ choose2_u64(left.blue) * right.red
+				+ left.red * choose2_u64(right.blue)
+				+ left.blue * choose2_u64(right.red)
+				+ node.same_red * blue
+				+ node.red * choose2_u64(blue);
 			self.counting.push(TripletLeafCounts {
 				red: left.red + right.red + node.red,
 				blue,
@@ -887,7 +892,32 @@ fn choose2_u64(value: u64) -> u64 {
 	value * value.saturating_sub(1) / 2
 }
 
-fn choose3(value: u32) -> u128 {
-	let value = u128::from(value);
-	value * value.saturating_sub(1) * value.saturating_sub(2) / 6
+fn validate_triplet_num_leaves(num_leaves: u32) -> Result<()> {
+	ensure!(
+		num_leaves >= 2,
+		"Expected at least two leaves, got {num_leaves}"
+	);
+	// 4_801_280 is the largest n for which C(n, 3) fits in u64.
+	// Leaf counts are at most n, and pair counts are at most C(n, 2).
+	// Contractions keep leaf groups disjoint and count each shared triple
+	// once, so triplet products and running totals stay within C(n, 3).
+	// n * (n - 1) also fits here; choose3 divides before its last
+	// multiplication to avoid overflow. Node indices fit in u32 as well,
+	// since a binary tree has 2n - 1 nodes. Available memory may impose
+	// a lower practical limit.
+	ensure!(
+		num_leaves <= 4_801_280,
+		"Triplet distance supports at most 4801280 leaves, got {num_leaves}"
+	);
+	Ok(())
+}
+
+fn choose3(value: u32) -> u64 {
+	let value = u64::from(value);
+	let pairs = value * (value - 1) / 2;
+	if pairs.is_multiple_of(3) {
+		pairs / 3 * (value - 2)
+	} else {
+		pairs * ((value - 2) / 3)
+	}
 }
