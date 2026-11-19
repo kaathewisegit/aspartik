@@ -897,7 +897,14 @@ fn validate_triplet_num_leaves(num_leaves: u32) -> Result<()> {
 		num_leaves >= 2,
 		"Expected at least two leaves, got {num_leaves}"
 	);
-	// C(n, 3) fits in u64 through n = 4_801_280; the next size overflows.
+	// 4_801_280 is the largest n for which C(n, 3) fits in u64.
+	// Leaf counts are at most n, and pair counts are at most C(n, 2).
+	// Contractions keep leaf groups disjoint and count each shared triple
+	// once, so triplet products and running totals stay within C(n, 3).
+	// n * (n - 1) also fits here; choose3 divides before its last
+	// multiplication to avoid overflow. Node indices fit in u32 as well,
+	// since a binary tree has 2n - 1 nodes. Available memory may impose
+	// a lower practical limit.
 	ensure!(
 		num_leaves <= 4_801_280,
 		"Triplet distance supports at most 4801280 leaves, got {num_leaves}"
